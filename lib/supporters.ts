@@ -98,15 +98,6 @@ export type SupporterContact = {
   city: string | null;
 };
 
-/** Why a source record is this supporter's. */
-export type SupporterLink = {
-  source: SupporterLinkSource;
-  sourceId: string;
-  matchedBy: "email";
-  matchedValue: string;
-  linkedAt: string;
-};
-
 /** A supporter's MP: the one in office for the constituency of the postcode that places them. */
 export type SupporterMp = { id: number; name: string; constituency: string; party: string };
 
@@ -116,7 +107,6 @@ export type SupporterDetails = {
   mp: SupporterMp | null;
   identities: SupporterIdentity[];
   contacts: SupporterContact[];
-  links: SupporterLink[];
   activity: SupporterActivity[];
   /** Whether we may contact each of their addresses and numbers about each topic, and why. */
   permissions: ContactPermission[];

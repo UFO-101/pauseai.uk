@@ -566,15 +566,6 @@ describeWithDatabase("listSupporters and getSupporter", () => {
         city: "London",
       },
     ]);
-    expect(sam.links).toEqual([
-      {
-        source: "luma",
-        sourceId: "usr-2",
-        matchedBy: "email",
-        matchedValue: "sam@example.com",
-        linkedAt: expect.any(Date),
-      },
-    ]);
     expect(sam.activity.map((a) => a.kind)).toEqual(["opted-out", "luma-contact", "luma-registered"]);
     // Whether we'd contact each address and number about each topic (lib/server/contact-permissions.ts).
     expect(sam.permissions.map((p) => [p.topic, p.send, p.reason])).toEqual([["luma-calendar", "no", "unsubscribed"]]);
@@ -583,7 +574,6 @@ describeWithDatabase("listSupporters and getSupporter", () => {
       "SELECT supporter_id::int AS id FROM supporter_links WHERE form_entry_id IS NOT NULL",
     );
     const details = (await getSupporter(pat))!;
-    expect(details.links[0]).toMatchObject({ source: "form", sourceId: expect.stringMatching(/^\d+$/) });
     expect(details.permissions.map((p) => [p.address, p.topic, p.send])).toEqual([
       ["pat@example.com", "site-forms", "yes"],
     ]);
@@ -678,7 +668,6 @@ describeWithDatabase("members as supporters", () => {
       href: "https://airtable.com/appWPTGqZmUcs3NWu/tblL1icZBhTV1gQ9o/recJane",
       status: null,
     });
-    expect(jane.links.map((l) => l.source).sort()).toEqual(["form", "member"]);
 
     // A member no longer read is no longer one, though what they gave stays.
     await query("UPDATE members SET removed_at = now()");

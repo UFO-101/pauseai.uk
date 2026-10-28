@@ -59,22 +59,6 @@ export const exampleSupporterDetails: SupporterDetails = {
       city: "Manchester",
     },
   ],
-  links: [
-    {
-      source: "luma",
-      sourceId: "usr-example",
-      matchedBy: "email",
-      matchedValue: "jane@example.com",
-      linkedAt: "2026-10-01T03:17:00Z",
-    },
-    {
-      source: "form",
-      sourceId: "12",
-      matchedBy: "email",
-      matchedValue: "jane.e@example.org",
-      linkedAt: "2026-10-05T09:00:00Z",
-    },
-  ],
   activity: [
     {
       source: "luma-webhook",
@@ -179,15 +163,6 @@ export const exampleMemberDetails: SupporterDetails = {
       latitude: null,
       longitude: null,
       city: "Cardiff",
-    },
-  ],
-  links: [
-    {
-      source: "member",
-      sourceId: "recRhea",
-      matchedBy: "email",
-      matchedValue: "rhea@example.com",
-      linkedAt: "2026-10-11T08:47:00Z",
     },
   ],
   activity: [

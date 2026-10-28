@@ -2934,7 +2934,6 @@ describe("SupporterDetails", () => {
           },
           identities: [{ source: "luma", email: "x@example.com", name: "", seenAt: null }],
           contacts: [],
-          links: [],
           activity: [
             {
               source: "luma",
@@ -3130,7 +3129,7 @@ describe("SupporterDetails", () => {
     );
     const letter = copy.sources["email-your-mp"];
     // A name only where a source gave one; every email, each as its source gave it.
-    expect(held.filter(([, what]) => what !== copy.detail.held.record)).toEqual([
+    expect(held).toEqual([
       ["5 Oct 2026", copy.detail.held.name, "Jane", letter],
       ["", copy.detail.emails, "jane@example.com", copy.sources.luma],
       ["", copy.detail.emails, "old@example.com", letter],

@@ -20,8 +20,7 @@ type Held = { key: string; what: string; value: ReactNode; from: string; at: str
 
 /**
  * Everything we hold about a supporter, as Everything we hold's rows:
- * each record joined to make them one person, by the address that matched
- * it; then every value each source record gave, as it gave it, a kind at a
+ * every value each source record gave, as it gave it, a kind at a
  * time, oldest first; a number no topic lets us use marked, the rest of
  * the addresses and numbers links.
  */
@@ -30,17 +29,6 @@ function held(supporter: Details, usable: Set<string>): Held[] {
   const from = (source: SupporterSource) => copy.sources[source];
   const byTime = (a: { at: string | null }, b: { at: string | null }) =>
     String(a.at ?? "").localeCompare(String(b.at ?? ""));
-  const records = supporter.links.map((l, i) => ({
-    key: `record-${i}`,
-    what: d.held.record,
-    value: (
-      <>
-        {d.linkSources[l.source]} <code>{l.sourceId}</code>
-      </>
-    ),
-    from: d.linkedBy(l.matchedValue),
-    at: l.linkedAt,
-  }));
   const identities = [...supporter.identities].sort((a, b) => byTime({ at: a.seenAt }, { at: b.seenAt }));
   const names = identities
     .filter((i) => i.name)
@@ -59,7 +47,6 @@ function held(supporter: Details, usable: Set<string>): Held[] {
       return shown === null ? [] : [{ key: `${what}-${n}`, what, value: shown, from: from(c.source), at: c.at }];
     });
   return [
-    ...records,
     ...names,
     ...emails,
     ...each(d.phone, (c) =>
