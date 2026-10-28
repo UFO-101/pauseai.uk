@@ -59,8 +59,7 @@
   justify-content: space-between;
 }
 
-/* In the "?" box, a channel's part, named by its icon when there's more
-   than one. */
+/* In the "?" box, a channel's part, named with its icon. */
 .channel + .channel {
   margin-top: var(--space-3);
   padding-top: var(--space-3);

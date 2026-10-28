@@ -21,7 +21,7 @@ const TONES = { yes: "green", unsure: "amber", no: undefined } as const;
 
 /**
  * What's behind a row's "?": the topic's name, then for each channel it
- * has here, named when there's more than one, what it is, when we would
+ * has here, named with its icon, what it is, when we would
  * contact them and when not, in the words of the ways it allows, and, for
  * some, what we can't see, each under its label.
  */
@@ -34,12 +34,10 @@ function TopicDetails({ topic, channels, name }: { topic: Topic; channels: Chann
         const when = copy.when[waysKey(channel, topic)];
         return (
           <div key={channel} className={styles.channel}>
-            {channels.length > 1 && (
-              <p className={styles.channelName}>
-                <ChannelIcon channel={channel} />
-                {staffCopy.supporters.filters.channels[channel]}
-              </p>
-            )}
+            <p className={styles.channelName}>
+              <ChannelIcon channel={channel} />
+              {staffCopy.supporters.filters.channels[channel]}
+            </p>
             <p>{details.about}</p>
             <dl className={styles.when}>
               <dt>{when.yes}</dt>
