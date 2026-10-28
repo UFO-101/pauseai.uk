@@ -15,7 +15,9 @@ import { LOCAL_URL } from "../fixture-env.mjs";
  * person has scrolled, or a step has scrolled them (to a form field, an
  * anchor), only the window is pictured: where they are is the point of the
  * frame, and a full-page picture of a scrolled page puts the sticky header
- * wherever the scroll was.
+ * wherever the scroll was. So too while a menu or a dialog is open: it's
+ * placed against the window, and a full-page picture, which Chromium takes
+ * by resizing the window, sometimes caught it placed against a passing size.
  *
  * `of` pictures one element, exactly (the component gallery's variants), with
  * the page at the top so the sticky header is never over it. `window`
@@ -40,7 +42,7 @@ export async function frame(
   // Images below the fold load first, and the fonts, so the picture is of the
   // finished page; and any smooth scroll (a field scrolled into view, an
   // anchor) has come to rest, so it's of the place it ends up.
-  const scrolled = await page
+  const inWindow = await page
     .evaluate(async () => {
       for (const img of document.querySelectorAll("img[loading=lazy]")) img.setAttribute("loading", "eager");
       await document.fonts.ready;
@@ -67,7 +69,7 @@ export async function frame(
         last = window.scrollY;
         await tick();
       }
-      return window.scrollY > 0;
+      return window.scrollY > 0 || document.querySelector(":popover-open, dialog:modal") !== null;
     })
     .catch(() => {
       // An image that never loads, or a page that navigated away: take the picture anyway.
@@ -84,7 +86,7 @@ export async function frame(
     await info.attach(`frame ${index}: ${caption}`, { body, contentType: "image/png" });
     return;
   }
-  const body = scrolled || windowOnly ? await page.screenshot(SHOT) : await wholePage(page);
+  const body = inWindow || windowOnly ? await page.screenshot(SHOT) : await wholePage(page);
   await info.attach(`frame ${index}: ${caption}`, { body, contentType: "image/png" });
 }
 

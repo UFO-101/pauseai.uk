@@ -150,7 +150,9 @@ tests know nothing about main.
 A frame pictures the whole page when the page is at the top, so its layout
 can be looked over, and only the window once a person, or a step, has
 scrolled: where they are is then the point, and a full-page picture of a
-scrolled page puts the sticky header wherever the scroll was. A flow with
+scrolled page puts the sticky header wherever the scroll was. The same
+while a menu or a dialog is open, as it's placed against the window, which
+a full-page picture resizes. A flow with
 no frames (the redirects, a scroll position, a header) says so on the page:
 "Passed. No frames: this flow only checks."
 
