@@ -150,8 +150,7 @@ function Standing({
           }
         >
           <strong>{copy.sends(londonWhen(written.dueAt!))}</strong>
-          <br />
-          {copy.scheduledLine(mailing.to, written.fromName ?? written.sentFrom!)}
+          <span>{copy.scheduledLine(mailing.to, written.fromName ?? written.sentFrom!)}</span>
         </Strip>
       </>
     );

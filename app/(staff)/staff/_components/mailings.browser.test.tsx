@@ -246,9 +246,7 @@ describe("MailingView", () => {
         reschedule={noAction}
       />,
     );
-    await expect
-      .element(page.getByText(new RegExp(`${copy.scheduledLine(mailing.to, "jo@pauseai.uk").replaceAll(".", "\\.")}$`)))
-      .toBeVisible();
+    await expect.element(page.getByText(copy.scheduledLine(mailing.to, "jo@pauseai.uk"))).toBeVisible();
   });
 
   it("sending: how far it's got, and Stop", async () => {

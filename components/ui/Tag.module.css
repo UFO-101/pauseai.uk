@@ -8,6 +8,8 @@
   font-size: var(--tag-font-size);
   font-weight: 400;
   line-height: 1.5;
+  /* A lozenge never breaks in two, even in a narrow table column. */
+  white-space: nowrap;
 }
 
 /* After a heading's words, it sits on their middle, at its own size and weight. */
