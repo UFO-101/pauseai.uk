@@ -183,14 +183,16 @@ don't change it.
         the recipients. "Change who" goes back to the list with the
         filter filled in, where the button updates this draft's
         recipients instead of starting a new mailing.
-     2. Write: the template, merge fields and attachments, with a
-        preview as any recipient.
+     2. Write: the template, merge fields and attachments, written on
+        the page with the details at the side. No preview here: the
+        Schedule step shows each recipient's email.
      3. Schedule: a dry run, run as the page opens, which shows who the
         mailing would go to and who would be skipped and why, with
         nothing recorded as sent; "Leave out" takes one person out of
-        this mailing, with a reason saved with it; a test send, one
-        real message to your own pauseai.uk address by Postmark, as the
-        recipient shown in the preview would get it, logged as
+        this mailing, with a reason saved with it; each recipient's
+        email, stepped through one at a time, and a test send of the
+        one shown, one real message to your own pauseai.uk address by
+        Postmark, logged as
         `mailing-test`, skipping permissions (once a channel is built,
         test sends go by it); then when it goes, a summary with the
         sender and the cost, and the button to schedule it.
