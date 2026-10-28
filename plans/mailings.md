@@ -125,9 +125,11 @@ don't change it.
   mailing's topic. For a politician, their address must not be blocked
   and they must still be in office. Anyone who fails the check is
   skipped, and the reason is recorded.
-- Someone with no address for the channel is never in a mailing: they
-  are left out when it starts, and its To line says how many, rather
-  than being skipped at sending.
+- Someone with no address for the channel, or whose address is
+  blocked, is never in a mailing: they are left out when it starts, and
+  the page says how many and who, rather than skipping them at sending.
+  Only what changes after scheduling is skipped: an address blocked
+  since, or leaving office.
 - Anyone who can see a list can send a mailing to it. Every staff
   account can mail politicians. Only accounts with the `supporters`
   permission can mail supporters.
@@ -165,12 +167,9 @@ don't change it.
    ask. Staff never see or type markup. The editor is built and in the
    component gallery (`MailingEditor`). The server checks the document
    as it checks letters, and one function writes a recipient's HTML and
-   plain text from it, for the dry run, test sends and sending. Every
-   merge field must have a value for every recipient: Write names those
-   missing one, with links to fix them, and Schedule can't be reached
-   until they're fixed or the field is taken out. So the only reasons
-   to skip someone at sending are ones that change after scheduling: a
-   blocked address, or leaving office.
+   plain text from it, for the preview, test sends and sending. Only
+   merge fields every recipient has a value for can be used: the others
+   are offered ghosted, saying how many lack one.
 5. Channels. `Channel` is a type with four functions: send one message,
    say how many more can be sent today, say what one message costs, and
    turn a provider's report into an event. Each channel also has a fake
@@ -196,28 +195,31 @@ https://claude.ai/artifact/3qi42XAhd2qwYBTRYVGZoz
 - A "Mail these" button on the politicians list, beside Download over
   the table, with the count in it ("Mail these 129…") (chosen on the
   canvas).
-- A new mailing in two steps, with a bar of the steps at the top and
-  Back and Next in a bar fixed to the bottom of the window. Done steps
-  link back; a step that can't be reached yet is greyed and says what
-  it needs. There's no step for who: staff have just chosen them on the
-  list, so the mailing opens on Write.
-  1. Write: at the top, who it's to: the count, the filter as
-     read-only pills, and "Change who", which goes back to the list
-     with the filter filled in, where the button updates this draft's
-     recipients instead of starting a new mailing. Then the editor,
-     with the details at the side. No preview here: the Schedule step
-     shows each recipient's email.
-  2. Schedule: a checklist. A dry run, run as the page opens, of who
-     the mailing would go to and who would be skipped and why, with
-     nothing recorded as sent. "Leave out" takes one person out, with a
-     reason saved with the mailing. Each recipient's email, stepped
-     through one at a time, and a test send of the one shown: one real
-     message to your own pauseai.uk address by Postmark, logged as
+- A new mailing on one page (chosen on the canvas), in six numbered
+  sections down the page:
+  1. Who: the filter as read-only pills with "Change who", which goes
+     back to the list with the filter filled in, where the button
+     updates this draft's recipients; how many will get it; and how
+     many of those the filter finds are left out for having no address
+     or a blocked one, with "See who".
+  2. Write: subject, ask, the editor and attachments, with a sidebar of
+     lozenges to drag in or click: the merge fields, those not every
+     recipient has ghosted, with a hover saying how many lack one; and
+     "Only for those who…", one per ask answer, each with how many it
+     covers.
+  3. Preview: a search by name or constituency picks whose email is
+     shown, rendered as they'll get it, with "Send this one to me": one
+     real message to your own pauseai.uk address by Postmark, logged as
      `mailing-test`, skipping permissions, or by Gmail once it's built.
-     Last, when it goes, with the schedule button in the bottom bar.
+  4. Sent from: whose Gmail, each connected one with today's sends
+     against the limit. Picking your own before it's connected shows
+     "Connect Gmail", which goes to Google once and comes back here.
+     Then the name it's from.
+  5. When: a day and an hour; it goes on the hour.
+  6. Send: one sentence of what will go, to whom, from whom and when,
+     and the button to schedule it.
 - Drafts. A mailing becomes a draft at the first change worth keeping:
-  writing in the subject or letter, attaching a file, or leaving
-  someone out. Until then nothing is saved. A draft saves itself a
+  writing in the subject or letter, or attaching a file. Until then nothing is saved. A draft saves itself a
   moment after each change. A draft with no subject or letter is
   deleted after a day unopened. "Delete draft" deletes it after one
   confirmation; a draft has sent nothing, so it isn't archived.
@@ -245,8 +247,8 @@ built on phase 2's. To be designed once phase 2's are settled.
 - "Email these" or "Text these" on the supporters list, following its
   Contact filter. Without a "Can email" or "Can text" filter the button
   is dotted, and clicking it explains which filter to add.
-- The same two steps, with the channel and topic fixed by the filter,
-  a count of texts and their cost, and opt-outs among the reasons to be
+- The same page, with the channel and topic fixed by the filter, a
+  count of texts and their cost, and opt-outs among the reasons to be
   skipped.
 - A message's page and the list of messages, with delivered, failed,
   opted out, replies and cost.
