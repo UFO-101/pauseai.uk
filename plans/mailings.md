@@ -122,6 +122,14 @@ don't change it.
 - Anyone who can see a list can send a mailing to it. Every staff
   account can mail politicians. Only accounts with the `supporters`
   permission can mail supporters.
+- Supporters can only be messaged from a list filtered to those we can
+  contact: a Contact filter answered "Can email" or "Can text" for one
+  topic. That filter decides the mailing's channel and topic, so the
+  Mail button on the supporters list offers email for a "Can email"
+  filter and text for a "Can text" one. Without such a filter the
+  button can't be pressed, and says which filter to add. "Not sure"
+  isn't enough, so members can't be emailed about PauseAI updates until
+  we can read CiviCRM's unsubscribes (`plans/supporters-email.md`).
 - A stored filter is read strictly. If it contains a value the site no
   longer recognises, such as a renamed topic or a deleted event, the
   mailing can't be scheduled until someone fixes it. Otherwise the
@@ -157,7 +165,9 @@ don't change it.
    components on desktop and phone, and choose between them. The
    mock-ups are on a design canvas:
    https://claude.ai/artifact/3qi42XAhd2qwYBTRYVGZoz
-   - A "Mail these" button on the politicians and supporters lists.
+   - A "Mail these" button on the politicians list, and on the
+     supporters list "Email these" or "Text these", following the
+     Contact filter.
    - A page for a new mailing: the recipients, each of whom can be
      unticked; the channel; the template; a preview as any recipient;
      the cost; and buttons to schedule and cancel.
