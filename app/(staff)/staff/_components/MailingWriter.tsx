@@ -309,19 +309,19 @@ export default function MailingWriter({
 
   return (
     <>
-      {/* Once the title has scrolled off, a bar at the top of the window with it and whether it's saved. */}
-      <div className={styles.barFrame} aria-hidden="true">
+      {/* Whether it's saved, at the top right; once the title has scrolled off, in a bar at the top of
+          the window with the title, in the same place. */}
+      <div className={styles.barFrame}>
         <div className={styles.bar} data-shown={titleGone || undefined}>
-          <strong>{title}</strong>
-          <SaveState state={saveState} />
+          <strong aria-hidden="true">{title}</strong>
+          <span role="status">
+            <SaveState state={saveState} />
+          </span>
         </div>
       </div>
-      <div className={styles.heading}>
-        <h1 ref={heading}>{title}</h1>
-        <span role="status">
-          <SaveState state={saveState} />
-        </span>
-      </div>
+      <h1 ref={heading} className={styles.title}>
+        {title}
+      </h1>
       {!data.sends && <Strip tone="amber">{copy.cantSend}</Strip>}
       {saveState === "conflict" && (
         <Strip tone="red" announce>
