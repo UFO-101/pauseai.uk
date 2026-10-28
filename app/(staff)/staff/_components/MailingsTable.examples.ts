@@ -31,6 +31,10 @@ export const exampleMailings: MailingSummary[] = [
 /** The Edinburgh invitation, with its recipients: one personalised who replied, one that bounced, one left out. */
 export const exampleMailing: Mailing = {
   ...exampleMailings[1],
+  recipientsTotal: 3,
+  page: 1,
+  pages: 1,
+  pageSize: 100,
   recipients: [
     {
       letterId: 11,

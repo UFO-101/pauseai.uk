@@ -1,3 +1,4 @@
+import { Fragment, type ReactNode } from "react";
 import Form from "next/form";
 import { Button } from "@/components/ui/Button";
 import { Select, TextInput } from "@/components/ui/Controls";
@@ -9,7 +10,20 @@ import StaffLink from "./StaffLink";
 import Menu from "./Menu";
 import styles from "./FilterBar.module.css";
 
-export type FilterOption = { value: string; label: string };
+/**
+ * A choice. Choices in a `group` come under its heading, its icon once,
+ * the group named on the chip too; a `detail` is said quietly after the
+ * words. One with `seconds` is in two parts: chosen, its chip is in two
+ * halves, the second offering `seconds`, the first of which is this choice
+ * alone and the rest narrow it.
+ */
+export type FilterOption = {
+  value: string;
+  label: string;
+  group?: { label: string; icon: ReactNode };
+  detail?: string;
+  seconds?: FilterOption[];
+};
 
 /**
  * One of a list's filters: its URL parameter, its name, and its choices. A
@@ -36,10 +50,21 @@ export type Filter = {
 
 const copy = staffCopy.filters;
 
-/** A value of `filter` in words: its name and choice, joined by `join`, or that it's left out. */
+/** The choice of `filter` a value is, or whose second part it is, and that second part, if it narrows it. */
+function parts(filter: Filter, value: string): { first?: FilterOption; second?: FilterOption } {
+  for (const option of filter.options) {
+    if (option.value === value) return { first: option };
+    const second = option.seconds?.find((o) => o.value === value);
+    if (second) return { first: option, second };
+  }
+  return {};
+}
+
+/** A value of `filter` in words: its name and choice, the second part too, joined by `join`, or that it's left out. */
 function valueWords(filter: Filter, value: string, join: string): string {
   const { value: plain, not } = notValue(value);
-  const choice = filter.options.find((o) => o.value === plain)?.label ?? plain;
+  const { first, second } = parts(filter, plain);
+  const choice = first ? [first.group?.label, first.label, second?.label].filter(Boolean).join(", ") : plain;
   return not ? copy.notChip(filter.label, choice) : `${filter.label}${join}${choice}`;
 }
 
@@ -81,12 +106,21 @@ function Choices({
     <>
       {search && <ChoiceSearch label={search} />}
       <ul className={styles.choices} data-search={search ? "empty" : undefined}>
-        {options.map((option) => (
-          <li key={option.value}>
-            <StaffLink href={href(option.value)} aria-current={option.value === current ? "true" : undefined}>
-              {option.label}
-            </StaffLink>
-          </li>
+        {options.map((option, i) => (
+          <Fragment key={option.value}>
+            {option.group && option.group.label !== options[i - 1]?.group?.label && (
+              <li className={styles.choiceGroup}>
+                {option.group.icon}
+                {option.group.label}
+              </li>
+            )}
+            <li className={option.group ? styles.inGroup : undefined}>
+              <StaffLink href={href(option.value)} aria-current={option.value === current ? "true" : undefined}>
+                {option.label}
+                {option.detail && <span className={styles.detail}>{option.detail}</span>}
+              </StaffLink>
+            </li>
+          </Fragment>
         ))}
       </ul>
     </>
@@ -186,7 +220,10 @@ export default function FilterBar({
   const offered = filters
     .filter((filter) => !filter.after && (filter.repeat || chosen(filter.name).length === 0))
     .map((filter) => {
-      const taken = chosen(filter.name).map((value) => notValue(value).value);
+      const taken = chosen(filter.name).map((value) => {
+        const plain = notValue(value).value;
+        return parts(filter, plain).first?.value ?? plain;
+      });
       return { filter, options: filter.options.filter((option) => option.value && !taken.includes(option.value)) };
     })
     .filter(({ filter, options }) => filter.place || options.length > 0);
@@ -208,8 +245,15 @@ export default function FilterBar({
     hidden.filter(([name]) => name !== filter.name && name !== filter.place!.within) as [string, string][];
   // A filter's chip, for `value` of it: its menu has its choices and, but in a chip's second half, a way to
   // remove it. A choice in a repeating filter's chip changes that one value, keeping it found or left out, and
-  // the chip can turn it the other way.
-  const chip = (filter: Filter, value: string, text: string, second = false) => {
+  // the chip can turn it the other way, but from the second half of a choice in two parts, which offers that
+  // choice's `seconds`.
+  const chip = (
+    filter: Filter,
+    value: string,
+    text: ReactNode,
+    second = false,
+    seconds?: { options: FilterOption[]; current: string },
+  ) => {
     const { value: plain, not } = notValue(value);
     const others = chosen(filter.name).filter((v) => v !== value);
     const choose = (v: string) =>
@@ -218,8 +262,8 @@ export default function FilterBar({
         : href({ ...without(filter.name), [filter.name]: v });
     return (
       <Menu
-        key={`${filter.name}-${value}`}
-        id={`filter-${filter.name}-${value}`}
+        key={`${filter.name}-${value}${seconds ? "-2" : ""}`}
+        id={`filter-${filter.name}-${value}${seconds ? "-2" : ""}`}
         trigger={not ? `${styles.chip} ${styles.not}` : styles.chip}
         label={
           <>
@@ -233,15 +277,15 @@ export default function FilterBar({
           <PlaceForm path={path} filter={filter} values={values} others={othersThan(filter)} />
         ) : (
           <Choices
-            options={filter.options}
-            current={plain}
+            options={seconds?.options ?? filter.options}
+            current={seconds?.current ?? parts(filter, plain).first?.value ?? plain}
             href={choose}
             search={filter.searchable ? copy.narrow : undefined}
           />
         )}
-        {(filter.repeat || !second) && (
+        {((filter.repeat && !seconds) || !second) && (
           <p className={styles.actions}>
-            {filter.repeat && (
+            {filter.repeat && !seconds && (
               <StaffLink href={href({ [filter.name]: [...others, not ? plain : NOT + plain] })}>
                 {not ? copy.onlyInstead : copy.exceptInstead}
               </StaffLink>
@@ -321,7 +365,40 @@ export default function FilterBar({
             );
           }
           if (filter.place) return chip(filter, value, placeLabel(filter, value));
-          return chosen(filter.name).map((one) => chip(filter, one, valueWords(filter, one, ": ")));
+          return chosen(filter.name).map((one) => {
+            const { value: plain, not } = notValue(one);
+            const { first, second } = parts(filter, plain);
+            if (!first?.seconds) return chip(filter, one, valueWords(filter, one, ": "));
+            // A choice in two parts: one lozenge in two halves, the second narrowing the first.
+            // Its group's icon before its words, so "PauseAI UK" says which.
+            const named = first.group ? (
+              <>
+                <span className={styles.chipIcon}>{first.group.icon}</span>
+                {first.label}
+              </>
+            ) : (
+              first.label
+            );
+            const words = not ? (
+              <>
+                {copy.notChip(filter.label, "")}
+                {named}
+              </>
+            ) : (
+              <>
+                {filter.label}: {named}
+              </>
+            );
+            return (
+              <span key={`${filter.name}-${one}`} className={styles.pair} role="group" aria-label={filter.label}>
+                {chip(filter, one, words)}
+                {chip(filter, one, (second ?? first.seconds[0]).label, true, {
+                  options: first.seconds,
+                  current: plain,
+                })}
+              </span>
+            );
+          });
         })}
       {offered.length > 0 &&
         (negatable.length > 0 ? (

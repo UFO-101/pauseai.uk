@@ -10,7 +10,7 @@ import { syncPoliticians } from "./politician-sync";
 
 const letters = () =>
   query(
-    `SELECT n.name, m.airtable_field AS mailing, l.status, l.sent_at AS "sentAt", p.personalised
+    `SELECT n.name, coalesce(m.airtable_field, m.title) AS mailing, l.status, l.sent_at AS "sentAt", p.personalised
      FROM pauseai_letters p JOIN letters l USING (id) JOIN mailings m ON m.id = p.mailing_id
        JOIN notable_people n ON n.id = l.notable_person_id
      ORDER BY p.airtable_id`,
@@ -22,15 +22,15 @@ afterEach(() => vi.unstubAllEnvs());
 describeWithDatabase("syncEmails", () => {
   useTestDatabase();
 
-  it("adds each 2026 email once, as a letter of its mailing, holding back one with no mailing we know", async () => {
+  it("adds each email once, as a letter of its mailing, by its box or the dates it was sent in, holding back one with no mailing we know", async () => {
     await syncPoliticians(NIGHTLY);
     const requests: URL[] = [];
     server.events.on("request:start", ({ request }) => {
       if (request.url.includes("tblp4nH5Jymq48rcm")) requests.push(new URL(request.url));
     });
     expect(await syncEmails(NIGHTLY)).toEqual({
-      read: 6,
-      added: 4,
+      read: 7,
+      added: 5,
       waiting: 0,
       noPolitician: 1,
       unplaced: [{ airtableId: "recEmailNewBox", mailings: [] }],
@@ -59,6 +59,14 @@ describeWithDatabase("syncEmails", () => {
         sentAt: new Date("2026-06-10T09:00:00Z"),
         personalised: false,
       },
+      // Summer 2025's, with no box of a mailing ticked, is the DeepMind letter's by when it was sent.
+      {
+        name: "Polly Placeholder",
+        mailing: "DeepMind letter",
+        status: "sent",
+        sentAt: new Date("2025-07-09T11:00:00Z"),
+        personalised: true,
+      },
       {
         name: "Morag Example",
         mailing: "Edinburgh Conference Nov 26 Invitation",
@@ -75,12 +83,12 @@ describeWithDatabase("syncEmails", () => {
       },
     ]);
     expect(await query("SELECT actor, action, details FROM audit_log WHERE action = 'copy PauseAI emails'")).toEqual([
-      { actor: "sync", action: "copy PauseAI emails", details: { added: 4 } },
+      { actor: "sync", action: "copy PauseAI emails", details: { added: 5 } },
     ]);
 
     // Again: nothing new, so nothing added or logged, and the run says so.
     expect(await syncEmails("jo@pauseai.uk")).toMatchObject({ added: 0, unplaced: [{ airtableId: "recEmailNewBox" }] });
-    expect(await letters()).toHaveLength(4);
+    expect(await letters()).toHaveLength(5);
     const runs = (await listRuns("sync-emails")) as EmailSync[];
     expect(runs.map((run) => [run.status, run.startedBy])).toEqual([
       ["unchanged", "jo@pauseai.uk"],

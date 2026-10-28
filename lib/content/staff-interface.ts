@@ -1,5 +1,6 @@
 // Every word the staff interface (/staff) shows.
 
+import type { Channel } from "@/lib/contact-permissions";
 import type { ImportJob } from "@/lib/import-runs";
 
 export const staffCopy = {
@@ -145,8 +146,6 @@ export const staffCopy = {
     filters: {
       search: "Name, email or phone",
       // Whether we have a phone number, or an email, for them.
-      phone: { yes: "Has a phone number", no: "No phone number" },
-      email: { yes: "Has an email", no: "No email" },
       // The Near filter: a postcode or a town, and how far from it.
       near: "Near",
       nearPlaceholder: "Postcode or town",
@@ -161,25 +160,17 @@ export const staffCopy = {
       campaign: "Campaign",
       wrote: { "": "Wrote", no: "Didn't write" } as Record<string, string>,
       // The other filters are named after their columns.
-      // A choice in the Subscriptions filter, and its chip: a topic and a reason it gives, short.
-      states: {
-        "luma-calendar": {
-          following: "Luma: contact",
-          unsubscribed: "Luma: unsubscribed",
-          "not-following": "Luma: not a contact",
-        },
-        "pauseai-updates": {
-          asked: "PauseAI global: asked",
-          joined: "PauseAI global: joined before July 2026",
-          declined: "PauseAI global: declined",
-          unsubscribed: "PauseAI global: unsubscribed",
-          removed: "PauseAI global: removed",
-        },
-        "site-forms": {
-          asked: "PauseAI UK: agreed",
-          declined: "PauseAI UK: didn't agree",
-        },
-      } as Record<string, Record<string, string>>,
+      // The Contact filter: its topics under their channel's heading, each named short, a phone's with how we'd
+      // contact them after it; then in its chip's second half, its answer, as a supporter's page words it.
+      channels: { email: "Email", phone: "Phone" } as Record<Channel, string>,
+      topics: {
+        "luma-calendar": "Luma",
+        "pauseai-updates": "PauseAI global",
+        "site-forms": "PauseAI UK",
+        volunteering: "Volunteering",
+        "march-day": "March day",
+      } as Record<string, string>,
+      ways: { text: "texts", "call-or-text": "calls & texts" } as Record<string, string>,
     },
     columns: {
       name: "Name",
@@ -187,14 +178,17 @@ export const staffCopy = {
       phone: "Phone",
       place: "Place",
       badges: "Activities",
-      subscriptions: "Subscriptions",
+      subscriptions: "Contact",
       firstSeen: "First sign-up",
       lastActive: "Last activity",
       events: "Luma events",
       letters: "Letters to MP",
+      // Added by the Event filter: how their registration for the event stands, each event named when there are several.
+      registrations: "At the event",
+      // Added by the Campaign filter: when they first wrote in the campaign.
+      wrote: "Wrote",
     },
     noName: "(no name)",
-    moreEmails: (n: number) => `+${n}`,
     // The badges: the sources a supporter is in, and what they did there.
     badges: {
       lumaContact: "Luma contact",
@@ -203,15 +197,23 @@ export const staffCopy = {
       member: "Member",
       march: "March sign-up",
     },
-    // In the list, a lozenge per topic we'd email them about.
+    // In the list, a lozenge per topic we'd contact them about, by channel.
     subscriptions: {
       topics: {
-        "luma-calendar": "Luma",
-        "pauseai-updates": "PauseAI global",
-        "site-forms": "PauseAI UK",
-      } as Record<string, string>,
+        email: {
+          "luma-calendar": "Luma email",
+          "pauseai-updates": "PauseAI global email",
+          "site-forms": "PauseAI UK email",
+        },
+        phone: {
+          "luma-calendar": "Luma texts",
+          volunteering: "Volunteer calls & texts",
+          "site-forms": "PauseAI UK calls & texts",
+          "march-day": "March day texts",
+        },
+      } as Record<Channel, Record<string, string>>,
       // A yes that an unsubscribe we can't see may have undone.
-      unsure: (topic: string) => `${topic}, unsure`,
+      unsure: (topic: string) => `${topic} (?)`,
       // Every address they have is blocked.
       blocked: "Blocked",
     },
@@ -230,6 +232,8 @@ export const staffCopy = {
     detail: {
       emails: "Email",
       phone: "Phone",
+      // By a number no topic lets us use.
+      unusable: "Don't use",
       postcode: "Postcode",
       city: "City",
       /** Where the join form was: through our own site, or on another. */
@@ -242,20 +246,44 @@ export const staffCopy = {
       } as Record<string, string>,
       // From when we first saw them to their last activity.
       active: "Active",
-      /** Where a detail came from and when: "Luma, 26 Sept 2026". */
-      from: (sources: string, when: string) => `${sources}, ${when}`,
-      // Under the main box: a tile per topic, saying whether we'd email them about it, and why.
-      listsTitle: "Subscriptions",
+      // The box under the band: a row per topic and address, saying whether we'd contact them about it, and why.
+      listsTitle: "Can we contact them?",
+      // Folded at the foot of the page, after the history, a table: each record joined to make them one person,
+      // by the address that matched it, then every value each source record gave, as it gave it.
+      everythingTitle: "Everything we hold",
+      held: {
+        columns: { when: "When", what: "What", value: "Value", from: "From" },
+        record: "Record",
+        name: "Name",
+        point: "Point",
+      },
+      linkSources: { luma: "Luma account", form: "Form entry", member: "Membership" } as Record<string, string>,
+      linkedBy: (address: string) => `matched by ${address}`,
       permissions: {
+        // By channel: each topic's name, and the answers. Unsure is a yes that an unsubscribe we can't see may have undone.
         topics: {
-          "luma-calendar": "Luma calendar emails",
-          "pauseai-updates": "PauseAI global updates",
-          "site-forms": "PauseAI UK updates",
-        } as Record<string, string>,
-        yes: "Will email",
-        no: "Won't email",
-        // A yes that an unsubscribe we can't see may have undone.
-        unsure: "Don't know",
+          email: {
+            "luma-calendar": "Luma calendar",
+            "pauseai-updates": "PauseAI global updates",
+            "site-forms": "PauseAI UK updates",
+          },
+          phone: {
+            "luma-calendar": "Luma calendar",
+            volunteering: "Volunteering",
+            "site-forms": "PauseAI UK updates",
+            "march-day": "March day updates",
+          },
+        } as Record<Channel, Record<string, string>>,
+        // By the ways the topic lets us contact them (TOPIC_WAYS), so the answer says the channel. Unsure is a
+        // yes an unsubscribe we can't see may have undone.
+        answers: {
+          email: { yes: "Can email", no: "Can't email", unsure: "Not sure" },
+          text: { yes: "Can text", no: "Can't text", unsure: "Not sure" },
+          "call-or-text": { yes: "Can call or text", no: "Can't call or text", unsure: "Not sure" },
+        } as Record<string, Record<"yes" | "no" | "unsure", string>>,
+        // By the address or number, so a screen reader says what it is.
+        email: "Email",
+        phone: "Phone",
         why: "details",
         // The short reason under the answer, by topic and reason, with when.
         reasons: {
@@ -276,6 +304,15 @@ export const staffCopy = {
             asked: (when: string, form?: string) => `Agreed on ${form}, ${when}`,
             declined: (when: string, form?: string) => `Didn't agree on ${form}, ${when}`,
           },
+          volunteering: {
+            volunteered: (when: string) => `Gave it when joining as a volunteer, ${when}`,
+            "gave-number": (when: string) => `Gave it when joining, not as a volunteer, ${when}`,
+            removed: () => "No longer shared with us",
+          },
+          "march-day": {
+            "gave-number": (when: string, form?: string) => `Gave it on ${form} for texts on the day, ${when}`,
+            ended: (_when: string, form?: string) => `Gave it on ${form} for texts on the day, which is over`,
+          },
         } as Record<string, Record<string, (when: string, form?: string) => string>>,
         // The form a box was on, by form_entries.form; one not here is "their newest form".
         forms: {
@@ -284,17 +321,64 @@ export const staffCopy = {
           "march-2026-11": "the march sign-up",
         } as Record<string, string>,
         otherForm: "their newest form",
-        // Behind "Why?": how we know, and what we can't.
+        // Behind a strip's "?": the topic, what it is, when it's a yes and when a no, and what we can't see, by
+        // channel and topic.
+        topicTitle: (topic: string) => `Topic: ${topic}`,
+        // The labels over when it's a yes and when a no, in the words of the ways the topic allows (TOPIC_WAYS).
+        when: {
+          email: { yes: "Can email when", no: "Can't email when" },
+          text: { yes: "Can text when", no: "Can't text when" },
+          "call-or-text": { yes: "Can call or text when", no: "Can't call or text when" },
+        } as Record<string, { yes: string; no: string }>,
+        caveat: "Note",
         details: {
-          "luma-calendar":
-            "Luma sends emails to the calendar's 'contacts'. Registering for an event or following the calendar makes someone a contact; unsubscribing from a Luma email takes them off the list, as does being removed or blocked. We hear of an unsubscribe at once, but annoyingly we have to poll for hours to find out about anyone coming back. Confusingly, unfollowing the calendar doesn't change whether Luma emails them.",
-          "pauseai-updates":
-            "“Keep me informed” on the join form has been optional since 30 June 2026. Before then everyone who joined was on the list. Unsubscribes since joining are in CiviCRM, which we don't read yet, so we usually have to put “Don't know” here.",
-          "site-forms":
-            "There are several UK specific forms which have ways of opting in to contact. For example, when emailing your MP or signing up on this site to a march.",
-        } as Record<string, string>,
-        // One tile in place of the topics', when the address is blocked.
-        blocked: "Won't email: address blocked",
+          email: {
+            "luma-calendar": {
+              about: "Emails Luma sends to the calendar's contacts.",
+              yes: "They're a contact of the calendar: they registered for an event or followed it.",
+              no: "They unsubscribed from one of Luma's emails, or were never a contact.",
+              caveat:
+                "Unfollowing the calendar doesn't stop Luma's emails. Luma tells us of an unsubscribe straight away, but we only see someone resubscribe when we next check, a few hours later.",
+            },
+            "pauseai-updates": {
+              about: "PauseAI newsletters sent via CiviCRM, either by the global team or the UK team.",
+              yes: "They ticked “Keep me informed” when they joined, or joined before 30 June 2026, when everyone was signed up.",
+              no: "They left “Keep me informed” unticked, or the global team no longer shares their membership with us.",
+              caveat: "Unsubscribes are in CiviCRM, which we can't read, so even a yes shows as “Not sure” right now.",
+            },
+            "site-forms": {
+              about: "Emails from PauseAI UK.",
+              yes: "They ticked the contact box on the latest of our forms they filled in, such as Email your MP or the march sign-up.",
+              no: "They left that box unticked.",
+            },
+          },
+          phone: {
+            "luma-calendar": {
+              about: "Texts to a number given when registering for a Luma event. We text it, never call it.",
+              yes: "The Luma account that gave it is a contact of the calendar.",
+              no: "That account unsubscribed from Luma's emails, or was never a contact.",
+            },
+            "site-forms": {
+              about: "Calls and texts from PauseAI UK.",
+              yes: "They ticked the contact box on the latest of our forms that has this number. The march sign-up's box says “by email and phone”.",
+              no: "They left that box unticked.",
+            },
+            volunteering: {
+              about: "Calls and texts about volunteering.",
+              yes: "They gave the number on the PauseAI join form after choosing to volunteer regularly, the only choice it asks a number for, or on the Tally volunteer sign-up form the join page had before 30 June 2026.",
+              no: "The global team no longer shares their membership with us.",
+              caveat: "A number given with any other choice shows as “Not sure”.",
+            },
+            "march-day": {
+              about: "Texts on the day of the march.",
+              yes: "They gave a number on the march sign-up, which asks for one “for text updates on the day”, and the day isn't over yet.",
+              no: "The day is over. If they ticked the box on the sign-up, PauseAI UK updates still covers the number.",
+            },
+          },
+        } as Record<Channel, Record<string, { about: string; yes: string; no: string; caveat?: string }>>,
+        // One tile in place of the topics', when the address is blocked: in place of a topic, then the answer.
+        everyTopic: "Every topic",
+        blocked: "Can't email: blocked",
         blockedBecause: {
           hard: (when: string) => `An email to it bounced, ${when}.`,
           complaint: (when: string) => `They marked an email as spam, ${when}.`,
@@ -302,8 +386,6 @@ export const staffCopy = {
         seeBlocked: "See blocked emails",
       },
       activityTitle: "History",
-      // The history, folded at the foot of the page: the button that opens it.
-      showHistory: (n: number) => `Show all ${n}`,
       // Where they are, and what it's from: their postcode, a city they gave, or an event's place.
       place: "Place",
       placeFrom: {
@@ -311,9 +393,14 @@ export const staffCopy = {
         city: () => "from the city they gave",
         event: (given: string) => `from where ${given} was`,
       } as Record<string, (given: string) => string>,
+      // In the band at the top: their MP, linked to their page, how they first came, under when they were active,
+      // and how many events they registered for and letters they wrote, each linked to its table.
+      theirMp: "Their MP",
+      firstVia: (source: string) => `first came via ${source}`,
+      eventsCounted: (n: number) => (n === 1 ? "event" : "events"),
+      lettersCounted: (n: number) => (n === 1 ? "letter to an MP" : "letters to MPs"),
       // Beside the box of what we hold: the events they registered for, and their letters, a table each.
       eventsTitle: "Events",
-      eventsCount: (registered: number) => `${registered} registered`,
       noEvents: "No events.",
       lettersTitle: "Letters to MPs",
       noLetters: "No letters.",
@@ -471,6 +558,7 @@ export const staffCopy = {
       important: "Important target",
       connection: "Personal connection",
       removed: "No longer in Airtable",
+      test: "Test politician",
     } as Record<string, string>,
     ask: "Ask",
     // An answer to the ask chosen, in the second half of the ask's chip, its menu named after the ask. With no
@@ -486,9 +574,10 @@ export const staffCopy = {
     outOfOffice: (n: number) => `${n} ${n === 1 ? "match" : "matches"} found for politicians not in office`,
     // The same, when a search of one house finds no one there, linked to every house.
     otherHouses: (n: number) => `${n} ${n === 1 ? "match" : "matches"} found for politicians in other houses`,
+    // The same, when a search finds no one, but would among the test politicians, linked to them.
+    tests: (n: number) => `${n} ${n === 1 ? "match" : "matches"} found for test politicians`,
     // Over the nearest names, when a search finds no one.
     closest: "No one matches exactly. These are close matches:",
-    testMp: "Test",
     // The counts in the list: letters written to them, and how many of those got a reply.
     columns: {
       letters: "Letters",
@@ -552,6 +641,9 @@ export const staffCopy = {
     noText:
       "Text not avilable. This was imported from the Airtable's Emails table, which keeps only who got it and how it was written. It was sent with Gmail, look there.",
     recipientsTitle: "Recipients",
+    // Over the recipients: how many; instead of them, when there are none.
+    recipientsCount: (n: number) => `${n} ${n === 1 ? "recipient" : "recipients"}`,
+    noRecipients: "Nobody yet.",
     recipientColumns: {
       name: "Politician",
       status: "Outcome",
@@ -801,11 +893,11 @@ export const staffCopy = {
   },
   // The hourly copy of PauseAI's UK members (lib/server/members-import.ts),
   // on the import page.
-  // PauseAI's 2026 emails to politicians, from Airtable's Emails table.
+  // PauseAI's emails to politicians, from Airtable's Emails table.
   pauseaiEmails: {
     title: "PauseAI's emails to politicians",
     intro: {
-      before: "Copies each email that PauseAI has sent a politician since January 2026 from the ",
+      before: "Copies each email that PauseAI has sent a politician, of every year, from the ",
       link: "Emails table in Airtable",
       after: ". Only transfers known ones, the import code needs updating if a new mailing is added.",
     },

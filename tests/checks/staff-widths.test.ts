@@ -15,7 +15,7 @@ const COMPONENTS = join(ROOT, "app", "(staff)", "staff", "_components");
 const ALLOWED: Record<string, string> = {
   // Over the page, where the grid doesn't reach.
   "ChangesTable.module.css .json": "a popover",
-  "EmailPermissionTiles.module.css .popover": "a popover",
+  "PermissionTiles.module.css .popover": "a popover",
   "Details.module.css .editPopover": "a popover",
   "DeletePolitician.module.css .confirm": "a popover",
   "StaffNav.module.css .menu > div": "the menu's dropdown",

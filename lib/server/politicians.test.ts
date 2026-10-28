@@ -81,7 +81,7 @@ describe("politiciansSearch", () => {
         email: ["none", "blocked"],
         ask: BILL,
         answer: "signed",
-        not: { party: ["Reform UK"], flags: ["connection"], country: ["scotland"], email: ["yes"] },
+        not: { party: ["Reform UK"], flags: ["connection", "test"], country: ["scotland"], email: ["yes"] },
         sort: { key: "party", dir: "desc" },
         page: 3,
       },
@@ -103,6 +103,7 @@ describe("politiciansSearch", () => {
       email: undefined,
       ask: undefined,
       answer: undefined,
+      not: { flags: ["test"] },
       sort: { key: "name", dir: "asc" },
       page: 1,
     };
@@ -132,6 +133,12 @@ describe("politiciansSearch", () => {
     };
     expect(politiciansSearch(unknown)).toEqual({ ...blank, ...unknown, filter: none });
     expect(politiciansSearch({ q: "  " }).filter.search).toBeUndefined();
+  });
+
+  it("leaves out the test politicians, unless the Marked filter finds them", () => {
+    expect(politiciansSearch({ flag: "test" }).filter).toMatchObject({ flags: ["test"], not: undefined });
+    expect(politiciansSearch({ flag: ["important", "test"] }).filter.not).toBeUndefined();
+    expect(politiciansSearch({ flag: "!test" }).filter).toMatchObject({ flags: undefined, not: { flags: ["test"] } });
   });
 
   it("is everyone, in office or not, with any status", () => {
@@ -238,6 +245,18 @@ describeWithDatabase("politicians", () => {
     const typo = await page({ search: "Plaseholder", house: "lords" });
     expect(typo.closest.map((p) => p.name)).toEqual(["Lord Placeholder"]);
     expect(await page({ search: "zzz", status: "in_office" })).toMatchObject({ otherHouses: 0, closest: [] });
+    // A search that finds no one, as test politicians are left out: how many it finds among them, whatever
+    // else of Marked is left out; and none when it finds someone, or they aren't left out.
+    await addTestMp();
+    const hidden = {
+      search: "McTestface",
+      status: "in_office" as const,
+      not: { flags: ["removed" as const, "test" as const] },
+    };
+    expect(await page(hidden)).toMatchObject({ total: 0, tests: 1 });
+    expect(await page({ ...hidden, search: "placeholder" })).toMatchObject({ tests: 0 });
+    expect(await page({ ...hidden, not: undefined })).toMatchObject({ total: 1, tests: 0 });
+    expect(await page({ ...hidden, not: { flags: ["removed"] } })).toMatchObject({ total: 1, tests: 0 });
     expect(await page({ page: 2 })).toMatchObject({ page: 2, politicians: [] });
   });
 
@@ -263,21 +282,21 @@ describeWithDatabase("politicians", () => {
     expect(await closestPoliticians({ search: "zzzz" })).toEqual([]);
   });
 
-  it("lists politicians, the test MP first, filtered by search, house and ask", async () => {
+  it("lists politicians by name, filtered by search, house and ask", async () => {
     const mp = await addTestPolitician();
     const peer = await addPeer();
     await addTestMp();
     await setStatus(peer, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
 
     expect((await listPoliticians()).map((p) => p.name)).toEqual([
-      "Testy McTestface MP",
       "Lord Example",
       "Polly Placeholder",
+      "Testy McTestface MP",
     ]);
     expect((await listPoliticians({ search: "westminster" })).map((p) => p.id)).toEqual([mp]);
     expect((await listPoliticians({ search: "CROSSBENCH" })).map((p) => p.id)).toEqual([peer]);
     expect((await listPoliticians({ house: "lords" })).map((p) => p.id)).toEqual([peer]);
-    // Sorted by a column, either way, the test MPs staying first.
+    // Sorted by a column, either way.
     const byParty = (dir: "asc" | "desc") =>
       listPoliticians({ sort: { key: "party", dir } }).then((rows) =>
         rows.filter((p) => !p.isTest).map((p) => p.party),
@@ -288,7 +307,7 @@ describeWithDatabase("politicians", () => {
     expect((await listPoliticians({ party: [(await getPolitician(peer))!.party] })).map((p) => p.id)).toEqual([peer]);
     expect(await listPoliticians({}, 1)).toHaveLength(1);
     // A page further on.
-    expect((await listPoliticians({ page: 2 }, 1)).map((p) => p.name)).toEqual(["Lord Example"]);
+    expect((await listPoliticians({ page: 2 }, 1)).map((p) => p.name)).toEqual(["Polly Placeholder"]);
     // Each word anywhere, ignoring case and accents; a % or _ is only itself.
     expect((await listPoliticians({ search: "poll westminster" })).map((p) => p.id)).toEqual([mp]);
     expect((await listPoliticians({ search: "Pólly lords" })).map((p) => p.id)).toEqual([]);
@@ -388,6 +407,10 @@ describeWithDatabase("politicians", () => {
     expect(await ids({ flags: ["connection"] })).toEqual([peer]);
     expect(await ids({ flags: ["removed"] })).toEqual([retired]);
     expect(await ids({ flags: ["important", "removed"] })).toEqual([mp, retired].sort());
+    const test = await addTestMp();
+    expect(await ids({ flags: ["test"], status: undefined })).toEqual([test]);
+    expect(await ids({ not: { flags: ["test"] }, status: undefined })).toEqual([mp, peer, retired].sort());
+    await query("DELETE FROM notable_people WHERE id = $1", [test]);
     // By nation; and by whether we can write to them: an address, none, or a blocked one.
     await query("UPDATE politicians SET country = 'wales' WHERE id = $1", [peer]);
     expect(await ids({ country: ["wales"] })).toEqual([peer]);

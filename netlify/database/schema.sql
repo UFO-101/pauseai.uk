@@ -46,27 +46,29 @@ CREATE EXTENSION IF NOT EXISTS unaccent WITH SCHEMA public;
 COMMENT ON EXTENSION unaccent IS 'text search dictionary that removes accents';
 
 --
--- Name: email_permission(text, text); Type: FUNCTION; Schema: public; Owner: -
+-- Name: contact_permission(text, text, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.email_permission(for_topic text, for_address text) RETURNS TABLE(send text, reason text, at timestamp with time zone, source text)
+CREATE FUNCTION public.contact_permission(for_topic text, for_channel text, for_address text) RETURNS TABLE(send text, reason text, at timestamp with time zone, source text)
     LANGUAGE sql STABLE
     AS $$
 SELECT r.send, r.reason, r.at, r.source FROM (
-  -- A block overrides everything.
+  -- A blocked address overrides everything.
   SELECT 1, 'no', 'blocked', p.at, p.kind
-  FROM email_blocks b JOIN email_problems p ON p.id = b.problem_id WHERE b.address = for_address
+  FROM email_blocks b JOIN email_problems p ON p.id = b.problem_id
+  WHERE for_channel = 'email' AND b.address = for_address
   UNION ALL
   -- Then an opt-out in force.
   SELECT 2, 'no', 'unsubscribed', o.unsubscribed_at, o.source
-  FROM opt_outs o WHERE o.address = for_address AND o.list = for_topic AND o.resubscribed_at IS NULL
+  FROM opt_outs o
+  WHERE o.channel = for_channel AND o.address = for_address AND o.list = for_topic AND o.resubscribed_at IS NULL
   UNION ALL
   -- A contact of the calendar.
   SELECT 3, 'yes', 'following', f.since, 'luma'
   FROM (SELECT min(l.contact_since) AS since FROM luma_people l WHERE l.email = for_address) f
-  WHERE for_topic = 'luma-calendar' AND f.since IS NOT NULL
+  WHERE for_channel = 'email' AND for_topic = 'luma-calendar' AND f.since IS NOT NULL
   UNION ALL
-  SELECT 4, 'no', 'not-following', NULL, NULL WHERE for_topic = 'luma-calendar'
+  SELECT 4, 'no', 'not-following', NULL, NULL WHERE for_channel = 'email' AND for_topic = 'luma-calendar'
   UNION ALL
   -- The newest member record, one still shared before one removed. Every
   -- yes is unsure: the updates are sent from CiviCRM, whose unsubscribes
@@ -80,16 +82,83 @@ SELECT r.send, r.reason, r.at, r.source FROM (
     m.created_at, 'member'
   FROM (SELECT * FROM members m WHERE m.email = for_address
         ORDER BY m.removed_at IS NOT NULL, m.created_at DESC, m.id LIMIT 1) m
-  WHERE for_topic = 'pauseai-updates'
+  WHERE for_channel = 'email' AND for_topic = 'pauseai-updates'
   UNION ALL
   -- The box on the newest form entry.
   SELECT 3, CASE WHEN f.contact_consent THEN 'yes' ELSE 'no' END,
     CASE WHEN f.contact_consent THEN 'asked' ELSE 'declined' END, f.created_at, f.form
-  FROM (SELECT * FROM form_entries f WHERE lower(trim(f.email)) = for_address
-        ORDER BY f.created_at DESC, f.id DESC LIMIT 1) f
+  FROM (SELECT * FROM form_entries f WHERE for_channel = 'email' AND lower(trim(f.email)) = for_address
+        UNION ALL
+        SELECT * FROM form_entries f WHERE for_channel = 'phone' AND phone_number(f.phone) = for_address
+        ORDER BY created_at DESC, id DESC LIMIT 1) f
   WHERE for_topic = 'site-forms'
+  UNION ALL
+  -- The answer of the Luma account that gave the number.
+  SELECT 3, a.send, a.reason, a.at, 'luma'
+  FROM (SELECT
+          CASE WHEN o.id IS NULL AND l.contact_since IS NOT NULL THEN 'yes' ELSE 'no' END AS send,
+          CASE WHEN o.id IS NOT NULL THEN 'unsubscribed'
+            WHEN l.contact_since IS NOT NULL THEN 'following' ELSE 'not-following' END AS reason,
+          coalesce(o.unsubscribed_at, l.contact_since) AS at
+        FROM luma_people l
+          LEFT JOIN opt_outs o ON o.channel = 'email' AND o.list = 'luma-calendar' AND o.address = l.email
+            AND o.resubscribed_at IS NULL
+        WHERE l.user_id IN (SELECT g.user_id FROM luma_guests g WHERE phone_number(g.phone) = for_address)
+        ORDER BY o.id IS NULL AND l.contact_since IS NOT NULL DESC, coalesce(o.unsubscribed_at, l.contact_since) DESC NULLS LAST
+        LIMIT 1) a
+  WHERE for_channel = 'phone' AND for_topic = 'luma-calendar'
+  UNION ALL
+  -- The newest member record that gave the number, one still shared first.
+  -- No intent is the join form before it asked one, taken as a volunteer's.
+  SELECT 3,
+    CASE WHEN m.removed_at IS NOT NULL THEN 'no'
+      WHEN m.intent IS NULL OR m.intent = 'Volunteer' THEN 'yes' ELSE 'unsure' END,
+    CASE WHEN m.removed_at IS NOT NULL THEN 'removed'
+      WHEN m.intent IS NULL OR m.intent = 'Volunteer' THEN 'volunteered' ELSE 'gave-number' END,
+    m.created_at, 'member'
+  FROM (SELECT * FROM members m WHERE phone_number(m.phone) = for_address
+        ORDER BY m.removed_at IS NOT NULL, m.created_at DESC, m.id LIMIT 1) m
+  WHERE for_channel = 'phone' AND for_topic = 'volunteering'
+  UNION ALL
+  -- The newest entry on a form with texts on the day, until the day ends.
+  SELECT 3, CASE WHEN now() < f.ends_at THEN 'yes' ELSE 'no' END,
+    CASE WHEN now() < f.ends_at THEN 'gave-number' ELSE 'ended' END, f.created_at, f.form
+  FROM (SELECT f.*, d.ends_at FROM form_entries f JOIN day_texts d ON d.form = f.form
+        WHERE phone_number(f.phone) = for_address ORDER BY f.created_at DESC, f.id DESC LIMIT 1) f
+  WHERE for_channel = 'phone' AND for_topic = 'march-day'
 ) r (rank, send, reason, at, source)
 ORDER BY r.rank LIMIT 1
+$$;
+
+--
+-- Name: phone_number(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.phone_number(raw text) RETURNS text
+    LANGUAGE sql IMMUTABLE
+    AS $_$
+SELECT CASE
+  WHEN d IS NULL OR d = '' THEN NULL
+  WHEN d ~ '^\+440[1-9][0-9]{8,9}$' THEN '+44' || substr(d, 5)
+  WHEN d ~ '^\+[1-9][0-9]{6,14}$' THEN d
+  WHEN d ~ '^00[1-9][0-9]{6,14}$' THEN '+' || substr(d, 3)
+  WHEN d ~ '^0[1-9][0-9]{8,9}$' THEN '+44' || substr(d, 2)
+  WHEN d ~ '^44[1-9][0-9]{9}$' THEN '+' || d
+  ELSE btrim(raw) END
+FROM (SELECT regexp_replace(raw, '[[:space:]().-]', '', 'g') AS d) n
+$_$;
+
+--
+-- Name: phone_usable(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.phone_usable(number text) RETURNS boolean
+    LANGUAGE sql STABLE
+    AS $$
+SELECT EXISTS (
+  SELECT 1 FROM unnest(ARRAY['luma-calendar', 'site-forms', 'volunteering', 'march-day']) t (topic)
+    CROSS JOIN LATERAL contact_permission(t.topic, 'phone', number) d
+  WHERE d.send <> 'no')
 $$;
 
 SET default_tablespace = '';
@@ -271,7 +340,9 @@ CREATE TABLE public.opt_outs (
     source_ref text NOT NULL,
     unsubscribed_at timestamp with time zone NOT NULL,
     resubscribed_at timestamp with time zone,
+    channel text DEFAULT 'email'::text NOT NULL,
     CONSTRAINT opt_outs_address_check CHECK ((address = lower(address))),
+    CONSTRAINT opt_outs_channel_check CHECK ((channel = ANY (ARRAY['email'::text, 'phone'::text]))),
     CONSTRAINT opt_outs_list_check CHECK ((list = ANY (ARRAY['luma-calendar'::text, 'pauseai-updates'::text]))),
     CONSTRAINT opt_outs_source_check CHECK ((source = ANY (ARRAY['luma-webhook'::text, 'luma-contacts'::text])))
 );
@@ -287,6 +358,8 @@ CREATE TABLE public.postcode_places (
     place text,
     country text,
     looked_up_at timestamp with time zone DEFAULT now() NOT NULL,
+    constituency text,
+    constituency_checked boolean DEFAULT false NOT NULL,
     CONSTRAINT postcode_places_check CHECK (((latitude IS NULL) = (longitude IS NULL))),
     CONSTRAINT postcode_places_postcode_check CHECK ((postcode = upper(replace(postcode, ' '::text, ''::text))))
 );
@@ -706,6 +779,16 @@ CREATE VIEW public.supporters_summary AS
            FROM (public.supporter_links k
              JOIN public.members m ON ((m.id = k.member_id)))
           WHERE (m.removed_at IS NULL)
+        ), ph AS (
+         SELECT n.supporter_id,
+            array_agg(n.number ORDER BY n.at DESC, n.number) AS phones
+           FROM ( SELECT c.supporter_id,
+                    public.phone_number(c.phone) AS number,
+                    max(c.at) AS at
+                   FROM public.supporter_contact c
+                  WHERE (public.phone_number(c.phone) IS NOT NULL)
+                  GROUP BY c.supporter_id, (public.phone_number(c.phone))) n
+          GROUP BY n.supporter_id
         )
  SELECT s.id,
     ident.name,
@@ -721,12 +804,14 @@ CREATE VIEW public.supporters_summary AS
     COALESCE(act.events, 0) AS events,
     COALESCE(act.letters, 0) AS letters,
     (mem.supporter_id IS NOT NULL) AS member,
-    COALESCE(act.luma_contact, false) AS luma_follows
-   FROM ((((public.supporters s
+    COALESCE(act.luma_contact, false) AS luma_follows,
+    COALESCE(ph.phones, '{}'::text[]) AS phones
+   FROM (((((public.supporters s
      LEFT JOIN ident ON ((ident.supporter_id = s.id)))
      LEFT JOIN act ON ((act.supporter_id = s.id)))
      LEFT JOIN contact ON ((contact.supporter_id = s.id)))
-     LEFT JOIN mem ON ((mem.supporter_id = s.id)));
+     LEFT JOIN mem ON ((mem.supporter_id = s.id)))
+     LEFT JOIN ph ON ((ph.supporter_id = s.id)));
 
 --
 -- Name: supporters_list; Type: MATERIALIZED VIEW; Schema: public; Owner: -
@@ -751,7 +836,8 @@ CREATE MATERIALIZED VIEW public.supporters_list AS
     sp.given,
     sp.country,
     sp.latitude,
-    sp.longitude
+    sp.longitude,
+    s.phones
    FROM ((public.supporters_summary s
      LEFT JOIN public.supporter_place sp ON ((sp.supporter_id = s.id)))
      LEFT JOIN ( SELECT DISTINCT ON (i.supporter_id) i.supporter_id,
@@ -777,7 +863,7 @@ BEGIN
       (SELECT i.email FROM supporter_identity i WHERE i.supporter_id = s.id
        ORDER BY i.seen_at DESC NULLS LAST, i.email LIMIT 1),
       s.phone, s.postcode, s.sources, s.luma_follows, s.first_seen_at, s.last_active_at, s.events, s.letters, s.member,
-      sp.place, sp.basis, sp.given, sp.country, sp.latitude, sp.longitude
+      sp.place, sp.basis, sp.given, sp.country, sp.latitude, sp.longitude, s.phones
     FROM supporters_summary s LEFT JOIN supporter_place sp ON sp.supporter_id = s.id
     WHERE s.id = added;
   END LOOP;
@@ -863,13 +949,12 @@ CREATE TABLE public.campaigns (
 );
 
 --
--- Name: email_blocks; Type: TABLE; Schema: public; Owner: -
+-- Name: day_texts; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.email_blocks (
-    address text NOT NULL,
-    problem_id bigint NOT NULL,
-    CONSTRAINT email_blocks_address_check CHECK ((address = lower(address)))
+CREATE TABLE public.day_texts (
+    form text NOT NULL,
+    ends_at timestamp with time zone NOT NULL
 );
 
 --
@@ -898,8 +983,95 @@ CREATE VIEW public.email_permissions AS
          SELECT opt_outs.list,
             opt_outs.address
            FROM public.opt_outs
-          WHERE (opt_outs.resubscribed_at IS NULL)) t
-     CROSS JOIN LATERAL public.email_permission(t.topic, t.address) d(send, reason, at, source));
+          WHERE ((opt_outs.channel = 'email'::text) AND (opt_outs.resubscribed_at IS NULL))) t
+     CROSS JOIN LATERAL public.contact_permission(t.topic, 'email'::text, t.address) d(send, reason, at, source));
+
+--
+-- Name: phone_permissions; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.phone_permissions AS
+ SELECT t.topic,
+    t.address,
+    d.send,
+    d.reason,
+    d.at,
+    d.source
+   FROM (( SELECT 'luma-calendar'::text AS topic,
+            public.phone_number(luma_guests.phone) AS address
+           FROM public.luma_guests
+          WHERE (public.phone_number(luma_guests.phone) IS NOT NULL)
+        UNION
+         SELECT 'volunteering'::text,
+            public.phone_number(members.phone) AS phone_number
+           FROM public.members
+          WHERE (public.phone_number(members.phone) IS NOT NULL)
+        UNION
+         SELECT 'site-forms'::text,
+            public.phone_number(form_entries.phone) AS phone_number
+           FROM public.form_entries
+          WHERE (public.phone_number(form_entries.phone) IS NOT NULL)
+        UNION
+         SELECT 'march-day'::text,
+            public.phone_number(form_entries.phone) AS phone_number
+           FROM public.form_entries
+          WHERE ((form_entries.form IN ( SELECT day_texts.form
+                   FROM public.day_texts)) AND (public.phone_number(form_entries.phone) IS NOT NULL))
+        UNION
+         SELECT opt_outs.list,
+            opt_outs.address
+           FROM public.opt_outs
+          WHERE ((opt_outs.channel = 'phone'::text) AND (opt_outs.resubscribed_at IS NULL))) t
+     CROSS JOIN LATERAL public.contact_permission(t.topic, 'phone'::text, t.address) d(send, reason, at, source));
+
+--
+-- Name: contact_permissions; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.contact_permissions AS
+ SELECT email_permissions.topic,
+    'email'::text AS channel,
+    email_permissions.address,
+    email_permissions.send,
+    email_permissions.reason,
+    email_permissions.at,
+    email_permissions.source
+   FROM public.email_permissions
+UNION ALL
+ SELECT phone_permissions.topic,
+    'phone'::text AS channel,
+    phone_permissions.address,
+    phone_permissions.send,
+    phone_permissions.reason,
+    phone_permissions.at,
+    phone_permissions.source
+   FROM public.phone_permissions;
+
+--
+-- Name: contact_unsubscribes; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.contact_unsubscribes AS
+ SELECT o.channel,
+    o.list AS topic,
+    o.address,
+    d.send,
+    d.reason,
+    d.at,
+    d.source
+   FROM (public.opt_outs o
+     CROSS JOIN LATERAL public.contact_permission(o.list, o.channel, o.address) d(send, reason, at, source))
+  WHERE ((o.resubscribed_at IS NULL) AND (d.reason = 'unsubscribed'::text));
+
+--
+-- Name: email_blocks; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.email_blocks (
+    address text NOT NULL,
+    problem_id bigint NOT NULL,
+    CONSTRAINT email_blocks_address_check CHECK ((address = lower(address)))
+);
 
 --
 -- Name: email_problems; Type: TABLE; Schema: public; Owner: -
@@ -961,21 +1133,6 @@ ALTER TABLE public.email_sends ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY 
     NO MAXVALUE
     CACHE 1
 );
-
---
--- Name: email_unsubscribes; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.email_unsubscribes AS
- SELECT o.list AS topic,
-    o.address,
-    d.send,
-    d.reason,
-    d.at,
-    d.source
-   FROM (public.opt_outs o
-     CROSS JOIN LATERAL public.email_permission(o.list, o.address) d(send, reason, at, source))
-  WHERE ((o.resubscribed_at IS NULL) AND (d.reason = 'unsubscribed'::text));
 
 --
 -- Name: form_entries_id_seq; Type: SEQUENCE; Schema: public; Owner: -
@@ -1089,8 +1246,10 @@ CREATE TABLE public.mailings (
     id bigint NOT NULL,
     title text NOT NULL,
     ask text,
-    airtable_field text NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    airtable_field text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    airtable_sent_between tstzrange,
+    CONSTRAINT mailings_box_or_dates CHECK (((airtable_field IS NULL) <> (airtable_sent_between IS NULL)))
 );
 
 --
@@ -1277,7 +1436,8 @@ CREATE VIEW public.supporters_listed AS
     supporters_list.given,
     supporters_list.country,
     supporters_list.latitude,
-    supporters_list.longitude
+    supporters_list.longitude,
+    supporters_list.phones
    FROM public.supporters_list
 UNION ALL
  SELECT supporters_added.id,
@@ -1298,8 +1458,9 @@ UNION ALL
     supporters_added.given,
     supporters_added.country,
     supporters_added.latitude,
-    supporters_added.longitude
-   FROM public.supporters_added() supporters_added(id, name, emails, email, phone, postcode, sources, luma_follows, first_seen_at, last_active_at, events, letters, member, place, basis, given, country, latitude, longitude);
+    supporters_added.longitude,
+    supporters_added.phones
+   FROM public.supporters_added() supporters_added(id, name, emails, email, phone, postcode, sources, luma_follows, first_seen_at, last_active_at, events, letters, member, place, basis, given, country, latitude, longitude, phones);
 
 --
 -- Name: ask_kind_statuses ask_kind_statuses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1349,6 +1510,13 @@ ALTER TABLE public.audit_log
 
 ALTER TABLE ONLY public.campaigns
     ADD CONSTRAINT campaigns_pkey PRIMARY KEY (slug);
+
+--
+-- Name: day_texts day_texts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.day_texts
+    ADD CONSTRAINT day_texts_pkey PRIMARY KEY (form);
 
 --
 -- Name: email_blocks email_blocks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -1704,6 +1872,12 @@ CREATE INDEX email_sends_message_id ON public.email_sends USING btree (message_i
 CREATE INDEX form_entries_email ON public.form_entries USING btree (lower(TRIM(BOTH FROM email)));
 
 --
+-- Name: form_entries_phone; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX form_entries_phone ON public.form_entries USING btree (public.phone_number(phone));
+
+--
 -- Name: import_runs_job_at; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1734,6 +1908,12 @@ CREATE INDEX luma_events_start ON public.luma_events USING btree (start_at DESC)
 CREATE INDEX luma_guests_event ON public.luma_guests USING btree (event_id);
 
 --
+-- Name: luma_guests_phone; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX luma_guests_phone ON public.luma_guests USING btree (public.phone_number(phone));
+
+--
 -- Name: luma_guests_user; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1752,6 +1932,12 @@ CREATE INDEX luma_people_email ON public.luma_people USING btree (email);
 CREATE INDEX members_email ON public.members USING btree (email);
 
 --
+-- Name: members_phone; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX members_phone ON public.members USING btree (public.phone_number(phone));
+
+--
 -- Name: notable_people_email; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1761,7 +1947,7 @@ CREATE INDEX notable_people_email ON public.notable_people USING btree (lower(em
 -- Name: opt_outs_open; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX opt_outs_open ON public.opt_outs USING btree (address, list) WHERE (resubscribed_at IS NULL);
+CREATE UNIQUE INDEX opt_outs_open ON public.opt_outs USING btree (channel, address, list) WHERE (resubscribed_at IS NULL);
 
 --
 -- Name: pauseai_letters_mailing; Type: INDEX; Schema: public; Owner: -

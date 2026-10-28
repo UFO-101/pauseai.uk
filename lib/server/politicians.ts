@@ -156,7 +156,7 @@ export type PoliticianFilter = {
   status?: PersonStatus | "out";
   /** Those in any of these parties. */
   party?: string[];
-  /** Those with any of these: Airtable's markers, or a record no longer in Airtable. */
+  /** Those with any of these: Airtable's markers, a record no longer in Airtable, or a test politician. */
   flags?: PoliticianFlag[];
   /** Those in any of these nations. */
   country?: Country[];
@@ -201,7 +201,8 @@ function among<T extends string>(list: string[], known: readonly T[]): T[] {
  * The politicians page's filter, from its URL: each field as typed, for the
  * form, and the filter they make, leaving out what's blank or unknown, but
  * for the status: those in office unless it's given. A filter that repeats
- * finds those with any of its values.
+ * finds those with any of its values. The test politicians are left out,
+ * unseen in the filters, unless the Marked filter finds them.
  */
 export function politiciansSearch(params: Partial<Record<keyof PoliticiansSearch, ParamValue>>): PoliticiansSearch & {
   filter: PoliticianFilter;
@@ -226,7 +227,12 @@ export function politiciansSearch(params: Partial<Record<keyof PoliticiansSearch
     email: emails,
     ask: ask || undefined,
     answer: answer || undefined,
-    not: notOf({ party: notParties, flags: notFlags, country: notCountries, email: notEmails }),
+    not: notOf({
+      party: notParties,
+      flags: flags?.includes("test") ? notFlags : [...new Set([...(notFlags ?? []), "test" as const])],
+      country: notCountries,
+      email: notEmails,
+    }),
     sort: parseSort(POLITICIAN_SORTS, "name", sort, dir),
     page: pageNumber(page),
   };
@@ -238,6 +244,7 @@ const FLAG_CONDITIONS: Record<PoliticianFlag, string> = {
   important: "n.important_target",
   connection: "n.personal_connection",
   removed: "n.airtable_removed_at IS NOT NULL",
+  test: "p.is_test",
 };
 
 /** When we can write to a politician, or not. */
@@ -302,8 +309,8 @@ function parameters(): [unknown[], (v: unknown) => string] {
 }
 
 /**
- * A page of politicians for the staff interface: the test MPs first, then by
- * the column asked for, by name to start. A `limit` of null is every one,
+ * A page of politicians for the staff interface, by the column asked for, by
+ * name to start. A `limit` of null is every one,
  * for a download.
  */
 export async function listPoliticians(
@@ -314,7 +321,7 @@ export async function listPoliticians(
   const offset = ((filter.page ?? 1) - 1) * (limit ?? 0);
   const rows = await query<Row>(
     `${SELECT_POLITICIANS} ${politicianWhere(filter, value)}
-     GROUP BY n.id, p.id ORDER BY p.is_test DESC, ${POLITICIAN_COLUMNS[filter.sort?.key ?? "name"]} ${filter.sort?.dir === "desc" ? "DESC" : "ASC"} NULLS LAST, n.name, n.id
+     GROUP BY n.id, p.id ORDER BY ${POLITICIAN_COLUMNS[filter.sort?.key ?? "name"]} ${filter.sort?.dir === "desc" ? "DESC" : "ASC"} NULLS LAST, n.name, n.id
      LIMIT ${value(limit)} OFFSET ${value(offset)}`,
     values,
   );
@@ -325,16 +332,21 @@ export async function listPoliticians(
  * What the politicians page shows for `filter`: its page of them, how many
  * there are and on how many pages; and for a search, how many it finds out
  * of office, while it's of those in office, and in other houses, when one
- * house has none, and the nearest names, when it finds none at all.
+ * house has none, and, when it finds none at all, the nearest names and how
+ * many test politicians it finds, while they're left out.
  */
 export async function politiciansPage(filter: PoliticianFilter) {
   const [politicians, total] = await Promise.all([listPoliticians(filter), countPoliticians(filter)]);
   const { search } = filter;
   const none = Boolean(search) && politicians.length === 0;
-  const [outOfOffice, otherHouses, closest] = await Promise.all([
+  const [outOfOffice, otherHouses, closest, tests] = await Promise.all([
     search && filter.status === "in_office" ? countPoliticians({ ...filter, status: "out" }) : 0,
     none && filter.house ? countPoliticians({ ...filter, house: undefined }) : 0,
     search && none ? closestPoliticians({ ...filter, search }) : [],
+    // As the Marked filter has them when only Test politician is chosen.
+    none && filter.not?.flags?.includes("test")
+      ? countPoliticians({ ...filter, flags: ["test"], not: { ...filter.not, flags: undefined } })
+      : 0,
   ]);
   return {
     politicians,
@@ -345,6 +357,7 @@ export async function politiciansPage(filter: PoliticianFilter) {
     outOfOffice,
     otherHouses,
     closest,
+    tests,
   };
 }
 

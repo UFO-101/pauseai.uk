@@ -6,3 +6,10 @@
   flex-wrap: wrap;
   gap: var(--space-1);
 }
+
+/* Each registration the Event filter's column shows, a line each. */
+.registrations {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}

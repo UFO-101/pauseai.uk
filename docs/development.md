@@ -281,7 +281,7 @@ Delete `DATA_FIXTURES` from `.env.local`, and fill in the keys you need. Each is
 
 - **Politicians.** The database starts with only the test MPs. With
   `AIRTABLE_TOKEN` set, copy the real politicians from Airtable, and
-  PauseAI's 2026 emails to them, then check the MPs against Parliament
+  PauseAI's emails to them, then check the MPs against Parliament
   (about 650 lookups, which takes a minute):
 
   ```bash
@@ -330,6 +330,7 @@ curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-politic
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/check-mps
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/import-luma   # the hourly Luma import; with fixtures, the fixture calendar
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/import-members   # the hourly members import; with fixtures, the fixture members
+curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/tidy-logs   # deletes what the import and audit logs no longer keep
 ```
 
 **Postmark's webhooks.** Set `POSTMARK_WEBHOOK_USER=postmark` and
@@ -455,7 +456,7 @@ Set up outside the code:
 - **Settings:** every environment variable is in [.env.example](../.env.example), with what it's for. Netlify needs the same ones.
 - **Postmark:** a server, and two sending domains, each with DKIM, Return-Path and DMARC. `letters.pauseai.uk` sends letters to representatives and is the inbound domain, with its MX pointing at `inbound.postmarkapp.com`. `notify.pauseai.uk` sends everything else, such as forwarded replies and staff emails. Its webhooks carry basic auth in the URL, e.g. `https://postmark:<password>@pauseai.uk/api/postmark/bounce`: Bounce and Spam complaint go to `/api/postmark/bounce`, Inbound to `/api/postmark/inbound`.
 - **Luma's webhook:** in Luma, the PauseAI UK calendar, Settings → Developer → Webhooks: a webhook for `https://pauseai.uk/api/luma/webhook` with the event types Calendar Person Unsubscribed and Calendar Person Subscribed. Its secret (`whsec_…`) goes into Netlify as `LUMA_WEBHOOK_SECRET`. Luma retries a delivery that isn't answered 2xx three more times, after 1, 2 and 4 minutes, and only sends unsubscribes that happen after the webhook exists. To check it works: unsubscribe a staff address from the calendar's emails and look for its row in `opt_outs`; follow the calendar again, and the next full pass over the contacts sets the row's `resubscribed_at`, as Luma's webhook doesn't say when someone comes back ([domain concepts](domain-concepts.md#opt-outs)).
-- **Daily jobs:** the politician sync, then the Emails sync, runs at 06:21 UTC, the check against Parliament at 06:23 and the ControlAI import at 06:25, just after the day's first imports. The database sleeps after five minutes without a query and is billed while it's awake, so every scheduled job starts within a few minutes of the Luma import, sharing one wake an hour, and none runs from midnight to six UTC. The check makes about 650 requests to Parliament, which took 12–18 seconds from a laptop on 14 Oct 2026. A Netlify scheduled function gets 30 seconds, so a daily check that starts timing out has outgrown it.
+- **Daily jobs:** the politician sync, then the Emails sync, runs at 06:21 UTC, the check against Parliament at 06:23, the ControlAI import at 06:25 and the tidying of the logs at 06:27, just after the day's first imports. The database sleeps after five minutes without a query and is billed while it's awake, so every scheduled job starts within a few minutes of the Luma import, sharing one wake an hour, and none runs from midnight to six UTC. The check makes about 650 requests to Parliament, which took 12–18 seconds from a laptop on 14 Oct 2026. A Netlify scheduled function gets 30 seconds, so a daily check that starts timing out has outgrown it.
 - **The Luma import** runs at 17 minutes past every hour from 06:17 to 23:17 UTC, with `LUMA_API_KEY`. Each run fetches for about 20 seconds, then stops and records how many events are still waiting, so the first copy of the calendar (about 430 requests on 21 Oct 2026) takes a few runs; after that a run is a handful of requests. It leaves 50 of Luma's 200 requests a minute for the site's own fetches, and stops early if Luma answers 429. Run it by hand from `/staff/import-data` to see where it's got to.
 - **The members import** runs at 19 minutes past every hour from 06:19 to 23:19 UTC, with `AIRTABLE_TOKEN`, which needs read access to Stichting PauseAI's "Members & Actions" base (`appWPTGqZmUcs3NWu`) as well as the MPs' base; the global team grant it. A run reads every UK member we may hold, about 15 requests, which counts against the global team's Airtable plan's monthly API calls. Run it by hand from `/staff/import-data`.
 - **A new database:** run the politician sync from `/staff/import-data`, and apply it, then the Emails sync and the two one-off imports (the web form letters and Go to Parliament). Until the sync has run, Email your MP finds no MPs.

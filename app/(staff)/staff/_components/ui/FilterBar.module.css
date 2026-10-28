@@ -89,8 +89,10 @@
   white-space: normal;
 }
 
+/* The arrow after a no-break space, so a chip that wraps keeps it with its
+   last word rather than alone on a line. */
 .chip::after {
-  content: " ▾" / "";
+  content: " ▾" / "";
 }
 
 /* A chip that leaves its choice out: white, its edge dashed, and a circle
@@ -202,14 +204,13 @@
   padding-bottom: var(--space-2);
 }
 
-/* A filter's choices, a link a line; a long list scrolls. */
+/* A filter's choices, a link a line, all of them: the menu they're in is
+   as tall as they are, and scrolls only when the window is shorter. */
 .choices {
   display: grid;
   gap: 2px;
-  max-height: 18rem;
   margin: 0;
   padding: 0;
-  overflow-y: auto;
   list-style: none;
 }
 
@@ -224,6 +225,47 @@
   border-radius: var(--radius-sm);
   color: var(--text);
   text-decoration: none;
+}
+
+/* A group's heading, its icon once with room after it; the choices under
+   it set in under its words, each with its detail quiet at the right. */
+.choiceGroup {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-2) var(--space-2) 2px;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.choiceGroup:first-child {
+  padding-top: 2px;
+}
+
+.choiceGroup svg {
+  flex: none;
+}
+
+.inGroup a {
+  display: flex;
+  gap: var(--space-4);
+  justify-content: space-between;
+  padding-left: calc(var(--space-2) + 12px + var(--space-2));
+}
+
+.detail {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* A group's icon in a chip, before its words, with room each side. */
+.chipIcon {
+  display: inline-flex;
+  margin: 0 var(--space-1) 0 2px;
+  vertical-align: -1px;
 }
 
 .choices a:hover {

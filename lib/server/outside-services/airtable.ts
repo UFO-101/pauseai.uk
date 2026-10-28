@@ -198,7 +198,7 @@ function links(record: AirtableRecord, field: string): string[] {
 }
 
 // PauseAI's emails to politicians, a record each, with a tick box for the
-// mailing it was part of. Only those from 2026 are copied.
+// mailing it was part of. Every one with a time is copied.
 /** The IDs of the politicians' records ticked Test, which the politicians sync skips. */
 export async function fetchTestPoliticianIds(token: string): Promise<string[]> {
   const records = await fetchRecords(token, "{Test}", ["Test"]);
@@ -207,7 +207,7 @@ export async function fetchTestPoliticianIds(token: string): Promise<string[]> {
 }
 
 const EMAILS_TABLE_ID = "tblp4nH5Jymq48rcm";
-export const EMAILS_FORMULA = "IS_AFTER({Timestamp},'2025-12-31T23:59:59.000Z')";
+export const EMAILS_FORMULA = "{Timestamp}";
 
 export type EmailToImport = {
   airtableId: string;
@@ -220,7 +220,7 @@ export type EmailToImport = {
   mailings: string[];
 };
 
-/** PauseAI's 2026 emails to politicians, reading the tick boxes of the mailings named `mailingFields`. */
+/** PauseAI's emails to politicians, reading the tick boxes of the mailings named `mailingFields`. */
 export async function fetchEmails(token: string, mailingFields: readonly string[]): Promise<EmailToImport[]> {
   const fields = ["Timestamp", "UK Parliamentarian", "Personalized", ...mailingFields];
   const records = await fetchRecords(token, EMAILS_FORMULA, fields, `${BASE_ID}/${EMAILS_TABLE_ID}`);

@@ -1,7 +1,7 @@
 // Supporters, as the staff pages show them: the shapes the server
 // (lib/server/supporters.ts) gives the components.
 import { staffCopy } from "./content/staff-interface";
-import type { EmailPermission, EmailState } from "./email-permissions";
+import type { ContactPermission, ContactState } from "./contact-permissions";
 import type { SortColumns, SortDirection } from "./staff-sort";
 
 /** Where a supporter came from: Luma, the members, or one of our forms (form_entries.form): Email your MP, pauseai.info's old letter form, or the march sign-up. */
@@ -25,9 +25,8 @@ export type SupporterSummary = {
   /** The newest name any source gave, or null when none did. */
   name: string | null;
   emails: string[];
-  /** The address any source gave most recently. */
-  email: string | null;
-  phone: string | null;
+  /** Every number any source gave, as phone_number() writes them, newest first, whether we may use them or not. */
+  phones: string[];
   postcode: string | null;
   sources: SupporterSource[];
   /** Whether they're a contact of the Luma calendar now, as registering for an event or following it makes them, and unsubscribing undoes. */
@@ -43,16 +42,25 @@ export type SupporterSummary = {
   place?: SupporterPlaceName | null;
 };
 
-/** A supporter's place: its name, what it's from and what that was (a postcode, a city, an event's name), its nation. */
+/** A supporter's place: its name, what it's from and what that was (a postcode, a city, an event's name), its nation, and where it is. */
 export type SupporterPlaceName = {
   name: string | null;
   basis: "postcode" | "city" | "event";
   given: string;
   country: string | null;
+  /** Where it is; left out where it isn't needed, as in a list's row. */
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
-/** One row of the list, with whether we'd email each of their addresses about each topic. */
-export type SupporterRow = SupporterSummary & { permissions: EmailPermission[] };
+/** One row of the list, with whether we'd contact each of their addresses and numbers about each topic. */
+export type SupporterRow = SupporterSummary & {
+  permissions: ContactPermission[];
+  /** With the Event filter on, their registrations for the events it finds: each event's name and how it stands. */
+  registrations?: { event: string; status: string }[];
+  /** With the Campaign filter finding those who wrote, when they first wrote in it. */
+  wroteAt?: string;
+};
 
 /** What a supporter did, from any source: `kind` says what, `title` and `detail` which and how. */
 export type SupporterActivity = {
@@ -82,6 +90,7 @@ export type SupporterIdentity = { source: SupporterSource; email: string; name: 
 export type SupporterContact = {
   source: SupporterSource;
   at: string;
+  /** As phone_number() writes it. */
   phone: string | null;
   postcode: string | null;
   latitude: number | null;
@@ -98,14 +107,19 @@ export type SupporterLink = {
   linkedAt: string;
 };
 
+/** A supporter's MP: the one in office for the constituency of the postcode that places them. */
+export type SupporterMp = { id: number; name: string; constituency: string; party: string };
+
 export type SupporterDetails = {
   summary: SupporterSummary;
+  /** Their MP, when a postcode places them and its constituency has one in office; else null. */
+  mp: SupporterMp | null;
   identities: SupporterIdentity[];
   contacts: SupporterContact[];
   links: SupporterLink[];
   activity: SupporterActivity[];
-  /** Whether we may email each of their addresses about each topic, and why. */
-  permissions: EmailPermission[];
+  /** Whether we may contact each of their addresses and numbers about each topic, and why. */
+  permissions: ContactPermission[];
 };
 
 /** What the list can be sorted by, a column heading or the Sort by field, and which way a first click goes. */
@@ -122,7 +136,7 @@ export type SupporterSort = keyof typeof SUPPORTER_SORTS;
 export const NEAR_MILES = [5, 10, 25, 50] as const;
 
 /** The filters that repeat, which can leave out as well as find. */
-export type NegatableSupporterFilter = "activity" | "subscription" | "event" | "country";
+export type NegatableSupporterFilter = "activity" | "contact" | "event" | "country";
 
 /** The list's filters, as the server applies them. A filter that repeats finds those with any of its values. */
 export type SupporterFilter = {
@@ -130,11 +144,8 @@ export type SupporterFilter = {
   search?: string;
   /** Has any of these lozenges in the Activities column. */
   activity?: SupporterBadge[];
-  /** Has any of these answers about a topic, or is blocked, at any of their addresses. */
-  subscription?: EmailState[];
-  /** Whether we have a phone number for them, and an email. */
-  phone?: boolean;
-  email?: boolean;
+  /** Has any of these answers about a topic by a channel, or is blocked, at any of their addresses or numbers. */
+  contact?: ContactState[];
   /** Registered for any of these Luma events, by ID, but for declined. */
   event?: string[];
   /** Wrote a letter in this campaign, by slug; or, with `wrote` false, never did. */
@@ -152,6 +163,16 @@ export type SupporterFilter = {
 };
 
 export const SUPPORTERS_PAGE_SIZE = 100;
+
+/**
+ * A registration's status, as a table cell has it: Luma's, or registered
+ * for an approved one, starting with a capital, as the statuses are
+ * written to follow a dot in the history.
+ */
+export function registrationStatus(status: string | null): string {
+  const words = staffCopy.supporters.detail.statuses[status ?? ""] ?? staffCopy.supporters.detail.registered;
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
 
 /** A supporter's page's name: theirs, or the stand-in for one with none. */
 export function supporterTitle(summary: Pick<SupporterSummary, "name">): string {

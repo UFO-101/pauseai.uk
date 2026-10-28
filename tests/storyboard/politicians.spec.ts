@@ -41,7 +41,7 @@ test("a politician from Airtable: their markers, notes, answers and PauseAI's em
   await expect(asks.getByText(staffCopy.statuses.declined)).toBeVisible();
   await expect(asks.getByText(copy.fromImport.airtable).first()).toBeVisible();
   // The conference's invitation, personalised.
-  await expect(page.getByText(copy.personalised, { exact: false })).toBeVisible();
+  await expect(page.getByText(copy.personalised, { exact: false }).first()).toBeVisible();
   await frame(page, "Polly's page: important, with notes, her answers from Airtable and PauseAI's invitation");
 });
 
@@ -147,12 +147,12 @@ test("the politicians list's houses are tabs, each keeping the other filters", a
 });
 
 test("the politicians list pages through many, a count and downloads over it", async ({ page, flowDatabase }) => {
-  // 245 made-up MPs, with the 5 test MPs 250: three pages.
+  // 250 made-up MPs, the test MPs left out: three pages.
   runSql(
     flowDatabase,
     `WITH n AS (
        INSERT INTO notable_people (kind, name, salutation, status)
-       SELECT 'politician', 'Example Member ' || lpad(i::text, 3, '0'), '', 'in_office' FROM generate_series(1, 245) i
+       SELECT 'politician', 'Example Member ' || lpad(i::text, 3, '0'), '', 'in_office' FROM generate_series(1, 250) i
        RETURNING id
      ) INSERT INTO politicians (id, house, constituency, party)
        SELECT id, 'commons', 'Exampleton ' || id, (ARRAY['Labour', 'Conservative', 'Green'])[1 + id % 3] FROM n`,
@@ -196,7 +196,7 @@ test("the politicians list pages through many, a count and downloads over it", a
   await expect(page).toHaveURL(`${BASE}/staff/politicians?house=lords&status=any`);
 });
 
-test("searching the politicians: each word anywhere, those not in office, and the nearest to a typo", async ({
+test("searching the politicians: each word anywhere, those not in office or test politicians, and the nearest to a typo", async ({
   page,
   request,
   flowDatabase,
@@ -237,6 +237,13 @@ test("searching the politicians: each word anywhere, those not in office, and th
   await expect(page).toHaveURL(/q=Morag$/);
   await expect(rows.filter({ hasText: "Morag Example" })).toBeVisible();
   await frame(page, "no one in the Lords is Morag, but one in another house is: one click finds her");
+
+  await page.goto(`${BASE}/staff/politicians`);
+  await search("Testy McTestface");
+  await page.getByRole("link", { name: copy.tests(1) }).click();
+  await expect(page).toHaveURL(/q=Testy\+McTestface&flag=test$/);
+  await expect(rows.filter({ hasText: "Testy McTestface MP" })).toBeVisible();
+  await frame(page, "a test politician is left out of a search, but one click finds them");
 });
 
 test("a politician whose record has gone from Airtable, and who's had no letters, is deleted", async ({
@@ -319,10 +326,13 @@ test("PauseAI's emails: copied once, with one held back for a mailing nobody has
   await page.goto(`${BASE}/staff/import-data/emails`);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(jobTitles["sync-emails"]);
   await expect(page.getByText("recEmailNewBox", { exact: false }).first()).toBeVisible();
-  await frame(page, "the Emails sync's page: four copied, one held back with no mailing we know");
+  await frame(
+    page,
+    "the Emails sync's page: five copied, summer 2025's by its dates, one held back with no mailing we know",
+  );
   await page.getByRole("button", { name: staffCopy.pauseaiEmails.importNow }).click();
   await expect(page.getByText(staffCopy.runs.status.incomplete).first()).toBeVisible();
-  expect(runSql(flowDatabase, "SELECT count(*) FROM pauseai_letters")).toEqual(["4"]);
+  expect(runSql(flowDatabase, "SELECT count(*) FROM pauseai_letters")).toEqual(["5"]);
 });
 
 test("the one-off imports: pauseai.info's letters and their senders, and Go to Parliament's meetings", async ({

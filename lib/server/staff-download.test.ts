@@ -4,6 +4,7 @@ import { describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { requestCookies } from "@/tests/next-headers";
 import { downloadAs } from "@/tests/staff-download";
 import { downloadResponse, staffDownload, type Download } from "./staff-download";
+import { valuesOf, type ParamValue } from "@/lib/staff-search";
 
 vi.mock("next/headers", () => import("@/tests/next-headers"));
 
@@ -50,9 +51,9 @@ describeWithDatabase("staffDownload", () => {
 
   const load =
     (contact?: Download<Row>["contact"]) =>
-    async (params: Record<string, string>): Promise<Download<Row>> => ({
+    async (params: Record<string, ParamValue>): Promise<Download<Row>> => ({
       what: "People",
-      filters: params.q ? [`Search ${params.q}`] : [],
+      filters: valuesOf(params.q).map((q) => `Search ${q}`),
       columns,
       rows: [{ name: "Ann" }],
       contact,
@@ -62,6 +63,11 @@ describeWithDatabase("staffDownload", () => {
 
   it("gives the rows the filters find, in the format asked for, and logs it when asked", async () => {
     const res = await downloadAs(route(undefined, "download people"), "https://pauseai.uk/x?format=csv&q=ann");
+    // A parameter that repeats keeps every value.
+    await downloadAs(route(undefined, "download twice"), "https://pauseai.uk/x?format=csv&q=ann&q=bob");
+    expect(await query("SELECT details->'filters' AS filters FROM audit_log WHERE action = 'download twice'")).toEqual([
+      { filters: ["Search ann", "Search bob"] },
+    ]);
     expect(await res.text()).toContain("Name\r\nAnn\r\n");
     expect(await query("SELECT actor, action, details FROM audit_log WHERE action = 'download people'")).toEqual([
       {

@@ -128,7 +128,7 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
     return json({ skipped: email.startsWith("luma-skips@") ? [{ email }] : [] });
   }
   // The UK Parliamentarians base's tables: a politician of each body, one
-  // retired and one who left; PauseAI's 2026 emails to them, of each
+  // retired and one who left; PauseAI's emails to them, of each
   // mailing, one with no politician and one with no mailing we know; the
   // web form's letters, with the senders and states the import skips; and
   // Go to Parliament's meetings, one MP with two guests.
@@ -146,8 +146,13 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
     return json({
       status: 200,
       result: postcodes.map((query) => {
-        const place = PLACES[query.replace(/\s+/g, "").toUpperCase()];
-        return { query, result: place ? { postcode: query, ...place } : null };
+        const key = query.replace(/\s+/g, "").toUpperCase();
+        const place = PLACES[key];
+        const constituency = POSTCODES[key] && {
+          parliamentary_constituency: POSTCODES[key],
+          codes: { parliamentary_constituency: "E14001172" },
+        };
+        return { query, result: place ? { postcode: query, ...place, ...constituency } : null };
       }),
     });
   }

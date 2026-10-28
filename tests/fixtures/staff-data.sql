@@ -292,6 +292,14 @@ INSERT INTO postcode_places (postcode, latitude, longitude, place, country) VALU
   ('ZZ99ZN', NULL, NULL, NULL, NULL),
   ('ZZ99ZS', NULL, NULL, NULL, NULL),
   ('ZZ99ZZ', NULL, NULL, NULL, NULL);
+-- And each one's constituency, where a fixture MP has it: Jane's in
+-- Manchester is the first made-up MP's, there being no fixture MP there.
+UPDATE postcode_places SET constituency_checked = true,
+  constituency = CASE postcode WHEN 'EC1A1BB' THEN 'Cities of London and Westminster' END;
+UPDATE postcode_places SET constituency = (
+  SELECT p.constituency FROM politicians p JOIN notable_people n ON n.id = p.id
+  WHERE n.airtable_id LIKE 'recMade%' AND p.house = 'commons' AND n.status = 'in_office' ORDER BY p.id LIMIT 1
+) WHERE postcode = 'M11AE';
 INSERT INTO named_places (name, latitude, longitude, place, country) VALUES
   ('manchester', 53.4794, -2.2453, 'Manchester', 'england'),
   ('london', 51.5072, -0.1276, 'London', 'england'),
@@ -442,20 +450,24 @@ INSERT INTO form_entry_luma (entry_id, event_id, status)
 SELECT id, 'evt-hfOj1RR5K1gBNEW', CASE WHEN email LIKE 'mo.%' THEN 'skipped' ELSE 'added' END FROM entries;
 
 -- PauseAI's emails, as the Emails sync copies them (airtable-emails.json):
--- one of each mailing, personalised or not.
+-- one of each mailing, personalised or not, the DeepMind letter's by its title, as it has no box.
 CREATE TEMP TABLE seed_emails (airtable_id text, politician text, mailing text, personalised boolean, sent interval) ON COMMIT DROP;
 INSERT INTO seed_emails VALUES
   ('recEmailCsrb', 'recDummy', 'CSRB Iqbal Amendment', false, '138 days'),
   ('recEmailEdinburghPolly', 'recPlaceholder', 'Edinburgh Conference Nov 26 Invitation', true, '25 days'),
   ('recEmailEdinburghMorag', 'recMorag', 'Edinburgh Conference Nov 26 Invitation', false, '25 days'),
-  ('recEmailBenLake', 'recDummy', 'Ben Lake October 2026 Debate', false, '11 days');
+  ('recEmailBenLake', 'recDummy', 'Ben Lake October 2026 Debate', false, '11 days'),
+  ('recEmailDocumentary', 'recDummy', 'Documentary Invitation', false, '420 days'),
+  ('recEmailWestminster', 'recPlaceholder', 'Westminster Hall Debate Invitation', true, '390 days'),
+  ('recEmailDeepMind', 'recPlaceholder', 'DeepMind letter', true, '470 days');
 CREATE TEMP TABLE seeded_emails ON COMMIT DROP AS
 SELECT nextval(pg_get_serial_sequence('letters', 'id')) AS id, e.* FROM seed_emails e;
 INSERT INTO letters (id, kind, notable_person_id, status, created_at, sent_at) OVERRIDING SYSTEM VALUE
 SELECT e.id, 'pauseai', n.id, 'sent', now() - e.sent, now() - e.sent
 FROM seeded_emails e JOIN notable_people n ON n.airtable_id = e.politician;
 INSERT INTO pauseai_letters (id, mailing_id, airtable_id, personalised)
-SELECT e.id, m.id, e.airtable_id, e.personalised FROM seeded_emails e JOIN mailings m ON m.airtable_field = e.mailing;
+SELECT e.id, m.id, e.airtable_id, e.personalised FROM seeded_emails e
+JOIN mailings m ON coalesce(m.airtable_field, m.title) = e.mailing;
 
 -- ---------------------------------------------------------- import log
 

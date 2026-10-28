@@ -138,8 +138,12 @@ describe("placesForPostcodes", () => {
       longitude: -2.2353,
       place: "Manchester",
       country: "england",
+      constituency: null,
     });
     expect(found.get("ZZ99ZZ")).toBeNull();
+    // With its constituency, by the official name for its code.
+    const westminster = await placesForPostcodes(["SW1A 1AA"]);
+    expect(westminster.get("SW1A 1AA")).toMatchObject({ constituency: "Cities of London and Westminster" });
   });
 
   it("names a nation outside the four as none, a place with no council area by the postcode, and none with no point", async () => {
@@ -149,15 +153,31 @@ describe("placesForPostcodes", () => {
           result: [
             { query: "IM1 1AA", result: { latitude: 54.15, longitude: -4.48, country: "Isle of Man" } },
             { query: "X1", result: { latitude: null, longitude: -1 } },
-            { query: "X2", result: { latitude: 51, longitude: -1, admin_district: "Somewhere", country: 7 } },
+            {
+              query: "X2",
+              result: {
+                latitude: 51,
+                longitude: -1,
+                admin_district: "Somewhere",
+                country: 7,
+                parliamentary_constituency: "Somewhere North",
+              },
+            },
           ],
         }),
       ),
     );
     const found = await placesForPostcodes(["IM1 1AA", "X1", "X2"]);
-    expect(found.get("IM1 1AA")).toEqual({ latitude: 54.15, longitude: -4.48, place: "IM1 1AA", country: null });
+    expect(found.get("IM1 1AA")).toEqual({
+      latitude: 54.15,
+      longitude: -4.48,
+      place: "IM1 1AA",
+      country: null,
+      constituency: null,
+    });
     expect(found.get("X1")).toBeNull();
-    expect(found.get("X2")).toMatchObject({ place: "Somewhere", country: null });
+    // A constituency with no code is postcodes.io's name for it.
+    expect(found.get("X2")).toMatchObject({ place: "Somewhere", country: null, constituency: "Somewhere North" });
   });
 
   it("throws when postcodes.io fails", async () => {

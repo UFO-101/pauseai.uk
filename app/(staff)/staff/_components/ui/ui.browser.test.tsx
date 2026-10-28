@@ -211,11 +211,44 @@ describe("FilterBar", () => {
     expect(rows.map((row) => row.querySelector("summary")!.textContent)).toEqual(["Many", "Few"]);
     expect(rows.map((row) => row.open)).toEqual([false, false]);
     await page.getByText("Many", { exact: true }).click();
-    // A long list scrolls in its row.
+    // A long list is all there, the menu as tall as the window and scrolling as one.
     const list = rows[0].querySelector("ul")!;
-    expect(list.scrollHeight).toBeGreaterThan(list.clientHeight);
+    expect(list.scrollHeight).toBe(list.clientHeight);
+    const box = document.querySelector<HTMLElement>("[popover]:popover-open")!;
+    expect(box.scrollHeight).toBeGreaterThan(box.clientHeight);
+    expect(box.getBoundingClientRect().height).toBeLessThanOrEqual(window.innerHeight);
     await page.getByText("Few", { exact: true }).click();
     expect(rows.map((row) => row.open)).toEqual([false, true]);
+  });
+
+  it("gives a choice in two parts a chip in two halves, its words alone when it has no group", async () => {
+    await render(
+      <FilterBar
+        path="/list"
+        values={{ part: ["a:2"] }}
+        search={{ name: "q", label: "Search" }}
+        filters={[
+          {
+            name: "part",
+            label: "Part",
+            repeat: true,
+            options: [
+              {
+                value: "a:1",
+                label: "A",
+                seconds: [
+                  { value: "a:1", label: "One" },
+                  { value: "a:2", label: "Two" },
+                ],
+              },
+            ],
+          },
+        ]}
+      />,
+    );
+    const halves = page.getByRole("group", { name: "Part" }).getByRole("button").all();
+    expect(halves.map((half) => half.element().textContent)).toEqual(["Part: A", "Two"]);
+    expect(halves[0].element().querySelector("span")).toBeNull();
   });
 
   it("shows a searchable filter's choices only once something's typed, those that have it", async () => {

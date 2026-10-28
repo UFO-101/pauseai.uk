@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import { query, transaction } from "@/lib/server/db";
-import { addTestLetter, addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { addTestLetter, addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import type { SupporterFilter } from "@/lib/supporters";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
@@ -268,8 +268,7 @@ describeWithDatabase("listSupporters and getSupporter", () => {
       id: expect.any(Number),
       name: "Jane",
       emails: ["jane@example.com"],
-      email: "jane@example.com",
-      phone: "+447700900001",
+      phones: ["+447700900001"],
       postcode: "M1 1AE",
       sources: ["luma"],
       lumaContact: true,
@@ -278,11 +277,21 @@ describeWithDatabase("listSupporters and getSupporter", () => {
       events: 1,
       letters: 0,
       member: false,
-      place: { name: "London", basis: "event", given: "evt-1", country: null },
+      place: { name: "London", basis: "event", given: "evt-1", country: null, latitude: 51.5, longitude: -0.1 },
       permissions: [
         {
           topic: "luma-calendar",
+          channel: "email",
           address: "jane@example.com",
+          send: "yes",
+          reason: "following",
+          at: "2026-01-01T00:00:00+00:00",
+          source: "luma",
+        },
+        {
+          topic: "luma-calendar",
+          channel: "phone",
+          address: "+447700900001",
           send: "yes",
           reason: "following",
           at: "2026-01-01T00:00:00+00:00",
@@ -347,28 +356,42 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     expect(await names({ activity: ["lumaContact"] })).toEqual(["Jane"]);
     expect(await names({ activity: ["member"] })).toEqual([]);
     expect(await names({ activity: ["letter", "lumaContact"] })).toEqual(["Jane", "Pat"]);
-    const unsubscribed = [{ topic: "luma-calendar", reason: "unsubscribed" }] as const;
-    expect(await names({ subscription: [...unsubscribed] })).toEqual(["Sam"]);
-    expect(await names({ subscription: [{ topic: "luma-calendar", reason: "not-following" }] })).toEqual(["Old"]);
-    expect(await names({ subscription: [{ topic: "site-forms", reason: "asked" }] })).toEqual(["Pat"]);
-    expect(await names({ subscription: [...unsubscribed, { topic: "site-forms", reason: "asked" }] })).toEqual([
-      "Sam",
-      "Pat",
+    const unsubscribed = [{ channel: "email", topic: "luma-calendar", reason: "unsubscribed" }] as const;
+    expect(await names({ contact: [...unsubscribed] })).toEqual(["Sam"]);
+    expect(await names({ contact: [{ channel: "email", topic: "luma-calendar", reason: "not-following" }] })).toEqual([
+      "Old",
     ]);
+    expect(await names({ contact: [{ channel: "email", topic: "site-forms", reason: "asked" }] })).toEqual(["Pat"]);
+    expect(
+      await names({ contact: [...unsubscribed, { channel: "email", topic: "site-forms", reason: "asked" }] }),
+    ).toEqual(["Sam", "Pat"]);
     // Leaving "Keep me informed" unticked isn't an unsubscribe.
     await query(
       `INSERT INTO members (id, email, name, joined_at, created_at, keep_informed, share_permission, source_modified_at)
        VALUES ('recOld', 'old@example.com', 'Old', '2026-09-01T00:00:00Z', '2026-09-01T00:00:00Z', false, true, '2026-09-01T00:00:00Z')`,
     );
-    expect(await names({ subscription: [...unsubscribed] })).toEqual(["Sam"]);
-    expect(await names({ subscription: [{ topic: "pauseai-updates", reason: "declined" }] })).toEqual(["Old"]);
+    expect(await names({ contact: [...unsubscribed] })).toEqual(["Sam"]);
+    expect(await names({ contact: [{ channel: "email", topic: "pauseai-updates", reason: "declined" }] })).toEqual([
+      "Old",
+    ]);
     // A block is every topic's answer, and outranks the unsubscribe.
     await query(
       `WITH p AS (INSERT INTO email_problems (address, kind, at, can_reset) VALUES ('sam@example.com', 'hard', '2026-10-13T00:00:00Z', false) RETURNING id)
        INSERT INTO email_blocks (address, problem_id) SELECT 'sam@example.com', id FROM p`,
     );
-    expect(await names({ subscription: [{ reason: "blocked" }] })).toEqual(["Sam"]);
-    expect(await names({ subscription: [...unsubscribed] })).toEqual([]);
+    expect(await names({ contact: [{ channel: "email", reason: "blocked" }] })).toEqual(["Sam"]);
+    // Any answer for a topic, and one answer.
+    expect(await names({ contact: [{ channel: "email", topic: "pauseai-updates", send: "no" }] })).toEqual(["Old"]);
+    expect(await names({ contact: [{ channel: "email", topic: "pauseai-updates" }] })).toEqual(
+      await names({
+        contact: [
+          { channel: "email", topic: "pauseai-updates", send: "yes" },
+          { channel: "email", topic: "pauseai-updates", send: "unsure" },
+          { channel: "email", topic: "pauseai-updates", send: "no" },
+        ],
+      }),
+    );
+    expect(await names({ contact: [...unsubscribed] })).toEqual([]);
     expect(await names({ sort: "first", dir: "asc" })).toEqual(["Old", "Sam", "Jane", "Pat"]);
     expect(await names({ sort: "first", dir: "desc" })).toEqual(["Pat", "Jane", "Sam", "Old"]);
     expect(await names({ sort: "name", dir: "asc" })).toEqual(["Jane", "Old", "Pat", "Sam"]);
@@ -378,12 +401,43 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     expect(await names({ sort: "active", dir: "asc" })).toEqual(["Old", "Pat", "Jane", "Sam"]);
   });
 
-  it("filters by phone and email, events, campaigns, nation and nearness, and places each", async () => {
+  it("shows the newest number we may use, and finds supporters by their numbers' answers", async () => {
     await people();
-    expect(await names({ phone: true })).toEqual(["Jane"]);
-    expect(await names({ phone: false })).toEqual(["Sam", "Pat", "Old"]);
-    expect(await names({ email: true })).toEqual(["Sam", "Jane", "Pat", "Old"]);
-    expect(await names({ email: false })).toEqual([]);
+    const jane = async () =>
+      (await listSupporters({ sort: "active", dir: "desc", page: 1 })).supporters.find((s) => s.name === "Jane")!;
+    // Jane gave Luma her number; once she unsubscribes from the calendar, it's one we may not use.
+    await query(
+      `INSERT INTO opt_outs (address, list, source, source_ref, unsubscribed_at)
+       VALUES ('jane@example.com', 'luma-calendar', 'luma-webhook', 'w3', '2026-10-15T00:00:00Z')`,
+    );
+    expect(await jane()).toMatchObject({ phones: ["+447700900001"] });
+    const lumaPhone = { channel: "phone", topic: "luma-calendar" } as const;
+    expect(await names({ contact: [{ ...lumaPhone, reason: "unsubscribed" }] })).toEqual(["Jane"]);
+    expect(await names({ contact: [{ ...lumaPhone, reason: "following" }] })).toEqual([]);
+    // The same number given on joining as a volunteer is one we may use; a number found by email or phone.
+    await member("recJane", "jane@example.com", "2026-09-01T00:00:00Z", {
+      name: "Jane",
+      phone: "07700 900001",
+      intent: "Volunteer",
+    });
+    await linkSupporters();
+    expect(await jane()).toMatchObject({ phones: ["+447700900001"] });
+    const volunteered = { channel: "phone", topic: "volunteering", reason: "volunteered" } as const;
+    expect(await names({ contact: [volunteered] })).toEqual(["Jane"]);
+    expect(await names({ contact: [volunteered, { channel: "email", topic: "site-forms", reason: "asked" }] })).toEqual(
+      ["Jane", "Pat"],
+    );
+    // Her page has each number once, as phone_number() writes it.
+    const details = (await getSupporter((await jane()).id))!;
+    expect([...new Set(details.contacts.map((c) => c.phone).filter(Boolean))]).toEqual(["+447700900001"]);
+    expect(details.permissions.filter((p) => p.channel === "phone").map((p) => [p.topic, p.send])).toEqual([
+      ["luma-calendar", "no"],
+      ["volunteering", "yes"],
+    ]);
+  });
+
+  it("filters by events, campaigns, nation and nearness, and places each", async () => {
+    await people();
     expect(await names({ event: ["evt-1"] })).toEqual(["Sam", "Jane", "Old"]);
     expect(await names({ event: ["evt-none", "evt-1"] })).toEqual(["Sam", "Jane", "Old"]);
     expect(await names({ event: ["evt-none"] })).toEqual([]);
@@ -391,6 +445,22 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     const [{ campaign }] = await query<{ campaign: string }>("SELECT campaign FROM supporter_letters LIMIT 1");
     expect(await names({ campaign, wrote: true })).toEqual(["Pat"]);
     expect(await names({ campaign, wrote: false })).toEqual(["Sam", "Jane", "Old"]);
+    // The Event filter's rows have their registrations for its events and how each stands; the Campaign filter's
+    // writers, when they first wrote in it. Without the filter, neither.
+    await query("UPDATE luma_guests SET approval_status = 'waitlist' WHERE user_id = 'usr-2'");
+    const at = await listSupporters({ sort: "name", dir: "asc", page: 1, event: ["evt-1", "evt-none"] });
+    expect(at.supporters.map((s) => [s.name, s.registrations])).toEqual([
+      ["Jane", [{ event: "evt-1", status: "approved" }]],
+      ["Old", [{ event: "evt-1", status: "approved" }]],
+      ["Sam", [{ event: "evt-1", status: "waitlist" }]],
+    ]);
+    expect(at.supporters[0]).not.toHaveProperty("wroteAt");
+    await query("UPDATE luma_guests SET approval_status = 'approved' WHERE user_id = 'usr-2'");
+    const writers = await listSupporters({ sort: "name", dir: "asc", page: 1, campaign, wrote: true });
+    expect(writers.supporters.map((s) => [s.name, s.wroteAt])).toEqual([["Pat", new Date("2026-06-01T09:00:00Z")]]);
+    const others = await listSupporters({ sort: "name", dir: "asc", page: 1, campaign, wrote: false });
+    expect(others.supporters[0]).not.toHaveProperty("wroteAt");
+    expect(others.supporters[0]).not.toHaveProperty("registrations");
     // Jane's postcode places her in Manchester; the others' events are in London.
     await query(
       `INSERT INTO postcode_places (postcode, latitude, longitude, place, country)
@@ -438,7 +508,7 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     expect(await names({ event: ["evt-1"], not: { event: ["evt-2"] } })).toEqual(["Sam", "Old"]);
     expect(await names({ event: ["evt-2"], not: { event: ["evt-2"] } })).toEqual([]);
     expect(await names({ not: { activity: ["letter", "lumaContact"] } })).toEqual(["Sam", "Old"]);
-    expect(await names({ not: { subscription: [{ topic: "site-forms", reason: "asked" }] } })).toEqual([
+    expect(await names({ not: { contact: [{ channel: "email", topic: "site-forms", reason: "asked" }] } })).toEqual([
       "Jane",
       "Sam",
       "Old",
@@ -449,6 +519,30 @@ describeWithDatabase("listSupporters and getSupporter", () => {
        VALUES ('M11AE', 53.4794, -2.2353, 'Manchester', 'england')`,
     );
     expect(await names({ not: { country: ["england"] } })).toEqual(["Sam", "Pat", "Old"]);
+  });
+
+  it("gives a supporter's MP, in office for the constituency of the postcode that places them, and none without one", async () => {
+    await people();
+    const id = await supporterWith("jane@example.com");
+    await query(
+      `INSERT INTO postcode_places (postcode, latitude, longitude, place, country, constituency, constituency_checked)
+       VALUES ('M11AE', 53.4794, -2.2353, 'Manchester', 'england', 'Manchester Central', true)`,
+    );
+    expect((await getSupporter(id))!.mp).toBeNull();
+    const mp = await addTestPolitician({
+      name: "Mo Manchester",
+      constituency: "Manchester Central",
+      airtableId: "recMo",
+    });
+    expect((await getSupporter(id))!.mp).toEqual({
+      id: mp,
+      name: "Mo Manchester",
+      constituency: "Manchester Central",
+      party: "Labour (Co-op)",
+    });
+    // One out of office isn't their MP.
+    await query("UPDATE notable_people SET status = 'retired' WHERE id = $1", [mp]);
+    expect((await getSupporter(id))!.mp).toBeNull();
   });
 
   it("gives one supporter's details: identities, contact details, links, activity and each list's opt-out", async () => {
@@ -482,7 +576,7 @@ describeWithDatabase("listSupporters and getSupporter", () => {
       },
     ]);
     expect(sam.activity.map((a) => a.kind)).toEqual(["opted-out", "luma-contact", "luma-registered"]);
-    // Whether we'd email each address about each topic (lib/server/email-permissions.ts).
+    // Whether we'd contact each address and number about each topic (lib/server/contact-permissions.ts).
     expect(sam.permissions.map((p) => [p.topic, p.send, p.reason])).toEqual([["luma-calendar", "no", "unsubscribed"]]);
 
     const [{ id: pat }] = await query<{ id: number }>(
@@ -559,7 +653,7 @@ describeWithDatabase("members as supporters", () => {
     expect(jane.summary).toMatchObject({
       sources: ["email-your-mp", "member"],
       member: true,
-      phone: "+447700900123",
+      phones: ["+447700900123"],
       firstSeenAt: new Date("2024-03-23T00:00:00Z"),
     });
     expect(jane.contacts).toContainEqual({

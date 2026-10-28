@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
-import { getMailing, listMailings } from "./mailings";
+import { getMailing, listMailings, mailingTitle } from "./mailings";
 
 /** A PauseAI letter of the mailing titled `title`, to `politicianId`. */
 async function addLetter(
@@ -38,18 +38,24 @@ describeWithDatabase("mailings", () => {
     await addLetter(CSRB, polly, { sent: "2026-06-01" });
 
     const mailings = await listMailings();
+    // The unsent first, the newest made first.
     expect(mailings.map((m) => [m.title, m.sent, m.skipped, m.bounced, m.replied])).toEqual([
+      ["DeepMind letter", 0, 0, 0, 0],
+      ["Westminster Hall Debate Invitation", 0, 0, 0, 0],
+      ["Documentary Invitation", 0, 0, 0, 0],
       ["Ben Lake October 2026 Debate", 0, 0, 0, 0],
       [EDINBURGH, 2, 1, 1, 1],
       [CSRB, 1, 0, 0, 0],
     ]);
-    expect(mailings[1]).toMatchObject({
+    expect(mailings[4]).toMatchObject({
       ask: "edinburgh-conference-2026",
       askTitle: "Edinburgh conference",
       imported: true,
       sentAt: new Date("2026-10-01"),
     });
-    expect(mailings[0]).toMatchObject({ ask: null, askTitle: null, sentAt: null });
+    expect(mailings[1]).toMatchObject({ ask: null, askTitle: null, sentAt: null });
+    // One found by when its emails were sent is imported too, and its ask is the DeepMind letter.
+    expect(mailings[0]).toMatchObject({ ask: "deepmind-letter", imported: true, sentAt: null });
   });
 
   it("gives one mailing with each recipient's outcome, by name; or nothing for no such mailing", async () => {
@@ -73,6 +79,12 @@ describeWithDatabase("mailings", () => {
         personalised: true,
       },
     ]);
+    expect(mailing).toMatchObject({ recipientsTotal: 2, page: 1, pages: 1, pageSize: 100 });
+    // A page past the last has no one on it, and the same count.
+    expect(await getMailing(id, 2)).toMatchObject({ recipients: [], recipientsTotal: 2, page: 2 });
     expect(await getMailing(9999)).toBeUndefined();
+    // Its title alone, for its page's title.
+    expect(await mailingTitle(id)).toBe(EDINBURGH);
+    expect(await mailingTitle(9999)).toBeUndefined();
   });
 });

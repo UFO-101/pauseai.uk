@@ -34,9 +34,14 @@ async function logInWithSupporters(page: Page, database: string) {
 
 const copy = staffCopy.supporters;
 
+/** Opens everything we hold of a supporter, folded at the foot of their page, with the erase button at its end. */
+async function openEverything(page: Page) {
+  await page.locator("summary", { has: page.getByRole("heading", { name: copy.detail.everythingTitle }) }).click();
+}
+
 /** Opens a supporter's history, folded at the foot of their page. */
 async function openHistory(page: Page) {
-  await page.locator("summary", { hasText: copy.detail.showHistory(0).replace(/0$/, "") }).click();
+  await page.locator("summary", { has: page.getByRole("heading", { name: copy.detail.activityTitle }) }).click();
 }
 
 test("without the supporters permission, the list is closed and the home page doesn't offer it", async ({
@@ -139,7 +144,12 @@ test("the supporters not at an event, by Except: the guest who declined it, and 
   await frame(page, "its chip's menu: the event, Only this instead, and Remove");
   await page.locator("[popover]:popover-open").getByRole("link", { name: staffCopy.filters.onlyInstead }).click();
   await expect(page.getByText(copy.total(4))).toBeVisible();
-  await frame(page, "only those at the London March: the four approved");
+  await expect(page.getByRole("columnheader", { name: copy.columns.registrations })).toBeVisible();
+  await expect(page.locator("tbody").getByText(copy.detail.registered).first()).toBeVisible();
+  await frame(
+    page,
+    "only those at the London March: the four approved, each one's registration in a column of its own",
+  );
 });
 
 test("a supporter's page: who they are, what they gave, their history, and an opt-out from Luma's webhook", async ({
@@ -164,10 +174,11 @@ test("a supporter's page: who they are, what they gave, their history, and an op
   const jane = page.getByRole("row").filter({ hasText: "Jane Fixture" });
   await jane.getByRole("link", { name: "Jane Fixture" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Jane Fixture");
-  await expect(page.getByText(copy.badges.registered).first()).toBeVisible();
-  await expect(page.getByText("+447700900001", { exact: false })).toBeVisible();
+  await expect(page.getByText(copy.detail.firstVia(copy.sources.luma))).toBeVisible();
+  await expect(page.getByText("+447700900001", { exact: false }).first()).toBeVisible();
   const reasons = copy.detail.permissions.reasons;
-  await expect(page.getByText(reasons["luma-calendar"].unsubscribed("16 Oct 2026"), { exact: false })).toBeVisible();
+  // Her email and her Luma number in one row, the reason they share once.
+  await expect(page.getByText(reasons["luma-calendar"].unsubscribed("16 Oct 2026"), { exact: false })).toHaveCount(1);
   await frame(page, "Jane's page: opted out of the calendar's emails, with her phone, postcode and registrations");
   await openHistory(page);
   const history = page.getByRole("list", { name: copy.detail.activityTitle });
@@ -181,8 +192,8 @@ test("a supporter's page: who they are, what they gave, their history, and an op
     recorded: true,
   });
   await page.reload();
-  // A contact again, since before Luma's webhook: we can't be sure.
-  await expect(page.getByText(reasons["luma-calendar"].following("20 Sept 2026"), { exact: false })).toBeVisible();
+  // A contact again, since before Luma's webhook, her email and number alike: the reason once.
+  await expect(page.getByText(reasons["luma-calendar"].following("20 Sept 2026"), { exact: false })).toHaveCount(1);
   await openHistory(page);
   await expect(history.getByText(copy.detail.kinds.resubscribed, { exact: false })).toBeVisible();
   await frame(page, "subscribed again: the list says so, and the history keeps both");
@@ -213,9 +224,11 @@ test("a letter writer is a supporter too, linked from the letters page", async (
   await page.goto(`${BASE}/staff/letters`);
   await page.getByRole("row").filter({ hasText: sender }).getByRole("link", { name: "Jane Smith" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Jane Smith");
-  // Exactly, as Next's route announcer reads out the heading, badge and all, after a navigation.
-  await expect(page.getByText(copy.badges.letter, { exact: true })).toBeVisible();
-  await expect(page.getByText(copy.detail.kinds.letter, { exact: false }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: `1 ${copy.detail.lettersCounted(1)}` })).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: copy.detail.lettersTitle }).getByRole("link", { name: "Testy McTestface MP" }),
+  ).toBeVisible();
+  await openEverything(page);
   await expect(page.getByText("ZZ9 9ZZ", { exact: false })).toBeVisible();
   await frame(page, "the letter writer's page: the letter, and the postcode they gave");
 
@@ -246,14 +259,17 @@ test("a march sign-up is a supporter, with what they gave and the link they came
 
   await logInWithSupporters(page, flowDatabase);
   await page.goto(`${BASE}/staff/supporters`);
-  const marta = page.getByRole("row").filter({ hasText: email });
+  const marta = page.getByRole("row").filter({ hasText: "Marta Marcher" });
   await expect(marta).toContainText(copy.badges.march);
   await frame(page, "the list: Marta, who signed up for the march");
 
   await marta.getByRole("link").first().click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Marta Marcher");
-  await expect(page.getByText("07700 900123", { exact: false })).toBeVisible();
-  await expect(page.getByText("LS1 1AA", { exact: false })).toBeVisible();
+  // Her number as we compare numbers, a yes for texts on the march's day and, as she agreed, after.
+  await expect(page.getByText("+447700900123", { exact: false }).first()).toBeVisible();
+  await openEverything(page);
+  await expect(page.getByText("LS1 1AA", { exact: true })).toBeVisible();
+  // Her email and number in one row, the reason they share once.
   await expect(
     page.getByText(
       copy.detail.permissions.reasons["site-forms"].asked(
@@ -262,7 +278,7 @@ test("a march sign-up is a supporter, with what they gave and the link they came
       ),
       { exact: false },
     ),
-  ).toBeVisible();
+  ).toHaveCount(1);
   await openHistory(page);
   const history = page.getByRole("list", { name: copy.detail.activityTitle });
   await expect(history.getByText(copy.detail.cameFrom("nl"), { exact: false })).toBeVisible();
@@ -283,14 +299,17 @@ test("a member who also wrote to their MP is one supporter, with how they joined
 
   await logInWithSupporters(page, flowDatabase);
   await page.goto(`${BASE}/staff/supporters`);
-  const lee = page.getByRole("row").filter({ hasText: "lee.letter@example.com" });
+  // The only member who wrote to their MP.
+  const lee = page.getByRole("row").filter({ hasText: copy.badges.member }).filter({ hasText: copy.badges.letter });
   await expect(lee).toContainText(copy.badges.member);
   await expect(lee).toContainText(copy.badges.letter);
   await frame(page, "the list: the members, and Lee, who also wrote to their MP");
 
   await lee.getByRole("link").first().click();
   await expect(page).toHaveURL(/\/staff\/supporters\/\d+$/);
-  await expect(page.getByRole("heading", { level: 1 })).toContainText(copy.badges.member);
+  // The letter's sender's name, as the newest; how they first came, as a member.
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Jane Smith");
+  await expect(page.getByText(copy.detail.firstVia(copy.sources.member))).toBeVisible();
   await expect(page.getByText("29 Nov 2025", { exact: false }).first()).toBeVisible();
   // Joined before "Keep me informed" was a choice: on the updates.
   await expect(
@@ -313,19 +332,23 @@ test("the list says what each supporter gets, and filters by it", async ({ page,
   await expect(page.getByRole("columnheader", { name: copy.columns.subscriptions })).toBeVisible();
   await frame(page, "the list, with what each supporter gets by topic");
 
-  await addFilter(page, copy.columns.subscriptions, copy.filters.states["luma-calendar"].unsubscribed);
-  await expect(page.getByText(copy.total(1))).toBeVisible();
+  // A topic first, those we can email about it, then in the chip's second half, those we can't.
+  const answers = copy.detail.permissions.answers;
+  await addFilter(page, copy.columns.subscriptions, copy.filters.topics["luma-calendar"]);
+  await changeFilter(page, answers.email.yes, answers.email.no);
   await expect(page.getByRole("row").filter({ hasText: "Jane Fixture" })).toBeVisible();
   // Owen left Keep me informed unticked, which isn't an unsubscribe.
   await expect(page.getByRole("row").filter({ hasText: "Owen Member" })).toHaveCount(0);
-  await frame(page, "filtered to those who unsubscribed: Jane, whom Luma told us of");
+  await frame(page, "Luma by email, can't: Jane, who unsubscribed, as Luma told us");
 
+  // Another topic, from the chip's first half, then its answer.
   await changeFilter(
     page,
-    `${copy.columns.subscriptions}: ${copy.filters.states["luma-calendar"].unsubscribed}`,
-    copy.filters.states["pauseai-updates"].declined,
+    `${copy.columns.subscriptions}: ${copy.filters.topics["luma-calendar"]}`,
+    copy.filters.topics["pauseai-updates"],
   );
-  await expect(page).toHaveURL(/subscription=pauseai-updates%3Adeclined/);
+  await changeFilter(page, answers.email.yes, answers.email.no);
+  await expect(page).toHaveURL(/contact=email%3Apauseai-updates%3Ano/);
   await expect(page.getByRole("row").filter({ hasText: "Owen Member" })).toBeVisible();
   await expect(page.getByRole("row").filter({ hasText: "Jane Fixture" })).toHaveCount(0);
   await frame(page, "filtered to those who left Keep me informed unticked: Owen");
@@ -339,7 +362,7 @@ test("a member who left Keep me informed unticked won't get the updates", async 
   await expect(
     page.getByText(copy.detail.permissions.reasons["pauseai-updates"].declined("6 Oct 2026"), { exact: false }),
   ).toBeVisible();
-  await expect(page.getByText(copy.detail.permissions.no).first()).toBeVisible();
+  await expect(page.getByText(copy.detail.permissions.answers.email.no).first()).toBeVisible();
   await openHistory(page);
   await expect(
     page.getByText(`${copy.detail.joinedOn("pauseai.uk")}, ${copy.detail.intents["Act now"]}`),
@@ -362,7 +385,7 @@ test("a member who re-joined and ticked Keep me informed is on the updates", asy
     page.getByText(copy.detail.permissions.reasons["pauseai-updates"].asked("11 Oct 2026"), { exact: false }),
   ).toBeVisible();
   await page.getByRole("button", { name: copy.detail.permissions.why }).first().click();
-  await expect(page.getByText(copy.detail.permissions.details["pauseai-updates"])).toBeVisible();
+  await expect(page.getByText(copy.detail.permissions.details.email["pauseai-updates"].about)).toBeVisible();
   await frame(page, "Rhea's page: asked for the updates on re-joining");
 });
 
@@ -375,9 +398,10 @@ test("erasing a supporter: gone from the list and the next import, with the audi
   await logInWithSupporters(page, flowDatabase);
   await page.goto(`${BASE}/staff/supporters`);
   await page.getByRole("link", { name: "Sam Fixture" }).click();
+  await openEverything(page);
   const eraseLink = page.getByRole("link", { name: staffCopy.erase.title });
   await eraseLink.scrollIntoViewIfNeeded();
-  await frame(page, "the red button at the foot of Sam's page");
+  await frame(page, "the red button at the end of everything we hold of Sam");
   await eraseLink.click();
   await expect(page).toHaveURL(/\/staff\/supporters\/\d+\/erase$/);
   await expect(page.getByRole("button", { name: staffCopy.erase.button })).toBeDisabled();
@@ -415,6 +439,7 @@ test("erasing a member: gone from the list, and the next members import doesn't 
   await logInWithSupporters(page, flowDatabase);
   await page.goto(`${BASE}/staff/supporters`);
   await page.getByRole("link", { name: "Mara Member" }).click();
+  await openEverything(page);
   await page.getByRole("link", { name: staffCopy.erase.title }).click();
   await page.getByRole("textbox", { name: staffCopy.erase.referenceLabel }).fill("Request of 16 Oct 2026");
   await page.getByRole("checkbox", { name: staffCopy.erase.confirm }).check();

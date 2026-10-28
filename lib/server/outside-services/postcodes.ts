@@ -11,21 +11,27 @@ import { outsideFetch } from "./outside-fetch";
 export type ConstituencyResult =
   { ok: true; constituency: string; place?: Place } | { ok: false; reason: "not_found" | "no_constituency" | "failed" };
 
+/** A postcode's constituency in postcodes.io's result: the official name, from its code, else postcodes.io's (lib/constituencies.ts); null for none. */
+function constituencyOf(result: Record<string, unknown> | undefined): string | null {
+  const name = result?.parliamentary_constituency;
+  if (typeof name !== "string" || !name) return null;
+  const code = (result!.codes as Record<string, unknown> | undefined)?.parliamentary_constituency;
+  return (typeof code === "string" && constituencyName(code)) || name;
+}
+
 export async function constituencyForPostcode(postcode: string): Promise<ConstituencyResult> {
   try {
     const res = await outsideFetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(postcode)}`);
     if (res.status === 404) return { ok: false, reason: "not_found" };
     if (!res.ok) return { ok: false, reason: "failed" };
     const data = await res.json();
-    const name = data?.result?.parliamentary_constituency;
-    if (typeof name !== "string" || !name) return { ok: false, reason: "no_constituency" };
-    // The official name, from the code: postcodes.io's names can differ (lib/constituencies.ts).
-    const code = data.result.codes?.parliamentary_constituency;
+    const constituency = constituencyOf(data?.result);
+    if (!constituency) return { ok: false, reason: "no_constituency" };
     const { latitude, longitude } = data.result;
     const place = typeof latitude === "number" && typeof longitude === "number" ? { latitude, longitude } : undefined;
     return {
       ok: true,
-      constituency: (typeof code === "string" && constituencyName(code)) || name,
+      constituency,
       ...(place && { place }),
     };
   } catch {
@@ -69,7 +75,14 @@ async function placeAt(path: string, code: string): Promise<PostcodePlaceResult>
 }
 
 /** Where a postcode or town is: its point, its name (a council area, or the town), and its nation, if one of ours. */
-export type FoundPlace = { latitude: number; longitude: number; place: string; country: string | null };
+export type FoundPlace = {
+  latitude: number;
+  longitude: number;
+  place: string;
+  country: string | null;
+  /** A postcode's constituency, from a bulk lookup; a town has none. */
+  constituency?: string | null;
+};
 
 /** postcodes.io's nation, as the site names them ("northern-ireland"); null for one outside the four. */
 function nation(country: unknown): string | null {
@@ -107,6 +120,7 @@ export async function placesForPostcodes(postcodes: string[]): Promise<Map<strin
             longitude: result.longitude,
             place: String(result.admin_district ?? query),
             country: nation(result.country),
+            constituency: constituencyOf(result),
           }
         : null,
     ]),

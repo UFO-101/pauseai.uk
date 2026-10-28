@@ -5,8 +5,8 @@
 export const COUNTRIES = ["england", "scotland", "wales", "northern-ireland"] as const;
 export type Country = (typeof COUNTRIES)[number];
 
-/** The politicians list's markers: the boxes ticked in Airtable, and a record it no longer has. */
-export const POLITICIAN_FLAGS = ["important", "connection", "removed"] as const;
+/** The politicians list's markers: the boxes ticked in Airtable, a record it no longer has, and our own test politicians. */
+export const POLITICIAN_FLAGS = ["important", "connection", "removed", "test"] as const;
 export type PoliticianFlag = (typeof POLITICIAN_FLAGS)[number];
 
 /** Whether we can write to them: an address we can use, none, or one that's blocked. */

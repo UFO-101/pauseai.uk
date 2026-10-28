@@ -133,7 +133,7 @@ adds what its kind has, joined as notable people are:
 - **PauseAI's letter** (`pauseai_letters`): one person's letter of a mailing
   (`mailings`), which may make an ask. Those sent before the site could send
   them are copied nightly from Airtable's Emails table
-  (`lib/server/emails-sync.ts`), from 2026 on: who, when, and whether it was
+  (`lib/server/emails-sync.ts`): who, when, and whether it was
   personalised, but no text. Each mailing there is a
   tick box, named by `mailings.airtable_field`; an email with no box we know
   is held back and reported until a migration adds its mailing.
@@ -288,37 +288,72 @@ permissions read it there.
 A new list is a name in the `CHECK`s on `list` and `source`, and whatever
 records it.
 
-### Whether we'd email someone
+### Whether we'd contact someone
 
-One place decides whether we may email an address about each topic, and
-why: the `email_permissions` view
-(`netlify/database/migrations/0032_email_permissions.sql`, where each
-reason is explained). Everything that asks reads it: the supporter's page
-and the list's Subscriptions column, through `permissionsFor()` in
-`lib/server/email-permissions.ts`; the list's Subscriptions filter; and the
-staff home's count of Luma unsubscribes. Nothing else reads `opt_outs`
-to answer it, and `tests/checks/opt-outs.test.ts` fails if code outside
-`lib/server/opt-outs.ts` and erasure does.
+One place decides whether we may contact an email address or a phone
+number about each topic, and why: `contact_permission()`
+(`netlify/database/migrations/0049_contact_permissions.sql`, where each
+reason is explained), read through the `email_permissions` and
+`phone_permissions` views and `contact_permissions`, both of them.
+Everything that asks reads those: the supporter's page and the list's
+Contact, Email and Phone columns, through `permissionsFor()` in
+`lib/server/contact-permissions.ts`; the list's Contact filter;
+and the staff home's count of Luma unsubscribes, through the
+`contact_unsubscribes` view. Nothing else
+reads `opt_outs` to answer it, and `tests/checks/opt-outs.test.ts` fails if
+code outside `lib/server/opt-outs.ts` and erasure does.
 
-The topics are the Luma calendar's emails, the PauseAI updates, and
-`site-forms`, what the box on our forms agrees to. Each answer
-is yes, no or unsure, with a reason from a short list, when, and which
-source said so. The first rule that matches wins:
+An address or a number does two jobs, kept apart. It says which records
+are one person, so every one is kept and shown, whatever its answers. And
+it's a way to reach someone, which needs a yes: the answer is for one
+topic, one channel and one address, so someone who gave Luma one number and
+the join form another has an answer for each.
 
-- a blocked address (`email_blocks`, below) is no to everything;
-- then an opt-out in force is no;
-- then each topic's source: being a contact of the Luma calendar, which
-  registering for an event makes someone, as following it does, whenever
-  they joined (Luma's list leaves out anyone who left); the newest member
-  record's "Keep me informed" (a free choice from 30 June 2026; before,
-  everyone who joined was on the list); the newest form entry's box.
+The topics, and the channels each goes by (`TOPIC_REASONS` in
+`lib/contact-permissions.ts`):
+
+- **Luma calendar**, email and phone: being a contact of the calendar,
+  which registering for an event makes someone, as following it does,
+  whenever they joined (Luma's list leaves out anyone who left). A number
+  given at a registration was given by a Luma account, so it has that
+  account's answer: an unsubscribe from the calendar's emails is a no for
+  its number too. The same number given anywhere else has its own answers.
+- **PauseAI updates**, email: the newest member record's "Keep me
+  informed" (a free choice from 30 June 2026; before, everyone who joined
+  was on the list).
+- **Site forms**, email and phone: the newest form entry's box, which on
+  the march's says "by email and phone".
+- **Volunteering**, phone: the join form asks for a number only of those
+  who choose to volunteer regularly, for volunteers' messages. Before 30
+  June 2026 it was a Tally form with no choice, taken to be the same, so a
+  number on a record with no intent is a yes too; one with another intent
+  is unsure.
+- **March day**, phone: a number given for "text updates on the day" is a
+  yes until the day ends (`day_texts`), then no, unless the box said yes
+  to site forms.
+
+A number is one channel, but a topic says which ways it allows
+(`TOPIC_WAYS` in `lib/contact-permissions.ts`), from what people were
+told when they gave it: Luma's and the march day's are for texts only,
+site forms' and volunteering's for calls and texts too. Calling someone
+without their consent is allowed in the UK only to a number that isn't
+on the Telephone Preference Service, so a calling tool reads the ways,
+not just the answer.
+
+Each answer is yes, no or unsure, with a reason from a short list, when,
+and which source said so. The first rule that matches wins: a blocked
+email address (`email_blocks`, below) is no to everything; then an opt-out
+in force, by its channel, is no; then the topic's source.
 
 Unsure is a yes that an unsubscribe we can't see may have undone: every
-member on the updates, which CiviCRM sends. A
-topic the address has had nothing to do with (no Luma account, never a
-member, no form entry) has no row. Nothing sends email by it yet; when the
-site mails supporters, `send()` asks it for the purpose's topic as it
-checks `email_blocks`.
+member on the updates, which CiviCRM sends. A topic the address or number
+has had nothing to do with has no row. The list shows an Email or Phone
+column only with the Contact filter by that channel, and in it the
+addresses or numbers whose answer the filter finds; a download, vCards
+too, has the same. The supporter's page shows every address and number,
+marking a number no topic lets us use.
+Nothing sends by it yet; when the site mails supporters, `send()` asks it
+for the purpose's topic as it checks `email_blocks`.
 
 ## Email
 

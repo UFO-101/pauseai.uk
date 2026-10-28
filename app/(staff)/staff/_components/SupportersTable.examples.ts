@@ -1,13 +1,16 @@
-import type { EmailPermission } from "@/lib/email-permissions";
+import type { ContactPermission } from "@/lib/contact-permissions";
 import type { SupporterDetails, SupporterRow, SupporterSummary } from "@/lib/supporters";
 
-/** A supporter known from Luma and a letter: two emails, a phone, registered twice, opted out of the calendar's emails. */
+/**
+ * A supporter known from Luma and a letter: two emails, a phone, registered
+ * twice, opted out of the calendar's emails; the phone, given to Luma, is
+ * one we may use only while she follows the calendar, so we may not.
+ */
 export const exampleSupporter: SupporterSummary = {
   id: 7,
   name: "Jane Example",
   emails: ["jane@example.com", "jane.e@example.org"],
-  email: "jane.e@example.org",
-  phone: "+447700900001",
+  phones: ["+447700900001"],
   postcode: "M1 1AE",
   sources: ["email-your-mp", "luma"],
   lumaContact: true,
@@ -20,7 +23,18 @@ export const exampleSupporter: SupporterSummary = {
 
 /** Everything a supporter's page shows, for Jane. */
 export const exampleSupporterDetails: SupporterDetails = {
-  summary: exampleSupporter,
+  summary: {
+    ...exampleSupporter,
+    place: {
+      name: "Manchester",
+      basis: "postcode",
+      given: "M1 1AE",
+      country: "england",
+      latitude: 53.4794,
+      longitude: -2.2353,
+    },
+  },
+  mp: { id: 1, name: "Polly Placeholder", constituency: "Manchester Central", party: "Labour (Co-op)" },
   identities: [
     { source: "luma", email: "jane@example.com", name: "Jane", seenAt: "2026-03-01T10:00:00Z" },
     { source: "email-your-mp", email: "jane.e@example.org", name: "Jane Example", seenAt: "2026-10-05T09:00:00Z" },
@@ -111,6 +125,7 @@ export const exampleSupporterDetails: SupporterDetails = {
   permissions: [
     {
       topic: "luma-calendar",
+      channel: "email",
       address: "jane@example.com",
       send: "no",
       reason: "unsubscribed",
@@ -119,23 +134,34 @@ export const exampleSupporterDetails: SupporterDetails = {
     },
     {
       topic: "site-forms",
+      channel: "email",
       address: "jane@example.com",
       send: "yes",
       reason: "asked",
       at: "2026-10-05T09:00:00Z",
       source: "email-your-mp",
     },
+    {
+      topic: "luma-calendar",
+      channel: "phone",
+      address: "+447700900001",
+      send: "no",
+      reason: "unsubscribed",
+      at: "2026-10-12T18:30:00Z",
+      source: "luma",
+    },
   ],
 };
 
 /** A member who joined through our site wanting to volunteer, opted out of the updates on joining, then re-joined asking for them; never a contact of the Luma calendar. */
 export const exampleMemberDetails: SupporterDetails = {
+  mp: null,
   summary: {
     ...exampleSupporter,
     id: 8,
     name: "Rhea Member",
     emails: ["rhea@example.com"],
-    phone: null,
+    phones: ["+447700900002"],
     postcode: null,
     sources: ["member"],
     lumaContact: false,
@@ -148,7 +174,7 @@ export const exampleMemberDetails: SupporterDetails = {
     {
       source: "member",
       at: "2026-10-11T08:00:00Z",
-      phone: null,
+      phone: "+447700900002",
       postcode: null,
       latitude: null,
       longitude: null,
@@ -178,6 +204,7 @@ export const exampleMemberDetails: SupporterDetails = {
   permissions: [
     {
       topic: "luma-calendar",
+      channel: "email",
       address: "rhea@example.com",
       send: "no",
       reason: "not-following",
@@ -186,26 +213,39 @@ export const exampleMemberDetails: SupporterDetails = {
     },
     {
       topic: "pauseai-updates",
+      channel: "email",
       address: "rhea@example.com",
       send: "unsure",
       reason: "asked",
       at: "2026-10-11T08:00:00Z",
       source: "member",
     },
+    {
+      topic: "volunteering",
+      channel: "phone",
+      address: "+447700900002",
+      send: "yes",
+      reason: "volunteered",
+      at: "2026-07-10T00:00:00Z",
+      source: "member",
+    },
   ],
 };
 
 /** A supporter whose only address is blocked: they marked a letter as spam. */
-export const exampleBlockedPermissions: EmailPermission[] = (["luma-calendar", "site-forms"] as const).map((topic) => ({
-  topic,
-  address: "gus@example.com",
-  send: "no",
-  reason: "blocked",
-  at: "2026-10-05T12:00:00Z",
-  source: "complaint",
-}));
+export const exampleBlockedPermissions: ContactPermission[] = (["luma-calendar", "site-forms"] as const).map(
+  (topic) => ({
+    topic,
+    channel: "email",
+    address: "gus@example.com",
+    send: "no",
+    reason: "blocked",
+    at: "2026-10-05T12:00:00Z",
+    source: "complaint",
+  }),
+);
 
-/** Rows of the list: Jane, unsubscribed from the calendar's emails but agreed on her letter; Sam, a member and a contact of the calendar since before its webhook; Gus, blocked. */
+/** Rows of the list: Jane, unsubscribed from the calendar's emails but agreed on her letter; Sam, a member who volunteered with a phone and a contact of the calendar since before its webhook; Gus, blocked. */
 export const exampleSupporterRows: SupporterRow[] = [
   { ...exampleSupporter, permissions: exampleSupporterDetails.permissions },
   {
@@ -213,7 +253,7 @@ export const exampleSupporterRows: SupporterRow[] = [
     id: 8,
     name: null,
     emails: ["sam@example.com"],
-    phone: null,
+    phones: ["+447700900003"],
     postcode: null,
     sources: ["luma", "member"],
     events: 0,
@@ -222,6 +262,7 @@ export const exampleSupporterRows: SupporterRow[] = [
     permissions: [
       {
         topic: "luma-calendar",
+        channel: "email",
         address: "sam@example.com",
         send: "yes",
         reason: "following",
@@ -230,9 +271,19 @@ export const exampleSupporterRows: SupporterRow[] = [
       },
       {
         topic: "pauseai-updates",
+        channel: "email",
         address: "sam@example.com",
         send: "unsure",
         reason: "asked",
+        at: "2026-09-12T00:00:00Z",
+        source: "member",
+      },
+      {
+        topic: "volunteering",
+        channel: "phone",
+        address: "+447700900003",
+        send: "yes",
+        reason: "volunteered",
         at: "2026-09-12T00:00:00Z",
         source: "member",
       },

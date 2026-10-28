@@ -1,11 +1,27 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { SupportersSearch } from "@/lib/staff-search";
-import { EMAIL_TOPIC_REASONS, EMAIL_TOPICS } from "@/lib/email-permissions";
+import { CHANNELS, SENDS, stateValue, waysKey, type Channel, type Topic } from "@/lib/contact-permissions";
 import { campaigns } from "@/lib/content/email-your-mp";
 import type { EventChoice, SupportersPage } from "@/lib/server/supporters";
 import { staffDate } from "@/lib/staff-time";
 import { NEAR_MILES, SUPPORTER_BADGES } from "@/lib/supporters";
+import ChannelIcon from "./ChannelIcon";
 import FilterBar, { type Filter } from "./ui/FilterBar";
+
+/**
+ * The Subscriptions filter's topics, in its order: email's, then phone's,
+ * each ours first, then Luma's, then the rest, so the same one sits on the
+ * same row under each heading.
+ */
+export const SUBSCRIPTION_ORDER: [Channel, Topic][] = [
+  ["email", "site-forms"],
+  ["email", "luma-calendar"],
+  ["email", "pauseai-updates"],
+  ["phone", "site-forms"],
+  ["phone", "luma-calendar"],
+  ["phone", "volunteering"],
+  ["phone", "march-day"],
+];
 
 /** The words in the Near chip: where it found, or that it couldn't. */
 function nearWords(text: string, near: SupportersPage["near"]): string {
@@ -16,12 +32,14 @@ function nearWords(text: string, near: SupportersPage["near"]): string {
 
 /**
  * The supporters list's filters, each named after the column it filters
- * on, in the columns' order: whether we have their email and phone; their
- * nation and how near somewhere they are; their activities and
- * subscriptions; the events they registered for, from `events`; and
- * whether they wrote in a campaign. A subscription's choices are each
- * topic's reasons, then blocked. Activities, subscriptions, nations and
- * events can each be chosen more than once.
+ * on, in the columns' order: their nation and how near somewhere they
+ * are; their activities and subscriptions; the events they registered for,
+ * from `events`; and whether they wrote in a campaign. A contact filter's
+ * choices are each topic, then blocked, a topic chosen as those we can
+ * contact about it and another answer in its chip's second half; one by
+ * email or phone shows that column.
+ * Activities, subscriptions, nations and events can each be chosen more
+ * than once.
  */
 export function supporterFilters(
   search: Pick<SupportersSearch, "near">,
@@ -31,22 +49,6 @@ export function supporterFilters(
   const copy = staffCopy.supporters.filters;
   const { columns } = staffCopy.supporters;
   return [
-    {
-      name: "email",
-      label: columns.email,
-      options: [
-        { value: "yes", label: copy.email.yes },
-        { value: "no", label: copy.email.no },
-      ],
-    },
-    {
-      name: "phone",
-      label: columns.phone,
-      options: [
-        { value: "yes", label: copy.phone.yes },
-        { value: "no", label: copy.phone.no },
-      ],
-    },
     {
       name: "country",
       label: staffCopy.politician.country,
@@ -70,18 +72,33 @@ export function supporterFilters(
       options: SUPPORTER_BADGES.map((badge) => ({ value: badge, label: staffCopy.supporters.badges[badge] })),
     },
     {
-      name: "subscription",
+      name: "contact",
       label: columns.subscriptions,
       repeat: true,
-      options: [
-        ...EMAIL_TOPICS.flatMap((topic) =>
-          EMAIL_TOPIC_REASONS[topic].map((reason) => ({
-            value: `${topic}:${reason}`,
-            label: copy.states[topic][reason],
-          })),
-        ),
-        { value: "blocked", label: staffCopy.supporters.subscriptions.blocked },
-      ],
+      // Each topic under its channel's heading, chosen as those we can contact about it; then in its chip's second
+      // half, another answer. Blocked is last of email's.
+      options: CHANNELS.flatMap((channel) => [
+        ...SUBSCRIPTION_ORDER.filter(([c]) => c === channel).map(([, topic]) => {
+          const ways = waysKey(channel, topic);
+          const answers = staffCopy.supporters.detail.permissions.answers[ways];
+          return {
+            value: stateValue({ channel, topic, send: "yes" }),
+            label: copy.topics[topic],
+            group: { label: copy.channels[channel], icon: <ChannelIcon channel={channel} /> },
+            detail: copy.ways[ways],
+            seconds: SENDS.map((send) => ({ value: stateValue({ channel, topic, send }), label: answers[send] })),
+          };
+        }),
+        ...(channel === "email"
+          ? [
+              {
+                value: stateValue({ channel, reason: "blocked" }),
+                label: staffCopy.supporters.subscriptions.blocked,
+                group: { label: copy.channels.email, icon: <ChannelIcon channel="email" /> },
+              },
+            ]
+          : []),
+      ]),
     },
     {
       name: "event",

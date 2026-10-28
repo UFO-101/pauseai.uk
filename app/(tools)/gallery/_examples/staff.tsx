@@ -66,7 +66,8 @@ import { exampleDashboard, exampleQuietDashboard } from "@/app/(staff)/staff/_co
 import Sparkline from "@/app/(staff)/staff/_components/Sparkline";
 import SupporterBadges from "@/app/(staff)/staff/_components/SupporterBadges";
 import SubscriptionBadges from "@/app/(staff)/staff/_components/SubscriptionBadges";
-import EmailPermissionTiles from "@/app/(staff)/staff/_components/EmailPermissionTiles";
+import ChannelIcon from "@/app/(staff)/staff/_components/ChannelIcon";
+import PermissionTiles from "@/app/(staff)/staff/_components/PermissionTiles";
 import SupporterDetails from "@/app/(staff)/staff/_components/SupporterDetails";
 import SupporterFilters from "@/app/(staff)/staff/_components/SupporterFilters";
 import SupportersTable from "@/app/(staff)/staff/_components/SupportersTable";
@@ -636,7 +637,7 @@ export const staff: Group = {
                 search={supportersSearch({
                   q: "jane",
                   activity: ["registered", "member"],
-                  subscription: "luma-calendar:unsubscribed",
+                  contact: "email:luma-calendar:unsubscribed",
                   campaign: "support-sobel-bill",
                   wrote: "no",
                   near: "LS1",
@@ -741,14 +742,31 @@ export const staff: Group = {
       ],
     },
     {
-      name: "EmailPermissionTiles",
-      file: "app/(staff)/staff/_components/EmailPermissionTiles.tsx",
+      name: "ChannelIcon",
+      file: "app/(staff)/staff/_components/ChannelIcon.tsx",
       variants: [
         {
-          label: "Will and won't email, by topic",
+          label: "Email and phone, named, and as decoration",
           render: () => (
             <StaffPage as="div">
-              <EmailPermissionTiles permissions={exampleSupporterDetails.permissions} />
+              <p>
+                <ChannelIcon channel="email" label="Email" /> <ChannelIcon channel="phone" label="Phone" />{" "}
+                <ChannelIcon channel="email" /> <ChannelIcon channel="phone" />
+              </p>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "PermissionTiles",
+      file: "app/(staff)/staff/_components/PermissionTiles.tsx",
+      variants: [
+        {
+          label: "Will and won't email, by topic, and a phone number we may not use",
+          render: () => (
+            <StaffPage as="div">
+              <PermissionTiles permissions={exampleSupporterDetails.permissions} />
             </StaffPage>
           ),
         },
@@ -756,10 +774,11 @@ export const staff: Group = {
           label: "A contact of the calendar since its webhook, and don't know of the updates",
           render: () => (
             <StaffPage as="div">
-              <EmailPermissionTiles
+              <PermissionTiles
                 permissions={[
                   {
                     topic: "luma-calendar",
+                    channel: "email",
                     address: "nia@example.com",
                     send: "yes",
                     reason: "following",
@@ -773,10 +792,18 @@ export const staff: Group = {
           ),
         },
         {
+          label: "A volunteer's phone number",
+          render: () => (
+            <StaffPage as="div">
+              <PermissionTiles permissions={exampleMemberDetails.permissions.slice(2)} />
+            </StaffPage>
+          ),
+        },
+        {
           label: "A blocked address",
           render: () => (
             <StaffPage as="div">
-              <EmailPermissionTiles permissions={exampleBlockedPermissions} />
+              <PermissionTiles permissions={exampleBlockedPermissions} />
             </StaffPage>
           ),
         },
@@ -808,6 +835,7 @@ export const staff: Group = {
             <StaffPage as="div">
               <SupporterDetails
                 supporter={{
+                  mp: null,
                   summary: {
                     ...exampleSupporter,
                     name: null,
@@ -1163,7 +1191,7 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <PoliticiansList
-                list={{ ...examplePoliticiansPage, total: 150, pages: 2, outOfOffice: 3, otherHouses: 2 }}
+                list={{ ...examplePoliticiansPage, total: 150, pages: 2, outOfOffice: 3, otherHouses: 2, tests: 1 }}
                 search={{ ...EMPTY_POLITICIAN_FILTERS, q: "pol" }}
                 asks={exampleAsks}
               />
@@ -1215,7 +1243,16 @@ export const staff: Group = {
           label: "One with no ask, not sent yet",
           render: () => (
             <StaffPage as="div">
-              <MailingDetails mailing={{ ...exampleMailings[0], recipients: [] }} />
+              <MailingDetails
+                mailing={{
+                  ...exampleMailings[0],
+                  recipients: [],
+                  recipientsTotal: 0,
+                  page: 1,
+                  pages: 1,
+                  pageSize: 100,
+                }}
+              />
             </StaffPage>
           ),
         },

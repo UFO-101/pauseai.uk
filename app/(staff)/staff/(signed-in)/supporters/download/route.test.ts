@@ -16,18 +16,20 @@ describeWithDatabase("GET /staff/supporters/download", () => {
   });
   afterEach(() => vi.unstubAllEnvs());
 
-  it("gives every supporter the filters find, as cards too, each download logged", async () => {
+  it("gives every supporter the filters find, as cards too, with the numbers the Contact filter finds, each download logged", async () => {
     await query(
       `INSERT INTO members (id, email, name, phone, city, joined_at, created_at, keep_informed, share_permission, source_modified_at)
        VALUES ('recA', 'ann@example.com', 'Ann', '+447700900001', 'Leeds', '2026-09-01', '2026-09-01', true, true, '2026-09-01')`,
     );
     await linkSupporters();
-    const csv = await downloadAs(GET, "https://pauseai.uk/staff/supporters/download?format=csv&phone=yes", [
+    // A member's number, given with no intent, is a volunteer's.
+    const found = "contact=email%3Apauseai-updates%3Aunsure&contact=phone%3Avolunteering%3Ayes";
+    const csv = await downloadAs(GET, `https://pauseai.uk/staff/supporters/download?format=csv&${found}`, [
       "supporters",
     ]);
     expect(await csv.text()).toContain("Ann,ann@example.com,'+447700900001");
     const cards = await (
-      await downloadAs(GET, "https://pauseai.uk/staff/supporters/download?format=vcf", ["supporters"])
+      await downloadAs(GET, `https://pauseai.uk/staff/supporters/download?format=vcf&${found}`, ["supporters"])
     ).text();
     expect(cards).toMatch(/^FN:PauseAI \w{4} - Ann$/m);
     expect(cards).toContain("TEL;TYPE=CELL,PREF:+447700900001");

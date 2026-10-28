@@ -1,8 +1,8 @@
-/* The erase button and its note, well under the history, side by side. */
+/* The erase button and its note, side by side, in the page's foot. */
 .erase {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
   align-items: center;
-  margin-top: var(--space-8);
+  margin: 0;
 }

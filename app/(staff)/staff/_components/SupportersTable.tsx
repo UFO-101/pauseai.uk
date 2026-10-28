@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { contactState, type Channel, type ContactState } from "@/lib/contact-permissions";
 import type { SupportersPage } from "@/lib/server/supporters";
-import { filtersPath, pageParam, type Params, type SupportersSearch } from "@/lib/staff-search";
+import { campaignBySlug } from "@/lib/email-your-mp";
+import { anyAndNone, filtersPath, pageParam, valuesOf, type Params, type SupportersSearch } from "@/lib/staff-search";
 import { staffDate } from "@/lib/staff-time";
 import { parseSort, sortHref } from "@/lib/staff-sort";
 import {
+  registrationStatus,
   SUPPORTER_SORTS,
   SUPPORTERS_PAGE_SIZE,
   type SupporterPlaceName,
@@ -36,14 +39,51 @@ function Place({ place }: { place: SupporterPlaceName }) {
   return place.basis === "event" ? <Muted>{place.name}</Muted> : place.name;
 }
 
+/** The answers the Contact filter finds, but those it leaves out. */
+function contactStates(search: Pick<SupportersSearch, "contact">): ContactState[] {
+  return anyAndNone(valuesOf(search.contact), (values) => values.flatMap((v) => contactState(v) ?? []))[0] ?? [];
+}
+
 /**
- * The supporters list's columns: who they are (their name; their newest
- * email, and how many others they have; their newest phone; where they
- * are); what they are to us and what we'd email them about, as lozenges;
+ * A supporter's addresses, or numbers, by `channel`, that have an answer
+ * the Contact filter finds (`states`), each once.
+ */
+function contactsFound(states: ContactState[], channel: Channel, s: SupporterRow): string[] {
+  const found = s.permissions.filter(
+    (p) =>
+      p.channel === channel &&
+      states.some(
+        (state) =>
+          state.channel === channel &&
+          (!state.topic || state.topic === p.topic) &&
+          (!state.send || state.send === p.send) &&
+          (!state.reason || state.reason === p.reason),
+      ),
+  );
+  return [...new Set(found.map((p) => p.address))];
+}
+
+/** Addresses or numbers in a cell, a line each. */
+function Addresses({ addresses }: { addresses: string[] }) {
+  return addresses.map((address) => <div key={address}>{address}</div>);
+}
+
+/**
+ * The supporters list's columns: who they are (their name; with the
+ * Subscriptions filter by email or phone, their addresses or numbers whose
+ * answer it finds; where they are); what they are to us and what we'd
+ * email them about, as lozenges;
  * how many events and letters; and when we first saw them and last saw
- * them do something.
+ * them do something. The Event filter, finding those at events, adds how
+ * each registration for them stands, named when there's more than one
+ * event; the Campaign filter, finding those who wrote, when they first
+ * wrote in it. A download has the same columns.
  */
 export function supporterColumns(search: SupportersSearch): ListColumn<SupporterRow>[] {
+  const [events] = anyAndNone(valuesOf(search.event), (values) => values);
+  const states = contactStates(search);
+  const named = (events?.length ?? 0) > 1;
+  const wrote = Boolean(campaignBySlug(search.campaign)) && search.wrote !== "no";
   const sort = parseSort(SUPPORTER_SORTS, "active", search.sort, search.dir);
   const heading = (key: SupporterSort, label: string) => (
     <SortHeading
@@ -55,7 +95,7 @@ export function supporterColumns(search: SupportersSearch): ListColumn<Supporter
       {label}
     </SortHeading>
   );
-  return [
+  const columns: (ListColumn<SupporterRow> | false)[] = [
     {
       key: "name",
       label: copy.columns.name,
@@ -63,18 +103,19 @@ export function supporterColumns(search: SupportersSearch): ListColumn<Supporter
       text: (s) => s.name,
       cell: (s) => <Link href={`${PATH}/${s.id}`}>{s.name ?? copy.noName}</Link>,
     },
-    {
+    states.some((state) => state.channel === "email") && {
       key: "email",
       label: copy.columns.email,
-      text: (s) => s.email,
-      cell: (s) => (
-        <>
-          {s.email}
-          {s.emails.length > 1 && <Muted> {copy.moreEmails(s.emails.length - 1)}</Muted>}
-        </>
-      ),
+      text: (s) => contactsFound(states, "email", s).join("; "),
+      cell: (s) => <Addresses addresses={contactsFound(states, "email", s)} />,
     },
-    { key: "phone", label: copy.columns.phone, short: true, text: (s) => s.phone, cell: (s) => s.phone },
+    states.some((state) => state.channel === "phone") && {
+      key: "phone",
+      label: copy.columns.phone,
+      short: true,
+      text: (s) => contactsFound(states, "phone", s).join("; "),
+      cell: (s) => <Addresses addresses={contactsFound(states, "phone", s)} />,
+    },
     {
       key: "place",
       label: copy.columns.place,
@@ -110,6 +151,24 @@ export function supporterColumns(search: SupportersSearch): ListColumn<Supporter
       text: (s) => s.events,
       cell: (s) => s.events,
     },
+    Boolean(events) && {
+      key: "registrations",
+      label: copy.columns.registrations,
+      text: (s) =>
+        (s.registrations ?? [])
+          .map((r) => (named ? `${r.event}: ${registrationStatus(r.status)}` : registrationStatus(r.status)))
+          .join("; "),
+      cell: (s) => (
+        <ul className={styles.registrations}>
+          {(s.registrations ?? []).map((r, i) => (
+            <li key={i}>
+              {named && <Muted>{r.event}: </Muted>}
+              {registrationStatus(r.status)}
+            </li>
+          ))}
+        </ul>
+      ),
+    },
     {
       key: "letters",
       label: copy.columns.letters,
@@ -117,6 +176,13 @@ export function supporterColumns(search: SupportersSearch): ListColumn<Supporter
       short: true,
       text: (s) => s.letters,
       cell: (s) => s.letters,
+    },
+    wrote && {
+      key: "wrote",
+      label: copy.columns.wrote,
+      short: true,
+      text: (s) => s.wroteAt ?? null,
+      cell: (s) => s.wroteAt && staffDate(s.wroteAt),
     },
     {
       key: "first",
@@ -135,16 +201,24 @@ export function supporterColumns(search: SupportersSearch): ListColumn<Supporter
       cell: (s) => s.lastActiveAt && staffDate(s.lastActiveAt),
     },
   ];
+  return columns.filter((column) => column !== false);
 }
 
 /**
- * A supporter as a contact card (lib/vcard.ts): their name, every email,
- * the newest first, their phone, where they are, and in the note what
- * they are to us, what we'd email them about, when we first and last saw
- * them, and how many events and letters.
+ * Supporters as contact cards (lib/vcard.ts), for the list's filters: a
+ * supporter's name; the addresses and numbers the Contact filter
+ * finds, as the columns, none without it; where they are; and in the note
+ * what they are to us, what we'd email them about, when we first and last
+ * saw them, and how many events and letters.
  */
-export function supporterContact(s: SupporterRow): Contact {
-  const emails = [s.email, ...s.emails.filter((e) => e !== s.email)].filter((e): e is string => Boolean(e));
+export function supporterContact(search: Pick<SupportersSearch, "contact">) {
+  const states = contactStates(search);
+  return (s: SupporterRow): Contact => contactCard(states, s);
+}
+
+/** A supporter's card, with the addresses and numbers the Contact filter finds (`states`), as the columns. */
+function contactCard(states: ContactState[], s: SupporterRow): Contact {
+  const emails = contactsFound(states, "email", s);
   const note = [
     supporterBadgeWords(s) && `${copy.columns.badges}: ${supporterBadgeWords(s)}`,
     subscriptionWords(s.permissions) && `${copy.columns.subscriptions}: ${subscriptionWords(s.permissions)}`,
@@ -156,7 +230,7 @@ export function supporterContact(s: SupporterRow): Contact {
   return {
     name: s.name,
     emails,
-    phones: s.phone ? [s.phone] : [],
+    phones: contactsFound(states, "phone", s),
     address: {
       locality: s.place?.name,
       postcode: s.postcode,

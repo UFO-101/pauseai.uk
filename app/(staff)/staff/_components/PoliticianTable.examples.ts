@@ -96,6 +96,7 @@ export const examplePoliticiansPage: PoliticiansPage = {
   pages: 1,
   pageSize: 100,
   outOfOffice: 0,
+  tests: 0,
   otherHouses: 0,
   closest: [],
 };

@@ -56,7 +56,7 @@ export const METRIC_LINKS: Record<DashboardMetric, { href?: string; permission?:
   eventsHeld: {},
   supportersAdded: { href: "/staff/supporters", permission: "supporters" },
   unsubscribes: {
-    href: "/staff/supporters?subscription=luma-calendar:unsubscribed",
+    href: "/staff/supporters?contact=email:luma-calendar:no",
     permission: "supporters",
     worse: true,
   },

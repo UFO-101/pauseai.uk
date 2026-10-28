@@ -45,7 +45,7 @@ export default function Grid({
   children: ReactNode;
 }) {
   return (
-    <div className={styles.frame}>
+    <div className={styles.frame} data-grid>
       <Tag className={even ? `${styles.grid} ${styles.even}` : styles.grid} aria-label={label}>
         {children}
       </Tag>
