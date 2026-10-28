@@ -287,23 +287,27 @@ export const staffCopy = {
         // By channel: each topic's name, and the answers. Unsure is a yes that an unsubscribe we can't see may have undone.
         topics: {
           email: {
-            "luma-calendar": "⁂ Luma calendar, by email",
-            "pauseai-updates": "⁂ PauseAI global updates, by email",
-            "site-forms": "⁂ PauseAI UK updates, by email",
+            "luma-calendar": "⁂ Luma calendar",
+            "pauseai-updates": "⁂ PauseAI global updates",
+            "site-forms": "⁂ PauseAI UK updates",
           },
           phone: {
-            "luma-calendar": "⁂ Luma calendar, by text",
-            volunteering: "⁂ Volunteering, by call or text",
-            "site-forms": "⁂ PauseAI UK updates, by call or text",
-            "march-day": "⁂ March day updates, by text",
+            "luma-calendar": "⁂ Luma calendar",
+            volunteering: "⁂ Volunteering",
+            "site-forms": "⁂ PauseAI UK updates",
+            "march-day": "⁂ March day updates",
           },
         } as Record<Channel, Record<string, string>>,
-        // By the ways the topic lets us contact them (TOPIC_WAYS).
+        // By the ways the topic lets us contact them (TOPIC_WAYS), so the answer says the channel. Unsure is a
+        // yes an unsubscribe we can't see may have undone.
         answers: {
-          email: { yes: "Will email", no: "Won't email", unsure: "Don't know" },
-          text: { yes: "⁂ Will text", no: "⁂ Won't text", unsure: "Don't know" },
-          "call-or-text": { yes: "⁂ May call or text", no: "⁂ Won't call or text", unsure: "Don't know" },
+          email: { yes: "⁂ Will email", no: "⁂ Won't email", unsure: "⁂ May email?" },
+          text: { yes: "⁂ Will text", no: "⁂ Won't text", unsure: "⁂ May text?" },
+          "call-or-text": { yes: "⁂ Will call or text", no: "⁂ Won't call or text", unsure: "⁂ May call or text?" },
         } as Record<string, Record<"yes" | "no" | "unsure", string>>,
+        // By the address or number, so a screen reader says what it is.
+        email: "⁂ Email",
+        phone: "⁂ Phone",
         why: "details",
         // The short reason under the answer, by topic and reason, with when.
         reasons: {
@@ -362,8 +366,9 @@ export const staffCopy = {
               "⁂ The march sign-up asks for a number for text updates on the day. Without the box ticked, we can use it only until the day is over.",
           },
         } as Record<Channel, Record<string, string>>,
-        // One tile in place of the topics', when the address is blocked.
-        blocked: "Won't email: address blocked",
+        // One tile in place of the topics', when the address is blocked: in place of a topic, then the answer.
+        everyTopic: "⁂ Every topic",
+        blocked: "⁂ Won't email: blocked",
         blockedBecause: {
           hard: (when: string) => `An email to it bounced, ${when}.`,
           complaint: (when: string) => `They marked an email as spam, ${when}.`,

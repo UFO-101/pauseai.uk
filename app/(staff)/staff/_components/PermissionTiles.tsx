@@ -1,7 +1,7 @@
 import type React from "react";
 import Link from "next/link";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { waysKey, type ContactPermission } from "@/lib/contact-permissions";
+import { waysKey, type Channel, type ContactPermission } from "@/lib/contact-permissions";
 import { staffDate } from "@/lib/staff-time";
 import Strip from "./ui/Strip";
 import styles from "./PermissionTiles.module.css";
@@ -18,10 +18,41 @@ function reason(permission: ContactPermission): string {
 /** A topic's answer as a strip's colour: green we'd contact them, plain we wouldn't, amber we don't know. */
 const TONES = { yes: "green", no: "plain", unsure: "amber" } as const;
 
+/** The address or number a strip is for, smaller, after a tiny envelope or phone. */
+function Address({ channel, address }: { channel: Channel; address: string }) {
+  return (
+    <span className={styles.address}>
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        role="img"
+        aria-label={copy[channel]}
+      >
+        {channel === "email" ? (
+          <>
+            <rect x="3" y="5" width="18" height="14" rx="2" />
+            <path d="M3 7l9 6 9-6" />
+          </>
+        ) : (
+          <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2" />
+        )}
+      </svg>
+      {address}
+    </span>
+  );
+}
+
 /**
- * One topic, a strip: its name, the address or number it's for, and
- * whether we'd contact them about it, then why in a few words; how we know
- * is behind the "?" at its top right.
+ * One topic, a strip: its name and whether we'd contact them about it, in
+ * the words of the ways it allows; under them the address or number it's
+ * for, then why in a few words; how we know is behind the "?" at its top
+ * right.
  */
 function Tile({ permission }: { permission: ContactPermission }) {
   const id = `why-${permission.channel}-${permission.topic}-${permission.address.replace(/\W/g, "-")}`;
@@ -31,9 +62,8 @@ function Tile({ permission }: { permission: ContactPermission }) {
     <li data-send={permission.send}>
       <Strip tone={TONES[permission.send]} icon={false}>
         <span className={styles.title}>
-          <span>
-            {topic} · {permission.address}: {answer}
-          </span>
+          <span>{topic}</span>
+          <span className={styles.answer}>{answer}</span>
           <button
             type="button"
             className={styles.help}
@@ -44,6 +74,7 @@ function Tile({ permission }: { permission: ContactPermission }) {
             ?
           </button>
         </span>
+        <Address channel={permission.channel} address={permission.address} />
         <span className={styles.reason}>{reason(permission)}</span>
       </Strip>
       <div
@@ -64,9 +95,11 @@ function Blocked({ permission }: { permission: ContactPermission }) {
   return (
     <li data-send="no">
       <Strip tone="red">
-        <span>
-          {permission.address}: {copy.blocked}
+        <span className={styles.title}>
+          <span>{copy.everyTopic}</span>
+          <span className={styles.answer}>{copy.blocked}</span>
         </span>
+        <Address channel="email" address={permission.address} />
         <span className={styles.reason}>
           {because && `${because(staffDate(permission.at!))} `}
           <Link href="/staff/supporters/blocked-emails">{copy.seeBlocked}</Link>

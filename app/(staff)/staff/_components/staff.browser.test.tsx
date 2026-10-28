@@ -3185,28 +3185,33 @@ function openHistory() {
 describe("PermissionTiles", () => {
   const copy = staffCopy.supporters.detail.permissions;
   const tiles = () => [...document.querySelectorAll("li")];
+  const title = (tile: Element) => tile.querySelector("[class*=title]")!.textContent;
+  const address = (tile: Element) => tile.querySelector("[class*=address]")!;
 
-  it("is a strip a topic: its name, the address and the answer, why in a few words, and how we know behind the ?", async () => {
+  it("is a strip a topic: its name and the answer, the address, why in a few words, and how we know behind the ?", async () => {
     await render(<PermissionTiles permissions={exampleSupporterDetails.permissions} />);
     expect(tiles().map((tile) => tile.dataset.send)).toEqual(["no", "yes", "no"]);
     expect(tiles()[0].textContent).toBe(
-      `${copy.topics.email["luma-calendar"]} · jane@example.com: ${copy.answers.email.no}?${copy.reasons["luma-calendar"].unsubscribed("12 Oct 2026")}${copy.details.email["luma-calendar"]}`,
+      `${copy.topics.email["luma-calendar"]}${copy.answers.email.no}?jane@example.com${copy.reasons["luma-calendar"].unsubscribed("12 Oct 2026")}${copy.details.email["luma-calendar"]}`,
     );
-    expect(tiles()[1].querySelector("span > span")!.textContent).toBe(
-      `${copy.topics.email["site-forms"]} · jane@example.com: ${copy.answers.email.yes}`,
-    );
-    // A phone number's topic, answer and how we know are in a phone's words.
-    expect(tiles()[2].querySelector("span > span")!.textContent).toBe(
-      `${copy.topics.phone["luma-calendar"]} · +447700900001: ${copy.answers.text.no}`,
-    );
+    expect(title(tiles()[1])).toBe(`${copy.topics.email["site-forms"]}${copy.answers.email.yes}?`);
+    // The address after an envelope, a number after a phone, each named for a screen reader.
+    expect(address(tiles()[0]).querySelector("svg")!.getAttribute("aria-label")).toBe(copy.email);
+    expect(address(tiles()[2]).textContent).toBe("+447700900001");
+    expect(address(tiles()[2]).querySelector("svg")!.getAttribute("aria-label")).toBe(copy.phone);
+    // A number's answer is in the words of the ways its topic allows, and how we know in a phone's words.
+    expect(title(tiles()[2])).toBe(`${copy.topics.phone["luma-calendar"]}${copy.answers.text.no}?`);
     expect(tiles()[2].textContent).toContain(copy.details.phone["luma-calendar"]);
+    // The answer on the topic's line, the address under it.
+    const line = (selector: string) => tiles()[0].querySelector(selector)!.getBoundingClientRect().top;
+    expect(line("[class*=answer]")).toBeLessThan(line("[class*=address]"));
     // The ? at the top right, out of the reason's way.
     const top = tiles()[0].querySelector("button")!.getBoundingClientRect().top;
     expect(top).toBeLessThan(tiles()[0].querySelector("[class*=reason]")!.getBoundingClientRect().top);
     // Green we'd email them, plain we wouldn't; an answer, so no warning icon.
     expect(tiles()[1].firstElementChild!.className).toMatch(/green/);
     expect(tiles()[0].firstElementChild!.className).not.toMatch(/green|amber|red|undefined/);
-    expect(tiles()[0].querySelector("svg")).toBeNull();
+    expect(tiles()[0].querySelectorAll("svg")).toHaveLength(1);
     // How we know shows when the ? is clicked.
     await expect.element(page.getByText(copy.details.email["luma-calendar"]).first()).not.toBeVisible();
     await page.getByRole("button", { name: copy.why }).first().click();
@@ -3248,15 +3253,14 @@ describe("PermissionTiles", () => {
   it("says don't know where an unsubscribe may not have reached us", async () => {
     await render(<PermissionTiles permissions={exampleMemberDetails.permissions} />);
     expect(tiles()[1].dataset.send).toBe("unsure");
-    expect(tiles()[1].querySelector("span > span")!.textContent).toContain(copy.answers.email.unsure);
+    expect(title(tiles()[1])).toContain(copy.answers.email.unsure);
     expect(tiles()[1].firstElementChild!.className).toMatch(/amber/);
     // A volunteer's number, a yes; an unsure one is a don't know, as by email.
-    expect(tiles()[2].querySelector("span > span")!.textContent).toBe(
-      `${copy.topics.phone.volunteering} · +447700900002: ${copy.answers["call-or-text"].yes}`,
-    );
+    expect(title(tiles()[2])).toBe(`${copy.topics.phone.volunteering}${copy.answers["call-or-text"].yes}?`);
+    expect(address(tiles()[2]).textContent).toBe("+447700900002");
     const [, , phone] = exampleMemberDetails.permissions;
     await render(<PermissionTiles permissions={[{ ...phone, send: "unsure", reason: "gave-number" }]} />);
-    expect(tiles().at(-1)!.querySelector("span > span")!.textContent).toContain(copy.answers["call-or-text"].unsure);
+    expect(title(tiles().at(-1)!)).toContain(copy.answers["call-or-text"].unsure);
   });
 
   it("names each address, and falls back to the reason's own name", async () => {
@@ -3269,16 +3273,16 @@ describe("PermissionTiles", () => {
         ]}
       />,
     );
-    expect(tiles()[0].textContent).toContain(`${copy.topics.email["luma-calendar"]} · jane@example.com`);
-    expect(tiles()[0].textContent).toContain(`${copy.answers.email.no}?joined`);
-    expect(tiles()[1].textContent).toContain("other@example.com");
+    expect(address(tiles()[0]).textContent).toBe("jane@example.com");
+    expect(tiles()[0].textContent).toContain("jane@example.comjoined");
+    expect(address(tiles()[1]).textContent).toBe("other@example.com");
   });
 
   it("gives a blocked address one tile, saying why and linking to the blocked emails", async () => {
     await render(<PermissionTiles permissions={exampleBlockedPermissions} />);
     expect(tiles()).toHaveLength(1);
     expect(tiles()[0].textContent).toBe(
-      `gus@example.com: ${copy.blocked}${copy.blockedBecause.complaint("5 Oct 2026")} ${copy.seeBlocked}`,
+      `${copy.everyTopic}${copy.blocked}gus@example.com${copy.blockedBecause.complaint("5 Oct 2026")} ${copy.seeBlocked}`,
     );
     await expect
       .element(page.getByRole("link", { name: copy.seeBlocked }))

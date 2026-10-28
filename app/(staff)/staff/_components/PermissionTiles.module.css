@@ -12,19 +12,38 @@
   font-size: var(--text-sm);
 }
 
-/* The topic, the address and the answer, with the "?" at the top right, out
-   of the reason's way. A long address breaks anywhere rather than widen the
-   card. */
+/* The topic, then the answer at the right, before the "?" at the top right,
+   out of the reason's way. */
 .title {
   display: flex;
   gap: var(--space-2);
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: baseline;
 }
 
 .title > span:first-child {
+  flex: 1;
   min-width: 0;
+}
+
+.answer {
+  white-space: nowrap;
+}
+
+/* The address or number, small and fixed-width, after its icon. A long
+   address breaks anywhere rather than widen the card. */
+.address {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+  min-width: 0;
+  color: var(--text-secondary);
+  font-family: ui-monospace, monospace;
+  font-size: var(--text-xs);
   overflow-wrap: anywhere;
+}
+
+.address svg {
+  flex: none;
 }
 
 /* The "?", which opens how we know. */
@@ -43,7 +62,7 @@
   font-size: var(--text-xs);
   font-weight: 700;
   line-height: 1;
-  vertical-align: text-bottom;
+  align-self: flex-start;
   cursor: pointer;
 }
 
