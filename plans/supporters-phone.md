@@ -2,13 +2,12 @@
 
 Mailings to supporters by text message and WhatsApp. This builds on
 `plans/mailings.md`, whose phase 3 makes the staff pages for messages
-to supporters, and is three pull requests:
+to supporters, and is two pull requests, with a third only if needed:
 
 1. The groundwork both channels need: consent, opt-outs and replies.
-2. Texts, which nothing outside blocks.
-3. WhatsApp, after Meta says whether its policy allows us.
-
-Joseph hasn't yet said whether texts should come before WhatsApp.
+2. WhatsApp, after Meta says whether its policy allows us.
+3. Texts, only if Meta won't let us use WhatsApp. Joseph prefers
+   WhatsApp, so the Meta question and account are being started now.
 
 ## What we have now
 
@@ -74,20 +73,7 @@ weekly and event texts.
    Staff answers are stored there too. Anyone with the `supporters`
    permission can reply, and each reply records who sent it.
 
-## 2. Texts
-
-1. Add a text provider in `lib/server/outside-services/`, with a fake
-   version for tests. Texts are sent from a real UK number, because
-   people can't reply to a sender name such as "PauseAI UK".
-2. Texts are free text, with no approval step. The new message page counts
-   160-character segments, because each one is charged.
-3. The provider's webhook records deliveries and failures in
-   `message_events`, treats STOP as an opt-out, and stores other
-   replies for the supporter's page.
-4. Staff can reply to a text at any time. Each reply is charged as a
-   text.
-
-## 3. WhatsApp
+## 2. WhatsApp
 
 ### Before building
 
@@ -148,6 +134,19 @@ Then Francis sets up the account, with Joseph as a second admin:
 5. Send first to staff and a few volunteers, then to one local group,
    and watch the template's quality rating before sending more widely.
 
+## 3. Texts, only if WhatsApp is blocked
+
+1. Add a text provider in `lib/server/outside-services/`, with a fake
+   version for tests. Texts are sent from a real UK number, because
+   people can't reply to a sender name such as "PauseAI UK".
+2. Texts are free text, with no approval step. The new message page counts
+   160-character segments, because each one is charged.
+3. The provider's webhook records deliveries and failures in
+   `message_events`, treats STOP as an opt-out, and stores other
+   replies for the supporter's page.
+4. Staff can reply to a text at any time. Each reply is charged as a
+   text.
+
 ## Data protection
 
 Record in `docs/data-protection.md`: a new use of phone numbers, only
@@ -164,18 +163,16 @@ WhatsApp messages to politicians.
 
 ## Open questions
 
-1. Which text provider should we use? Can it take over the giffgaff
-   number, or does it need a number of its own?
-2. Does Meta count PauseAI UK as a political campaign? Should we ask
+1. Does Meta count PauseAI UK as a political campaign? Should we ask
    Meta directly, or through a Solution Provider?
-3. Should one number be used for both? The giffgaff number could be our
-   WhatsApp number on the API and stay in the WhatsApp Business app
-   through Meta's Coexistence feature. Connecting it unlinks WhatsApp
-   Web, which can then be linked again
+2. Which number for WhatsApp? The giffgaff number could go on the API
+   and stay in the WhatsApp Business app on Reuben's phone through
+   Meta's Coexistence feature. Connecting it unlinks WhatsApp Web,
+   which can then be linked again
    ([Infobip](https://www.infobip.com/docs/whatsapp/manage-integration/coexistence)).
-   It could also be our texting number, if the text provider can take
-   it over.
-4. What should the checkbox say? The same words should be used on Luma
+   Or a new number just for the API.
+3. What should the checkbox say? The same words should be used on Luma
    and our own forms, and a person needs to write them. They need to
    name PauseAI UK and each way we'd contact someone, as Meta requires.
-   WhatsApp may need a box of its own.
+4. Only if WhatsApp is blocked: which text provider, and can it take
+   over the giffgaff number?
