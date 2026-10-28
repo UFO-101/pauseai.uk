@@ -135,7 +135,7 @@ test("Change who: a draft goes to who the list finds instead; then it's deleted"
   await frame(page, "the mailings, with no drafts left");
 });
 
-test("a scheduled mailing: when it sends, a new time, then stopped and a draft again", async ({
+test("a scheduled mailing: when it sends, a new time, then unscheduled and a draft again", async ({
   page,
   request,
   flowDatabase,
@@ -145,8 +145,8 @@ test("a scheduled mailing: when it sends, a new time, then stopped and a draft a
   const id = addMailing(flowDatabase, "Edinburgh reminder", "scheduled", ["scheduled", "scheduled", "scheduled"]);
   runSql(flowDatabase, `UPDATE mailings SET due_at = '2026-10-30T09:00:00Z' WHERE id = ${id}`);
   await page.goto(`${BASE}/staff/mailings`);
-  await expect(page.getByRole("button", { name: copy.stop })).toBeVisible();
-  await frame(page, "the mailings: one coming up, with Stop, over those sent");
+  await expect(page.getByRole("button", { name: copy.unschedule })).toBeVisible();
+  await frame(page, "the mailings: one coming up, with Unschedule, over those sent");
 
   await page.getByRole("link", { name: "Edinburgh reminder" }).click();
   await expect(page.getByText(copy.sends("Friday 30 October at 09:00"))).toBeVisible();
@@ -158,10 +158,10 @@ test("a scheduled mailing: when it sends, a new time, then stopped and a draft a
   await page.getByRole("button", { name: copy.saveTime }).click();
   await expect(page.getByText(copy.sends("Friday 30 October at 14:00"))).toBeVisible();
 
-  await page.getByRole("button", { name: copy.stopScheduled }).click();
+  await page.getByRole("button", { name: copy.unschedule }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Edinburgh reminder");
   await expect(page.getByRole("status").first()).toHaveText(copy.savePill.saved);
-  await frame(page, "stopped: a draft again, to change and schedule again");
+  await frame(page, "unscheduled: a draft again, to change and schedule again");
 });
 
 test("a mailing sending, and one sent: its counts, and its recipients that bounced", async ({

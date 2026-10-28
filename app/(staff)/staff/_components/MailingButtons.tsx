@@ -42,12 +42,12 @@ export function DeleteDraft({ id, action }: { id: number; action: FormAction }) 
   );
 }
 
-/** Stop, for mailing `id`: a scheduled one becomes a draft again, one sending sends no more. */
+/** Unschedule or Stop sending, for mailing `id`: a scheduled one becomes a draft again, one sending sends no more. */
 export function StopMailing({ id, label, action }: { id: number; label: string; action: FormAction }) {
   return (
     <form action={action}>
       <input type="hidden" name="id" value={id} />
-      <SubmitButton variant="danger" size="small" fit>
+      <SubmitButton variant="primary" size="small" fit>
         {label}
       </SubmitButton>
     </form>

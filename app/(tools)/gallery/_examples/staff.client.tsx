@@ -433,7 +433,7 @@ export function MailingButtonsExample({ id }: { id: number }) {
       {(log) => (
         <ButtonRow>
           <DeleteDraft id={id} action={log("deleteMailingDraft")} />
-          <StopMailing id={id} label={staffCopy.mailingPages.stop} action={log("stopMailingNow")} />
+          <StopMailing id={id} label={staffCopy.mailingPages.unschedule} action={log("stopMailingNow")} />
         </ButtonRow>
       )}
     </Logged>

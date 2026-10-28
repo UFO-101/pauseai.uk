@@ -74,7 +74,17 @@ export default function MailingsOverview({
       ) : (
         <ul className={styles.rows}>
           {comingUp.map((m) => (
-            <Row key={m.id} mailing={m} action={<StopMailing id={m.id} label={copy.stop} action={stop} />}>
+            <Row
+              key={m.id}
+              mailing={m}
+              action={
+                <StopMailing
+                  id={m.id}
+                  label={m.state === "sending" ? copy.stopSending : copy.unschedule}
+                  action={stop}
+                />
+              }
+            >
               {copy.comingLine(m.createdBy!, londonWhen(m.dueAt!), m.to)}
             </Row>
           ))}

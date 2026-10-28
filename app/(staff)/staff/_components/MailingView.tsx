@@ -138,7 +138,7 @@ function Standing({
           action={
             <div className={styles.actions}>
               <ChangeTime mailing={written} action={reschedule} />
-              <StopMailing id={written.id} label={copy.stopScheduled} action={stop} />
+              <StopMailing id={written.id} label={copy.unschedule} action={stop} />
             </div>
           }
         >
@@ -146,9 +146,6 @@ function Standing({
           <br />
           {copy.scheduledLine(mailing.to, written.fromName ?? written.sentFrom!)}
         </Strip>
-        <p>
-          <Muted>{copy.stopNote}</Muted>
-        </p>
       </>
     );
   }

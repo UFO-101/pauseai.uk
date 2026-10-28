@@ -831,7 +831,6 @@ export const staffCopy = {
     noneComing: "Nothing scheduled.",
     draftLine: (by: string, n: number) => `${by} · to ${n} ${n === 1 ? "person" : "people"}`,
     comingLine: (by: string, when: string, n: number) => `⁂ ${by} · ${when} · to ${n} ${n === 1 ? "person" : "people"}`,
-    stop: "Stop",
     // On the politicians list, beside Download.
     mailThese: (n: number) => `⁂ Mail these ${n}…`,
     useThese: (n: number) => `⁂ Use these ${n} for the draft`,
@@ -848,8 +847,8 @@ export const staffCopy = {
     scheduledLine: (n: number, from: string) => `⁂ ${n} ${n === 1 ? "email" : "emails"} from ${from}.`,
     changeTime: "⁂ Change the time",
     saveTime: "⁂ Change it",
-    stopScheduled: "⁂ Stop this mailing",
-    stopNote: "⁂ Stopping it sends nothing and makes it a draft again, to change and schedule again.",
+    // Takes a scheduled mailing back to a draft, sending nothing.
+    unschedule: "⁂ Unschedule",
     sending: (n: number, of: number) => `⁂ ${n} of ${of} sent`,
     stopSending: "⁂ Stop sending",
     sentLabel: "⁂ Sent",

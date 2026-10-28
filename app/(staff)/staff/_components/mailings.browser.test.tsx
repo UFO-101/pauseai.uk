@@ -123,7 +123,7 @@ describe("MailingsOverview", () => {
     await expect
       .element(page.getByText(copy.comingLine("jo@pauseai.uk", "Friday 30 October at 09:00", 72)))
       .toBeVisible();
-    await expect.element(page.getByRole("button", { name: copy.stop })).toBeVisible();
+    await expect.element(page.getByRole("button", { name: copy.unschedule })).toBeVisible();
     await expect.element(page.getByText("Jo Example")).toBeVisible();
     await expect
       .element(page.getByRole("link", { name: copy.howToStart.link }))
@@ -201,13 +201,12 @@ describe("MailingView", () => {
     const action = async (form: FormData) => void forms.push(form);
     await view({ written: { ...written, state: "scheduled" }, stop: action, reschedule: action });
     await expect.element(page.getByText(copy.sends("Tuesday 1 December at 09:00"))).toBeVisible();
-    await expect.element(page.getByText(copy.stopNote)).toBeVisible();
     await expect.element(page.getByText(`11${copy.counts.sent}`)).not.toBeInTheDocument();
     await page.getByRole("button", { name: copy.changeTime }).click();
     await expect.element(page.getByLabelText(copy.day)).toHaveValue("2026-12-01");
     await page.getByRole("combobox").selectOptions("10");
     await page.getByRole("button", { name: copy.saveTime }).click();
-    await page.getByRole("button", { name: copy.stopScheduled }).click();
+    await page.getByRole("button", { name: copy.unschedule }).click();
     await expect
       .poll(() => forms.map((form) => [...form.entries()]))
       .toEqual([
