@@ -174,8 +174,17 @@ shape, made in the migrations: `supporter_source_<name>` (`source_id`,
 history, and `supporter_contact_<name>` (`source_id`, `at`, `phone`,
 `postcode`, `latitude`, `longitude`, `city`) for contact details and places.
 `supporter_identity`, `supporter_activity` and `supporter_contact` union
-them by supporter, and `supporters_summary` is one row per supporter for
-the list. When a supporter was first seen, the earliest `seen_at` of their
+them by supporter (Luma's activity is two arms of `supporter_activity`
+itself, as Postgres can't narrow a union inside a join to one supporter),
+and `supporters_summary` is one row per supporter. The list reads
+`supporters_listed`: `supporters_list`, a materialized view of every
+supporter's summary and place, refreshed by `refreshSupportersList()` at
+the end of each import that links supporters and by an erasure, and anyone
+added since, worked out as it's read. So a supporter's counts, tags and
+place in the list are as of the last import, up to an hour old (overnight,
+until 06:17), but for whether they're a Luma contact: an opt-out from the
+calendar, or its end, is looked up as the list is read
+(`optedOutOfLuma()`). Their own page is always as they are now. When a supporter was first seen, the earliest `seen_at` of their
 records (`supporter_first_seen`), is kept on the supporter
 (`supporters.first_seen_at`) by `refreshSupporterFacts()`
 (`lib/server/supporter-facts.ts`), which `linkSupporters()` runs, so the
@@ -355,7 +364,10 @@ staff email), how it ended, why it failed, and the job's own account of
 what it found. A run can be held for staff to decide on, as a large politician sync
 is. `/staff/import-data` shows each job's newest run on a card, and each
 job's own page (`/staff/import-data/<slug>`, `importPath()` in
-`lib/import-runs.ts`) its button and every run.
+`lib/import-runs.ts`) its button and every run it keeps: a week of an
+hourly job's, a month of a nightly one's, a one-off job's last 50, and
+always its newest and a held run (`lib/server/log-retention.ts`, run
+nightly).
 
 A new job is a name in `IMPORT_JOBS` and the `import_runs` CHECK, a result
 type, a function that records its run, a slug in `IMPORT_SLUGS`, its

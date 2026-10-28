@@ -27,7 +27,8 @@ describe("staffPageOf", () => {
     expect(staffPageOf("/staff/supporters")?.id).toBe("supporters");
     expect(staffPageOf("/staff/supporters/[id]/erase")?.id).toBe("supporters");
     expect(staffPageOf("/staff/supporters/blocked-emails")?.id).toBe("supporterEmails");
-    expect(staffPageOf("/staff/letters/supporter/[id]")?.permission).toBe("supporters");
+    expect(staffPageOf("/staff/letters/supporter/[id]")?.id).toBe("supporters");
+    expect(staffPageOf("/staff/letters/[id]")?.id).toBe("letters");
     expect(staffPageOf("/staff/politicians/[id]")).toEqual({ id: "politicians", href: "/staff/politicians" });
     expect(staffPageOf("/staff/lettersx")).toBeUndefined();
     expect(staffPageOf("/staff")).toBeUndefined();

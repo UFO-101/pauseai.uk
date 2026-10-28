@@ -47,7 +47,8 @@ import {
   exampleSyncedMp,
   exampleWebFormResult,
 } from "./RunList.examples";
-import StaffNav from "./StaffNav";
+import StaffNav, { staffPageAt } from "./StaffNav";
+import { navigation } from "@/tests/browser/navigation";
 import StaffSessions from "./StaffSessions";
 import { spanClass } from "./ui/Grid";
 import StaffDashboard from "./StaffDashboard";
@@ -186,6 +187,30 @@ describe("StaffNav", () => {
       "/staff/letters",
       "/staff/supporters/blocked-emails",
     ]);
+  });
+});
+
+describe("StaffNav in the signed-in pages' layout", () => {
+  it("marks the page the URL is, or is under, and closes the phone's menu when the page changes", async () => {
+    navigation.pathname = "/staff/letters/supporter/3";
+    const nav = () => <StaffNav email="jo@pauseai.uk" permissions={["supporters"]} />;
+    const { rerender } = await render(nav());
+    const current = () => document.querySelector('nav a[aria-current="page"]')?.textContent;
+    expect(current()).toBe(staffCopy.nav.supporters);
+    const menu = () => page.getByRole("group").element() as HTMLDetailsElement;
+    await page.getByRole("group").getByText(staffCopy.nav.supporters, { exact: true }).first().click();
+    expect(menu().open).toBe(true);
+    navigation.pathname = "/staff/letters/7";
+    await rerender(nav());
+    expect(current()).toBe(staffCopy.nav.letters);
+    expect(menu().open).toBe(false);
+  });
+
+  it("marks home at /staff and your sessions at theirs", async () => {
+    expect(staffPageAt("/staff")).toBe("home");
+    expect(staffPageAt("/staff/sessions")).toBe("sessions");
+    expect(staffPageAt("/staff/politicians/blocked-emails")).toBe("mpEmails");
+    expect(staffPageAt("/staff/login")).toBeUndefined();
   });
 });
 
@@ -583,16 +608,18 @@ describe("StaffAccountsTable", () => {
       `21 Oct 2026, 10:30 ${copy.addedByLogin}`,
       "21 Oct 2026, 10:30",
       "21 Oct 2026, 11:00",
-      "1",
+      `1${copy.endSessions}`,
     ]);
   });
 
-  it("ends an account's sessions from its row, only where it has some, warning on your own row that it ends yours", async () => {
+  it("ends an account's sessions from its row, only where it has some, saying on your own row that it logs you out", async () => {
     const { end } = await renderTable();
     const form = (email: string) => page.getByRole("form", { name: `${staffCopy.accounts.endSessions}: ${email}` });
     await expect.element(form("jo@pauseai.uk")).not.toBeInTheDocument();
-    await expect.element(form("admin@pauseai.uk").getByText(staffCopy.accounts.endsYours)).toBeVisible();
-    await expect.element(form("sam@pauseai.uk").getByText(staffCopy.accounts.endsYours)).not.toBeInTheDocument();
+    await expect
+      .element(form("admin@pauseai.uk").getByRole("button"))
+      .toHaveTextContent(staffCopy.accounts.endMySessions);
+    await expect.element(form("sam@pauseai.uk").getByRole("button")).toHaveTextContent(staffCopy.accounts.endSessions);
     await form("sam@pauseai.uk").getByRole("button").click();
     await vi.waitFor(() => expect(end.sent).toEqual([{ email: "sam@pauseai.uk" }]));
   });
@@ -1972,7 +1999,7 @@ describe("PoliticianTable", () => {
 
   it("leaves out only a column the filters fix, however alike the rows are", async () => {
     const plain = { ...MP, importantTarget: false };
-    const headings = () => [...document.querySelectorAll("th")].map((th) => th.textContent!.replace(/ [▲▼]$/, ""));
+    const headings = () => [...document.querySelectorAll("th")].map((th) => th.textContent!.replace(/( [▲▼])+$/, ""));
     const { columns } = staffCopy.politicians;
     const after = [
       staffCopy.politicians.flag,

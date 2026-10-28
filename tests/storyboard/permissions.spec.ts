@@ -236,7 +236,7 @@ test("an admin sees when each account last logged in and was seen, and its sessi
     .getByRole("row")
     .filter({ has: page.getByRole("cell", { name: "admin@pauseai.uk", exact: true }) });
   await expect(seeded).toContainText(staffCopy.accounts.never);
-  await expect(page.getByRole("row").filter({ hasText: staffEmail() })).toContainText(staffCopy.accounts.endsYours);
+  await expect(page.getByRole("row").filter({ hasText: staffEmail() })).toContainText(staffCopy.accounts.endMySessions);
   await frame(page, "the accounts page: added by login, last login and seen, and sessions open");
 
   await row.getByRole("button", { name: staffCopy.accounts.endSessions }).click();

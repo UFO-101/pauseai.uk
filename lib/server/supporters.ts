@@ -14,6 +14,7 @@ import type {
 import { SUPPORTERS_PAGE_SIZE } from "@/lib/supporters";
 import { query, transaction, type Queryable } from "./db";
 import { permissionsFor } from "./email-permissions";
+import { optedOutOfLuma } from "./opt-outs";
 import { refreshSupporterFacts } from "./supporter-facts";
 import { SUPPORTER_SOURCES } from "./supporter-sources";
 import { contains, everyWord } from "./search";
@@ -83,20 +84,37 @@ export async function linkSupporters(db?: Queryable): Promise<LinkResult> {
   return { supportersAdded: added.length, linked: existing.length + fresh.length };
 }
 
-const SUMMARY_COLUMNS = `s.id::int AS id, s.name, coalesce(s.emails, '{}') AS emails,
-  (SELECT i.email FROM supporter_identity i WHERE i.supporter_id = s.id ORDER BY i.seen_at DESC NULLS LAST, i.email LIMIT 1) AS email,
-  s.phone, s.postcode,
-  coalesce(s.sources, '{}') AS sources, s.luma_contact AS "lumaContact", s.first_seen_at AS "firstSeenAt",
-  s.last_active_at AS "lastActiveAt", s.events, s.letters, s.member`;
+/**
+ * Whether supporter `s` is a contact of the Luma calendar's now: they follow
+ * it, and haven't opted out of its emails. The opt-out is looked up as the
+ * list is read, not kept with it, so Luma's webhook saying so shows at once.
+ */
+const LUMA_CONTACT = `(s.luma_follows AND NOT ${optedOutOfLuma("s.emails")})`;
 
-/** Where they are (the supporter_place view), joined as sp: a place's name and what it's from, or nulls. */
-const PLACE_COLUMNS = `CASE WHEN sp.supporter_id IS NULL THEN NULL
-  ELSE json_build_object('name', sp.place, 'basis', sp.basis, 'given', sp.given, 'country', sp.country) END AS place`;
+/**
+ * A supporter's summary as staff see it, from `s`, a row shaped as
+ * supporters_listed's: who they are, their newest email, what they've done,
+ * and where they are (a place's name and what it's from), or nulls.
+ */
+const SUMMARY_COLUMNS = `s.id::int AS id, s.name, coalesce(s.emails, '{}') AS emails, s.email, s.phone, s.postcode,
+  coalesce(s.sources, '{}') AS sources, ${LUMA_CONTACT} AS "lumaContact", s.first_seen_at AS "firstSeenAt",
+  s.last_active_at AS "lastActiveAt", s.events, s.letters, s.member,
+  CASE WHEN s.basis IS NULL THEN NULL
+  ELSE json_build_object('name', s.place, 'basis', s.basis, 'given', s.given, 'country', s.country) END AS place`;
+
+/**
+ * Supporter $1's row, shaped as supporters_listed's, worked out now from
+ * the views rather than read from the list's last refresh: for their page.
+ */
+const LIVE_SUMMARY = `(SELECT s.*,
+    (SELECT i.email FROM supporter_identity i WHERE i.supporter_id = s.id ORDER BY i.seen_at DESC NULLS LAST, i.email LIMIT 1) AS email,
+    sp.place, sp.basis, sp.given, sp.country
+  FROM supporters_summary s LEFT JOIN supporter_place sp ON sp.supporter_id = s.id WHERE s.id = $1) s`;
 
 /** When a supporter has each lozenge in the Activities column, as SupporterBadges shows them. */
 const BADGE_CONDITIONS: Record<SupporterBadge, string> = {
   member: "s.member",
-  lumaContact: "s.luma_contact",
+  lumaContact: LUMA_CONTACT,
   registered: "s.events > 0",
   letter: "s.letters > 0",
   march: "'march-2026-11' = ANY(s.sources)",
@@ -112,8 +130,8 @@ export type SupportersPage = {
 
 /** Miles between a supporter's place and the point `lat`, `lon` (the haversine formula, on a round Earth). */
 const milesFrom = (lat: string, lon: string) =>
-  `3958.8 * 2 * asin(sqrt(power(sin(radians(sp.latitude - ${lat}) / 2), 2)
-     + cos(radians(${lat})) * cos(radians(sp.latitude)) * power(sin(radians(sp.longitude - ${lon}) / 2), 2)))`;
+  `3958.8 * 2 * asin(sqrt(power(sin(radians(s.latitude - ${lat}) / 2), 2)
+     + cos(radians(${lat})) * cos(radians(s.latitude)) * power(sin(radians(s.longitude - ${lon}) / 2), 2)))`;
 
 /**
  * The conditions of the filters that repeat, those that are on: each finds
@@ -138,14 +156,17 @@ function anyOf(filter: Pick<SupporterFilter, NegatableSupporterFilter>, add: (va
        WHERE k.supporter_id = s.id AND g.event_id = ANY(${add(filter.event)}) AND g.approval_status <> 'declined')`,
     );
   }
-  if (filter.country) conditions.push(`sp.country = ANY(${add(filter.country)})`);
+  if (filter.country) conditions.push(`s.country = ANY(${add(filter.country)})`);
   return conditions.map((condition) => `(${condition})`);
 }
 
 /**
  * One page of the list, filtered and sorted; with a `limit` of null, every
- * one, for a download. The Near filter's words are looked up at
- * postcodes.io; a place it can't find finds no one.
+ * one, for a download. Read from supporters_listed: as of the list's last
+ * refresh, with anyone added since. The Near filter's words are looked up
+ * at postcodes.io; a place it can't find finds no one. The page and how
+ * many there are in all are two queries, at once: counting alongside the
+ * page would read every row to sort them.
  */
 export async function listSupporters(
   filter: SupporterFilter,
@@ -191,20 +212,18 @@ export async function listSupporters(
   }[filter.sort];
   const dir = filter.dir === "asc" ? "ASC" : "DESC";
   const order = `${column} ${dir} NULLS LAST, s.last_active_at DESC NULLS LAST, s.id ${dir}`;
-  const rows = await query<SupporterSummary & { total: number }>(
-    `SELECT ${SUMMARY_COLUMNS}, ${PLACE_COLUMNS}, count(*) OVER ()::int AS total
-     FROM supporters_summary s LEFT JOIN supporter_place sp ON sp.supporter_id = s.id
-     ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
-     ORDER BY ${order} LIMIT ${add(limit)} OFFSET ${add((filter.page - 1) * (limit ?? 0))}`,
-    values,
-  );
-  const total = rows[0]?.total ?? 0;
+  const filtered = `FROM supporters_listed s ${where.length ? `WHERE ${where.join(" AND ")}` : ""}`;
+  const counting = [...values];
+  // The page's rows first, then their columns: worked out before the sort, the columns were for everyone.
+  const page = `SELECT ${SUMMARY_COLUMNS} FROM (SELECT s.* ${filtered}
+     ORDER BY ${order} LIMIT ${add(limit)} OFFSET ${add((filter.page - 1) * (limit ?? 0))}) s ORDER BY ${order}`;
+  const [rows, [{ total }]] = await Promise.all([
+    query<SupporterSummary>(page, values),
+    query<{ total: number }>(`SELECT count(*)::int AS total ${filtered}`, counting),
+  ]);
   const permissions = await permissionsFor(rows.flatMap((row) => row.emails));
   return {
-    supporters: rows.map(({ total, ...row }) => {
-      void total;
-      return { ...row, permissions: permissions.filter((p) => row.emails.includes(p.address)) };
-    }),
+    supporters: rows.map((row) => ({ ...row, permissions: permissions.filter((p) => row.emails.includes(p.address)) })),
     total,
     pages: Math.max(1, Math.ceil(total / SUPPORTERS_PAGE_SIZE)),
     ...(near !== undefined && { near }),
@@ -224,11 +243,7 @@ export async function eventChoices(): Promise<EventChoice[]> {
 
 /** Everything the staff page shows about one supporter, or undefined if there's no such one. */
 export async function getSupporter(id: number): Promise<SupporterDetails | undefined> {
-  const [summary] = await query<SupporterSummary>(
-    `SELECT ${SUMMARY_COLUMNS}, ${PLACE_COLUMNS}
-     FROM supporters_summary s LEFT JOIN supporter_place sp ON sp.supporter_id = s.id WHERE s.id = $1`,
-    [id],
-  );
+  const [summary] = await query<SupporterSummary>(`SELECT ${SUMMARY_COLUMNS} FROM ${LIVE_SUMMARY}`, [id]);
   if (!summary) return undefined;
   const [identities, contacts, links, activity, permissions] = await Promise.all([
     query<SupporterIdentity>(

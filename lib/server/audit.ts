@@ -31,7 +31,8 @@ export type ChangesPage = { changes: LoggedChange[]; total: number; pages: numbe
 
 /**
  * A page of the audit log, newest first, each entry with whom it's about;
- * with a `limit` of null, every entry, for a download.
+ * with a `limit` of null, every entry, for a download. Whom it's about is
+ * looked up for the page's entries only, not every one before them.
  */
 export async function recentChanges(page = 1, limit: number | null = AUDIT_PAGE_SIZE): Promise<ChangesPage> {
   const [{ total }] = await query<{ total: number }>("SELECT count(*)::int AS total FROM audit_log");
@@ -39,9 +40,9 @@ export async function recentChanges(page = 1, limit: number | null = AUDIT_PAGE_
     `SELECT a.id::int AS id, a.at, a.actor, a.action, a.details,
        (SELECT json_build_object('id', p.id, 'name', p.name) FROM notable_people p
         WHERE p.id::text = CASE WHEN a.action = ANY($2) THEN a.details->>'id' ELSE a.details->>'politicianId' END) AS politician,
-       (SELECT json_build_object('id', s.id, 'name', s.name) FROM supporters_summary s
-        WHERE a.action = 'view supporter' AND s.id::text = a.details->>'id') AS supporter
-     FROM audit_log a ORDER BY a.at DESC, a.id DESC LIMIT $1 OFFSET $3`,
+       (SELECT json_build_object('id', s.id, 'name', s.name) FROM supporters_listed s
+        WHERE s.id = CASE WHEN a.action = 'view supporter' THEN (a.details->>'id')::bigint END) AS supporter
+     FROM (SELECT * FROM audit_log ORDER BY at DESC, id DESC LIMIT $1 OFFSET $3) a ORDER BY a.at DESC, a.id DESC`,
     [limit, POLITICIAN_ACTIONS, (page - 1) * (limit ?? 0)],
   );
   return { changes, total, pages: Math.max(1, Math.ceil(total / AUDIT_PAGE_SIZE)), pageSize: AUDIT_PAGE_SIZE };

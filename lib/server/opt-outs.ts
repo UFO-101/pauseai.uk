@@ -89,3 +89,13 @@ export async function recordContactsPass(passStartedAt: Date, db?: Queryable): P
   );
   return gone.length + back.length;
 }
+
+/**
+ * SQL that's true while any of the addresses in `emails` (an SQL array) has
+ * opted out of the Luma calendar's emails: for whether a supporter is a
+ * Luma contact now, which the supporters list works out as it's read.
+ */
+export function optedOutOfLuma(emails: string): string {
+  return `EXISTS (SELECT 1 FROM opt_outs o
+    WHERE o.list = 'luma-calendar' AND o.resubscribed_at IS NULL AND o.address = ANY(${emails}))`;
+}

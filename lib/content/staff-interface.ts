@@ -33,11 +33,9 @@ export const staffCopy = {
   nav: {
     // At the left of the bar, and the way to the home page.
     title: "PauseAI Staff",
-    // The button at the top of the sidebar that folds it to a strip, and back, for a screen reader.
+    // The round button on the sidebar's edge, by its title, that folds it to a strip, and back, for a screen reader.
     fold: "Fold the menu",
     unfold: "Unfold the menu",
-    // Beside the fold button's chevron while the menu's open.
-    foldShort: "Fold",
     home: "Dashboard",
     accounts: "Staff accounts",
     // The sections the pages are in, in the sidebar.
@@ -403,9 +401,9 @@ export const staffCopy = {
     addedByLogin: "by login",
     // For an account that has never logged in or been seen.
     never: "Never",
-    // On each row with sessions open: ends them all; on your own row, the warning beside it.
-    endSessions: "Log out everywhere",
-    endsYours: "This logs you out too.",
+    // Beside how many sessions a row has open: ends every one; on your own row, it says they're yours, as it logs you out too.
+    endSessions: "End all",
+    endMySessions: "End all mine",
     // Under the last row: the field for the address of someone new (its
     // label, read aloud) and its button, which adds them as a row, saved
     // with the others.

@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { useId, type ReactNode } from "react";
-import { ButtonLink, buttonClass } from "@/components/ui/Button";
+import { buttonClass } from "@/components/ui/Button";
 import Table from "@/components/ui/Table";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { pageRange, type DownloadColumn, type DownloadFormat } from "@/lib/staff-list";
+import StaffLink from "./StaffLink";
 import Menu from "./Menu";
 import styles from "./ListFrame.module.css";
 
@@ -59,9 +59,13 @@ function Paging({ page, pages, href }: { page: number; pages: number; href: (pag
   return (
     <nav aria-label={copy.label} className={styles.pages}>
       {page > 1 && (
-        <ButtonLink variant="ghost" size="small" fit href={href(page - 1)} rel="prev">
+        <StaffLink
+          className={buttonClass({ variant: "ghost", size: "small", fit: true })}
+          href={href(page - 1)}
+          rel="prev"
+        >
           {copy.previous}
-        </ButtonLink>
+        </StaffLink>
       )}
       <ol className={styles.numbers}>
         {pageRange(page, pages).map((n, i) =>
@@ -76,9 +80,9 @@ function Paging({ page, pages, href }: { page: number; pages: number; href: (pag
                   {n}
                 </span>
               ) : (
-                <Link href={href(n)} aria-label={copy.page(n)} className={styles.number}>
+                <StaffLink href={href(n)} aria-label={copy.page(n)} className={styles.number}>
                   {n}
-                </Link>
+                </StaffLink>
               )}
             </li>
           ),
@@ -86,9 +90,13 @@ function Paging({ page, pages, href }: { page: number; pages: number; href: (pag
       </ol>
       <span className={styles.of}>{copy.of(page, pages)}</span>
       {page < pages && (
-        <ButtonLink variant="ghost" size="small" fit href={href(page + 1)} rel="next">
+        <StaffLink
+          className={buttonClass({ variant: "ghost", size: "small", fit: true })}
+          href={href(page + 1)}
+          rel="next"
+        >
           {copy.next}
-        </ButtonLink>
+        </StaffLink>
       )}
     </nav>
   );

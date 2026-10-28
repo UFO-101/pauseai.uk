@@ -106,7 +106,8 @@ function requirement(node: ts.Node): string | undefined {
  * outside the navigation's sections ask for an account.
  */
 function permissionProblems(name: string, source: string): string[] {
-  const path = `/${name.replace(/\/?page\.tsx$/, "")}`;
+  // Its URL: the folders it's in, but route groups, such as (signed-in).
+  const path = `/${name.replace(/\([^/]+\)\//g, "").replace(/\/?page\.tsx$/, "")}`;
   const page = staffPageOf(path);
   if (!page && !OUTSIDE_NAVIGATION.has(path)) return [`${name}: ${path} isn't under any page in lib/staff-sections.ts`];
   const wanted = page?.permission ?? "account";

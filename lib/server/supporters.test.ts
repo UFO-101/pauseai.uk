@@ -4,6 +4,7 @@ import { addTestLetter, addTestMp, describeWithDatabase, useTestDatabase } from 
 import type { SupporterFilter } from "@/lib/supporters";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
+import { refreshSupportersList } from "./supporter-facts";
 import { eventChoices, getSupporter, linkSupporters, listSupporters } from "./supporters";
 
 /** A Luma user, with a registration for `event` if given. */
@@ -289,11 +290,49 @@ describeWithDatabase("listSupporters and getSupporter", () => {
         },
       ],
     });
+    // A page past the end has no one on it, but still says how many there are.
     expect(await listSupporters({ sort: "active", dir: "desc", page: 2 })).toEqual({
       supporters: [],
-      total: 0,
+      total: 4,
       pages: 1,
     });
+  });
+
+  it("lists everyone as of the last refresh, and anyone added since as they are now", async () => {
+    await people();
+    await refreshSupportersList();
+    await query("UPDATE luma_people SET name = 'Janet' WHERE user_id = 'usr-1'");
+    await lumaUser("usr-4", "lee@example.com", "Lee", "evt-1", { registeredAt: "2026-10-15T10:00:00Z" });
+    await linkSupporters();
+    const listed = await names({});
+    expect(listed[0]).toBe("Lee");
+    expect(listed).toContain("Jane");
+    expect((await listSupporters({ sort: "active", dir: "desc", page: 1 })).total).toBe(5);
+    // A supporter's own page is as they are now.
+    const [{ id }] = await query<{ id: number }>(
+      "SELECT supporter_id::int AS id FROM supporter_links WHERE luma_user_id = 'usr-1'",
+    );
+    expect((await getSupporter(id))!.summary.name).toBe("Janet");
+    await refreshSupportersList();
+    expect(await names({})).toContain("Janet");
+  });
+
+  it("shows an opt-out from the Luma calendar, and its end, at once, between refreshes", async () => {
+    await people();
+    await refreshSupportersList();
+    const contacts = () => names({ activity: ["lumaContact"] });
+    expect(await contacts()).toEqual(["Jane"]);
+    await query(
+      `INSERT INTO opt_outs (address, list, source, source_ref, unsubscribed_at)
+       VALUES ('jane@example.com', 'luma-calendar', 'luma-webhook', 'w2', '2026-10-15T00:00:00Z')`,
+    );
+    expect(await contacts()).toEqual([]);
+    expect(
+      (await listSupporters({ sort: "active", dir: "desc", page: 1 })).supporters.find((s) => s.name === "Jane")!
+        .lumaContact,
+    ).toBe(false);
+    await query("UPDATE opt_outs SET resubscribed_at = '2026-10-16T00:00:00Z' WHERE source_ref = 'w2'");
+    expect(await contacts()).toEqual(["Jane"]);
   });
 
   it("filters by name, email or phone, activities, subscriptions, first sign-up and postcode, and sorts", async () => {

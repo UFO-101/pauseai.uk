@@ -1,4 +1,4 @@
-import type { APIRequestContext, Page } from "@playwright/test";
+import type { APIRequestContext, Page, Route } from "@playwright/test";
 import { campaigns, copy } from "@/lib/content/email-your-mp";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import type { ImportJob } from "@/lib/import-runs";
@@ -15,6 +15,7 @@ import {
   fillLetter,
   logInAsStaff,
   loginLinkFor,
+  lockTable,
   lookUpTestMp,
   newestEmail,
   newestEmailTo,
@@ -62,15 +63,26 @@ test(
     await page.goto(`${BASE}/staff/politicians`);
     const nav = page.getByRole("navigation", { name: staffCopy.nav.title });
     await expect(nav.getByRole("link", { name: staffCopy.nav.supporters })).toBeVisible();
-    await frame(page, "the sidebar open: each page's icon beside its name, and Fold at its foot");
+    await frame(
+      page,
+      "the sidebar open: each page's icon beside its name, and a round fold button on its edge at its foot",
+    );
 
+    // Folding moves the icons sideways only: each stays at the height it was.
+    const heights = () =>
+      nav.locator("li svg, form svg").evaluateAll((icons) => icons.map((icon) => icon.getBoundingClientRect().top));
+    const open = await heights();
     await nav.getByRole("button", { name: staffCopy.nav.fold }).click();
     await expect(nav.getByRole("button", { name: staffCopy.nav.unfold })).toBeVisible();
     await expect(nav.getByRole("heading", { name: staffCopy.nav.sections.admin })).toBeHidden();
-    await frame(page, "folded: a rail of icons, the sections a rule apart, and the list wider");
+    expect(await heights()).toEqual(open);
+    await frame(page, "folded: a rail of icons, each where it was, the sections a rule apart, and the list wider");
 
-    await nav.getByRole("link", { name: staffCopy.nav.supporters }).hover();
-    await frame(page, "a page's name beside its icon, on hover");
+    // Tabbed to, as the frame moves the mouse away: a hover shows the same.
+    await nav.getByRole("link", { name: staffCopy.nav.home }).focus();
+    await page.keyboard.press("Tab");
+    await expect(nav.getByRole("link", { name: staffCopy.nav.supporters })).toBeFocused();
+    await frame(page, "a page's name beside its icon, tabbed to or hovered over");
 
     await nav.getByRole("link", { name: staffCopy.nav.supporters }).click();
     await expect(page).toHaveURL(`${BASE}/staff/supporters`);
@@ -81,6 +93,98 @@ test(
     await expect(nav.getByRole("heading", { name: staffCopy.nav.sections.admin })).toBeVisible();
   },
 );
+
+/**
+ * Holds the next request for the page at a URL matching `target` (a
+ * navigation's, not a prefetch: a link hovered fetches its page whole
+ * ahead), so a flow can picture the page while it waits; `release` lets it
+ * through.
+ */
+async function holdNextPage(page: Page, target: RegExp): Promise<{ release: () => Promise<void> }> {
+  let open = () => {};
+  const held = new Promise<void>((done) => (open = done));
+  let holding = true;
+  const matches = (url: URL) => url.searchParams.has("_rsc") && target.test(url.search);
+  const handler = async (route: Route) => {
+    if (!holding || route.request().headers()["next-router-prefetch"]) return route.continue();
+    holding = false;
+    await held;
+    await route.continue();
+  };
+  await page.route(matches, handler);
+  return {
+    release: async () => {
+      open();
+      await page.unroute(matches, handler);
+    },
+  };
+}
+
+/** Whether the line along the top of the page, while something loads, is showing (StaffPage). */
+const loadingLine = (page: Page) =>
+  page.evaluate(() => {
+    const line = getComputedStyle(document.querySelector("main")!, "::before");
+    return line.content !== "none" && line.opacity === "1";
+  });
+
+test("a sort or search shows chosen at once, the list staying put until the new one arrives", async ({
+  page,
+  flowDatabase,
+}) => {
+  // The line along the top slides while it waits; held still, so each frame of it is the same.
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await logIn(page, flowDatabase, ["supporters", "admin"]);
+  await page.goto(`${BASE}/staff/politicians`);
+  await frame(page, "the politicians list, by name, A to Z");
+
+  // A sort heading: its arrow turns at once; the rows stay as they were.
+  let next = await holdNextPage(page, /sort=name&dir=desc/);
+  const name = page.getByRole("table").getByRole("link", { name: staffCopy.fields.name });
+  await name.click();
+  await expect(name).toHaveAttribute("data-pending", "true");
+  await expect(name).toContainText("▼");
+  await expect.poll(() => loadingLine(page)).toBe(true);
+  await frame(page, "Name clicked again: its arrow turned at once, a line along the top while Z to A loads");
+  await next.release();
+  await expect(page).toHaveURL(/sort=name&dir=desc/);
+  await expect.poll(() => loadingLine(page)).toBe(false);
+
+  // A search, sent from its box without leaving the page.
+  next = await holdNextPage(page, /q=Testy/);
+  await page.getByRole("searchbox").fill("Testy");
+  await page.getByRole("button", { name: staffCopy.search }).click();
+  await expect.poll(() => loadingLine(page)).toBe(true);
+  await frame(page, "a search sent: the list as it was, a line along the top while it looks");
+  await next.release();
+  await expect(page).toHaveURL(/q=Testy/);
+  await expect(page.getByRole("table").getByRole("row")).toHaveCount(2);
+  await frame(page, "what the search found");
+});
+
+test("another page shows chosen in the sidebar at once, the page staying put until the next arrives", async ({
+  page,
+  flowDatabase,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await logIn(page, flowDatabase, ["supporters", "admin"]);
+  await page.goto(`${BASE}/staff/politicians`);
+  // In the sidebar; on a phone, behind the bar's menu.
+  const asks = page
+    .getByRole("navigation", { name: staffCopy.nav.title })
+    .getByRole("link", { name: staffCopy.nav.asks });
+  if (!(await asks.first().isVisible())) await page.locator("nav details > summary").click();
+
+  // The Asks page waits on its table, as on a slow database.
+  const release = await lockTable(flowDatabase, "asks");
+  await asks.filter({ visible: true }).click();
+  await expect(asks.filter({ visible: true })).toHaveAttribute("data-pending", "true");
+  await expect(page.getByRole("heading", { level: 1, name: staffCopy.politicians.title })).toBeVisible();
+  await expect.poll(() => loadingLine(page)).toBe(true);
+  await frame(page, "Asks clicked: marked in the sidebar at once, the politicians still there, a line along the top");
+  await release();
+  await expect(page.getByRole("heading", { level: 1, name: staffCopy.asks.title })).toBeVisible();
+  await frame(page, "the Asks page arrived");
+});
 
 test("every staff page, without a session, goes to the login page, to come back to once logged in", async ({
   request,

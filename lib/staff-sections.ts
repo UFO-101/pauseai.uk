@@ -21,7 +21,12 @@ export type StaffPageId =
   | "changes";
 export type StaffSectionId = "supporters" | "politicians" | "admin";
 
-export type StaffPageLink = { id: StaffPageId; href: string; permission?: Permission };
+/**
+ * A page in the navigation: which, where, and the permission it needs. The
+ * paths `under` it too, besides its own: pages that belong with it but live
+ * elsewhere.
+ */
+export type StaffPageLink = { id: StaffPageId; href: string; permission?: Permission; under?: string[] };
 
 export type StaffSection = { id: StaffSectionId; pages: StaffPageLink[] };
 
@@ -29,7 +34,8 @@ const STAFF_SECTIONS: readonly StaffSection[] = [
   {
     id: "supporters",
     pages: [
-      { id: "supporters", href: "/staff/supporters", permission: "supporters" },
+      // A supporter's letters are a page of the supporter's.
+      { id: "supporters", href: "/staff/supporters", permission: "supporters", under: ["/staff/letters/supporter"] },
       { id: "letters", href: "/staff/letters", permission: "supporters" },
       { id: "supporterEmails", href: "/staff/supporters/blocked-emails", permission: "supporters" },
     ],
@@ -62,12 +68,15 @@ export function sectionsFor(permissions: readonly Permission[]): StaffSection[] 
 }
 
 /**
- * The page in the navigation a path is, or is under: the one whose href
- * is the longest whole-segment prefix of it. So /staff/supporters/7 is
- * under Supporters, and /staff/supporters/blocked-emails is its own page.
+ * The page in the navigation a path is, or is under: the one with the
+ * longest whole-segment prefix of it, its href or one it has `under` it. So
+ * /staff/supporters/7 is under Supporters, /staff/supporters/blocked-emails
+ * is its own page, and /staff/letters/supporter/7 is under Supporters too.
  */
 export function staffPageOf(path: string): StaffPageLink | undefined {
+  const within = (prefix: string) => (path === prefix || path.startsWith(`${prefix}/`) ? prefix.length : 0);
   return STAFF_SECTIONS.flatMap((section) => section.pages)
-    .filter((page) => path === page.href || path.startsWith(`${page.href}/`))
-    .sort((a, b) => b.href.length - a.href.length)[0];
+    .map((page) => ({ page, length: Math.max(...[page.href, ...(page.under ?? [])].map(within)) }))
+    .filter(({ length }) => length > 0)
+    .sort((a, b) => b.length - a.length)[0]?.page;
 }

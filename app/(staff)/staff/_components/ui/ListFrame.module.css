@@ -100,10 +100,18 @@
   background: var(--surface-2);
 }
 
-.current {
+.current,
+.number[data-pending] {
   background: var(--text);
   color: var(--surface);
   font-weight: 600;
+}
+
+/* A page clicked (StaffLink): marked at once, the one it was no longer, while it loads. */
+.numbers:has([data-pending]) .current {
+  background: none;
+  color: var(--text);
+  font-weight: inherit;
 }
 
 .gap {

@@ -55,12 +55,15 @@
   font-size: var(--text-sm);
 }
 
-/* A page: its icon, then its name. Log out is one too, a form's button. */
+/* A page: its icon, then its name. Log out is one too, a form's button.
+   A set height, so it's as tall folded, with its name hidden. */
 .page {
   position: relative;
-  display: inline-flex;
+  display: flex;
   gap: var(--space-2);
   align-items: center;
+  width: fit-content;
+  height: 1.75rem;
 }
 
 .page svg {
@@ -96,15 +99,26 @@ button.page:hover {
 }
 
 /* The current page, or the list a page belongs to: bold, in the text's colour, still a link. */
-.group a[aria-current="page"] {
+.group a[aria-current="page"],
+.group a[data-pending] {
   font-weight: 700;
   color: var(--text);
 }
 
+/* A page clicked (StaffLink): marked as the current one at once, and the one it was no longer, while it loads. */
+.nav:has(a[data-pending]) .group a[aria-current="page"]:not([data-pending]) {
+  font-weight: 500;
+  color: var(--accent);
+}
+
+/* Who's logged in, on one line, cut short if it's long, so the sidebar
+   keeps its height when it folds. */
 .who {
+  overflow: hidden;
   color: var(--text-secondary);
   font-size: var(--text-sm);
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* Under Log out: how many sessions are open, faint, as few need it. */
@@ -120,15 +134,19 @@ button.page:hover {
   text-decoration: underline;
 }
 
-/* Wider screens: the sidebar, with the groups spaced down it and the foot after them. */
+/* Wider screens: the sidebar, with the groups spaced down it and the foot
+   after them, no wider than its column however long who's logged in is. */
 .sidebar {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-5);
   width: 100%;
+  min-width: 0;
 }
 
 .foot {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-2);
   padding-top: var(--space-4);
   border-top: 1px solid var(--border);
@@ -152,9 +170,12 @@ button.page:hover {
     flex-direction: column;
     align-items: stretch;
     gap: var(--space-5);
-    /* Stays in view while a long page scrolls, from a little under the top. */
+    /* Stays in view while a long page scrolls, from a little under the top;
+       above the page, so a folded page's name and the fold button show
+       over it. */
     position: sticky;
     top: var(--space-5);
+    z-index: 2;
     align-self: start;
   }
 }
@@ -218,36 +239,69 @@ button.page:hover {
   }
 }
 
-/* Folded (NavFold), on wider screens: a rail of the icons, the sections a
-   rule apart, without their headings. Each name is still read out, and
-   shows beside its icon on hover or focus. */
+/* Folded (NavFold), on wider screens: a rail of the icons, each where it
+   was, so nothing moves up or down. A section's heading keeps its line,
+   showing a short rule instead of its words; who's logged in keeps theirs,
+   empty. Each page's name is still read out, and shows beside its icon on
+   hover or focus. */
 @media (min-width: 721px) {
   :global(:root[data-staff-nav="folded"]) .name,
-  :global(:root[data-staff-nav="folded"]) .group h2,
-  :global(:root[data-staff-nav="folded"]) .who,
   :global(:root[data-staff-nav="folded"]) .sessions {
     display: none;
   }
 
-  :global(:root[data-staff-nav="folded"]) .nav,
+  :global(:root[data-staff-nav="folded"]) .group h2,
+  :global(:root[data-staff-nav="folded"]) .who {
+    visibility: hidden;
+  }
+
+  :global(:root[data-staff-nav="folded"]) .group h2 {
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  :global(:root[data-staff-nav="folded"]) .group h2::after {
+    content: "";
+    position: absolute;
+    inset: 50% 20% auto;
+    border-top: 1px solid var(--border-strong);
+    visibility: visible;
+  }
+
+  /* The pause symbol in the middle of the rail, as the icons are. */
+  :global(:root[data-staff-nav="folded"]) .nav {
+    align-items: center;
+  }
+
   :global(:root[data-staff-nav="folded"]) .sidebar,
   :global(:root[data-staff-nav="folded"]) .foot {
     justify-items: center;
-    gap: var(--space-3);
   }
 
-  :global(:root[data-staff-nav="folded"]) .sidebar .group + .group {
-    padding-top: var(--space-3);
-    border-top: 1px solid var(--border);
+  :global(:root[data-staff-nav="folded"]) .sidebar .group,
+  :global(:root[data-staff-nav="folded"]) .who {
+    width: 100%;
   }
 
+  /* The current page's tint reaches past the icon without taking room. */
   :global(:root[data-staff-nav="folded"]) .sidebar .page {
-    padding: var(--space-1);
+    margin-inline: auto;
     border-radius: var(--radius-sm);
   }
 
-  :global(:root[data-staff-nav="folded"]) .sidebar .page[aria-current="page"] {
+  :global(:root[data-staff-nav="folded"]) .sidebar .page[aria-current="page"],
+  :global(:root[data-staff-nav="folded"]) .sidebar .page[data-pending] {
     background: rgb(var(--text-rgb) / 0.08);
+    box-shadow: 0 0 0 var(--space-1) rgb(var(--text-rgb) / 0.08);
+  }
+
+  :global(:root[data-staff-nav="folded"])
+    .nav:has(a[data-pending])
+    .sidebar
+    .page[aria-current="page"]:not([data-pending]) {
+    background: none;
+    box-shadow: none;
   }
 
   :global(:root[data-staff-nav="folded"]) .sidebar .label {

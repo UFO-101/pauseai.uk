@@ -2,11 +2,12 @@ import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import type { Permission } from "@/lib/staff-permissions";
 import { KEEP_DAYS, loginPath, SESSION_COOKIE, SESSION_HOURS, STAFF_PATH_HEADER } from "@/lib/staff-session";
 import { logChange } from "./audit";
 import { query } from "./db";
-import { accountOf, accountOnLogin } from "./staff-accounts";
+import { accountOnLogin } from "./staff-accounts";
 
 // Staff sessions, kept in the database. Every staff page, Server Action and
 // route handler calls requireStaff() first, saying what it needs: an
@@ -41,11 +42,16 @@ export async function createSession(email: string, remember = false, userAgent: 
 
 /**
  * The staff member a session token belongs to, if it's current, who is
- * then seen now, with how many sessions they have open, this one included.
- * A kept session is renewed for another 30 days.
+ * then seen now, with how many sessions they have open, this one included,
+ * and their account's permissions, or null if their account has gone. A
+ * kept session is renewed for another 30 days. One query, as every staff
+ * page waits on it, and once a request (React's cache), as the signed-in
+ * pages' layout and the page both ask.
  */
-async function sessionOf(token: string): Promise<{ email: string; sessions: number } | undefined> {
-  const [row] = await query<{ email: string; sessions: number }>(
+const sessionOf = cache(async function sessionOf(
+  token: string,
+): Promise<{ email: string; sessions: number; permissions: Permission[] | null } | undefined> {
+  const [row] = await query<{ email: string; sessions: number; permissions: Permission[] | null }>(
     `WITH session AS (
        UPDATE staff_sessions SET expires_at = CASE WHEN remember THEN now() + interval '${KEEP_DAYS} days' ELSE expires_at END
        WHERE token_hash = $1 AND expires_at > now() RETURNING email
@@ -53,12 +59,13 @@ async function sessionOf(token: string): Promise<{ email: string; sessions: numb
        UPDATE staff_accounts SET last_seen_at = now() WHERE email IN (SELECT lower(email) FROM session)
      )
      SELECT email, (SELECT count(*)::int FROM staff_sessions o
-                    WHERE lower(o.email) = lower(session.email) AND o.expires_at > now()) AS sessions
+                    WHERE lower(o.email) = lower(session.email) AND o.expires_at > now()) AS sessions,
+       (SELECT a.permissions FROM staff_accounts a WHERE a.email = lower(trim(session.email))) AS permissions
      FROM session`,
     [hash(token)],
   );
   return row;
-}
+});
 
 /** The staff member a session token belongs to, if it's current (sessionOf). */
 export async function sessionEmail(token: string): Promise<string | undefined> {
@@ -127,8 +134,8 @@ const STAFF_HOME = "/staff";
 export async function requireStaff(needs: StaffNeeds = "account"): Promise<Staff> {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   const session = token ? await sessionOf(token) : undefined;
-  const account = session ? await accountOf(session.email) : undefined;
-  if (!token || !session || !account) redirect(loginPath((await headers()).get(STAFF_PATH_HEADER) ?? undefined));
-  if (needs !== "account" && !account.permissions.includes(needs)) redirect(STAFF_HOME);
-  return { email: session.email, token, permissions: account.permissions, sessions: session.sessions };
+  const permissions = session?.permissions;
+  if (!token || !session || !permissions) redirect(loginPath((await headers()).get(STAFF_PATH_HEADER) ?? undefined));
+  if (needs !== "account" && !permissions.includes(needs)) redirect(STAFF_HOME);
+  return { email: session.email, token, permissions, sessions: session.sessions };
 }

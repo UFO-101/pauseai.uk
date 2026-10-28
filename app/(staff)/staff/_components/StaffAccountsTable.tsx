@@ -56,9 +56,8 @@ function PermissionBoxes({ account, save }: { account: StaffAccount; save: Actio
 }
 
 /**
- * The button that ends every session an account has, for a row with any
- * open; on your own row, with the warning that it ends yours too on its
- * own line under it.
+ * The button that ends every session an account has, beside how many it
+ * has open, for a row with any; on your own row, saying they're yours.
  */
 function EndSessionsForm({ account, yours, end }: { account: StaffAccount; yours: boolean; end: Action }) {
   const copy = staffCopy.accounts;
@@ -67,13 +66,8 @@ function EndSessionsForm({ account, yours, end }: { account: StaffAccount; yours
     <form action={end} aria-label={`${copy.endSessions}: ${account.email}`}>
       <input type="hidden" name="email" value={account.email} />
       <SubmitButton variant="ghost" size="small" fit>
-        {copy.endSessions}
+        {yours ? copy.endMySessions : copy.endSessions}
       </SubmitButton>
-      {yours && (
-        <p className={styles.warning}>
-          <Muted>{copy.endsYours}</Muted>
-        </p>
-      )}
     </form>
   );
 }
@@ -176,12 +170,14 @@ export default function StaffAccountsTable({
               </td>
               <td>{when(account.lastLoginAt)}</td>
               <td>{when(account.lastSeenAt)}</td>
-              <td>{account.sessions}</td>
               <td>
-                <div className={styles.buttons}>
+                <span className={styles.sessions}>
+                  {account.sessions}
                   <EndSessionsForm account={account} yours={account.email === you} end={endSessions} />
-                  <RemoveAccountForm email={account.email} remove={remove} />
-                </div>
+                </span>
+              </td>
+              <td>
+                <RemoveAccountForm email={account.email} remove={remove} />
               </td>
             </tr>
           ))}

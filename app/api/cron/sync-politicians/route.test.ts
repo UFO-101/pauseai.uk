@@ -17,7 +17,10 @@ const call = (authorization: string) =>
 describeWithDatabase("POST /api/cron/sync-politicians", () => {
   useTestDatabase();
 
-  it("copies the politicians from Airtable, then PauseAI's emails to them, and says what changed", async () => {
+  it("copies the politicians from Airtable, then PauseAI's emails to them, tidies the logs, and says what changed", async () => {
+    await query(
+      "INSERT INTO import_runs (job, at, status) VALUES ('import-luma', now() - interval '8 days', 'ok'), ('import-luma', now(), 'ok')",
+    );
     const res = await call("Bearer s3cret");
     expect(await res.json()).toEqual({
       status: "applied",
@@ -27,6 +30,7 @@ describeWithDatabase("POST /api/cron/sync-politicians", () => {
       renamed: 0,
       statuses: { added: 5, changed: 0, removed: 0 },
       emails: 4,
+      tidied: { importRuns: 1, auditEntries: 0 },
     });
   });
 

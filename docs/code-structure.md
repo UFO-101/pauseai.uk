@@ -279,7 +279,10 @@ need no thought. Two kinds of query do, and get it when they're written:
   activity). It groups each source once and joins the results, rather than
   running a subquery per column for every row (`supporters_summary`).
   Subqueries over views of views, once per row, are what the planner prices
-  highest.
+  highest. A list sorted or filtered by what that works out can't use an
+  index on it, so keep it (a materialized view, as `supporters_list`) and
+  read the kept rows; and take the page's rows before building their
+  columns, or they're built for every row the sort reads.
 
 For either, check it before calling it done: fill a throwaway database to
 about the size the real data will reach in a year (`scripts/fresh-database.mjs`
@@ -291,7 +294,25 @@ above 100,000 (`jit_above_cost`), Postgres compiles the query first where it
 has JIT, as CI's image does, which can take seconds
 for a query that runs in milliseconds. This container's Postgres has no JIT
 (`pg_jit_available()` is false), so a query too costly for CI still passes
-here; the cost is the only warning.
+here; the cost is the only warning. To see every query's cost as the tests
+run it, those a PL/pgSQL function runs included, which it plans apart: `ALTER
+ROLE dev SET session_preload_libraries = 'auto_explain'`, with
+`auto_explain.log_min_duration = 0` and `auto_explain.log_nested_statements =
+on`, run the tests, read the plans in Postgres's log, and reset the three.
+
+The symptom is a test that times out in CI and passes here in milliseconds.
+The fix is a query the planner prices lower, not JIT turned off (it was
+once, and then the query was fixed instead): Postgres prices views of
+views of unions in the millions however few rows they hold. What has
+brought them under:
+
+- Grouping each source once and joining, not a subquery per row:
+  `supporters_summary`, and the newest email in `supporters_list`.
+- Building a page's columns after taking its rows, and counting apart from
+  the page (`listSupporters()`).
+- For a few rows worked out from the views, a PL/pgSQL function that looks
+  each up by ID in a loop, declared with a small `ROWS`, so the outer query
+  is planned as if there are few (`supporters_added()`).
 
 Beyond that, no speculative indexes: one costs every write to its table and
 is easy to add later, when a query that's actually used turns out slow.

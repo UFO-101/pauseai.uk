@@ -9,7 +9,9 @@ import { TEST_MPS, type TestMp } from "@/lib/test-mps";
 import { FIXTURE_NOW, OUTBOX_DIR } from "./fixture-env.mjs";
 import { type OutboxEmail, readOutbox } from "./fixtures/outbox";
 import { lumaPersonWebhook, lumaWebhookHeaders } from "./luma-webhooks";
-import { runSql } from "@/scripts/fresh-database.mjs";
+import { spawn } from "node:child_process";
+import { once } from "node:events";
+import { databaseUrl, runSql } from "@/scripts/fresh-database.mjs";
 
 // Redirects to the first campaign.
 const TOOL_PAGE = "/campaigns";
@@ -60,6 +62,27 @@ export function addStaffAccount(database: string, email: string, permissions: st
     `INSERT INTO staff_accounts (email, permissions, added_by) VALUES ('${email}', '${list}', 'admin@pauseai.uk')
      ON CONFLICT (email) DO UPDATE SET permissions = '${list}'`,
   );
+}
+
+/**
+ * Locks `table` in `database` until the returned function is called, so a
+ * page that reads it waits there, and a flow can picture what shows while it
+ * loads. The rest of the page, and every other table, go on as usual.
+ */
+export async function lockTable(database: string, table: string): Promise<() => Promise<void>> {
+  const psql = spawn("psql", ["-X", "-At", "-v", "ON_ERROR_STOP=1", "-d", databaseUrl(database)], {
+    stdio: ["pipe", "pipe", "inherit"],
+  });
+  psql.stdin.write(`BEGIN; LOCK TABLE ${table} IN ACCESS EXCLUSIVE MODE; SELECT 'locked';\n`);
+  await new Promise<void>((done) =>
+    psql.stdout.on("data", (data: Buffer) => {
+      if (data.toString().includes("locked")) done();
+    }),
+  );
+  return async () => {
+    psql.stdin.end("COMMIT;\n");
+    await once(psql, "exit");
+  };
 }
 
 /** Copies the fixture Airtable's members into the flow's database through the hourly import's own route. */

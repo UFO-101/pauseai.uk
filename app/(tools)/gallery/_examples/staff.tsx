@@ -50,6 +50,8 @@ import { exampleMailing, exampleMailings } from "@/app/(staff)/staff/_components
 import ListFrame, { ListTable, type ListColumn } from "@/app/(staff)/staff/_components/ui/ListFrame";
 import ChoiceSearch from "@/app/(staff)/staff/_components/ui/ChoiceSearch";
 import NavFold from "@/app/(staff)/staff/_components/ui/NavFold";
+import FormPending from "@/app/(staff)/staff/_components/ui/FormPending";
+import StaffLink from "@/app/(staff)/staff/_components/ui/StaffLink";
 import NavIcon from "@/app/(staff)/staff/_components/NavIcon";
 import PoliticiansList, { HouseTabs } from "@/app/(staff)/staff/_components/PoliticiansList";
 import ErasedNotice from "@/app/(staff)/staff/_components/ErasedNotice";
@@ -377,14 +379,49 @@ export const staff: Group = {
       ],
     },
     {
+      name: "StaffLink",
+      file: "app/(staff)/staff/_components/ui/StaffLink.tsx",
+      variants: [
+        {
+          label: "A link to another page or a changed list: chosen at once, the page fetched ahead once it's hovered",
+          render: () => (
+            <StaffPage as="div">
+              <StaffLink href="/gallery/staff">Next page</StaffLink>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "FormPending",
+      file: "app/(staff)/staff/_components/ui/FormPending.tsx",
+      variants: [
+        {
+          label: "Unseen, in a list's search form: marks it pending while its search loads, for the line along the top",
+          render: () => (
+            <StaffPage as="div">
+              <form>
+                <FormPending />
+              </form>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
       name: "NavFold",
       file: "app/(staff)/staff/_components/ui/NavFold.tsx",
       variants: [
         {
-          label: "At the sidebar's foot: folds it to a rail of icons, and back",
+          label: "On the sidebar's edge, at its foot: folds it to a rail of icons, and back",
           render: () => (
             <StaffPage as="div">
-              <NavFold />
+              {/* A box for it to sit on the right edge of, as the navigation is. */}
+              <div
+                style={{ position: "relative", width: "10rem", height: "2rem", borderRight: "1px solid var(--border)" }}
+              >
+                <NavFold />
+              </div>
             </StaffPage>
           ),
         },

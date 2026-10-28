@@ -23,3 +23,15 @@ export async function refreshSupporterFacts(db?: Queryable, only?: number[]): Pr
   );
   return rows.length;
 }
+
+/**
+ * Works out the supporters list again (the supporters_list materialized
+ * view, which supporters_listed reads), for everyone, while pages go on
+ * reading the old one. About two seconds at 100,000 supporters, so only the
+ * imports that add or link supporters run it, at their end, and an erasure,
+ * so no one erased stays listed. Anyone added in between is listed anyway,
+ * worked out as the list is read.
+ */
+export async function refreshSupportersList(db?: Queryable): Promise<void> {
+  await query("REFRESH MATERIALIZED VIEW CONCURRENTLY supporters_list", [], db);
+}
