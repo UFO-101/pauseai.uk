@@ -41,15 +41,13 @@ describeWithDatabase("mailings", () => {
     // The unsent first, the newest made first.
     expect(mailings.map((m) => [m.title, m.sent, m.skipped, m.bounced, m.replied])).toEqual([
       ["DeepMind letter", 0, 0, 0, 0],
-      ["Frontier AI", 0, 0, 0, 0],
-      ["Liability Bill", 0, 0, 0, 0],
       ["Westminster Hall Debate Invitation", 0, 0, 0, 0],
       ["Documentary Invitation", 0, 0, 0, 0],
       ["Ben Lake October 2026 Debate", 0, 0, 0, 0],
       [EDINBURGH, 2, 1, 1, 1],
       [CSRB, 1, 0, 0, 0],
     ]);
-    expect(mailings[6]).toMatchObject({
+    expect(mailings[4]).toMatchObject({
       ask: "edinburgh-conference-2026",
       askTitle: "Edinburgh conference",
       imported: true,

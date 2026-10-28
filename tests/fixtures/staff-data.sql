@@ -450,7 +450,7 @@ INSERT INTO form_entry_luma (entry_id, event_id, status)
 SELECT id, 'evt-hfOj1RR5K1gBNEW', CASE WHEN email LIKE 'mo.%' THEN 'skipped' ELSE 'added' END FROM entries;
 
 -- PauseAI's emails, as the Emails sync copies them (airtable-emails.json):
--- one of each mailing, personalised or not.
+-- one of each mailing, personalised or not, the DeepMind letter's by its title, as it has no box.
 CREATE TEMP TABLE seed_emails (airtable_id text, politician text, mailing text, personalised boolean, sent interval) ON COMMIT DROP;
 INSERT INTO seed_emails VALUES
   ('recEmailCsrb', 'recDummy', 'CSRB Iqbal Amendment', false, '138 days'),
@@ -459,15 +459,15 @@ INSERT INTO seed_emails VALUES
   ('recEmailBenLake', 'recDummy', 'Ben Lake October 2026 Debate', false, '11 days'),
   ('recEmailDocumentary', 'recDummy', 'Documentary Invitation', false, '420 days'),
   ('recEmailWestminster', 'recPlaceholder', 'Westminster Hall Debate Invitation', true, '390 days'),
-  ('recEmailLiability', 'recDummy', 'Liability Bill', false, '200 days'),
-  ('recEmailFrontier', 'recPlaceholder', 'Frontier AI', true, '160 days');
+  ('recEmailDeepMind', 'recPlaceholder', 'DeepMind letter', true, '470 days');
 CREATE TEMP TABLE seeded_emails ON COMMIT DROP AS
 SELECT nextval(pg_get_serial_sequence('letters', 'id')) AS id, e.* FROM seed_emails e;
 INSERT INTO letters (id, kind, notable_person_id, status, created_at, sent_at) OVERRIDING SYSTEM VALUE
 SELECT e.id, 'pauseai', n.id, 'sent', now() - e.sent, now() - e.sent
 FROM seeded_emails e JOIN notable_people n ON n.airtable_id = e.politician;
 INSERT INTO pauseai_letters (id, mailing_id, airtable_id, personalised)
-SELECT e.id, m.id, e.airtable_id, e.personalised FROM seeded_emails e JOIN mailings m ON m.airtable_field = e.mailing;
+SELECT e.id, m.id, e.airtable_id, e.personalised FROM seeded_emails e
+JOIN mailings m ON coalesce(m.airtable_field, m.title) = e.mailing;
 
 -- ---------------------------------------------------------- import log
 
