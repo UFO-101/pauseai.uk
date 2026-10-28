@@ -388,24 +388,26 @@ export default function MailingWriter({
         </Card>
 
         <Card span={6} title={<Numbered n={4}>{copy.sections.from}</Numbered>} id="from-title">
-          <Field label={copy.fromLegend} className={styles.sender}>
-            <Select
-              value={values.sentFrom ?? ""}
-              onChange={(event) => change({ sentFrom: event.target.value || null })}
-            >
-              <option value="" />
-              {data.senders.map((sender) => (
-                <option key={sender} value={sender}>
-                  {sender}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Hint>{copy.notConnected}</Hint>
+          <div className={styles.withHint}>
+            <Field label={copy.fromLegend} className={styles.sender}>
+              <Select
+                value={values.sentFrom ?? ""}
+                onChange={(event) => change({ sentFrom: event.target.value || null })}
+              >
+                <option value="" />
+                {data.senders.map((sender) => (
+                  <option key={sender} value={sender}>
+                    {sender}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Hint>{copy.notConnected}</Hint>
+          </div>
         </Card>
 
         <Card span={6} title={<Numbered n={5}>{copy.sections.when}</Numbered>} id="when-title">
-          <div className={styles.whenGroup}>
+          <div className={styles.withHint}>
             <div className={styles.when}>
               <Field label={copy.day} className={styles.day}>
                 <TextInput

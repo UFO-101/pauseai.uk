@@ -62,8 +62,8 @@
   max-width: 22rem;
 }
 
-/* The day and hour, with the note on the hour close under them. */
-.whenGroup {
+/* Fields with their note close under them, not a card's gap away. */
+.withHint {
   display: grid;
 }
 
