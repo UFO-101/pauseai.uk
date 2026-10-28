@@ -1,15 +1,11 @@
 // The storyboard's test object: every flow gets its own database, a fixed
 // clock, and the cookie that tells the build which database it's on. Specs
 // import `test` and `expect` from here, never from @playwright/test.
+import { createHash } from "node:crypto";
 import { test as base, type BrowserContextOptions } from "@playwright/test";
 import { copyDatabase, dropDatabase, runSql } from "@/scripts/fresh-database.mjs";
-import {
-  FIXTURE_NOW,
-  FLOW_DATABASE_COOKIE,
-  FLOW_DATABASE_PREFIX,
-  LOCAL_URL,
-  TEMPLATE_DATABASE,
-} from "../fixture-env.mjs";
+import { FLOW_DATABASES, TEMPLATE_DATABASE } from "../checkout.mjs";
+import { FIXTURE_NOW, FLOW_DATABASE_COOKIE, LOCAL_URL } from "../fixture-env.mjs";
 
 export { expect } from "@playwright/test";
 export { emailFrame, frame } from "./frame";
@@ -58,13 +54,12 @@ const TALLY_STAND_IN = "window.Tally = { loadEmbeds: () => {} };";
 export const test = base.extend<{ flowDatabase: string }>({
   // A copy of the template (global-setup.ts), made in tens of milliseconds,
   // for this flow alone, and dropped after it. Named after the test, so a
-  // flow run twice, or alongside others, never shares one.
+  // flow run twice, or alongside others, never shares one: a hash, as the
+  // test's id and the checkout's are more than Postgres's 63 characters.
   flowDatabase: [
     async ({}, provide, testInfo) => {
-      const name = `${FLOW_DATABASE_PREFIX}${testInfo.testId}_${testInfo.repeatEachIndex}_${testInfo.retry}`.replace(
-        /\W/g,
-        "_",
-      );
+      const flow = `${testInfo.testId} ${testInfo.repeatEachIndex} ${testInfo.retry}`;
+      const name = `${FLOW_DATABASES}${createHash("sha256").update(flow).digest("hex").slice(0, 24)}`;
       copyDatabase(name, TEMPLATE_DATABASE);
       // The fixed clock's now() first, before Postgres's own (global-setup.ts).
       runSql("postgres", `ALTER DATABASE "${name}" SET search_path = fixture, pg_catalog, public`);

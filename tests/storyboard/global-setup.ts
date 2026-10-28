@@ -1,6 +1,7 @@
 import { rmSync } from "node:fs";
 import { addTestMps, databaseNames, dropDatabase, freshDatabase, runSql } from "@/scripts/fresh-database.mjs";
-import { FIXTURE_NOW, FLOW_DATABASE_PREFIX, OUTBOX_DIR, TEMPLATE_DATABASE, TEST_MP_EMAIL } from "../fixture-env.mjs";
+import { FLOW_DATABASES, OUTBOX_DIR, TEMPLATE_DATABASE } from "../checkout.mjs";
+import { FIXTURE_NOW, TEST_MP_EMAIL } from "../fixture-env.mjs";
 
 // Before the flows: the template database each flow's is copied from
 // (fixtures.ts), migrated and with the test MPs, as the build's own database
@@ -13,8 +14,8 @@ import { FIXTURE_NOW, FLOW_DATABASE_PREFIX, OUTBOX_DIR, TEMPLATE_DATABASE, TEST_
 // So a letter's sent time and an audit entry's time are the same on every
 // run, and the storyboard compares those pages unmasked.
 export default function globalSetup(): void {
-  // Left over from a run that was stopped: nothing can be using them now.
-  for (const name of databaseNames(FLOW_DATABASE_PREFIX)) dropDatabase(name);
+  // Left over from this checkout's run that was stopped: nothing can be using them now.
+  for (const name of databaseNames(FLOW_DATABASES)) dropDatabase(name);
 
   const url = freshDatabase(TEMPLATE_DATABASE);
   addTestMps(url, TEST_MP_EMAIL);

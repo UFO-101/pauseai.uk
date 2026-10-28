@@ -49,7 +49,8 @@ import {
 } from "node:fs";
 import { platform } from "node:os";
 import { basename, dirname, join, relative, resolve } from "node:path";
-import { LOCAL_URL, MAIN_OUTBOX_DIR, MAIN_URL } from "../tests/fixture-env.mjs";
+import { MAIN_OUTBOX_DIR } from "../tests/checkout.mjs";
+import { LOCAL_URL, MAIN_URL } from "../tests/fixture-env.mjs";
 import {
   cacheKey,
   carryable,

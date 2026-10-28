@@ -5,18 +5,11 @@
 // and the storyboard's tests, so every side is built and driven the same way.
 //
 // Plain JavaScript, not TypeScript, so the scripts can import it with Node.
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 
 /** This branch's build, under test. Not the dev server's port, so a running `npm run dev` is left alone. */
 export const LOCAL_URL = process.env.LOCAL_URL ?? "http://localhost:3100";
 /** Main's build (scripts/serve-main.mjs), for the storyboard's comparison. */
 export const MAIN_URL = process.env.MAIN_URL ?? "http://localhost:3001";
-
-/** Where the build under test writes its emails (tests/fixtures/outbox.ts). */
-export const OUTBOX_DIR = process.env.OUTBOX_DIR ?? join(tmpdir(), "pauseai-storyboard-outbox");
-/** Where main's fixture build (scripts/serve-main.mjs) writes its emails. */
-export const MAIN_OUTBOX_DIR = join(tmpdir(), "pauseai-storyboard-main-outbox");
 
 /** The test MPs' inbox in a fixture build. */
 export const TEST_MP_EMAIL = "test-mp@example.org";
@@ -36,10 +29,6 @@ export const FIXTURE_NOW = "2026-10-16T12:00:00.000Z";
  */
 export const FLOW_DATABASE_COOKIE = "storyboard_database";
 export const FLOW_DATABASE_PREFIX = "pauseai_sb_";
-/** The migrated template, with the test MPs, that each flow's database is copied from. Doesn't match the prefix: a cookie can't name it. */
-export const TEMPLATE_DATABASE = "pauseai_storyboard_template";
-/** The build's own database, for requests with no cookie. */
-export const SERVER_DATABASE = "pauseai_storyboard";
 
 /** @param {{ outboxDir: string }} options */
 export function fixtureEnv({ outboxDir }) {

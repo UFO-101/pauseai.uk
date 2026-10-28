@@ -1,4 +1,4 @@
-import type { Storyboard } from "./frames";
+import type { Storyboard } from "./frames.ts";
 
 // The storyboard page: `test-results/storyboard/index.html`, built from the
 // same data as storyboard.json. One file, nothing to install: the pictures

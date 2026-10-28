@@ -1,8 +1,8 @@
 // The storyboard's data: the frames one run of the suite recorded, and how
 // they pair up with another run's (main's), for the page (page.ts) and for an
 // agent (storyboard.json).
-import { readFileSync, writeFileSync } from "node:fs";
-import { PNG } from "pngjs";
+import { readFileSync } from "node:fs";
+import sharp from "sharp";
 
 export type FlowStatus = "passed" | "failed" | "timedOut" | "interrupted";
 
@@ -125,22 +125,21 @@ export function carryRuns(previous: RunManifest, fresh: RunManifest): RunManifes
 /**
  * Pairs each frame of this branch's run with main's, by section, flow and
  * caption (the n-th frame with that caption, if a flow repeats one), and
- * compares the pictures with `compare`. Frames only main has are kept, as
- * gone from this branch.
+ * compares the pictures with `compare`, all at once. Frames only main has are
+ * kept, as gone from this branch.
  */
-export function pairRuns(
+export async function pairRuns(
   branch: RunManifest,
   main: RunManifest | undefined,
   compare: (
     branchPng: string,
     mainPng: string,
     name: string,
-    viewport: string,
-  ) => { mismatch: number; noise: boolean; diff?: string },
-): Storyboard {
+  ) => Promise<{ mismatch: number; noise: boolean; diff?: string }>,
+): Promise<Storyboard> {
   const mainRuns = new Map(sortRuns(main?.frames ?? []).map((run) => [key(run), run]));
-  const flows: Flow[] = [];
-  const frames: Frame[] = [];
+  const flows: { flow: Flow; frames: Frame[] }[] = [];
+  const comparisons: Promise<void>[] = [];
 
   for (const run of sortRuns(branch.frames)) {
     const mainRun = mainRuns.get(key(run));
@@ -161,16 +160,16 @@ export function pairRuns(
         status: run.status,
       };
       if (f.png && paired?.png) {
-        const { mismatch, noise, diff } = compare(
-          f.png,
-          paired.png,
-          `${run.section}-${run.viewport}-${run.flow}-${i + 1}`,
-          run.viewport,
+        comparisons.push(
+          compare(f.png, paired.png, `${run.section}-${run.viewport}-${run.flow}-${i + 1}`).then(
+            ({ mismatch, noise, diff }) => {
+              frame.mismatch = mismatch;
+              frame.diff = diff;
+              if (noise) frame.noise = true;
+              frame.changed = mismatch > 0 && !noise;
+            },
+          ),
         );
-        frame.mismatch = mismatch;
-        frame.diff = diff;
-        if (noise) frame.noise = true;
-        frame.changed = mismatch > 0 && !noise;
       } else if (main && (f.png || paired?.png)) {
         // New on this branch, or main's run of the flow didn't get this far.
         frame.changed = true;
@@ -190,17 +189,19 @@ export function pairRuns(
         status: run.status,
       });
     }
-    frames.push(...flowFrames);
     flows.push({
-      section: run.section,
-      flow: run.flow,
-      viewport: run.viewport,
-      status: run.status,
-      error: run.error,
-      mainStatus: mainRun?.status,
-      frames: flowFrames.length,
-      changed: flowFrames.filter((f) => f.changed).length,
-      shotAt: run.shotAt,
+      flow: {
+        section: run.section,
+        flow: run.flow,
+        viewport: run.viewport,
+        status: run.status,
+        error: run.error,
+        mainStatus: mainRun?.status,
+        frames: flowFrames.length,
+        changed: 0,
+        shotAt: run.shotAt,
+      },
+      frames: flowFrames,
     });
   }
 
@@ -216,28 +217,33 @@ export function pairRuns(
       changed: true,
       status: gone.status,
     }));
-    frames.push(...flowFrames);
     flows.push({
-      section: gone.section,
-      flow: gone.flow,
-      viewport: gone.viewport,
-      status: gone.status,
-      mainStatus: gone.status,
-      frames: flowFrames.length,
-      changed: flowFrames.length,
+      flow: {
+        section: gone.section,
+        flow: gone.flow,
+        viewport: gone.viewport,
+        status: gone.status,
+        mainStatus: gone.status,
+        frames: flowFrames.length,
+        changed: 0,
+      },
+      frames: flowFrames,
     });
   }
 
+  await Promise.all(comparisons);
+  for (const { flow, frames } of flows) flow.changed = frames.filter((f) => f.changed).length;
+  const frames = flows.flatMap((f) => f.frames);
   return {
     generatedAt: new Date().toISOString(),
     withMain: main !== undefined,
     summary: {
       flows: flows.length,
-      failed: flows.filter((f) => f.status !== "passed").length,
+      failed: flows.filter((f) => f.flow.status !== "passed").length,
       frames: frames.length,
       changed: frames.filter((f) => f.changed).length,
     },
-    flows,
+    flows: flows.map((f) => f.flow),
     frames,
   };
 }
@@ -248,10 +254,11 @@ export function pairRuns(
  * platform/snapshots/png.ts and engine.ts). A pixel differs when a channel
  * moves by more than CHANNEL_NOISE levels. A frame has changed when its
  * differing pixels' largest channel moves add up to more than NOISE_TOTAL,
- * or more than NOISE_PIXELS pixels differ, both per CSS pixel, so scaled by
- * the square of the device's pixel ratio. Antialiasing on a few glyphs adds
- * up to a few thousand; a line that moves, millions. Below the limits the
- * frame is "noise": shown, with its diff, but not counted as changed.
+ * or more than NOISE_PIXELS pixels differ, counted in CSS pixels, as
+ * every frame is pictured (tests/storyboard/frame.ts). Antialiasing on a
+ * few glyphs adds up to a few thousand; a line that moves, millions. Below
+ * the limits the frame is "noise": shown, with its diff, but not counted as
+ * changed.
  */
 const CHANNEL_NOISE = 4;
 const NOISE_TOTAL = 2_000;
@@ -270,51 +277,72 @@ export type Comparison = {
 
 /**
  * Compares two PNG files pixel by pixel, writing the differences to
- * `diffPath` if there are any. Pictures of different sizes are padded with
- * white, so the extra height shows as a difference rather than vanishing.
- * `scale` is the device's pixel ratio.
+ * `diffPath` if there are any. Identical files are the same without being
+ * decoded, which is most frames of most runs. Pictures of different sizes
+ * are padded with white, so the extra height shows as a difference rather
+ * than vanishing.
  */
-export function comparePngs(branchPath: string, mainPath: string, diffPath: string, scale = 1): Comparison {
-  const [a, b] = padToMatch(PNG.sync.read(readFileSync(branchPath)), PNG.sync.read(readFileSync(mainPath)));
-  const diff = new PNG({ width: a.width, height: a.height });
+export async function comparePngs(branchPath: string, mainPath: string, diffPath: string): Promise<Comparison> {
+  const same: Comparison = { mismatch: 0, pixels: 0, noise: false };
+  if (readFileSync(branchPath).equals(readFileSync(mainPath))) return same;
+  const [a, b] = padToMatch(await rgba(branchPath), await rgba(mainPath));
   let pixels = 0;
   let total = 0;
   for (let i = 0; i < a.data.length; i += 4) {
-    const move = Math.max(
-      Math.abs(a.data[i] - b.data[i]),
-      Math.abs(a.data[i + 1] - b.data[i + 1]),
-      Math.abs(a.data[i + 2] - b.data[i + 2]),
-    );
+    const move = channelMove(a.data, b.data, i);
     if (move > CHANNEL_NOISE) {
       pixels++;
       total += move;
-      diff.data.set([255, 0, 0, 255], i);
-    } else {
-      // Faded towards white, so the red stands out against where it is.
-      const grey = 255 - Math.round((255 - (a.data[i] + a.data[i + 1] + a.data[i + 2]) / 3) * 0.2);
-      diff.data.set([grey, grey, grey, 255], i);
     }
   }
-  if (pixels === 0) return { mismatch: 0, pixels: 0, noise: false };
-  writeFileSync(diffPath, PNG.sync.write(diff));
-  const area = scale * scale;
+  if (pixels === 0) return same;
+  const diff = Buffer.alloc(a.data.length);
+  for (let i = 0; i < a.data.length; i += 4) {
+    // Red where they differ; elsewhere the branch's picture, faded towards white so the red stands out.
+    const grey = 255 - Math.round((255 - (a.data[i] + a.data[i + 1] + a.data[i + 2]) / 3) * 0.2);
+    const red = channelMove(a.data, b.data, i) > CHANNEL_NOISE;
+    diff[i] = red ? 255 : grey;
+    diff[i + 1] = red ? 0 : grey;
+    diff[i + 2] = red ? 0 : grey;
+    diff[i + 3] = 255;
+  }
+  await sharp(diff, { raw: { width: a.width, height: a.height, channels: 4 } })
+    .png()
+    .toFile(diffPath);
   return {
     mismatch: pixels / (a.width * a.height),
     pixels,
-    noise: total <= NOISE_TOTAL * area && pixels <= NOISE_PIXELS * area,
+    noise: total <= NOISE_TOTAL && pixels <= NOISE_PIXELS,
     diff: diffPath,
   };
 }
 
-function padToMatch(a: PNG, b: PNG): [PNG, PNG] {
+/** A decoded picture: four bytes a pixel, red, green, blue and alpha. */
+type Rgba = { width: number; height: number; data: Buffer };
+
+async function rgba(path: string): Promise<Rgba> {
+  const { data, info } = await sharp(path, { limitInputPixels: false })
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  return { width: info.width, height: info.height, data };
+}
+
+/** The pixel at byte `i`'s largest channel move between the two pictures. */
+function channelMove(a: Buffer, b: Buffer, i: number): number {
+  return Math.max(Math.abs(a[i] - b[i]), Math.abs(a[i + 1] - b[i + 1]), Math.abs(a[i + 2] - b[i + 2]));
+}
+
+function padToMatch(a: Rgba, b: Rgba): [Rgba, Rgba] {
   const width = Math.max(a.width, b.width);
   const height = Math.max(a.height, b.height);
-  const pad = (img: PNG) => {
+  const pad = (img: Rgba): Rgba => {
     if (img.width === width && img.height === height) return img;
-    const out = new PNG({ width, height });
-    out.data.fill(255);
-    PNG.bitblt(img, out, 0, 0, img.width, img.height, 0, 0);
-    return out;
+    const data = Buffer.alloc(width * height * 4, 255);
+    for (let y = 0; y < img.height; y++) {
+      img.data.copy(data, y * width * 4, y * img.width * 4, (y + 1) * img.width * 4);
+    }
+    return { width, height, data };
   };
   return [pad(a), pad(b)];
 }

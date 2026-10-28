@@ -78,15 +78,22 @@ export async function frame(
     const box = (await of.boundingBox())!;
     const body = await page.screenshot({
       fullPage: true,
-      animations: "disabled",
+      ...SHOT,
       clip: { x: box.x, y: box.y, width: box.width, height: box.height },
     });
     await info.attach(`frame ${index}: ${caption}`, { body, contentType: "image/png" });
     return;
   }
-  const body = scrolled || windowOnly ? await page.screenshot({ animations: "disabled" }) : await wholePage(page);
+  const body = scrolled || windowOnly ? await page.screenshot(SHOT) : await wholePage(page);
   await info.attach(`frame ${index}: ${caption}`, { body, contentType: "image/png" });
 }
+
+/**
+ * Every picture is a pixel to a CSS pixel, on a phone's high-density screen
+ * too: the layout is what a frame is for, and a phone's at its own density
+ * is nine times the pixels to take, store and compare.
+ */
+const SHOT = { animations: "disabled", scale: "css" } as const;
 
 /** The tallest piece of a page, in CSS pixels, that Chromium pictures in one go. */
 const SLICE = 4000;
@@ -102,19 +109,17 @@ async function wholePage(page: Page): Promise<Buffer> {
     width: document.documentElement.scrollWidth,
     height: document.documentElement.scrollHeight,
   }));
-  if (height <= SLICE) return page.screenshot({ fullPage: true, animations: "disabled" });
+  if (height <= SLICE) return page.screenshot({ fullPage: true, ...SHOT });
   const slices: { top: number; body: Buffer }[] = [];
   for (let top = 0; top < height; top += SLICE) {
     const clip = { x: 0, y: top, width, height: Math.min(SLICE, height - top) };
-    slices.push({ top, body: await page.screenshot({ fullPage: true, animations: "disabled", clip }) });
+    slices.push({ top, body: await page.screenshot({ fullPage: true, ...SHOT, clip }) });
   }
-  const { width: pixels } = await sharp(slices[0].body).metadata();
-  const scale = pixels! / width;
   return sharp({
-    create: { width: pixels!, height: Math.round(height * scale), channels: 4, background: "#00000000" },
+    create: { width, height, channels: 4, background: "#00000000" },
     limitInputPixels: false,
   })
-    .composite(slices.map(({ top, body }) => ({ input: body, left: 0, top: Math.round(top * scale) })))
+    .composite(slices.map(({ top, body }) => ({ input: body, left: 0, top })))
     .png()
     .toBuffer();
 }

@@ -1,11 +1,11 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { PNG } from "pngjs";
+import sharp from "sharp";
 import { readdirSync } from "node:fs";
-import { carryRuns, comparePngs, pairRuns, SECTION_ORDER, sortRuns, type FlowRun, type RunManifest } from "./frames";
-import { renderStoryboardPage } from "./page";
+import { carryRuns, comparePngs, pairRuns, SECTION_ORDER, sortRuns, type FlowRun, type RunManifest } from "./frames.ts";
+import { renderStoryboardPage } from "./page.ts";
 
 const run = (flow: string, captions: string[], extra: Partial<FlowRun> = {}): FlowRun => ({
   section: "staff",
@@ -17,10 +17,10 @@ const run = (flow: string, captions: string[], extra: Partial<FlowRun> = {}): Fl
   ...extra,
 });
 
-const same = () => ({ mismatch: 0, noise: false });
+const same = async () => ({ mismatch: 0, noise: false });
 
 describe("pairRuns", () => {
-  it("pairs frames by section, flow and caption, and counts what changed", () => {
+  it("pairs frames by section, flow and caption, and counts what changed", async () => {
     const branch: RunManifest = {
       frames: [run("login", ["form", "sent", "new step"]), run("letters", ["list"], { viewport: "phone", line: 2 })],
     };
@@ -28,18 +28,14 @@ describe("pairRuns", () => {
       frames: [run("login", ["form", "old step", "sent"]), run("letters", ["list"], { viewport: "phone", line: 2 })],
     };
     const compared: string[] = [];
-    const board = pairRuns(branch, main, (b, m, name, viewport) => {
-      compared.push(`${name} ${viewport}`);
+    const board = await pairRuns(branch, main, async (b, m, name) => {
+      compared.push(name);
       return m.endsWith("1.png")
         ? { mismatch: 0, noise: false }
         : { mismatch: 0.25, noise: false, diff: `diff/${name}.png` };
     });
 
-    expect(compared).toEqual([
-      "staff-desktop-login-1 desktop",
-      "staff-desktop-login-2 desktop",
-      "staff-phone-letters-1 phone",
-    ]);
+    expect(compared).toEqual(["staff-desktop-login-1", "staff-desktop-login-2", "staff-phone-letters-1"]);
     expect(board.withMain).toBe(true);
     expect(board.frames.map((f) => [f.flow, f.index, f.caption, f.changed, f.mismatch, f.main !== undefined])).toEqual([
       ["login", 1, "form", false, 0, true],
@@ -57,8 +53,8 @@ describe("pairRuns", () => {
     expect(board.summary).toEqual({ flows: 2, failed: 0, frames: 5, changed: 3 });
   });
 
-  it("without a run of main, nothing is changed and nothing is compared", () => {
-    const board = pairRuns({ frames: [run("login", ["form"])] }, undefined, () => {
+  it("without a run of main, nothing is changed and nothing is compared", async () => {
+    const board = await pairRuns({ frames: [run("login", ["form"])] }, undefined, async () => {
       throw new Error("not called");
     });
     expect(board.withMain).toBe(false);
@@ -68,20 +64,20 @@ describe("pairRuns", () => {
     expect(board.flows[0].mainStatus).toBeUndefined();
   });
 
-  it("keeps a failed flow's error, and main's status when main failed", () => {
+  it("keeps a failed flow's error, and main's status when main failed", async () => {
     const branch: RunManifest = {
       frames: [run("login", ["form"], { status: "failed", error: "expected 200, got 500" })],
     };
     const main: RunManifest = { frames: [run("login", [], { status: "timedOut" })] };
-    const board = pairRuns(branch, main, same);
+    const board = await pairRuns(branch, main, same);
     expect(board.flows[0]).toMatchObject({ status: "failed", error: "expected 200, got 500", mainStatus: "timedOut" });
     // Main got no frame, so this branch's is new to it.
     expect(board.frames[0]).toMatchObject({ changed: true, main: undefined, status: "failed" });
     expect(board.summary.failed).toBe(1);
   });
 
-  it("keeps a flow only main has, as gone", () => {
-    const board = pairRuns({ frames: [] }, { frames: [run("old flow", ["a", "b"])] }, same);
+  it("keeps a flow only main has, as gone", async () => {
+    const board = await pairRuns({ frames: [] }, { frames: [run("old flow", ["a", "b"])] }, same);
     expect(board.flows).toEqual([
       expect.objectContaining({ flow: "old flow", frames: 2, changed: 2, mainStatus: "passed" }),
     ]);
@@ -91,29 +87,37 @@ describe("pairRuns", () => {
     ]);
   });
 
-  it("keeps a frame that differs only by noise as unchanged, marked noise", () => {
-    const board = pairRuns({ frames: [run("login", ["form"])] }, { frames: [run("login", ["form"])] }, () => ({
-      mismatch: 0.001,
-      noise: true,
-      diff: "diff/x.png",
-    }));
+  it("keeps a frame that differs only by noise as unchanged, marked noise", async () => {
+    const board = await pairRuns(
+      { frames: [run("login", ["form"])] },
+      { frames: [run("login", ["form"])] },
+      async () => ({
+        mismatch: 0.001,
+        noise: true,
+        diff: "diff/x.png",
+      }),
+    );
     expect(board.frames[0]).toMatchObject({ changed: false, noise: true, mismatch: 0.001, diff: "diff/x.png" });
     expect(board.summary.changed).toBe(0);
   });
 
-  it("pairs a repeated caption with the next one of the same name", () => {
-    const board = pairRuns({ frames: [run("f", ["x", "x"])] }, { frames: [run("f", ["x", "x"])] }, (b, m) => ({
-      mismatch: b === m ? 0 : 1,
-      noise: false,
-    }));
+  it("pairs a repeated caption with the next one of the same name", async () => {
+    const board = await pairRuns(
+      { frames: [run("f", ["x", "x"])] },
+      { frames: [run("f", ["x", "x"])] },
+      async (b, m) => ({
+        mismatch: b === m ? 0 : 1,
+        noise: false,
+      }),
+    );
     expect(board.frames.map((f) => f.mismatch)).toEqual([0, 0]);
   });
 
-  it("skips frames without pictures, as a run without screenshots leaves them", () => {
+  it("skips frames without pictures, as a run without screenshots leaves them", async () => {
     const branch: RunManifest = {
       frames: [{ section: "s", flow: "f", viewport: "desktop", line: 1, status: "passed", frames: [{ caption: "a" }] }],
     };
-    const board = pairRuns(branch, branch, () => {
+    const board = await pairRuns(branch, branch, async () => {
       throw new Error("not called");
     });
     expect(board.frames[0]).toMatchObject({ caption: "a", changed: false });
@@ -124,12 +128,12 @@ describe("pairRuns", () => {
 describe("sortRuns", () => {
   const at = (section: string, line: number, flow = "f", viewport = "desktop") => ({ section, line, flow, viewport });
 
-  it("puts the sections in SECTION_ORDER, unknown ones after, alphabetically", () => {
+  it("puts the sections in SECTION_ORDER, unknown ones after, alphabetically", async () => {
     const sorted = sortRuns([at("zz-new", 1), at("staff", 1), at("aa-new", 1), at("public-pages", 1)]);
     expect(sorted.map((r) => r.section)).toEqual(["public-pages", "staff", "aa-new", "zz-new"]);
   });
 
-  it("within a section keeps the spec file's order, then the flow's name, then the viewport", () => {
+  it("within a section keeps the spec file's order, then the flow's name, then the viewport", async () => {
     const sorted = sortRuns([
       at("staff", 9, "b", "phone"),
       at("staff", 9, "b", "desktop"),
@@ -144,7 +148,7 @@ describe("sortRuns", () => {
     ]);
   });
 
-  it("lists every section, so each spec file is placed on purpose", () => {
+  it("lists every section, so each spec file is placed on purpose", async () => {
     const specs = readdirSync(join(__dirname, ".."))
       .filter((f) => f.endsWith(".spec.ts"))
       .map((f) => f.replace(/\.spec\.ts$/, ""));
@@ -152,8 +156,8 @@ describe("sortRuns", () => {
     expect(SECTION_ORDER[0]).toBe("public-pages");
   });
 
-  it("orders the flows of both runs, whatever order they finished in", () => {
-    const board = pairRuns(
+  it("orders the flows of both runs, whatever order they finished in", async () => {
+    const board = await pairRuns(
       { frames: [run("second", ["a"], { line: 20 }), run("first", ["a"], { line: 10, section: "public-pages" })] },
       { frames: [run("gone", ["a"], { line: 30 }), run("second", ["a"], { line: 20 })] },
       same,
@@ -163,7 +167,7 @@ describe("sortRuns", () => {
 });
 
 describe("carryRuns", () => {
-  it("puts a partial run's flows on top of the last run's, each replacing its namesake", () => {
+  it("puts a partial run's flows on top of the last run's, each replacing its namesake", async () => {
     const previous = {
       frames: [
         { ...run("login", ["form"]), shotAt: "1" },
@@ -177,7 +181,7 @@ describe("carryRuns", () => {
     ]);
   });
 
-  it("keeps the flows pairRuns tells apart by viewport", () => {
+  it("keeps the flows pairRuns tells apart by viewport", async () => {
     const previous = { frames: [run("login", ["form"], { viewport: "phone" })] };
     const fresh = { frames: [run("login", ["form"])] };
     expect(carryRuns(previous, fresh).frames.map((r) => r.viewport)).toEqual(["phone", "desktop"]);
@@ -185,8 +189,8 @@ describe("carryRuns", () => {
 });
 
 describe("pairRuns and when flows were shot", () => {
-  it("passes each flow's shot time on to the page", () => {
-    const board = pairRuns(
+  it("passes each flow's shot time on to the page", async () => {
+    const board = await pairRuns(
       { frames: [{ ...run("login", ["form"]), shotAt: "2026-10-17T08:00:00.000Z" }] },
       undefined,
       same,
@@ -200,69 +204,91 @@ describe("comparePngs", () => {
   beforeEach(() => (dir = mkdtempSync(join(tmpdir(), "storyboard-"))));
   afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
-  function png(name: string, width: number, height: number, paint: (x: number, y: number) => number): string {
-    const image = new PNG({ width, height });
+  async function png(
+    name: string,
+    width: number,
+    height: number,
+    paint: (x: number, y: number) => number,
+    compressionLevel = 6,
+  ): Promise<string> {
+    const data = Buffer.alloc(width * height * 4);
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         const v = paint(x, y);
-        image.data.set([v, v, v, 255], (y * width + x) * 4);
+        data.set([v, v, v, 255], (y * width + x) * 4);
       }
     }
     const path = join(dir, name);
-    writeFileSync(path, PNG.sync.write(image));
+    await sharp(data, { raw: { width, height, channels: 4 } })
+      .png({ compressionLevel })
+      .toFile(path);
     return path;
   }
 
-  it("says identical pictures match, and writes no diff", () => {
-    const a = png("a.png", 10, 10, () => 200);
-    const b = png("b.png", 10, 10, () => 200);
-    expect(comparePngs(a, b, join(dir, "diff.png"))).toEqual({ mismatch: 0, pixels: 0, noise: false });
+  const pixels = async (path: string) => sharp(path).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+
+  it("says identical pictures match, and writes no diff", async () => {
+    const a = await png("a.png", 10, 10, () => 200);
+    const b = await png("b.png", 10, 10, () => 200);
+    expect(await comparePngs(a, b, join(dir, "diff.png"))).toEqual({ mismatch: 0, pixels: 0, noise: false });
     expect(() => readFileSync(join(dir, "diff.png"))).toThrow();
   });
 
-  it("measures the fraction of pixels that differ, padding a taller picture", () => {
-    const a = png("a.png", 10, 10, () => 255);
+  it("says the same pixels match when the files differ", async () => {
+    const a = await png("a.png", 10, 10, (x) => x * 20, 0);
+    const b = await png("b.png", 10, 10, (x) => x * 20, 9);
+    expect(readFileSync(a).equals(readFileSync(b))).toBe(false);
+    expect(await comparePngs(a, b, join(dir, "diff.png"))).toEqual({ mismatch: 0, pixels: 0, noise: false });
+  });
+
+  it("measures the fraction of pixels that differ, padding a taller picture", async () => {
+    const a = await png("a.png", 10, 10, () => 255);
     // The same, but ten rows longer, all black: the padding is white, so every extra pixel differs.
-    const b = png("b.png", 10, 20, (x, y) => (y < 10 ? 255 : 0));
-    const result = comparePngs(a, b, join(dir, "diff.png"));
+    const b = await png("b.png", 10, 20, (x, y) => (y < 10 ? 255 : 0));
+    const result = await comparePngs(a, b, join(dir, "diff.png"));
     expect(result.diff).toBe(join(dir, "diff.png"));
     expect(result.mismatch).toBeCloseTo(0.5, 2);
-    expect(PNG.sync.read(readFileSync(join(dir, "diff.png"))).height).toBe(20);
+    expect((await pixels(join(dir, "diff.png"))).info.height).toBe(20);
     expect(result.noise).toBe(false);
   });
 
-  it("doesn't count a channel moving by 4 levels or less", () => {
-    const a = png("a.png", 10, 10, () => 200);
-    const b = png("b.png", 10, 10, () => 204);
-    expect(comparePngs(a, b, join(dir, "diff.png"))).toEqual({ mismatch: 0, pixels: 0, noise: false });
+  it("pads a wider picture too", async () => {
+    const a = await png("a.png", 20, 10, () => 255);
+    const b = await png("b.png", 10, 10, () => 255);
+    expect(await comparePngs(a, b, join(dir, "diff.png"))).toEqual({ mismatch: 0, pixels: 0, noise: false });
   });
 
-  it("calls antialiasing-sized differences noise, and marks them red in the diff", () => {
-    const a = png("a.png", 100, 100, () => 255);
+  it("doesn't count a channel moving by 4 levels or less", async () => {
+    const a = await png("a.png", 10, 10, () => 200);
+    const b = await png("b.png", 10, 10, () => 204);
+    expect(await comparePngs(a, b, join(dir, "diff.png"))).toEqual({ mismatch: 0, pixels: 0, noise: false });
+  });
+
+  it("calls antialiasing-sized differences noise, and marks them red in the diff", async () => {
+    const a = await png("a.png", 100, 100, () => 255);
     // Ten pixels a little darker: a total of 10 × 60, well under the limit.
-    const b = png("b.png", 100, 100, (x, y) => (y === 0 && x < 10 ? 195 : 255));
-    const result = comparePngs(a, b, join(dir, "diff.png"));
+    const b = await png("b.png", 100, 100, (x, y) => (y === 0 && x < 10 ? 195 : 255));
+    const result = await comparePngs(a, b, join(dir, "diff.png"));
     expect(result).toMatchObject({ pixels: 10, noise: true });
-    const diff = PNG.sync.read(readFileSync(result.diff!));
-    expect([...diff.data.subarray(0, 4)]).toEqual([255, 0, 0, 255]);
-    expect([...diff.data.subarray(40, 44)]).toEqual([255, 255, 255, 255]);
+    const { data } = await pixels(result.diff!);
+    expect([...data.subarray(0, 4)]).toEqual([255, 0, 0, 255]);
+    expect([...data.subarray(40, 44)]).toEqual([255, 255, 255, 255]);
   });
 
-  it("counts a difference past either limit as a change, the limits scaled by the pixel ratio", () => {
-    const a = png("a.png", 100, 100, () => 255);
-    // 40 pixels moving 255 levels: a total of 10,200, past 2,000 at 1×, within 18,000 at 3×.
-    const total = png("total.png", 100, 100, (x, y) => (y === 0 && x < 40 ? 0 : 255));
-    expect(comparePngs(a, total, join(dir, "1.png")).noise).toBe(false);
-    expect(comparePngs(a, total, join(dir, "2.png"), 3).noise).toBe(true);
+  it("counts a difference past either limit as a change", async () => {
+    const a = await png("a.png", 100, 100, () => 255);
+    // 40 pixels moving 255 levels: a total of 10,200, past 2,000.
+    const total = await png("total.png", 100, 100, (x, y) => (y === 0 && x < 40 ? 0 : 255));
+    expect((await comparePngs(a, total, join(dir, "1.png"))).noise).toBe(false);
     // 1,100 pixels moving 1 level past the floor each: a small total, but too many pixels.
-    const wide = png("wide.png", 100, 100, (x, y) => (y < 11 ? 250 : 255));
-    expect(comparePngs(a, wide, join(dir, "3.png")).noise).toBe(false);
+    const wide = await png("wide.png", 100, 100, (x, y) => (y < 11 ? 250 : 255));
+    expect((await comparePngs(a, wide, join(dir, "2.png"))).noise).toBe(false);
   });
 });
 
 describe("renderStoryboardPage", () => {
-  it("embeds the data, with nothing that could close the script", () => {
-    const board = pairRuns({ frames: [run("</script><b>", ["a"])] }, undefined, same);
+  it("embeds the data, with nothing that could close the script", async () => {
+    const board = await pairRuns({ frames: [run("</script><b>", ["a"])] }, undefined, same);
     const html = renderStoryboardPage(board);
     expect(html).toContain("<title>Storyboard</title>");
     expect(html).toContain('<script id="data" type="application/json">');
@@ -270,8 +296,8 @@ describe("renderStoryboardPage", () => {
     expect(JSON.parse(html.match(/type="application\/json">([\s\S]*?)<\/script>/)![1])).toEqual(board);
   });
 
-  it("titles itself with the run's time, and reads which run is newest, to link to it", () => {
-    const html = renderStoryboardPage(pairRuns({ frames: [run("flow", ["a"])] }, undefined, same));
+  it("titles itself with the run's time, and reads which run is newest, to link to it", async () => {
+    const html = renderStoryboardPage(await pairRuns({ frames: [run("flow", ["a"])] }, undefined, same));
     expect(html).toContain('<script src="../../latest.js"></script>');
     expect(html).toContain('<a id="newer" href="../../index.html" hidden></a>');
     expect(html).toContain('"Storyboard " + isoLocal(new Date(data.generatedAt))');
