@@ -201,7 +201,7 @@ export default function MailingView({
     href: filtersPath(path, { tab: key === "all" ? "" : key }),
   }));
   return (
-    <>
+    <div className={styles.page}>
       <div className={styles.heading}>
         <h1>{mailing.title}</h1>
         <Tag tone={STATE_TONES[written.state]}>{copy.states[written.state]}</Tag>
@@ -234,6 +234,6 @@ export default function MailingView({
           {who}
         </Card>
       </Grid>
-    </>
+    </div>
   );
 }

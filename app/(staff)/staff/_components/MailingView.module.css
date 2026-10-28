@@ -1,4 +1,11 @@
-/* A mailing's page, once scheduled: its title with its state beside it. */
+/* A mailing's page, once scheduled: its parts a gap apart, so the bar of
+   when it sends, or its counts, doesn't run into the recipients. */
+.page {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* Its title with its state beside it. */
 .heading {
   display: flex;
   flex-wrap: wrap;
