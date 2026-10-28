@@ -69,6 +69,18 @@ describe("the lists' counts", () => {
     expect(staffCopy.supporters.detail.eventsCounted(1)).not.toBe(staffCopy.supporters.detail.eventsCounted(2));
     expect(staffCopy.supporters.detail.lettersCounted(1)).not.toBe(staffCopy.supporters.detail.lettersCounted(2));
     expect(emails.count(1)).not.toBe(emails.count(2).replace("2", "1"));
+    const writing = staffCopy.mailingPages;
+    for (const say of [
+      writing.willGet,
+      writing.schedule,
+      (n: number) => writing.summary(n, null, null),
+      (n: number) => writing.draftLine("jo@pauseai.uk", n),
+      (n: number) => writing.comingLine("jo@pauseai.uk", "Friday at 09:00", n),
+      (n: number) => writing.scheduledLine(n, "Jo"),
+      (n: number) => writing.leftOut(n + 2, n, n),
+    ]) {
+      expect(say(1)).not.toBe(say(2).replaceAll("2", "1"));
+    }
     for (const list of [
       letters,
       politicians,

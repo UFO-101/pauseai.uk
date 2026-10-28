@@ -269,6 +269,45 @@ describe("MailingWriter", () => {
     await expect.element(preview().getByText("Lady Dummy")).toBeVisible();
   });
 
+  it("shows the first recipient once the one chosen is no longer among them", async () => {
+    const plain = {
+      ...exampleWrittenMailing,
+      body: {
+        type: "doc" as const,
+        content: [{ type: "paragraph" as const, content: [{ type: "field" as const, attrs: { field: "name" } }] }],
+      },
+    };
+    const { view, actions } = await renderWriter({ draft: plain });
+    await expect.element(preview().getByText("Polly Placeholder <polly@example.org>")).toBeVisible();
+    await view.rerender(
+      <MailingWriter
+        data={{ ...exampleWriterData, recipients: exampleWriterData.recipients.slice(1) }}
+        draft={plain}
+        who={<p>{"Who it's to"}</p>}
+        actions={actions as unknown as MailingWriterActions}
+      />,
+    );
+    await expect.element(preview().getByText("Dora Dummy <dora@example.org>")).toBeVisible();
+  });
+
+  it("names a part for an answer no ask has any more by its ID, to find who it's for", async () => {
+    const gone = {
+      ...exampleWrittenMailing,
+      body: {
+        type: "doc" as const,
+        content: [
+          {
+            type: "onlyFor" as const,
+            attrs: { condition: "old-event:going" },
+            content: [{ type: "paragraph" as const, content: [{ type: "text" as const, text: "See you." }] }],
+          },
+        ],
+      },
+    };
+    await renderWriter({ draft: gone });
+    await expect.element(preview().getByRole("button", { name: "old-event:going" })).toBeVisible();
+  });
+
   it("sends a test copy to yourself once there's a letter, saving the draft first, and says where, or that it couldn't", async () => {
     const { actions } = await renderWriter();
     const test = preview().getByRole("button", { name: copy.sendTest });

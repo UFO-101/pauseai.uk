@@ -391,14 +391,14 @@ export function MailingWriterExample({ draft }: { draft: boolean }) {
   );
 }
 
-/** A mailing's page in each state but draft. */
-export function MailingViewExample({ state }: { state: "scheduled" | "sending" | "sent" }) {
+/** A mailing's page in each state but draft, or one imported from Airtable, with none. */
+export function MailingViewExample({ state }: { state: "scheduled" | "sending" | "sent" | "imported" }) {
   return (
     <Logged>
       {(log) => (
         <MailingView
-          mailing={{ ...exampleMailing, ...exampleMailings[0] }}
-          written={{ ...exampleWrittenMailing, state }}
+          mailing={state === "imported" ? exampleMailing : { ...exampleMailing, ...exampleMailings[0] }}
+          written={state === "imported" ? undefined : { ...exampleWrittenMailing, state }}
           who={<FilterPills data={exampleWriterData} />}
           asks={exampleAsks}
           stop={log("stopMailingNow")}
@@ -465,19 +465,23 @@ export function MailingForExample({ kind }: { kind: "draft" | "written" }) {
   );
 }
 
+/** The politicians list, its Change who logged. */
+export function PoliticiansListExample(props: Omit<Parameters<typeof PoliticiansList>[0], "changeWho">) {
+  return (
+    <Logged>
+      {(log) => <PoliticiansList {...props} changeWho={log("changeMailingWho") as (form: FormData) => Promise<void>} />}
+    </Logged>
+  );
+}
+
 /** The politicians list after a draft's Change who: its button makes the draft go to these. */
 export function ChangeWhoListExample() {
   return (
-    <Logged>
-      {(log) => (
-        <PoliticiansList
-          list={examplePoliticiansPage}
-          search={{ ...emptyPoliticiansSearch, house: "commons", mailing: "12" }}
-          asks={exampleAsks}
-          changeWho={log("changeMailingWho") as (form: FormData) => Promise<void>}
-        />
-      )}
-    </Logged>
+    <PoliticiansListExample
+      list={examplePoliticiansPage}
+      search={{ ...emptyPoliticiansSearch, house: "commons", mailing: "12" }}
+      asks={exampleAsks}
+    />
   );
 }
 

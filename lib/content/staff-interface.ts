@@ -651,8 +651,6 @@ export const staffCopy = {
     // How a recipient's letter was written.
     personalised: "personalised",
     asWritten: "as written",
-    // Over a mailing's recipients: how many, and how many of those replied.
-    counts: (sent: number, replied: number) => `Sent to ${sent}; ${replied} replied.`,
   },
   // A mailing's editor: the letter, with merge fields and parts only some recipients get.
   mailingEditor: {

@@ -49,6 +49,13 @@ describe("FilterPills", () => {
     expect(pills.getByRole("listitem").all()).toHaveLength(3);
   });
 
+  it("puts a search in its own pill", async () => {
+    await render(
+      <FilterPills data={{ ...exampleWriterData, filter: { list: "politicians", params: { q: "smith" } } }} />,
+    );
+    await expect.element(page.getByRole("listitem")).toHaveTextContent(copy.searchPill("smith"));
+  });
+
   it("says everyone in office for a filter of nothing", async () => {
     await render(<FilterPills data={{ ...exampleWriterData, filter: { list: "politicians", params: {} } }} />);
     await expect.element(page.getByText(copy.everyone)).toBeVisible();
@@ -109,7 +116,7 @@ describe("MailingsOverview", () => {
     await render(
       <MailingsOverview
         drafts={[exampleDraft, { ...exampleDraft, id: 7, title: "" }]}
-        comingUp={[exampleScheduled]}
+        comingUp={[exampleScheduled, { ...exampleScheduled, id: 8, state: "sending" }]}
         sent={exampleMailings}
         deleteDraft={noAction}
         stop={noAction}
@@ -121,9 +128,10 @@ describe("MailingsOverview", () => {
     await expect.element(page.getByRole("link", { name: copy.untitled })).toBeVisible();
     await expect.element(page.getByText(copy.draftLine("jo@pauseai.uk", 412)).first()).toBeVisible();
     await expect
-      .element(page.getByText(copy.comingLine("jo@pauseai.uk", "Friday 30 October at 09:00", 72)))
+      .element(page.getByText(copy.comingLine("jo@pauseai.uk", "Friday 30 October at 09:00", 72)).first())
       .toBeVisible();
     await expect.element(page.getByRole("button", { name: copy.unschedule })).toBeVisible();
+    await expect.element(page.getByRole("button", { name: copy.stopSending })).toBeVisible();
     await expect.element(page.getByText("Jo Example")).toBeVisible();
     await expect
       .element(page.getByRole("link", { name: copy.howToStart.link }))
@@ -221,6 +229,26 @@ describe("MailingView", () => {
         ],
         [["id", "12"]],
       ]);
+  });
+
+  it("by its address alone, for a sender with no name", async () => {
+    const { rerender } = await view({ written: { ...written, fromName: null } });
+    await expect
+      .element(page.getByText(copy.sentLine("20 Oct 2026, 08:00", "jo@pauseai.uk"), { exact: false }))
+      .toBeVisible();
+    await expect.element(page.getByText("jo@pauseai.uk", { exact: true })).toBeVisible();
+    await rerender(
+      <MailingView
+        mailing={mailing}
+        written={{ ...written, fromName: null, state: "scheduled" }}
+        asks={exampleAsks}
+        stop={noAction}
+        reschedule={noAction}
+      />,
+    );
+    await expect
+      .element(page.getByText(new RegExp(`${copy.scheduledLine(mailing.to, "jo@pauseai.uk").replaceAll(".", "\\.")}$`)))
+      .toBeVisible();
   });
 
   it("sending: how far it's got, and Stop", async () => {

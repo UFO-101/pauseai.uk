@@ -46,18 +46,17 @@ import Breadcrumb from "@/app/(staff)/staff/_components/Breadcrumb";
 import EraseLink from "@/app/(staff)/staff/_components/EraseLink";
 import MailingsTable from "@/app/(staff)/staff/_components/MailingsTable";
 import NotIcon from "@/app/(staff)/staff/_components/ui/NotIcon";
-import MailingView from "@/app/(staff)/staff/_components/MailingView";
 import { MailingLetter } from "@/app/(staff)/staff/_components/MailingLetter";
 import { FilterPills, MailingCounts } from "@/app/(staff)/staff/_components/MailingParts";
 import { exampleMailingLetter, exampleWriterData } from "@/app/(staff)/staff/_components/MailingWriter.examples";
-import { exampleMailing, exampleMailings } from "@/app/(staff)/staff/_components/MailingsTable.examples";
+import { exampleMailings } from "@/app/(staff)/staff/_components/MailingsTable.examples";
 import ListFrame, { ListTable, type ListColumn } from "@/app/(staff)/staff/_components/ui/ListFrame";
 import ChoiceSearch from "@/app/(staff)/staff/_components/ui/ChoiceSearch";
 import NavFold from "@/app/(staff)/staff/_components/ui/NavFold";
 import FormPending from "@/app/(staff)/staff/_components/ui/FormPending";
 import StaffLink from "@/app/(staff)/staff/_components/ui/StaffLink";
 import NavIcon from "@/app/(staff)/staff/_components/NavIcon";
-import PoliticiansList, { HouseTabs } from "@/app/(staff)/staff/_components/PoliticiansList";
+import { HouseTabs } from "@/app/(staff)/staff/_components/PoliticiansList";
 import ErasedNotice from "@/app/(staff)/staff/_components/ErasedNotice";
 import ImportCard, { ImportCards } from "@/app/(staff)/staff/_components/ImportCard";
 import KeepSignedIn from "@/app/(staff)/staff/_components/KeepSignedIn";
@@ -112,6 +111,7 @@ import {
   MailingViewExample,
   MailingWriterExample,
   ChangeWhoListExample,
+  PoliticiansListExample,
   PoliticianDetailsExample,
   PoliticianTableEmptyExample,
   PoliticianTableExample,
@@ -149,9 +149,6 @@ const exampleEventChoices = [
 const parties = ["Conservative", "Green", "Labour", "Liberal Democrat"];
 
 /** The politicians list's filters, none chosen. */
-/** The list's Change who action, for the examples that show Mail these, which never call it. */
-const noChangeWho = async () => {};
-
 const EMPTY_POLITICIAN_FILTERS = {
   q: "",
   house: "",
@@ -1213,8 +1210,7 @@ export const staff: Group = {
           label: "A search's page of politicians, with more in other houses and out of office",
           render: () => (
             <StaffPage as="div">
-              <PoliticiansList
-                changeWho={noChangeWho}
+              <PoliticiansListExample
                 list={{ ...examplePoliticiansPage, total: 150, pages: 2, outOfOffice: 3, otherHouses: 2, tests: 1 }}
                 search={{ ...EMPTY_POLITICIAN_FILTERS, q: "pol" }}
                 asks={exampleAsks}
@@ -1226,8 +1222,7 @@ export const staff: Group = {
           label: "A search that finds no one, with the nearest names",
           render: () => (
             <StaffPage as="div">
-              <PoliticiansList
-                changeWho={noChangeWho}
+              <PoliticiansListExample
                 list={{ ...examplePoliticiansPage, politicians: [], total: 0, closest: [examplePolitician] }}
                 search={{ ...EMPTY_POLITICIAN_FILTERS, q: "Polly Plaseholder" }}
                 asks={exampleAsks}
@@ -1357,7 +1352,7 @@ export const staff: Group = {
           label: "One imported from Airtable: who got it and how it was written, no text",
           render: () => (
             <StaffPage as="div">
-              <MailingView mailing={exampleMailing} asks={[]} stop={noChangeWho} reschedule={noChangeWho} />
+              <MailingViewExample state="imported" />
             </StaffPage>
           ),
         },

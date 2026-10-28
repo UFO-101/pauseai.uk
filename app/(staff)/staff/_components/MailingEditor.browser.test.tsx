@@ -27,9 +27,9 @@ const paragraph = (...content: JSONContent[]): JSONContent => ({ type: "paragrap
 const text = (value: string): JSONContent => ({ type: "text", text: value });
 const field = (id: string): JSONContent => ({ type: "field", attrs: { field: id } });
 
-function renderEditor(content: JSONContent[], offered = { fields, conditions }, recipients?: number) {
+async function renderEditor(content: JSONContent[], offered = { fields, conditions }, recipients?: number) {
   const onChange = vi.fn<(doc: JSONContent) => void>();
-  render(
+  await render(
     <>
       <p id="label">Letter</p>
       <MailingEditor
@@ -48,7 +48,7 @@ function renderEditor(content: JSONContent[], offered = { fields, conditions }, 
 const editor = () => page.getByRole("textbox", { name: "Letter" });
 
 /** The last document the editor reported. */
-function last(onChange: ReturnType<typeof renderEditor>): JSONContent {
+function last(onChange: Awaited<ReturnType<typeof renderEditor>>): JSONContent {
   return onChange.mock.lastCall![0];
 }
 
@@ -60,7 +60,7 @@ async function toEnd() {
 
 describe("MailingEditor", () => {
   it("shows a merge field as a chip by its label, and a part for only some in a box saying who", async () => {
-    renderEditor([
+    await renderEditor([
       paragraph(text("Dear "), field("salutation"), text(",")),
       { type: "onlyFor", attrs: { condition: conditions[0].id }, content: [paragraph(text("Thank you."))] },
     ]);
@@ -69,7 +69,7 @@ describe("MailingEditor", () => {
   });
 
   it("shows a field or part no longer offered by its ID", async () => {
-    renderEditor([
+    await renderEditor([
       paragraph(field("postcode")),
       { type: "onlyFor", attrs: { condition: "going:old-event" }, content: [paragraph(text("See you."))] },
     ]);
@@ -78,7 +78,7 @@ describe("MailingEditor", () => {
   });
 
   it("makes text bold, italic and a bullet point", async () => {
-    const onChange = renderEditor([paragraph(text("Hello"))]);
+    const onChange = await renderEditor([paragraph(text("Hello"))]);
     await editor().click();
     await userEvent.keyboard("{Control>}a{/Control}");
     for (const name of [copy.bold, copy.italic, copy.bulletList]) {
@@ -89,7 +89,7 @@ describe("MailingEditor", () => {
   });
 
   it("puts a field in at the cursor from its lozenge, but not one some recipients lack", async () => {
-    const onChange = renderEditor([paragraph(text("Dear "))]);
+    const onChange = await renderEditor([paragraph(text("Dear "))]);
     await toEnd();
     await page.getByRole("button", { name: "name", exact: true }).click();
     expect(last(onChange).content![0].content).toContainEqual(field("name"));
@@ -105,7 +105,7 @@ describe("MailingEditor", () => {
   });
 
   it("makes a paragraph only for some, changes who for, then for everyone again", async () => {
-    const onChange = renderEditor([paragraph(text("Thank you."))]);
+    const onChange = await renderEditor([paragraph(text("Thank you."))]);
     await toEnd();
     const only = page.getByRole("menu", { name: copy.addOnlyFor });
     await page.getByRole("button", { name: copy.addOnlyFor }).click();
@@ -128,7 +128,7 @@ describe("MailingEditor", () => {
   });
 
   it("counts those an except part leaves in, out of the recipients", async () => {
-    renderEditor([paragraph(text("Thank you."))], { fields, conditions }, 20);
+    await renderEditor([paragraph(text("Thank you."))], { fields, conditions }, 20);
     await page.getByRole("button", { name: copy.except }).click();
     const except = page.getByRole("menu", { name: copy.except });
     await except.getByRole("menuitem", { name: "Frontier AI letter" }).click();
@@ -137,8 +137,22 @@ describe("MailingEditor", () => {
       .toBeVisible();
   });
 
+  it("puts a field in from its lozenge by Enter or space, and not by other keys", async () => {
+    const onChange = await renderEditor([paragraph(text("Dear "))]);
+    await toEnd();
+    const name = page.getByRole("button", { name: "name", exact: true }).element() as HTMLElement;
+    name.focus();
+    await userEvent.keyboard("a");
+    expect(onChange).not.toHaveBeenCalled();
+    await userEvent.keyboard("{Enter}");
+    expect(last(onChange).content![0].content).toEqual([text("Dear "), field("name")]);
+    name.focus();
+    await userEvent.keyboard(" ");
+    expect(last(onChange).content![0].content).toEqual([text("Dear "), field("name"), field("name")]);
+  });
+
   it("drags a field in as the editor reads it", async () => {
-    renderEditor([paragraph(text("Dear "))]);
+    await renderEditor([paragraph(text("Dear "))]);
     const button = page.getByRole("button", { name: "name", exact: true });
     await expect.element(button).toBeVisible();
     const dragged = new DataTransfer();
@@ -148,7 +162,7 @@ describe("MailingEditor", () => {
   });
 
   it("says when no recipient has answered an ask, and types { when no field can be used", async () => {
-    const onChange = renderEditor([paragraph(text("Dear"))], { fields: [fields[2]], conditions: [] });
+    const onChange = await renderEditor([paragraph(text("Dear"))], { fields: [fields[2]], conditions: [] });
     await expect.element(page.getByText(copy.noConditions)).toBeVisible();
     await toEnd();
     await userEvent.keyboard("{{");
@@ -157,7 +171,7 @@ describe("MailingEditor", () => {
   });
 
   it("offers the fields when { is typed, and puts the one picked where it was typed", async () => {
-    const onChange = renderEditor([paragraph(text("Dear "))]);
+    const onChange = await renderEditor([paragraph(text("Dear "))]);
     await toEnd();
     await userEvent.keyboard("{{");
     const menu = page.getByRole("menu", { name: copy.pickField });
@@ -168,7 +182,7 @@ describe("MailingEditor", () => {
   });
 
   it("moves through the menu of fields every recipient has with the arrow keys, round from either end", async () => {
-    const onChange = renderEditor([paragraph(text("Dear "))]);
+    const onChange = await renderEditor([paragraph(text("Dear "))]);
     await toEnd();
     await userEvent.keyboard("{{");
     const menu = page.getByRole("menu", { name: copy.pickField });
@@ -193,7 +207,7 @@ describe("MailingEditor", () => {
     });
 
     it("at the start of a box, takes its text out rather than into a box just before it", async () => {
-      const onChange = renderEditor([
+      const onChange = await renderEditor([
         box(conditions[0].id, paragraph(text("Thanks."))),
         box("going:edinburgh", paragraph(text("See you there."))),
       ]);
@@ -207,7 +221,7 @@ describe("MailingEditor", () => {
     });
 
     it("inside a box, deletes as anywhere else: a letter, a selection, or the break before a second line", async () => {
-      const onChange = renderEditor([box(conditions[0].id, paragraph(text("One")), paragraph(text("Two")))]);
+      const onChange = await renderEditor([box(conditions[0].id, paragraph(text("One")), paragraph(text("Two")))]);
       await editor().getByText("Two").click();
       await userEvent.keyboard("{End}");
       await userEvent.keyboard("{Backspace}");
@@ -220,7 +234,7 @@ describe("MailingEditor", () => {
     });
 
     it("at the start of a line in no box, joins it to the line before", async () => {
-      const onChange = renderEditor([paragraph(text("One")), paragraph(text("Two"))]);
+      const onChange = await renderEditor([paragraph(text("One")), paragraph(text("Two"))]);
       await editor().getByText("Two").click();
       await userEvent.keyboard("{Home}");
       await userEvent.keyboard("{Backspace}");
@@ -229,7 +243,7 @@ describe("MailingEditor", () => {
   });
 
   it("closes the menu of fields on Escape, typing no {", async () => {
-    const onChange = renderEditor([paragraph(text("Dear"))]);
+    const onChange = await renderEditor([paragraph(text("Dear"))]);
     await toEnd();
     await userEvent.keyboard("{{");
     await userEvent.keyboard("{Escape}");
@@ -240,7 +254,7 @@ describe("MailingEditor", () => {
   });
 
   it("reads fields and parts pasted in, and copies a field as its label", async () => {
-    const onChange = renderEditor([paragraph(text("Start"))]);
+    const onChange = await renderEditor([paragraph(text("Start"))]);
     await toEnd();
     const pasted = new DataTransfer();
     pasted.setData(
