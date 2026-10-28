@@ -18,7 +18,6 @@ const ALLOWED: Record<string, string> = {
   "PermissionTiles.module.css .popover": "a popover",
   "Details.module.css .editPopover": "a popover",
   "DeletePolitician.module.css .confirm": "a popover",
-  "MailingView.module.css .popover": "a popover",
   "MailingEditor.module.css .partMenu": "a popover",
   "MailingWriter.module.css .helpBox": "a popover",
   "MailingWriter.module.css .ask": "a field",

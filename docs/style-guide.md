@@ -388,6 +388,16 @@ are:
 one underlined: the politicians' houses. A list has at most one row of
 tabs, for the one choice people make most.
 
+**Popovers, not modals.** Anything a button opens, a menu, a small form or
+a "?"'s few words, is a bubble hung from that button (`ui/Menu`, or a
+popover anchored to its button the same way), so it opens where the person
+is looking and the page stays in view around it. Never a box in the middle
+of the window: it takes them away from what they were doing, and hides
+what they'd want to check against. A browser too old to anchor one shows
+it in the middle as a fallback; that's the only place it goes there. A
+choice that needs confirming is confirmed in place, as Delete draft is
+pressed twice.
+
 **The sidebar** (`StaffNav`). Each page has its icon (`NavIcon`) beside
 its name. Fold, at its foot, folds it to a rail of the icons on wider
 screens, the sections a rule apart, each name showing beside its icon on

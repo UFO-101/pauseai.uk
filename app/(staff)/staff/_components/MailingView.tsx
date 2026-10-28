@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Button } from "@/components/ui/Button";
+import { buttonClass } from "@/components/ui/Button";
 import { Select, TextInput } from "@/components/ui/Controls";
 import { Field } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -20,6 +20,7 @@ import { MailingCounts } from "./MailingParts";
 import Grid, { Card } from "./ui/Grid";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
 import Strip from "./ui/Strip";
+import Menu from "./ui/Menu";
 import Tabs from "./ui/Tabs";
 import styles from "./MailingView.module.css";
 
@@ -85,32 +86,35 @@ function recipientColumns(mailing: Mailing): ListColumn<MailingRecipient>[] {
   ];
 }
 
-/** Change the time: a button that opens a small form of the day and hour, in London. */
+/** Change the time: a button with a small form of the day and hour, in London, hung from it. */
 function ChangeTime({ mailing, action }: { mailing: WrittenMailing; action: FormAction }) {
   const { day, hour } = londonDayHour(mailing.dueAt!);
   return (
     <>
-      <Button variant="ghost" size="small" fit popoverTarget="change-time">
-        {copy.changeTime}
-      </Button>
-      <form id="change-time" popover="auto" action={action} className={styles.popover}>
-        <input type="hidden" name="id" value={mailing.id} />
-        <Field label={copy.day}>
-          <TextInput type="date" name="day" defaultValue={day} required />
-        </Field>
-        <Field label={copy.hour}>
-          <Select name="hour" defaultValue={hour}>
-            {Array.from({ length: 24 }, (_, h) => (
-              <option key={h} value={h}>
-                {`${String(h).padStart(2, "0")}:00`}
-              </option>
-            ))}
-          </Select>
-        </Field>
-        <SubmitButton variant="primary" size="small" fit>
-          {copy.saveTime}
-        </SubmitButton>
-      </form>
+      <Menu
+        id="change-time"
+        trigger={buttonClass({ variant: "ghost", size: "small", fit: true })}
+        label={copy.changeTime}
+      >
+        <form action={action} className={styles.changeTime}>
+          <input type="hidden" name="id" value={mailing.id} />
+          <Field label={copy.day}>
+            <TextInput type="date" name="day" defaultValue={day} required />
+          </Field>
+          <Field label={copy.hour}>
+            <Select name="hour" defaultValue={hour}>
+              {Array.from({ length: 24 }, (_, h) => (
+                <option key={h} value={h}>
+                  {`${String(h).padStart(2, "0")}:00`}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <SubmitButton variant="primary" size="small" fit>
+            {copy.saveTime}
+          </SubmitButton>
+        </form>
+      </Menu>
     </>
   );
 }
