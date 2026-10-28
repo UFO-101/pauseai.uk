@@ -18,8 +18,9 @@ mailing for a channel once that channel's plan is built.
 - The `mailings` table holds the mailings imported from Airtable, with
   their title and ask, and the tick box (`airtable_field`) or dates
   (`airtable_sent_between`) that identify them in Airtable.
-- `pauseai_letters` holds each politician's letter in a mailing. It is
-  a kind of `letters`.
+- `letters` holds every letter to a notable person. It has two child
+  tables: `supporter_letters`, a supporter's letter in a campaign, and
+  `pauseai_letters`, PauseAI's letter in a mailing.
 - `/staff/mailings` lists the imported mailings, and each has a page
   (`lib/server/mailings.ts`).
 - `send()` in `lib/server/email.ts` sends by Postmark, refuses blocked
@@ -33,13 +34,62 @@ mailing for a channel once that channel's plan is built.
 
 ## Data model
 
-`mailings` is the parent table. Each audience has its own table of
-recipients, in the same way that `letters` has `supporter_letters` and
-`pauseai_letters`:
+A letter is an email to a notable person. A message is an email, text
+or WhatsApp message to a supporter. Each table's name says which way it
+goes, so "supporter" never means "from" in one table and "to" in the
+next. The first step renames the tables we have:
+
+| Now                 | Renamed                   | One row is                                                |
+| ------------------- | ------------------------- | --------------------------------------------------------- |
+| `letters`           | `letters`                 | A letter to a notable person, from anyone                 |
+| `supporter_letters` | `letters_from_supporters` | A supporter's letter to a politician, in a campaign       |
+| `pauseai_letters`   | `letters_from_pauseai`    | PauseAI's letter to a politician, in a mailing            |
+| (new)               | `messages_to_supporters`  | PauseAI's message to a supporter, in a mailing            |
+| `letter_events`     | `letter_events`           | Something that happened to a letter: sent, bounced…       |
+| (new)               | `message_events`          | Something that happened to a message: delivered, failed…  |
+| (later)             | `letter_replies`          | A later email in a letter's thread (`politician-email.md`) |
+| (later)             | `message_replies`         | A supporter's reply, or our answer (`supporters-phone.md`) |
+
+`letters.kind` keeps its values, `supporter` and `pauseai`, which now
+read as who it is from. A text to a politician, if we ever send one,
+would not be a letter; it would need its own table.
+
+Mail to politicians:
 
 ```
-mailings ──┬── pauseai_letters      politicians (exists)
-           └── supporter_messages   supporters (new)
+                     notable_people ── politicians
+                           ▲
+                           │ to
+                        letters ◄── letter_events
+                           │
+              ┌────────────┴─────────────┐
+              │ one of                   │ one of
+  letters_from_supporters        letters_from_pauseai
+     │            │                      │
+     │ in         │ written in           │ in
+     ▼            ▼                      ▼
+ campaigns    form_entries            mailings
+     │            ▲                      │
+     │ asks       │ linked by            │ asks
+     ▼            │                      ▼
+   asks     supporter_links ──► supporters
+```
+
+Mail to supporters:
+
+```
+ mailings ◄── messages_to_supporters ──► supporters
+                        ▲
+                        └── message_events
+```
+
+A mailing's recipients are in one of two tables, by audience:
+
+```
+               mailings
+        ┌─────────┴──────────┐
+letters_from_pauseai   messages_to_supporters
+  (politicians)            (supporters)
 ```
 
 - `mailings` gets new columns: the audience (`politicians` or
@@ -48,13 +98,11 @@ mailings ──┬── pauseai_letters      politicians (exists)
   is sent from, when it is due, and its state (`draft`, `scheduled`,
   `sending`, `sent` or `cancelled`). Only the imported mailings may
   have no template.
-- `supporter_messages` has one row per supporter in a mailing: the
+- `messages_to_supporters` has one row per supporter in a mailing: the
   supporter, the address or number used, the status (`scheduled`,
   `sent`, `delivered`, `failed` or `skipped`), the provider's message
   ID, the merge values, and the reason if it was skipped. Erasure
   deletes the address and merge values but keeps the row.
-- `message_events` records what happened to each message after it was
-  sent, for both tables of recipients.
 
 We don't store each message's text. It can be rebuilt from the template
 and the recipient's merge values. The mailing keeps a copy of the
@@ -81,15 +129,20 @@ don't change it.
 
 ## Steps
 
-1. Store filters. Separate who a list shows from how it is shown, for
+1. Rename the tables, in a migration and a commit of their own, before
+   anything else. `supporter_letters` is used in 22 files and
+   `pauseai_letters` in 12, including erasure, supporter links, the
+   supporter views, `contact_permission()`, the backup Worker's checks
+   and the docs.
+2. Store filters. Separate who a list shows from how it is shown, for
    both lists, as one validated value that a mailing stores as JSON. A
    mailing's page shows its filter in words and can run it again to
    show who it would choose now.
-2. Templates. Use Email your MP's format (`lib/letter-format.ts`) and
+3. Templates. Use Email your MP's format (`lib/letter-format.ts`) and
    add merge fields and sections shown only to some recipients, such as
    `[if signed frontier-ai-letter] … [end]`. If a merge field can't be
    filled in for someone, they are skipped.
-3. Channels. `Channel` is a type with four functions: send one message,
+4. Channels. `Channel` is a type with four functions: send one message,
    say how many more can be sent today, say what one message costs, and
    turn a provider's report into an event. Each channel also has a fake
    version for fixture builds, the dev server and tests. The fake writes
@@ -97,10 +150,10 @@ don't change it.
    can report deliveries, failures, bounces, opt-outs and replies
    through the same code as the real webhook. This plan uses the fake
    email channel that already exists.
-4. The `send-mailings` job runs hourly, during the database wake that
+5. The `send-mailings` job runs hourly, during the database wake that
    the other jobs share. Each run sends what it can in 30 seconds and
    leaves the rest for the next run.
-5. Staff pages. Design them first, as mock-ups on the real staff
+6. Staff pages. Design them first, as mock-ups on the real staff
    components on desktop and phone, and choose between them.
    - A "Mail these" button on the politicians and supporters lists.
    - A page for a new mailing: the recipients, each of whom can be

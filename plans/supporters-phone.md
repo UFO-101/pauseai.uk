@@ -68,8 +68,9 @@ weekly and event texts.
    provider, in `contact_unsubscribes`.
 4. Mark a number that turns out not to be a mobile, or not to be on
    WhatsApp, and skip it in future.
-5. Store each reply with the message it answers, and show it on the
-   supporter's page with a reply box. Anyone with the `supporters`
+5. Store each reply in a new `message_replies` table, with the message
+   it answers, and show it on the supporter's page with a reply box.
+   Staff answers are stored there too. Anyone with the `supporters`
    permission can reply, and each reply records who sent it.
 
 ## 2. Texts

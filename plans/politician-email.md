@@ -52,7 +52,8 @@ question).
      `from:mailer-daemon OR from:postmaster newer_than:3d`.
    - An automatic reply is logged as an event.
    - Any other message is stored in full, gzipped, in Netlify Blobs,
-     with a row in a new `letter_messages` table.
+     with a row in a new `letter_replies` table. A row there is any later
+     message in the thread: the politician's reply, or our answer.
 5. Back up the stored messages. The backup Worker fetches new ones
    through a read-only route on the site.
 6. Let staff add asks, on `/staff/asks` or while making a mailing. An
