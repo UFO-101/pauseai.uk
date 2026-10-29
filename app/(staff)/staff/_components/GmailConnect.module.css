@@ -8,3 +8,8 @@
 .connect ul {
   margin: 0;
 }
+
+/* Connect Gmail, a step down from the list over it. */
+.connect > a {
+  margin-top: var(--space-2);
+}
