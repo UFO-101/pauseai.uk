@@ -100,7 +100,7 @@ function EventField({ name, value }: { name: string; value: unknown }) {
 }
 
 /**
- * Each change of a letter's status, oldest first: its time, the status and
+ * Each change of a letter's status, newest first: its time, the status and
  * every field it recorded, in words, and a {} button that opens them as
  * recorded, as the audit log has.
  */

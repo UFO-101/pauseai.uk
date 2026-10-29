@@ -60,9 +60,10 @@ describeWithDatabase("recentLetters", () => {
     ]);
     expect((await recentLetters({ politicianId: mp })).map((l) => l.id)).toEqual([2, 1]);
     expect(await recentLetters({ politicianId: mp + 1 })).toEqual([]);
+    // Newest first: at the same moment, the one recorded last.
     expect(letters[1].events.map((e) => [e.status, e.details])).toEqual([
-      ["sending", {}],
       ["sent", { messageId: "m" }],
+      ["sending", {}],
     ]);
     expect(letters[0].events).toEqual([]);
     expect((await recentLetters({ status: "sent" })).map((l) => l.id)).toEqual([1]);

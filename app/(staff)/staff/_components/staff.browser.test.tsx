@@ -2588,7 +2588,8 @@ describe("LetterDetails", () => {
       .toHaveAttribute("href", googleGroupUrl(letter.postmarkId!));
     // Each change in words, and a {} for those that recorded anything, opening it as recorded.
     const history = page.getByRole("list", { name: copy.detail.historyTitle });
-    const [sending, bounced] = history.getByRole("listitem").all();
+    // Newest first.
+    const [bounced, sending] = history.getByRole("listitem").all();
     expect(sending.element().textContent).toContain(copy.status.sending);
     expect(sending.getByRole("button").all()).toHaveLength(0);
     expect(bounced.element().textContent).toContain(`${copy.status.bounced} · ${copy.detail.fields.type} HardBounce`);

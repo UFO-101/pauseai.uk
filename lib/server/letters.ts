@@ -80,7 +80,7 @@ async function letterRows({
     `SELECT l.id::int AS id, s.campaign, l.status, f.name AS "senderName", f.email AS "senderEmail",
        f.contact_consent AS "contactConsent", n.name AS "mpName", n.id::int AS "politicianId", p.is_test AS "isTest", s.airtable_id IS NOT NULL AS imported, l.created_at AS "createdAt", l.sent_at AS "sentAt", l.replied_at AS "repliedAt",
        (SELECT k.supporter_id::int FROM supporter_links k WHERE k.form_entry_id = s.entry_id) AS "supporterId",
-       coalesce((SELECT json_agg(json_build_object('at', e.at, 'status', e.status, 'details', e.details) ORDER BY e.at, e.id)
+       coalesce((SELECT json_agg(json_build_object('at', e.at, 'status', e.status, 'details', e.details) ORDER BY e.at DESC, e.id DESC)
                  FROM letter_events e WHERE e.letter_id = l.id), '[]') AS events,
        count(*) OVER ()::int AS total
      FROM letters_from_supporters s JOIN letters l ON l.id = s.id JOIN form_entries f ON f.id = s.entry_id
@@ -158,7 +158,7 @@ export async function getLetter(id: number): Promise<LetterDetails | undefined> 
     `SELECT 'pauseai' AS kind, l.id::int AS id, l.status, l.created_at AS "createdAt", l.sent_at AS "sentAt",
        n.name AS "mpName", n.id::int AS "politicianId", n.email AS "mpEmail", m.id::int AS "mailingId",
        m.title AS mailing, p.personalised,
-       coalesce((SELECT json_agg(json_build_object('at', e.at, 'status', e.status, 'details', e.details) ORDER BY e.at, e.id)
+       coalesce((SELECT json_agg(json_build_object('at', e.at, 'status', e.status, 'details', e.details) ORDER BY e.at DESC, e.id DESC)
                  FROM letter_events e WHERE e.letter_id = l.id), '[]') AS events
      FROM letters_from_pauseai p JOIN letters l USING (id) JOIN mailings m ON m.id = p.mailing_id
        JOIN notable_people n ON n.id = l.notable_person_id
