@@ -22,6 +22,7 @@ export const DYNAMIC_EXAMPLES: Record<string, string> = {
   "/staff/letters/[id]": "/staff/letters/1",
   "/staff/letters/supporter/[id]": "/staff/letters/supporter/1",
   "/staff/mailings/[id]": "/staff/mailings/1",
+  "/staff/mailings/[id]/letters/[letter]": "/staff/mailings/1/letters/1",
   "/staff/politicians/[id]": "/staff/politicians/1",
   "/staff/supporters/[id]": "/staff/supporters/1",
   "/staff/supporters/[id]/erase": "/staff/supporters/1/erase",
