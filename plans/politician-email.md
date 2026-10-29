@@ -5,8 +5,11 @@ whole thread in `/staff`. This builds on `plans/mailings.md`, phases 1
 and 2, and is one pull request. Once it's built, a mailing made on the
 new mailing page can be scheduled.
 
-Joseph needs to create the Google Cloud project, and to decide with
-Francis about a shared account (see the open questions).
+The Google Cloud project is PauseAI UK, which Joseph made under the
+organisation of PauseAI's Workspace, whose primary domain is
+pauseai.info. Francis sets up its Gmail API, consent screen and OAuth
+client. Joseph needs to decide with Francis about a shared account (see
+the open questions).
 
 ## Rules
 
@@ -28,8 +31,8 @@ Francis about a shared account (see the open questions).
    `https://mail.google.com/mail/u/{sender}/#all/{threadId}` opens a
    thread, as this URL isn't documented.
 2. Connect Gmail. The Google Cloud project has an Internal consent
-   screen, so only pauseai.uk accounts can grant access and Google
-   doesn't need to review it
+   screen, so only accounts in PauseAI's Workspace (pauseai.info and
+   pauseai.uk) can grant access and Google doesn't need to review it
    ([user type](https://support.google.com/cloud/answer/15549945)). It
    asks for the `gmail.send` and `gmail.readonly` scopes
    ([scopes](https://developers.google.com/workspace/gmail/api/auth/scopes)).

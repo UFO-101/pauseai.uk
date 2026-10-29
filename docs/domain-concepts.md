@@ -160,7 +160,9 @@ check, as to public figures in their public role. Each staff member
 connects their own Gmail, on their page (`/staff/me`) or from a mailing's
 Sent from (`lib/server/gmail-accounts.ts`); once it's connected, any staff
 member can send a mailing from it. The Google Cloud project's consent
-screen is Internal, so only pauseai.uk accounts can connect. The refresh
+screen is Internal, so only accounts in PauseAI's Google Workspace,
+pauseai.info's as well as pauseai.uk's, can grant access, and the site
+takes only the logged-in staff member's own address. The refresh
 token is kept encrypted (`GMAIL_TOKEN_KEY`), and deleted on disconnecting.
 
 - **Scheduling** needs the Gmail it's from connected, and no more
