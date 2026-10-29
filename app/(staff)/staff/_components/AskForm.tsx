@@ -13,6 +13,7 @@ import { AskPreview } from "./AskLine";
 import { DeleteTwice } from "./MailingButtons";
 import Grid, { Card } from "./ui/Grid";
 import Strip from "./ui/Strip";
+import forms from "./StaffForms.module.css";
 
 const copy = staffCopy.asks;
 
@@ -60,11 +61,11 @@ export default function AskForm({
       )}
       {fixed && <Strip tone="amber">{copy.fixed}</Strip>}
       <Grid>
-        <Card span={4}>
+        <Card span={3}>
           <FormStack id="ask-form" action={save}>
             <input type="hidden" name="back" value={back} />
             {ask && <input type="hidden" name="slug" value={ask.slug} />}
-            <Field label={copy.fields.kind}>
+            <Field label={copy.fields.kind} className={forms.short}>
               <Select
                 name="kind"
                 required
@@ -94,7 +95,7 @@ export default function AskForm({
             </Field>
             <Hint>{words.titleHint}</Hint>
             {ask && <Hint>{copy.slugHint(ask.slug)}</Hint>}
-            <Field label={words.date}>
+            <Field label={words.date} className={forms.short}>
               <TextInput
                 name="date"
                 type="date"
@@ -131,7 +132,7 @@ export default function AskForm({
           )}
           {ask && !fixed && !ask.deletable && <Hint>{copy.notDeletable}</Hint>}
         </Card>
-        <Card span={2} look="aside" title={copy.previewTitle} id="ask-preview">
+        <Card span={3} look="aside" title={copy.previewTitle} id="ask-preview">
           <AskPreview
             ask={{
               slug: ask?.slug ?? "",

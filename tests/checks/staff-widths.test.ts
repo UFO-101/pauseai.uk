@@ -31,6 +31,7 @@ const ALLOWED: Record<string, string> = {
   "DevLogin.module.css .dev": "the login page",
   // A control's width inside a form.
   "StaffForms.module.css .narrow": "a field",
+  "StaffForms.module.css .short": "a field",
   "FilterBar.module.css .search > :first-child": "the search, so its label fits",
   "Menu.module.css .menu": "a popover",
   "StaffAccountsTable.module.css .add input": "a field",

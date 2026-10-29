@@ -14,3 +14,8 @@
 .narrow {
   max-width: 28rem;
 }
+
+/* A field of a few words at most: a date, a short choice. */
+.short {
+  max-width: 12rem;
+}

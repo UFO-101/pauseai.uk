@@ -33,15 +33,21 @@ export function AskLead({ ask }: { ask: Ask }) {
   );
 }
 
-/** An ask as it shows among a politician's asks before they've answered it: AskLead, and beside it that there's no answer. */
+/**
+ * An ask as it shows among a politician's asks once they've said yes:
+ * AskLead, and beside it, in a column of its own, their answer, ticked in
+ * green.
+ */
 export function AskPreview({ ask }: { ask: Ask }) {
   return (
-    <div className={styles.ask} role="group" aria-label={ask.title}>
-      <div className={styles.asked}>
-        <AskLead ask={ask} />
-      </div>
-      <div className={styles.answer}>
-        <span>{ask.kind === "letter" ? staffCopy.statuses.none : staffCopy.statuses.noAnswer}</span>
+    <div className={styles.asks}>
+      <div className={styles.ask} role="group" aria-label={ask.title}>
+        <div className={styles.asked}>
+          <AskLead ask={ask} />
+        </div>
+        <div className={`${styles.answer} ${styles.yes}`}>
+          <span>{staffCopy.statuses[ask.kind === "letter" ? "signed" : "going"]}</span>
+        </div>
       </div>
     </div>
   );

@@ -117,9 +117,17 @@ FROM people p JOIN made_politicians m USING (airtable_id);
 UPDATE notable_people SET airtable_id = NULL WHERE airtable_id IN (SELECT airtable_id FROM made_politicians);
 DROP TABLE made_politicians;
 
--- An ask staff added, which no one has answered, so it can be changed or deleted.
+-- Two asks staff added: one no one has answered, so it can be changed or
+-- deleted; and one Polly and Dora have, so its kind is fixed and it can't
+-- be deleted.
 INSERT INTO asks (slug, title, kind, date, url, asked_by) VALUES
-  ('winter-reception-dec-2026', 'Winter reception', 'event', '2026-12-09', NULL, '{pauseai}');
+  ('winter-reception-dec-2026', 'Winter reception', 'event', '2026-12-09', NULL, '{pauseai}'),
+  ('ai-safety-briefing-sep-2026', 'AI safety briefing in Westminster, September 2026', 'event', '2026-09-15',
+    'https://luma.com/ai-safety-briefing', '{pauseai}');
+INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, note, updated_by, updated_at)
+SELECT id, 'ai-safety-briefing-sep-2026', 'event', CASE airtable_id WHEN 'recPlaceholder' THEN 'going' ELSE 'declined' END,
+  '2026-09-01', '', 'jo@pauseai.uk', now() - interval '50 days'
+FROM notable_people WHERE airtable_id IN ('recPlaceholder', 'recDummy');
 
 -- Statuses: Polly signed the letter to the PM last month; Dora this week;
 -- the peer backs the bill, from ControlAI's letter, the week before; Backy

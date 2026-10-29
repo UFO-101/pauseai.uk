@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Actions from "@/components/ui/Actions";
 import { ButtonLink } from "@/components/ui/Button";
+import styles from "./AsksTable.module.css";
 import { ASK_STATUSES, FIXED_ASKS } from "@/lib/asks";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { AskWithCounts } from "@/lib/server/asks";
@@ -115,11 +116,13 @@ export default function AsksTable({ asks, notice = "" }: { asks: AskWithCounts[]
         rowKey={(a) => a.slug}
         empty={copy.none}
       />
-      <Actions>
-        <ButtonLink href="/staff/asks/new" variant="primary" fit>
-          {copy.add}
-        </ButtonLink>
-      </Actions>
+      <div className={styles.add}>
+        <Actions>
+          <ButtonLink href="/staff/asks/new" variant="primary" fit>
+            {copy.add}
+          </ButtonLink>
+        </Actions>
+      </div>
     </>
   );
 }

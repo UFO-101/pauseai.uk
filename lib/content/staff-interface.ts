@@ -971,7 +971,7 @@ export const staffCopy = {
     fixed: "⁂ The site's code uses this ask, so it can't be changed here.",
     // Beside the form: the ask as it will show on a politician's page.
     previewTitle: "⁂ On a politician's page",
-    previewHint: "⁂ How it shows among their asks, before they've answered.",
+    previewHint: "⁂ How it shows among their asks, once they've said yes.",
     save: "⁂ Save",
     delete: "⁂ Delete ask",
     notDeletable: "⁂ It can't be deleted while answers, campaigns or mailings refer to it.",
