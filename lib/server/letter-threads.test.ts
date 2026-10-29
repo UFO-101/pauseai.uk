@@ -24,7 +24,7 @@ describeWithDatabase("letter threads", () => {
   afterEach(() => vi.unstubAllEnvs());
 
   /** A mailing sent from Jo's Gmail, its letter to Polly, and the letter's ID; or with `imported`, one from Airtable. */
-  async function letter(imported = false): Promise<{ mailing: number; letter: number; polly: number }> {
+  async function letter(imported = false): Promise<{ mailing: number; letter: number }> {
     const polly = await addTestPolitician();
     const [{ id: mailing }] = imported
       ? await query<{ id: number }>("SELECT id::int AS id FROM mailings WHERE body IS NULL ORDER BY id LIMIT 1")
@@ -43,7 +43,7 @@ describeWithDatabase("letter threads", () => {
       mailing,
       imported ? null : JSON.stringify({ values: { salutation: "Ms Placeholder" }, meets: [] }),
     ]);
-    return { mailing, letter: id, polly };
+    return { mailing, letter: id };
   }
 
   async function keep(letterId: number, key: string, raw: string | null, at: string, fromUs = false) {
@@ -56,15 +56,11 @@ describeWithDatabase("letter threads", () => {
     );
   }
 
-  it("gives the letter as it went, its Gmail thread, what happened to it, and each reply's text, oldest first", async () => {
-    const { mailing, letter: id, polly } = await letter();
+  it("gives the letter as it went, its Gmail thread, and each reply's text, oldest first", async () => {
+    const { mailing, letter: id } = await letter();
     await query(
       `INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id, backend, sender, gmail_thread_id)
        VALUES ('mailing', $1, 'p@example.org', 'sent', 'g1', 'gmail', 'jo@pauseai.uk', 'thread-1')`,
-      [id],
-    );
-    await query(
-      "INSERT INTO letter_events (letter_id, status, at) VALUES ($1, 'sent', now()), ($1, 'auto_reply', '2026-11-02T10:01:00Z')",
       [id],
     );
     await keep(
@@ -76,12 +72,7 @@ describeWithDatabase("letter threads", () => {
     );
     await keep(id, "a.eml.gz", "Subject: Re\r\n\r\nThanks,\r\nPolly\r\n", "2026-11-02T12:00:00Z");
     expect(await letterThread(mailing, id)).toEqual({
-      letterId: id,
-      mailingId: mailing,
       mailingTitle: "AI",
-      politician: { id: polly, name: "Polly Placeholder", email: "polly.placeholder.mp@parliament.uk" },
-      status: "sent",
-      sentAt: new Date("2026-11-02T10:00:00Z"),
       subject: "AI safety",
       letter: {
         type: "doc",
@@ -98,7 +89,6 @@ describeWithDatabase("letter threads", () => {
       sentFrom: "jo@pauseai.uk",
       fromName: "Jo Staff",
       gmailThreadId: "thread-1",
-      events: [{ at: new Date("2026-11-02T10:01:00Z"), status: "auto_reply" }],
       messages: [
         expect.objectContaining({ fromName: "Polly", fromUs: false, text: "Thanks,\nPolly" }),
         expect.objectContaining({ fromUs: true, text: "Ours & yours" }),

@@ -155,10 +155,11 @@ function History({ events }: { events: LetterEvent[] }) {
 /**
  * A letter's page, a supporter's or PauseAI's: its title, then a card of
  * who it's from and to, what it was and how it stands, with the way to
- * read it in Google; beside it, what happened to it. A supporter's goes
- * back to the letters list, PauseAI's to its mailing.
+ * read it in Google; beside it, what happened to it; then `children`, for
+ * PauseAI's its thread. A supporter's goes back to the letters list,
+ * PauseAI's to its mailing.
  */
-export default function LetterDetails({ letter }: { letter: Details }) {
+export default function LetterDetails({ letter, children }: { letter: Details; children?: ReactNode }) {
   const back =
     letter.kind === "supporter"
       ? { href: "/staff/letters", label: staffCopy.nav.letters }
@@ -187,6 +188,7 @@ export default function LetterDetails({ letter }: { letter: Details }) {
           <History events={letter.events} />
         </Card>
       </Grid>
+      {children}
     </>
   );
 }

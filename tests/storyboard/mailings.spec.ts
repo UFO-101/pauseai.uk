@@ -200,7 +200,7 @@ test("Gmail connected from Sent from, the mailing scheduled, then sent by the ho
 }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
-  await page.goto(`${BASE}/staff/politicians?country=scotland`);
+  await page.goto(`${BASE}/staff/politicians?nation=scotland`);
   await page.getByRole("link", { name: copy.mailThese(1) }).click();
   await page.getByLabel(copy.subject).fill("See you in Edinburgh");
   await page.getByRole("textbox", { name: copy.letter }).click();

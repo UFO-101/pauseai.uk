@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { gmailThreadUrl } from "@/lib/gmail-connect";
@@ -6,7 +5,6 @@ import type { LetterThread as Thread, ThreadMessage } from "@/lib/server/letter-
 import { staffTime } from "@/lib/staff-time";
 import { MailingLetter } from "./MailingLetter";
 import Grid, { Card } from "./ui/Grid";
-import Strip from "./ui/Strip";
 import styles from "./LetterThread.module.css";
 
 const copy = staffCopy.letterThread;
@@ -28,47 +26,30 @@ function Message({ message }: { message: ThreadMessage }) {
 }
 
 /**
- * One of PauseAI's letters and its thread: to whom, from whom and when it
- * went, and its status; Open in Gmail, for `me` if the letter went from
- * their Gmail; the letter as it went, or a note that an imported one's text
- * isn't kept; then what else happened to it, and each reply and answer in
- * the thread, oldest first.
+ * One of PauseAI's letters' thread, below its page's facts and history:
+ * the Gmail it went from, with Open in Gmail for `me` if it's theirs; the
+ * letter as it went, or a note that an imported one's text isn't kept;
+ * then each reply and answer, oldest first.
  */
 export default function LetterThread({ thread, me }: { thread: Thread; me: string }) {
   const inGmail = thread.gmailThreadId && thread.sentFrom === me;
   return (
-    <>
-      <h1>{copy.title(thread.politician.name)}</h1>
-      <dl className={styles.facts}>
-        <dt>{copy.to}</dt>
-        <dd>
-          <Link href={`/staff/politicians/${thread.politician.id}`}>{thread.politician.name}</Link>
-          {thread.politician.email && <Muted>{` <${thread.politician.email}>`}</Muted>}
-        </dd>
-        {thread.sentFrom && (
-          <>
-            <dt>{copy.from}</dt>
-            {/* With no name of its own, it went in the Gmail account's. */}
-            <dd>{thread.fromName ? `${thread.fromName} <${thread.sentFrom}>` : thread.sentFrom}</dd>
-          </>
-        )}
-        <dt>{copy.sent}</dt>
-        <dd>{thread.sentAt ? staffTime(thread.sentAt) : <Muted>{copy.notSent}</Muted>}</dd>
-        <dt>{copy.status}</dt>
-        <dd>{staffCopy.letters.status[thread.status] ?? thread.status}</dd>
-      </dl>
-      {inGmail && (
+    <section aria-labelledby="letter-thread">
+      <h2 id="letter-thread">{copy.title}</h2>
+      {thread.sentFrom && (
         <p>
-          <a href={gmailThreadUrl(me, thread.gmailThreadId!)} target="_blank" rel="noreferrer">
-            {copy.openInGmail}
-          </a>
+          {/* With no name of its own, it went in the Gmail account's. */}
+          {copy.sentFrom(thread.fromName ? `${thread.fromName} <${thread.sentFrom}>` : thread.sentFrom)}
+          {inGmail && (
+            <>
+              {" · "}
+              <a href={gmailThreadUrl(me, thread.gmailThreadId!)} target="_blank" rel="noreferrer">
+                {copy.openInGmail}
+              </a>
+            </>
+          )}
         </p>
       )}
-      {thread.events.map((event) => (
-        <Strip key={`${event.status}-${event.at}`} tone={event.status === "auto_reply" ? "plain" : "amber"}>
-          {`${copy.events[event.status]} · ${staffTime(event.at)}`}
-        </Strip>
-      ))}
       <Grid>
         <Card span={6} title={thread.subject || thread.mailingTitle}>
           {thread.letter ? <MailingLetter doc={thread.letter} /> : <Muted>{copy.noText}</Muted>}
@@ -78,6 +59,6 @@ export default function LetterThread({ thread, me }: { thread: Thread; me: strin
         ))}
       </Grid>
       {thread.messages.length === 0 && <Muted>{copy.noReplies}</Muted>}
-    </>
+    </section>
   );
 }

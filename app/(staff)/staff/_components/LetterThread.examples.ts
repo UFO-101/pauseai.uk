@@ -2,14 +2,9 @@ import type { LetterThread } from "@/lib/server/letter-threads";
 import type { GmailAccount } from "@/lib/server/gmail-accounts";
 import type { EditableAsk } from "./AskForm";
 
-/** Jo's letter to Polly, from Jo's Gmail, which Polly answered and Jo answered back, after an out-of-office. */
+/** Jo's letter to Polly, from Jo's Gmail, which Polly answered and Jo answered back. */
 export const exampleThread: LetterThread = {
-  letterId: 35,
-  mailingId: 11,
   mailingTitle: "Edinburgh follow-up",
-  politician: { id: 5, name: "Polly Placeholder", email: "polly.placeholder.mp@parliament.uk" },
-  status: "sent",
-  sentAt: "2026-10-09T09:00:00Z",
   subject: "Edinburgh follow-up",
   letter: {
     type: "doc",
@@ -21,7 +16,6 @@ export const exampleThread: LetterThread = {
   sentFrom: "jo@pauseai.uk",
   fromName: "Jo Seed",
   gmailThreadId: "thread-seed-2",
-  events: [{ at: "2026-10-09T09:01:00Z", status: "auto_reply" }],
   messages: [
     {
       id: 1,
@@ -51,9 +45,6 @@ export const exampleImportedThread: LetterThread = {
   sentFrom: null,
   fromName: null,
   gmailThreadId: null,
-  sentAt: null,
-  status: "not_sent",
-  events: [],
   messages: [],
 };
 
