@@ -397,8 +397,8 @@ The topics, and the channels each goes by (`TOPIC_REASONS` in
 - **Volunteering**, phone: the join form asks for a number only of those
   who choose to volunteer regularly, for volunteers' messages. Before 30
   June 2026 it was a Tally form with no choice, taken to be the same, so a
-  number on a record with no intent is a yes too; one with another intent
-  is unsure.
+  number on a record from then with no intent is a yes too. One with
+  another intent, or with none on a later record, is unsure.
 - **March day**, phone: a number given for "text updates on the day" is a
   yes until the day ends (`day_texts`), then no, unless the box said yes
   to site forms.
