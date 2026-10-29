@@ -47,6 +47,17 @@ async function fillIn(page: Page, email: string) {
   await page.getByLabel(copy.form.email).fill(email);
 }
 
+/**
+ * The form's message, mid-window. A click leaves the window wherever
+ * scrolling the button into view put it, which varies between runs.
+ */
+async function messageMidWindow(page: Page): Promise<void> {
+  const alert = page.locator("form").getByRole("alert");
+  await alert.evaluate((el) => el.scrollIntoView({ block: "center", behavior: "instant" }));
+  await scrollSettled(page);
+  await expect(alert).toBeInViewport();
+}
+
 test("Register: the form becomes the share card", { tag: "@phone" }, async ({ page }, testInfo) => {
   await openSignup(page);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(/March AgainstAI Extinction/);
@@ -83,6 +94,7 @@ test("Register when Luma fails", { tag: "@phone" }, async ({ page }) => {
     "https://luma.com/pauseai-nov26",
   );
   await expect(page).toHaveURL(`${BASE}/protests/march-against-ai-extinction-nov-26#register`);
+  await messageMidWindow(page);
   await frame(page, "the form says it didn't go through, and offers Luma's page");
 });
 
@@ -91,6 +103,7 @@ test("Register with a name the server refuses", async ({ page }) => {
   await fillIn(page, "testy@example");
   await page.getByRole("button", { name: copy.form.submit, exact: true }).click();
   await expect(page.locator("form").getByRole("alert")).toHaveText(copy.errors.emailInvalid);
+  await messageMidWindow(page);
   await frame(page, "the form asks for a valid email");
 });
 
