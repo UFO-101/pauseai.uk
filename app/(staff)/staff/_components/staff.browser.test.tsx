@@ -2596,7 +2596,8 @@ describe("LetterDetails", () => {
     const [bounced, sending] = history.getByRole("listitem").all();
     expect(sending.element().textContent).toContain(copy.status.sending);
     expect(sending.getByRole("button").all()).toHaveLength(0);
-    expect(bounced.element().textContent).toContain(`${copy.status.bounced} · ${copy.detail.fields.type} HardBounce`);
+    // A hard bounce says no more than its status; the {} has what Postmark said.
+    expect(bounced.element().querySelector("li > span:nth-child(2)")!.textContent).toBe(copy.status.bounced);
     await bounced.getByRole("button", { name: staffCopy.changes.json }).click();
     await expect.element(page.getByText('"type": "HardBounce"', { exact: false })).toBeVisible();
     expect(document.body.textContent).toContain(copy.consent.yes);
@@ -2614,14 +2615,23 @@ describe("LetterDetails", () => {
           status: "odd",
           sentAt: null,
           repliedAt: "2026-10-13T09:00:00Z",
-          events: [{ at: "2026-10-14T10:00:00Z", status: "replied", details: { subject: "Thanks", spam: 0.1 } }],
+          events: [
+            { at: "2026-10-14T10:00:00Z", status: "replied", details: { subject: "Thanks", spam: 0.1 } },
+            { at: "2026-10-12T10:00:00Z", status: "bounced", details: { type: "SoftBounce", email: "jo@example.org" } },
+          ],
         }}
       />,
     );
     // A field with no name in the copy, as recorded, and a value that isn't words, as JSON.
-    expect(page.getByRole("list", { name: copy.detail.historyTitle }).element().textContent).toContain(
-      `${copy.detail.fields.subject} Thanks · spam 0.1`,
+    const history = page.getByRole("list", { name: copy.detail.historyTitle });
+    expect(history.element().textContent).toContain(`${copy.detail.fields.subject} Thanks · spam 0.1`);
+    // A soft bounce in words, and the address leading to it among the blocked emails.
+    expect(history.element().textContent).toContain(
+      `${copy.status.bounced} · Soft bounce · ${copy.detail.fields.email} jo@example.org`,
     );
+    await expect
+      .element(history.getByRole("link", { name: "jo@example.org" }))
+      .toHaveAttribute("href", "/staff/politicians/blocked-emails?q=jo%40example.org");
     expect(page.getByRole("link", { name: exampleSupporterLetterDetails.senderName }).all()).toHaveLength(0);
     expect(page.getByRole("link", { name: copy.detail.googleGroup }).all()).toHaveLength(0);
     await expect.element(page.getByText(copy.imported)).toBeVisible();

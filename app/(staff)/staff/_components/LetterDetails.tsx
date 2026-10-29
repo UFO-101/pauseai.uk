@@ -90,13 +90,42 @@ function Sender({ letter }: { letter: Details }) {
   );
 }
 
-/** One field a change recorded: its name, in bold, then its value; one with no name in the copy, as recorded. */
+/** The kind of bounce or complaint Postmark gave that each status already says, so the history leaves it out. */
+const SAID_BY_STATUS: Record<string, string> = { bounced: "HardBounce", spam_complaint: "SpamComplaint" };
+
+/** One of Postmark's kinds, in words: "SoftBounce" is "Soft bounce". */
+function postmarkWords(type: string): string {
+  const words = type.replace(/(?<=[a-z])(?=[A-Z])/g, " ").toLowerCase();
+  return words[0].toUpperCase() + words.slice(1);
+}
+
+/**
+ * One field a change recorded, in words: Postmark's kind of bounce; the
+ * address, leading to it among the blocked emails; anything else by its
+ * name, in bold, then its value, one with no name in the copy as recorded.
+ */
 function EventField({ name, value }: { name: string; value: unknown }) {
+  if (name === "type" && typeof value === "string") return <>{postmarkWords(value)}</>;
+  const shown =
+    name === "email" && typeof value === "string" ? (
+      <Link href={`/staff/politicians/blocked-emails?q=${encodeURIComponent(value)}`}>{value}</Link>
+    ) : typeof value === "string" ? (
+      value
+    ) : (
+      JSON.stringify(value)
+    );
   return (
     <>
-      <strong>{copy.detail.fields[name] ?? name}</strong> {typeof value === "string" ? value : JSON.stringify(value)}
+      <strong>{copy.detail.fields[name] ?? name}</strong> {shown}
     </>
   );
+}
+
+/** What a change recorded, as the parts of its line: each field, but Postmark's kind when the status already says it. */
+function eventParts(event: LetterEvent): ReactNode[] {
+  return Object.entries(event.details)
+    .filter(([name, value]) => !(name === "type" && SAID_BY_STATUS[event.status] === value))
+    .map(([name, value]) => <EventField key={name} name={name} value={value} />);
 }
 
 /**
@@ -108,23 +137,17 @@ function History({ events }: { events: LetterEvent[] }) {
   if (events.length === 0) return <p className={styles.none}>{copy.detail.noHistory}</p>;
   return (
     <ol className={`${styles.history} ${styles.events}`} aria-label={copy.detail.historyTitle}>
-      {events.map((event, i) => {
-        const fields = Object.entries(event.details);
-        return (
-          <li key={i}>
-            <span className={styles.when}>{staffTime(event.at)}</span>
-            <span>
-              <DotParts>
-                {[
-                  statusOf(event.status),
-                  ...fields.map(([name, value]) => <EventField key={name} name={name} value={value} />),
-                ]}
-              </DotParts>
-            </span>
-            <span>{fields.length > 0 && <LoggedJson id={`event-${i}`} details={event.details} />}</span>
-          </li>
-        );
-      })}
+      {events.map((event, i) => (
+        <li key={i}>
+          <span className={styles.when}>{staffTime(event.at)}</span>
+          <span>
+            <DotParts>{[statusOf(event.status), ...eventParts(event)]}</DotParts>
+          </span>
+          <span>
+            {Object.keys(event.details).length > 0 && <LoggedJson id={`event-${i}`} details={event.details} />}
+          </span>
+        </li>
+      ))}
     </ol>
   );
 }
