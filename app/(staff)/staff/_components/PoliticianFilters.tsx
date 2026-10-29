@@ -20,16 +20,16 @@ export function politicianFilters(askSlug: string, parties: string[], asks: Ask[
   const ask = asks.find((a) => a.slug === askSlug);
   return [
     {
-      name: "party",
-      label: staffCopy.fields.party,
-      repeat: true,
-      options: parties.map((party) => ({ value: party, label: party })),
-    },
-    {
       name: "country",
       label: staffCopy.politician.country,
       repeat: true,
       options: COUNTRIES.map((country) => ({ value: country, label: staffCopy.countries[country] })),
+    },
+    {
+      name: "party",
+      label: staffCopy.fields.party,
+      repeat: true,
+      options: parties.map((party) => ({ value: party, label: party })),
     },
     {
       name: "status",

@@ -17,34 +17,14 @@ const copy = staffCopy.letters;
 const statusOf = (status: string) => copy.status[status] ?? status;
 
 /**
- * The letters list's columns: first what happened to it, its status
- * (leading to the letter's page), when it was sent and when the MP
- * answered; then who it was from (leading to their supporter) and their
- * email, and to (leading to the MP's page); the campaign (leading to its
- * page on the site); and whether the sender agreed to hear from us.
+ * The letters list's columns, as every list's go (docs/style-guide.md):
+ * who it was from (leading to their supporter) and their email, and to
+ * (leading to the MP's page), and the campaign (leading to its page on
+ * the site); then how it stands, its status (leading to the letter's
+ * page) and whether the sender agreed to hear from us; then when it was
+ * sent and when the MP answered.
  */
 export const letterColumns: ListColumn<LetterSummary>[] = [
-  {
-    key: "status",
-    label: copy.columns.status,
-    short: true,
-    text: (l) => statusOf(l.status),
-    cell: (l) => <Link href={`/staff/letters/${l.id}`}>{statusOf(l.status)}</Link>,
-  },
-  {
-    key: "sent",
-    label: copy.columns.sent,
-    short: true,
-    text: (l) => l.sentAt,
-    cell: (l) => (l.sentAt ? staffTime(l.sentAt) : <Muted>–</Muted>),
-  },
-  {
-    key: "replied",
-    label: copy.columns.replied,
-    short: true,
-    text: (l) => l.repliedAt,
-    cell: (l) => l.repliedAt && staffTime(l.repliedAt),
-  },
   {
     key: "from",
     label: copy.columns.from,
@@ -83,11 +63,32 @@ export const letterColumns: ListColumn<LetterSummary>[] = [
     ),
   },
   {
+    key: "status",
+    label: copy.columns.status,
+    short: true,
+    text: (l) => statusOf(l.status),
+    cell: (l) => <Link href={`/staff/letters/${l.id}`}>{statusOf(l.status)}</Link>,
+  },
+  {
     key: "consent",
     label: copy.columns.consent,
     short: true,
     text: (l) => l.contactConsent,
     cell: (l) => (l.contactConsent ? copy.consent.yes : copy.consent.no),
+  },
+  {
+    key: "sent",
+    label: copy.columns.sent,
+    short: true,
+    text: (l) => l.sentAt,
+    cell: (l) => (l.sentAt ? staffTime(l.sentAt) : <Muted>–</Muted>),
+  },
+  {
+    key: "replied",
+    label: copy.columns.replied,
+    short: true,
+    text: (l) => l.repliedAt,
+    cell: (l) => l.repliedAt && staffTime(l.repliedAt),
   },
 ];
 

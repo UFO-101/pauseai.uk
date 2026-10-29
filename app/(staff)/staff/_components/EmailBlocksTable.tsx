@@ -17,10 +17,11 @@ function sentWords(block: EmailBlock): string | null {
 }
 
 /**
- * The blocked addresses' columns: the address, why, since when, whose,
- * the email that found it out (a letter linked with `letterLinks`), how
- * many emails haven't been sent since; and with `unblock`, a way to
- * unblock each, which a download leaves out.
+ * The blocked addresses' columns, as every list's go (docs/style-guide.md):
+ * the address and whose; why, and the email that found it out (a letter
+ * linked with `letterLinks`); how many emails haven't been sent since;
+ * since when; and with `unblock`, a way to unblock each, which a download
+ * leaves out.
  */
 export function blockColumns(
   letterLinks: boolean,
@@ -28,15 +29,6 @@ export function blockColumns(
 ): ListColumn<EmailBlock>[] {
   const columns: ListColumn<EmailBlock>[] = [
     { key: "address", label: copy.columns.address, text: (b) => b.address, cell: (b) => b.address },
-    {
-      key: "kind",
-      label: copy.columns.kind,
-      short: true,
-      text: (b) => copy.kinds[b.kind],
-      cell: (b) => copy.kinds[b.kind],
-    },
-    { key: "since", label: copy.columns.since, short: true, text: (b) => b.since, cell: (b) => staffTime(b.since) },
-    { key: "reason", label: copy.columns.reason, text: (b) => b.reason, cell: (b) => b.reason },
     {
       key: "whose",
       label: copy.columns.whose,
@@ -50,6 +42,14 @@ export function blockColumns(
         )),
     },
     {
+      key: "kind",
+      label: copy.columns.kind,
+      short: true,
+      text: (b) => copy.kinds[b.kind],
+      cell: (b) => copy.kinds[b.kind],
+    },
+    { key: "reason", label: copy.columns.reason, text: (b) => b.reason, cell: (b) => b.reason },
+    {
       key: "sent",
       label: copy.columns.sent,
       text: sentWords,
@@ -61,6 +61,7 @@ export function blockColumns(
         ),
     },
     { key: "refused", label: copy.columns.refused, short: true, text: (b) => b.refused, cell: (b) => b.refused },
+    { key: "since", label: copy.columns.since, short: true, text: (b) => b.since, cell: (b) => staffTime(b.since) },
   ];
   return unblock
     ? [...columns, { key: "unblock", label: "", cell: (b) => <UnblockForm block={b} action={unblock} /> }]

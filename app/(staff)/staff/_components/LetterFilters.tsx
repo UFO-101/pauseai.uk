@@ -9,22 +9,14 @@ const copy = staffCopy.letters;
 export function letterFilters(): Filter[] {
   return [
     {
-      name: "status",
-      label: copy.columns.status,
-      options: Object.entries(copy.status).map(([value, label]) => ({ value, label })),
-    },
-    {
-      name: "answered",
-      label: copy.columns.replied,
-      options: [
-        { value: "yes", label: copy.answered.yes },
-        { value: "no", label: copy.answered.no },
-      ],
-    },
-    {
       name: "campaign",
       label: copy.columns.campaign,
       options: campaigns.map((campaign) => ({ value: campaign.slug, label: campaign.title })),
+    },
+    {
+      name: "status",
+      label: copy.columns.status,
+      options: Object.entries(copy.status).map(([value, label]) => ({ value, label })),
     },
     {
       name: "consent",
@@ -32,6 +24,14 @@ export function letterFilters(): Filter[] {
       options: [
         { value: "yes", label: copy.consent.yes },
         { value: "no", label: copy.consent.no },
+      ],
+    },
+    {
+      name: "answered",
+      label: copy.columns.replied,
+      options: [
+        { value: "yes", label: copy.answered.yes },
+        { value: "no", label: copy.answered.no },
       ],
     },
   ];

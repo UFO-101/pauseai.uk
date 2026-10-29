@@ -3792,12 +3792,12 @@ describe("PoliticianFilters", () => {
     // The party can be chosen again, from those not chosen; the other filters not on are there too.
     const add = await menu(staffCopy.filters.add);
     expect(add.map(([text]) => text)).toEqual([
-      "Green",
       ...Object.values(staffCopy.countries),
+      "Green",
       ...Object.values(copy.emailStates),
       ...Object.values(copy.flags),
     ]);
-    expect(add[0][1]).toBe(
+    expect(add.find(([text]) => text === "Green")![1]).toBe(
       "/staff/politicians?q=blake&house=lords&status=retired&party=Labour&party=Green&ask=edinburgh-conference-2026&answer=declined&sort=asks&dir=asc",
     );
     await expect
@@ -3810,8 +3810,8 @@ describe("PoliticianFilters", () => {
     const groups = () => [...document.querySelectorAll("#filter-add details > summary")].map((p) => p.textContent);
     await page.getByRole("button", { name: staffCopy.filters.add }).click();
     expect(groups()).toEqual([
-      staffCopy.fields.party,
       staffCopy.politician.country,
+      staffCopy.fields.party,
       copy.status,
       staffCopy.fields.email,
       copy.flag,
@@ -3857,13 +3857,13 @@ describe("LetterFilters", () => {
     await expect.element(page.getByRole("searchbox", { name: copy.search })).toHaveValue("jane");
     // In the columns' order.
     expect(chips()).toEqual([
-      `${copy.columns.status}: ${copy.status.sent}`,
       `${copy.columns.campaign}: ${campaignBySlug("support-sobel-bill")!.title}`,
+      `${copy.columns.status}: ${copy.status.sent}`,
     ]);
     const add = await menu(staffCopy.filters.add);
     expect(add[0]).toEqual([
-      copy.answered.yes,
-      "/staff/letters?status=sent&q=jane&answered=yes&campaign=support-sobel-bill",
+      copy.consent.yes,
+      "/staff/letters?status=sent&q=jane&campaign=support-sobel-bill&consent=yes",
     ]);
   });
 });

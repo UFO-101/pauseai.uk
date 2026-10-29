@@ -566,7 +566,7 @@ async function sentLetterId(page: Page, database: string, sender: string, mp = T
   await page.goto(`${BASE}/staff/letters`);
   const row = page.getByRole("row").filter({ hasText: sender });
   await expect(row).toContainText(staffCopy.letters.status.sent);
-  await row.getByRole("link").first().click();
+  await row.getByRole("link", { name: staffCopy.letters.status.sent, exact: true }).click();
   const group = page.getByRole("link", { name: staffCopy.letters.detail.googleGroup });
   const id = (await group.getAttribute("href"))!.match(/\/msgid\/policy\/([\w-]+)@mtasv\.net$/)![1];
   await page.goto(`${BASE}/staff/letters`);
@@ -586,8 +586,8 @@ test("letters are listed, sent and bounced, and can be filtered by status and ca
   await page.reload();
   const janes = page.getByRole("row").filter({ hasText: jane });
   const sams = page.getByRole("row").filter({ hasText: sam });
-  await expect(janes.locator("td").first()).toHaveText(staffCopy.letters.status.sent);
-  await expect(sams.locator("td").first()).toHaveText(staffCopy.letters.status.bounced);
+  await expect(janes.getByRole("link", { name: staffCopy.letters.status.sent, exact: true })).toBeVisible();
+  await expect(sams.getByRole("link", { name: staffCopy.letters.status.bounced, exact: true })).toBeVisible();
   await frame(page, "the letters list: one sent, one bounced");
 
   await addFilter(page, staffCopy.letters.columns.status, staffCopy.letters.status.bounced);
