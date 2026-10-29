@@ -1288,7 +1288,7 @@ export const staffCopy = {
       historyTitle: "⁂ What happened to it",
       noHistory: "⁂ Nothing recorded yet.",
       // A supporter's letter, Bcc'd to policy@: its copy there.
-      googleGroup: "⁂ Read it in the policy@ Google Group",
+      googleGroup: "Find it in Gmail",
       // PauseAI's letter, sent from Gmail: a search for it.
       gmail: "Find it in Gmail",
     },
