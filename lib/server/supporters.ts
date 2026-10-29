@@ -16,7 +16,7 @@ import type { Channel } from "@/lib/contact-permissions";
 import { query, transaction, type Queryable } from "./db";
 import { permissionsFor } from "./contact-permissions";
 import { optedOutOfLuma } from "./opt-outs";
-import { refreshSupporterFacts } from "./supporter-facts";
+import { refreshSupporterFacts, refreshSupportersList } from "./supporter-facts";
 import { SUPPORTER_SOURCES } from "./supporter-sources";
 import { contains, everyWord, phoneSearch } from "./search";
 import { placeFor, type FoundPlace } from "./outside-services/postcodes";
@@ -25,7 +25,10 @@ import { placeFor, type FoundPlace } from "./outside-services/postcodes";
 // (supporter_links). Linking is by email, trimmed and lowercased and
 // nothing more: jane+luma@ and jane@ are two people. It only adds links,
 // so running it again does nothing, and a Luma user who changes their
-// email stays linked by user ID.
+// email stays linked by user ID. Then two supporters who gave the same UK
+// mobile number are one, merged into the older
+// (merge_supporters_by_phone(), migration 0058); the other's ID still
+// finds them.
 
 export type LinkResult = { supportersAdded: number; linked: number };
 
@@ -43,11 +46,15 @@ const CANDIDATE_COLUMNS = SUPPORTER_SOURCES.map((s) => `c.${s.column}`).join(", 
 /**
  * Links every unlinked source record to a supporter: to the supporter an
  * existing link matched on the same email, or else to a new one, made for
- * each new email; then brings what's worked out about each supporter it
- * linked up to date. Set-based, in one transaction (`db`'s, or its own).
+ * each new email; then merges those who share a UK mobile number, by the
+ * numbers of the supporters it linked, or with `everyone`, by everyone's,
+ * which catches a number given since a record was linked, as the hourly
+ * imports do; then brings what's worked out about each supporter it linked
+ * or merged into up to date. Set-based, in one transaction (`db`'s, or its
+ * own).
  */
-export async function linkSupporters(db?: Queryable): Promise<LinkResult> {
-  if (!db) return transaction(linkSupporters);
+export async function linkSupporters(db?: Queryable, everyone = false): Promise<LinkResult> {
+  if (!db) return transaction((own) => linkSupporters(own, everyone));
   await query(`CREATE TEMP TABLE candidates ON COMMIT DROP AS ${CANDIDATES}`, [], db);
   // The email already belongs to a supporter.
   const existing = await query<{ id: number }>(
@@ -67,8 +74,8 @@ export async function linkSupporters(db?: Queryable): Promise<LinkResult> {
     [],
     db,
   );
-  const added = await query(
-    "INSERT INTO supporters (id) OVERRIDING SYSTEM VALUE SELECT id FROM new_supporters RETURNING id",
+  const added = await query<{ id: number }>(
+    "INSERT INTO supporters (id) OVERRIDING SYSTEM VALUE SELECT id FROM new_supporters RETURNING id::int AS id",
     [],
     db,
   );
@@ -80,9 +87,23 @@ export async function linkSupporters(db?: Queryable): Promise<LinkResult> {
     db,
   );
   await query("DROP TABLE candidates, new_supporters", [], db);
-  const linkedTo = [...new Set([...existing, ...fresh].map((link) => link.id))];
+  const linked = [...new Set([...existing, ...fresh].map((link) => link.id))];
+  const merged = await query<{ id: number }>(
+    "SELECT DISTINCT id::int AS id FROM merge_supporters_by_phone($1::bigint[]) id",
+    [everyone ? null : linked],
+    db,
+  );
+  const linkedTo = [...new Set([...linked, ...merged.map((row) => row.id)])];
   if (linkedTo.length > 0) await refreshSupporterFacts(db, linkedTo);
-  return { supportersAdded: added.length, linked: existing.length + fresh.length };
+  if (merged.length === 0) return { supportersAdded: added.length, linked: existing.length + fresh.length };
+  // Those merged went, so the list loses them now, and only the new supporters still here were added.
+  await refreshSupportersList(db);
+  const [{ kept }] = await query<{ kept: number }>(
+    "SELECT count(*)::int AS kept FROM supporters WHERE id = ANY($1::bigint[])",
+    [added.map((row) => row.id)],
+    db,
+  );
+  return { supportersAdded: kept, linked: existing.length + fresh.length };
 }
 
 /**
@@ -320,8 +341,15 @@ export async function supporterChoices(): Promise<SupporterChoices> {
   return { events, mps };
 }
 
-/** Everything the staff page shows about one supporter, or undefined if there's no such one. */
-export async function getSupporter(id: number): Promise<SupporterDetails | undefined> {
+/**
+ * Everything the staff page shows about one supporter, or undefined if
+ * there's no such one. An ID merged into another supporter finds them.
+ */
+export async function getSupporter(given: number): Promise<SupporterDetails | undefined> {
+  const [{ id }] = await query<{ id: number }>(
+    "SELECT coalesce((SELECT into_id FROM supporter_merges WHERE from_id = $1), $1)::int AS id",
+    [given],
+  );
   const [summary] = await query<SupporterSummary>(`SELECT ${SUMMARY_COLUMNS} FROM ${LIVE_SUMMARY}`, [id]);
   if (!summary) return undefined;
   const postcode = summary.place?.basis === "postcode" ? summary.place.given : null;

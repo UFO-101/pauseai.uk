@@ -85,7 +85,7 @@ export function importMembers(startedBy: string): Promise<MembersImportResult> {
           members.map((m) => m.id),
           db,
         ),
-        ...(await linkSupporters(db)),
+        ...(await linkSupporters(db, true)),
       };
       // A record already linked may have changed, so everyone's facts, not only the newly linked.
       await refreshSupporterFacts(db);

@@ -131,6 +131,58 @@ ORDER BY r.rank LIMIT 1
 $$;
 
 --
+-- Name: merge_supporters_by_phone(bigint[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.merge_supporters_by_phone(only_for bigint[] DEFAULT NULL::bigint[]) RETURNS SETOF bigint
+    LANGUAGE plpgsql ROWS 10
+    AS $_$
+DECLARE
+  numbers text[];
+  pairs text;
+  pair record;
+  merged boolean;
+BEGIN
+  IF only_for IS NOT NULL THEN
+    numbers := (SELECT array_agg(DISTINCT phone_number(c.phone)) FROM supporter_contact c
+                WHERE c.supporter_id = ANY(only_for) AND phone_number(c.phone) LIKE '+447%');
+    IF numbers IS NULL THEN
+      RETURN;
+    END IF;
+  END IF;
+  pairs := format(
+    $sql$WITH numbers AS (
+      SELECT k.supporter_id, phone_number(g.phone) AS phone FROM luma_guests g
+        JOIN supporter_links k ON k.luma_user_id = g.user_id WHERE phone_number(g.phone) %1$s
+      UNION SELECT k.supporter_id, phone_number(f.phone) FROM form_entries f
+        JOIN supporter_links k ON k.form_entry_id = f.id WHERE phone_number(f.phone) %1$s
+      UNION SELECT k.supporter_id, phone_number(m.phone) FROM members m
+        JOIN supporter_links k ON k.member_id = m.id WHERE phone_number(m.phone) %1$s)
+    SELECT a.supporter_id AS from_id, min(b.supporter_id) AS into_id
+    FROM numbers a JOIN numbers b ON b.phone = a.phone AND b.supporter_id < a.supporter_id
+    GROUP BY a.supporter_id ORDER BY a.supporter_id DESC$sql$,
+    CASE WHEN numbers IS NULL THEN $sql$LIKE '+447%'$sql$ ELSE '= ANY($1)' END
+  );
+  LOOP
+    merged := false;
+    FOR pair IN EXECUTE pairs USING numbers LOOP
+      UPDATE supporter_links SET supporter_id = pair.into_id WHERE supporter_id = pair.from_id;
+      UPDATE messages_to_supporters m SET supporter_id = NULL, address = NULL, merge_values = NULL
+      WHERE m.supporter_id = pair.from_id
+        AND EXISTS (SELECT 1 FROM messages_to_supporters o WHERE o.supporter_id = pair.into_id AND o.mailing_id = m.mailing_id);
+      UPDATE messages_to_supporters SET supporter_id = pair.into_id WHERE supporter_id = pair.from_id;
+      UPDATE supporter_merges SET into_id = pair.into_id WHERE into_id = pair.from_id;
+      INSERT INTO supporter_merges (from_id, into_id) VALUES (pair.from_id, pair.into_id);
+      DELETE FROM supporters WHERE id = pair.from_id;
+      merged := true;
+      RETURN NEXT pair.into_id;
+    END LOOP;
+    EXIT WHEN NOT merged;
+  END LOOP;
+END
+$_$;
+
+--
 -- Name: phone_number(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1542,6 +1594,16 @@ ALTER TABLE public.supporter_links ALTER COLUMN id ADD GENERATED ALWAYS AS IDENT
 );
 
 --
+-- Name: supporter_merges; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.supporter_merges (
+    from_id bigint NOT NULL,
+    into_id bigint NOT NULL,
+    merged_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
 -- Name: supporters_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -1975,6 +2037,13 @@ ALTER TABLE ONLY public.supporter_links
     ADD CONSTRAINT supporter_links_pkey PRIMARY KEY (id);
 
 --
+-- Name: supporter_merges supporter_merges_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.supporter_merges
+    ADD CONSTRAINT supporter_merges_pkey PRIMARY KEY (from_id);
+
+--
 -- Name: supporters supporters_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2180,6 +2249,12 @@ CREATE INDEX supporter_links_matched ON public.supporter_links USING btree (matc
 CREATE INDEX supporter_links_supporter ON public.supporter_links USING btree (supporter_id);
 
 --
+-- Name: supporter_merges_into; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX supporter_merges_into ON public.supporter_merges USING btree (into_id);
+
+--
 -- Name: supporters_first_seen; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2378,6 +2453,13 @@ ALTER TABLE ONLY public.supporter_links
 
 ALTER TABLE ONLY public.supporter_links
     ADD CONSTRAINT supporter_links_supporter_id_fkey FOREIGN KEY (supporter_id) REFERENCES public.supporters(id) ON DELETE CASCADE;
+
+--
+-- Name: supporter_merges supporter_merges_into_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.supporter_merges
+    ADD CONSTRAINT supporter_merges_into_id_fkey FOREIGN KEY (into_id) REFERENCES public.supporters(id) ON DELETE CASCADE;
 
 --
 -- PostgreSQL database dump complete
