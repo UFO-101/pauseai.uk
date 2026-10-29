@@ -70,7 +70,7 @@ describeWithDatabase("the mailing pages' Server Actions", () => {
       subject: "Hi",
       filter: { list: "politicians", params: { house: "lords" } },
     });
-    expect(revalidatePath).toHaveBeenCalledWith("/staff/mailings");
+    expect(revalidatePath).not.toHaveBeenCalled();
     expect(await saveMailing(id, 1, { sentFrom: "Jo@PauseAI.uk", dueAt: "2026-12-01T09:00:00Z" })).toEqual({
       saved: true,
       version: 2,

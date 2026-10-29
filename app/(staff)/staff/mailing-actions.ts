@@ -39,9 +39,10 @@ export async function startMailing(
   const { email } = await requireStaff();
   const parsed = mailingChangesFrom(changes);
   if (!parsed) return undefined;
-  const draft = await createDraft(email, storedFilter("politicians", params), parsed);
-  revalidatePath("/staff/mailings");
-  return draft;
+  // Not revalidated: that would refresh the page, by now at the draft's own
+  // address, remounting the writer under someone still typing. The list of
+  // mailings is fetched afresh whenever it's opened.
+  return createDraft(email, storedFilter("politicians", params), parsed);
 }
 
 /** Saves a draft's changes, if no one else has saved it since `version`. */
