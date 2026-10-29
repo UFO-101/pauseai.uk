@@ -278,7 +278,7 @@ describe("MailingView", () => {
       ]);
   });
 
-  it("by its address alone, for a sender with no name", async () => {
+  it("by its address alone, for a sender with no name or a blank one", async () => {
     const { rerender } = await view({ written: { ...written, fromName: null } });
     await expect
       .element(page.getByText(copy.sentLine("20 Oct 2026, 08:00", "jo@pauseai.uk"), { exact: false }))
@@ -287,7 +287,7 @@ describe("MailingView", () => {
     await rerender(
       <MailingView
         mailing={mailing}
-        written={{ ...written, fromName: null, state: "scheduled" }}
+        written={{ ...written, fromName: "", state: "scheduled" }}
         asks={exampleAsks}
         stop={noAction}
         reschedule={noAction}

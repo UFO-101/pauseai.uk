@@ -136,7 +136,7 @@ function Standing({
           }
         >
           <strong>{copy.sends(londonWhen(written.dueAt!))}</strong>
-          <span>{copy.scheduledLine(mailing.to, written.fromName ?? written.sentFrom!)}</span>
+          <span>{copy.scheduledLine(mailing.to, written.fromName || written.sentFrom!)}</span>
         </Strip>
       </>
     );
@@ -158,7 +158,7 @@ function Standing({
   return (
     <p>
       {written
-        ? copy.sentLine(staffTime(mailing.sentAt ?? written.dueAt!), written.fromName ?? written.sentFrom!)
+        ? copy.sentLine(staffTime(mailing.sentAt ?? written.dueAt!), written.fromName || written.sentFrom!)
         : mailing.sentAt
           ? copy.importedLine(staffTime(mailing.sentAt))
           : staffCopy.mailings.notSent}
