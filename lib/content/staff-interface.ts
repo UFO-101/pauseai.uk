@@ -1275,8 +1275,25 @@ export const staffCopy = {
     // The Answered filter: whether the MP replied.
     answered: { yes: "Answered", no: "Not answered" },
     // The titles of a letter's own page, and of a supporter's letters' page.
-    oneTitle: (mp: string) => `Letter to ${mp}`,
+    oneTitle: (from: string, to: string) => `⁂ Letter from ${from} to ${to}`,
     fromTitle: (name: string) => `Letters from ${name}`,
+    // Who PauseAI's letters are from, in a letter's title.
+    fromPauseai: "⁂ PauseAI UK",
+    // A letter's own page: its facts beside the list's, and the way to read it as it was sent.
+    detail: {
+      subject: "⁂ Subject",
+      sent: "⁂ Sent",
+      mailing: "⁂ Mailing",
+      personalised: "⁂ Personalised",
+      historyTitle: "⁂ What happened to it",
+      noHistory: "⁂ Nothing recorded yet.",
+      // A supporter's letter, Bcc'd to policy@: its copy there.
+      googleGroup: "⁂ Read it in the policy@ Google Group",
+      // PauseAI's letter, sent from Gmail: a search for it.
+      gmail: "⁂ Find it in Gmail",
+      gmailHow: (minutes: number) =>
+        `⁂ Searches the Gmail account you're signed in to for email to their address sent ${minutes} minutes either side.`,
+    },
     none: "No letters.",
     status: {
       sending: "Sending",

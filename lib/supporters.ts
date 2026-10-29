@@ -101,8 +101,20 @@ export type SupporterContact = {
 /** A supporter's MP: the one in office for the constituency of the postcode that places them. */
 export type SupporterMp = { id: number; name: string; constituency: string; party: string };
 
+/** A letter a supporter wrote: which, when, to whom, in which campaign, and how it stands. */
+export type SupporterLetter = {
+  id: number;
+  at: string;
+  mpName: string;
+  politicianId: number;
+  campaign: string;
+  status: string;
+};
+
 export type SupporterDetails = {
   summary: SupporterSummary;
+  /** Their letters, newest first. */
+  letters: SupporterLetter[];
   /** Their MP, when a postcode places them and its constituency has one in office; else null. */
   mp: SupporterMp | null;
   identities: SupporterIdentity[];

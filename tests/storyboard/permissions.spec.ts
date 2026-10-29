@@ -155,7 +155,9 @@ test("without supporters, Letters and Supporters' blocked emails are closed, and
   addStaffAccount(flowDatabase, staffEmail(), ["supporters"]);
   await page.reload();
   await blocked.getByRole("link", { name: `${staffCopy.emails.letterTo} ${bouncy.name}` }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.letters.oneTitle(bouncy.name));
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    staffCopy.letters.oneTitle("Jane Smith", bouncy.name),
+  );
   await frame(page, "with supporters, the letter it names opens");
 });
 

@@ -8,6 +8,7 @@ import type {
   SupporterMp,
   SupporterFilter,
   SupporterIdentity,
+  SupporterLetter,
   SupporterRow,
   SupporterSummary,
 } from "@/lib/supporters";
@@ -353,7 +354,7 @@ export async function getSupporter(given: number): Promise<SupporterDetails | un
   const [summary] = await query<SupporterSummary>(`SELECT ${SUMMARY_COLUMNS} FROM ${LIVE_SUMMARY}`, [id]);
   if (!summary) return undefined;
   const postcode = summary.place?.basis === "postcode" ? summary.place.given : null;
-  const [identities, contacts, activity, permissions, [mp]] = await Promise.all([
+  const [identities, contacts, activity, permissions, [mp], letters] = await Promise.all([
     query<SupporterIdentity>(
       `SELECT source, email, name, seen_at AS "seenAt" FROM supporter_identity WHERE supporter_id = $1 ORDER BY seen_at NULLS LAST, email`,
       [id],
@@ -378,6 +379,13 @@ export async function getSupporter(given: number): Promise<SupporterDetails | un
           [postcode],
         )
       : [],
+    query<SupporterLetter>(
+      `SELECT l.id::int AS id, l.created_at AS at, n.name AS "mpName", n.id::int AS "politicianId", s.campaign, l.status
+       FROM supporter_links k JOIN letters_from_supporters s ON s.entry_id = k.form_entry_id
+         JOIN letters l ON l.id = s.id JOIN notable_people n ON n.id = l.notable_person_id
+       WHERE k.supporter_id = $1 ORDER BY l.created_at DESC, l.id DESC`,
+      [id],
+    ),
   ]);
-  return { summary, mp: mp ?? null, identities, contacts, activity, permissions };
+  return { summary, letters, mp: mp ?? null, identities, contacts, activity, permissions };
 }

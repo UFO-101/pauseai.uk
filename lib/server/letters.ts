@@ -131,6 +131,57 @@ export async function pauseaiLetters(politicianId: number): Promise<PauseaiLette
   );
 }
 
+/** A supporter's letter, for its own page: what the list has, its subject, and Postmark's ID for the email sent. */
+export type SupporterLetterDetails = LetterSummary & { kind: "supporter"; subject: string; postmarkId: string | null };
+
+/** One of PauseAI's letters, for its own page: to whom, at which address now, in which mailing, and what happened. */
+export type PauseaiLetterDetails = {
+  kind: "pauseai";
+  id: number;
+  status: string;
+  createdAt: string;
+  sentAt: string | null;
+  mpName: string;
+  politicianId: number;
+  mpEmail: string | null;
+  mailingId: number;
+  mailing: string;
+  personalised: boolean;
+  events: LetterEvent[];
+};
+
+export type LetterDetails = SupporterLetterDetails | PauseaiLetterDetails;
+
+/**
+ * Letter `id`, of either kind, for a staff member with `permissions`; or
+ * undefined if there's none, or it's a supporter's and they can't see
+ * supporters. Postmark's ID is the newest send's of the letter.
+ */
+export async function getLetter(id: number, permissions: readonly Permission[]): Promise<LetterDetails | undefined> {
+  const [pauseai] = await query<PauseaiLetterDetails>(
+    `SELECT 'pauseai' AS kind, l.id::int AS id, l.status, l.created_at AS "createdAt", l.sent_at AS "sentAt",
+       n.name AS "mpName", n.id::int AS "politicianId", n.email AS "mpEmail", m.id::int AS "mailingId",
+       m.title AS mailing, p.personalised,
+       coalesce((SELECT json_agg(json_build_object('at', e.at, 'status', e.status, 'details', e.details) ORDER BY e.at, e.id)
+                 FROM letter_events e WHERE e.letter_id = l.id), '[]') AS events
+     FROM letters_from_pauseai p JOIN letters l USING (id) JOIN mailings m ON m.id = p.mailing_id
+       JOIN notable_people n ON n.id = l.notable_person_id
+     WHERE l.id = $1`,
+    [id],
+  );
+  if (pauseai) return pauseai;
+  if (!permissions.includes("supporters")) return undefined;
+  const [letter] = await recentLetters({ letterId: id });
+  if (!letter) return undefined;
+  const [{ subject, postmarkId }] = await query<{ subject: string; postmarkId: string | null }>(
+    `SELECT s.subject, (SELECT e.message_id FROM email_sends e WHERE e.letter_id = s.id AND e.purpose = 'letter'
+       AND e.outcome = 'sent' ORDER BY e.at DESC, e.id DESC LIMIT 1) AS "postmarkId"
+     FROM letters_from_supporters s WHERE s.id = $1`,
+    [id],
+  );
+  return { ...letter, kind: "supporter", subject, postmarkId };
+}
+
 /** A letter on an MP's page for staff without `supporters`: what happened to it, and nothing of who wrote it. */
 export type UnsignedLetter = Pick<LetterSummary, "id" | "campaign" | "status" | "createdAt" | "repliedAt">;
 

@@ -1,34 +1,25 @@
 import type { Metadata } from "next";
-import { staffCopy } from "@/lib/content/staff-interface";
 import { found } from "@/lib/found";
-import { recentLetters } from "@/lib/server/letters";
+import { getLetter } from "@/lib/server/letters";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { letterId } from "@/lib/staff-search";
-import Breadcrumb from "../../../_components/Breadcrumb";
-import LettersTable from "../../../_components/LettersTable";
+import LetterDetails, { letterTitle } from "../../../_components/LetterDetails";
 
 type Params = { params: Promise<{ id: string }> };
 
-/** The letter with the ID in the URL, or a 404. */
+/** The letter with the ID in the URL, PauseAI's or, for staff who can see supporters, a supporter's; or a 404. */
 async function letterOf(params: Params["params"]) {
-  const [letter] = await recentLetters({ letterId: found(letterId((await params).id)) });
-  return found(letter);
+  const { permissions } = await requireStaff();
+  return found(await getLetter(found(letterId((await params).id)), permissions));
 }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
-  await requireStaff("supporters");
-  return { title: staffCopy.letters.oneTitle((await letterOf(params)).mpName) };
+  await requireStaff();
+  return { title: letterTitle(await letterOf(params)) };
 }
 
-/** One letter, as its row in the letters list: where a letter is named elsewhere leads here. */
+/** One letter: who it's from and to, how it stands, what happened to it, and where to read it. */
 export default async function LetterPage({ params }: Params) {
-  await requireStaff("supporters");
-  const letter = await letterOf(params);
-  return (
-    <>
-      <Breadcrumb href="/staff/letters">{staffCopy.nav.letters}</Breadcrumb>
-      <h1>{staffCopy.letters.oneTitle(letter.mpName)}</h1>
-      <LettersTable letters={[letter]} />
-    </>
-  );
+  await requireStaff();
+  return <LetterDetails letter={await letterOf(params)} />;
 }

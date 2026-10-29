@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { addTestLetter, addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
-import { LETTERS_PAGE_SIZE, listLetters, pauseaiLetters, politicianLetters, recentLetters } from "./letters";
+import { getLetter, LETTERS_PAGE_SIZE, listLetters, pauseaiLetters, politicianLetters, recentLetters } from "./letters";
 
 describeWithDatabase("recentLetters", () => {
   useTestDatabase();
@@ -188,5 +188,56 @@ describeWithDatabase("pauseaiLetters", () => {
     ]);
     expect((await recentLetters()).map((l) => [l.id, l.imported])).toEqual([[3, false]]);
     expect(await pauseaiLetters(mp + 1)).toEqual([]);
+  });
+});
+
+describeWithDatabase("getLetter", () => {
+  useTestDatabase();
+
+  it("gives a supporter's letter, with its subject and the newest send's Postmark ID, only to staff with supporters", async () => {
+    const mp = await addTestMp();
+    const id = await addTestLetter({ politicianId: mp, senderName: "Jane Smith" });
+    await query(
+      `INSERT INTO email_sends (at, purpose, letter_id, address, outcome, message_id) VALUES
+         ('2026-10-01T09:00:00Z', 'letter', $1, 'test-mp@example.org', 'sent', 'pm-old'),
+         ('2026-10-02T09:00:00Z', 'letter', $1, 'test-mp@example.org', 'sent', 'pm-new'),
+         ('2026-10-03T09:00:00Z', 'letter', $1, 'test-mp@example.org', 'failed', NULL)`,
+      [id],
+    );
+    const letter = await getLetter(id, ["supporters"]);
+    expect(letter).toMatchObject({ kind: "supporter", id, senderName: "Jane Smith", postmarkId: "pm-new" });
+    expect(typeof (letter as { subject: string }).subject).toBe("string");
+    expect(await getLetter(id, [])).toBeUndefined();
+    expect(await getLetter(id + 100, ["supporters"])).toBeUndefined();
+    // One never sent through Postmark has no ID.
+    const unsent = await addTestLetter({ politicianId: mp });
+    expect(await getLetter(unsent, ["supporters"])).toMatchObject({ postmarkId: null });
+  });
+
+  it("gives PauseAI's letter to any staff, with its mailing and the MP's address", async () => {
+    const mp = await addTestMp("mp@example.org");
+    const [{ id }] = await query<{ id: number }>(
+      "INSERT INTO letters (kind, notable_person_id, status, created_at, sent_at) VALUES ('pauseai', $1, 'sent', $2, $2) RETURNING id::int AS id",
+      [mp, "2026-10-01T09:00:00Z"],
+    );
+    await query(
+      `INSERT INTO letters_from_pauseai (id, mailing_id, personalised)
+       SELECT $1, id, true FROM mailings WHERE airtable_field = 'CSRB Iqbal Amendment'`,
+      [id],
+    );
+    expect(await getLetter(id, [])).toEqual({
+      kind: "pauseai",
+      id,
+      status: "sent",
+      createdAt: new Date("2026-10-01T09:00:00Z"),
+      sentAt: new Date("2026-10-01T09:00:00Z"),
+      mpName: "Testy McTestface MP",
+      politicianId: mp,
+      mpEmail: "mp@example.org",
+      mailingId: expect.any(Number),
+      mailing: "CSRB Iqbal Amendment",
+      personalised: true,
+      events: [],
+    });
   });
 });

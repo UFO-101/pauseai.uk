@@ -333,6 +333,20 @@ test("PauseAI's emails: copied once, with one held back for a mailing nobody has
   await page.getByRole("button", { name: staffCopy.pauseaiEmails.importNow }).click();
   await expect(page.getByText(staffCopy.runs.status.incomplete).first()).toBeVisible();
   expect(runSql(flowDatabase, "SELECT count(*) FROM letters_from_pauseai")).toEqual(["5"]);
+
+  // Each is in its MP's history, leading to its own page, and from there to a Gmail search for it.
+  await page.goto(`${BASE}/staff/politicians`);
+  await page.getByRole("link", { name: "Polly Placeholder" }).click();
+  const history = page.getByRole("list", { name: staffCopy.politician.historyTitle });
+  await history.getByRole("link", { name: staffCopy.letters.status.sent }).first().click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    staffCopy.letters.oneTitle(staffCopy.letters.fromPauseai, "Polly Placeholder"),
+  );
+  await expect(page.getByRole("link", { name: staffCopy.letters.detail.gmail })).toHaveAttribute(
+    "href",
+    /^https:\/\/mail\.google\.com\/mail\/#search\/to%3Apolly/,
+  );
+  await frame(page, "one of PauseAI's emails to Polly: its mailing, and a Gmail search for it");
 });
 
 test("the one-off imports: pauseai.info's letters and their senders, and Go to Parliament's meetings", async ({

@@ -2,11 +2,11 @@ import Link from "next/link";
 import CampaignName from "./CampaignName";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { campaignBySlug } from "@/lib/email-your-mp";
+import type { DownloadColumn } from "@/lib/staff-list";
 import { staffTime } from "@/lib/staff-time";
 import type { LetterSummary } from "@/lib/server/letters";
 import { filtersPath, pageParam, type LettersSearch } from "@/lib/staff-search";
 import ListFrame, { ListTable, type ListColumn } from "./ui/ListFrame";
-import styles from "./LettersTable.module.css";
 import { Muted } from "@/components/ui/Text";
 import Tag from "@/components/ui/Tag";
 
@@ -17,10 +17,10 @@ const copy = staffCopy.letters;
 const statusOf = (status: string) => copy.status[status] ?? status;
 
 /**
- * The letters list's columns: when, the sender (leading to their
- * supporter) and their email, whether they agreed to hear from us, the MP
- * (leading to their page), the campaign (leading to its page on the site),
- * its status, when the MP replied, and each change of status and reply.
+ * The letters list's columns: when (leading to the letter's page), the
+ * sender (leading to their supporter) and their email, whether they agreed
+ * to hear from us, the MP (leading to their page), the campaign (leading to
+ * its page on the site), its status, and when the MP replied.
  */
 export const letterColumns: ListColumn<LetterSummary>[] = [
   {
@@ -28,7 +28,7 @@ export const letterColumns: ListColumn<LetterSummary>[] = [
     label: copy.columns.created,
     short: true,
     text: (l) => l.createdAt,
-    cell: (l) => staffTime(l.createdAt),
+    cell: (l) => <Link href={`/staff/letters/${l.id}`}>{staffTime(l.createdAt)}</Link>,
   },
   {
     key: "from",
@@ -88,20 +88,15 @@ export const letterColumns: ListColumn<LetterSummary>[] = [
     text: (l) => l.repliedAt,
     cell: (l) => l.repliedAt && staffTime(l.repliedAt),
   },
+];
+
+/** The list's columns for a download, with each change of status and reply after them, which its page shows. */
+export const letterDownloadColumns: DownloadColumn<LetterSummary>[] = [
+  ...letterColumns,
   {
     key: "history",
     label: copy.columns.history,
     text: (l) => l.events.map((event) => `${event.at} ${statusOf(event.status)}`).join("; "),
-    cell: (l) => (
-      <ul className={styles.events}>
-        {l.events.map((event, i) => (
-          <li key={i}>
-            {staffTime(event.at)}: {statusOf(event.status)}
-            {Object.keys(event.details).length > 0 && <code> {JSON.stringify(event.details)}</code>}
-          </li>
-        ))}
-      </ul>
-    ),
   },
 ];
 

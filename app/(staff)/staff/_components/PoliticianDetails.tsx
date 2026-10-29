@@ -120,7 +120,7 @@ function letterEntries({ senders, letters }: PoliticianLetters): Entry[] {
   );
 }
 
-/** PauseAI's letters, each a line: the mailing, and whether it was personalised. */
+/** PauseAI's letters, each a line: the mailing, whether it was personalised, and how it stands, leading to its page. */
 function pauseaiEntries(letters: PauseaiLetter[]): Entry[] {
   return letters.map((letter) => ({
     key: `pauseai-${letter.id}`,
@@ -128,7 +128,11 @@ function pauseaiEntries(letters: PauseaiLetter[]): Entry[] {
     what: (
       <>
         {copy.history["pauseai-letter"]} <Link href={`/staff/mailings/${letter.mailingId}`}>{letter.mailing}</Link>
-        <Muted>{letter.personalised && ` · ${copy.personalised}`}</Muted>
+        <Muted>
+          {letter.personalised && ` · ${copy.personalised}`}
+          {" · "}
+          <Link href={`/staff/letters/${letter.id}`}>{staffCopy.letters.status[letter.status] ?? letter.status}</Link>
+        </Muted>
       </>
     ),
   }));

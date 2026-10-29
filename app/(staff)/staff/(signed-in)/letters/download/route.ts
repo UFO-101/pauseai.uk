@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { letterFilters } from "../../../_components/LetterFilters";
-import { letterColumns } from "../../../_components/LettersTable";
+import { letterDownloadColumns } from "../../../_components/LettersTable";
 import { filterWords } from "../../../_components/ui/FilterBar";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { recentLetters } from "@/lib/server/letters";
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       return {
         what: staffCopy.letters.title,
         filters: filterWords(letterFilters(), search, "q"),
-        columns: letterColumns,
+        columns: letterDownloadColumns,
         rows: await recentLetters({ ...filter, limit: null }),
       };
     },

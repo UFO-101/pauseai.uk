@@ -16,7 +16,12 @@ import CampaignName from "@/app/(staff)/staff/_components/CampaignName";
 import LetterFilters from "@/app/(staff)/staff/_components/LetterFilters";
 import LetterLink from "@/app/(staff)/staff/_components/LetterLink";
 import LettersTable, { LettersList } from "@/app/(staff)/staff/_components/LettersTable";
-import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
+import {
+  exampleLetter,
+  examplePauseaiLetterDetails,
+  exampleSupporterLetterDetails,
+} from "@/app/(staff)/staff/_components/LettersTable.examples";
+import LetterDetails from "@/app/(staff)/staff/_components/LetterDetails";
 import DevLogin from "@/app/(staff)/staff/_components/DevLogin";
 import LoginCard from "@/app/(staff)/staff/_components/LoginCard";
 import LoginForm from "@/app/(staff)/staff/_components/LoginForm";
@@ -857,6 +862,7 @@ export const staff: Group = {
               <SupporterDetails
                 supporter={{
                   mp: null,
+                  letters: [],
                   summary: {
                     ...exampleSupporter,
                     name: null,
@@ -2118,6 +2124,29 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <LettersTable letters={[]} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "LetterDetails",
+      file: "app/(staff)/staff/_components/LetterDetails.tsx",
+      variants: [
+        {
+          label: "A supporter's letter that bounced, with its copy in the policy@ group",
+          render: () => (
+            <StaffPage as="div">
+              <LetterDetails letter={exampleSupporterLetterDetails} />
+            </StaffPage>
+          ),
+        },
+        {
+          label:
+            "PauseAI's letter, personalised, copied from Airtable, found by a Gmail search, nothing recorded since",
+          render: () => (
+            <StaffPage as="div">
+              <LetterDetails letter={examplePauseaiLetterDetails} />
             </StaffPage>
           ),
         },

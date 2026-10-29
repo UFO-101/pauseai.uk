@@ -629,11 +629,14 @@ test("a letter that bounces: staff are emailed, and the address is blocked", asy
   await expect(blocked).toContainText(staffCopy.emails.kinds.hard);
   await frame(page, "the address, blocked, with the letter that found it out");
 
-  // The letter, by whom it was to, leads to its own page: its row from the letters list.
+  // The letter, by whom it was to, leads to its own page.
   await blocked.getByRole("link", { name: `${staffCopy.emails.letterTo} ${bouncy.name}` }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.letters.oneTitle(bouncy.name));
-  await expect(page.getByRole("row").filter({ hasText: sender })).toContainText(staffCopy.letters.status.bounced);
-  await frame(page, "the letter's page");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    staffCopy.letters.oneTitle("Jane Smith", bouncy.name),
+  );
+  await expect(page.getByText(sender)).toBeVisible();
+  await expect(page.getByText(staffCopy.letters.status.bounced).first()).toBeVisible();
+  await frame(page, "the letter's page: from and to whom, bounced, and what happened to it");
   await page.getByRole("link", { name: staffCopy.nav.letters }).first().click();
   await expect(page).toHaveURL(`${BASE}/staff/letters`);
 });
