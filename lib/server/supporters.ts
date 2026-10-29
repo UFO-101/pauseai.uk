@@ -380,7 +380,7 @@ export async function getSupporter(given: number): Promise<SupporterDetails | un
         )
       : [],
     query<SupporterLetter>(
-      `SELECT l.id::int AS id, l.created_at AS at, n.name AS "mpName", n.id::int AS "politicianId", s.campaign, l.status
+      `SELECT l.id::int AS id, l.sent_at AS "sentAt", n.name AS "mpName", n.id::int AS "politicianId", s.campaign, l.status
        FROM supporter_links k JOIN letters_from_supporters s ON s.entry_id = k.form_entry_id
          JOIN letters l ON l.id = s.id JOIN notable_people n ON n.id = l.notable_person_id
        WHERE k.supporter_id = $1 ORDER BY l.created_at DESC, l.id DESC`,

@@ -105,7 +105,7 @@ export type SupporterMp = { id: number; name: string; constituency: string; part
 /** A letter a supporter wrote: which, when, to whom, in which campaign, and how it stands. */
 export type SupporterLetter = {
   id: number;
-  at: string;
+  sentAt: string | null;
   mpName: string;
   politicianId: number;
   campaign: string;

@@ -17,18 +17,33 @@ const copy = staffCopy.letters;
 const statusOf = (status: string) => copy.status[status] ?? status;
 
 /**
- * The letters list's columns: when (leading to the letter's page), the
- * sender (leading to their supporter) and their email, whether they agreed
- * to hear from us, the MP (leading to their page), the campaign (leading to
- * its page on the site), its status, and when the MP replied.
+ * The letters list's columns: first what happened to it, its status
+ * (leading to the letter's page), when it was sent and when the MP
+ * answered; then who it was from (leading to their supporter) and their
+ * email, and to (leading to the MP's page); the campaign (leading to its
+ * page on the site); and whether the sender agreed to hear from us.
  */
 export const letterColumns: ListColumn<LetterSummary>[] = [
   {
-    key: "created",
-    label: copy.columns.created,
+    key: "status",
+    label: copy.columns.status,
     short: true,
-    text: (l) => l.createdAt,
-    cell: (l) => <Link href={`/staff/letters/${l.id}`}>{staffTime(l.createdAt)}</Link>,
+    text: (l) => statusOf(l.status),
+    cell: (l) => <Link href={`/staff/letters/${l.id}`}>{statusOf(l.status)}</Link>,
+  },
+  {
+    key: "sent",
+    label: copy.columns.sent,
+    short: true,
+    text: (l) => l.sentAt,
+    cell: (l) => (l.sentAt ? staffTime(l.sentAt) : <Muted>–</Muted>),
+  },
+  {
+    key: "replied",
+    label: copy.columns.replied,
+    short: true,
+    text: (l) => l.repliedAt,
+    cell: (l) => l.repliedAt && staffTime(l.repliedAt),
   },
   {
     key: "from",
@@ -45,13 +60,6 @@ export const letterColumns: ListColumn<LetterSummary>[] = [
         <Muted>{l.senderEmail}</Muted>
       </>
     ),
-  },
-  {
-    key: "consent",
-    label: copy.columns.consent,
-    short: true,
-    text: (l) => l.contactConsent,
-    cell: (l) => (l.contactConsent ? copy.consent.yes : copy.consent.no),
   },
   {
     key: "to",
@@ -75,24 +83,18 @@ export const letterColumns: ListColumn<LetterSummary>[] = [
     ),
   },
   {
-    key: "status",
-    label: copy.columns.status,
+    key: "consent",
+    label: copy.columns.consent,
     short: true,
-    text: (l) => statusOf(l.status),
-    cell: (l) => statusOf(l.status),
-  },
-  {
-    key: "replied",
-    label: copy.columns.replied,
-    short: true,
-    text: (l) => l.repliedAt,
-    cell: (l) => l.repliedAt && staffTime(l.repliedAt),
+    text: (l) => l.contactConsent,
+    cell: (l) => (l.contactConsent ? copy.consent.yes : copy.consent.no),
   },
 ];
 
-/** The list's columns for a download, with each change of status and reply after them, which its page shows. */
+/** The list's columns for a download, with when each was written and each change of status, which its page shows. */
 export const letterDownloadColumns: DownloadColumn<LetterSummary>[] = [
   ...letterColumns,
+  { key: "created", label: copy.columns.created, text: (l) => l.createdAt },
   {
     key: "history",
     label: copy.columns.history,

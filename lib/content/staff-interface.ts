@@ -409,6 +409,7 @@ export const staffCopy = {
         to: "To",
         campaign: "Campaign",
         letter: "Status",
+        sent: "Sent",
       },
       // A registration that went through, where the status says nothing more.
       registered: "Registered",
@@ -1318,6 +1319,7 @@ export const staffCopy = {
     } as Record<string, string>,
     columns: {
       created: "Created",
+      sent: "Sent",
       from: "From",
       consent: "Consent",
       to: "To",

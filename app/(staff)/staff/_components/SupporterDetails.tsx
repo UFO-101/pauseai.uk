@@ -242,9 +242,20 @@ const eventColumns: ListColumn<SupporterActivity>[] = [
   },
 ];
 
-/** Their letters, newest first: when, to whom, in which campaign, and how it stands, leading to the letter's page. */
+/** Their letters, newest first: how each stands, leading to the letter's page, when it was sent, to whom, and in which campaign. */
 const letterColumns: ListColumn<SupporterLetter>[] = [
-  { key: "at", label: copy.detail.columns.date, short: true, cell: (l) => staffDate(l.at) },
+  {
+    key: "letter",
+    label: copy.detail.columns.letter,
+    short: true,
+    cell: (l) => <Link href={`/staff/letters/${l.id}`}>{staffCopy.letters.status[l.status] ?? l.status}</Link>,
+  },
+  {
+    key: "sent",
+    label: copy.detail.columns.sent,
+    short: true,
+    cell: (l) => (l.sentAt ? staffDate(l.sentAt) : <Muted>–</Muted>),
+  },
   {
     key: "to",
     label: copy.detail.columns.to,
@@ -257,12 +268,6 @@ const letterColumns: ListColumn<SupporterLetter>[] = [
       const campaign = campaignBySlug(l.campaign);
       return campaign ? <Link href={campaignPath(campaign)}>{campaign.title}</Link> : l.campaign;
     },
-  },
-  {
-    key: "letter",
-    label: copy.detail.columns.letter,
-    short: true,
-    cell: (l) => <Link href={`/staff/letters/${l.id}`}>{staffCopy.letters.status[l.status] ?? l.status}</Link>,
   },
 ];
 

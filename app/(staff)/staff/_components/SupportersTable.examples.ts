@@ -38,7 +38,7 @@ export const exampleSupporterDetails: SupporterDetails = {
   letters: [
     {
       id: 12,
-      at: "2026-10-05T09:00:00Z",
+      sentAt: "2026-10-05T09:00:00Z",
       mpName: "Polly Placeholder",
       politicianId: 1,
       campaign: "regulate-letter-pm",

@@ -2520,6 +2520,7 @@ describe("LettersTable", () => {
             isTest: false,
             imported: true,
             contactConsent: false,
+            sentAt: null,
             repliedAt: "2026-10-13T09:00:00Z",
             events: [{ at: letter.createdAt, status: "strange", details: {} }],
           },
@@ -2545,21 +2546,20 @@ describe("LettersTable", () => {
       .element(page.getByRole("link", { name: letter.senderName }).first())
       .toHaveAttribute("href", "/staff/supporters/7");
     await expect.element(page.getByRole("cell", { name: /^gone/ })).toBeInTheDocument();
-    await expect.element(page.getByText("odd")).toBeInTheDocument();
+    await expect.element(page.getByRole("link", { name: "odd" })).toHaveAttribute("href", "/staff/letters/2");
     await expect
       .element(page.getByRole("cell", { name: staffCopy.letters.consent.yes, exact: true }))
       .toBeInTheDocument();
     await expect
       .element(page.getByRole("cell", { name: staffCopy.letters.consent.no, exact: true }))
       .toBeInTheDocument();
-    // Its history is on its page, which its date leads to.
+    // Its history is on its page, which its status leads to; when it was sent, or a dash.
     expect(document.body.textContent).not.toContain("strange");
-    expect(
-      page
-        .getByRole("link", { name: staffTime(letter.createdAt) })
-        .all()
-        .map((l) => l.element().getAttribute("href")),
-    ).toEqual(["/staff/letters/1", "/staff/letters/2"]);
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.letters.status[letter.status] }))
+      .toHaveAttribute("href", "/staff/letters/1");
+    await expect.element(page.getByRole("cell", { name: staffTime(letter.sentAt!), exact: true })).toBeInTheDocument();
+    await expect.element(page.getByRole("cell", { name: "–", exact: true })).toBeInTheDocument();
     expect(page.getByText(staffCopy.politicians.flags.test).all()).toHaveLength(1);
     await expect.element(page.getByRole("cell", { name: "13 Oct 2026, 09:00", exact: true })).toBeInTheDocument();
   });
@@ -3036,7 +3036,7 @@ describe("SupporterDetails", () => {
           letters: [
             {
               id: 5,
-              at: "2026-01-03T00:00:00Z",
+              sentAt: null,
               mpName: "An MP",
               politicianId: 9,
               campaign: "gone-campaign",
