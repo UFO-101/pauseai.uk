@@ -331,7 +331,7 @@ test("Add an ask, change it, then delete it", async ({ page, flowDatabase }) => 
   await frame(page, "deleted");
 
   // One politicians have answered: its kind can't change, and it can't be deleted.
-  await page.goto(`${BASE}/staff/asks/ai-safety-briefing-sep-2026`);
+  await page.goto(`${BASE}/staff/asks/ai-safety-briefing-jan-2027`);
   await expect(page.getByText(asks.kindFixed)).toBeVisible();
   await expect(page.getByRole("button", { name: asks.delete })).toHaveCount(0);
   await frame(page, "an ask politicians have answered: its kind fixed, and no Delete, but why");

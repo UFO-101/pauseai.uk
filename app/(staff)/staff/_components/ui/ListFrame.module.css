@@ -72,6 +72,13 @@
   white-space: nowrap;
 }
 
+/* A row's buttons, at the right edge. */
+.end {
+  width: 1%;
+  text-align: right;
+  white-space: nowrap;
+}
+
 /* Previous, the page numbers and Next, in a row. */
 .pages {
   display: flex;

@@ -122,11 +122,11 @@ DROP TABLE made_politicians;
 -- be deleted.
 INSERT INTO asks (slug, title, kind, date, url, asked_by) VALUES
   ('winter-reception-dec-2026', 'Winter reception', 'event', '2026-12-09', NULL, '{pauseai}'),
-  ('ai-safety-briefing-sep-2026', 'AI safety briefing in Westminster, September 2026', 'event', '2026-09-15',
+  ('ai-safety-briefing-jan-2027', 'AI safety briefing in Westminster, January 2027', 'event', '2027-01-20',
     'https://luma.com/ai-safety-briefing', '{pauseai}');
 INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, note, updated_by, updated_at)
-SELECT id, 'ai-safety-briefing-sep-2026', 'event', CASE airtable_id WHEN 'recPlaceholder' THEN 'going' ELSE 'declined' END,
-  '2026-09-01', '', 'jo@pauseai.uk', now() - interval '50 days'
+SELECT id, 'ai-safety-briefing-jan-2027', 'event', CASE airtable_id WHEN 'recPlaceholder' THEN 'going' ELSE 'declined' END,
+  (now() - interval '5 days')::date, '', 'jo@pauseai.uk', now() - interval '5 days'
 FROM notable_people WHERE airtable_id IN ('recPlaceholder', 'recDummy');
 
 -- Statuses: Polly signed the letter to the PM last month; Dora this week;

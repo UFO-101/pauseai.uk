@@ -953,14 +953,14 @@ export const staffCopy = {
     byKind: {
       letter: {
         title: "⁂ Which letter",
-        titleExample: "⁂ Frontier AI letter to the Prime Minister",
+        titleExample: "⁂ Letter to the Chancellor asking for one (1) off switch",
         titleHint: "⁂ What the letter is and who it's to, as you'd say it after “sign the”.",
         date: "⁂ When the letter was sent",
         url: "⁂ Where to read the letter",
       },
       event: {
         title: "⁂ Which event",
-        titleExample: "⁂ Edinburgh conference, November 2026",
+        titleExample: "⁂ Tea, biscuits and existential risk, March 2027",
         titleHint: "⁂ What the event is, and when, as you'd say it after “come to the”.",
         date: "⁂ When the event is",
         url: "⁂ The event's page",
@@ -970,8 +970,7 @@ export const staffCopy = {
     kindFixed: "⁂ Its kind can't change, as politicians have answered it.",
     fixed: "⁂ The site's code uses this ask, so it can't be changed here.",
     // Beside the form: the ask as it will show on a politician's page.
-    previewTitle: "⁂ On a politician's page",
-    previewHint: "⁂ How it shows among their asks, once they've said yes.",
+    previewTitle: "Preview of how it will look on a politician's page",
     save: "⁂ Save",
     delete: "⁂ Delete ask",
     notDeletable: "⁂ It can't be deleted while answers, campaigns or mailings refer to it.",

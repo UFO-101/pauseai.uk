@@ -86,7 +86,7 @@ export const askColumns: ListColumn<AskWithCounts>[] = [
 const editColumn: ListColumn<AskWithCounts> = {
   key: "edit",
   label: "",
-  short: true,
+  end: true,
   cell: (a) =>
     !FIXED_ASKS.includes(a.slug) && (
       <ButtonLink href={`/staff/asks/${a.slug}`} variant="ghost" size="small" fit>
@@ -115,6 +115,7 @@ export default function AsksTable({ asks, notice = "" }: { asks: AskWithCounts[]
         rows={asks}
         rowKey={(a) => a.slug}
         empty={copy.none}
+        align="middle"
       />
       <div className={styles.add}>
         <Actions>

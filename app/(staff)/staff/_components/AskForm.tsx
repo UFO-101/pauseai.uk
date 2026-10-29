@@ -143,7 +143,6 @@ export default function AskForm({
               askedBy,
             }}
           />
-          <Hint>{copy.previewHint}</Hint>
         </Card>
       </Grid>
     </>
