@@ -194,11 +194,12 @@ export async function eraseSupporterNow(form: FormData): Promise<void> {
   redirect("/staff/supporters?erased=1");
 }
 
-/** Disconnects your own Gmail, from your page. */
+/** Disconnects your own Gmail, from your page, going back to it saying so, in place of how connecting went. */
 export async function disconnectMyGmail(): Promise<void> {
   const { email } = await requireStaff();
   await disconnectGmail(email, email);
   revalidatePath("/staff/me");
+  redirect("/staff/me?gmail=disconnected");
 }
 
 /** Where an ask's form goes after a save: `back`, or the asks page; or the form again, saying why not. */

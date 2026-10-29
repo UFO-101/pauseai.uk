@@ -11,8 +11,12 @@ import styles from "./GmailConnect.module.css";
 const copy = staffCopy.gmail;
 const LIMIT = GMAIL_DAILY_LIMIT.toLocaleString("en-GB");
 
-/** Each way connecting can end, in its tone: green connected, amber when you didn't allow it, red any error. */
-const OUTCOME_TONES: Record<string, "green" | "amber"> = { connected: "green", refused: "amber" };
+/** Each way connecting can end, in its tone: green connected or disconnected, amber when you didn't allow it, red any error. */
+const OUTCOME_TONES: Record<string, "green" | "amber"> = {
+  connected: "green",
+  disconnected: "green",
+  refused: "amber",
+};
 
 /**
  * What connecting a Gmail means, said before it goes to Google: which

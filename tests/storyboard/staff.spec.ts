@@ -229,8 +229,10 @@ test("Connect your Gmail on your account page, then disconnect it", async ({ pag
   await frame(page, "back from Google: connected, with today's sends, and Disconnect");
 
   await page.getByRole("button", { name: staffCopy.gmail.disconnect }).click();
+  await expect(page.getByText(staffCopy.gmail.outcomes.disconnected)).toBeVisible();
+  await expect(page.getByText(staffCopy.gmail.outcomes.connected)).toHaveCount(0);
   await expect(page.getByRole("link", { name: staffCopy.gmail.connect })).toBeVisible();
-  await frame(page, "disconnected: Connect Gmail again");
+  await frame(page, "disconnected: it says so, and Connect Gmail again");
 
   // Google sending you back having chosen another account, as the callback does.
   await page.goto(`${BASE}/staff/me?gmail=other-account`);

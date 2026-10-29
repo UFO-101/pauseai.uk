@@ -313,7 +313,7 @@ describeWithDatabase("staff Server Actions", () => {
 
   it("disconnects your own Gmail", async () => {
     await connectTestGmail("jo@pauseai.uk");
-    await disconnectMyGmail();
+    expect(await expectRedirect(disconnectMyGmail)).toBe("/staff/me?gmail=disconnected");
     expect(await gmailAccounts()).toEqual([]);
     expect(revalidatePath).toHaveBeenCalledWith("/staff/me");
   });
