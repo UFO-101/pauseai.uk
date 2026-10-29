@@ -74,6 +74,8 @@ describeWithDatabase("letter threads", () => {
     expect(await letterThread(mailing, id)).toEqual({
       mailingTitle: "AI",
       subject: "AI safety",
+      to: { name: "Polly Placeholder", email: "polly.placeholder.mp@parliament.uk" },
+      sentAt: new Date("2026-11-02T10:00:00Z"),
       letter: {
         type: "doc",
         content: [
