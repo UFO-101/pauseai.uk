@@ -165,12 +165,22 @@
   --button-font-size: 14px;
 }
 
-/* The address's label, bold, beside it, on its line. */
+/* The address's label, bold, beside it, on its line; over it on a phone, where all three don't fit. */
 .testLabel {
   display: flex;
   align-items: center;
   font-weight: 600;
   white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .testRow {
+    flex-wrap: wrap;
+  }
+
+  .testLabel {
+    flex-basis: 100%;
+  }
 }
 
 /* The address: room for a long one, but no wider, and never pushing its button off the row. */

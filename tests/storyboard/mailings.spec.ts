@@ -89,7 +89,14 @@ test("Write a new mailing, save it, preview it and send yourself a test", async 
   const preview = page.getByRole("region", { name: copy.sections.preview });
   await expect(preview.getByText("We hope to see you there.")).toBeVisible();
   await expect(preview.getByText("Dear Ms Example,")).toBeVisible();
-  await frame(page, "written under the greeting, saved as a draft, and the preview filled in");
+  await preview.getByRole("button", { name: copy.sendTest }).scrollIntoViewIfNeeded();
+  await frame(
+    page,
+    "written under the greeting, saved as a draft, and the preview filled in, to send a test to yourself",
+    {
+      window: true,
+    },
+  );
 
   await preview.getByRole("button", { name: copy.sendTest }).click();
   await expect(preview.getByText(copy.testSent(staffEmail()))).toBeVisible();

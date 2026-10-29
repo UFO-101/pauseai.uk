@@ -861,8 +861,8 @@ export const staffCopy = {
     // Under it: how the test copy goes, so you know where to look for it.
     testVia: (gmail: string | null) =>
       gmail
-        ? `⁂ It goes from ${gmail}'s Gmail, so it'll be in its Sent mail too.`
-        : "⁂ It goes from our own mail service, not a Gmail, so it won't be in any Gmail's Sent mail.",
+        ? `Sends from ${gmail}'s Gmail, so copies also show in Sent.`
+        : "Sends from our own mail service, so it won't be in any Gmail's Sent.",
     testSent: (address: string) => `Sent to ${address}.`,
     // Under the test button, while the letter is empty or only its greeting.
     testNeedsDraft: "Write something first!",
