@@ -3,7 +3,7 @@
 import type { JSONContent } from "@tiptap/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button, ButtonAnchor } from "@/components/ui/Button";
 import { Select, TextInput } from "@/components/ui/Controls";
 import { Field, Hint, Label } from "@/components/ui/Field";
 import { Muted } from "@/components/ui/Text";
@@ -406,7 +406,10 @@ export default function MailingWriter({
                 </option>
               ))}
             </Select>
-            <a
+            <ButtonAnchor
+              variant="ghost"
+              size="small"
+              fit
               className={styles.newAsk}
               href={`/staff/asks/new?${new URLSearchParams({ back: writerPath })}`}
               onClick={async (event) => {
@@ -415,7 +418,7 @@ export default function MailingWriter({
               }}
             >
               {copy.newAsk}
-            </a>
+            </ButtonAnchor>
           </div>
           <div className={styles.letter}>
             <p id={letterLabel} className={styles.label}>

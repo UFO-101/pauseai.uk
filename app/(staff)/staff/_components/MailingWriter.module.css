@@ -57,9 +57,7 @@
 
 /* Under the ask: a new one, on the asks page. */
 .newAsk {
-  display: inline-block;
-  margin-top: var(--space-1);
-  font-size: var(--text-sm);
+  margin-top: var(--space-2);
 }
 
 .sender {
