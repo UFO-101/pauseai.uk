@@ -436,7 +436,7 @@ describe("MailingWriter", () => {
     await expect.element(region(copy.sections.send).getByText(copy.problems["no-letter"])).toBeVisible();
   });
 
-  it("schedules one that's ready, and shows it scheduled; not one someone changed first", async () => {
+  it("schedules one that's ready, and shows it scheduled from the page's top; not one someone changed first", async () => {
     const ready = {
       ...exampleWrittenMailing,
       sentFrom: "samuel.whitlock@pauseai.uk",
@@ -447,6 +447,7 @@ describe("MailingWriter", () => {
     await expect.element(page.getByText(copy.cantSend)).not.toBeInTheDocument();
     await page.getByRole("button", { name: copy.schedule(2) }).click();
     await expect.poll(() => navigation.refreshes, WAIT).toBe(1);
+    expect(window.scrollY).toBe(0);
     expect(actions.schedule).toHaveBeenCalledWith(12, 3);
     actions.schedule.mockResolvedValueOnce({ scheduled: false, reason: "conflict" });
     await page.getByRole("button", { name: copy.schedule(2) }).click();

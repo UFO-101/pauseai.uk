@@ -525,7 +525,11 @@ export default function MailingWriter({
                 // What's still to be saved, such as a time just chosen, goes first, or it's scheduled without it.
                 await saveNow();
                 const result = await actions.schedule(savedId!, version.current);
-                if (result.scheduled) router.refresh();
+                // The page becomes the scheduled mailing's, which starts at its top, at once, as a new page would.
+                if (result.scheduled) {
+                  window.scrollTo({ top: 0, behavior: "instant" });
+                  router.refresh();
+                }
               }}
             >
               {copy.schedule(data.recipients.length)}
