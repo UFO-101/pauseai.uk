@@ -202,7 +202,7 @@ describeWithDatabase("staff Server Actions", () => {
   it("syncNow copies the politicians from Airtable, and keeps a failure rather than crashing the page", async () => {
     await syncNow();
     expect(await query("SELECT count(*)::int AS n FROM notable_people WHERE airtable_id IS NOT NULL")).toEqual([
-      { n: 6 },
+      { n: 7 },
     ]);
     expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data");
 

@@ -96,6 +96,22 @@
         "Email": "gordon.gone.mp@parliament.uk",
         "Status": "No longer in office"
       }
+    },
+    {
+      "id": "recMo",
+      "createdTime": "2026-01-01T00:00:00.000Z",
+      "fields": {
+        "Full name or Title": "Mo Example",
+        "Forename": "Mo",
+        "Surname": "Example",
+        "Salutation": "Mx Example",
+        "Body": "House of Commons",
+        "Constituency": "Manchester Central",
+        "Party": "Labour",
+        "Country": "England",
+        "City": "Manchester",
+        "Email": "mp90003.office@parliament.uk"
+      }
     }
   ]
 }

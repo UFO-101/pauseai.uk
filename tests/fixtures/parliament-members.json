@@ -23,9 +23,21 @@
         "latestParty": { "id": 15, "name": "Labour (Co-op)" },
         "latestHouseMembership": { "membershipFrom": "Cities of London and Westminster", "house": 1 }
       }
+    },
+    {
+      "value": {
+        "id": 90003,
+        "nameListAs": "Example, Mo",
+        "nameDisplayAs": "Mo Example",
+        "nameFullTitle": "Mo Example MP",
+        "nameAddressAs": "Mx Example",
+        "gender": "F",
+        "latestParty": { "id": 15, "name": "Labour" },
+        "latestHouseMembership": { "membershipFrom": "Manchester Central", "house": 1 }
+      }
     }
   ],
-  "totalResults": 2,
+  "totalResults": 3,
   "skip": 0,
   "take": 20
 }

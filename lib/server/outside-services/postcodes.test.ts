@@ -138,7 +138,7 @@ describe("placesForPostcodes", () => {
       longitude: -2.2353,
       place: "Manchester",
       country: "england",
-      constituency: null,
+      constituency: "Manchester Central",
     });
     expect(found.get("ZZ99ZZ")).toBeNull();
     // With its constituency, by the official name for its code.

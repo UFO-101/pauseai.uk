@@ -22,6 +22,12 @@ describe("fetchCurrentMps", () => {
         constituency: "Cities of London and Westminster",
         emails: ["mp90002.office@parliament.uk"],
       },
+      {
+        parliamentId: 90003,
+        name: "Mo Example",
+        constituency: "Manchester Central",
+        emails: ["mp90003.office@parliament.uk"],
+      },
     ]);
   });
 
