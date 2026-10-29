@@ -267,6 +267,23 @@
   overflow-wrap: anywhere;
 }
 
+/* A change's fields under its status: each name, muted, beside its value, a line each. */
+.eventFields {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 2px var(--space-3);
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-sm);
+}
+
+.eventFields dt {
+  color: var(--text-secondary);
+}
+
+.eventFields dd {
+  margin: 0;
+}
+
 /* A card with nothing in it yet. */
 .none {
   margin: 0;

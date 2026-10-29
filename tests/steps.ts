@@ -123,26 +123,32 @@ export async function postLumaWebhook(
   return (await res.json()) as { recorded: boolean };
 }
 
-/** Opens the tool and fills in the name and a postcode, without looking it up yet. */
-export async function openLookup(page: Page, base: string, postcode = "ZZ9 9ZZ", path = TOOL_PAGE) {
+/** Opens the tool and fills in the name, Jane Smith unless told otherwise, and a postcode, without looking it up yet. */
+export async function openLookup(
+  page: Page,
+  base: string,
+  postcode = "ZZ9 9ZZ",
+  path = TOOL_PAGE,
+  name = "Jane Smith",
+) {
   const response = await page.goto(`${base}${path}`);
   if (!response?.ok()) throw new Error(`${base}${path} returned ${response?.status()}: is the tool deployed there?`);
   await page.waitForLoadState("load");
   // Filling scrolls the field into view; a font that swaps in afterwards
   // moves the page under it, and the frame with it.
   await page.evaluate(() => document.fonts.ready);
-  await page.getByLabel(copy.lookup.nameLabel).fill("Jane Smith");
+  await page.getByLabel(copy.lookup.nameLabel).fill(name);
   await page.getByLabel(copy.lookup.addressLabel).fill("1 High Street, Testville");
   await page.getByLabel(copy.lookup.postcodeLabel).fill(postcode);
 }
 
 /**
- * Looks up a test MP, ZZ99ZZ unless told otherwise, and waits for them and
- * their letter. Fails fast, saying why, rather than waiting out the test's
+ * Looks up a test MP, ZZ99ZZ unless told otherwise, as `name`, and waits
+ * for them and their letter. Fails fast, saying why, rather than waiting out the test's
  * timeout for a field or a heading that will never appear.
  */
-export async function lookUpTestMp(page: Page, base: string, mp: TestMp = TEST_MPS[0]) {
-  await openLookup(page, base, `${mp.postcode.slice(0, -3)} ${mp.postcode.slice(-3)}`);
+export async function lookUpTestMp(page: Page, base: string, mp: TestMp = TEST_MPS[0], name?: string) {
+  await openLookup(page, base, `${mp.postcode.slice(0, -3)} ${mp.postcode.slice(-3)}`, undefined, name);
   await page.getByRole("button", { name: copy.lookup.button }).click();
 
   const found = page.getByRole("heading", { name: mp.name });

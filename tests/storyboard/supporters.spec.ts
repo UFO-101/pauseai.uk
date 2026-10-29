@@ -323,7 +323,7 @@ test("A march sign-up's page", async ({ page, flowDatabase }, testInfo) => {
 test("A member who wrote to their MP is one supporter", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await fakeTurnstile(page);
-  await lookUpTestMp(page, BASE, TEST_MPS[0]);
+  await lookUpTestMp(page, BASE, TEST_MPS[0], "Lee Letter");
   await fillLetter(page, "lee.letter@example.com");
   await sendLetter(page, TEST_MPS[0]);
   await importMembers(request, BASE);
@@ -339,7 +339,7 @@ test("A member who wrote to their MP is one supporter", async ({ page, request, 
   await lee.getByRole("link").first().click();
   await expect(page).toHaveURL(/\/staff\/supporters\/\d+$/);
   // The letter's sender's name, as the newest; how they first came, as a member.
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Jane Smith");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Lee Letter");
   await expect(page.getByText(copy.detail.firstVia(copy.sources.member))).toBeVisible();
   await expect(page.getByText("29 Nov 2025", { exact: false }).first()).toBeVisible();
   // Joined before "Keep me informed" was a choice: on the updates.

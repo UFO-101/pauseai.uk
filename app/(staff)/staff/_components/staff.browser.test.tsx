@@ -2658,13 +2658,23 @@ describe("LetterDetails", () => {
         }}
       />,
     );
-    // A field with no name in the copy, as recorded, and a value that isn't words, as JSON.
+    // Each change's fields a line each, by name: one with no name in the copy as recorded, a value that isn't
+    // words as JSON, a soft bounce in words, and the address leading to it among the blocked emails.
     const history = page.getByRole("list", { name: copy.detail.historyTitle });
-    expect(history.element().textContent).toContain(`${copy.detail.fields.subject} Thanks · spam 0.1`);
-    // A soft bounce in words, and the address leading to it among the blocked emails.
-    expect(history.element().textContent).toContain(
-      `${copy.status.bounced} · Soft bounce · ${copy.detail.fields.email} jo@example.org`,
+    const fields = [...history.element().querySelectorAll("dl")].map((list) =>
+      [...list.querySelectorAll("dt")].map((name) => [name.textContent, name.nextElementSibling!.textContent]),
     );
+    expect(fields).toEqual([
+      [
+        [copy.detail.fields.subject, "Thanks"],
+        ["spam", "0.1"],
+      ],
+      [
+        [copy.detail.fields.type, "Soft bounce"],
+        [copy.detail.fields.email, "jo@example.org"],
+      ],
+    ]);
+    expect(history.element().textContent).toContain(copy.status.bounced);
     await expect
       .element(history.getByRole("link", { name: "jo@example.org" }))
       .toHaveAttribute("href", "/staff/politicians/blocked-emails?q=jo%40example.org");

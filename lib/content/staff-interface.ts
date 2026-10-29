@@ -72,11 +72,11 @@ export const staffCopy = {
   },
   // One of PauseAI's letters, and the replies in its thread.
   letterThread: {
-    title: "⁂ The letter and its replies",
+    title: "The letter and replies",
     sentFrom: (who: string) => `⁂ Sent from ${who}`,
     // An imported letter, whose text Airtable didn't keep.
-    noText: "⁂ This letter was sent before the site sent mailings, so its text isn't here.",
-    openInGmail: "⁂ Open in Gmail",
+    noText: "This letter was sent before the site sent mailings, so its text isn't here.",
+    openInGmail: "Open in Gmail",
     noReplies: "⁂ No replies yet.",
     ourAnswer: "⁂ Our answer",
     unreadable: "⁂ This message couldn't be read.",

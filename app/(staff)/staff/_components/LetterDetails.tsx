@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { gmailThreadUrl } from "@/lib/gmail-connect";
 import { gmailSearchUrl, googleGroupUrl } from "@/lib/letter-links";
@@ -9,7 +9,7 @@ import Tag from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
 import Breadcrumb from "./Breadcrumb";
 import CampaignName from "./CampaignName";
-import { DotParts, LoggedJson } from "./Logged";
+import { LoggedJson } from "./Logged";
 import Grid, { Card } from "./ui/Grid";
 import styles from "./Details.module.css";
 
@@ -113,44 +113,44 @@ function postmarkWords(type: string): string {
   return words[0].toUpperCase() + words.slice(1);
 }
 
-/**
- * One field a change recorded, in words: Postmark's kind of bounce; the
- * address, leading to it among the blocked emails; anything else by its
- * name, in bold, then its value, one with no name in the copy as recorded.
- */
-function EventField({ name, value }: { name: string; value: unknown }) {
+/** One field a change recorded, its value in words: Postmark's kind of bounce; the address, leading to it among the blocked emails; the rest as recorded. */
+function EventValue({ name, value }: { name: string; value: unknown }) {
   if (name === "type" && typeof value === "string") return <>{postmarkWords(value)}</>;
-  const shown =
-    name === "email" && typeof value === "string" ? (
-      <Link href={`/staff/politicians/blocked-emails?q=${encodeURIComponent(value)}`}>{value}</Link>
-    ) : typeof value === "string" ? (
-      value
-    ) : (
-      JSON.stringify(value)
-    );
-  return (
-    <>
-      <strong>{copy.detail.fields[name] ?? name}</strong> {shown}
-    </>
-  );
+  if (name === "email" && typeof value === "string")
+    return <Link href={`/staff/politicians/blocked-emails?q=${encodeURIComponent(value)}`}>{value}</Link>;
+  return <>{typeof value === "string" ? value : JSON.stringify(value)}</>;
 }
 
-/** The IDs a send or a read of Gmail records, for finding a message, not reading: in the {} bubble, not the line. */
+/** The IDs a send or a read of Gmail records, for finding a message, not reading: in the {} bubble, not the list. */
 const IDS = ["messageId", "threadId", "gmailMessageId"];
 
 /**
- * What a change recorded, as the parts of its line: each field, but
- * Postmark's kind when the status already says it, and the IDs.
+ * What a change recorded, a field to a line, each by its name, one with no
+ * name in the copy as recorded: every field but Postmark's kind when the
+ * status already says it, and the IDs.
  */
-function eventParts(event: LetterEvent): ReactNode[] {
-  return Object.entries(event.details)
-    .filter(([name, value]) => !IDS.includes(name) && !(name === "type" && SAID_BY_STATUS[event.status] === value))
-    .map(([name, value]) => <EventField key={name} name={name} value={value} />);
+function EventFields({ event }: { event: LetterEvent }) {
+  const fields = Object.entries(event.details).filter(
+    ([name, value]) => !IDS.includes(name) && !(name === "type" && SAID_BY_STATUS[event.status] === value),
+  );
+  if (fields.length === 0) return null;
+  return (
+    <dl className={styles.eventFields}>
+      {fields.map(([name, value]) => (
+        <Fragment key={name}>
+          <dt>{copy.detail.fields[name] ?? name}</dt>
+          <dd>
+            <EventValue name={name} value={value} />
+          </dd>
+        </Fragment>
+      ))}
+    </dl>
+  );
 }
 
 /**
- * Each change of a letter's status, newest first: its time, the status and
- * every field it recorded, in words, and a {} button that opens them as
+ * Each change of a letter's status, newest first: its time, the status, and
+ * under it every field it recorded, a line each, in words; and a {} button that opens them as
  * recorded, as the audit log has.
  */
 function History({ events }: { events: LetterEvent[] }) {
@@ -161,7 +161,8 @@ function History({ events }: { events: LetterEvent[] }) {
         <li key={i}>
           <span className={styles.when}>{staffTime(event.at)}</span>
           <span>
-            <DotParts>{[statusOf(event.status), ...eventParts(event)]}</DotParts>
+            <strong>{statusOf(event.status)}</strong>
+            <EventFields event={event} />
           </span>
           <span>
             {Object.keys(event.details).length > 0 && <LoggedJson id={`event-${i}`} details={event.details} />}
@@ -198,7 +199,7 @@ export default function LetterDetails({
       <Breadcrumb href={back.href}>{back.label}</Breadcrumb>
       <h1>{letterTitle(letter)}</h1>
       <Grid>
-        <Card span={4}>
+        <Card span={3}>
           <dl className={styles.facts}>
             <Sender letter={letter} />
             <Fact label={copy.columns.to}>
@@ -213,7 +214,7 @@ export default function LetterDetails({
           </dl>
           <InGoogle letter={letter} me={me} />
         </Card>
-        <Card span={2} look="log" title={copy.detail.historyTitle} id="letter-history">
+        <Card span={3} look="log" title={copy.detail.historyTitle} id="letter-history">
           <History events={letter.events} />
         </Card>
       </Grid>
