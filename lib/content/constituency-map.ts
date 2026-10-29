@@ -15,9 +15,9 @@ export const constituencyMapCopy = {
   /** The switch between layers, and each layer's name on it. */
   layerLabel: "⁂ Show",
   layers: {
-    supporters: "⁂ Supporters",
+    supporters: "Supporters",
     frontier: "Regulate AI developers",
-    sobel: "⁂ Letters: Superintelligence Bill",
+    sobel: "Letters: Superintelligence Bill",
   } satisfies Record<MapLayer, string>,
 
   /** The sentence over the map saying how far a layer reaches. */
@@ -43,7 +43,7 @@ export const constituencyMapCopy = {
     `⁂ Map of the UK's 650 constituencies, coloured by ${layer}. The table below has every number.`,
 
   finder: {
-    label: "⁂ Your postcode",
+    label: "Your postcode",
     button: "⁂ Find",
     finding: "⁂ Finding…",
     notOnMap: "⁂ We found your MP, but their constituency isn't on this map.",
@@ -63,10 +63,10 @@ export const constituencyMapCopy = {
 
   /** What a person can do about the constituency they picked: the first is the one the map is showing. */
   actions: {
-    frontier: { label: "⁂ Email your MP about frontier AI", href: "/campaigns/regulate-letter-pm#email-your-mp" },
+    frontier: { label: "⁂ Email your MP about frontier AI", href: "/campaigns/regulate-letter-pm" },
     sobel: {
       label: "⁂ Ask your MP to back the Superintelligence Bill",
-      href: "/campaigns/support-sobel-bill#email-your-mp",
+      href: "/campaigns/support-sobel-bill",
     },
     events: { label: "⁂ Find people near you", href: "/events" },
   },
@@ -80,7 +80,7 @@ export const constituencyMapCopy = {
       {
         title: "⁂ Write to your MP",
         body: "⁂ It takes two minutes. One letter turns your constituency on the map from empty to coloured, and puts AI risk on your MP's desk.",
-        link: { label: "⁂ Email your MP", href: "/campaigns/support-sobel-bill#email-your-mp" },
+        link: { label: "⁂ Email your MP", href: "/campaigns/support-sobel-bill" },
       },
       {
         title: "⁂ Ask someone in an empty constituency",
@@ -100,7 +100,7 @@ export const constituencyMapCopy = {
     caption: "⁂ Supporters and letters in each constituency",
     constituency: "⁂ Constituency",
     mp: "⁂ MP",
-    supporters: "⁂ Supporters",
+    supporters: "Supporters",
     frontier: "⁂ Frontier AI letters",
     sobel: "⁂ Bill letters",
   },
