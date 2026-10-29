@@ -252,6 +252,19 @@ export function accountsSearch({ notice = "" }: { notice?: string }): { notice: 
   return { notice: notice === "last-admin" || notice === "not-pauseai" ? notice : "" };
 }
 
+/**
+ * An ask's form, from its URL: the page to go back to after saving (the
+ * asks page unless it's another staff page), and how the last save went.
+ */
+export function askFormSearch(params: Record<string, ParamValue>): { back: string; notice: string } {
+  return { back: staffBack(firstOf(params.back), "/staff/asks"), notice: firstOf(params.notice) };
+}
+
+/** A staff page to go back to, with its query, never another site's; `fallback` for anything else. */
+export function staffBack(back: string | null | undefined, fallback: string): string {
+  return back && /^\/staff(\/[\w\-/]*)?(\?[^#]*)?$/.test(back) && !back.includes("//") ? back : fallback;
+}
+
 // Who a list shows, kept apart from how it shows them (the sort and the
 // page), as its URL parameters, so a mailing can keep it and run it again
 // (lib/server/stored-filters.ts reads it back strictly).

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ASK_STATUSES } from "@/lib/asks";
+import { ASK_STATUSES, FIXED_ASKS } from "@/lib/asks";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { AskWithCounts } from "@/lib/server/asks";
 import { staffDate } from "@/lib/staff-time";
@@ -78,20 +78,33 @@ export const askColumns: ListColumn<AskWithCounts>[] = [
   },
 ];
 
-/** Every ask, newest first, in the list frame: how many, their downloads, and a row each. */
+/** Each ask's Edit, but for those the code names, which staff can't change. */
+const editColumn: ListColumn<AskWithCounts> = {
+  key: "edit",
+  label: "",
+  short: true,
+  cell: (a) => !FIXED_ASKS.includes(a.slug) && <Link href={`/staff/asks/${a.slug}`}>{copy.edit}</Link>,
+};
+
+/** Every ask, newest first, in the list frame: how many, their downloads, a row each with Edit; and Add an ask. */
 export default function AsksTable({ asks }: { asks: AskWithCounts[] }) {
   return (
-    <ListFrame
-      count={copy.total(asks.length)}
-      total={asks.length}
-      page={1}
-      pages={1}
-      pageSize={asks.length}
-      download={(format) => `/staff/asks/download?format=${format}`}
-      columns={askColumns}
-      rows={asks}
-      rowKey={(a) => a.slug}
-      empty={copy.none}
-    />
+    <>
+      <p>
+        <Link href="/staff/asks/new">{copy.add}</Link>
+      </p>
+      <ListFrame
+        count={copy.total(asks.length)}
+        total={asks.length}
+        page={1}
+        pages={1}
+        pageSize={asks.length}
+        download={(format) => `/staff/asks/download?format=${format}`}
+        columns={[...askColumns, editColumn]}
+        rows={asks}
+        rowKey={(a) => a.slug}
+        empty={copy.none}
+      />
+    </>
   );
 }

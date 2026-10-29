@@ -392,6 +392,19 @@ export default function MailingWriter({
                 </option>
               ))}
             </Select>
+            <a
+              className={styles.newAsk}
+              href={`/staff/asks/new?${new URLSearchParams({ back: writerPath })}`}
+              onClick={async (event) => {
+                // Saves what's waiting to be saved before leaving the page.
+                event.preventDefault();
+                const href = event.currentTarget.href;
+                await flush();
+                window.location.assign(href);
+              }}
+            >
+              {copy.newAsk}
+            </a>
           </div>
           <div className={styles.letter}>
             <p id={letterLabel} className={styles.label}>

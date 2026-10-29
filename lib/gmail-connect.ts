@@ -3,6 +3,8 @@
 // back to the page it started from (app/(staff)/staff/api/gmail/); the
 // daily limit; and links to a thread in it.
 
+import { staffBack } from "./staff-search";
+
 /**
  * The most the site sends from one account in a day, counting every
  * mailing: under Gmail's 2,000 (https://support.google.com/a/answer/166852),
@@ -21,7 +23,7 @@ export type GmailConnectOutcome = "connected" | "other-account" | "refused" | "f
 
 /** A staff page to go back to: one of ours, never another site; the page of your own otherwise. */
 export function backPath(back: string | null | undefined): string {
-  return back && /^\/staff(\/[\w\-/]*)?(\?[^#]*)?$/.test(back) && !back.includes("//") ? back : "/staff/me";
+  return staffBack(back, "/staff/me");
 }
 
 /** Where connecting from `back` starts. */

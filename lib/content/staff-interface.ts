@@ -828,6 +828,8 @@ export const staffCopy = {
       `The saved filter has values that are no longer supported (${values}), you need to change it before carrying on.`,
     subject: "Subject",
     ask: "Ask",
+    // Under the ask: a new one, on the asks page, which comes back here.
+    newAsk: "⁂ Add an ask",
     // Behind the ? beside Ask.
     askHelpLabel: "Help about what an ask is",
     askHelp:
@@ -947,7 +949,37 @@ export const staffCopy = {
   // The asks page: each ask, its kind and date, and how many gave each answer.
   asks: {
     title: "Asks",
-    intro: "What we ask notable people to do when writing to them. Make a PR to add a new ask.",
+    intro: "⁂ What we ask notable people to do when writing to them.",
+    add: "⁂ Add an ask",
+    edit: "⁂ Edit",
+    // The form, adding an ask or editing one.
+    newTitle: "⁂ New ask",
+    editTitle: (title: string) => `⁂ Edit ${title}`,
+    fields: {
+      title: "⁂ Title",
+      kind: "⁂ Kind",
+      date: "⁂ Date",
+      url: "⁂ Link",
+      askedBy: "⁂ Asked by",
+    },
+    urlHint: "⁂ The letter or the event: a page of ours, starting /, or another site's, starting https://.",
+    slugHint: (slug: string) => `⁂ Its address in links is ${slug}, which doesn't change.`,
+    kindFixed: "⁂ Its kind can't change, as politicians have answered it.",
+    fixed: "⁂ The site's code uses this ask, so it can't be changed here.",
+    save: "⁂ Save",
+    delete: "⁂ Delete ask",
+    notDeletable: "⁂ It can't be deleted while answers, campaigns or mailings refer to it.",
+    // After saving or deleting, or failing to.
+    notices: {
+      added: "⁂ The ask is added.",
+      saved: "⁂ The ask is saved.",
+      deleted: "⁂ The ask is deleted.",
+      invalid: "⁂ Give it a title and a kind, and a link starting / or https://.",
+      fixed: "⁂ The site's code uses this ask, so it can't be changed here.",
+      "kind-in-use": "⁂ Its kind can't change, as politicians have answered it.",
+      "in-use": "⁂ It can't be deleted while answers, campaigns or mailings refer to it.",
+      gone: "⁂ That ask has gone.",
+    } as Record<string, string>,
     // Over the list: how many there are.
     total: (n: number) => `${n} ${n === 1 ? "ask" : "asks"}`,
     none: "No asks yet.",

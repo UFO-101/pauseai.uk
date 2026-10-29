@@ -1,6 +1,6 @@
 // Reads the staff interface's forms. Anything that doesn't fit is refused
 // (undefined) rather than guessed at.
-import { ASK_STATUSES, type AskStatus } from "@/lib/asks";
+import { ASK_STATUSES, ASKERS, type Asker, type AskKind, type AskStatus } from "@/lib/asks";
 import { trackedAsks } from "@/lib/email-your-mp";
 import { PERMISSIONS, type Permission } from "@/lib/staff-permissions";
 
@@ -64,4 +64,28 @@ export function eraseFrom(form: FormData): EraseForm | undefined {
   const reference = text(form, "reference");
   if (!id || !reference || text(form, "confirm") === "") return undefined;
   return { id, reference };
+}
+
+export type AskForm = {
+  title: string;
+  kind: AskKind;
+  date: string | null;
+  url: string | null;
+  askedBy: Asker[];
+};
+
+/**
+ * An ask's form: a title and a kind, and maybe a date (yyyy-mm-dd), a link
+ * (one of ours, from /, or another site's, https://) and who asks it.
+ */
+export function askFrom(form: FormData): AskForm | undefined {
+  const title = text(form, "title");
+  const kind = text(form, "kind");
+  const date = text(form, "date");
+  const url = text(form, "url");
+  const askedBy = form.getAll("askedBy").filter((one): one is Asker => (ASKERS as readonly unknown[]).includes(one));
+  if (!title || !Object.hasOwn(ASK_STATUSES, kind)) return undefined;
+  if (date && !(/^\d{4}-\d{2}-\d{2}$/.test(date) && !Number.isNaN(Date.parse(date)))) return undefined;
+  if (url && !/^(https:\/\/|\/)/.test(url)) return undefined;
+  return { title, kind: kind as AskKind, date: date || null, url: url || null, askedBy: [...new Set(askedBy)] };
 }
