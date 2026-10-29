@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import { query } from "@/lib/server/db";
@@ -6,10 +6,15 @@ import { isBlocked, recordProblem } from "@/lib/server/email";
 import { getPolitician } from "@/lib/server/politicians";
 import { createSession } from "@/lib/server/staff-auth";
 import { saveStaffAccount } from "@/lib/server/staff-accounts";
-import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { FIXED_ASKS } from "@/lib/asks";
+import { gmailAccounts } from "@/lib/server/gmail-accounts";
+import { addTestPolitician, connectTestGmail, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { expectRedirect, requestCookies } from "@/tests/next-headers";
 import {
   checkNow,
+  deleteAskNow,
+  disconnectMyGmail,
+  saveAskNow,
   decideSync,
   deletePoliticianNow,
   eraseSupporterNow,
@@ -303,5 +308,55 @@ describeWithDatabase("staff Server Actions", () => {
     expect(await isBlocked("a@example.org")).toBe(true);
     expect(error).toHaveBeenCalled();
     error.mockRestore();
+  });
+
+  it("disconnects your own Gmail", async () => {
+    await connectTestGmail("jo@pauseai.uk");
+    await disconnectMyGmail();
+    expect(await gmailAccounts()).toEqual([]);
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/me");
+  });
+
+  describe("asks", () => {
+    beforeEach(() => query("DELETE FROM asks WHERE slug <> ALL($1)", [FIXED_ASKS]));
+    const reception = (extra: Record<string, string> = {}) =>
+      form({ title: "Winter reception", kind: "event", date: "2026-12-09", ...extra });
+
+    it("adds an ask, going back to where it was opened from, or the asks page, saying it's added", async () => {
+      expect(await expectRedirect(() => saveAskNow(reception({ back: "/staff/mailings/4?x=1" })))).toBe(
+        "/staff/mailings/4?x=1&notice=added",
+      );
+      expect(await expectRedirect(() => saveAskNow(reception({ back: "https://evil.example" })))).toBe(
+        "/staff/asks?notice=added",
+      );
+      expect(await expectRedirect(() => saveAskNow(reception()))).toBe("/staff/asks?notice=added");
+      expect(revalidatePath).toHaveBeenCalledWith("/staff/asks");
+    });
+
+    it("saves an ask by its slug, or goes back to its form saying why not", async () => {
+      await expectRedirect(() => saveAskNow(reception()));
+      expect(
+        await expectRedirect(() => saveAskNow(reception({ slug: "winter-reception-dec-2026", title: "Reception" }))),
+      ).toBe("/staff/asks?notice=saved");
+      expect(await expectRedirect(() => saveAskNow(reception({ slug: "frontier-ai-letter" })))).toBe(
+        "/staff/asks/frontier-ai-letter?notice=fixed&back=%2Fstaff%2Fasks",
+      );
+      expect(await expectRedirect(() => saveAskNow(form({ title: "", kind: "event" })))).toBe(
+        "/staff/asks/new?notice=invalid&back=%2Fstaff%2Fasks",
+      );
+    });
+
+    it("deletes an ask, or goes back to its form saying why not", async () => {
+      await expectRedirect(() => saveAskNow(reception()));
+      expect(await expectRedirect(() => deleteAskNow(form({ slug: "frontier-ai-letter" })))).toBe(
+        "/staff/asks/frontier-ai-letter?notice=fixed&back=%2Fstaff%2Fasks",
+      );
+      expect(await expectRedirect(() => deleteAskNow(form({ slug: "winter-reception-dec-2026" })))).toBe(
+        "/staff/asks?notice=deleted",
+      );
+      expect(await expectRedirect(() => deleteAskNow(new FormData()))).toBe(
+        "/staff/asks/new?notice=gone&back=%2Fstaff%2Fasks",
+      );
+    });
   });
 });

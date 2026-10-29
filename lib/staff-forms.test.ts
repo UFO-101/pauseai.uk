@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { eraseFrom, idFrom, permissionsFrom, statusFrom, unblockFrom } from "./staff-forms";
+import { askFrom, eraseFrom, idFrom, permissionsFrom, statusFrom, unblockFrom } from "./staff-forms";
 
 function form(fields: Record<string, string | Blob>) {
   const data = new FormData();
@@ -81,5 +81,36 @@ describe("eraseFrom", () => {
     expect(eraseFrom(form({ id: "7", reference: "", confirm: "on" }))).toBeUndefined();
     expect(eraseFrom(form({ id: "7", reference: "x" }))).toBeUndefined();
     expect(eraseFrom(form({ id: "x", reference: "x", confirm: "on" }))).toBeUndefined();
+  });
+});
+
+describe("askFrom", () => {
+  it("reads an ask's title, kind, date, link and who asks it, each asker once", () => {
+    const data = form({ title: " Winter reception ", kind: "event", date: "2026-12-09", url: "/events" });
+    for (const asker of ["pauseai", "supporters", "pauseai", "someone"]) data.append("askedBy", asker);
+    expect(askFrom(data)).toEqual({
+      title: "Winter reception",
+      kind: "event",
+      date: "2026-12-09",
+      url: "/events",
+      askedBy: ["pauseai", "supporters"],
+    });
+    expect(askFrom(form({ title: "Letter", kind: "letter", date: "", url: "https://example.org" }))).toEqual({
+      title: "Letter",
+      kind: "letter",
+      date: null,
+      url: "https://example.org",
+      askedBy: [],
+    });
+    expect(askFrom(form({ title: "Letter", kind: "letter" }))).toMatchObject({ date: null, url: null });
+  });
+
+  it("refuses one without a title or a kind it knows, a date that isn't one, or a link elsewhere", () => {
+    expect(askFrom(form({ title: "", kind: "event" }))).toBeUndefined();
+    expect(askFrom(form({ title: "A", kind: "petition" }))).toBeUndefined();
+    expect(askFrom(form({ title: "A", kind: "toString" }))).toBeUndefined();
+    expect(askFrom(form({ title: "A", kind: "event", date: "9 Dec" }))).toBeUndefined();
+    expect(askFrom(form({ title: "A", kind: "event", date: "2026-13-45" }))).toBeUndefined();
+    expect(askFrom(form({ title: "A", kind: "event", url: "http://example.org" }))).toBeUndefined();
   });
 });

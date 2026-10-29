@@ -1,0 +1,25 @@
+From: postmaster@example.net
+To: jo@pauseai.uk
+Subject: Undeliverable: AI safety
+MIME-Version: 1.0
+Content-Type: multipart/report; boundary="b2"; report-type=delivery-status
+
+--b2
+Content-Type: message/delivery-status
+
+Reporting-MTA: dns; example.net
+
+Original-Recipient: rfc822;full@example.net
+Action: delayed
+Status: 4.2.2
+
+Final-Recipient: rfc822; fine@example.net
+Action: delivered
+Status: 2.0.0
+
+--b2
+Content-Type: text/rfc822-headers
+
+Message-ID: <letter-2@pauseai.uk>
+Subject: AI safety
+--b2--

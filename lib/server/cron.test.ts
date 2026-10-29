@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { isCronRequest } from "./cron";
+import { isBackupRequest, isCronRequest } from "./cron";
 
 afterEach(() => vi.unstubAllEnvs());
 
@@ -18,5 +18,16 @@ describe("isCronRequest", () => {
   it("accepts nothing without CRON_SECRET", () => {
     vi.stubEnv("CRON_SECRET", "");
     expect(isCronRequest(request("Bearer "))).toBe(false);
+  });
+});
+
+describe("isBackupRequest", () => {
+  it("accepts only BACKUP_SECRET, and nothing without it", () => {
+    vi.stubEnv("CRON_SECRET", "s3cret");
+    vi.stubEnv("BACKUP_SECRET", "b4ckup");
+    expect(isBackupRequest(request("Bearer b4ckup"))).toBe(true);
+    expect(isBackupRequest(request("Bearer s3cret"))).toBe(false);
+    vi.stubEnv("BACKUP_SECRET", "");
+    expect(isBackupRequest(request("Bearer "))).toBe(false);
   });
 });
