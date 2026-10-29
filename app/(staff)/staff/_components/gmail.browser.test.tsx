@@ -15,7 +15,8 @@ const gmail = staffCopy.gmail;
 describe("GmailConnect, SentToday and GmailOutcome", () => {
   it("says what connecting means, then links to Google's consent, coming back to the page", async () => {
     await render(<GmailConnect back="/staff/me" />);
-    for (const line of gmail.explain) await expect.element(page.getByText(line)).toBeVisible();
+    await expect.element(page.getByText(gmail.intro)).toBeVisible();
+    for (const line of gmail.explain) await expect.element(page.getByRole("listitem").getByText(line)).toBeVisible();
     await expect.element(page.getByText(gmail.limit("1,800"))).toBeVisible();
     await expect
       .element(page.getByRole("link", { name: gmail.connect }))

@@ -77,13 +77,13 @@ export const staffCopy = {
   // Connecting a staff member's Gmail, on their own page and in a mailing's Sent from.
   gmail: {
     title: "Let staff send mailings from your Gmail",
-    // What connecting it means, said before it goes to Google.
+    // What connecting it means, said before it goes to Google: a line, then a bullet each.
+    intro: "⁂ Usually this is a shared account rather than a person's own: log in here as it, then connect it.",
     explain: [
-      "⁂ Usually this is a shared account rather than a person's own: log in here as it, then connect it.",
       "⁂ Mailings go from its address, kept in its Sent mail, and replies come back to it.",
       "⁂ The site reads only those replies and bounces, and never deletes or changes anything.",
     ],
-    limit: (limit: string) => `⁂ At most ${limit} a day, so your own email still goes.`,
+    limit: (limit: string) => `⁂ At most ${limit} a day, leaving room for the account's other email.`,
     connect: "⁂ Connect Gmail",
     disconnect: "⁂ Disconnect Gmail",
     connected: (when: string) => `⁂ Connected ${when}.`,

@@ -12,19 +12,22 @@ const copy = staffCopy.gmail;
 const LIMIT = GMAIL_DAILY_LIMIT.toLocaleString("en-GB");
 
 /**
- * What connecting your Gmail means, said before it goes to Google: what
- * it's for, that any staff member can then send from it, what the site
- * reads, and the daily limit; then the button, which goes to Google and
- * comes back to `back`.
+ * What connecting a Gmail means, said before it goes to Google: which
+ * account, then in bullets what it's for, what the site reads, and the
+ * daily limit; then the button, which goes to Google and comes back to
+ * `back`.
  */
 export function GmailConnect({ back, onConnect }: { back: string; onConnect?: () => Promise<string> }) {
   const href = connectPath(back);
   return (
     <div className={styles.connect}>
-      {copy.explain.map((line) => (
-        <p key={line}>{line}</p>
-      ))}
-      <p>{copy.limit(LIMIT)}</p>
+      <p>{copy.intro}</p>
+      <ul>
+        {copy.explain.map((line) => (
+          <li key={line}>{line}</li>
+        ))}
+        <li>{copy.limit(LIMIT)}</li>
+      </ul>
       <a
         className={buttonClass({ variant: "primary", fit: true })}
         href={href}

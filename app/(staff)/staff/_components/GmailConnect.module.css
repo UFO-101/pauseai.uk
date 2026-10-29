@@ -4,6 +4,7 @@
   justify-items: start;
 }
 
-.connect p {
+.connect p,
+.connect ul {
   margin: 0;
 }
