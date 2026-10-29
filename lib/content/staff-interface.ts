@@ -940,40 +940,32 @@ export const staffCopy = {
   asks: {
     title: "Asks",
     intro: "What we ask notable people to do, either by writing to them or by meeting them.",
-    add: "⁂ Add an ask",
-    edit: "⁂ Edit",
+    add: "Add an ask",
+    edit: "Edit",
     // The form, adding an ask or editing one.
-    newTitle: "⁂ New ask",
-    editTitle: (title: string) => `⁂ Edit the ask “${title}”`,
+    newTitle: "New ask",
+    editTitle: (title: string) => `Edit the ask “${title}”`,
     fields: {
-      kind: "⁂ We ask them to",
-      askedBy: "⁂ Who asks them",
+      kind: "We ask them to",
+      askedBy: "Who asks them",
     },
     // The rest of the form's fields, by the kind of ask: the title reads on from "sign" or "attend".
     byKind: {
       letter: {
-        title: "⁂ Which letter",
-        titleExample: "⁂ Letter to the Chancellor asking for one (1) off switch",
-        titleHint: "⁂ What the letter is and who it's to, as you'd say it after “sign the”.",
-        needsTitle: "⁂ Say which letter to save it.",
-        date: "⁂ When the letter was sent",
-        url: "⁂ Where to read the letter",
+        title: "Which letter",
+        titleExample: "Letter to the Chancellor asking for one (1) off switch",
+        date: "When the letter was started",
+        url: "Where to read the letter",
       },
       event: {
         title: "⁂ Which event",
         titleExample: "⁂ Tea, biscuits and existential risk, March 2027",
-        titleHint: "⁂ What the event is, and when, as you'd say it after “come to the”.",
-        needsTitle: "⁂ Say which event to save it.",
-        date: "⁂ When the event is",
-        url: "⁂ The event's page",
+        date: "When the event is",
+        url: "Event's page",
       },
-    } as Record<
-      string,
-      { title: string; titleExample: string; titleHint: string; needsTitle: string; date: string; url: string }
-    >,
-    // Beside a disabled Save: a link that isn't a whole one.
-    needsLink: "⁂ Give the whole link, starting https://.",
-    slugHint: (slug: string) => `⁂ Its address in links is ${slug}, which doesn't change.`,
+    } as Record<string, { title: string; titleExample: string; date: string; url: string }>,
+    // Over an ask's slug, which doesn't change.
+    slugLabel: "URL slug",
     kindFixed: "⁂ Its kind can't change, as politicians have answered it.",
     fixed: "⁂ The site's code uses this ask, so it can't be changed here.",
     // Beside the form: the ask as it will show on a politician's page.
@@ -1003,7 +995,7 @@ export const staffCopy = {
       askedBy: "Asked by",
       answers: "Answers",
     },
-    kinds: { letter: "Sign letter", event: "Attend event" } as Record<string, string>,
+    kinds: { letter: "Sign a letter", event: "Attend an event" } as Record<string, string>,
     askedBy: { supporters: "Supporters", pauseai: "PauseAI", controlai: "ControlAI" },
     noAnswers: "No answers yet",
     // Each answer's count links to the politicians who gave it.

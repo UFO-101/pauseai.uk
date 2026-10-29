@@ -1,21 +1,54 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Actions from "@/components/ui/Actions";
 import { Button } from "@/components/ui/Button";
-import { Checkbox, Select, TextInput } from "@/components/ui/Controls";
+import { Checkbox, TextInput } from "@/components/ui/Controls";
 import { Field, FieldSet, Hint } from "@/components/ui/Field";
 import { FormStack } from "@/components/ui/Form";
-import { ASK_STATUSES, ASKERS, type AskKind, type Asker } from "@/lib/asks";
+import { ASK_STATUSES, ASKERS, askSlug, type AskKind, type Asker } from "@/lib/asks";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { Ask } from "@/lib/server/asks";
 import { AskPreview } from "./AskLine";
 import { DeleteTwice } from "./MailingButtons";
 import Grid, { Card } from "./ui/Grid";
 import Strip from "./ui/Strip";
+import styles from "./AskForm.module.css";
 import forms from "./StaffForms.module.css";
 
 const copy = staffCopy.asks;
+
+/** Each kind's picture, in strokes of the text's colour: a pen on a page, a calendar. */
+const KIND_ICONS: Record<AskKind, ReactNode> = {
+  letter: (
+    <svg
+      width="28"
+      height="28"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      aria-hidden="true"
+    >
+      <path d="M13 4H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6" />
+      <path d="M17.5 3.5l3 3L13 14l-3.5.5.5-3.5z" />
+    </svg>
+  ),
+  event: (
+    <svg
+      width="28"
+      height="28"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      aria-hidden="true"
+    >
+      <rect x="4" y="5" width="16" height="15" rx="1" />
+      <path d="M4 10h16M8 3v4M16 3v4" />
+    </svg>
+  ),
+};
 
 /** An ask to edit, with whether the code names it, its kind can change, and it can be deleted. */
 export type EditableAsk = Ask & { fixed: boolean; kindFixed: boolean; deletable: boolean };
@@ -52,8 +85,6 @@ export default function AskForm({
   const [askedBy, setAskedBy] = useState<Asker[]>(ask?.askedBy ?? ["pauseai"]);
   const fixed = Boolean(ask?.fixed);
   const words = copy.byKind[kind];
-  // What's missing before it can be saved, as the server would refuse it (askFrom).
-  const missing = !title.trim() ? words.needsTitle : url && !/^(https:\/\/|\/)/.test(url) ? copy.needsLink : null;
   return (
     <>
       {copy.notices[notice] && (
@@ -67,36 +98,45 @@ export default function AskForm({
           <FormStack id="ask-form" action={save}>
             <input type="hidden" name="back" value={back} />
             {ask && <input type="hidden" name="slug" value={ask.slug} />}
-            <Field label={copy.fields.kind} className={forms.short}>
-              <Select
-                name="kind"
-                required
-                value={kind}
-                onChange={(event) => setKind(event.target.value as AskKind)}
-                disabled={fixed || ask?.kindFixed}
-              >
+            <FieldSet label={copy.fields.kind}>
+              <div className={styles.kinds}>
                 {Object.keys(ASK_STATUSES).map((one) => (
-                  <option key={one} value={one}>
-                    {copy.kinds[one]}
-                  </option>
+                  <label key={one} className={styles.kind}>
+                    <input
+                      type="radio"
+                      name="kind"
+                      value={one}
+                      checked={kind === one}
+                      onChange={() => setKind(one as AskKind)}
+                      disabled={fixed || ask?.kindFixed}
+                    />
+                    {KIND_ICONS[one as AskKind]}
+                    <span>{copy.kinds[one]}</span>
+                  </label>
                 ))}
-              </Select>
-            </Field>
-            {/* A disabled select sends nothing, so its kind goes as it is. */}
+              </div>
+            </FieldSet>
+            {/* A disabled choice sends nothing, so its kind goes as it is. */}
             {ask?.kindFixed && <input type="hidden" name="kind" value={ask.kind} />}
             {ask?.kindFixed && !fixed && <Hint>{copy.kindFixed}</Hint>}
-            <Field label={words.title}>
-              <TextInput
-                name="title"
-                required
-                value={title}
-                placeholder={words.titleExample}
-                onChange={(event) => setTitle(event.target.value)}
-                disabled={fixed}
-              />
-            </Field>
-            <Hint>{words.titleHint}</Hint>
-            {ask && <Hint>{copy.slugHint(ask.slug)}</Hint>}
+            {/* The title, and under it the slug it gives a new ask, or an ask's own, which doesn't change. */}
+            <div className={styles.titled}>
+              <Field label={words.title}>
+                <TextInput
+                  name="title"
+                  required
+                  value={title}
+                  placeholder={words.titleExample}
+                  onChange={(event) => setTitle(event.target.value)}
+                  disabled={fixed}
+                />
+              </Field>
+              {(ask || title.trim()) && (
+                <p className={styles.slug}>
+                  <span>{copy.slugLabel}</span> <code>{ask ? ask.slug : askSlug(title, date || null)}</code>
+                </p>
+              )}
+            </div>
             <Field label={words.date} className={forms.short}>
               <TextInput
                 name="date"
@@ -107,7 +147,13 @@ export default function AskForm({
               />
             </Field>
             <Field label={words.url}>
-              <TextInput name="url" value={url} onChange={(event) => setUrl(event.target.value)} disabled={fixed} />
+              <TextInput
+                name="url"
+                value={url}
+                placeholder="https://"
+                onChange={(event) => setUrl(event.target.value)}
+                disabled={fixed}
+              />
             </Field>
             <FieldSet label={copy.fields.askedBy}>
               {ASKERS.map((asker) => (
@@ -126,10 +172,9 @@ export default function AskForm({
           </FormStack>
           {!fixed && (
             <Actions>
-              <Button type="submit" form="ask-form" variant="primary" fit disabled={Boolean(missing)}>
+              <Button type="submit" form="ask-form" variant="primary" fit disabled={!title.trim()}>
                 {copy.save}
               </Button>
-              {missing && <Hint>{missing}</Hint>}
               {ask?.deletable && <DeleteTwice name="slug" value={ask.slug} label={copy.delete} action={remove} />}
             </Actions>
           )}

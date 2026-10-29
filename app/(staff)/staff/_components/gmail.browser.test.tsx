@@ -132,15 +132,17 @@ describe("AskForm", () => {
     const save = vi.fn();
     await render(<AskForm ask={null} back="/staff/mailings/4" notice="" save={save} remove={vi.fn()} />);
     expect(page.getByRole("button", { name: copy.delete }).query()).toBeNull();
+    await expect.element(page.getByRole("button", { name: copy.save })).toBeDisabled();
     await expect
       .element(field(copy.byKind.letter.title))
       .toHaveAttribute("placeholder", copy.byKind.letter.titleExample);
     await expect.element(preview().getByRole("group", { name: copy.byKind.letter.titleExample })).toBeVisible();
-    await field(copy.fields.kind).selectOptions("event");
-    await expect.element(page.getByText(copy.byKind.event.titleHint)).toBeVisible();
+    await page.getByText(copy.kinds.event).click();
+    await expect.element(page.getByRole("radio", { name: copy.kinds.event })).toBeChecked();
     await field(copy.byKind.event.title).fill("Winter reception");
     await field(copy.byKind.event.date).fill("2026-12-09");
     await field(copy.byKind.event.url).fill("https://luma.com/winter");
+    await expect.element(page.getByText("winter-reception-dec-2026", { exact: true })).toBeVisible();
     await page.getByLabelText(copy.askedBy.supporters).click();
     await page.getByLabelText(copy.askedBy.pauseai).click();
     await expect
@@ -165,7 +167,7 @@ describe("AskForm", () => {
     const remove = vi.fn();
     await render(<AskForm ask={exampleEditableAsk} back="/staff/asks" notice="saved" save={vi.fn()} remove={remove} />);
     await expect.element(page.getByRole("status")).toHaveTextContent(copy.notices.saved);
-    await expect.element(page.getByText(copy.slugHint("winter-reception-dec-2026"))).toBeVisible();
+    await expect.element(page.getByText("winter-reception-dec-2026", { exact: true })).toBeVisible();
     await expect.element(field(copy.byKind.event.title)).toHaveValue("Winter reception");
     await page.getByRole("button", { name: copy.delete }).click();
     await page.getByRole("button", { name: staffCopy.mailingPages.deleteIt }).click();
@@ -187,7 +189,8 @@ describe("AskForm", () => {
     await expect
       .element(page.getByRole("alert").or(page.getByRole("status")))
       .toHaveTextContent(copy.notices["in-use"]);
-    await expect.element(field(copy.fields.kind)).toBeDisabled();
+    await expect.element(page.getByRole("radio", { name: copy.kinds.event })).toBeDisabled();
+    await expect.element(page.getByRole("radio", { name: copy.kinds.event })).toBeChecked();
     await expect.element(page.getByText(copy.kindFixed)).toBeVisible();
     expect(page.getByRole("button", { name: copy.delete }).query()).toBeNull();
     await expect.element(page.getByText(copy.notDeletable).last()).toBeVisible();
