@@ -73,7 +73,7 @@ export const staffCopy = {
   },
   // Your own page: your sessions and your Gmail.
   me: {
-    title: "⁂ Your account",
+    title: "Your account",
     sessionsTitle: "Where you're logged in",
   },
   // Connecting a staff member's Gmail, on their own page and in a mailing's Sent from.
@@ -100,7 +100,7 @@ export const staffCopy = {
     } as Record<string, string>,
     // Back from Google having chosen an account other than the one logged in here, `me`.
     otherAccount: (me: string) =>
-      `⁂ That was a different Google account. To connect, choose ${me} when Google asks which account to use.`,
+      `That Google account does not have the same email ${me} as your PauseAI UK staff account. Either pick a different Google account, or log in here with the same email.`,
   },
   // Your sessions, on your own page (/staff/me): one row each, and a way to end them all.
   sessions: {
@@ -939,23 +939,39 @@ export const staffCopy = {
   // The asks page: each ask, its kind and date, and how many gave each answer.
   asks: {
     title: "Asks",
-    intro: "⁂ What we ask notable people to do when writing to them.",
+    intro: "What we ask notable people to do, either by writing to them or by meeting them.",
     add: "⁂ Add an ask",
     edit: "⁂ Edit",
     // The form, adding an ask or editing one.
     newTitle: "⁂ New ask",
-    editTitle: (title: string) => `⁂ Edit ${title}`,
+    editTitle: (title: string) => `⁂ Edit the ask “${title}”`,
     fields: {
-      title: "⁂ Title",
-      kind: "⁂ Kind",
-      date: "⁂ Date",
-      url: "⁂ Link",
-      askedBy: "⁂ Asked by",
+      kind: "⁂ We ask them to",
+      askedBy: "⁂ Who asks them",
     },
-    urlHint: "⁂ The letter or the event: a page of ours, starting /, or another site's, starting https://.",
+    // The rest of the form's fields, by the kind of ask: the title reads on from "sign" or "attend".
+    byKind: {
+      letter: {
+        title: "⁂ Which letter",
+        titleExample: "⁂ Frontier AI letter to the Prime Minister",
+        titleHint: "⁂ What the letter is and who it's to, as you'd say it after “sign the”.",
+        date: "⁂ When the letter was sent",
+        url: "⁂ Where to read the letter",
+      },
+      event: {
+        title: "⁂ Which event",
+        titleExample: "⁂ Edinburgh conference, November 2026",
+        titleHint: "⁂ What the event is, and when, as you'd say it after “come to the”.",
+        date: "⁂ When the event is",
+        url: "⁂ The event's page",
+      },
+    } as Record<string, { title: string; titleExample: string; titleHint: string; date: string; url: string }>,
     slugHint: (slug: string) => `⁂ Its address in links is ${slug}, which doesn't change.`,
     kindFixed: "⁂ Its kind can't change, as politicians have answered it.",
     fixed: "⁂ The site's code uses this ask, so it can't be changed here.",
+    // Beside the form: the ask as it will show on a politician's page.
+    previewTitle: "⁂ On a politician's page",
+    previewHint: "⁂ How it shows among their asks, before they've answered.",
     save: "⁂ Save",
     delete: "⁂ Delete ask",
     notDeletable: "⁂ It can't be deleted while answers, campaigns or mailings refer to it.",

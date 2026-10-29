@@ -307,9 +307,9 @@ test("Add an ask, change it, then delete it", async ({ page, flowDatabase }) => 
   const asks = staffCopy.asks;
   await page.goto(`${BASE}/staff/asks`);
   await page.getByRole("link", { name: asks.add }).click();
-  await page.getByLabel(asks.fields.title).fill("Winter reception");
   await page.getByLabel(asks.fields.kind).selectOption("event");
-  await page.getByLabel(asks.fields.date).fill("2026-12-09");
+  await page.getByLabel(asks.byKind.event.title).fill("Winter reception");
+  await page.getByLabel(asks.byKind.event.date).fill("2026-12-09");
   await frame(page, "a new ask: its title, kind and date, and PauseAI asking");
   await page.getByRole("button", { name: asks.save }).click();
   await expect(page.getByText(asks.notices.added)).toBeVisible();
@@ -318,7 +318,7 @@ test("Add an ask, change it, then delete it", async ({ page, flowDatabase }) => 
 
   await page.getByRole("row").filter({ hasText: "Winter reception" }).getByRole("link", { name: asks.edit }).click();
   await expect(page.getByText(asks.slugHint("winter-reception-dec-2026"))).toBeVisible();
-  await page.getByLabel(asks.fields.url).fill("https://luma.com/winter");
+  await page.getByLabel(asks.byKind.event.url).fill("https://luma.com/winter");
   await page.getByRole("button", { name: asks.save }).click();
   await expect(page.getByRole("link", { name: "Winter reception" })).toHaveAttribute("href", "https://luma.com/winter");
   await page.getByRole("row").filter({ hasText: "Winter reception" }).getByRole("link", { name: asks.edit }).click();

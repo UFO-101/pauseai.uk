@@ -1,4 +1,6 @@
 import Link from "next/link";
+import Actions from "@/components/ui/Actions";
+import { ButtonLink } from "@/components/ui/Button";
 import { ASK_STATUSES, FIXED_ASKS } from "@/lib/asks";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { AskWithCounts } from "@/lib/server/asks";
@@ -84,10 +86,15 @@ const editColumn: ListColumn<AskWithCounts> = {
   key: "edit",
   label: "",
   short: true,
-  cell: (a) => !FIXED_ASKS.includes(a.slug) && <Link href={`/staff/asks/${a.slug}`}>{copy.edit}</Link>,
+  cell: (a) =>
+    !FIXED_ASKS.includes(a.slug) && (
+      <ButtonLink href={`/staff/asks/${a.slug}`} variant="ghost" size="small" fit>
+        {copy.edit}
+      </ButtonLink>
+    ),
 };
 
-/** Every ask, newest first, in the list frame: how many, their downloads, a row each with Edit; and Add an ask; over them, `notice`, how the last save or delete went. */
+/** Every ask, newest first, in the list frame: how many, their downloads, a row each with Edit; under them, Add an ask; over them, `notice`, how the last save or delete went. */
 export default function AsksTable({ asks, notice = "" }: { asks: AskWithCounts[]; notice?: string }) {
   return (
     <>
@@ -96,9 +103,6 @@ export default function AsksTable({ asks, notice = "" }: { asks: AskWithCounts[]
           {copy.notices[notice]}
         </Strip>
       )}
-      <p>
-        <Link href="/staff/asks/new">{copy.add}</Link>
-      </p>
       <ListFrame
         count={copy.total(asks.length)}
         total={asks.length}
@@ -111,6 +115,11 @@ export default function AsksTable({ asks, notice = "" }: { asks: AskWithCounts[]
         rowKey={(a) => a.slug}
         empty={copy.none}
       />
+      <Actions>
+        <ButtonLink href="/staff/asks/new" variant="primary" fit>
+          {copy.add}
+        </ButtonLink>
+      </Actions>
     </>
   );
 }

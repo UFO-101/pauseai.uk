@@ -7,6 +7,7 @@ import { FilterForm } from "@/components/ui/Form";
 import { ASK_STATUSES } from "@/lib/asks";
 import { trackedAsks } from "@/lib/email-your-mp";
 import type { Ask } from "@/lib/server/asks";
+import { AskLead, AskTitle } from "./AskLine";
 import CampaignName from "./CampaignName";
 import { FieldChanges } from "./AuditDetail";
 import type { FieldChange } from "@/lib/field-changes";
@@ -280,18 +281,6 @@ function StatusForm({
 const YES = ["signed", "going"];
 const NO = ["declined", "declined_surgery"];
 
-/** The ask's title, linked to the letter or the event if we know where it is; another site's in a new tab. */
-function AskTitle({ ask }: { ask: Ask }) {
-  if (!ask.url) return ask.title;
-  return ask.url.startsWith("/") ? (
-    <Link href={ask.url}>{ask.title}</Link>
-  ) : (
-    <a href={ask.url} target="_blank" rel="noreferrer">
-      {ask.title}
-    </a>
-  );
-}
-
 /**
  * One ask, a row of the asks card: who asked them to do what, and when,
  * leading into the ask's title; the note and who set the answer, or which
@@ -310,16 +299,13 @@ function AskRow({
 }) {
   const status = politician.statuses[ask.slug];
   const none = ask.kind === "letter" ? staffCopy.statuses.none : staffCopy.statuses.noAnswer;
-  const who = new Intl.ListFormat("en-GB").format(ask.askedBy.map((asker) => staffCopy.asks.askedBy[asker]));
-  const asked = [copy.askedThem(who, ask.kind), ask.date && staffDate(ask.date)].filter(Boolean).join(" · ");
   const tracked = trackedAsks.includes(ask.slug);
   const editId = `edit-${ask.slug}`;
   const tone = status && (YES.includes(status.status) ? styles.yes : NO.includes(status.status) ? styles.no : "");
   return (
     <div className={styles.ask} role="group" aria-label={ask.title}>
       <div className={styles.asked}>
-        <span className={styles.askMeta}>{asked}</span>
-        <AskTitle ask={ask} />
+        <AskLead ask={ask} />
         {status && (
           <span className={styles.askMeta}>
             {status.note && `${status.note} · `}

@@ -126,15 +126,29 @@ describe("AskForm", () => {
   const copy = staffCopy.asks;
   /** A field by the start of its label: a select's name also holds its choice. */
   const field = (label: string) => page.getByLabelText(new RegExp(`^${label}`));
+  const preview = () => page.getByRole("region", { name: copy.previewTitle });
 
-  it("a new ask: its fields, PauseAI asking to start with, and no slug or Delete; sends what's filled in", async () => {
+  it("a new ask: the kind first, the rest in its words, previewed as typed; PauseAI asking, and no slug or Delete", async () => {
     const save = vi.fn();
     await render(<AskForm ask={null} back="/staff/mailings/4" notice="" save={save} remove={vi.fn()} />);
     expect(page.getByRole("button", { name: copy.delete }).query()).toBeNull();
-    await field(copy.fields.title).fill("Winter reception");
+    await expect
+      .element(field(copy.byKind.letter.title))
+      .toHaveAttribute("placeholder", copy.byKind.letter.titleExample);
+    await expect.element(preview().getByRole("group", { name: copy.byKind.letter.titleExample })).toBeVisible();
     await field(copy.fields.kind).selectOptions("event");
+    await expect.element(page.getByText(copy.byKind.event.titleHint)).toBeVisible();
+    await field(copy.byKind.event.title).fill("Winter reception");
+    await field(copy.byKind.event.date).fill("2026-12-09");
+    await field(copy.byKind.event.url).fill("https://luma.com/winter");
     await page.getByLabelText(copy.askedBy.supporters).click();
     await page.getByLabelText(copy.askedBy.pauseai).click();
+    await expect
+      .element(preview().getByText(`${staffCopy.politician.askedThem(copy.askedBy.supporters, "event")} · 9 Dec 2026`))
+      .toBeVisible();
+    await expect
+      .element(preview().getByRole("link", { name: "Winter reception" }))
+      .toHaveAttribute("href", "https://luma.com/winter");
     await page.getByRole("button", { name: copy.save }).click();
     await expect.poll(() => save.mock.calls.length).toBe(1);
     const sent = save.mock.calls[0][0] as FormData;
@@ -152,14 +166,14 @@ describe("AskForm", () => {
     await render(<AskForm ask={exampleEditableAsk} back="/staff/asks" notice="saved" save={vi.fn()} remove={remove} />);
     await expect.element(page.getByRole("status")).toHaveTextContent(copy.notices.saved);
     await expect.element(page.getByText(copy.slugHint("winter-reception-dec-2026"))).toBeVisible();
-    await expect.element(field(copy.fields.title)).toHaveValue("Winter reception");
+    await expect.element(field(copy.byKind.event.title)).toHaveValue("Winter reception");
     await page.getByRole("button", { name: copy.delete }).click();
     await page.getByRole("button", { name: staffCopy.mailingPages.deleteIt }).click();
     await expect.poll(() => remove.mock.calls.length).toBe(1);
     expect((remove.mock.calls[0][0] as FormData).get("slug")).toBe("winter-reception-dec-2026");
   });
 
-  it("one answered: its kind fixed, sent all the same, and Delete greyed with why", async () => {
+  it("one answered: its kind fixed, sent all the same, and no Delete but why", async () => {
     const save = vi.fn();
     await render(
       <AskForm
@@ -175,14 +189,14 @@ describe("AskForm", () => {
       .toHaveTextContent(copy.notices["in-use"]);
     await expect.element(field(copy.fields.kind)).toBeDisabled();
     await expect.element(page.getByText(copy.kindFixed)).toBeVisible();
-    await expect.element(page.getByRole("button", { name: copy.delete })).toBeDisabled();
+    expect(page.getByRole("button", { name: copy.delete }).query()).toBeNull();
     await expect.element(page.getByText(copy.notDeletable).last()).toBeVisible();
     await page.getByRole("button", { name: copy.save }).click();
     await expect.poll(() => save.mock.calls.length).toBe(1);
     expect((save.mock.calls[0][0] as FormData).get("kind")).toBe("event");
   });
 
-  it("one the code names: nothing can be changed, and there's no Delete", async () => {
+  it("one the code names: nothing can be changed, and there's no Save or Delete", async () => {
     await render(
       <AskForm
         ask={{ ...exampleEditableAsk, fixed: true, kindFixed: true, deletable: false }}
@@ -193,8 +207,9 @@ describe("AskForm", () => {
       />,
     );
     await expect.element(page.getByText(copy.fixed)).toBeVisible();
-    await expect.element(page.getByRole("button", { name: copy.save })).toBeDisabled();
+    expect(page.getByRole("button", { name: copy.save }).query()).toBeNull();
     expect(page.getByRole("button", { name: copy.delete }).query()).toBeNull();
     expect(page.getByText(copy.kindFixed).query()).toBeNull();
+    expect(page.getByText(copy.notDeletable).query()).toBeNull();
   });
 });

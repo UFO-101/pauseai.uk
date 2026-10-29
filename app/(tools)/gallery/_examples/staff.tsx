@@ -104,6 +104,7 @@ import AsksTable from "@/app/(staff)/staff/_components/AsksTable";
 import BounceReason from "@/app/(staff)/staff/_components/BounceReason";
 import { GmailConnect, GmailOutcome, SentToday } from "@/app/(staff)/staff/_components/GmailConnect";
 import AccountTitle from "@/app/(staff)/staff/_components/AccountTitle";
+import { AskLead, AskPreview, AskTitle } from "@/app/(staff)/staff/_components/AskLine";
 import LetterThread from "@/app/(staff)/staff/_components/LetterThread";
 import { exampleImportedThread, exampleThread } from "@/app/(staff)/staff/_components/LetterThread.examples";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -1959,6 +1960,64 @@ export const staff: Group = {
                 asks={exampleAsks}
                 parties={parties}
               />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "AskPreview",
+      file: "app/(staff)/staff/_components/AskLine.tsx",
+      variants: [
+        {
+          label: "An event, with a date and a link, before it's answered",
+          render: () => (
+            <StaffPage as="div">
+              <AskPreview ask={exampleAsks[0]} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "A letter with no link",
+          render: () => (
+            <StaffPage as="div">
+              <AskPreview ask={{ ...exampleAsks[2], url: null, date: null }} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "AskLead",
+      file: "app/(staff)/staff/_components/AskLine.tsx",
+      variants: [
+        {
+          label: "Who asked them to do what, and when, leading into the ask's title",
+          render: () => (
+            <StaffPage as="div">
+              <AskLead ask={exampleAsks[0]} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "AskTitle",
+      file: "app/(staff)/staff/_components/AskLine.tsx",
+      variants: [
+        {
+          label: "Linked to another site, to a page of ours, and not linked",
+          render: () => (
+            <StaffPage as="div">
+              <p>
+                <AskTitle ask={exampleAsks[0]} />
+              </p>
+              <p>
+                <AskTitle ask={{ ...exampleAsks[2], url: "/campaigns/dear-sir-demis-2025" }} />
+              </p>
+              <p>
+                <AskTitle ask={exampleAsks[1]} />
+              </p>
             </StaffPage>
           ),
         },

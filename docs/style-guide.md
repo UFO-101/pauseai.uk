@@ -468,6 +468,40 @@ size sets `--button-padding` and `--button-font-size` on itself. A row of
 buttons after what they act on is `Actions`; centred under a section,
 `ButtonRow`.
 
+### Which button
+
+- **Primary, orange** (`variant="primary"`): the one thing a form or a
+  page is for: Save, Schedule, Connect Gmail, Add an ask. One to an area,
+  so it's plain what to press.
+- **Secondary, no colour** (`variant="ghost"`): anything else beside it:
+  Change the time, Disconnect Gmail, a row's Edit, and the first press of
+  Delete.
+- **Danger, red** (`variant="danger"`): only the press that destroys
+  something for good, the second press of Delete.
+- **Size.** A form's own buttons are the default size; a secondary one
+  beside its primary, such as Delete beside Save, is `small`. Buttons in
+  a table's row, a strip or a bar of filters are `small` too.
+- **A link, not a button,** for going to read or look at something,
+  where nothing changes and it isn't what the page is for: a row's name,
+  to its own page; a count, to the list it counts; back to the list; a
+  section of the page. Anything that does something, or opens a form to
+  do it, is a button, even when it goes to another page: Edit and Add an
+  ask are `ButtonLink`s, not links. `LinkButton` is the one exception, a
+  button that reads as a link for a small step in a line of text that's
+  easily undone (Remove, Undo).
+
+### Deleting, pressed twice
+
+Delete is a ghost button naming what it deletes ("Delete ask"). Pressed
+once, it turns into a red "Delete it", which takes the focus; pressed
+again, it deletes. It goes back to how it was after a few seconds, or as
+soon as the focus leaves it, so a stray click deletes nothing
+(`DeleteTwice`, in `MailingButtons.tsx`). There's no dialog.
+
+Delete is offered only when the thing can be deleted. While something
+refers to it (an ask politicians have answered, a mailing that's been
+sent), there's no button, and a `Hint` says why in its place.
+
 ### Primary Button
 
 - Background: `var(--accent)` (solid, no gradient)
