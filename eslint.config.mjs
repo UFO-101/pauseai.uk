@@ -68,7 +68,7 @@ const SERVICES = [
   {
     name: "Google's OAuth and Gmail",
     files: ["gmail.ts"],
-    host: "(?:oauth2|gmail)\\.googleapis\\.com|accounts\\.google\\.com.o.oauth2",
+    host: "(?:oauth2|gmail|openidconnect)\\.googleapis\\.com|accounts\\.google\\.com.o.oauth2",
     why: "and email is sent with send() from lib/server/email.ts",
   },
   { name: "postcodes.io", files: ["postcodes.ts"], host: "api\\.postcodes\\.io" },

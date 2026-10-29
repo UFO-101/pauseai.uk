@@ -17,9 +17,15 @@ const CONSENT_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const REVOKE_URL = "https://oauth2.googleapis.com/revoke";
 const API = "https://gmail.googleapis.com/gmail/v1/users/me";
+const USERINFO = "https://openidconnect.googleapis.com/v1/userinfo";
 
 /** What the site asks for: to send as the account, and to read it (it reads only replies to our letters, and bounces). */
-const GMAIL_SCOPES = ["https://www.googleapis.com/auth/gmail.send", "https://www.googleapis.com/auth/gmail.readonly"];
+const GMAIL_SCOPES = [
+  "https://www.googleapis.com/auth/gmail.send",
+  "https://www.googleapis.com/auth/gmail.readonly",
+  // The account's name, for when its address sends as none of its own.
+  "https://www.googleapis.com/auth/userinfo.profile",
+];
 
 export class GmailError extends Error {
   /** Google no longer accepts the refresh token: it was revoked, or the account's access removed. */
@@ -119,15 +125,23 @@ export async function gmailProfile(accessToken: string): Promise<{ emailAddress:
 }
 
 /**
- * The name the account's own address sends as, its primary "Send mail as"
- * address's; empty when it has none, and Gmail uses the Google account's.
+ * The name the account's mail goes out under: its primary "Send mail as"
+ * address's, or with none of its own, the Google account's, which Gmail
+ * uses then. Empty if neither is known, as for a token given before the
+ * site asked to see the account's name.
  */
 export async function gmailSendName(accessToken: string): Promise<string> {
   const { sendAs } = await api<{ sendAs: { isPrimary?: boolean; displayName?: string }[] }>(
     accessToken,
     "/settings/sendAs",
   );
-  return sendAs.find((address) => address.isPrimary)?.displayName ?? "";
+  const own = sendAs.find((address) => address.isPrimary)?.displayName;
+  if (own) return own;
+  const res = await outsideFetch(USERINFO, {
+    headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" },
+    cache: "no-store",
+  });
+  return res.ok ? (((await res.json()) as { name?: string }).name ?? "") : "";
 }
 
 /**

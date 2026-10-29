@@ -45,6 +45,14 @@ export async function gmailAccount(email: string): Promise<GmailAccount | undefi
   return (await gmailAccounts()).find((account) => account.email === email.toLowerCase());
 }
 
+/** Keeps the name `email`'s connected Gmail now sends as, as reading it finds it. */
+export async function saveGmailName(email: string, name: string): Promise<void> {
+  await query("UPDATE staff_accounts SET gmail_name = $2 WHERE email = $1 AND gmail_token IS NOT NULL", [
+    email.toLowerCase(),
+    name,
+  ]);
+}
+
 /** How many `email` has sent in the last day, connected or not. */
 export async function sentToday(email: string): Promise<number> {
   const [row] = await query<{ sent: number }>(`SELECT ${SENT_TODAY} AS sent FROM (SELECT $1::text AS email) a`, [

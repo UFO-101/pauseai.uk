@@ -46,7 +46,11 @@ describe("consent", () => {
       client_id: "client-id",
       redirect_uri: "https://pauseai.uk/staff/api/gmail/callback",
       response_type: "code",
-      scope: "https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly",
+      scope: [
+        "https://www.googleapis.com/auth/gmail.send",
+        "https://www.googleapis.com/auth/gmail.readonly",
+        "https://www.googleapis.com/auth/userinfo.profile",
+      ].join(" "),
       access_type: "offline",
       prompt: "consent",
       login_hint: "jo@pauseai.uk",
@@ -181,6 +185,16 @@ describe("the Gmail API", () => {
       http.get(`${API}/settings/sendAs`, () =>
         HttpResponse.json({ sendAs: [{ sendAsEmail: "jo@pauseai.uk", isPrimary: true }] }),
       ),
+    );
+    // None of its own: the Google account's, if the token may see it; nothing, if it may not, or there's none.
+    server.use(
+      http.get("https://openidconnect.googleapis.com/v1/userinfo", () => HttpResponse.json({ name: "Jo Google" })),
+    );
+    expect(await gmailSendName("tok")).toBe("Jo Google");
+    server.use(http.get("https://openidconnect.googleapis.com/v1/userinfo", () => HttpResponse.json({})));
+    expect(await gmailSendName("tok")).toBe("");
+    server.use(
+      http.get("https://openidconnect.googleapis.com/v1/userinfo", () => new HttpResponse(null, { status: 403 })),
     );
     expect(await gmailSendName("tok")).toBe("");
   });

@@ -2,7 +2,7 @@ import "server-only";
 import { gzipSync } from "node:zlib";
 import { query } from "./db";
 import { handleDeliveryProblem } from "./delivery-problems";
-import { gmailAccess, gmailReadingState, saveHistoryId } from "./gmail-accounts";
+import { gmailAccess, gmailReadingState, saveGmailName, saveHistoryId } from "./gmail-accounts";
 import { allParts, fromAddress, messageIds, parseHeaders, parseMime, partText, type MimePart } from "./mime";
 import { saveLetterReply } from "./outside-services/blobs";
 import {
@@ -10,6 +10,7 @@ import {
   gmailMessageHeaders,
   gmailProfile,
   gmailRawMessage,
+  gmailSendName,
   searchGmail,
   type GmailMessageHeaders,
 } from "./outside-services/gmail";
@@ -255,6 +256,8 @@ async function readAccount(account: string, historyId: string, request: Request)
   const ids = new Set([...history.messageIds, ...(await searchGmail(token, BOUNCE_SEARCH))]);
   for (const id of ids) await readMessage(account, token, id, read, request);
   await saveHistoryId(account, history.historyId);
+  // Its name, as Gmail has it now: renamed since it was connected, or connected before the site kept it.
+  await saveGmailName(account, await gmailSendName(token));
   return read;
 }
 
