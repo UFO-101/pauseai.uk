@@ -71,6 +71,7 @@ import { emptyPoliticiansSearch, examplePoliticiansPage } from "./PoliticianTabl
 import MailingsTable, { mailingColumns } from "./MailingsTable";
 import { exampleMailings } from "./MailingsTable.examples";
 import ImportCard, { ImportCards } from "./ImportCard";
+import ImportIcon, { ImportIcons } from "./ImportIcon";
 import DevLogin from "./DevLogin";
 import KeepSignedIn from "./KeepSignedIn";
 import RemoveAccountForm from "./RemoveAccountForm";
@@ -1001,24 +1002,48 @@ describe("SortHeading", () => {
   });
 });
 
+describe("ImportIcon", () => {
+  it("draws each source, and a check, named for screen readers and on hover", async () => {
+    await render(
+      <>
+        {(["airtable", "luma", "gmail", "web", "checkOnly"] as const).map((source) => (
+          <ImportIcon key={source} source={source} />
+        ))}
+      </>,
+    );
+    for (const source of ["airtable", "luma", "gmail", "web", "checkOnly"] as const) {
+      const icon = page.getByRole("img", { name: staffCopy.import[source] });
+      await expect.element(icon).toBeVisible();
+      expect(icon.element().parentElement!.title).toBe(staffCopy.import[source]);
+    }
+    const [brand, line] = [
+      page.getByRole("img", { name: staffCopy.import.gmail }),
+      page.getByRole("img", { name: staffCopy.import.web }),
+    ];
+    expect(brand.element().getAttribute("fill")).toBe("currentColor");
+    expect(line.element().getAttribute("stroke")).toBe("currentColor");
+  });
+});
+
 describe("ImportCard", () => {
-  it("is a card with its title as the link to its page, its lozenges, what it does and its newest run, in a grid", async () => {
+  it("is a card with its icons, its title as the link to its page, what it does and its newest run, in a grid", async () => {
     await render(
       <ImportCards>
         <ImportCard
           title="An import"
           href="/staff/import-data/luma"
-          tags={<span>Hourly</span>}
+          icons={<ImportIcons sources={["luma"]} />}
           intro={<a href="https://luma.com">Luma</a>}
         >
           <p>Not imported yet.</p>
         </ImportCard>
-        <ImportCard title="Another" href="/x" tags={null} intro="More.">
+        <ImportCard title="Another" href="/x" icons={null} intro="More.">
           <p>Never.</p>
         </ImportCard>
       </ImportCards>,
     );
-    const heading = page.getByRole("heading", { level: 3, name: "An import Hourly" });
+    await expect.element(page.getByRole("img", { name: staffCopy.import.luma })).toBeVisible();
+    const heading = page.getByRole("heading", { level: 3, name: "An import" });
     await expect.element(heading).toBeVisible();
     await expect
       .element(heading.getByRole("link", { name: "An import" }))
@@ -1775,7 +1800,7 @@ describe("ImportOverview", () => {
       jobTitles["import-go-to-parliament"],
     ]);
     // Under the name, how the newest run ended, tinted to match.
-    const status = (i: number) => cards[i].querySelector("h3 + div > div")!;
+    const status = (i: number) => cards[i].querySelector("h3")!.parentElement!.nextElementSibling!.firstElementChild!;
     expect(status(0).textContent).toBe(`${staffCopy.runs.status.incomplete}21 Oct 2026, 11:17`);
     // The Emails sync held some back, so it's amber too.
     expect([0, 1, 2, 3, 4, 5, 6, 7].map((i) => status(i).className.match(/green|amber|red/)?.[0])).toEqual([
@@ -1818,7 +1843,9 @@ describe("ImportOverview", () => {
         airtableTable="x"
       />,
     );
-    const status = (i: number) => document.querySelectorAll("section")[i].querySelector("h3 + div > div")!.className;
+    const status = (i: number) =>
+      document.querySelectorAll("section")[i].querySelector("h3")!.parentElement!.nextElementSibling!.firstElementChild!
+        .className;
     expect(status(0)).toMatch(/green/);
     expect(status(3)).toMatch(/green/);
     await rerender(
@@ -1829,7 +1856,7 @@ describe("ImportOverview", () => {
 });
 
 describe("ImportJobPage", () => {
-  it("leads back to the overview, names the job with its lozenges, runs it, and lists every run by day", async () => {
+  it("leads back to the overview, names the job with its icons and schedule, runs it, and lists every run by day", async () => {
     const run = vi.fn();
     const { fn, sent } = action();
     const runs: AnyImportRun[] = [
@@ -1854,14 +1881,16 @@ describe("ImportJobPage", () => {
       .element(page.getByRole("navigation", { name: staffCopy.import.pageTitle }).getByRole("link"))
       .toHaveAttribute("href", "/staff/import-data");
     expect(page.getByRole("heading", { level: 1 }).element().textContent).toBe(
-      `${jobTitles["sync-politicians"]}${staffCopy.import.airtable}${staffCopy.import.nightly}`,
+      `${jobTitles["sync-politicians"]}${staffCopy.import.nightly}`,
     );
-    // The lozenges are plain: only a run's ending is in colour.
+    await expect.element(page.getByRole("img", { name: staffCopy.import.airtable })).toBeVisible();
+    // The schedule's lozenge is plain: only a run's ending is in colour.
     const lozenges = [...page.getByRole("heading", { level: 1 }).element().querySelectorAll("span")];
-    expect(lozenges.map((tag) => tag.className.match(/green|amber|red|blue/))).toEqual([null, null]);
+    expect(lozenges.map((tag) => tag.className.match(/green|amber|red|blue/))).toEqual([null]);
     // No strip under the title: the newest run, in the history, carries the colour.
-    expect(page.getByRole("heading", { level: 1 }).element().nextElementSibling!.tagName).toBe("P");
-    expect(page.getByRole("heading", { level: 1 }).element().nextElementSibling!.className).toBe("");
+    const after = page.getByRole("heading", { level: 1 }).element().parentElement!.nextElementSibling!;
+    expect(after.tagName).toBe("P");
+    expect(after.className).toBe("");
     await page.getByRole("button", { name: staffCopy.syncs.syncNow }).click();
     await vi.waitFor(() => expect(run).toHaveBeenCalledOnce());
     expect(
@@ -2366,14 +2395,13 @@ describe("RunList", () => {
     const accounts = [{ ...exampleGmailResult.accounts[0], restarted: true }, exampleGmailResult.accounts[1]];
     await render(
       <RunList
-        runs={[ran("read-gmail", { accounts }, { id: 1 }), failed("read-gmail", "Database down", { id: 2 })]}
+        runs={[ran("read-gmail", { accounts }, { id: 2 }), failed("read-gmail", "Database down", { id: 1 })]}
         none="None"
       />,
     );
-    const [first, second] = page.getByRole("status").all();
-    await expect.element(first).toHaveTextContent(staffCopy.gmailReading.result(accounts));
-    await expect.element(first).toHaveTextContent(staffCopy.runs.status.incomplete);
-    await expect.element(second).toHaveTextContent(staffCopy.runs.error("Database down"));
+    await expect.element(page.getByText(staffCopy.gmailReading.result(accounts), { exact: false })).toBeVisible();
+    await expect.element(page.getByText(staffCopy.runs.status.incomplete, { exact: true })).toBeVisible();
+    await expect.element(page.getByText(staffCopy.runs.error("Database down"), { exact: false })).toBeVisible();
     await expect
       .element(page.getByText(`${staffCopy.gmailReading.account(accounts[0])} ${staffCopy.gmailReading.restarted}`))
       .toBeVisible();

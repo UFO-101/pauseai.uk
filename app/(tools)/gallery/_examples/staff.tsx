@@ -66,6 +66,7 @@ import NavIcon from "@/app/(staff)/staff/_components/NavIcon";
 import { HouseTabs } from "@/app/(staff)/staff/_components/PoliticiansList";
 import ErasedNotice from "@/app/(staff)/staff/_components/ErasedNotice";
 import ImportCard, { ImportCards } from "@/app/(staff)/staff/_components/ImportCard";
+import ImportIcon, { ImportIcons } from "@/app/(staff)/staff/_components/ImportIcon";
 import KeepSignedIn from "@/app/(staff)/staff/_components/KeepSignedIn";
 import SortHeading from "@/app/(staff)/staff/_components/SortHeading";
 import Table from "@/components/ui/Table";
@@ -1713,6 +1714,38 @@ export const staff: Group = {
       ],
     },
     {
+      name: "ImportIcon",
+      file: "app/(staff)/staff/_components/ImportIcon.tsx",
+      variants: [
+        {
+          label: "Each source, and a check",
+          render: () => (
+            <StaffPage as="div">
+              <div style={{ display: "flex", gap: "var(--space-3)" }}>
+                {(["airtable", "luma", "gmail", "web", "checkOnly"] as const).map((source) => (
+                  <ImportIcon key={source} source={source} />
+                ))}
+              </div>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "ImportIcons",
+      file: "app/(staff)/staff/_components/ImportIcon.tsx",
+      variants: [
+        {
+          label: "A check of the web",
+          render: () => (
+            <StaffPage as="div">
+              <ImportIcons sources={["web", "checkOnly"]} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
       name: "ImportCards",
       file: "app/(staff)/staff/_components/ImportCard.tsx",
       variants: [
@@ -1724,14 +1757,19 @@ export const staff: Group = {
                 <ImportCard
                   title="An import"
                   href="/staff/import-data/signatories"
-                  tags={<Tag tone="blue">Nightly</Tag>}
+                  icons={<ImportIcons sources={["web", "checkOnly"]} />}
                   intro="What it copies, and from where."
                 >
                   <p>
                     <Tag tone="green">Done</Tag> 2026-10-15 02:00
                   </p>
                 </ImportCard>
-                <ImportCard title="Another" href="/staff/import-data/luma" tags={null} intro="Never run.">
+                <ImportCard
+                  title="Another"
+                  href="/staff/import-data/luma"
+                  icons={<ImportIcons sources={["luma"]} />}
+                  intro="Never run."
+                >
                   <p>Not imported yet.</p>
                 </ImportCard>
               </ImportCards>
@@ -1748,7 +1786,12 @@ export const staff: Group = {
           label: "One card on its own",
           render: () => (
             <StaffPage as="div">
-              <ImportCard title="An import" href="/staff/import-data/luma" tags={null} intro="What it copies.">
+              <ImportCard
+                title="An import"
+                href="/staff/import-data/luma"
+                icons={<ImportIcons sources={["airtable"]} />}
+                intro="What it copies."
+              >
                 <p>Not imported yet.</p>
               </ImportCard>
             </StaffPage>

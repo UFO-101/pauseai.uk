@@ -1,0 +1,23 @@
+/* An import's icons: each on a tile in the page's second surface, plain,
+   so only how a job's runs ended is in colour. */
+.icons {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: var(--space-1);
+  vertical-align: middle;
+}
+
+.tile {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: var(--text-secondary);
+}
+
+.icon {
+  width: 1.125rem;
+  height: 1.125rem;
+}

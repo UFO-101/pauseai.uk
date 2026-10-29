@@ -475,7 +475,7 @@ nightly).
 
 A new job is a name in `IMPORT_JOBS` and the `import_runs` CHECK, a result
 type, a function that records its run, a slug in `IMPORT_SLUGS`, its
-lozenges and description in `ImportJob.tsx`, its button's Server Action in
+icons (`ImportIcon.tsx`, where it reads from) and description in `ImportJob.tsx`, its button's Server Action in
 the job page, and a scheduled function if it runs on a schedule. A job that has more to do
 than a run allows, as the Luma import has, keeps its place and says in
 its result what's left.

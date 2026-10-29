@@ -1417,7 +1417,9 @@ export const staffCopy = {
     // The page, with every import: the politicians from Airtable, ControlAI's
     // letter from the web, Luma and the members.
     pageTitle: "Import data",
-    // The lozenges next to each import's heading: where it's from, and how often it runs.
+    // Each import's icons, named for screen readers and on hover: where it's
+    // from, and whether it only checks. Then how often it runs, the overview's
+    // headings and a lozenge on the job's page.
     airtable: "Airtable",
     web: "Web",
     luma: "Luma",
