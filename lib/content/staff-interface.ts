@@ -3,6 +3,16 @@
 import type { Channel } from "@/lib/contact-permissions";
 import type { ImportJob } from "@/lib/import-runs";
 
+/**
+ * What can't be done to an ask, said on its form and, the same words, when a
+ * save or a delete is refused for it (staffCopy.asks).
+ */
+const askLimits = {
+  kindFixed: "Kind can't be changed now, as politicians have answered it.",
+  fixed: "Campaigns hard-coded on the site use this ask, so you can't change it here.",
+  notDeletable: "Asks can't be deleted while answers, campaigns or mailings refer to them.",
+};
+
 export const staffCopy = {
   metaTitle: "PauseAI Staff",
   login: {
@@ -971,21 +981,22 @@ export const staffCopy = {
     badLink: "Give a full link beginning https://",
     // Over an ask's slug, which doesn't change.
     slugLabel: "Identifier: ",
-    kindFixed: "Kind can't be changed now, as politicians have answered it.",
-    fixed: "Campaigns hard-coded on the site use this ask, so you can't change it here.",
+    kindFixed: askLimits.kindFixed,
+    fixed: askLimits.fixed,
     // Beside the form: the ask as it will show on a politician's page.
     previewTitle: "What the ask will look like on a politician's page",
     save: "Save ask",
     delete: "Delete ask",
-    notDeletable: "Asks can't be deleted while answers, campaigns or mailings refer to them.",
+    notDeletable: askLimits.notDeletable,
     // After saving or deleting, or failing to.
     notices: {
       added: "Ask added.",
       saved: "Ask saved.",
       deleted: "Ask deleted.",
-      fixed: "⁂ The site's code uses this ask, so it can't be changed here.",
-      "kind-in-use": "⁂ Its kind can't change, as politicians have answered it.",
-      "in-use": "⁂ It can't be deleted while answers, campaigns or mailings refer to it.",
+      // The same as the form says, when a save or a delete is refused for it.
+      fixed: askLimits.fixed,
+      "kind-in-use": askLimits.kindFixed,
+      "in-use": askLimits.notDeletable,
       gone: "That ask has been deleted.",
     } as Record<string, string>,
     // Over the list: how many there are.
