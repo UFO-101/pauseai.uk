@@ -181,6 +181,8 @@ export type SupportersSearch = {
   campaign: string;
   wrote: string;
   country: string[];
+  /** MPs' politician IDs. */
+  mp: string[];
   /** A postcode, the first half of one, or a town; and how many miles from it. */
   near: string;
   within: string;
@@ -198,8 +200,8 @@ export function supportersSearch(
   const [q, campaign, wrote, near, within, sort, dir, page, erased] = (
     ["q", "campaign", "wrote", "near", "within", "sort", "dir", "page", "erased"] as const
   ).map((name) => firstOf(params[name]));
-  const [activity, contact, event, country] = (["activity", "contact", "event", "country"] as const).map((name) =>
-    valuesOf(params[name]),
+  const [activity, contact, event, country, mp] = (["activity", "contact", "event", "country", "mp"] as const).map(
+    (name) => valuesOf(params[name]),
   );
   const sorting = parseSort(SUPPORTER_SORTS, "active", sort, dir);
   const [badges, notBadges] = anyAndNone(activity, (values) => values.filter(isSupporterBadge));
@@ -208,6 +210,7 @@ export function supportersSearch(
   const [countries, notCountries] = anyAndNone(country, (values) =>
     values.filter((value) => Object.hasOwn(staffCopy.countries, value)),
   );
+  const [mps, notMps] = anyAndNone(mp, (values) => values.flatMap((value) => politicianId(value) ?? []));
   const miles = NEAR_MILES.find((n) => String(n) === within) ?? NEAR_MILES[1];
   const filter: SupporterFilter = {
     search: q.trim() || undefined,
@@ -217,8 +220,9 @@ export function supportersSearch(
     campaign: campaignBySlug(campaign)?.slug,
     wrote: campaignBySlug(campaign) ? wrote !== "no" : undefined,
     country: countries,
+    mp: mps,
     near: near.trim() ? { text: near.trim(), miles } : undefined,
-    not: notOf({ activity: notBadges, contact: notStates, event: notEvents, country: notCountries }),
+    not: notOf({ activity: notBadges, contact: notStates, event: notEvents, country: notCountries, mp: notMps }),
     sort: sorting.key,
     dir: sorting.dir,
     page: pageNumber(page),
@@ -231,6 +235,7 @@ export function supportersSearch(
     campaign,
     wrote,
     country,
+    mp,
     near,
     within,
     sort,
@@ -260,7 +265,7 @@ export type StoredFilter = { list: FilterList; params: Params };
 /** Each list's parameters that choose who it shows. */
 export const WHO_PARAMS: Record<FilterList, readonly string[]> = {
   politicians: ["q", "house", "status", "party", "flag", "country", "email", "ask", "answer"],
-  supporters: ["q", "activity", "contact", "event", "campaign", "wrote", "country", "near", "within"],
+  supporters: ["q", "activity", "contact", "event", "campaign", "wrote", "country", "mp", "near", "within"],
 };
 
 /** Who a list's URL parameters show, without the sort, the page or anything else, nor blanks. */

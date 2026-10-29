@@ -2,7 +2,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import type { SupportersSearch } from "@/lib/staff-search";
 import { CHANNELS, SENDS, stateValue, waysKey, type Channel, type Topic } from "@/lib/contact-permissions";
 import { campaigns } from "@/lib/content/email-your-mp";
-import type { EventChoice, SupportersPage } from "@/lib/server/supporters";
+import type { SupporterChoices, SupportersPage } from "@/lib/server/supporters";
 import { staffDate } from "@/lib/staff-time";
 import { NEAR_MILES, SUPPORTER_BADGES } from "@/lib/supporters";
 import ChannelIcon from "./ChannelIcon";
@@ -35,17 +35,18 @@ function nearWords(text: string, near: SupportersPage["near"]): string {
 /**
  * The supporters list's filters, each named after the column it filters
  * on, in the columns' order: their nation and how near somewhere they
- * are; their activities and subscriptions; the events they registered for,
- * from `events`; and whether they wrote in a campaign. A contact filter's
+ * are, and their MP; their activities and subscriptions; the events they
+ * registered for; and whether they wrote in a campaign; the events and MPs
+ * from `choices`. A contact filter's
  * choices are each topic, then blocked, a topic chosen as those we can
  * contact about it and another answer in its chip's second half; one by
  * email or phone shows that column.
- * Activities, subscriptions, nations and events can each be chosen more
- * than once.
+ * Activities, subscriptions, nations, MPs and events can each be chosen
+ * more than once.
  */
 export function supporterFilters(
   search: Pick<SupportersSearch, "near">,
-  events: EventChoice[] = [],
+  { events, mps }: SupporterChoices = { events: [], mps: [] },
   near?: SupportersPage["near"],
 ): Filter[] {
   const copy = staffCopy.supporters.filters;
@@ -66,6 +67,13 @@ export function supporterFilters(
         placeholder: copy.nearPlaceholder,
         distances: NEAR_MILES.map((n) => ({ value: String(n), label: copy.miles(n) })),
       },
+    },
+    {
+      name: "mp",
+      label: staffCopy.politician.roles.commons,
+      repeat: true,
+      searchable: true,
+      options: mps.map((mp) => ({ value: String(mp.id), label: copy.mpChoice(mp.name, mp.constituency) })),
     },
     {
       name: "activity",
@@ -129,20 +137,20 @@ export function supporterFilters(
 /** The supporters list's search and filters that are on, in words, as their chips say them. */
 export function supporterWords(
   search: SupportersSearch,
-  events: EventChoice[],
+  choices: SupporterChoices,
   near?: SupportersPage["near"],
 ): string[] {
-  return filterWords(supporterFilters(search, events, near), supporterFiltersOf(search), "q");
+  return filterWords(supporterFilters(search, choices, near), supporterFiltersOf(search), "q");
 }
 
 /** Search and filter the supporters list. The erased notice goes with any change. */
 export default function SupporterFilters({
   search,
-  events,
+  choices,
   near,
 }: {
   search: SupportersSearch;
-  events: EventChoice[];
+  choices: SupporterChoices;
   near?: SupportersPage["near"];
 }) {
   return (
@@ -150,7 +158,7 @@ export default function SupporterFilters({
       path="/staff/supporters"
       values={{ ...search, erased: "" }}
       search={{ name: "q", label: staffCopy.supporters.filters.search }}
-      filters={supporterFilters(search, events, near)}
+      filters={supporterFilters(search, choices, near)}
     />
   );
 }

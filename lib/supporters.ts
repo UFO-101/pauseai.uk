@@ -126,7 +126,7 @@ export type SupporterSort = keyof typeof SUPPORTER_SORTS;
 export const NEAR_MILES = [5, 10, 25, 50] as const;
 
 /** The filters that repeat, which can leave out as well as find. */
-export type NegatableSupporterFilter = "activity" | "contact" | "event" | "country";
+export type NegatableSupporterFilter = "activity" | "contact" | "event" | "country" | "mp";
 
 /** Who the list shows, as the server finds them. A filter that repeats finds those with any of its values. */
 export type SupporterWho = {
@@ -143,6 +143,8 @@ export type SupporterWho = {
   wrote?: boolean;
   /** In any of these nations (supporter_place). */
   country?: string[];
+  /** In the constituency of any of these MPs, by politician ID, by the postcode that places them. */
+  mp?: number[];
   /** Within `miles` of what was typed: a postcode, the first half of one, or a town. */
   near?: { text: string; miles: number };
   /** Those with none of these, each a filter above that repeats. */

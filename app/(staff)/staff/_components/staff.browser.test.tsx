@@ -3756,7 +3756,7 @@ describe("the supporters list's Email and Phone columns", () => {
 describe("the lists' filters in words, for their titles", () => {
   it("says a supporters search's Near as typed when it wasn't looked up, and each filter by its chip's words", () => {
     const search = supportersSearch({ q: "jo", near: "LS1", activity: "member" });
-    expect(supporterWords(search, [])).toEqual([
+    expect(supporterWords(search, { events: [], mps: [] })).toEqual([
       `${staffCopy.search} jo`,
       `${staffCopy.supporters.filters.near} LS1`,
       `${staffCopy.supporters.columns.badges} ${staffCopy.supporters.badges.member}`,
@@ -3779,6 +3779,9 @@ describe("SupporterFilters", () => {
     { id: "evt-1", name: "Leeds social", startAt: "2026-10-20T18:00:00Z" },
     { id: "evt-2", name: "Oxford talk", startAt: "2026-10-12T18:00:00Z" },
   ];
+  const mps = [{ id: 7, name: "Mo Manchester", constituency: "Manchester Central" }];
+  const choices = { events, mps };
+  const none = { events: [], mps: [] };
 
   it("has a chip for each filter on, a contact one in two halves, its topic then its answer", async () => {
     const { filter, ...search } = supportersSearch({
@@ -3787,7 +3790,7 @@ describe("SupporterFilters", () => {
       erased: "1",
     });
     void filter;
-    await render(<SupporterFilters search={search} events={events} />);
+    await render(<SupporterFilters search={search} choices={choices} />);
     const { topics, channels, ways } = copy.filters;
     const label = copy.columns.subscriptions;
     const answers = copy.detail.permissions.answers;
@@ -3852,11 +3855,12 @@ describe("SupporterFilters", () => {
   it("offers every filter in the columns' order, events by name and day", async () => {
     const { filter, ...search } = supportersSearch({});
     void filter;
-    await render(<SupporterFilters search={search} events={events} />);
+    await render(<SupporterFilters search={search} choices={choices} />);
     await page.getByRole("button", { name: staffCopy.filters.add }).click();
     expect([...document.querySelectorAll("#filter-add details > summary")].map((p) => p.textContent)).toEqual([
       staffCopy.politician.country,
       copy.filters.near,
+      staffCopy.politician.roles.commons,
       copy.columns.badges,
       copy.columns.subscriptions,
       copy.filters.event,
@@ -3871,6 +3875,7 @@ describe("SupporterFilters", () => {
     await menu(staffCopy.filters.except);
     expect([...document.querySelectorAll("#filter-except details > summary")].map((p) => p.textContent)).toEqual([
       staffCopy.politician.country,
+      staffCopy.politician.roles.commons,
       copy.columns.badges,
       copy.columns.subscriptions,
       copy.filters.event,
@@ -3881,10 +3886,25 @@ describe("SupporterFilters", () => {
     ]);
   });
 
+  it("offers MPs by name and constituency, and has a chip for one chosen", async () => {
+    const mo = copy.filters.mpChoice("Mo Manchester", "Manchester Central");
+    const { filter, ...search } = supportersSearch({ mp: ["7", "x"] });
+    void filter;
+    const { rerender } = await render(<SupporterFilters search={search} choices={choices} />);
+    expect(chips()).toEqual([
+      `${staffCopy.politician.roles.commons}: ${mo}`,
+      `${staffCopy.politician.roles.commons}: x`,
+    ]);
+    const { filter: unused, ...unfiltered } = supportersSearch({});
+    void unused;
+    await rerender(<SupporterFilters search={unfiltered} choices={choices} />);
+    expect(await menu(staffCopy.filters.add)).toContainEqual([mo, "/staff/supporters?mp=7"]);
+  });
+
   it("has a chip for the events they're at and one, marked, for those they're not", async () => {
     const { filter, ...search } = supportersSearch({ event: ["evt-1", "!evt-2"] });
     void filter;
-    await render(<SupporterFilters search={search} events={events} />);
+    await render(<SupporterFilters search={search} choices={choices} />);
     const leeds = copy.filters.eventChoice("Leeds social", "20 Oct 2026");
     const oxford = copy.filters.eventChoice("Oxford talk", "12 Oct 2026");
     expect(chips()).toEqual([`${copy.filters.event}: ${leeds}`, staffCopy.filters.notChip(copy.filters.event, oxford)]);
@@ -3908,21 +3928,21 @@ describe("SupporterFilters", () => {
     const { rerender } = await render(
       <SupporterFilters
         search={near("LS1")}
-        events={[]}
+        choices={none}
         near={{ latitude: 53.8, longitude: -1.55, place: "Leeds", country: "england" }}
       />,
     );
     expect(chips()).toEqual([`${copy.filters.near}: Leeds, ${copy.filters.miles(25)}`]);
-    await rerender(<SupporterFilters search={near("Atlantis")} events={[]} near={null} />);
+    await rerender(<SupporterFilters search={near("Atlantis")} choices={none} near={null} />);
     expect(chips()).toEqual([`${copy.filters.near}: ${copy.filters.notFound("Atlantis")}, ${copy.filters.miles(25)}`]);
-    await rerender(<SupporterFilters search={near("Leeds")} events={[]} near="failed" />);
+    await rerender(<SupporterFilters search={near("Leeds")} choices={none} near="failed" />);
     expect(chips()).toEqual([`${copy.filters.near}: ${copy.filters.failed("Leeds")}, ${copy.filters.miles(25)}`]);
   });
 
   it("joins a campaign and whether they wrote in it", async () => {
     const { filter, ...search } = supportersSearch({ campaign: "support-sobel-bill", wrote: "no" });
     void filter;
-    await render(<SupporterFilters search={search} events={[]} />);
+    await render(<SupporterFilters search={search} choices={none} />);
     expect(chips()).toEqual([campaignBySlug("support-sobel-bill")!.title, copy.filters.wrote.no]);
   });
 });

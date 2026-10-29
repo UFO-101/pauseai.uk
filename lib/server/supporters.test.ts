@@ -5,7 +5,7 @@ import type { SupporterFilter } from "@/lib/supporters";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import { refreshSupportersList } from "./supporter-facts";
-import { eventChoices, getSupporter, linkSupporters, listSupporters } from "./supporters";
+import { getSupporter, linkSupporters, listSupporters, supporterChoices } from "./supporters";
 
 /** A Luma user, with a registration for `event` if given. */
 async function lumaUser(id: string, email: string, name: string, event?: string, more: Record<string, unknown> = {}) {
@@ -441,7 +441,9 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     expect(await names({ event: ["evt-1"] })).toEqual(["Sam", "Jane", "Old"]);
     expect(await names({ event: ["evt-none", "evt-1"] })).toEqual(["Sam", "Jane", "Old"]);
     expect(await names({ event: ["evt-none"] })).toEqual([]);
-    expect(await eventChoices()).toEqual([{ id: "evt-1", name: "evt-1", startAt: new Date("2026-10-01T18:00:00Z") }]);
+    expect((await supporterChoices()).events).toEqual([
+      { id: "evt-1", name: "evt-1", startAt: new Date("2026-10-01T18:00:00Z") },
+    ]);
     const [{ campaign }] = await query<{ campaign: string }>("SELECT campaign FROM letters_from_supporters LIMIT 1");
     expect(await names({ campaign, wrote: true })).toEqual(["Pat"]);
     expect(await names({ campaign, wrote: false })).toEqual(["Sam", "Jane", "Old"]);
@@ -540,6 +542,14 @@ describeWithDatabase("listSupporters and getSupporter", () => {
       constituency: "Manchester Central",
       party: "Labour (Co-op)",
     });
+    // The MP filter finds her by her MP, and leaves her out; the test MP the letter went to is no choice.
+    await query("REFRESH MATERIALIZED VIEW supporters_list");
+    expect((await supporterChoices()).mps).toEqual([
+      { id: mp, name: "Mo Manchester", constituency: "Manchester Central" },
+    ]);
+    expect(await names({ mp: [mp] })).toEqual(["Jane"]);
+    expect(await names({ mp: [mp + 1] })).toEqual([]);
+    expect(await names({ not: { mp: [mp] } })).toEqual(["Sam", "Pat", "Old"]);
     // One out of office isn't their MP.
     await query("UPDATE notable_people SET status = 'retired' WHERE id = $1", [mp]);
     expect((await getSupporter(id))!.mp).toBeNull();

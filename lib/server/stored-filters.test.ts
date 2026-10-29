@@ -88,10 +88,11 @@ describeWithDatabase("filterProblems", () => {
     ]);
   });
 
-  it("checks a supporters filter's events against those imported", async () => {
+  it("checks a supporters filter's events against those imported, and its MPs against those in office", async () => {
     await query(
       `INSERT INTO luma_events (id, name, url, start_at, access) VALUES ('evt-1', 'Meet-up', 'https://lu.ma/a', now(), 'manage')`,
     );
+    const mp = await addTestPolitician({ name: "Mo Manchester", constituency: "Manchester Central" });
     expect(
       await filterProblems({
         list: "supporters",
@@ -103,6 +104,7 @@ describeWithDatabase("filterProblems", () => {
           campaign: "support-sobel-bill",
           wrote: "no",
           country: "scotland",
+          mp: [String(mp), `!${mp}`],
           near: "EH1",
           within: "10",
         },
@@ -117,6 +119,7 @@ describeWithDatabase("filterProblems", () => {
           event: ["evt-gone", "!evt-1"],
           campaign: "old-campaign",
           wrote: "maybe",
+          mp: String(mp + 1),
           within: "3",
         },
       }),
@@ -126,6 +129,7 @@ describeWithDatabase("filterProblems", () => {
       "event=evt-gone",
       "campaign=old-campaign",
       "wrote=maybe",
+      `mp=${mp + 1}`,
       "within=3",
     ]);
   });

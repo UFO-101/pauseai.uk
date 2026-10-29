@@ -653,11 +653,15 @@ export const staff: Group = {
                   contact: "email:luma-calendar:unsubscribed",
                   campaign: "support-sobel-bill",
                   wrote: "no",
+                  mp: "!7",
                   near: "LS1",
                   within: "25",
                   sort: "name",
                 })}
-                events={exampleEventChoices}
+                choices={{
+                  events: exampleEventChoices,
+                  mps: [{ id: 7, name: "Alex Sobel", constituency: "Leeds Central and Headingley" }],
+                }}
                 near={{ latitude: 53.8, longitude: -1.55, place: "Leeds", country: "england" }}
               />
             </StaffPage>
@@ -667,7 +671,11 @@ export const staff: Group = {
           label: "Near somewhere postcodes.io doesn't know",
           render: () => (
             <StaffPage as="div">
-              <SupporterFilters search={supportersSearch({ near: "Atlantis" })} events={[]} near={null} />
+              <SupporterFilters
+                search={supportersSearch({ near: "Atlantis" })}
+                choices={{ events: [], mps: [] }}
+                near={null}
+              />
             </StaffPage>
           ),
         },

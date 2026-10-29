@@ -175,6 +175,12 @@ function anyOf(filter: Pick<SupporterFilter, NegatableSupporterFilter>, add: (va
     );
   }
   if (filter.country) conditions.push(`s.country = ANY(${add(filter.country)})`);
+  if (filter.mp) {
+    conditions.push(
+      `s.basis = 'postcode' AND upper(replace(s.given, ' ', '')) IN (SELECT pp.postcode FROM postcode_places pp
+         JOIN (${MP_CHOICES}) p ON p.constituency = pp.constituency WHERE p.id = ANY(${add(filter.mp)}))`,
+    );
+  }
   return conditions.map((condition) => `(${condition})`);
 }
 
@@ -285,12 +291,30 @@ export async function listSupporters(
 /** A Luma event to filter supporters by: its ID, name and when it starts. */
 export type EventChoice = { id: string; name: string; startAt: string };
 
-/** Our Luma events, newest first, for the Event filter: those we manage, whose guests we know. */
-export async function eventChoices(): Promise<EventChoice[]> {
-  return query<EventChoice>(
-    `SELECT id, name, start_at AS "startAt" FROM luma_events
-     WHERE access = 'manage' AND removed_at IS NULL ORDER BY start_at DESC, id`,
-  );
+/** An MP to filter supporters by: their politician ID, name and constituency. */
+export type MpChoice = { id: number; name: string; constituency: string };
+
+/** What the Event and MP filters offer. */
+export type SupporterChoices = { events: EventChoice[]; mps: MpChoice[] };
+
+/** The MPs a supporter's postcode can find, as getSupporter() gives theirs: each in office, but the test ones. */
+export const MP_CHOICES = `SELECT n.id::int AS id, n.name, p.constituency FROM politicians p
+  JOIN notable_people n ON n.id = p.id AND n.status = 'in_office'
+  WHERE p.house = 'commons' AND NOT p.is_test`;
+
+/**
+ * The Event filter's choices, newest first: our Luma events that we
+ * manage, whose guests we know; and the MP filter's, by name.
+ */
+export async function supporterChoices(): Promise<SupporterChoices> {
+  const [events, mps] = await Promise.all([
+    query<EventChoice>(
+      `SELECT id, name, start_at AS "startAt" FROM luma_events
+       WHERE access = 'manage' AND removed_at IS NULL ORDER BY start_at DESC, id`,
+    ),
+    query<MpChoice>(`SELECT * FROM (${MP_CHOICES}) p ORDER BY p.name, p.constituency`),
+  ]);
+  return { events, mps };
 }
 
 /** Everything the staff page shows about one supporter, or undefined if there's no such one. */
@@ -317,9 +341,8 @@ export async function getSupporter(id: number): Promise<SupporterDetails | undef
     // Their MP, in office for their postcode's constituency.
     postcode
       ? query<SupporterMp>(
-          `SELECT n.id::int AS id, n.name, p.constituency, p.party FROM postcode_places pp
-           JOIN politicians p ON p.constituency = pp.constituency AND p.house = 'commons' AND NOT p.is_test
-           JOIN notable_people n ON n.id = p.id AND n.status = 'in_office'
+          `SELECT m.id, m.name, m.constituency, p.party FROM postcode_places pp
+           JOIN (${MP_CHOICES}) m ON m.constituency = pp.constituency JOIN politicians p ON p.id = m.id
            WHERE pp.postcode = upper(replace($1, ' ', '')) LIMIT 1`,
           [postcode],
         )
