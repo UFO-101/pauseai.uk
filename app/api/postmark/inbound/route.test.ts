@@ -10,7 +10,7 @@ beforeEach(() => {
   vi.stubEnv("POSTMARK_WEBHOOK_USER", "postmark");
   vi.stubEnv("POSTMARK_WEBHOOK_PASSWORD", "hunter2");
   vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token");
-  vi.stubEnv("REPLIES_INBOX", "replies@pauseai.uk");
+  vi.stubEnv("POLICY_INBOX", "replies@pauseai.uk");
 });
 afterEach(() => vi.unstubAllEnvs());
 

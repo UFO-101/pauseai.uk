@@ -22,7 +22,7 @@ type Sent = { To: string; Subject: string; TextBody: string };
 
 beforeEach(() => {
   vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token");
-  vi.stubEnv("REPLIES_INBOX", "replies@pauseai.uk");
+  vi.stubEnv("POLICY_INBOX", "replies@pauseai.uk");
   vi.stubEnv("SITE_ORIGIN", "https://pauseai.uk");
 });
 afterEach(() => vi.unstubAllEnvs());
@@ -105,7 +105,7 @@ describeWithDatabase("handleDeliveryProblem", () => {
   });
 
   it("tells nobody when there's no shared inbox", async () => {
-    vi.stubEnv("REPLIES_INBOX", "");
+    vi.stubEnv("POLICY_INBOX", "");
     await sentEmail();
     const sent = postmark();
     await handleDeliveryProblem(BOUNCE, REQUEST);

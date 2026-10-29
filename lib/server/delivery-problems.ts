@@ -33,7 +33,7 @@ const letterProblem: Hook = async ({ letterId }, problem, request) => {
     status,
     JSON.stringify({ ...problem.details, reason: problem.reason, email: problem.address }),
   ]);
-  const inbox = process.env.REPLIES_INBOX;
+  const inbox = process.env.POLICY_INBOX;
   if (problem.kind === "soft" || !inbox) return;
   await send(
     {

@@ -160,7 +160,7 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
   await recordReply(letter, email);
 
   const copied = [...(email.ToFull ?? []), ...(email.CcFull ?? [])].map((a) => a.Email?.toLowerCase());
-  const recipients = [process.env.REPLIES_INBOX, letter.senderEmail].filter(
+  const recipients = [process.env.POLICY_INBOX, letter.senderEmail].filter(
     (to): to is string => !!to && !copied.includes(to.toLowerCase()),
   );
 

@@ -347,7 +347,7 @@ curl -u postmark:secret -H 'Content-Type: application/json' localhost:3000/api/p
   -d '{"FromFull":{"Email":"test-mp@example.org","Name":"Testy"},"ToFull":[{"Email":"<reply_hash>@letters.pauseai.uk"}],"CcFull":[],"Subject":"Re: hello","TextBody":"Thanks."}'
 ```
 
-With `REPLIES_INBOX` set, the reply is forwarded there too. With fixtures,
+With `POLICY_INBOX` set, the reply is forwarded there too. With fixtures,
 both copies land in the outbox.
 
 **Luma's webhook.** Set `LUMA_WEBHOOK_SECRET=whsec_dev`, then post a

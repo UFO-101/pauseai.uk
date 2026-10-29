@@ -54,7 +54,7 @@ export function fixtureEnv({ outboxDir }) {
     POSTMARK_SERVER_TOKEN: "fixture",
     POSTMARK_WEBHOOK_USER: "postmark",
     POSTMARK_WEBHOOK_PASSWORD: "fixture-webhook-password",
-    REPLIES_INBOX: "replies@example.org",
+    POLICY_INBOX: "replies@example.org",
     // Each email sent is also written here (tests/fixtures/outbox.ts).
     OUTBOX_DIR: outboxDir,
   };

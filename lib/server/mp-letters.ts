@@ -111,7 +111,7 @@ export function letterAddress(mailbox: string): string {
  * letter's own address, which records the reply.
  */
 function replyTo(form: LetterForm, address: string): string {
-  const inbox = process.env.REPLIES_INBOX;
+  const inbox = process.env.POLICY_INBOX;
   return [
     `"${headerName(form.name)}" <${form.email}>`,
     inbox && `"PauseAI Policy Team" <${inbox}>`,
@@ -129,7 +129,7 @@ export function recipient(mp: { name: string }, email: string): string {
 
 /** Our shared inbox gets a blind copy of each letter: the only copy kept of its text. */
 function bcc(): string | undefined {
-  return process.env.REPLIES_INBOX || undefined;
+  return process.env.POLICY_INBOX || undefined;
 }
 
 async function logEvent(letterId: number, status: string, details: object, db?: Queryable): Promise<void> {
