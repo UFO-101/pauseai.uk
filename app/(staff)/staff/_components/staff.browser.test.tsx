@@ -19,7 +19,7 @@ import { exampleBlock, exampleComplaint, exampleGmailBlock, exampleProblems } fr
 import EmailProblemsTable from "./EmailProblemsTable";
 import { exampleChanges } from "./ChangesTable.examples";
 import LettersTable, { LettersList, letterColumns, letterDownloadColumns } from "./LettersTable";
-import LetterDetails from "./LetterDetails";
+import LetterDetails, { GmailLink } from "./LetterDetails";
 import { examplePauseaiLetterDetails, exampleSupporterLetterDetails } from "./LettersTable.examples";
 import { gmailSearchUrl, googleGroupUrl } from "@/lib/letter-links";
 import { exampleLetter } from "./LettersTable.examples";
@@ -2687,7 +2687,7 @@ describe("LetterDetails", () => {
     expect(page.getByText(copy.detail.sent, { exact: true }).all()).toHaveLength(0);
   });
 
-  it("shows PauseAI's letter: its mailing, a Gmail search for it, and that nothing's recorded since", async () => {
+  it("shows PauseAI's letter: its mailing, whether personalised, and that nothing's recorded since", async () => {
     const letter = examplePauseaiLetterDetails;
     const { rerender } = await render(<LetterDetails letter={letter} />);
     await expect
@@ -2707,27 +2707,40 @@ describe("LetterDetails", () => {
       .element(page.getByRole("link", { name: letter.mpName }))
       .toHaveAttribute("href", "/staff/politicians/1");
     await expect.element(page.getByText(copy.detail.personalised)).toBeVisible();
+    await expect.element(page.getByText(copy.detail.noHistory)).toBeVisible();
+    // Its Gmail link goes with its thread, not in the card.
+    expect(page.getByRole("link", { name: copy.detail.gmail }).all()).toHaveLength(0);
+    await rerender(<LetterDetails letter={{ ...letter, personalised: false }} />);
+    expect(page.getByText(copy.detail.personalised).all()).toHaveLength(0);
+  });
+});
+
+describe("GmailLink", () => {
+  const copy = staffCopy.letters;
+  const letter = examplePauseaiLetterDetails;
+
+  it("searches Gmail for a letter by its MP's address and when it went, or was made; with no address, nothing", async () => {
+    const { rerender } = await render(<GmailLink letter={letter} me="jo@pauseai.uk" />);
     await expect
       .element(page.getByRole("link", { name: copy.detail.gmail }))
       .toHaveAttribute("href", gmailSearchUrl(letter.mpEmail!, letter.sentAt!));
-    await expect.element(page.getByText(copy.detail.noHistory)).toBeVisible();
-    // Not sent yet, it's searched for by when it was made; with no address, not at all.
     await rerender(
-      <LetterDetails letter={{ ...letter, sentAt: null, createdAt: "2026-09-01T08:00:00Z", personalised: false }} />,
+      <GmailLink letter={{ ...letter, sentAt: null, createdAt: "2026-09-01T08:00:00Z" }} me="jo@pauseai.uk" />,
     );
     await expect
       .element(page.getByRole("link", { name: copy.detail.gmail }))
       .toHaveAttribute("href", gmailSearchUrl(letter.mpEmail!, "2026-09-01T08:00:00Z"));
-    expect(page.getByText(copy.detail.personalised).all()).toHaveLength(0);
-    await rerender(<LetterDetails letter={{ ...letter, mpEmail: null }} />);
-    expect(page.getByRole("link", { name: copy.detail.gmail }).all()).toHaveLength(0);
-    // Sent from Jo's Gmail: Jo opens its thread there, and anyone else searches.
+    await rerender(<GmailLink letter={{ ...letter, mpEmail: null }} me="jo@pauseai.uk" />);
+    expect(page.getByRole("link").all()).toHaveLength(0);
+  });
+
+  it("opens the thread in Gmail for the one it went from, and searches for anyone else", async () => {
     const fromJo = { ...letter, sentFrom: "jo@pauseai.uk", gmailThreadId: "thread-1" };
-    await rerender(<LetterDetails letter={fromJo} me="jo@pauseai.uk" />);
+    const { rerender } = await render(<GmailLink letter={fromJo} me="jo@pauseai.uk" />);
     await expect
       .element(page.getByRole("link", { name: staffCopy.letterThread.openInGmail }))
       .toHaveAttribute("href", "https://mail.google.com/mail/u/jo%40pauseai.uk/#all/thread-1");
-    await rerender(<LetterDetails letter={fromJo} me="al@pauseai.uk" />);
+    await rerender(<GmailLink letter={fromJo} me="al@pauseai.uk" />);
     await expect.element(page.getByRole("link", { name: copy.detail.gmail })).toBeVisible();
   });
 });

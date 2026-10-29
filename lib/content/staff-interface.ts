@@ -72,14 +72,14 @@ export const staffCopy = {
   },
   // One of PauseAI's letters, and the replies in its thread.
   letterThread: {
-    title: "The letter and replies",
+    title: "Letter and replies",
     // An imported letter, whose text Airtable didn't keep.
     noText: "This letter was sent before the site sent mailings, so its text isn't here.",
     openInGmail: "Open in Gmail",
     noReplies: "No replies yet.",
-    unreadable: "⁂ This message couldn't be read.",
+    unreadable: "This message couldn't be read.",
     // Over each message, as an email shows them.
-    headers: { from: "From", to: "To", date: "⁂ Date", subject: "Subject" },
+    headers: { from: "From", to: "To", date: "Date", subject: "Subject" },
   },
   // Your own page: your sessions and your Gmail.
   me: {
@@ -100,7 +100,7 @@ export const staffCopy = {
     disconnect: "Disconnect Gmail",
     connected: (when: string) => `⁂ Connected ${when}.`,
     notConnected: "Your Gmail isn't connected.",
-    sentToday: (sent: number, limit: string) => `⁂ ${sent} of today's ${limit} sent.`,
+    sentToday: (sent: number, limit: string) => `${sent} of today's ${limit} sent.`,
     // After coming back from Google, or disconnecting.
     outcomes: {
       connected: "Your Gmail is connected. All staff will be able to send mailings from it now.",

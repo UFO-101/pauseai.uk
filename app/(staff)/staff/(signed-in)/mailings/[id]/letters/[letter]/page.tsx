@@ -4,7 +4,7 @@ import { letterThread } from "@/lib/server/letter-threads";
 import { getPauseaiLetter } from "@/lib/server/letters";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { letterId, mailingId } from "@/lib/staff-search";
-import LetterDetails, { letterTitle } from "../../../../../_components/LetterDetails";
+import LetterDetails, { GmailLink, letterTitle } from "../../../../../_components/LetterDetails";
 import LetterThread from "../../../../../_components/LetterThread";
 
 type Params = { params: Promise<{ id: string; letter: string }> };
@@ -28,10 +28,11 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 export default async function MailingLetterPage({ params }: Params) {
   const { email } = await requireStaff();
   const ids = await idsOf(params);
-  const [letter, thread] = await Promise.all([getPauseaiLetter(...ids), letterThread(...ids)]);
+  const [pauseaiLetter, thread] = await Promise.all([getPauseaiLetter(...ids), letterThread(...ids)]);
+  const letter = found(pauseaiLetter);
   return (
-    <LetterDetails letter={found(letter)} me={email}>
-      <LetterThread thread={found(thread)} />
+    <LetterDetails letter={letter}>
+      <LetterThread thread={found(thread)} link={<GmailLink letter={letter} me={email} />} />
     </LetterDetails>
   );
 }

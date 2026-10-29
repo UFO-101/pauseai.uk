@@ -51,16 +51,19 @@ function Email({
 
 /**
  * One of PauseAI's letters' thread, below its page's facts and history,
- * each message as an email: the letter as it went, from the Gmail it went
+ * `link` at the right of its heading, each message as an email: the letter as it went, from the Gmail it went
  * from, or a note that an imported one's text isn't kept; then each reply
  * and answer, oldest first.
  */
-export default function LetterThread({ thread }: { thread: Thread }) {
+export default function LetterThread({ thread, link }: { thread: Thread; link?: ReactNode }) {
   const politician = named(thread.to.name, thread.to.email);
   const ours = thread.sentFrom ? named(thread.fromName, thread.sentFrom) : staffCopy.letters.fromPauseai;
   return (
     <section aria-labelledby="letter-thread" className={styles.thread}>
-      <h2 id="letter-thread">{copy.title}</h2>
+      <div className={styles.heading}>
+        <h2 id="letter-thread">{copy.title}</h2>
+        {link}
+      </div>
       <Email from={ours} to={politician} at={thread.sentAt} subject={thread.subject || thread.mailingTitle}>
         {thread.letter ? <MailingLetter doc={thread.letter} /> : <Muted>{copy.noText}</Muted>}
       </Email>

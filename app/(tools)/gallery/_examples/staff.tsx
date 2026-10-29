@@ -22,7 +22,7 @@ import {
   examplePauseaiLetterDetails,
   exampleSupporterLetterDetails,
 } from "@/app/(staff)/staff/_components/LettersTable.examples";
-import LetterDetails from "@/app/(staff)/staff/_components/LetterDetails";
+import LetterDetails, { GmailLink } from "@/app/(staff)/staff/_components/LetterDetails";
 import DevLogin from "@/app/(staff)/staff/_components/DevLogin";
 import LoginCard from "@/app/(staff)/staff/_components/LoginCard";
 import LoginForm from "@/app/(staff)/staff/_components/LoginForm";
@@ -2421,19 +2421,32 @@ export const staff: Group = {
           ),
         },
         {
-          label:
-            "PauseAI's letter, personalised, copied from Airtable, found by a Gmail search, nothing recorded since",
+          label: "PauseAI's letter, personalised, copied from Airtable, nothing recorded since",
           render: () => (
             <StaffPage as="div">
               <LetterDetails letter={examplePauseaiLetterDetails} />
             </StaffPage>
           ),
         },
+      ],
+    },
+    {
+      name: "GmailLink",
+      file: "app/(staff)/staff/_components/LetterDetails.tsx",
+      variants: [
         {
-          label: "PauseAI's letter sent from Jo's Gmail, seen by Jo: Open in Gmail, to its thread",
+          label: "PauseAI's letter, found by a Gmail search",
           render: () => (
             <StaffPage as="div">
-              <LetterDetails
+              <GmailLink letter={examplePauseaiLetterDetails} me="jo@pauseai.uk" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Sent from Jo's Gmail, seen by Jo: Open in Gmail, to its thread",
+          render: () => (
+            <StaffPage as="div">
+              <GmailLink
                 letter={{ ...examplePauseaiLetterDetails, sentFrom: "jo@pauseai.uk", gmailThreadId: "thread-seed-2" }}
                 me="jo@pauseai.uk"
               />

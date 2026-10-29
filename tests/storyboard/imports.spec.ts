@@ -144,6 +144,8 @@ test("A big politician import is held: discard it, then apply it", async ({ page
   await expect(page.getByRole("button", { name: staffCopy.syncs.apply })).toHaveCount(0);
   await expect(page.getByText(staffCopy.runs.status.discarded).first()).toBeVisible();
   expect(inAirtable()).toBe(21);
+  // From the top, where the newest run says how it ended; the button left the page scrolled down its list.
+  await page.evaluate(() => window.scrollTo(0, 0));
   await frame(page, "discarded: nobody changed");
 
   await page.getByRole("button", { name: staffCopy.syncs.syncNow }).click();
@@ -151,6 +153,7 @@ test("A big politician import is held: discard it, then apply it", async ({ page
   await expect(page.getByRole("button", { name: staffCopy.syncs.apply })).toHaveCount(0);
   await expect(page.getByText(staffCopy.runs.decidedBy(staffEmail())).first()).toBeVisible();
   expect(inAirtable()).toBe(0);
+  await page.evaluate(() => window.scrollTo(0, 0));
   await frame(page, "held again, then applied: the 21 are marked gone from Airtable, and kept");
 
   await page.goto(`${BASE}/staff/audit-log`);

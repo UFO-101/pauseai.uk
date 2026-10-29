@@ -110,7 +110,10 @@ test("Unblock an MP's bounced address", async ({ page, request, flowDatabase }) 
   // Politicians' blocked emails lists them, and is the way to them.
   await page.goto(`${BASE}/staff/politicians/blocked-emails`);
   await expect(page.getByRole("row").filter({ hasText: bouncy.name })).toBeVisible();
-  await frame(page, "Politicians' blocked emails lists their address");
+  await frame(
+    page,
+    "Politicians' blocked emails lists their address, from a bounce Postmark couldn't tie to an email we sent",
+  );
 
   await page.getByRole("link", { name: bouncy.name }).click();
   await expect(page.getByRole("heading", { level: 1, name: bouncy.name })).toBeVisible();

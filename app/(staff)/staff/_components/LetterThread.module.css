@@ -1,11 +1,24 @@
-/* The thread: its heading, then each message, a step apart. */
+/* The thread: a step down from the cards over it, however short they are; its heading, then each message, a step apart. */
 .thread {
   display: grid;
   gap: var(--space-4);
+  margin-top: var(--space-6);
 }
 
-.thread > h2,
 .thread > p {
+  margin: 0;
+}
+
+/* The heading, and the way to read it in Gmail at the right, on its line. */
+.heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.heading h2 {
   margin: 0;
 }
 
