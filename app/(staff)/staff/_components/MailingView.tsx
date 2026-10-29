@@ -42,7 +42,10 @@ function letterLabels(asks: Ask[]): { fields: Record<string, string>; conditions
   };
 }
 
-/** A recipient's columns: who, what happened to their letter, when, whether they replied, and their answer to its ask. */
+/**
+ * A recipient's columns: who, what happened to their letter, leading to
+ * its page, when, whether they replied, and their answer to its ask.
+ */
 function recipientColumns(mailing: Mailing): ListColumn<MailingRecipient>[] {
   return [
     {
@@ -57,7 +60,9 @@ function recipientColumns(mailing: Mailing): ListColumn<MailingRecipient>[] {
         r.skipReason ? (
           <span className={styles.skipped}>{copy.skipReasons[r.skipReason]}</span>
         ) : (
-          (staffCopy.letters.status[r.status] ?? r.status)
+          <Link href={`/staff/mailings/${mailing.id}/letters/${r.letterId}`}>
+            {staffCopy.letters.status[r.status] ?? r.status}
+          </Link>
         ),
     },
     {

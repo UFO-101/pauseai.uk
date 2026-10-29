@@ -152,9 +152,12 @@ export type PauseaiLetterDetails = {
 
 export type LetterDetails = SupporterLetterDetails | PauseaiLetterDetails;
 
-/** Letter `id`, of either kind, or undefined if there's none. Postmark's ID is the newest send's of the letter. */
-export async function getLetter(id: number): Promise<LetterDetails | undefined> {
-  const [pauseai] = await query<PauseaiLetterDetails>(
+/**
+ * PauseAI's letter `id`, for its page under mailing `mailingId`, or
+ * undefined if that mailing has no such letter.
+ */
+export async function getPauseaiLetter(mailingId: number, id: number): Promise<PauseaiLetterDetails | undefined> {
+  const [letter] = await query<PauseaiLetterDetails>(
     `SELECT 'pauseai' AS kind, l.id::int AS id, l.status, l.created_at AS "createdAt", l.sent_at AS "sentAt",
        n.name AS "mpName", n.id::int AS "politicianId", n.email AS "mpEmail", m.id::int AS "mailingId",
        m.title AS mailing, p.personalised,
@@ -162,10 +165,18 @@ export async function getLetter(id: number): Promise<LetterDetails | undefined> 
                  FROM letter_events e WHERE e.letter_id = l.id), '[]') AS events
      FROM letters_from_pauseai p JOIN letters l USING (id) JOIN mailings m ON m.id = p.mailing_id
        JOIN notable_people n ON n.id = l.notable_person_id
-     WHERE l.id = $1`,
-    [id],
+     WHERE l.id = $1 AND p.mailing_id = $2`,
+    [id, mailingId],
   );
-  if (pauseai) return pauseai;
+  return letter;
+}
+
+/**
+ * A supporter's letter `id`, for its page, or undefined if there's none:
+ * PauseAI's letters have theirs under their mailing. Postmark's ID is the
+ * newest send's of the letter.
+ */
+export async function getSupporterLetter(id: number): Promise<SupporterLetterDetails | undefined> {
   const [letter] = await recentLetters({ letterId: id });
   if (!letter) return undefined;
   const [{ subject, postmarkId }] = await query<{ subject: string; postmarkId: string | null }>(

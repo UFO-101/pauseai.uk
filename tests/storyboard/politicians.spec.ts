@@ -321,8 +321,8 @@ test("PauseAI's emails: copied once, with one held back for a mailing nobody has
   flowDatabase,
 }) => {
   await syncPoliticians(request, BASE);
-  // With supporters, as only they open a letter's page.
-  await logIn(page, flowDatabase, ["supporters"]);
+  // With no permissions: PauseAI's letters are the politicians section's.
+  await logIn(page, flowDatabase);
   // The nightly sync copied them; the button finds nothing new.
   await page.goto(`${BASE}/staff/import-data/emails`);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(jobTitles["sync-emails"]);
@@ -335,7 +335,7 @@ test("PauseAI's emails: copied once, with one held back for a mailing nobody has
   await expect(page.getByText(staffCopy.runs.status.incomplete).first()).toBeVisible();
   expect(runSql(flowDatabase, "SELECT count(*) FROM letters_from_pauseai")).toEqual(["5"]);
 
-  // Each is in its MP's history, leading to its own page, and from there to a Gmail search for it.
+  // Each is in its MP's history, leading to its own page under its mailing, and from there to a Gmail search for it.
   await page.goto(`${BASE}/staff/politicians`);
   await page.getByRole("link", { name: "Polly Placeholder" }).click();
   const history = page.getByRole("list", { name: staffCopy.politician.historyTitle });
@@ -343,6 +343,7 @@ test("PauseAI's emails: copied once, with one held back for a mailing nobody has
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     staffCopy.letters.oneTitle(staffCopy.letters.fromPauseai, "Polly Placeholder"),
   );
+  await expect(page).toHaveURL(/\/staff\/mailings\/\d+\/letters\/\d+$/);
   await expect(page.getByRole("link", { name: staffCopy.letters.detail.gmail })).toHaveAttribute(
     "href",
     /^https:\/\/mail\.google\.com\/mail\/#search\/to%3Apolly/,

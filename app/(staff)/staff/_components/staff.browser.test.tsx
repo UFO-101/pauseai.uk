@@ -1404,6 +1404,10 @@ describe("PoliticianDetails", () => {
       `1 May 2026, 08:00${copy["pauseai-letter"]} Example Mailing · made-up`,
     ]);
     expect(list.element().querySelector('a[href^="/staff/letters"]')).toBeNull();
+    // PauseAI's letters lead to their pages under their mailing, for anyone.
+    await expect
+      .element(list.getByRole("link", { name: "made-up" }))
+      .toHaveAttribute("href", "/staff/mailings/3/letters/12");
   });
 
   it("gives each ask staff record, and each they've answered, a row: the answer first, the ask linked, who asked and when, who set the answer, and the form where staff record it", async () => {
@@ -2632,10 +2636,19 @@ describe("LetterDetails", () => {
     await expect
       .element(page.getByRole("heading", { level: 1 }))
       .toHaveTextContent(copy.oneTitle(copy.fromPauseai, letter.mpName));
+    // Back to its mailing, which the facts name too; and on to its MP.
     await expect
-      .element(page.getByRole("navigation").getByRole("link", { name: letter.mpName }))
+      .element(page.getByRole("navigation").getByRole("link", { name: letter.mailing }))
+      .toHaveAttribute("href", "/staff/mailings/3");
+    expect(
+      page
+        .getByRole("link", { name: letter.mailing })
+        .all()
+        .map((link) => link.element().getAttribute("href")),
+    ).toEqual(["/staff/mailings/3", "/staff/mailings/3"]);
+    await expect
+      .element(page.getByRole("link", { name: letter.mpName }))
       .toHaveAttribute("href", "/staff/politicians/1");
-    await expect.element(page.getByRole("link", { name: letter.mailing })).toHaveAttribute("href", "/staff/mailings/3");
     await expect.element(page.getByText(copy.detail.personalised)).toBeVisible();
     await expect
       .element(page.getByRole("link", { name: copy.detail.gmail }))

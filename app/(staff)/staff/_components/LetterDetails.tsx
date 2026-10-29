@@ -133,13 +133,13 @@ function History({ events }: { events: LetterEvent[] }) {
  * A letter's page, a supporter's or PauseAI's: its title, then a card of
  * who it's from and to, what it was and how it stands, with the way to
  * read it in Google; beside it, what happened to it. A supporter's goes
- * back to the letters list, PauseAI's to its MP.
+ * back to the letters list, PauseAI's to its mailing.
  */
 export default function LetterDetails({ letter }: { letter: Details }) {
   const back =
     letter.kind === "supporter"
       ? { href: "/staff/letters", label: staffCopy.nav.letters }
-      : { href: `/staff/politicians/${letter.politicianId}`, label: letter.mpName };
+      : { href: `/staff/mailings/${letter.mailingId}`, label: letter.mailing };
   return (
     <>
       <Breadcrumb href={back.href}>{back.label}</Breadcrumb>

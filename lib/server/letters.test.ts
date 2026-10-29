@@ -1,7 +1,15 @@
 import { expect, it } from "vitest";
 import { addTestLetter, addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
-import { getLetter, LETTERS_PAGE_SIZE, listLetters, pauseaiLetters, politicianLetters, recentLetters } from "./letters";
+import {
+  getPauseaiLetter,
+  getSupporterLetter,
+  LETTERS_PAGE_SIZE,
+  listLetters,
+  pauseaiLetters,
+  politicianLetters,
+  recentLetters,
+} from "./letters";
 
 describeWithDatabase("recentLetters", () => {
   useTestDatabase();
@@ -192,7 +200,7 @@ describeWithDatabase("pauseaiLetters", () => {
   });
 });
 
-describeWithDatabase("getLetter", () => {
+describeWithDatabase("a letter for its page", () => {
   useTestDatabase();
 
   it("gives a supporter's letter, with its subject and the newest send's Postmark ID", async () => {
@@ -205,16 +213,16 @@ describeWithDatabase("getLetter", () => {
          ('2026-10-03T09:00:00Z', 'letter', $1, 'test-mp@example.org', 'failed', NULL)`,
       [id],
     );
-    const letter = await getLetter(id);
+    const letter = await getSupporterLetter(id);
     expect(letter).toMatchObject({ kind: "supporter", id, senderName: "Jane Smith", postmarkId: "pm-new" });
     expect(typeof (letter as { subject: string }).subject).toBe("string");
-    expect(await getLetter(id + 100)).toBeUndefined();
+    expect(await getSupporterLetter(id + 100)).toBeUndefined();
     // One never sent through Postmark has no ID.
     const unsent = await addTestLetter({ politicianId: mp });
-    expect(await getLetter(unsent)).toMatchObject({ postmarkId: null });
+    expect(await getSupporterLetter(unsent)).toMatchObject({ postmarkId: null });
   });
 
-  it("gives PauseAI's letter, with its mailing and the MP's address", async () => {
+  it("gives PauseAI's letter in its mailing, with the mailing and the MP's address; not in another, nor as a supporter's", async () => {
     const mp = await addTestMp("mp@example.org");
     const [{ id }] = await query<{ id: number }>(
       "INSERT INTO letters (kind, notable_person_id, status, created_at, sent_at) VALUES ('pauseai', $1, 'sent', $2, $2) RETURNING id::int AS id",
@@ -225,7 +233,13 @@ describeWithDatabase("getLetter", () => {
        SELECT $1, id, true FROM mailings WHERE airtable_field = 'CSRB Iqbal Amendment'`,
       [id],
     );
-    expect(await getLetter(id)).toEqual({
+    const [{ mailing }] = await query<{ mailing: number }>(
+      "SELECT mailing_id::int AS mailing FROM letters_from_pauseai WHERE id = $1",
+      [id],
+    );
+    expect(await getPauseaiLetter(mailing + 1, id)).toBeUndefined();
+    expect(await getSupporterLetter(id)).toBeUndefined();
+    expect(await getPauseaiLetter(mailing, id)).toEqual({
       kind: "pauseai",
       id,
       status: "sent",
@@ -234,7 +248,7 @@ describeWithDatabase("getLetter", () => {
       mpName: "Testy McTestface MP",
       politicianId: mp,
       mpEmail: "mp@example.org",
-      mailingId: expect.any(Number),
+      mailingId: mailing,
       mailing: "CSRB Iqbal Amendment",
       personalised: true,
       events: [],

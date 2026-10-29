@@ -185,6 +185,10 @@ describe("MailingView", () => {
     await expect.element(page.getByRole("cell", { name: staffCopy.statuses.going })).toBeInTheDocument();
     expect(headings()).toContain("Edinburgh conference");
     await expect.element(page.getByText(copy.skipReasons["left-office"])).toBeVisible();
+    // Each one sent leads to its letter's page, under the mailing.
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.letters.status.sent }).first())
+      .toHaveAttribute("href", "/staff/mailings/4/letters/11");
     // The email as a mail app shows one: from, to and the subject, then the letter and its files.
     await expect.element(page.getByText("Jo Example <jo@pauseai.uk>")).toBeVisible();
     await expect.element(page.getByText(copy.toEach)).toBeVisible();

@@ -122,10 +122,9 @@ function letterEntries({ senders, letters }: PoliticianLetters): Entry[] {
 
 /**
  * PauseAI's letters, each a line: the mailing, whether it was personalised,
- * and how it stands, leading to its page when `linked`, as only staff with
- * `supporters` can open the letters' pages.
+ * and how it stands, leading to the letter's page under its mailing.
  */
-function pauseaiEntries(letters: PauseaiLetter[], linked: boolean): Entry[] {
+function pauseaiEntries(letters: PauseaiLetter[]): Entry[] {
   return letters.map((letter) => ({
     key: `pauseai-${letter.id}`,
     at: letter.at,
@@ -135,11 +134,9 @@ function pauseaiEntries(letters: PauseaiLetter[], linked: boolean): Entry[] {
         <Muted>
           {letter.personalised && ` · ${copy.personalised}`}
           {" · "}
-          {linked ? (
-            <Link href={`/staff/letters/${letter.id}`}>{staffCopy.letters.status[letter.status] ?? letter.status}</Link>
-          ) : (
-            (staffCopy.letters.status[letter.status] ?? letter.status)
-          )}
+          <Link href={`/staff/mailings/${letter.mailingId}/letters/${letter.id}`}>
+            {staffCopy.letters.status[letter.status] ?? letter.status}
+          </Link>
         </Muted>
       </>
     ),
@@ -399,7 +396,7 @@ export default function PoliticianDetails({
 }) {
   const entries: Entry[] = [
     ...letterEntries(letters),
-    ...pauseaiEntries(pauseaiLetters, letters.senders),
+    ...pauseaiEntries(pauseaiLetters),
     ...history.map((change) => ({
       key: `change-${change.id}`,
       ...whenOf(change),
