@@ -11,7 +11,7 @@ export function googleGroupUrl(postmarkId: string): string {
 }
 
 /** How far either side of a letter's time a Gmail search looks, in minutes. */
-export const GMAIL_SEARCH_MINUTES = 5;
+const GMAIL_SEARCH_MINUTES = 5;
 
 /** A search of the signed-in Gmail account for mail to `address` sent within GMAIL_SEARCH_MINUTES of `sentAt`. */
 export function gmailSearchUrl(address: string, sentAt: string | Date): string {

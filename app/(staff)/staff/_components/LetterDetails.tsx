@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { GMAIL_SEARCH_MINUTES, gmailSearchUrl, googleGroupUrl } from "@/lib/letter-links";
+import { gmailSearchUrl, googleGroupUrl } from "@/lib/letter-links";
 import type { LetterDetails as Details, LetterEvent } from "@/lib/server/letters";
 import { staffTime } from "@/lib/staff-time";
 import Tag from "@/components/ui/Tag";
@@ -52,8 +52,6 @@ function InGoogle({ letter }: { letter: Details }) {
         <a href={gmailSearchUrl(letter.mpEmail, at)} target="_blank" rel="noreferrer">
           {copy.detail.gmail}
         </a>
-        <br />
-        <Muted>{copy.detail.gmailHow(GMAIL_SEARCH_MINUTES)}</Muted>
       </p>
     )
   );

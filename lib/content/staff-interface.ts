@@ -1290,9 +1290,7 @@ export const staffCopy = {
       // A supporter's letter, Bcc'd to policy@: its copy there.
       googleGroup: "⁂ Read it in the policy@ Google Group",
       // PauseAI's letter, sent from Gmail: a search for it.
-      gmail: "⁂ Find it in Gmail",
-      gmailHow: (minutes: number) =>
-        `⁂ Searches the Gmail account you're signed in to for email to their address sent ${minutes} minutes either side.`,
+      gmail: "Find it in Gmail",
     },
     none: "No letters.",
     status: {
