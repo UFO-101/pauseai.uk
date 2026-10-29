@@ -36,6 +36,8 @@ npm run test:storyboard           # Playwright: the storyboard's gate, on fixtur
 (cd backup && npm ci && npm test && npm run typecheck)   # the backup Worker's own package
 ```
 
+Run them as CI does, in parallel, which takes two or three minutes rather than six: the four linters one after another, alongside `npm test`, `npm run test:storyboard` and the backup Worker's tests. Skip `npm run build` locally: it repeats the unit tests and linters, and the storyboard already builds the site. Never run two `next build`s at once in one checkout, as they share `.next`.
+
 If the prek Git hook is installed (`npm run hooks:install`), commits run Prettier, ESLint and Stylelint on the staged files first. Prettier rewrites them, so `git add` and commit again. That's only part of the gate.
 
 Running one Vitest project (`npm run test:node`, `npm run test:browser`) or one file doesn't check coverage, so it isn't the gate. The tests that need a database make their own in Postgres (`docs/testing.md`).
@@ -52,7 +54,7 @@ When you give one in a reply, write it as plain Markdown, not quoted with `>` or
 
 - Every new interactive behaviour goes in a flow, existing or new, with a frame after each thing a person would see. A PR without it isn't done.
 - Flows stay small: one thing a person does, about ten frames at most. Every flow stands alone: its own database (the `flowDatabase` fixture), a fixed clock, unique identifiers.
-- Before saying a change is done, run the review and look at every changed frame on both viewports. It never fails on a difference, so it proves nothing until you've looked. Say in the commit or PR what changed.
+- Before saying a change is done, run the review and look at every changed frame on both viewports. It never fails on a difference, so it proves nothing until you've looked. Say in the commit or PR what changed. Make that full review, after the last change, the latest run, for a person to open and check too, and say which run it is.
 
 ```bash
 npm run storyboard                # both viewports, screenshots, against a build of where this branch left origin/main, then opens test-results/storyboard/index.html

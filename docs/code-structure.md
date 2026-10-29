@@ -397,7 +397,9 @@ only a variant. The look itself (colours, type, buttons, cards) is in
   `components/tools/kit/`.
 - **Classes from content.** HTML that lib/ writes as strings (press logos,
   blog footnotes) keeps global class names, which the component that shows
-  it selects with `:global()` inside its own root class.
+  it selects with `:global()` inside its own root class. So before
+  deleting or renaming a class as unused, search the whole repo, not only
+  `app/` and `components/`.
 
 ### The march sign-up
 

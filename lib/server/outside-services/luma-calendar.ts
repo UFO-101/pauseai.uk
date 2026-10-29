@@ -122,6 +122,8 @@ export type CalendarEvent = LumaEvent & {
 /**
  * One page of every public event on our calendar, newest first, managed by us
  * or listed from another calendar, for the import. Throws as lumaList does.
+ * With neither `before` nor `after`, Luma lists the past and the future,
+ * private events too, though its docs don't say so.
  */
 export async function listCalendarEvents(cursor?: string): Promise<LumaPage<CalendarEvent>> {
   const params = new URLSearchParams({

@@ -92,9 +92,16 @@ Francis about a shared account (see the open questions).
    a status for it, and it can only be deleted while nothing refers to
    it. The asks named in `lib/asks.ts` can't be edited. Adding a new
    status for a kind still needs a migration.
-8. Rename `REPLIES_INBOX` to `POLICY_INBOX`. Everything sent there is
-   about politicians: copies of supporters' letters, MPs' replies and
-   bounce alerts.
+8. Hard-code the policy inbox and drop `REPLIES_INBOX`. Everything sent
+   there is about politicians: copies of supporters' letters, MPs'
+   replies and bounce alerts. The address, policy@pauseai.uk, is no
+   secret: it's on the letter's PDF and already `site.policyEmail` in
+   `lib/content/site.ts`, so the code uses that, everywhere, fixture
+   builds too (their email goes to the outbox anyway). The same goes for
+   `LETTERS_MAIL_DOMAIN` and `NOTIFY_MAIL_DOMAIN`, which only ever hold
+   their defaults: the domains become constants and the variables go.
+   `TEST_MP_EMAIL` stays a variable, as a developer points it at their
+   own inbox. Netlify's settings lose the dropped variables.
 9. Drop the views `supporter_letters` and `pauseai_letters`, in a new
    migration. Migration 0056 renamed those tables and kept the old names
    as views only for the site deployed before it, which has long since
