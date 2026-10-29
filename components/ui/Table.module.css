@@ -29,3 +29,11 @@
 .middle td {
   vertical-align: middle;
 }
+
+/* On a phone, a column is never squeezed to a sliver: the table scrolls sideways first. */
+@media (max-width: 720px) {
+  .table th,
+  .table td {
+    min-width: 7rem;
+  }
+}

@@ -1,7 +1,14 @@
 import { beforeEach, expect, it } from "vitest";
 import { FIXED_ASKS } from "@/lib/asks";
 import { campaigns, copy } from "@/lib/content/email-your-mp";
-import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { migrate } from "@/scripts/db-migrate.mjs";
+import {
+  addTestPolitician,
+  describeWithDatabase,
+  MAKES_DATABASES,
+  useDatabaseUpTo,
+  useTestDatabase,
+} from "@/tests/database";
 import { addAsk, askToEdit, asksWithCounts, deleteAsk, editAsk, listAsks, listCampaigns } from "./asks";
 import { query } from "./db";
 import { setStatus } from "./politicians";
@@ -149,5 +156,22 @@ describeWithDatabase("staff's asks", () => {
       action: "delete ask",
       details: { slug: "winter-reception-dec-2026", ...RECEPTION },
     });
+  });
+});
+
+describeWithDatabase("migration 0061_ask_links_whole", MAKES_DATABASES, () => {
+  const db = useDatabaseUpTo("0060");
+
+  it("puts the site's address in front of an ask's link that's a path of it, and leaves whole links alone", async () => {
+    expect(migrate(db.url, { appliedUpTo: "0060" })).toContain("0061_ask_links_whole");
+    expect(
+      await query(
+        "SELECT slug, url FROM asks WHERE slug IN ('frontier-ai-letter', 'deepmind-letter', 'controlai-letter') ORDER BY slug",
+      ),
+    ).toEqual([
+      { slug: "controlai-letter", url: "https://controlai.org/uk-pm-letter" },
+      { slug: "deepmind-letter", url: "https://pauseai.uk/campaigns/dear-sir-demis-2025" },
+      { slug: "frontier-ai-letter", url: "https://pauseai.uk/pdfs/Frontier-AI-Open-Letter.pdf" },
+    ]);
   });
 });

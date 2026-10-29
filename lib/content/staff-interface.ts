@@ -972,7 +972,7 @@ export const staffCopy = {
     // Over an ask's slug, which doesn't change.
     slugLabel: "Identifier: ",
     kindFixed: "Kind can't be changed now, as politicians have answered it.",
-    fixed: "⁂ The site's code uses this ask, so it can't be changed here.",
+    fixed: "Campaigns hard-coded on the site use this ask, so you can't change it here.",
     // Beside the form: the ask as it will show on a politician's page.
     previewTitle: "What the ask will look like on a politician's page",
     save: "Save ask",
@@ -986,7 +986,7 @@ export const staffCopy = {
       fixed: "⁂ The site's code uses this ask, so it can't be changed here.",
       "kind-in-use": "⁂ Its kind can't change, as politicians have answered it.",
       "in-use": "⁂ It can't be deleted while answers, campaigns or mailings refer to it.",
-      gone: "⁂ That ask has gone.",
+      gone: "That ask has been deleted.",
     } as Record<string, string>,
     // Over the list: how many there are.
     total: (n: number) => `${n} ${n === 1 ? "ask" : "asks"}`,

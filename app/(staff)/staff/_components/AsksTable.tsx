@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AskTitle } from "./AskLine";
 import Actions from "@/components/ui/Actions";
 import { ButtonLink } from "@/components/ui/Button";
 import styles from "./AsksTable.module.css";
@@ -17,18 +18,6 @@ function AskedBy({ ask }: { ask: AskWithCounts }) {
   return ask.askedBy.map((asker) => <div key={asker}>{copy.askedBy[asker]}</div>);
 }
 
-/** An ask's title, linked to the letter or the event if we know where it is. A link to another site opens in a new tab. */
-function Title({ ask }: { ask: AskWithCounts }) {
-  if (!ask.url) return ask.title;
-  return ask.url.startsWith("/") ? (
-    <Link href={ask.url}>{ask.title}</Link>
-  ) : (
-    <a href={ask.url} target="_blank" rel="noreferrer">
-      {ask.title}
-    </a>
-  );
-}
-
 /** The answers an ask's kind allows that some politicians gave. */
 const answersOf = (ask: AskWithCounts) => ASK_STATUSES[ask.kind].filter((status) => ask.counts[status]);
 
@@ -45,7 +34,7 @@ export const askColumns: ListColumn<AskWithCounts>[] = [
     text: (a) => copy.kinds[a.kind],
     cell: (a) => copy.kinds[a.kind],
   },
-  { key: "ask", label: copy.columns.ask, text: (a) => a.title, cell: (a) => <Title ask={a} /> },
+  { key: "ask", label: copy.columns.ask, text: (a) => a.title, cell: (a) => <AskTitle ask={a} /> },
   {
     key: "date",
     label: copy.columns.date,
