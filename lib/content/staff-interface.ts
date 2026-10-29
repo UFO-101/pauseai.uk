@@ -76,7 +76,7 @@ export const staffCopy = {
   },
   // Connecting a staff member's Gmail, on their own page and in a mailing's Sent from.
   gmail: {
-    title: "Let anyone send mails from your GMail",
+    title: "Let staff send mailings from a GMail",
     // What connecting it means, said before it goes to Google.
     explain: [
       "⁂ Mailings to politicians go from your address, kept in your Sent mail, and replies come back to you.",
