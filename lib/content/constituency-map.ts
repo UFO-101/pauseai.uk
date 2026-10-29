@@ -25,7 +25,7 @@ export const constituencyMapCopy = {
     supporters: (places: number, total: number) =>
       `⁂ ${counted(total, "supporter", "supporters")} in ${places} of 650 constituencies.`,
     frontier: (places: number, total: number) =>
-      `⁂ ${counted(total, "letter", "letters")} about frontier AI, to ${places} of 650 MPs.`,
+      `⁂ ${counted(total, "letter", "letters")} about regulating AI developers, to ${places} of 650 MPs.`,
     sobel: (places: number, total: number) =>
       `⁂ ${counted(total, "letter", "letters")} about the Superintelligence Bill, to ${places} of 650 MPs.`,
   } satisfies Record<MapLayer, (places: number, total: number) => string>,
@@ -56,14 +56,14 @@ export const constituencyMapCopy = {
     mp: (name: string, party: string) => `⁂ MP: ${name} (${party})`,
     noMp: "⁂ No MP in office",
     supporters: (n: number) => counted(n, "supporter", "supporters"),
-    frontier: (n: number) => `⁂ ${counted(n, "letter", "letters")} about frontier AI`,
+    frontier: (n: number) => `⁂ ${counted(n, "letter", "letters")} about regulating AI developers`,
     sobel: (n: number) => `⁂ ${counted(n, "letter", "letters")} about the Superintelligence Bill`,
     close: "⁂ Clear",
   },
 
   /** What a person can do about the constituency they picked: the first is the one the map is showing. */
   actions: {
-    frontier: { label: "⁂ Email your MP about frontier AI", href: "/campaigns/regulate-letter-pm" },
+    frontier: { label: "⁂ Ask your MP to regulate AI developers", href: "/campaigns/regulate-letter-pm" },
     sobel: {
       label: "⁂ Ask your MP to back the Superintelligence Bill",
       href: "/campaigns/support-sobel-bill",
@@ -101,7 +101,7 @@ export const constituencyMapCopy = {
     constituency: "⁂ Constituency",
     mp: "⁂ MP",
     supporters: "Supporters",
-    frontier: "⁂ Frontier AI letters",
+    frontier: "⁂ Regulate AI developers letters",
     sobel: "⁂ Bill letters",
   },
 

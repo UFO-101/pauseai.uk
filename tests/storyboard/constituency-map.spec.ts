@@ -25,8 +25,8 @@ test("Switch the map between supporters and letters", { tag: "@phone" }, async (
   await frame(page, "supporters in each constituency, the empty ones hollow");
 
   await page.getByRole("radio", { name: copy.layers.frontier }).click();
-  await expect(page.getByText(/about frontier AI, to \d+ of 650 MPs/)).toBeVisible();
-  await frame(page, "letters about frontier AI, to about a third of MPs");
+  await expect(page.getByText(/about regulating AI developers, to \d+ of 650 MPs/)).toBeVisible();
+  await frame(page, "letters about regulating AI developers, to about a third of MPs");
 
   await page.getByRole("radio", { name: copy.layers.sobel }).click();
   await expect(page.getByText(/about the Superintelligence Bill, to \d+ of 650 MPs/)).toBeVisible();
