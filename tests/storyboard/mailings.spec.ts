@@ -208,7 +208,8 @@ test("Send a mailing from a connected Gmail: schedule it, and the hourly job sen
   await expect(page).toHaveURL(/\/staff\/mailings\/\d+$/);
   await expect(page.getByLabel(copy.fromLegend, { exact: false })).toHaveValue(staffEmail());
   await expect(from.getByText(staffCopy.gmail.sentToday(0, "1,800"))).toBeVisible();
-  await frame(page, "Sent from your connected Gmail, with how many it has sent of today's 1,800");
+  await from.scrollIntoViewIfNeeded();
+  await frame(page, "Sent from your connected Gmail, with how many it has sent of today's 1,800", { window: true });
 
   await page.getByLabel(copy.hour, { exact: false }).selectOption("14");
   await page.getByRole("button", { name: copy.schedule(1) }).click();
@@ -245,9 +246,9 @@ test("Send a mailing from a connected Gmail: schedule it, and the hourly job sen
     `INSERT INTO letter_replies (letter_id, account, gmail_message_id, gmail_thread_id, from_address, from_name, subject, at,
        from_us, blob_key, size)
      VALUES (${letterId}, '${staffEmail()}', 'reply-1', 'thread-1', 'morag.example.msp@parliament.example', 'Morag Example',
-       'Re: See you in Edinburgh', '2026-10-16T15:00:00Z', false, 'fixture/polly-thanks.eml.gz', 512)`,
+       'Re: See you in Edinburgh', '2026-10-16T15:00:00Z', false, 'fixture/morag-edinburgh.eml.gz', 512)`,
   );
   await page.reload();
-  await expect(page.getByText("I share many")).toBeVisible();
+  await expect(page.getByText("I look", { exact: false })).toBeVisible();
   await frame(page, "her reply, under the letter");
 });

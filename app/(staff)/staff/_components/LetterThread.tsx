@@ -1,6 +1,5 @@
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { gmailThreadUrl } from "@/lib/gmail-connect";
 import type { LetterThread as Thread, ThreadMessage } from "@/lib/server/letter-threads";
 import { staffTime } from "@/lib/staff-time";
 import { MailingLetter } from "./MailingLetter";
@@ -27,12 +26,10 @@ function Message({ message }: { message: ThreadMessage }) {
 
 /**
  * One of PauseAI's letters' thread, below its page's facts and history:
- * the Gmail it went from, with Open in Gmail for `me` if it's theirs; the
- * letter as it went, or a note that an imported one's text isn't kept;
+ * the Gmail it went from; the letter as it went, or a note that an imported one's text isn't kept;
  * then each reply and answer, oldest first.
  */
-export default function LetterThread({ thread, me }: { thread: Thread; me: string }) {
-  const inGmail = thread.gmailThreadId && thread.sentFrom === me;
+export default function LetterThread({ thread }: { thread: Thread }) {
   return (
     <section aria-labelledby="letter-thread">
       <h2 id="letter-thread">{copy.title}</h2>
@@ -40,14 +37,6 @@ export default function LetterThread({ thread, me }: { thread: Thread; me: strin
         <p>
           {/* With no name of its own, it went in the Gmail account's. */}
           <span>{copy.sentFrom(thread.fromName ? `${thread.fromName} <${thread.sentFrom}>` : thread.sentFrom)}</span>
-          {inGmail && (
-            <>
-              {" · "}
-              <a href={gmailThreadUrl(me, thread.gmailThreadId!)} target="_blank" rel="noreferrer">
-                {copy.openInGmail}
-              </a>
-            </>
-          )}
         </p>
       )}
       <Grid>

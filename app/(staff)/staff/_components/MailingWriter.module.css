@@ -65,14 +65,15 @@
 }
 
 /* Fields with their note close under them, not a card's gap away. */
-.withHint {
+/* Sent from: the choice, what it has sent today or that there's none, and the way to connect another, evenly spaced. */
+.from {
   display: grid;
+  gap: var(--space-2);
+  justify-items: start;
 }
 
-/* Under the choice of Gmail: the way to connect another. */
-.connectOne {
-  margin: var(--space-2) 0 0;
-  font-size: var(--text-sm);
+.from p {
+  margin: 0;
 }
 
 .when {

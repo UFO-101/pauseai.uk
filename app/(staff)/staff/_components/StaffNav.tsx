@@ -97,11 +97,24 @@ export default function StaffNav({ email, permissions = [], sessions = 1, curren
       </ul>
     </section>
   ));
-  // In the phone's menu: who's logged in, leading to their own page.
-  const who = (
-    <StaffLink href={ME_PATH} className={styles.who} title={email} aria-current={current === "me" ? "page" : undefined}>
-      {email}
-    </StaffLink>
+  // Your address with an @, as a page under its own heading; in the sidebar on one line, cut short if it's long, the whole address on hover.
+  const profile = (
+    <section className={styles.group}>
+      <h2>{staffCopy.nav.sections.profile}</h2>
+      <ul>
+        <li>
+          <StaffLink
+            href={ME_PATH}
+            className={`${styles.page} ${styles.address}`}
+            title={email}
+            aria-current={current === "me" ? "page" : undefined}
+          >
+            <NavIcon id="me" />
+            <span className={styles.label}>{email}</span>
+          </StaffLink>
+        </li>
+      </ul>
+    </section>
   );
   const others = sessions > 1 && (
     <StaffLink href={`${ME_PATH}#sessions`} className={styles.sessions}>
@@ -118,23 +131,7 @@ export default function StaffNav({ email, permissions = [], sessions = 1, curren
         {home}
         {groups}
         <div className={styles.foot}>
-          {/* Your address with an @, as a page under its own heading; on one line, cut short if it's long, the whole address on hover. */}
-          <section className={styles.group}>
-            <h2>{staffCopy.nav.sections.profile}</h2>
-            <ul>
-              <li>
-                <StaffLink
-                  href={ME_PATH}
-                  className={`${styles.page} ${styles.address}`}
-                  title={email}
-                  aria-current={current === "me" ? "page" : undefined}
-                >
-                  <NavIcon id="me" />
-                  <span className={styles.label}>{email}</span>
-                </StaffLink>
-              </li>
-            </ul>
-          </section>
+          {profile}
           <form method="post" action="/staff/api/logout">
             <button type="submit" className={styles.page}>
               <NavIcon id="logout" />
@@ -150,8 +147,7 @@ export default function StaffNav({ email, permissions = [], sessions = 1, curren
         <div>
           {home}
           {groups}
-          <hr />
-          {who}
+          {profile}
           <form method="post" action="/staff/api/logout">
             <button type="submit" className={styles.linkButton}>
               {staffCopy.nav.logout}

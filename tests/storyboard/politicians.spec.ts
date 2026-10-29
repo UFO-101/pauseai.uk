@@ -321,6 +321,7 @@ test("Add an ask, change it, then delete it", async ({ page, flowDatabase }) => 
   await page.getByLabel(asks.byKind.event.url).fill("https://luma.com/winter");
   await page.getByRole("button", { name: asks.save }).click();
   await expect(page.getByRole("link", { name: "Winter reception" })).toHaveAttribute("href", "https://luma.com/winter");
+  await frame(page, "changed: its title now links to the event's page");
   await page.getByRole("row").filter({ hasText: "Winter reception" }).getByRole("link", { name: asks.edit }).click();
   await page.getByRole("button", { name: asks.delete }).click();
   await expect(page.getByRole("button", { name: staffCopy.mailingPages.deleteIt })).toBeFocused();

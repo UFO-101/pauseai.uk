@@ -46,5 +46,7 @@ export const examplePauseaiLetterDetails: PauseaiLetterDetails = {
   mailingId: 3,
   mailing: "Edinburgh Conference Nov 26 Invitation",
   personalised: true,
+  sentFrom: null,
+  gmailThreadId: null,
   events: [],
 };

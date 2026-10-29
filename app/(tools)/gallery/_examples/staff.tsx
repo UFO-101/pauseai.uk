@@ -1088,18 +1088,10 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/LetterThread.tsx",
       variants: [
         {
-          label: "Sent from Jo's Gmail, seen by Jo: an automatic reply, Polly's answer, and Jo's that can't be read",
+          label: "Sent from Jo's Gmail: Polly's answer, and Jo's that can't be read",
           render: () => (
             <StaffPage as="div">
-              <LetterThread thread={exampleThread} me="jo@pauseai.uk" />
-            </StaffPage>
-          ),
-        },
-        {
-          label: "Seen by someone else: no Open in Gmail",
-          render: () => (
-            <StaffPage as="div">
-              <LetterThread thread={exampleThread} me="samuel.whitlock@pauseai.uk" />
+              <LetterThread thread={exampleThread} />
             </StaffPage>
           ),
         },
@@ -1107,7 +1099,7 @@ export const staff: Group = {
           label: "Imported from Airtable, never sent: no text, no replies",
           render: () => (
             <StaffPage as="div">
-              <LetterThread thread={exampleImportedThread} me="jo@pauseai.uk" />
+              <LetterThread thread={exampleImportedThread} />
             </StaffPage>
           ),
         },
@@ -2434,6 +2426,17 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <LetterDetails letter={examplePauseaiLetterDetails} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "PauseAI's letter sent from Jo's Gmail, seen by Jo: Open in Gmail, to its thread",
+          render: () => (
+            <StaffPage as="div">
+              <LetterDetails
+                letter={{ ...examplePauseaiLetterDetails, sentFrom: "jo@pauseai.uk", gmailThreadId: "thread-seed-2" }}
+                me="jo@pauseai.uk"
+              />
             </StaffPage>
           ),
         },

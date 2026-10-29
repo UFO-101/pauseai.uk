@@ -854,7 +854,6 @@ export const staffCopy = {
     choose: "Choose…",
     fromLegend: "Whose Gmail to send it from",
     // A sender, in Sent from's list: their address, and how many more it can send today.
-    sender: (address: string, left: string) => `⁂ ${address} (${left} left today)`,
     // Your own address, before your Gmail's connected.
     senderNotConnected: (address: string) => `⁂ ${address} (not connected)`,
     notConnected: "⁂ This Gmail isn't connected. Only its owner can connect it, from their own page.",
@@ -864,7 +863,7 @@ export const staffCopy = {
     connectOne: "⁂ Connect a Gmail on your account page",
     // In the preview, who it's from: the name comes from the Gmail account.
     from: "From",
-    fromGmail: (address: string) => `Your Gmail's name <${address}>`,
+    fromGmail: (address: string) => `⁂ The name of the Gmail account <${address}>`,
     // The test copy's sender's name.
     testFromName: "PauseAI UK mailing test",
     day: "Day",
@@ -1402,8 +1401,6 @@ export const staffCopy = {
         from: "From",
         subject: "Subject",
         // What sending from Gmail and reading its mailbox record.
-        threadId: "⁂ Gmail thread",
-        gmailMessageId: "⁂ Gmail message",
         name: "⁂ Name",
         account: "⁂ Gmail",
         status: "⁂ Code",

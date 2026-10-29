@@ -437,7 +437,7 @@ describe("MailingWriter", () => {
         .getByRole("option")
         .all()
         .map((option) => option.element().textContent),
-    ).toEqual([copy.sender("al@pauseai.uk", "1,800"), copy.sender("samuel.whitlock@pauseai.uk", "1,680")]);
+    ).toEqual(["al@pauseai.uk", "samuel.whitlock@pauseai.uk"]);
     await expect.element(field(copy.fromLegend)).toHaveValue("al@pauseai.uk");
     await expect.element(from.getByRole("link", { name: copy.connectOne })).toHaveAttribute("href", "/staff/me#gmail");
     await field(copy.fromLegend).selectOptions("samuel.whitlock@pauseai.uk");

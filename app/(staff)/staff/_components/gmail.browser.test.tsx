@@ -72,33 +72,29 @@ describe("AccountTitle", () => {
 describe("LetterThread", () => {
   const copy = staffCopy.letterThread;
 
-  it("shows the Gmail it went from, the letter as it went, and each reply; Open in Gmail for the one who sent it", async () => {
-    await render(<LetterThread thread={exampleThread} me="jo@pauseai.uk" />);
+  it("shows the Gmail it went from, the letter as it went, and each reply", async () => {
+    await render(<LetterThread thread={exampleThread} />);
     await expect.element(page.getByRole("heading", { level: 2, name: copy.title })).toBeVisible();
     await expect.element(page.getByText(copy.sentFrom("Jo Seed <jo@pauseai.uk>"))).toBeVisible();
     await expect.element(page.getByText("Will you come and meet us?")).toBeVisible();
     await expect.element(page.getByText(/I'd be glad to meet/)).toBeVisible();
     await expect.element(page.getByText(copy.unreadable)).toBeVisible();
-    await expect
-      .element(page.getByRole("link", { name: copy.openInGmail }))
-      .toHaveAttribute("href", "https://mail.google.com/mail/u/jo%40pauseai.uk/#all/thread-seed-2");
     expect(page.getByText(copy.noReplies).query()).toBeNull();
   });
 
   it("names a reply with no name by its address", async () => {
     const reply = { ...exampleThread.messages[0], fromName: "" };
-    await render(<LetterThread thread={{ ...exampleThread, messages: [reply] }} me="jo@pauseai.uk" />);
+    await render(<LetterThread thread={{ ...exampleThread, messages: [reply] }} />);
     await expect.element(page.getByRole("heading", { name: reply.fromAddress })).toBeVisible();
   });
 
-  it("has no Open in Gmail for anyone else, and the address alone with no name", async () => {
-    await render(<LetterThread thread={{ ...exampleThread, fromName: "" }} me="samuel.whitlock@pauseai.uk" />);
-    expect(page.getByRole("link", { name: copy.openInGmail }).query()).toBeNull();
+  it("gives the address alone with no name", async () => {
+    await render(<LetterThread thread={{ ...exampleThread, fromName: "" }} />);
     await expect.element(page.getByText(copy.sentFrom("jo@pauseai.uk"))).toBeVisible();
   });
 
   it("says an imported letter's text isn't here, and that nothing's come back", async () => {
-    await render(<LetterThread thread={{ ...exampleImportedThread, subject: "" }} me="jo@pauseai.uk" />);
+    await render(<LetterThread thread={{ ...exampleImportedThread, subject: "" }} />);
     await expect.element(page.getByText(copy.noText)).toBeVisible();
     await expect.element(page.getByText(copy.noReplies)).toBeVisible();
     await expect.element(page.getByRole("heading", { name: exampleThread.mailingTitle })).toBeVisible();

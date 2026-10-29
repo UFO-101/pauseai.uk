@@ -457,34 +457,35 @@ export default function MailingWriter({
         </Card>
 
         <Card span={6} title={<Numbered n={4}>{copy.sections.from}</Numbered>} id="from-title">
-          {senderChoices.length > 0 ? (
-            <div className={styles.withHint}>
-              <Field label={copy.fromLegend} className={styles.sender}>
-                <Select value={values.sentFrom ?? ""} onChange={(event) => change({ sentFrom: event.target.value })}>
-                  {!values.sentFrom && (
-                    <option value="" disabled>
-                      {copy.choose}
-                    </option>
-                  )}
-                  {senderChoices.map((sender) => (
-                    <option key={sender.email} value={sender.email}>
-                      {sender.connected
-                        ? copy.sender(sender.email, sender.remaining.toLocaleString("en-GB"))
-                        : copy.senderNotConnected(sender.email)}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-              {sender && <SentToday sent={sender.sentToday} />}
-            </div>
-          ) : (
-            <p>{copy.noSenders}</p>
-          )}
-          {values.sentFrom && !sender && <Hint>{copy.notConnected}</Hint>}
-          {/* Connecting is done on the account's own page, logged in as it. */}
-          <p className={styles.connectOne}>
-            <Link href="/staff/me#gmail">{copy.connectOne}</Link>
-          </p>
+          {/* The choice of connected Gmails and what the chosen one has sent today, or that there's none; then where to connect one. */}
+          <div className={styles.from}>
+            {senderChoices.length > 0 ? (
+              <>
+                <Field label={copy.fromLegend} className={styles.sender}>
+                  <Select value={values.sentFrom ?? ""} onChange={(event) => change({ sentFrom: event.target.value })}>
+                    {!values.sentFrom && (
+                      <option value="" disabled>
+                        {copy.choose}
+                      </option>
+                    )}
+                    {senderChoices.map((sender) => (
+                      <option key={sender.email} value={sender.email}>
+                        {sender.connected ? sender.email : copy.senderNotConnected(sender.email)}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                {sender && <SentToday sent={sender.sentToday} />}
+              </>
+            ) : (
+              <p>{copy.noSenders}</p>
+            )}
+            {values.sentFrom && !sender && <Hint>{copy.notConnected}</Hint>}
+            {/* Connecting is done on the account's own page, logged in as it. */}
+            <p>
+              <Link href="/staff/me#gmail">{copy.connectOne}</Link>
+            </p>
+          </div>
         </Card>
 
         <Card span={6} title={<Numbered n={5}>{copy.sections.when}</Numbered>} id="when-title">

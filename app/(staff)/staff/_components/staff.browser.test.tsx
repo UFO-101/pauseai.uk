@@ -126,7 +126,7 @@ describe("StaffNav", () => {
     await expect.element(page.getByRole("link", { name: staffCopy.nav.title })).toHaveAttribute("href", "/staff");
     // The sidebar is for wider screens than the test's, so it's read from the DOM.
     const nav = document.querySelector("nav")!;
-    expect(nav.querySelector("a[class*=who]")!.textContent).toBe("jo@pauseai.uk");
+    expect(nav.querySelector(`a[href="/staff/me"]`)!.textContent).toBe("jo@pauseai.uk");
     // Home leads the list, a link like the rest.
     expect(nav.querySelector('a[href="/staff"][class*=page]')!.textContent).toBe(staffCopy.nav.home);
     const current = nav.querySelector('a[aria-current="page"]')!;
@@ -2701,6 +2701,14 @@ describe("LetterDetails", () => {
     expect(page.getByText(copy.detail.personalised).all()).toHaveLength(0);
     await rerender(<LetterDetails letter={{ ...letter, mpEmail: null }} />);
     expect(page.getByRole("link", { name: copy.detail.gmail }).all()).toHaveLength(0);
+    // Sent from Jo's Gmail: Jo opens its thread there, and anyone else searches.
+    const fromJo = { ...letter, sentFrom: "jo@pauseai.uk", gmailThreadId: "thread-1" };
+    await rerender(<LetterDetails letter={fromJo} me="jo@pauseai.uk" />);
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.letterThread.openInGmail }))
+      .toHaveAttribute("href", "https://mail.google.com/mail/u/jo%40pauseai.uk/#all/thread-1");
+    await rerender(<LetterDetails letter={fromJo} me="al@pauseai.uk" />);
+    await expect.element(page.getByRole("link", { name: copy.detail.gmail })).toBeVisible();
   });
 });
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { gmailThreadUrl } from "@/lib/gmail-connect";
 import { gmailSearchUrl, googleGroupUrl } from "@/lib/letter-links";
 import type { LetterDetails as Details, LetterEvent } from "@/lib/server/letters";
 import { staffTime } from "@/lib/staff-time";
@@ -33,8 +34,12 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-/** Where to read the letter as it was sent: a supporter's in the policy@ group, PauseAI's by a Gmail search. */
-function InGoogle({ letter }: { letter: Details }) {
+/**
+ * Where to read the letter as it was sent: a supporter's in the policy@
+ * group; PauseAI's in its Gmail thread, for `me` if it went from their
+ * Gmail, or else by a Gmail search.
+ */
+function InGoogle({ letter, me }: { letter: Details; me?: string }) {
   if (letter.kind === "supporter") {
     return (
       letter.postmarkId && (
@@ -44,6 +49,15 @@ function InGoogle({ letter }: { letter: Details }) {
           </a>
         </p>
       )
+    );
+  }
+  if (letter.gmailThreadId && letter.sentFrom === me) {
+    return (
+      <p className={styles.source}>
+        <a href={gmailThreadUrl(me, letter.gmailThreadId)} target="_blank" rel="noreferrer">
+          {staffCopy.letterThread.openInGmail}
+        </a>
+      </p>
     );
   }
   const at = letter.sentAt ?? letter.createdAt;
@@ -121,10 +135,16 @@ function EventField({ name, value }: { name: string; value: unknown }) {
   );
 }
 
-/** What a change recorded, as the parts of its line: each field, but Postmark's kind when the status already says it. */
+/** The IDs a send or a read of Gmail records, for finding a message, not reading: in the {} bubble, not the line. */
+const IDS = ["messageId", "threadId", "gmailMessageId"];
+
+/**
+ * What a change recorded, as the parts of its line: each field, but
+ * Postmark's kind when the status already says it, and the IDs.
+ */
 function eventParts(event: LetterEvent): ReactNode[] {
   return Object.entries(event.details)
-    .filter(([name, value]) => !(name === "type" && SAID_BY_STATUS[event.status] === value))
+    .filter(([name, value]) => !IDS.includes(name) && !(name === "type" && SAID_BY_STATUS[event.status] === value))
     .map(([name, value]) => <EventField key={name} name={name} value={value} />);
 }
 
@@ -159,7 +179,16 @@ function History({ events }: { events: LetterEvent[] }) {
  * PauseAI's its thread. A supporter's goes back to the letters list,
  * PauseAI's to its mailing.
  */
-export default function LetterDetails({ letter, children }: { letter: Details; children?: ReactNode }) {
+export default function LetterDetails({
+  letter,
+  me,
+  children,
+}: {
+  letter: Details;
+  /** Who's looking: the one it went from opens its thread in their Gmail. */
+  me?: string;
+  children?: ReactNode;
+}) {
   const back =
     letter.kind === "supporter"
       ? { href: "/staff/letters", label: staffCopy.nav.letters }
@@ -182,7 +211,7 @@ export default function LetterDetails({ letter, children }: { letter: Details; c
               {letter.kind === "supporter" && letter.repliedAt && staffTime(letter.repliedAt)}
             </Fact>
           </dl>
-          <InGoogle letter={letter} />
+          <InGoogle letter={letter} me={me} />
         </Card>
         <Card span={2} look="log" title={copy.detail.historyTitle} id="letter-history">
           <History events={letter.events} />

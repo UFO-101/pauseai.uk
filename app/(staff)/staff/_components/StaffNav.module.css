@@ -122,22 +122,6 @@ button.page:hover {
   text-overflow: ellipsis;
 }
 
-/* Who's logged in, in the phone's menu: a link to their own page, quiet until it's hovered or the page is theirs. */
-.who {
-  overflow: hidden;
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  text-decoration: none;
-}
-
-.who:hover,
-.who[aria-current="page"] {
-  color: var(--ink);
-  text-decoration: underline;
-}
-
 /* Under Log out: how many sessions are open, faint, as few need it. */
 .sessions {
   justify-self: start;
@@ -243,13 +227,6 @@ button.page:hover {
     border-radius: var(--radius-md);
     background: var(--surface);
     box-shadow: 0 4px 12px rgb(var(--black-rgb) / 10%);
-  }
-
-  .menu hr {
-    width: 100%;
-    margin: 0;
-    border: 0;
-    border-top: 1px solid var(--border);
   }
 }
 

@@ -30,8 +30,8 @@ export default async function MailingLetterPage({ params }: Params) {
   const ids = await idsOf(params);
   const [letter, thread] = await Promise.all([getPauseaiLetter(...ids), letterThread(...ids)]);
   return (
-    <LetterDetails letter={found(letter)}>
-      <LetterThread thread={found(thread)} me={email} />
+    <LetterDetails letter={found(letter)} me={email}>
+      <LetterThread thread={found(thread)} />
     </LetterDetails>
   );
 }
