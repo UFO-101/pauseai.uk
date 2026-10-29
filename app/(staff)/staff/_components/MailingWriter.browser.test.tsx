@@ -337,16 +337,26 @@ describe("MailingWriter", () => {
     await expect.element(preview().getByRole("button", { name: "old-event:going" })).toBeVisible();
   });
 
-  it("sends a test copy to yourself once there's a letter, saving the draft first, and says where, or that it couldn't", async () => {
+  it("sends a test copy, to you unless you give another address, once there's a letter, saving the draft first, and says where, or that it couldn't", async () => {
     const { actions } = await renderWriter();
     const test = preview().getByRole("button", { name: copy.sendTest });
+    const to = preview().getByLabelText(copy.sendTestTo);
+    await expect.element(to).toHaveValue("jo@pauseai.uk");
     await expect.element(test).toBeDisabled();
     await expect.element(preview().getByText(copy.testNeedsDraft)).toBeVisible();
+    // It goes from the Gmail chosen, which is connected.
+    await expect.element(preview().getByText(copy.testVia("al@pauseai.uk"))).toBeVisible();
     await write("Come along.");
     await test.click();
     await expect.element(preview().getByText(copy.testSent("jo@pauseai.uk"))).toBeVisible();
     expect(actions.start).toHaveBeenCalledTimes(1);
-    expect(actions.sendTest).toHaveBeenCalledWith(21, 7);
+    expect(actions.sendTest).toHaveBeenCalledWith(21, 7, "jo@pauseai.uk");
+    // Another address; one that isn't one can't be sent to.
+    await to.fill("not an address");
+    await expect.element(test).toBeDisabled();
+    await to.fill(" sam@example.org ");
+    await test.click();
+    await expect.poll(() => actions.sendTest.mock.calls.at(-1)).toEqual([21, 7, "sam@example.org"]);
     actions.sendTest.mockResolvedValueOnce({ sent: false, reason: "failed" });
     await test.click();
     await expect.element(preview().getByText(copy.testFailed)).toBeVisible();

@@ -116,6 +116,10 @@ describeWithDatabase("the mailing pages' Server Actions", () => {
     expect(await sendMailingTest(id, polly)).toMatchObject({ sent: true, id: "m", to: JO });
     // To the recipient's name, at the staff member's address.
     expect(to).toBe(`"Polly Placeholder" <${JO}>`);
+    // To another address given; nothing to one that isn't one.
+    expect(await sendMailingTest(id, polly, " sam@example.org ")).toMatchObject({ sent: true, to: "sam@example.org" });
+    expect(to).toBe('"Polly Placeholder" <sam@example.org>');
+    expect(await sendMailingTest(id, polly, "not an address")).toBeUndefined();
     expect(await sendMailingTest(id, polly + 1)).toBeUndefined();
     expect(await sendMailingTest(999, polly)).toBeUndefined();
   });

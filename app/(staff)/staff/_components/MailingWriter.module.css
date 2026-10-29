@@ -148,6 +148,38 @@
   gap: var(--space-3);
 }
 
+/* The test copy: the address and its button on one row, and under them where it went. */
+.test {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+
+/* The address and its button, as tall as each other: the button stretches to the field's height. */
+.testRow {
+  display: flex;
+  gap: var(--space-2);
+  align-items: stretch;
+  width: 100%;
+  --button-padding: 0 16px;
+  --button-font-size: 14px;
+}
+
+/* The address's label, bold, beside it, on its line. */
+.testLabel {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* The address: room for a long one, but no wider, and never pushing its button off the row. */
+.testTo {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 18rem;
+}
+
 .problems {
   margin: 0;
   padding-left: var(--space-5);

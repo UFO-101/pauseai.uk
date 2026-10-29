@@ -23,6 +23,7 @@ import {
   type ScheduleResult,
 } from "@/lib/server/mailing-drafts";
 import { politicianAudience } from "@/lib/server/mailing-recipients";
+import { looksLikeEmail } from "@/lib/email-your-mp";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { storedFilter } from "@/lib/staff-search";
 
@@ -72,13 +73,19 @@ export async function detachFromMailing(id: number, version: number, attachmentI
   return { ...saved, attachments: (await getWrittenMailing(id))?.attachments ?? [] };
 }
 
-/** Sends the staff member one recipient's email of a draft, as they'd get it, and says where it went. */
-export async function sendMailingTest(id: number, politicianId: number) {
+/**
+ * Sends one recipient's email of a draft, as they'd get it, to `to`, or
+ * with none the staff member, and says where it went; nothing to an
+ * address that doesn't look like one.
+ */
+export async function sendMailingTest(id: number, politicianId: number, to = "") {
   const { email } = await requireStaff();
+  const address = to.trim() || email;
+  if (!looksLikeEmail(address)) return undefined;
   const mailing = await getWrittenMailing(id);
   if (!mailing) return undefined;
   const recipient = (await politicianAudience(mailing.filter)).recipients.find((r) => r.id === politicianId);
-  return recipient && { ...(await sendTestCopy(mailing, recipient, email)), to: email };
+  return recipient && { ...(await sendTestCopy(mailing, recipient, address)), to: address };
 }
 
 /** Schedules a draft at its version, if nothing stops it. */

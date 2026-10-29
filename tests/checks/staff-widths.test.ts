@@ -25,6 +25,7 @@ const ALLOWED: Record<string, string> = {
   "MailingWriter.module.css .day": "a field",
   "MailingWriter.module.css .hour": "a field",
   "MailingWriter.module.css .whoShown": "a field",
+  "MailingWriter.module.css .testTo": "a field",
   "StaffNav.module.css .menu > div": "the menu's dropdown",
   // The login page: one card in the middle of the window, with no grid.
   "LoginCard.module.css .login": "the login page",

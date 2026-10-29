@@ -362,10 +362,9 @@ export function emailFor(mailing: Pick<WrittenMailing, "subject" | "body">, reci
 }
 
 /**
- * Sends `to`, a staff member, one recipient's email of a mailing, as that
- * recipient would get it, attachments and all, whatever the recipient's
- * permissions, addressed to the recipient's name at the staff member's
- * address: by the Gmail it's sent from, in its sender's name, if that's
+ * Sends `to`, an address a staff member gave, one recipient's email of a
+ * mailing, as that recipient would get it, attachments and all, whatever
+ * the recipient's permissions, addressed to the recipient's name at `to`: by the Gmail it's sent from, in its sender's name, if that's
  * connected; otherwise by Postmark.
  */
 export async function sendTestCopy(

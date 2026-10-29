@@ -22,6 +22,7 @@ import { MAX_ATTACHMENT_BYTES } from "@/lib/mailing-attachments";
 import { answerLabels } from "@/lib/mailing-fields";
 import Link from "next/link";
 import { DEFAULT_SENDER } from "@/lib/gmail-connect";
+import { looksLikeEmail } from "@/lib/email-your-mp";
 import { leavePage } from "@/lib/leave-page";
 import { scheduleProblems } from "@/lib/mailing-schedule";
 import { filtersPath } from "@/lib/staff-search";
@@ -68,7 +69,7 @@ export type MailingWriterActions = {
   save: (id: number, version: number, changes: unknown) => Promise<SaveResult | undefined>;
   attach: (form: FormData) => Promise<AttachResult | undefined>;
   detach: (id: number, version: number, attachmentId: number) => Promise<AttachResult>;
-  sendTest: (id: number, politicianId: number) => Promise<(ChannelResult & { to: string }) | undefined>;
+  sendTest: (id: number, politicianId: number, to: string) => Promise<(ChannelResult & { to: string }) | undefined>;
   schedule: (id: number, version: number) => Promise<ScheduleResult>;
   deleteDraft: (form: FormData) => void | Promise<void>;
 };
@@ -460,7 +461,7 @@ export default function MailingWriter({
             subject={values.subject}
             sentFrom={values.sentFrom}
             written={written}
-            sendTest={async (recipient) => actions.sendTest(await draftId(), recipient)}
+            sendTest={async (recipient, to) => actions.sendTest(await draftId(), recipient, to)}
           />
         </Card>
 
@@ -570,8 +571,11 @@ function Preview({
   /** Whether the letter has anything in it but its greeting, so there's something to test. */
   written: boolean;
   /** Sends the test copy of a recipient's email, saving the draft first if it isn't yet. */
-  sendTest: (recipient: number) => ReturnType<MailingWriterActions["sendTest"]>;
+  sendTest: (recipient: number, to: string) => ReturnType<MailingWriterActions["sendTest"]>;
 }) {
+  // Where the test copy goes: you, unless you give another address.
+  const [testTo, setTestTo] = useState(data.me);
+  const testToId = useId();
   // The name the Gmail sends as, if it has one of its own, as its From line will show it.
   const name = data.senders.find((sender) => sender.email === sentFrom)?.name;
   const fromLine = name ? `${name} <${sentFrom}>` : sentFrom;
@@ -653,21 +657,30 @@ function Preview({
         // No one to fill it in for: no email, rather than one made up.
         <p className={styles.noEmail}>{copy.noOneMix}</p>
       )}
-      <div className={styles.send}>
-        <Button
-          variant="ghost"
-          fit
-          disabled={!written || !recipient}
-          pending={sending}
-          onClick={async () => {
-            setSending(true);
-            const result = await sendTest(recipient!.id);
-            setSending(false);
-            setSent({ to: result?.sent ? result.to : undefined });
-          }}
-        >
-          {copy.sendTest}
-        </Button>
+      <div className={styles.test}>
+        <div className={styles.testRow}>
+          <label htmlFor={testToId} className={styles.testLabel}>
+            {copy.sendTestTo}
+          </label>
+          <span className={styles.testTo}>
+            <TextInput id={testToId} type="email" value={testTo} onChange={(event) => setTestTo(event.target.value)} />
+          </span>
+          <Button
+            variant="primary"
+            fit
+            disabled={!written || !recipient || !looksLikeEmail(testTo.trim())}
+            pending={sending}
+            onClick={async () => {
+              setSending(true);
+              const result = await sendTest(recipient!.id, testTo.trim());
+              setSending(false);
+              setSent({ to: result?.sent ? result.to : undefined });
+            }}
+          >
+            {copy.sendTest}
+          </Button>
+        </div>
+        <Muted>{copy.testVia(data.senders.some((sender) => sender.email === sentFrom) ? sentFrom : null)}</Muted>
         <Muted>
           <span role="status">
             {!written ? copy.testNeedsDraft : sent && (sent.to ? copy.testSent(sent.to) : copy.testFailed)}

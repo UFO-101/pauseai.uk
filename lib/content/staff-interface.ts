@@ -855,7 +855,14 @@ export const staffCopy = {
     noSender: "Choose who below",
     // When no recipient has the answers chosen.
     noOneMix: "No preview, because none of the recipients match the answers you picked above.",
-    sendTest: "Send this one to me",
+    // The test copy: the address it goes to, yours to start with, and the button.
+    sendTestTo: "Send a test copy to",
+    sendTest: "Send test",
+    // Under it: how the test copy goes, so you know where to look for it.
+    testVia: (gmail: string | null) =>
+      gmail
+        ? `⁂ It goes from ${gmail}'s Gmail, so it'll be in its Sent mail too.`
+        : "⁂ It goes from our own mail service, not a Gmail, so it won't be in any Gmail's Sent mail.",
     testSent: (address: string) => `Sent to ${address}.`,
     // Under the test button, while the letter is empty or only its greeting.
     testNeedsDraft: "Write something first!",
