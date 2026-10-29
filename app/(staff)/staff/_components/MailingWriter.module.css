@@ -181,6 +181,11 @@
   .testLabel {
     flex-basis: 100%;
   }
+
+  /* The address shrinks, so its button stays beside it. */
+  .testTo {
+    flex-basis: 0;
+  }
 }
 
 /* The address: room for a long one, but no wider, and never pushing its button off the row. */

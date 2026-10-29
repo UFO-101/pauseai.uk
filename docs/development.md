@@ -204,14 +204,15 @@ The example `.env.local` sets `DATA_FIXTURES=1`. With it, every call to an outsi
 answer from `tests/fixtures/outside-services.ts` instead. Nothing leaves
 your machine. You need no keys:
 
-| Service                  | What the fixture does                                                                                                                                       |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Luma                     | A few made-up events and guests                                                                                                                             |
-| postcodes.io             | Knows only SW1A 1AA (Cities of London and Westminster); every other postcode is "not found". The test postcodes never ask it.                               |
-| Airtable                 | A politician of each body, one retired and one who left, with their statuses; PauseAI's emails to them; the old form's letters; Go to Parliament's meetings |
-| Parliament's Members API | The same two MPs, with an office email each. Polly Placeholder's differs from Airtable's, so the MP check has something to show.                            |
-| Turnstile                | Accepts every token                                                                                                                                         |
-| Postmark                 | Accepts every email, without needing a token, and writes each one to a mail file (`.eml`) in `OUTBOX_DIR`, or `tmp/outbox/` in the dev server.              |
+| Service                  | What the fixture does                                                                                                                                                                           |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Luma                     | A few made-up events and guests                                                                                                                                                                 |
+| postcodes.io             | Knows only SW1A 1AA (Cities of London and Westminster); every other postcode is "not found". The test postcodes never ask it.                                                                   |
+| Airtable                 | A politician of each body, one retired and one who left, with their statuses; PauseAI's emails to them; the old form's letters; Go to Parliament's meetings                                     |
+| Parliament's Members API | The same two MPs, with an office email each. Polly Placeholder's differs from Airtable's, so the MP check has something to show.                                                                |
+| Turnstile                | Accepts every token                                                                                                                                                                             |
+| Postmark                 | Accepts every email, without needing a token, and writes each one to a mail file (`.eml`) in `OUTBOX_DIR`, or `tmp/outbox/` in the dev server.                                                  |
+| Google (Gmail)           | Connects any account with no consent screen, naming it from its address (policy@ is "Policy"); sends nothing, writing each email to the outbox as Postmark's fake does; reads an empty mailbox. |
 
 #### Send a letter to the test MP
 
