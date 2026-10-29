@@ -1324,6 +1324,8 @@ export const staffCopy = {
     narrow: "Search these",
     // A place filter's distance, for a screen reader.
     within: "Within",
+    // A list's page title, in the browser's tab, with its search and filters that are on, shortened.
+    pageTitle: (title: string, filters: string) => `${title}: ${filters}`,
   },
   // Under a list of more than one page.
   paging: {

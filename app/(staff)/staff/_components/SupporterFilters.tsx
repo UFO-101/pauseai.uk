@@ -6,7 +6,8 @@ import type { EventChoice, SupportersPage } from "@/lib/server/supporters";
 import { staffDate } from "@/lib/staff-time";
 import { NEAR_MILES, SUPPORTER_BADGES } from "@/lib/supporters";
 import ChannelIcon from "./ChannelIcon";
-import FilterBar, { type Filter } from "./ui/FilterBar";
+import { supporterFiltersOf } from "./SupportersTable";
+import FilterBar, { filterWords, type Filter } from "./ui/FilterBar";
 
 /**
  * The Subscriptions filter's topics, in its order: email's, then phone's,
@@ -23,9 +24,10 @@ export const SUBSCRIPTION_ORDER: [Channel, Topic][] = [
   ["phone", "march-day"],
 ];
 
-/** The words in the Near chip: where it found, or that it couldn't. */
+/** The words in the Near chip: where it found, or that it couldn't; as typed, when it wasn't looked up. */
 function nearWords(text: string, near: SupportersPage["near"]): string {
   const copy = staffCopy.supporters.filters;
+  if (near === undefined) return text;
   if (near === "failed") return copy.failed(text);
   return near ? near.place : copy.notFound(text);
 }
@@ -122,6 +124,15 @@ export function supporterFilters(
       options: Object.entries(copy.wrote).map(([value, label]) => ({ value, label })),
     },
   ];
+}
+
+/** The supporters list's search and filters that are on, in words, as their chips say them. */
+export function supporterWords(
+  search: SupportersSearch,
+  events: EventChoice[],
+  near?: SupportersPage["near"],
+): string[] {
+  return filterWords(supporterFilters(search, events, near), supporterFiltersOf(search), "q");
 }
 
 /** Search and filter the supporters list. The erased notice goes with any change. */

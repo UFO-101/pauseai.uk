@@ -4,7 +4,7 @@ import { page, userEvent } from "vitest/browser";
 import { TextInput } from "@/components/ui/Controls";
 import StaffPage from "./StaffPage";
 import Tabs from "./Tabs";
-import FilterBar, { filterWords, type Filter } from "./FilterBar";
+import FilterBar, { filteredTitle, filterWords, type Filter } from "./FilterBar";
 import Menu from "./Menu";
 import ListFrame, { ListTable, type ListColumn } from "./ListFrame";
 import NavFold from "./NavFold";
@@ -573,6 +573,17 @@ describe("filterWords", () => {
       staffCopy.filters.notChip("Kind", "A"),
       "Near LS1",
     ]);
+  });
+});
+
+describe("filteredTitle", () => {
+  it("is the list's title alone with no filter on, and with each one's words after it, cut short when long", () => {
+    expect(filteredTitle("People", ["", ""])).toBe("People");
+    expect(filteredTitle("People", ["", "Kind A", "Near LS1"])).toBe(
+      staffCopy.filters.pageTitle("People", "Kind A, Near LS1"),
+    );
+    const long = filteredTitle("People", ["Kind ".padEnd(40, "a"), "Near ".padEnd(40, "b")]);
+    expect(long).toBe(staffCopy.filters.pageTitle("People", `${"Kind ".padEnd(40, "a")}, ${"Near ".padEnd(17, "b")}…`));
   });
 });
 

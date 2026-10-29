@@ -4,13 +4,21 @@ import { requireStaff } from "@/lib/server/staff-auth";
 import { eventChoices, listSupporters } from "@/lib/server/supporters";
 import { supportersSearch, type SupportersSearch } from "@/lib/staff-search";
 import ErasedNotice from "../../_components/ErasedNotice";
-import SupporterFilters from "../../_components/SupporterFilters";
+import SupporterFilters, { supporterWords } from "../../_components/SupporterFilters";
 import SupportersTable from "../../_components/SupportersTable";
+import { filteredTitle } from "../../_components/ui/FilterBar";
+
+type Props = { searchParams: Promise<Partial<SupportersSearch>> };
+
+/** The list's title, with its filters: the Near filter as typed, not looked up. */
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  await requireStaff("supporters");
+  const search = supportersSearch(await searchParams);
+  return { title: filteredTitle(staffCopy.supporters.title, supporterWords(search, await eventChoices())) };
+}
 
 /** Everyone we know of, filtered, newest activity first. */
-export const metadata: Metadata = { title: staffCopy.supporters.title };
-
-export default async function SupportersPage({ searchParams }: { searchParams: Promise<Partial<SupportersSearch>> }) {
+export default async function SupportersPage({ searchParams }: Props) {
   await requireStaff("supporters");
   const { filter, ...search } = supportersSearch(await searchParams);
   const [page, events] = await Promise.all([listSupporters(filter), eventChoices()]);

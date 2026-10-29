@@ -1,7 +1,6 @@
 import type { NextRequest } from "next/server";
-import { politicianFilters } from "../../../_components/PoliticianFilters";
+import { politicianWords } from "../../../_components/PoliticianFilters";
 import { politicianColumns, politicianContact } from "../../../_components/PoliticianTable";
-import { filterWords } from "../../../_components/ui/FilterBar";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { listAsks } from "@/lib/server/asks";
 import { listParties, listPoliticians, politiciansSearch } from "@/lib/server/politicians";
@@ -21,10 +20,7 @@ export async function GET(request: NextRequest) {
     const filters = { ...search, page: "" };
     return {
       what: staffCopy.politicians.title,
-      filters: [
-        staffCopy.houses[search.house as keyof typeof staffCopy.houses] ?? "",
-        ...filterWords(politicianFilters(search.ask, parties, asks), filters, "q"),
-      ],
+      filters: politicianWords(search, parties, asks),
       columns: politicianColumns(asks, filters),
       rows: politicians,
       contact: politicianContact(asks),

@@ -23,7 +23,7 @@ import JobActions from "./JobActions";
 import LoginCard from "./LoginCard";
 import LoginForm from "./LoginForm";
 import PoliticianDetails from "./PoliticianDetails";
-import PoliticianFilters from "./PoliticianFilters";
+import PoliticianFilters, { politicianWords } from "./PoliticianFilters";
 import PoliticianTable, { politicianColumns, politicianContact } from "./PoliticianTable";
 import {
   exampleAsks,
@@ -76,7 +76,7 @@ import ErasedNotice from "./ErasedNotice";
 import SubscriptionBadges, { subscriptionWords } from "./SubscriptionBadges";
 import SupporterBadges, { supporterBadgeWords } from "./SupporterBadges";
 import SupporterDetails from "./SupporterDetails";
-import SupporterFilters, { SUBSCRIPTION_ORDER } from "./SupporterFilters";
+import SupporterFilters, { SUBSCRIPTION_ORDER, supporterWords } from "./SupporterFilters";
 import LetterFilters from "./LetterFilters";
 import SupportersTable, { supporterColumns, supporterContact } from "./SupportersTable";
 import type { ListColumn } from "./ui/ListFrame";
@@ -3750,6 +3750,26 @@ describe("the supporters list's Email and Phone columns", () => {
     await render(<SupportersTable search={search(contact)} page={{ supporters: [jane], total: 1, pages: 1 }} />);
     await expect.element(page.getByRole("cell", { name: "jane@example.com" })).toBeVisible();
     await expect.element(page.getByRole("cell", { name: "+447700900001" })).toBeVisible();
+  });
+});
+
+describe("the lists' filters in words, for their titles", () => {
+  it("says a supporters search's Near as typed when it wasn't looked up, and each filter by its chip's words", () => {
+    const search = supportersSearch({ q: "jo", near: "LS1", activity: "member" });
+    expect(supporterWords(search, [])).toEqual([
+      `${staffCopy.search} jo`,
+      `${staffCopy.supporters.filters.near} LS1`,
+      `${staffCopy.supporters.columns.badges} ${staffCopy.supporters.badges.member}`,
+    ]);
+  });
+
+  it("says the politicians' house first, or nothing for all of them", () => {
+    const parties = ["Labour"];
+    expect(politicianWords({ ...emptyPoliticiansSearch, house: "lords", party: ["Labour"] }, parties, [])).toEqual([
+      staffCopy.houses.lords,
+      `${staffCopy.fields.party} Labour`,
+    ]);
+    expect(politicianWords(emptyPoliticiansSearch, parties, [])).toEqual([""]);
   });
 });
 

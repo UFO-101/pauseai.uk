@@ -81,6 +81,17 @@ export function filterWords(filters: Filter[], values: Params, search: string): 
   return words;
 }
 
+/** How long the filters in a list's page title get before they're cut short. */
+const TITLE_FILTERS = 60;
+
+/** A list's page title with the search and filters that are on, `words` (filterWords()), cut short if long. */
+export function filteredTitle(title: string, words: string[]): string {
+  const filters = words.filter(Boolean).join(", ");
+  if (!filters) return title;
+  const short = filters.length > TITLE_FILTERS ? `${filters.slice(0, TITLE_FILTERS - 1).trimEnd()}…` : filters;
+  return copy.pageTitle(title, short);
+}
+
 /** A list of choices, each a link; the one chosen marked; with `search`, a box over it that narrows it. */
 function Choices({
   options,

@@ -3,7 +3,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import type { Ask } from "@/lib/server/asks";
 import { COUNTRIES, EMAIL_STATES, POLITICIAN_FLAGS } from "@/lib/politician-filters";
 import type { PoliticiansSearch } from "@/lib/server/politicians";
-import FilterBar, { type Filter } from "./ui/FilterBar";
+import FilterBar, { filterWords, type Filter } from "./ui/FilterBar";
 
 const copy = staffCopy.politicians;
 
@@ -73,6 +73,14 @@ export function politicianFilters(askSlug: string, parties: string[], asks: Ask[
         { value: "none", label: copy.noAnswer },
       ],
     },
+  ];
+}
+
+/** The politicians list's house, search and filters that are on, in words, as its tabs and chips say them. */
+export function politicianWords(search: PoliticiansSearch, parties: string[], asks: Ask[]): string[] {
+  return [
+    staffCopy.houses[search.house as keyof typeof staffCopy.houses] ?? "",
+    ...filterWords(politicianFilters(search.ask, parties, asks), search, "q"),
   ];
 }
 
