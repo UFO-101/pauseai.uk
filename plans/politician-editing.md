@@ -4,8 +4,8 @@ Politicians' details are updated every night from the official sources,
 staff edit everything else on the site, and the syncs from Airtable's
 "UK Politicians" base are switched off. This is one pull request.
 
-Most of it can be built now. Switching Airtable off should wait until
-Joseph is sending mailings from the site (`plans/politician-email.md`).
+Most of it can be built now. Switching Airtable off waits until Joseph
+sends mailings from the site rather than Airtable.
 
 ## What replaces each Airtable field
 
