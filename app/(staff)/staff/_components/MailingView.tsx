@@ -43,8 +43,10 @@ function letterLabels(asks: Ask[]): { fields: Record<string, string>; conditions
 }
 
 /**
- * A recipient's columns: who, what happened to their letter, leading to
- * its page, when, whether they replied, and their answer to its ask.
+ * A recipient's columns, as every list's go (docs/style-guide.md): who;
+ * how it stands, what happened to their letter, leading to its page, their
+ * answer to its ask, and how it was written; then when it was sent and
+ * replied to.
  */
 function recipientColumns(mailing: Mailing): ListColumn<MailingRecipient>[] {
   return [
@@ -66,6 +68,26 @@ function recipientColumns(mailing: Mailing): ListColumn<MailingRecipient>[] {
         </Link>
       ),
     },
+    ...(mailing.ask
+      ? [
+          {
+            key: "answer",
+            label: mailing.askTitle!,
+            cell: (r: MailingRecipient) => (r.answer ? staffCopy.statuses[r.answer] : <Muted>–</Muted>),
+          },
+        ]
+      : []),
+    // Airtable kept how each was written.
+    ...(mailing.imported
+      ? [
+          {
+            key: "how",
+            label: staffCopy.mailings.recipientColumns.how,
+            cell: (r: MailingRecipient) =>
+              r.personalised ? staffCopy.mailings.personalised : <Muted>{staffCopy.mailings.asWritten}</Muted>,
+          },
+        ]
+      : []),
     {
       key: "sentAt",
       label: staffCopy.mailings.recipientColumns.sentAt,
@@ -78,26 +100,6 @@ function recipientColumns(mailing: Mailing): ListColumn<MailingRecipient>[] {
       short: true,
       cell: (r) => (r.repliedAt ? staffDate(r.repliedAt) : <Muted>–</Muted>),
     },
-    // Airtable kept how each was written.
-    ...(mailing.imported
-      ? [
-          {
-            key: "how",
-            label: staffCopy.mailings.recipientColumns.how,
-            cell: (r: MailingRecipient) =>
-              r.personalised ? staffCopy.mailings.personalised : <Muted>{staffCopy.mailings.asWritten}</Muted>,
-          },
-        ]
-      : []),
-    ...(mailing.ask
-      ? [
-          {
-            key: "answer",
-            label: mailing.askTitle!,
-            cell: (r: MailingRecipient) => (r.answer ? staffCopy.statuses[r.answer] : <Muted>–</Muted>),
-          },
-        ]
-      : []),
   ];
 }
 
