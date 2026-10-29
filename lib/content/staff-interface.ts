@@ -619,7 +619,7 @@ export const staffCopy = {
     // In the second half of the ask's chip, before an answer is chosen.
     anyAnswer: "Any answer",
     // A filter: those a mailing about an ask has gone or is going to.
-    mailed: "⁂ Mailed about",
+    mailed: "Mailed about",
     noAnswer: "Not answered",
     none: "None found.",
     // Over the list: how many there are.
@@ -848,7 +848,7 @@ export const staffCopy = {
     removeFile: (name: string) => `Remove ${name}`,
     tooBig: "That file is too big - a file can be up to 4MB.",
     // When uploading a file fails, such as the connection dropping.
-    attachFailed: "⁂ That file couldn't be added. Try again.",
+    attachFailed: "That file couldn't be added. Try again.",
     // Over the preview: before a button for each condition the letter's parts use, then over the choice of whose email it shows.
     findRecipient: "Find recipient who:",
     chooseRecipient: "Choose recipient:",
@@ -874,7 +874,7 @@ export const staffCopy = {
     fromLegend: "Whose Gmail to send it from",
     // A sender, in Sent from's list: their address, and how many more it can send today.
     // Your own address, before your Gmail's connected.
-    senderNotConnected: (address: string) => `⁂ ${address} (not connected)`,
+    senderNotConnected: (address: string) => `${address} (not connected)`,
     notConnected: "This Gmail isn't connected. Only its owner can connect it, from their own page.",
     // With no Gmail connected, in place of the choice of one.
     noSenders: "No Gmail is connected yet, so nothing can be sent.",
@@ -897,8 +897,8 @@ export const staffCopy = {
       "no-recipients": "There's nobody to send to.",
       "field-lacking": "It uses a field some recipients have no value for.",
       "no-sender": "Choose who to send the message from.",
-      "not-connected": "⁂ The Gmail it's sent from isn't connected.",
-      "too-many": "⁂ It goes to more people than one Gmail can send to in a day.",
+      "not-connected": "The Gmail you've chosen to send from isn't connected.",
+      "too-many": "This mailing is to more people than one Gmail can send to in a day.",
       "no-time": "Choose what time it will be sent.",
       "time-passed": "You can't send it into the past!",
       "cannot-send": "Sending isn't built yet.",
@@ -1143,7 +1143,7 @@ export const staffCopy = {
     // Instead of the history, when nothing has bounced or been complained about.
     noProblems: "Nothing has bounced or been marked as spam.",
     // Beside a bounce read from someone's Gmail, rather than reported by Postmark.
-    foundInGmail: "⁂ found in Gmail",
+    foundInGmail: "found in Gmail",
     kinds: {
       hard: "Bounced",
       soft: "Soft bounce",
