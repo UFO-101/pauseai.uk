@@ -32,15 +32,19 @@ export function renderStoryboardPage(storyboard: Storyboard): string {
   <a id="newer" href="../../index.html" hidden></a>
   <p id="summary"></p>
   <div class="controls">
-    <input type="search" id="filter" placeholder="Filter flows and frames  /" aria-label="Filter flows and frames" autocomplete="off">
     <span class="segmented" role="radiogroup" aria-label="Viewport">
       <button type="button" data-viewport="desktop" aria-pressed="true">Desktop</button><button type="button" data-viewport="phone" aria-pressed="false">Phone</button>
     </span>
-    <label><input type="checkbox" id="changed-only"> Changed only</label>
   </div>
 </header>
 <div class="layout">
-  <nav id="sidebar" aria-label="Sections and flows"></nav>
+  <aside id="sidebar">
+    <div class="tools">
+      <input type="search" id="filter" placeholder="Filter flows and frames  /" aria-label="Filter flows and frames" autocomplete="off">
+      <label><input type="checkbox" id="changed-only"> Changed only</label>
+    </div>
+    <nav id="section-list" aria-label="Sections and flows"></nav>
+  </aside>
   <main id="board"></main>
 </div>
 <dialog id="lightbox">
@@ -69,7 +73,7 @@ h1, h2, h3, h4, p { margin: 0; }
 .bar p { color: var(--muted); flex: 1; }
 #newer { padding: 4px 10px; border-radius: 4px; background: var(--changed); color: #fff; font-weight: 600; text-decoration: none; }
 .controls { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; }
-#filter { width: 260px; font: inherit; padding: 5px 10px; border: 1px solid #bbb; border-radius: 6px; }
+#filter { width: 100%; font: inherit; padding: 6px 10px; border: 1px solid #bbb; border-radius: 6px; background: #fff; }
 #filter:focus { outline: 2px solid #111; outline-offset: -1px; border-color: #111; }
 .segmented button { font: inherit; padding: 4px 10px; border: 1px solid #999; background: #fff; cursor: pointer; }
 .segmented button:first-child { border-radius: 4px 0 0 4px; }
@@ -77,7 +81,11 @@ h1, h2, h3, h4, p { margin: 0; }
 .segmented button + button { border-left: 0; }
 .segmented button[aria-pressed="true"] { background: #111; color: #fff; border-color: #111; }
 .layout { display: grid; grid-template-columns: 360px 1fr; }
-#sidebar { position: sticky; top: var(--bar); height: calc(100vh - var(--bar)); overflow: auto; overscroll-behavior: contain; padding: 4px 0 40vh; border-right: 1px solid var(--line); background: var(--bg); }
+/* The sidebar: the filter and Changed only at its top, staying put, and the sections scrolling under them. */
+#sidebar { position: sticky; top: var(--bar); display: flex; flex-direction: column; height: calc(100vh - var(--bar)); border-right: 1px solid var(--line); background: var(--bg); }
+#sidebar .tools { display: grid; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+#sidebar .tools label { display: flex; gap: 6px; align-items: center; color: #333; cursor: pointer; }
+#section-list { flex: 1; overflow: auto; overscroll-behavior: contain; padding: 0 0 40vh; }
 /* A part: the public site, the staff pages, the tools. */
 #sidebar .part { position: sticky; top: 0; z-index: 1; padding: 14px 16px 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); background: var(--bg); }
 #sidebar summary { display: flex; justify-content: space-between; gap: 8px; padding: 6px 16px 6px 12px; cursor: pointer; font-weight: 600; list-style: none; border-radius: 0; }
@@ -136,7 +144,7 @@ dialog::backdrop { background: #000; }
 .lightbox-image { overflow: auto; height: calc(100vh - 41px); }
 .lightbox-image img { display: block; margin: 0 auto; max-width: none; }
 /* Narrow: the bar scrolls away, the sidebar is a list above the board, and the frames stack. */
-@media (max-width: 800px) { .bar { position: static; } :root { --bar: 0px; } .layout { grid-template-columns: 1fr; } #sidebar { position: static; height: auto; padding-bottom: 12px; } #sidebar .part { position: static; } main { padding: 8px 16px 40px; } .frame { grid-template-columns: 1fr; } #filter { width: 100%; } }
+@media (max-width: 800px) { .bar { position: static; } :root { --bar: 0px; } .layout { grid-template-columns: 1fr; } #sidebar { position: static; height: auto; } #section-list { padding-bottom: 12px; } #sidebar .part { position: static; } main { padding: 8px 16px 40px; } .frame { grid-template-columns: 1fr; } }
 `;
 
 const JS = `
@@ -191,7 +199,7 @@ function render() {
   const order = [...sectionInfo.keys()];
   const rank = (id) => (order.includes(id) ? order.indexOf(id) : order.length);
   const sections = [...new Set(flows.map((f) => f.section))].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
-  const sidebar = document.getElementById("sidebar");
+  const sidebar = document.getElementById("section-list");
   const board = document.getElementById("board");
   sidebar.replaceChildren();
   board.replaceChildren();
@@ -333,7 +341,7 @@ function trackPlace() {
   if (narrow.matches) return;
   // Into the sidebar's own view, below its part's heading. Not scrollIntoView:
   // on a phone the sidebar isn't sticky, and that would scroll the page to it.
-  const sidebar = document.getElementById("sidebar");
+  const sidebar = document.getElementById("section-list");
   const target = link.closest("details").open ? link : link.closest("details").querySelector("summary");
   const box = target.getBoundingClientRect();
   const view = sidebar.getBoundingClientRect();
