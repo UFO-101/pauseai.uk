@@ -3,7 +3,7 @@ import { logChange } from "./audit";
 import { query, transaction } from "./db";
 import { gmailAccess } from "./gmail-accounts";
 import { newMessageId } from "./mime";
-import { GmailError, sendGmail } from "./outside-services/gmail";
+import { GmailError, gmailMessageId, sendGmail } from "./outside-services/gmail";
 import { PostmarkError, sendEmail, unsuppress, type Email } from "./outside-services/postmark";
 import { now } from "@/lib/now";
 
@@ -76,7 +76,7 @@ export async function send(
 ): Promise<SendResult> {
   const address = bareAddress(email.To);
   const from = backend.name === "gmail" ? backend.account : (sender ?? null);
-  const rfcId = backend.name === "gmail" ? (messageId ?? newMessageId()) : (messageId ?? null);
+  let rfcId = backend.name === "gmail" ? (messageId ?? newMessageId()) : (messageId ?? null);
   const log = (outcome: "sent" | "refused" | "failed", id: string | null = null, threadId: string | null = null) =>
     query(
       `INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id, backend, sender, rfc_message_id, gmail_thread_id)
@@ -91,9 +91,12 @@ export async function send(
   let threadId: string | null = null;
   try {
     if (backend.name === "gmail") {
-      const sent = await sendGmail(await gmailAccess(backend.account), { ...email, MessageId: rfcId!, Date: now() });
+      const token = await gmailAccess(backend.account);
+      const sent = await sendGmail(token, { ...email, MessageId: rfcId!, Date: now() });
       id = sent.id;
       threadId = sent.threadId;
+      // The Message-ID it went with, which replies and bounces name, if Gmail gave it one of its own.
+      rfcId = (await gmailMessageId(token, sent.id)) ?? rfcId;
     } else {
       id = await sendEmail(rfcId ? { ...email, Headers: [{ Name: "Message-ID", Value: `<${rfcId}>` }] } : email);
     }

@@ -1,4 +1,6 @@
 import type { APIRequestContext, Page, Route } from "@playwright/test";
+import { longDay } from "@/lib/calendar-days";
+import { DATE_PICKER_WORDS } from "@/lib/content/date-picker";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { TEST_MPS } from "@/lib/test-mps";
 import { ROUTES } from "../routes";
@@ -114,4 +116,16 @@ export async function sentLetterId(
   const id = (await group.getAttribute("href"))!.match(/\/msgid\/policy\/([\w-]+)@mtasv\.net$/)![1];
   await page.goto(`${BASE}/staff/letters`);
   return id;
+}
+
+/**
+ * Chooses `day` with the date picker the field `label` names: opens it,
+ * moves on a few weeks at a time until the day is in view, and clicks it.
+ */
+export async function chooseDay(page: Page, label: string, day: string) {
+  await page.getByRole("button", { name: label }).click();
+  const calendar = page.getByRole("dialog");
+  const target = calendar.getByRole("button", { name: new RegExp(`^${longDay(day)}`) });
+  while (!(await target.isVisible())) await calendar.getByRole("button", { name: DATE_PICKER_WORDS.later }).click();
+  await target.click();
 }

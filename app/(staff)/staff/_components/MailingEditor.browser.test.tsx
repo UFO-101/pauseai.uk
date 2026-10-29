@@ -26,6 +26,8 @@ const conditions = [
 const paragraph = (...content: JSONContent[]): JSONContent => ({ type: "paragraph", content });
 const text = (value: string): JSONContent => ({ type: "text", text: value });
 const field = (id: string): JSONContent => ({ type: "field", attrs: { field: id } });
+/** An empty paragraph, as the editor reports it. */
+const EMPTY: JSONContent = { type: "paragraph" };
 
 async function renderEditor(content: JSONContent[], offered = { fields, conditions }, recipients?: number) {
   const onChange = vi.fn<(doc: JSONContent) => void>();
@@ -289,5 +291,97 @@ describe("MailingEditor", () => {
       .element()
       .dispatchEvent(new ClipboardEvent("copy", { clipboardData: copied, bubbles: true }));
     expect(copied.getData("text/plain")).toContain("Hi name");
+  });
+
+  it("links text from Link or Ctrl+K, and quotes it", async () => {
+    const onChange = await renderEditor([paragraph(text("Join us"))]);
+    await editor().click();
+    await userEvent.keyboard("{Control>}a{/Control}");
+    await page.getByRole("button", { name: copy.link }).click();
+    await userEvent.keyboard("pauseai.uk/join{Enter}");
+    // Link again shuts the bar, as does the button pressed twice.
+    await page.getByRole("button", { name: copy.link }).click();
+    await expect.element(page.getByRole("textbox", { name: copy.linkBar.address })).toBeVisible();
+    await page.getByRole("button", { name: copy.link }).click();
+    await expect.element(page.getByRole("textbox", { name: copy.linkBar.address })).not.toBeInTheDocument();
+    await expect.element(page.getByRole("button", { name: copy.link })).toHaveAttribute("aria-pressed", "true");
+    expect(last(onChange).content![0].content![0].marks).toEqual([
+      { type: "link", attrs: expect.objectContaining({ href: "https://pauseai.uk/join" }) },
+    ]);
+    await userEvent.keyboard("{Control>}k{/Control}");
+    await expect
+      .element(page.getByRole("textbox", { name: copy.linkBar.address }))
+      .toHaveValue("https://pauseai.uk/join");
+    await page.getByRole("button", { name: copy.linkBar.remove }).click();
+    expect(last(onChange).content![0].content![0].marks).toBeUndefined();
+    // Another key with Ctrl is the editor's.
+    await userEvent.keyboard("{Control>}b{/Control}");
+    await expect.element(page.getByRole("textbox", { name: copy.linkBar.address })).not.toBeInTheDocument();
+    await page.getByRole("button", { name: copy.quote }).click();
+    await expect.element(page.getByRole("button", { name: copy.quote })).toHaveAttribute("aria-pressed", "true");
+    expect(last(onChange).content![0]).toMatchObject({ type: "blockquote", content: [{ type: "paragraph" }] });
+  });
+
+  it("makes no blank lines: Enter on an empty line, or at the start of a line after one, does nothing", async () => {
+    const onChange = await renderEditor([paragraph(text("One")), EMPTY, paragraph(text("Two"))]);
+    await cursorAt("One", "end");
+    await userEvent.keyboard("{Enter}{Enter}x");
+    expect(last(onChange).content).toEqual([
+      paragraph(text("One")),
+      paragraph(text("x")),
+      EMPTY,
+      paragraph(text("Two")),
+    ]);
+    await cursorAt("Two", "start");
+    await userEvent.keyboard("{Enter}");
+    // The first line at its start, and a line in a list, split as ever.
+    await cursorAt("One", "start");
+    await userEvent.keyboard("{Enter}");
+    expect(last(onChange).content).toEqual([
+      EMPTY,
+      paragraph(text("One")),
+      paragraph(text("x")),
+      EMPTY,
+      paragraph(text("Two")),
+    ]);
+    await cursorAt("x", "start");
+    await userEvent.keyboard("{Enter}");
+    expect(last(onChange).content).toHaveLength(6);
+  });
+
+  it("leaves a list, or a selection, to Enter as ever", async () => {
+    const onChange = await renderEditor([
+      { type: "bulletList", content: [{ type: "listItem", content: [paragraph(text("Item"))] }] },
+      paragraph(text("After")),
+    ]);
+    await cursorAt("Item", "end");
+    await userEvent.keyboard("{Enter}{Enter}");
+    expect(last(onChange).content).toEqual([
+      { type: "bulletList", content: [{ type: "listItem", content: [paragraph(text("Item"))] }] },
+      EMPTY,
+      paragraph(text("After")),
+    ]);
+    // Text selected is replaced, as ever.
+    await cursorAt("After", "end");
+    await userEvent.keyboard("{Shift>}{Home}{/Shift}");
+    await expect.poll(() => document.getSelection()?.toString()).toBe("After");
+    await userEvent.keyboard("{Enter}");
+    expect(JSON.stringify(last(onChange))).not.toContain("After");
+  });
+
+  it("leaves out empty paragraphs pasted in, but not the ends of what's pasted", async () => {
+    const onChange = await renderEditor([paragraph(text("Start"))]);
+    await toEnd();
+    const paste = (html: string) => {
+      const pasted = new DataTransfer();
+      pasted.setData("text/html", html);
+      editor()
+        .element()
+        .dispatchEvent(new ClipboardEvent("paste", { clipboardData: pasted, bubbles: true }));
+    };
+    paste("<p>A</p><p></p><p></p><p>B</p>");
+    expect(last(onChange).content).toEqual([paragraph(text("StartA")), paragraph(text("B"))]);
+    paste("<ul><li><p>C</p></li></ul><p></p><ul><li><p>D</p></li></ul>");
+    expect(JSON.stringify(last(onChange))).not.toContain('{"type":"paragraph"}');
   });
 });

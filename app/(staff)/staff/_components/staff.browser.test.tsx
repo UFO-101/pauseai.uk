@@ -47,6 +47,7 @@ import {
   exampleGoToParliamentResult,
   exampleHeldSync,
   exampleLumaResult,
+  exampleGmailResult,
   exampleMembersResult,
   exampleRun,
   exampleSyncedMp,
@@ -70,6 +71,7 @@ import { emptyPoliticiansSearch, examplePoliticiansPage } from "./PoliticianTabl
 import MailingsTable, { mailingColumns } from "./MailingsTable";
 import { exampleMailings } from "./MailingsTable.examples";
 import ImportCard, { ImportCards } from "./ImportCard";
+import ImportIcon from "./ImportIcon";
 import DevLogin from "./DevLogin";
 import KeepSignedIn from "./KeepSignedIn";
 import RemoveAccountForm from "./RemoveAccountForm";
@@ -1000,24 +1002,51 @@ describe("SortHeading", () => {
   });
 });
 
+describe("ImportIcon", () => {
+  it("shows each source's mark, named for screen readers and on hover", async () => {
+    const sources = ["airtable", "luma", "gmail", "web"] as const;
+    await render(
+      <>
+        {sources.map((source) => (
+          <ImportIcon key={source} source={source} />
+        ))}
+      </>,
+    );
+    for (const source of sources) {
+      const icon = page.getByRole("img", { name: staffCopy.import[source] });
+      await expect.element(icon).toBeVisible();
+      expect(icon.element().getAttribute("title")).toBe(staffCopy.import[source]);
+    }
+    // Luma's is its own picture; Gmail's in its colours.
+    expect(page.getByRole("img", { name: staffCopy.import.luma }).element().querySelector("img")!.src).toContain(
+      "luma.png",
+    );
+    expect(
+      page.getByRole("img", { name: staffCopy.import.gmail }).element().querySelector("path")!.getAttribute("fill"),
+    ).toBe("var(--brand-gmail-blue)");
+  });
+});
+
 describe("ImportCard", () => {
-  it("is a card with its title as the link to its page, its lozenges, what it does and its newest run, in a grid", async () => {
+  it("is a card with its icons, its title as the link to its page, what it does and its newest run, in a grid", async () => {
     await render(
       <ImportCards>
         <ImportCard
           title="An import"
           href="/staff/import-data/luma"
-          tags={<span>Hourly</span>}
+          icon={<ImportIcon source="luma" />}
+          tags={<span>Check only</span>}
           intro={<a href="https://luma.com">Luma</a>}
         >
           <p>Not imported yet.</p>
         </ImportCard>
-        <ImportCard title="Another" href="/x" tags={null} intro="More.">
+        <ImportCard title="Another" href="/x" icon={null} intro="More.">
           <p>Never.</p>
         </ImportCard>
       </ImportCards>,
     );
-    const heading = page.getByRole("heading", { level: 3, name: "An import Hourly" });
+    await expect.element(page.getByRole("img", { name: staffCopy.import.luma })).toBeVisible();
+    const heading = page.getByRole("heading", { level: 3, name: "An import Check only" });
     await expect.element(heading).toBeVisible();
     await expect
       .element(heading.getByRole("link", { name: "An import" }))
@@ -1733,6 +1762,7 @@ describe("ImportOverview", () => {
     const newest: (AnyImportRun | undefined)[] = [
       ran("import-luma", { ...exampleLumaResult, stoppedBy: "time" }, { at: "2026-10-21T11:17:00Z" }),
       ran("import-members", exampleMembersResult, { at: "2026-10-21T11:47:00Z" }),
+      ran("read-gmail", { accounts: [] }, { at: "2026-10-21T11:20:00Z", status: "unchanged" }),
       exampleHeldSync,
       ran("sync-emails", exampleEmailsResult, { at: "2026-10-21T06:22:00Z" }),
       ran("check-mps", { problems: [] }, { at: "2026-10-21T01:00:00Z", status: "ok" }),
@@ -1753,6 +1783,7 @@ describe("ImportOverview", () => {
     expect(cards.map((card) => card.querySelector("h3 a")!.getAttribute("href"))).toEqual([
       "/staff/import-data/luma",
       "/staff/import-data/members",
+      "/staff/import-data/gmail",
       "/staff/import-data/politicians",
       "/staff/import-data/emails",
       "/staff/import-data/mp-check",
@@ -1763,6 +1794,7 @@ describe("ImportOverview", () => {
     expect(cards.map((card) => card.querySelector("h3 a")!.textContent)).toEqual([
       jobTitles["import-luma"],
       jobTitles["import-members"],
+      jobTitles["read-gmail"],
       jobTitles["sync-politicians"],
       jobTitles["sync-emails"],
       jobTitles["check-mps"],
@@ -1771,11 +1803,12 @@ describe("ImportOverview", () => {
       jobTitles["import-go-to-parliament"],
     ]);
     // Under the name, how the newest run ended, tinted to match.
-    const status = (i: number) => cards[i].querySelector("h3 + div > div")!;
+    const status = (i: number) => cards[i].querySelector("h3")!.parentElement!.nextElementSibling!.firstElementChild!;
     expect(status(0).textContent).toBe(`${staffCopy.runs.status.incomplete}21 Oct 2026, 11:17`);
     // The Emails sync held some back, so it's amber too.
-    expect([0, 1, 2, 3, 4, 5, 6].map((i) => status(i).className.match(/green|amber|red/)?.[0])).toEqual([
+    expect([0, 1, 2, 3, 4, 5, 6, 7].map((i) => status(i).className.match(/green|amber|red/)?.[0])).toEqual([
       "amber",
+      "green",
       "green",
       "amber",
       "amber",
@@ -1783,20 +1816,24 @@ describe("ImportOverview", () => {
       "red",
       "green",
     ]);
-    expect(status(7).textContent).toBe(staffCopy.goToParliament.never);
-    expect(status(7).className).not.toMatch(/green|amber|red/);
+    expect(status(8).textContent).toBe(staffCopy.goToParliament.never);
+    expect(status(8).className).not.toMatch(/green|amber|red/);
     // The Airtable jobs link the table they read; the politicians' sync also says the test MPs stay.
     const link = (i: number) => cards[i].querySelector(":scope > p a")!.getAttribute("href");
-    expect(link(2)).toBe("https://airtable.com/app/tblPoliticians");
-    expect(cards[2].querySelector(":scope > p")!.textContent).toContain(staffCopy.syncs.testMps);
-    expect([3, 6, 7].map(link)).toEqual([
+    expect(link(3)).toBe("https://airtable.com/app/tblPoliticians");
+    expect(cards[3].querySelector(":scope > p")!.textContent).toContain(staffCopy.syncs.testMps);
+    expect([4, 7, 8].map(link)).toEqual([
       "https://airtable.com/app/tblp4nH5Jymq48rcm",
       "https://airtable.com/app/tblkzjrRHiZiqMDGR",
       "https://airtable.com/app/tblminXS1xSuBbEjz",
     ]);
-    expect(cards[4].querySelector(":scope > p")!.textContent).not.toContain(staffCopy.syncs.testMps);
-    // The members come from the join form.
-    expect(cards[1].querySelector(":scope > p a")!.getAttribute("href")).toBe("https://pauseai.info/join");
+    expect(cards[5].querySelector(":scope > p")!.textContent).not.toContain(staffCopy.syncs.testMps);
+    // The members come from the join form; Gmail's card leads to where it's connected.
+    expect(link(1)).toBe("https://pauseai.info/join");
+    expect(link(2)).toBe("/staff/me");
+    // The MP check says it changes nothing, after its name.
+    expect(cards[5].querySelector("h3")!.textContent).toBe(`${jobTitles["check-mps"]}${staffCopy.import.checkOnly}`);
+    expect(cards[4].querySelector("h3")!.textContent).toBe(jobTitles["sync-emails"]);
   });
 
   it("shows an applied run, and one that changed nothing, in green, and one discarded plainly", async () => {
@@ -1807,20 +1844,25 @@ describe("ImportOverview", () => {
     );
     const unchanged = ran("import-luma", exampleLumaResult, { status: "unchanged" });
     const { rerender } = await render(
-      <ImportOverview newest={[unchanged, undefined, exampleAppliedSync, undefined, undefined]} airtableTable="x" />,
+      <ImportOverview
+        newest={[unchanged, undefined, undefined, exampleAppliedSync, undefined, undefined]}
+        airtableTable="x"
+      />,
     );
-    const status = (i: number) => document.querySelectorAll("section")[i].querySelector("h3 + div > div")!.className;
+    const status = (i: number) =>
+      document.querySelectorAll("section")[i].querySelector("h3")!.parentElement!.nextElementSibling!.firstElementChild!
+        .className;
     expect(status(0)).toMatch(/green/);
-    expect(status(2)).toMatch(/green/);
+    expect(status(3)).toMatch(/green/);
     await rerender(
-      <ImportOverview newest={[undefined, undefined, discarded, undefined, undefined]} airtableTable="x" />,
+      <ImportOverview newest={[undefined, undefined, undefined, discarded, undefined, undefined]} airtableTable="x" />,
     );
-    expect(status(2)).not.toMatch(/green|amber|red/);
+    expect(status(3)).not.toMatch(/green|amber|red/);
   });
 });
 
 describe("ImportJobPage", () => {
-  it("leads back to the overview, names the job with its lozenges, runs it, and lists every run by day", async () => {
+  it("leads back to the overview, names the job with its icons and schedule, runs it, and lists every run by day", async () => {
     const run = vi.fn();
     const { fn, sent } = action();
     const runs: AnyImportRun[] = [
@@ -1845,14 +1887,16 @@ describe("ImportJobPage", () => {
       .element(page.getByRole("navigation", { name: staffCopy.import.pageTitle }).getByRole("link"))
       .toHaveAttribute("href", "/staff/import-data");
     expect(page.getByRole("heading", { level: 1 }).element().textContent).toBe(
-      `${jobTitles["sync-politicians"]}${staffCopy.import.airtable}${staffCopy.import.nightly}`,
+      `${jobTitles["sync-politicians"]}${staffCopy.import.nightly}`,
     );
-    // The lozenges are plain: only a run's ending is in colour.
+    await expect.element(page.getByRole("img", { name: staffCopy.import.airtable })).toBeVisible();
+    // The schedule's lozenge is plain: only a run's ending is in colour.
     const lozenges = [...page.getByRole("heading", { level: 1 }).element().querySelectorAll("span")];
-    expect(lozenges.map((tag) => tag.className.match(/green|amber|red|blue/))).toEqual([null, null]);
+    expect(lozenges.map((tag) => tag.className.match(/green|amber|red|blue/))).toEqual([null]);
     // No strip under the title: the newest run, in the history, carries the colour.
-    expect(page.getByRole("heading", { level: 1 }).element().nextElementSibling!.tagName).toBe("P");
-    expect(page.getByRole("heading", { level: 1 }).element().nextElementSibling!.className).toBe("");
+    const after = page.getByRole("heading", { level: 1 }).element().parentElement!.nextElementSibling!;
+    expect(after.tagName).toBe("P");
+    expect(after.className).toBe("");
     await page.getByRole("button", { name: staffCopy.syncs.syncNow }).click();
     await vi.waitFor(() => expect(run).toHaveBeenCalledOnce());
     expect(
@@ -2351,6 +2395,23 @@ describe("RunList", () => {
       .toHaveTextContent(
         `${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.hourly} · ${staffCopy.runs.error("Airtable answered 503")}`,
       );
+  });
+
+  it("shows a Gmail read's totals, then each account, with one searched afresh and one that couldn't be read", async () => {
+    const accounts = [{ ...exampleGmailResult.accounts[0], restarted: true }, exampleGmailResult.accounts[1]];
+    await render(
+      <RunList
+        runs={[ran("read-gmail", { accounts }, { id: 2 }), failed("read-gmail", "Database down", { id: 1 })]}
+        none="None"
+      />,
+    );
+    await expect.element(page.getByText(staffCopy.gmailReading.result(accounts), { exact: false })).toBeVisible();
+    await expect.element(page.getByText(staffCopy.runs.status.incomplete, { exact: true })).toBeVisible();
+    await expect.element(page.getByText(staffCopy.runs.error("Database down"), { exact: false })).toBeVisible();
+    await expect
+      .element(page.getByText(`${staffCopy.gmailReading.account(accounts[0])} ${staffCopy.gmailReading.restarted}`))
+      .toBeVisible();
+    await expect.element(page.getByText(staffCopy.gmailReading.failed("Error: invalid_grant"))).toBeVisible();
   });
 
   it("says how many pages of contacts a Luma run read", async () => {

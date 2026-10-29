@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import Actions from "@/components/ui/Actions";
 import { Button } from "@/components/ui/Button";
 import { Checkbox, Segmented, TextInput } from "@/components/ui/Controls";
+import DatePicker from "@/components/ui/DatePicker";
 import { Field, FieldError, FieldSet, Hint } from "@/components/ui/Field";
 import { FormStack } from "@/components/ui/Form";
 import { ASK_STATUSES, ASKERS, askSlug, type AskKind, type Asker } from "@/lib/asks";
@@ -135,13 +136,7 @@ export default function AskForm({
                 )}
               </div>
               <Field label={words.date} className={forms.short}>
-                <TextInput
-                  name="date"
-                  type="date"
-                  value={date}
-                  onChange={(event) => setDate(event.target.value)}
-                  disabled={fixed}
-                />
+                <DatePicker name="date" value={date} onChange={setDate} clearable disabled={fixed} />
               </Field>
               <Field label={words.url}>
                 <TextInput

@@ -2,6 +2,7 @@ import {
   type AnyImportRun,
   type ControlAiImportResult,
   type EmailSyncResult,
+  type GmailReadResult,
   type GoToParliamentImportResult,
   type ImportJob,
   type LumaImportResult,
@@ -21,6 +22,7 @@ type Results = {
   "import-controlai": ControlAiImportResult;
   "import-luma": LumaImportResult;
   "import-members": MembersImportResult;
+  "read-gmail": GmailReadResult;
   "import-web-form-letters": WebFormImportResult;
   "import-go-to-parliament": GoToParliamentImportResult;
 };
@@ -161,6 +163,14 @@ export const exampleMembersResult: MembersImportResult = {
   removed: 0,
   supportersAdded: 2,
   linked: 3,
+};
+
+/** What a read of Gmail found: one account read, and one that couldn't be. */
+export const exampleGmailResult: GmailReadResult = {
+  accounts: [
+    { account: "mailings@pauseai.uk", replies: 2, autoReplies: 5, bounces: 1 },
+    { account: "jo@pauseai.uk", replies: 0, autoReplies: 0, bounces: 0, error: "Error: invalid_grant" },
+  ],
 };
 
 /** What a read of ControlAI's letter found, with every name placed. */

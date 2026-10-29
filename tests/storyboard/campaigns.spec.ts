@@ -269,8 +269,9 @@ test("Format the letter and paste into it: the preview is what the MP gets", asy
   await frame(page, "a bold line and a bullet list, typed with the toolbar");
   await caretAt(page, "Second reason", "end");
 
-  // Out of the list, then a paste of what a letter may not have: a heading,
-  // a link, a colour and a numbered list. The words stay, the list as bullets.
+  // Out of the list, then a paste of a link and of what a letter may not
+  // have: a heading, a colour and a numbered list. The link stays; of the
+  // rest the words stay, the list as bullets.
   await page.keyboard.press("Enter");
   await page.keyboard.press("Enter");
   await paste(
@@ -280,10 +281,11 @@ test("Format the letter and paste into it: the preview is what the MP gets", asy
   );
   await expect(letter).toContainText("Pasted heading");
   await expect(letter).toContainText("See this report and red words.");
-  await expect(letter.locator("h1, a, ol, span[style]")).toHaveCount(0);
+  await expect(letter.locator("h1, ol, span[style]")).toHaveCount(0);
+  await expect(letter.locator('a[href="https://example.com/"]')).toHaveText("this report");
   await expect(letter.locator("ul").last().locator("li")).toHaveText(["Numbered one"]);
   await wholePage(page);
-  await frame(page, "pasted from another app, as plain paragraphs");
+  await frame(page, "pasted from another app: its link kept, the rest as plain paragraphs");
 
   await fillAndPreview(page, sender);
   const preview = page.locator("article");
@@ -295,20 +297,24 @@ test("Format the letter and paste into it: the preview is what the MP gets", asy
     "Numbered one",
   ]);
   await expect(preview).toContainText("See this report and red words.");
+  await expect(preview.locator('a[href="https://example.com/"]')).toHaveText("this report");
   await frame(page, "the preview, formatted as written");
   await sendLetter(page);
 
   const sent = newestEmail((email) => email.To.includes("test-mp@example.org") && !!email.ReplyTo?.includes(sender))!;
   expect(sent.HtmlBody).toContain("<strong>Please reply.</strong>");
   expect(sent.HtmlBody).toMatch(/<ul>\s*<li><p>First reason<\/p><\/li>\s*<li><p>Second reason<\/p><\/li>\s*<\/ul>/);
-  expect(sent.HtmlBody).toContain("See this report and red words.");
+  expect(sent.HtmlBody).toContain('See <a href="https://example.com/">this report</a> and red words.');
   expect(sent.HtmlBody).not.toMatch(/<h1|<ol|style=/);
-  // The pasted link is gone: the only one is the drafted letter's address, which the HTML links.
-  expect(sent.HtmlBody?.match(/<a [^>]*>/g)).toEqual([`<a href="mailto:${site.policyEmail}">`]);
+  // The drafted letter's address, which the HTML links, and the pasted link, kept.
+  expect(sent.HtmlBody?.match(/<a [^>]*>/g)).toEqual([
+    `<a href="mailto:${site.policyEmail}">`,
+    '<a href="https://example.com/">',
+  ]);
   await emailFrame(page, sent, "the letter as the MP gets it, formatted");
   // All of it above the sign-off, which is as it was drafted.
   expect(sent.TextBody).toMatch(
-    /Please reply\.\n\n- First reason\n- Second reason\n\nPasted heading\n\nSee this report and red words\.\n\n- Numbered one\n\nThank you for your consideration,\n\nJane Smith\n\n1 High Street, Testville\nZZ9 9ZZ$/,
+    /Please reply\.\n\n- First reason\n- Second reason\n\nPasted heading\n\nSee this report \(https:\/\/example\.com\/\) and red words\.\n\n- Numbered one\n\nThank you for your consideration,\n\nJane Smith\n\n1 High Street, Testville\nZZ9 9ZZ$/,
   );
 });
 

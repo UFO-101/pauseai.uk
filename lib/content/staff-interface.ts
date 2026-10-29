@@ -1,6 +1,7 @@
 // Every word the staff interface (/staff) shows.
 
 import type { Channel } from "@/lib/contact-permissions";
+import { letterEditorCopy } from "@/lib/content/letter-editor";
 import type { ImportJob } from "@/lib/import-runs";
 
 /**
@@ -712,9 +713,8 @@ export const staffCopy = {
   },
   // A mailing's editor: the letter, with merge fields and parts only some recipients get.
   mailingEditor: {
-    bold: "Bold",
-    italic: "Italic",
-    bulletList: "Bullet point",
+    // Bold, italic, links, bullets and quotes, as in a supporter's letter.
+    ...letterEditorCopy,
     // The toolbar over the letter, for screen readers.
     formatting: "Formatting",
     // Over the merge fields beside the letter, to click or drag in.
@@ -886,6 +886,8 @@ export const staffCopy = {
     testFromName: "PauseAI UK mailing test",
     day: "Day",
     hour: "Hour",
+    // An hour overnight, when nothing is sent, that a mailing was due at already: the hour, and when it goes.
+    goesAt: (hour: string, sends: string) => `${hour} (goes at ${sends})`,
     summary: (n: number, from: string | null, when: string | null) =>
       `${n} ${n === 1 ? "email" : "emails"}, from ${from ? `${from}'s Gmail` : "no one yet"}, ${when ? `on ${when}` : "at a time not yet chosen"}.`,
     schedule: (n: number) => `Schedule ${n} ${n === 1 ? "email" : "emails"}`,
@@ -1241,6 +1243,26 @@ export const staffCopy = {
       running: "Another run was already going.",
     } as Record<string, string>,
   },
+  // The hourly read of the connected Gmail accounts for replies to our
+  // letters and bounces (lib/server/gmail-reading.ts), on the import page.
+  gmailReading: {
+    title: "Replies and bounces from Gmail",
+    intro: {
+      before: "Reads the replies to our letters, and their bounces, in each ",
+      link: "connected Gmail account",
+      after: ".",
+    },
+    readNow: "Read Gmail now",
+    never: "Not read yet.",
+    // The run's totals, over every account, then a line for each.
+    result: (accounts: { replies: number; autoReplies: number; bounces: number }[]) =>
+      `${accounts.length} accounts read: ${accounts.reduce((n, a) => n + a.replies, 0)} replies, ${accounts.reduce((n, a) => n + a.autoReplies, 0)} automatic replies, ${accounts.reduce((n, a) => n + a.bounces, 0)} bounces.`,
+    account: (a: { account: string; replies: number; autoReplies: number; bounces: number }) =>
+      `${a.account}: ${a.replies} replies, ${a.autoReplies} automatic replies, ${a.bounces} bounces.`,
+    // After an account's line: its history had gone, so the last few days were searched instead.
+    restarted: "Searched the last three days again, as Gmail had forgotten where we were up to.",
+    failed: (error: string) => `Couldn't be read: ${error}`,
+  },
   // The hourly copy of PauseAI's UK members (lib/server/members-import.ts),
   // on the import page.
   // PauseAI's emails to politicians, from Airtable's Emails table.
@@ -1382,10 +1404,13 @@ export const staffCopy = {
     // The page, with every import: the politicians from Airtable, ControlAI's
     // letter from the web, Luma and the members.
     pageTitle: "Import data",
-    // The lozenges next to each import's heading: where it's from, and how often it runs.
+    // Each import's icons, named for screen readers and on hover: where it's
+    // from, and whether it only checks. Then how often it runs, the overview's
+    // headings and a lozenge on the job's page.
     airtable: "Airtable",
     web: "Web",
     luma: "Luma",
+    gmail: "Gmail",
     nightly: "Nightly",
     hourly: "Hourly",
     oneOff: "One-off",
@@ -1567,4 +1592,5 @@ export const jobTitles: Record<ImportJob, string> = {
   "import-controlai": staffCopy.controlAi.title,
   "import-luma": staffCopy.luma.title,
   "import-members": staffCopy.members.title,
+  "read-gmail": staffCopy.gmailReading.title,
 };

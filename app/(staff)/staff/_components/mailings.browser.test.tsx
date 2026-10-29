@@ -1,5 +1,6 @@
 import { describe, expect, it, onTestFinished, vi } from "vitest";
 import { render } from "vitest-browser-react";
+import { chooseDay } from "@/tests/browser/date-picker";
 import { page } from "vitest/browser";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { Mailing } from "@/lib/server/mailings";
@@ -30,6 +31,34 @@ describe("MailingLetter", () => {
     await expect.element(page.getByText(staffCopy.mailingEditor.onlyForLabel("signed the letter"))).toBeVisible();
     await expect.element(page.getByText("Will you come to the example conference?")).toBeVisible();
     expect(page.getByRole("listitem").all()).toHaveLength(1);
+  });
+
+  it("shows links, a linked field, and quotes", async () => {
+    const link = { type: "link" as const, attrs: { href: "https://pauseai.uk/join" } };
+    await render(
+      <MailingLetter
+        doc={{
+          type: "doc",
+          content: [
+            {
+              type: "blockquote",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [
+                    { type: "text", text: "Join", marks: [link] },
+                    { type: "field", attrs: { field: "name" }, marks: [link] },
+                  ],
+                },
+              ],
+            },
+          ],
+        }}
+      />,
+    );
+    await expect.element(page.getByRole("link", { name: "Join" })).toHaveAttribute("href", "https://pauseai.uk/join");
+    await expect.element(page.getByRole("link", { name: "name" })).toHaveAttribute("href", "https://pauseai.uk/join");
+    expect(document.querySelector("blockquote p")!.textContent).toBe("Joinname");
   });
 
   it("names a part's condition by its ID with no labels", async () => {
@@ -128,7 +157,7 @@ describe("MailingsOverview", () => {
     await expect.element(page.getByRole("link", { name: copy.untitled })).toBeVisible();
     await expect.element(page.getByText(copy.draftLine("jo@pauseai.uk", 412)).first()).toBeVisible();
     await expect
-      .element(page.getByText(copy.comingLine("jo@pauseai.uk", "Friday 30 October at 09:00", 72)).first())
+      .element(page.getByText(copy.comingLine("jo@pauseai.uk", "Friday 30 October at 09:18", 72)).first())
       .toBeVisible();
     await expect.element(page.getByRole("button", { name: copy.unschedule })).toBeVisible();
     await expect.element(page.getByRole("button", { name: copy.stopSending })).toBeVisible();
@@ -222,11 +251,11 @@ describe("MailingView", () => {
     const forms: FormData[] = [];
     const action = async (form: FormData) => void forms.push(form);
     await view({ written: { ...written, state: "scheduled" }, stop: action, reschedule: action });
-    await expect.element(page.getByText(copy.sends("Tuesday 1 December at 09:00"))).toBeVisible();
+    await expect.element(page.getByText(copy.sends("Tuesday 1 December at 09:18"))).toBeVisible();
     await expect.element(page.getByText(`11${copy.counts.sent}`)).not.toBeInTheDocument();
     await expect.element(page.getByRole("heading", { name: copy.whoTitle(false) })).toBeVisible();
     await page.getByRole("button", { name: copy.changeTime }).click();
-    await expect.element(page.getByLabelText(copy.day)).toHaveValue("2026-12-01");
+    await expect.element(page.getByRole("button", { name: copy.day })).toHaveTextContent("Tue 1 Dec 2026");
     await page.getByRole("combobox").selectOptions("10");
     await page.getByRole("button", { name: copy.saveTime }).click();
     await page.getByRole("button", { name: copy.unschedule }).click();
@@ -242,6 +271,23 @@ describe("MailingView", () => {
       ]);
   });
 
+  it("Change the time keeps an hour overnight that a mailing was due at already, saying when it goes", async () => {
+    vi.useFakeTimers({ now: new Date("2026-12-01T08:58:00Z"), toFake: ["Date", "setInterval", "clearInterval"] });
+    onTestFinished(() => void vi.useRealTimers());
+    await view({
+      written: { ...written, state: "scheduled", dueAt: "2026-12-03T03:00:00Z" },
+      reschedule: async () => {},
+    });
+    await page.getByRole("button", { name: copy.changeTime }).click();
+    await expect.element(page.getByRole("combobox")).toHaveValue("3");
+    expect(
+      page
+        .getByRole("option")
+        .all()
+        .map((option) => option.element().textContent)[0],
+    ).toBe(copy.goesAt("03:00", "06:18"));
+  });
+
   it("Change the time never offers a time too soon: it starts at the first it can go, and moves on as time passes", async () => {
     vi.useFakeTimers({ now: new Date("2026-12-01T08:58:00Z"), toFake: ["Date", "setInterval", "clearInterval"] });
     onTestFinished(() => void vi.useRealTimers());
@@ -249,22 +295,22 @@ describe("MailingView", () => {
     const action = async (form: FormData) => void forms.push(form);
     await view({ written: { ...written, state: "scheduled" }, reschedule: action });
     await page.getByRole("button", { name: copy.changeTime }).click();
-    const day = page.getByLabelText(copy.day);
+    const day = page.getByRole("button", { name: copy.day });
     const hour = page.getByRole("combobox");
-    const option = (h: number) => page.getByRole("option", { name: `${String(h).padStart(2, "0")}:00` });
+    const option = (h: number) => page.getByRole("option", { name: `${String(h).padStart(2, "0")}:18` });
+    // Each hour says when a mailing due then goes, and those overnight, when nothing is sent, aren't offered.
+    expect(page.getByRole("option").all()[0].element().textContent).toBe("06:18");
     // It goes at 09:00, five minutes from now in London: too soon, so 10:00, and the hours before it can't be.
-    await expect.element(day).toHaveAttribute("min", "2026-12-01");
+    await expect.element(day).toHaveTextContent("Tue 1 Dec 2026");
     await expect.element(hour).toHaveValue("10");
     await expect.element(option(9)).toBeDisabled();
     await expect.element(option(10)).not.toBeDisabled();
-    // Another day, any hour; back to today, one too soon moves on; a day cleared keeps the one before.
-    await day.fill("2026-12-02");
+    // Another day, any hour; back to today, one too soon moves on.
+    await chooseDay(day, "2026-12-02");
     await hour.selectOptions("7");
     await expect.element(option(7)).not.toBeDisabled();
-    await day.fill("2026-12-01");
+    await chooseDay(day, "2026-12-01");
     await expect.element(hour).toHaveValue("10");
-    await day.fill("");
-    await expect.element(day).toHaveValue("2026-12-01");
     // An hour on, 10:00 is too soon too.
     vi.advanceTimersByTime(58 * 60_000);
     await expect.element(hour).toHaveValue("11");

@@ -1,5 +1,7 @@
-// A letter's formatting: paragraphs, bold, italic and bullet lists, and
-// nothing else. In the HTML, an email address in the text is a mailto: link. The form's editor (Tiptap) sends its document as JSON; the
+// A letter's formatting: paragraphs, bold, italic, links, bullet lists and
+// quotes, and nothing else. A link goes to a web page or an email address
+// (LINK_SCHEMES). In the HTML, an email address in the text that isn't a
+// link already is a mailto: link. The form's editor (Tiptap) sends its document as JSON; the
 // server checks it against what's allowed here, then writes the HTML and the
 // plain text itself, so nothing else can get into a letter.
 //
@@ -8,12 +10,60 @@
 // ignored), **bold**, _italic_, and
 // lines starting "- " for a bullet list.
 
-export type Mark = { type: "bold" | "italic" };
+export type Mark = { type: "bold" | "italic" } | { type: "link"; attrs: { href: string } };
 export type Inline = { type: "text"; text: string; marks?: Mark[] } | { type: "hardBreak" };
 export type Paragraph = { type: "paragraph"; content?: Inline[] };
 export type ListItem = { type: "listItem"; content: Block[] };
 export type BulletList = { type: "bulletList"; content: ListItem[] };
-export type Block = Paragraph | BulletList;
+export type Blockquote = { type: "blockquote"; content: Block[] };
+export type Block = Paragraph | BulletList | Blockquote;
+
+/** What a link may go to: a web page, or an email address. */
+const LINK_SCHEMES = ["http:", "https:", "mailto:"];
+
+/**
+ * What a link typed in goes to, as an address a letter may link to: as
+ * typed, or with https:// before a bare site ("pauseai.uk/join"), or
+ * mailto: before an email address. Undefined for anything else.
+ */
+export function linkHref(typed: string): string | undefined {
+  const text = typed.trim();
+  if (!text || /\s/.test(text)) return undefined;
+  const whole = /^[a-z][a-z0-9+.-]*:/i.test(text)
+    ? text
+    : /^[^@/]+@[^@/]+\.[a-z]{2,}$/i.test(text)
+      ? `mailto:${text}`
+      : `https://${text}`;
+  let url: URL;
+  try {
+    url = new URL(whole);
+  } catch {
+    return undefined;
+  }
+  if (!LINK_SCHEMES.includes(url.protocol)) return undefined;
+  // A web address needs a host with a dot in it, so a word typed by mistake isn't a link.
+  if (url.protocol !== "mailto:" && !url.hostname.includes(".")) return undefined;
+  return url.protocol === "mailto:" ? whole : url.href;
+}
+
+/** A node's marks, if each is one a letter may have, with nothing else kept of them and a link's address as linkHref() writes it; undefined if any isn't. */
+export function checkMarks(value: unknown): Mark[] | undefined {
+  const marks = Array.isArray(value) ? value : [];
+  const kept = marks.map((mark): Mark | undefined => {
+    if (!isObject(mark)) return undefined;
+    if (mark.type === "bold" || mark.type === "italic") return { type: mark.type };
+    if (mark.type !== "link" || !isObject(mark.attrs) || typeof mark.attrs.href !== "string") return undefined;
+    const href = linkHref(mark.attrs.href);
+    return href ? { type: "link", attrs: { href } } : undefined;
+  });
+  return kept.every(Boolean) ? (kept as Mark[]) : undefined;
+}
+
+/** Where a node's link goes, if it's in one. */
+export function linkOf(marks: Mark[] | undefined): string | undefined {
+  const link = marks?.find((mark) => mark.type === "link");
+  return link?.type === "link" ? link.attrs.href : undefined;
+}
 export type LetterDoc = { type: "doc"; content: Block[] };
 
 const BOLD_OR_ITALIC = /\*\*(.+?)\*\*|_(.+?)_/g;
@@ -70,11 +120,8 @@ export function checkInline(node: unknown): Inline | undefined {
   if (!isObject(node)) return undefined;
   if (node.type === "hardBreak") return { type: "hardBreak" };
   if (node.type !== "text" || typeof node.text !== "string") return undefined;
-  const marks = Array.isArray(node.marks) ? node.marks : [];
-  const kept = marks
-    .filter((mark): mark is Mark => isObject(mark) && (mark.type === "bold" || mark.type === "italic"))
-    .map((mark) => ({ type: mark.type }));
-  if (kept.length !== marks.length) return undefined;
+  const kept = checkMarks(node.marks);
+  if (!kept) return undefined;
   return kept.length > 0 ? { type: "text", text: node.text, marks: kept } : { type: "text", text: node.text };
 }
 
@@ -94,6 +141,10 @@ function checkBlock(node: unknown, depth: number): Block | undefined {
       return blocks.every(Boolean) ? { type: "listItem", content: blocks as Block[] } : undefined;
     });
     return items.every(Boolean) && items.length > 0 ? { type: "bulletList", content: items as ListItem[] } : undefined;
+  }
+  if (node.type === "blockquote" && depth < 5) {
+    const blocks = content.map((block) => checkBlock(block, depth + 1));
+    return blocks.every(Boolean) && blocks.length > 0 ? { type: "blockquote", content: blocks as Block[] } : undefined;
   }
   return undefined;
 }
@@ -116,17 +167,29 @@ function inlineHtml(inline: Inline[] = []): string {
   return inline
     .map((node) => {
       if (node.type === "hardBreak") return "<br>";
+      const href = linkOf(node.marks);
       // Escaping leaves an address as it was: it has no & < > or ".
-      let html = escape(node.text).replace(EMAIL, (address) => `<a href="mailto:${address}">${address}</a>`);
+      let html = href
+        ? escape(node.text)
+        : escape(node.text).replace(EMAIL, (address) => `<a href="mailto:${address}">${address}</a>`);
       if (node.marks?.some((mark) => mark.type === "italic")) html = `<em>${html}</em>`;
       if (node.marks?.some((mark) => mark.type === "bold")) html = `<strong>${html}</strong>`;
-      return html;
+      return href ? `<a href="${escape(href)}">${html}</a>` : html;
     })
     .join("");
 }
 
+/**
+ * A quote's look in an email, inline as email needs: a rule down its left,
+ * its text set in from it. Gmail and Outlook only partly support `margin`,
+ * so only its sides are set, leaving the space above and below a quote's own.
+ */
+const QUOTE_STYLE = "margin-left: 0; margin-right: 0; padding-left: 1em; border-left: 3px solid #ccc; color: #555;";
+
 function blockHtml(block: Block): string {
   if (block.type === "paragraph") return `<p>${inlineHtml(block.content)}</p>`;
+  if (block.type === "blockquote")
+    return `<blockquote style="${QUOTE_STYLE}">${block.content.map(blockHtml).join("")}</blockquote>`;
   return `<ul>${block.content.map((item) => `<li>${item.content.map(blockHtml).join("")}</li>`).join("")}</ul>`;
 }
 
@@ -135,12 +198,37 @@ export function toHtml(doc: LetterDoc): string {
   return doc.content.map(blockHtml).join("\n");
 }
 
+/** A link's text, then where it goes in brackets, unless the text says that already. */
+function linkText(text: string, href: string): string {
+  return [href, href.replace(/^mailto:/, ""), href.replace(/^https?:\/\//, "").replace(/\/$/, "")].includes(text)
+    ? text
+    : `${text} (${href})`;
+}
+
+/** The text of a paragraph's line, each link's text followed by where it goes; a link split by bold or italic is one link. */
 function inlineText(inline: Inline[] = []): string {
-  return inline.map((node) => (node.type === "hardBreak" ? "\n" : node.text)).join("");
+  const runs: { text: string; href?: string }[] = [];
+  for (const node of inline) {
+    const text = node.type === "hardBreak" ? "\n" : node.text;
+    const href = node.type === "text" ? linkOf(node.marks) : undefined;
+    const last = runs.at(-1);
+    if (last && last.href === href) last.text += text;
+    else runs.push({ text, href });
+  }
+  return runs.map((run) => (run.href ? linkText(run.text, run.href) : run.text)).join("");
 }
 
 function blockText(block: Block, indent: string): string {
   if (block.type === "paragraph") return inlineText(block.content);
+  // Unindented, as a paragraph is: in a list, its line follows the bullet.
+  if (block.type === "blockquote") {
+    return block.content
+      .map((inner) => blockText(inner, ""))
+      .join("\n\n")
+      .split("\n")
+      .map((line) => (line ? `> ${line}` : ">"))
+      .join("\n");
+  }
   return block.content
     .map((item) => {
       const [first, ...rest] = item.content.map((inner) => blockText(inner, `${indent}  `));
@@ -152,7 +240,7 @@ function blockText(block: Block, indent: string): string {
     .join("\n");
 }
 
-/** The letter as plain text: paragraphs apart, bullets as "- ", without bold or italic. */
+/** The letter as plain text: paragraphs apart, bullets as "- ", quotes' lines starting "> ", links' addresses in brackets, without bold or italic. */
 export function toText(doc: LetterDoc): string {
   return doc.content
     .map((block) => blockText(block, ""))
@@ -162,5 +250,6 @@ export function toText(doc: LetterDoc): string {
 
 /** Whether the letter has any words in it. */
 export function isBlank(doc: LetterDoc): boolean {
-  return toText(doc).replace(/[-\s]/g, "") === "";
+  // Without the dashes of bullets and the > of quotes.
+  return toText(doc).replace(/[-\s>]/g, "") === "";
 }

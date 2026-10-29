@@ -136,6 +136,18 @@
   padding-left: var(--space-5);
 }
 
+/* A quote, as the email shows it (lib/letter-format.ts): set in, with a rule down its left. */
+.editor blockquote {
+  margin: 0 0 var(--space-3);
+  padding-left: var(--space-3);
+  border-left: 3px solid var(--border-strong);
+  color: var(--text-secondary);
+}
+
+.editor blockquote > :last-child {
+  margin-bottom: 0;
+}
+
 .editor li p {
   margin: 0;
 }

@@ -7,6 +7,7 @@ import type { PoliticianChanges, PoliticianRecord, Renamed } from "./politician-
 export const IMPORT_JOBS = [
   "import-luma",
   "import-members",
+  "read-gmail",
   "sync-politicians",
   "sync-emails",
   "check-mps",
@@ -30,12 +31,14 @@ const IMPORT_SLUGS: Record<ImportJob, string> = {
   "check-mps": "mp-check",
   "import-controlai": "controlai",
   "import-members": "members",
+  "read-gmail": "gmail",
 };
 
 /** How often each job runs on its own, matching its schedule in netlify/functions/; a one-off is only run by staff. */
 export const JOB_SCHEDULES: Record<ImportJob, "hourly" | "nightly" | "oneOff"> = {
   "import-luma": "hourly",
   "import-members": "hourly",
+  "read-gmail": "hourly",
   "sync-politicians": "nightly",
   "sync-emails": "nightly",
   "import-web-form-letters": "oneOff",
@@ -155,6 +158,21 @@ export type MembersImportResult = {
 };
 export type MembersImport = ImportRun<"import-members", MembersImportResult>;
 
+/** What reading one connected Gmail account found. */
+export type GmailRead = {
+  account: string;
+  replies: number;
+  autoReplies: number;
+  bounces: number;
+  /** The mailbox's history had gone, so it was searched instead. */
+  restarted?: boolean;
+  error?: string;
+};
+
+/** What a run of reading Gmail found, account by account. */
+export type GmailReadResult = { accounts: GmailRead[] };
+export type GmailReading = ImportRun<"read-gmail", GmailReadResult>;
+
 /** What a run of the Emails sync did: the emails read, those it added, and those it couldn't. */
 export type EmailSyncResult = {
   read: number;
@@ -203,6 +221,7 @@ export type AnyImportRun =
   | ControlAiImport
   | LumaImport
   | MembersImport
+  | GmailReading
   | WebFormImport
   | GoToParliamentImport;
 
@@ -213,13 +232,16 @@ function lumaRunIncomplete(result: LumaImportResult): boolean {
 
 /**
  * How a run ended, as its line in the import log says it: its status, or
- * for a Luma import that left work for later, or an Emails sync that held
- * some back, "incomplete", in place of "ok" or "unchanged".
+ * for a Luma import that left work for later, an Emails sync that held
+ * some back, or a Gmail read that couldn't read an account, "incomplete", in place of "ok" or "unchanged".
  */
 export function runStatus(run: AnyImportRun): string {
   if (run.job === "import-luma" && run.status !== "failed" && lumaRunIncomplete(run.result)) return "incomplete";
   // Emails held back for a mailing nobody has added yet.
   if (run.job === "sync-emails" && run.status !== "failed" && run.result.unplaced.length > 0) return "incomplete";
+  // An account that couldn't be read, which the next run reads from where it got to.
+  if (run.job === "read-gmail" && run.status !== "failed" && run.result.accounts.some((a) => a.error))
+    return "incomplete";
   return run.status;
 }
 

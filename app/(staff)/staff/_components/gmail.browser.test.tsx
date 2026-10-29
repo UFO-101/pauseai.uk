@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
+import { chooseDay } from "@/tests/browser/date-picker";
 import { page } from "vitest/browser";
 import { staffCopy } from "@/lib/content/staff-interface";
 import AskForm from "./AskForm";
@@ -176,7 +177,7 @@ describe("AskForm", () => {
     await expect.element(page.getByRole("radio", { name: copy.kinds.event })).toBeChecked();
     await field(copy.byKind.event.title).fill("Winter reception");
     await expect.element(page.getByRole("button", { name: copy.save })).toBeDisabled();
-    await field(copy.byKind.event.date).fill("2026-12-09");
+    await chooseDay(page.getByRole("button", { name: copy.byKind.event.date }), "2026-12-09");
     await field(copy.byKind.event.url).fill("luma.com/winter");
     await expect.element(page.getByText(copy.badLink)).toBeVisible();
     await expect.element(page.getByRole("button", { name: copy.save })).toBeDisabled();

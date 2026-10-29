@@ -1,0 +1,31 @@
+/* An import's mark, on a tile in the page's second surface. It sits over
+   the card's link (ImportCard), so hovering it shows its name. */
+.tile {
+  position: relative;
+  z-index: 1;
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  vertical-align: middle;
+}
+
+.mark,
+.mark svg,
+.mark img {
+  display: block;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/* A mark that's no one's: a line drawing in the secondary text's colour. */
+.line {
+  fill: none;
+  stroke: var(--text-secondary);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

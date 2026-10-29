@@ -31,6 +31,7 @@
   "dependencies": {
     "@netlify/blobs": "^11.1.7",
     "@netlify/database": "^2.0.1",
+    "@tiptap/extension-blockquote": "^3.32.0",
     "@tiptap/pm": "^3.32.0",
     "@tiptap/react": "^3.32.0",
     "@tiptap/starter-kit": "^3.32.0",

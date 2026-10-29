@@ -458,11 +458,15 @@ export function DueTimeFieldsExample() {
   return <DueTimeFields day={when.day} hour={when.hour} onChange={(day, hour) => setWhen({ day, hour })} />;
 }
 
-/** Change the time's form, for a mailing whose time has become too soon: it starts at the first hour it can go. */
+/**
+ * Change the time's form, for a mailing due in the new year: far enough
+ * ahead that the page, rendered when the site is built, shows the same
+ * day and hours as the browser does.
+ */
 export function ChangeTimeFormExample() {
   return (
     <Logged>
-      {(log) => <ChangeTimeForm id={5} dueAt="2026-10-16T09:00:00Z" action={log("rescheduleMailingNow")} />}
+      {(log) => <ChangeTimeForm id={5} dueAt="2027-01-15T09:00:00Z" action={log("rescheduleMailingNow")} />}
     </Logged>
   );
 }

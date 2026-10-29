@@ -1,4 +1,5 @@
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import DatePicker from "./DatePicker";
 import styles from "./Controls.module.css";
 
 // Every form control on the site: a text box, a select, a text area, a file
@@ -8,26 +9,27 @@ import styles from "./Controls.module.css";
 
 type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "className">;
 
-/** A text, email, search, date or time field. */
+/** A text, email, search or time field. A day is a DatePicker. */
 export function TextInput(props: InputProps) {
   return <input {...props} className={styles.control} />;
 }
 
 /**
- * Two dates side by side, a dash between: from and to, each a date field
- * with its own name and label. Goes in a FieldSet, which names the pair.
+ * Two days side by side, a dash between: from and to, each a DatePicker
+ * with its own name and label, either of which can be left empty. Goes in
+ * a FieldSet, which names the pair.
  */
 export function DateRange({ from, to }: { from: DateProps; to: DateProps }) {
   return (
     <span className={styles.dateRange}>
-      <input {...from} type="date" className={styles.control} />
+      <DatePicker {...from} clearable />
       <span aria-hidden="true">–</span>
-      <input {...to} type="date" className={styles.control} />
+      <DatePicker {...to} clearable />
     </span>
   );
 }
 
-type DateProps = Omit<InputProps, "type"> & { "aria-label": string };
+type DateProps = { name?: string; defaultValue?: string; "aria-label": string };
 
 export function Select(props: Omit<SelectHTMLAttributes<HTMLSelectElement>, "className">) {
   return <select {...props} className={styles.control} />;

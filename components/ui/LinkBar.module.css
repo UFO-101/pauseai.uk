@@ -1,0 +1,17 @@
+/* The link bar, a strip under a letter editor's toolbar. */
+.bar {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.address {
+  flex: 1 1 12rem;
+  min-width: 0;
+}

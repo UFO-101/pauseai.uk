@@ -16,6 +16,7 @@ import { staffTime } from "@/lib/staff-time";
 import Breadcrumb from "./Breadcrumb";
 import styles from "./ImportJob.module.css";
 import ImportCard, { ImportCards } from "./ImportCard";
+import ImportIcon, { type ImportSource } from "./ImportIcon";
 import JobActions from "./JobActions";
 import type { Decide } from "./Run";
 import RunList from "./RunList";
@@ -30,17 +31,23 @@ const words = staffCopy.import;
 /** PauseAI's join form, where the members come from. */
 const JOIN_FORM = "https://pauseai.info/join";
 
-/** Each job's lozenges, all plain, so only how its runs ended is in colour: where it reads from, how often, and what kind of job it is. */
-const TAGS: Record<ImportJob, string[]> = {
-  "import-luma": [words.luma, words[JOB_SCHEDULES["import-luma"]]],
-  "sync-politicians": [words.airtable, words[JOB_SCHEDULES["sync-politicians"]]],
-  "sync-emails": [words.airtable, words[JOB_SCHEDULES["sync-emails"]]],
-  "import-web-form-letters": [words.airtable, words[JOB_SCHEDULES["import-web-form-letters"]]],
-  "import-go-to-parliament": [words.airtable, words[JOB_SCHEDULES["import-go-to-parliament"]]],
-  "check-mps": [words.web, words[JOB_SCHEDULES["check-mps"]], words.checkOnly],
-  "import-controlai": [words.web, words[JOB_SCHEDULES["import-controlai"]]],
-  "import-members": [words.airtable, words[JOB_SCHEDULES["import-members"]]],
+/** Where each job reads from, as its icon. */
+const SOURCES: Record<ImportJob, ImportSource> = {
+  "import-luma": "luma",
+  "sync-politicians": "airtable",
+  "sync-emails": "airtable",
+  "import-web-form-letters": "airtable",
+  "import-go-to-parliament": "airtable",
+  "check-mps": "web",
+  "import-controlai": "web",
+  "import-members": "airtable",
+  "read-gmail": "gmail",
 };
+
+/** The check that changes nothing, said so in a lozenge after its name. */
+function CheckOnly({ job }: { job: ImportJob }) {
+  return job === "check-mps" ? <Tag>{words.checkOnly}</Tag> : null;
+}
 
 /** Each job's description, around a link to where it reads from, and its button and what to say before its first run. */
 const ABOUT: Record<
@@ -102,13 +109,13 @@ const ABOUT: Record<
     button: staffCopy.members.importNow,
     none: staffCopy.members.never,
   },
+  "read-gmail": {
+    intro: staffCopy.gmailReading.intro,
+    href: "/staff/me",
+    button: staffCopy.gmailReading.readNow,
+    none: staffCopy.gmailReading.never,
+  },
 };
-
-/** A job's lozenges; on the overview, whose headings say how often each runs, without that one. */
-function Tags({ job, schedule = true }: { job: ImportJob; schedule?: boolean }) {
-  const often = words[JOB_SCHEDULES[job]];
-  return TAGS[job].filter((text) => schedule || text !== often).map((text) => <Tag key={text}>{text}</Tag>);
-}
 
 /** What the job does, with its source linked. Airtable's table link is the server's, so it comes in as a prop. */
 function Intro({ job, airtableTable }: { job: ImportJob; airtableTable: string }) {
@@ -172,7 +179,8 @@ export function ImportOverview({
                   key={job}
                   title={jobTitles[job]}
                   href={importPath(job)}
-                  tags={<Tags job={job} schedule={false} />}
+                  icon={<ImportIcon source={SOURCES[job]} />}
+                  tags={<CheckOnly job={job} />}
                   intro={<Intro job={job} airtableTable={airtableTable} />}
                 >
                   <NewestRun job={job} run={newest[i]} />
@@ -186,7 +194,7 @@ export function ImportOverview({
   );
 }
 
-/** One job's page: the way back, its name and lozenges, what it does, its button, then every run it has made, newest first, the newest tinted by how it ended. */
+/** One job's page: the way back, its icon, name, how often it runs and whether it only checks, what it does, its button, then every run it has made, newest first, the newest tinted by how it ended. */
 export function ImportJobPage({
   job,
   runs,
@@ -205,10 +213,14 @@ export function ImportJobPage({
   return (
     <>
       <Breadcrumb href="/staff/import-data">{words.pageTitle}</Breadcrumb>
-      <h1>
-        {jobTitles[job]}
-        <Tags job={job} />
-      </h1>
+      <div className={styles.head}>
+        <ImportIcon source={SOURCES[job]} />
+        <h1 className={styles.heading}>
+          {jobTitles[job]}
+          <Tag>{words[JOB_SCHEDULES[job]]}</Tag>
+          <CheckOnly job={job} />
+        </h1>
+      </div>
       <p>
         <Intro job={job} airtableTable={airtableTable} />
       </p>

@@ -154,6 +154,27 @@ describeWithDatabase("send by Gmail", () => {
     ]);
   });
 
+  it("keeps the Message-ID Gmail sent it with, when Gmail gave it one of its own, which replies and bounces name", async () => {
+    await connectTestGmail();
+    server.use(
+      http.post(SEND, () => HttpResponse.json({ id: "g2", threadId: "t2" })),
+      http.get("https://gmail.googleapis.com/gmail/v1/users/me/messages/g2", () =>
+        HttpResponse.json({
+          id: "g2",
+          threadId: "t2",
+          internalDate: "0",
+          payload: { headers: [{ name: "Message-ID", value: "<CAGt2Eo1@mail.gmail.com>" }] },
+        }),
+      ),
+    );
+    expect(await send(EMAIL, "mailing", null, { backend: GMAIL })).toMatchObject({
+      messageId: "CAGt2Eo1@mail.gmail.com",
+    });
+    expect(await query("SELECT rfc_message_id FROM email_sends")).toEqual([
+      { rfc_message_id: "CAGt2Eo1@mail.gmail.com" },
+    ]);
+  });
+
   it("fails, saying which account, when Gmail can't send or the account isn't connected", async () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     expect(await send(EMAIL, "mailing", null, { backend: GMAIL })).toEqual({ sent: false, reason: "failed" });

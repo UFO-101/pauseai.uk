@@ -15,6 +15,8 @@ const list = (...items: unknown[][]) => ({
 });
 const onlyFor = (condition: string, ...content: unknown[]) => ({ type: "onlyFor", attrs: { condition }, content });
 const doc = (...content: unknown[]) => ({ type: "doc", content }) as MailingDoc;
+const quote = (...content: unknown[]) => ({ type: "blockquote", content });
+const LINK = { type: "link", attrs: { href: "https://pauseai.uk/" } };
 
 describe("checkMailingDoc", () => {
   it("accepts a letter's formatting, fields and parts for only some, copying only what's allowed", () => {
@@ -25,6 +27,14 @@ describe("checkMailingDoc", () => {
         { ...onlyFor("ask:letter=signed", p(text("Thanks"))), attrs: { condition: "ask:letter=signed", x: 1 } },
         list([p(field("name"))]),
         p(),
+        quote(
+          p({
+            type: "field",
+            attrs: { field: "name" },
+            marks: [{ type: "link", attrs: { href: "https://pauseai.uk" } }],
+          }),
+        ),
+        onlyFor("c", quote(p(text("Quoted for some")))),
       ],
     };
     expect(checkMailingDoc(fromEditor)).toEqual(
@@ -33,6 +43,8 @@ describe("checkMailingDoc", () => {
         onlyFor("ask:letter=signed", p(text("Thanks"))),
         list([p(field("name"))]),
         p(),
+        quote(p({ type: "field", attrs: { field: "name" }, marks: [LINK] })),
+        onlyFor("c", quote(p(text("Quoted for some")))),
       ),
     );
   });
@@ -42,7 +54,10 @@ describe("checkMailingDoc", () => {
     ["no content", { type: "doc" }],
     ["a field with no ID", doc(p({ type: "field", attrs: { field: "" } }))],
     ["a field with no attributes", doc(p({ type: "field" }))],
-    ["a field marked as a link", doc(p({ type: "field", attrs: { field: "name" }, marks: [{ type: "link" }] }))],
+    ["a field linked to nowhere", doc(p({ type: "field", attrs: { field: "name" }, marks: [{ type: "link" }] }))],
+    ["an empty quote", doc(quote())],
+    ["a part in a quote", doc(quote(onlyFor("c", p())))],
+    ["quotes nested without end", doc(quote(quote(quote(quote(quote(quote(p())))))))],
     ["a part with no condition", doc({ type: "onlyFor", attrs: {}, content: [p()] })],
     ["a part with no attributes", doc({ type: "onlyFor", content: [p()] })],
     ["an empty part", doc(onlyFor("c"))],
@@ -75,10 +90,11 @@ describe("fieldsIn and conditionsIn", () => {
     onlyFor("signed", p(field("name")), list([p(field("house"))])),
     onlyFor("going", p()),
     onlyFor("signed", p()),
+    quote(p(field("title"))),
   );
 
   it("lists each field once, wherever it is", () => {
-    expect(fieldsIn(letter)).toEqual(["salutation", "name", "constituency", "party", "house"]);
+    expect(fieldsIn(letter)).toEqual(["salutation", "name", "constituency", "party", "house", "title"]);
   });
 
   it("lists each condition once", () => {
@@ -109,6 +125,16 @@ describe("letterFor", () => {
     expect(filled.content.at(-1)).toEqual({ type: "paragraph" });
   });
 
+  it("fills in a quote's fields, keeping a field's link", () => {
+    const quoting = doc(quote(p(text("As "), { ...field("name"), marks: [LINK] }, text(" said"))));
+    const filled = letterFor(quoting, { values: { name: "Jo" }, meets: [] });
+    expect(filled).toEqual({
+      type: "doc",
+      content: [quote(p(text("As "), { type: "text", text: "Jo", marks: [LINK] }, text(" said")))],
+    });
+    expect(toText(filled)).toBe("> As Jo (https://pauseai.uk/) said");
+  });
+
   it("keeps a field's value without marks as plain text, and an empty paragraph", () => {
     expect(letterFor(doc(p(field("name")), p()), { values: { name: "Jo" }, meets: [] })).toEqual({
       type: "doc",
@@ -125,5 +151,6 @@ describe("isBlankMailing", () => {
   it("isn't with words, or a field", () => {
     expect(isBlankMailing(doc(onlyFor("c", p(text("Hi")))))).toBe(false);
     expect(isBlankMailing(doc(p(field("name"))))).toBe(false);
+    expect(isBlankMailing(doc(quote(p(text("Hi")))))).toBe(false);
   });
 });

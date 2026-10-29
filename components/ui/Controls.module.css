@@ -23,10 +23,6 @@
   align-items: center;
 }
 
-.dateRange .control {
-  width: auto;
-}
-
 .textarea {
   height: auto;
   min-height: calc(var(--control-height) * 2);

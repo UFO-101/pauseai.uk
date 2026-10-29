@@ -170,7 +170,10 @@ token is kept encrypted (`GMAIL_TOKEN_KEY`), and deleted on disconnecting.
   1,800 a day from an account, counting every mailing, under Gmail's 2,000,
   so the person's own email still goes (`GMAIL_DAILY_LIMIT`).
 - **Sending** (`lib/server/mailing-sending.ts`): the hourly
-  `send-mailings` job starts each scheduled mailing that's due, then sends
+  `send-mailings` job, at 18 minutes past from 06:18 UTC, starts each
+  scheduled mailing that's due, so a mailing due at 09:00 goes at 09:18
+  and one due overnight at 06:18; the staff pages say so (`SENDING` in
+  `lib/staff-time.ts`). Then it sends
   its letters at Gmail's pace, one a second, marking each as it goes. A
   scheduled function has 30 seconds, so while letters are left it starts a
   background function, which calls the site again and again for up to 15
@@ -178,9 +181,13 @@ token is kept encrypted (`GMAIL_TOKEN_KEY`), and deleted on disconnecting.
   before it goes: a politician out of office, or whose address has been
   blocked since, is skipped, and the letter says why. An account at its
   limit, or no longer connected, waits.
-- **Message-IDs.** Every letter of a mailing goes with a Message-ID of ours
-  (`email_sends.rfc_message_id`), whichever backend sends it, so a reply
-  is matched by the IDs it names. `send()` takes a backend: Postmark, or a
+- **Message-IDs.** Every letter of a mailing goes with a Message-ID of ours,
+  whichever backend sends it, so a reply is matched by the IDs it names.
+  Gmail sends it with one of its own instead (`…@mail.gmail.com`), so
+  after sending, the site asks Gmail which it went with and keeps that
+  (`email_sends.rfc_message_id`). The letter's own copy in Sent is known
+  by Gmail's ID for it too, and a bounce naming no letter we know is
+  matched by the Gmail thread it's in. `send()` takes a backend: Postmark, or a
   connected Gmail.
 - **Reading** (`lib/server/gmail-reading.ts`): the hourly `read-gmail` job
   lists each mailbox's new messages since the last `historyId`, and
@@ -191,7 +198,9 @@ token is kept encrypted (`GMAIL_TOKEN_KEY`), and deleted on disconnecting.
   are searched for too. An automatic reply is an event on the letter. Any
   other message in the thread, the politician's reply or our answer, is
   kept whole, gzipped, in Netlify Blobs, with a row in `letter_replies`;
-  the backup Worker copies them (`backup/README.md`).
+  the backup Worker copies them (`backup/README.md`). Each run is in the
+  import log, with what it found in each account, and staff can run it
+  from its page under Import data.
 - **Threads.** Each PauseAI letter has a page with its whole thread
   (`/staff/mailings/<id>/letters/<letter>`), from the politician's history
   and the mailing's recipients, with Open in Gmail for whoever sent it.
@@ -470,7 +479,7 @@ nightly).
 
 A new job is a name in `IMPORT_JOBS` and the `import_runs` CHECK, a result
 type, a function that records its run, a slug in `IMPORT_SLUGS`, its
-lozenges and description in `ImportJob.tsx`, its button's Server Action in
+icons (`ImportIcon.tsx`, where it reads from) and description in `ImportJob.tsx`, its button's Server Action in
 the job page, and a scheduled function if it runs on a schedule. A job that has more to do
 than a run allows, as the Luma import has, keeps its place and says in
 its result what's left.

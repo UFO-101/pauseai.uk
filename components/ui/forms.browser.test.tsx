@@ -247,9 +247,9 @@ describe("FieldSet and DateRange", () => {
       </form>,
     );
     await expect.element(page.getByRole("group", { name: "Signed up" })).toBeVisible();
-    const from = page.getByLabelText("Signed up from").element() as HTMLInputElement;
-    const to = page.getByLabelText("Signed up to").element() as HTMLInputElement;
-    expect([from.type, to.type]).toEqual(["date", "date"]);
+    const from = page.getByRole("button", { name: "Signed up from" }).element();
+    const to = page.getByRole("button", { name: "Signed up to" }).element();
+    expect([from.textContent, to.textContent]).toEqual(["Thu 1 Jan 2026", "Choose a day"]);
     const form = new FormData(page.getByRole("form", { name: "Dates" }).element() as HTMLFormElement);
     expect([form.get("from"), form.get("to")]).toEqual(["2026-01-01", ""]);
     expect(Math.round(from.getBoundingClientRect().top)).toBe(Math.round(to.getBoundingClientRect().top));

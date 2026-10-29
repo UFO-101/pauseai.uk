@@ -8,10 +8,11 @@
  * from the request. On Netlify its URL has the main--pauseaiuk.netlify.app
  * host, where none of the pauseai.uk cookies are, and whoever sends it can
  * set its Host, so a login link built from it could hand them the token.
- * Only a local build, which Netlify didn't make, uses the request's origin.
+ * Only a local build, which Netlify didn't make, uses the request's origin,
+ * so there, without a request (a Server Action's), it can't say.
  */
-export function siteUrl(path: string, request: Request): URL {
-  const origin = process.env.SITE_ORIGIN || (process.env.DEPLOY_CONTEXT === "local" ? request.url : "");
+export function siteUrl(path: string, request: Request | undefined): URL {
+  const origin = process.env.SITE_ORIGIN || (process.env.DEPLOY_CONTEXT === "local" ? request?.url : "");
   if (!origin) throw new Error("This build doesn't know its own address: SITE_ORIGIN isn't set");
   return new URL(path, origin);
 }

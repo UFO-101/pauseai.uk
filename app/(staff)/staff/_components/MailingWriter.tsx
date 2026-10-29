@@ -506,7 +506,7 @@ export default function MailingWriter({
               hourClass={styles.hour}
               onChange={(day, hour) => {
                 setDayPicked(day);
-                if (hour !== null) change({ dueAt: day ? fromLondon(day, hour) : null });
+                if (hour !== null) change({ dueAt: fromLondon(day, hour) });
               }}
             />
           </div>

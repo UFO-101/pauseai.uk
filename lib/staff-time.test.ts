@@ -4,7 +4,9 @@ import {
   fromLondon,
   hourNotTooSoon,
   londonDayHour,
+  londonClock,
   londonWhen,
+  sendsAt,
   staffClock,
   staffDate,
   staffDay,
@@ -43,9 +45,19 @@ describe("London's time, for when a mailing goes", () => {
   });
 
   it("says when, in London", () => {
-    expect(londonWhen("2026-10-30T09:00:00Z")).toBe("Friday 30 October at 09:00");
-    expect(londonWhen("2026-07-02T08:00:00Z")).toBe("Thursday 2 July at 09:00");
+    expect(londonWhen("2026-10-30T09:00:00Z")).toBe("Friday 30 October at 09:18");
+    expect(londonWhen("2026-07-02T08:00:00Z")).toBe("Thursday 2 July at 09:18");
+    // Overnight, when the sending doesn't run, at its first run of the morning.
+    expect(londonWhen("2026-10-30T03:00:00Z")).toBe("Friday 30 October at 06:18");
+    expect(londonWhen("2026-07-02T02:00:00Z")).toBe("Thursday 2 July at 07:18");
   });
+});
+
+it("sends a mailing at its hour's run of the sending, or overnight at the morning's first", () => {
+  expect(sendsAt("2026-10-30T09:00:00.000Z")).toBe("2026-10-30T09:18:00.000Z");
+  expect(sendsAt("2026-10-30T23:00:00.000Z")).toBe("2026-10-30T23:18:00.000Z");
+  expect(sendsAt("2026-10-30T00:00:00.000Z")).toBe("2026-10-30T06:18:00.000Z");
+  expect(londonClock("2026-07-02T23:18:00Z")).toBe("00:18");
 });
 
 describe("the first hour a mailing can go", () => {

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { Mark } from "@/lib/letter-format";
+import { linkOf, type Mark } from "@/lib/letter-format";
 import type { MailingBlock, MailingDoc, MailingInline, OnlyForNode } from "@/lib/mailing-doc";
 import { NOT_CONDITION } from "@/lib/mailing-doc";
 import { partFor } from "@/lib/mailing-fields";
@@ -12,7 +12,14 @@ function marked(marks: Mark[] | undefined, content: ReactNode): ReactNode {
   let node = content;
   if (marks?.some((mark) => mark.type === "italic")) node = <em>{node}</em>;
   if (marks?.some((mark) => mark.type === "bold")) node = <strong>{node}</strong>;
-  return node;
+  const href = linkOf(marks);
+  return href ? (
+    <a href={href} target="_blank" rel="noreferrer">
+      {node}
+    </a>
+  ) : (
+    node
+  );
 }
 
 function Inline({ node, fields }: { node: MailingInline; fields: Record<string, string> }) {
@@ -31,6 +38,15 @@ function Block({ block, fields }: { block: MailingBlock; fields: Record<string, 
           <Inline key={i} node={node} fields={fields} />
         ))}
       </p>
+    );
+  }
+  if (block.type === "blockquote") {
+    return (
+      <blockquote>
+        {block.content.map((inner, i) => (
+          <Block key={i} block={inner} fields={fields} />
+        ))}
+      </blockquote>
     );
   }
   return (

@@ -16,6 +16,7 @@ it("uses the request's origin only in a local build, and otherwise refuses to gu
   expect(siteUrl("/staff", new Request("http://localhost:3000/staff/api/login")).href).toBe(
     "http://localhost:3000/staff",
   );
+  expect(() => siteUrl("/staff", undefined)).toThrow("SITE_ORIGIN isn't set");
   vi.stubEnv("DEPLOY_CONTEXT", "production");
   expect(() => siteUrl("/staff", request)).toThrow("SITE_ORIGIN isn't set");
 });

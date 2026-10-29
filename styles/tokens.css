@@ -164,6 +164,17 @@
   --status-blue: #1d4e89;
   --status-blue-bg: #dbe8f7;
 
+  /* The colours of the marks of the services the imports read from
+     (ImportIcon), as each draws its own. */
+  --brand-airtable-yellow: #fcb400;
+  --brand-airtable-blue: #18bfff;
+  --brand-airtable-red: #f82b60;
+  --brand-gmail-blue: #4285f4;
+  --brand-gmail-green: #34a853;
+  --brand-gmail-yellow: #fbbc04;
+  --brand-gmail-red: #ea4335;
+  --brand-gmail-dark-red: #c5221f;
+
   /* The march sign-up (app/(march)/): ink and paper, and a hotter orange
      than the site's, for a page that looks like a poster. */
   --march-ink: #0b0908;

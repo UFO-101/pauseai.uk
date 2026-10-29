@@ -3,7 +3,13 @@ import { describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 import Densities from "../_components/Densities";
-import { CheckboxExample, LinkButtonExample, SegmentedExample, StatusMessageUndoExample } from "./forms.client";
+import {
+  CheckboxExample,
+  LinkBarExample,
+  LinkButtonExample,
+  SegmentedExample,
+  StatusMessageUndoExample,
+} from "./forms.client";
 
 const value = () => page.getByText(/^Value: /);
 const log = () => page.getByRole("list", { name: "Event log" }).getByRole("listitem");
@@ -43,5 +49,12 @@ describe("the forms group's examples", () => {
     await render(<StatusMessageUndoExample />);
     await page.getByRole("button", { name: "Undo" }).click();
     await expect.element(log().nth(0)).toMatchTextContent(/^onUndo\(/);
+  });
+
+  it("shows the link bar open on a link, closing it doing nothing", async () => {
+    await render(<LinkBarExample />);
+    await expect.element(page.getByRole("textbox", { name: "Example address" })).toHaveValue("https://pauseai.uk/join");
+    await page.getByRole("button", { name: "Cancel" }).click();
+    await expect.element(page.getByRole("textbox", { name: "Example address" })).toBeVisible();
   });
 });
