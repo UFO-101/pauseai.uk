@@ -2,8 +2,9 @@
 
 import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
 import { useState } from "react";
+import { LinkIcon, QuoteIcon } from "@/components/ui/EditorIcons";
 import LinkBar from "@/components/ui/LinkBar";
-import { copy } from "@/lib/content/email-your-mp";
+import { letterEditorCopy as copy } from "@/lib/content/letter-editor";
 import { isLinkKey, letterExtensions } from "@/lib/letter-extensions";
 import type { LetterDoc } from "@/lib/letter-format";
 import styles from "./LetterEditor.module.css";
@@ -16,7 +17,7 @@ type Props = {
   describedBy: string;
 };
 
-/** Bold, italic, links, bullet points and quotes: the formatting a letter may have (lib/letter-format.ts). Link opens the link bar under it. */
+/** Bold, italic, links, bullet points and quotes: the formatting a letter may have (lib/letter-format.ts). Link opens the link bar under it, or closes it. */
 function Toolbar({ editor, labelledBy, onLink }: { editor: Editor; labelledBy: string; onLink: () => void }) {
   const active = useEditorState({
     editor,
@@ -30,27 +31,42 @@ function Toolbar({ editor, labelledBy, onLink }: { editor: Editor; labelledBy: s
   });
   const buttons = [
     {
-      title: "Bold",
+      title: copy.bold,
       label: <strong>B</strong>,
       pressed: active.bold,
       run: () => editor.chain().focus().toggleBold().run(),
     },
     {
-      title: "Italic",
+      title: copy.italic,
       label: <em>i</em>,
       pressed: active.italic,
       run: () => editor.chain().focus().toggleItalic().run(),
     },
-    { title: copy.editor.link, label: copy.editor.linkLabel, pressed: active.link, run: onLink },
     {
-      title: "Bullet point",
+      title: copy.link,
+      label: (
+        <>
+          <LinkIcon />
+          {copy.linkLabel}
+        </>
+      ),
+      pressed: active.link,
+      run: onLink,
+    },
+    {
+      title: copy.bulletList,
       label: "• List",
       pressed: active.bulletList,
       run: () => editor.chain().focus().toggleBulletList().run(),
     },
     {
-      title: copy.editor.quote,
-      label: copy.editor.quoteLabel,
+      title: copy.quote,
+      label: (
+        <>
+          <QuoteIcon />
+          {copy.quote}
+        </>
+      ),
       pressed: active.blockquote,
       run: () => editor.chain().focus().toggleBlockquote().run(),
     },
@@ -99,8 +115,18 @@ export default function LetterEditor({ initial, onChange, labelledBy, describedB
   });
   return (
     <div className={styles.editorFrame}>
-      {editor && <Toolbar editor={editor} labelledBy={labelledBy} onLink={() => setLinking(true)} />}
-      {editor && linking && <LinkBar editor={editor} words={copy.editor.linkBar} onClose={() => setLinking(false)} />}
+      {editor && (
+        <Toolbar
+          editor={editor}
+          labelledBy={labelledBy}
+          onLink={() => {
+            // Shut, the cursor goes back to the letter, as the bar's own Cancel does.
+            if (linking) editor.commands.focus();
+            setLinking(!linking);
+          }}
+        />
+      )}
+      {editor && linking && <LinkBar editor={editor} words={copy.linkBar} onClose={() => setLinking(false)} />}
       <EditorContent editor={editor} />
     </div>
   );

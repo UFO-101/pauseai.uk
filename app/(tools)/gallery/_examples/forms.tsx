@@ -4,6 +4,8 @@
 import { Button } from "@/components/ui/Button";
 import Actions from "@/components/ui/Actions";
 import { DateRange, FileInput, Select, TextArea, TextInput } from "@/components/ui/Controls";
+import DatePicker from "@/components/ui/DatePicker";
+import { LinkIcon, QuoteIcon } from "@/components/ui/EditorIcons";
 import { Field, FieldError, FieldGroup, FieldSet, Hint, Label } from "@/components/ui/Field";
 import { FilterForm, FormStack } from "@/components/ui/Form";
 import StatusMessage from "@/components/ui/StatusMessage";
@@ -60,6 +62,32 @@ export const forms: Group = {
                     to={{ "aria-label": "Example to" }}
                   />
                 </FieldSet>
+              )}
+            </Densities>
+          ),
+        },
+      ],
+    },
+    {
+      name: "DatePicker",
+      file: "components/ui/DatePicker.tsx",
+      variants: [
+        {
+          label: "A day chosen, none yet, and disabled",
+          render: () => (
+            <Densities>
+              {() => (
+                <div style={{ display: "grid", gap: "var(--form-gap)" }}>
+                  <Field label="Example day">
+                    <DatePicker defaultValue="2026-10-30" />
+                  </Field>
+                  <Field label="Example day not chosen">
+                    <DatePicker clearable />
+                  </Field>
+                  <Field label="Example disabled day">
+                    <DatePicker defaultValue="2026-10-30" disabled />
+                  </Field>
+                </div>
               )}
             </Densities>
           ),
@@ -158,14 +186,13 @@ export const forms: Group = {
       file: "components/ui/Controls.tsx",
       variants: [
         {
-          label: "Text, a search, a date and a time, and disabled",
+          label: "Text, a search and a time, and disabled",
           render: () => (
             <Densities>
               {() => (
                 <div style={{ display: "grid", gap: "var(--form-gap)" }}>
                   <TextInput aria-label="Example text" defaultValue="Some text" />
                   <TextInput aria-label="Example search" type="search" placeholder="Search" />
-                  <TextInput aria-label="Example date" type="date" defaultValue="2026-01-01" />
                   <TextInput aria-label="Example time" type="time" defaultValue="18:30" />
                   <TextInput aria-label="Example disabled" defaultValue="Can't change" disabled />
                 </div>
@@ -233,6 +260,36 @@ export const forms: Group = {
       file: "components/ui/Controls.tsx",
       variants: [
         { label: "Three options, one picked", render: () => <Densities>{() => <SegmentedExample />}</Densities> },
+      ],
+    },
+    {
+      name: "LinkIcon",
+      file: "components/ui/EditorIcons.tsx",
+      variants: [
+        {
+          label: "Before the word on an editor's Link button",
+          render: () => (
+            <span>
+              <LinkIcon />
+              Link
+            </span>
+          ),
+        },
+      ],
+    },
+    {
+      name: "QuoteIcon",
+      file: "components/ui/EditorIcons.tsx",
+      variants: [
+        {
+          label: "Before the word on an editor's Quote button",
+          render: () => (
+            <span>
+              <QuoteIcon />
+              Quote
+            </span>
+          ),
+        },
       ],
     },
     {

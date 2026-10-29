@@ -1,11 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
-import { copy } from "@/lib/content/email-your-mp";
+import { letterEditorCopy as words } from "@/lib/content/letter-editor";
 import type { LetterDoc } from "@/lib/letter-format";
 import LetterEditor from "./LetterEditor";
-
-const words = copy.editor;
 
 async function renderEditor() {
   const onChange = vi.fn<(doc: LetterDoc) => void>();
@@ -33,6 +31,11 @@ describe("LetterEditor", () => {
     await userEvent.keyboard("{Control>}a{/Control}");
     await page.getByRole("button", { name: words.link }).click();
     await userEvent.keyboard("pauseai.uk{Enter}");
+    // Link again shuts the bar, as does the button pressed twice.
+    await page.getByRole("button", { name: words.link }).click();
+    await expect.element(page.getByRole("textbox", { name: words.linkBar.address })).toBeVisible();
+    await page.getByRole("button", { name: words.link }).click();
+    await expect.element(page.getByRole("textbox", { name: words.linkBar.address })).not.toBeInTheDocument();
     await expect.element(page.getByRole("button", { name: words.link })).toHaveAttribute("aria-pressed", "true");
     expect(JSON.stringify(last())).toContain('"href":"https://pauseai.uk/"');
     await userEvent.keyboard("{Control>}k{/Control}");

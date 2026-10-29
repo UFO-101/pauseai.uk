@@ -270,6 +270,23 @@ describe("MailingView", () => {
       ]);
   });
 
+  it("Change the time keeps an hour overnight that a mailing was due at already, saying when it goes", async () => {
+    vi.useFakeTimers({ now: new Date("2026-12-01T08:58:00Z"), toFake: ["Date", "setInterval", "clearInterval"] });
+    onTestFinished(() => void vi.useRealTimers());
+    await view({
+      written: { ...written, state: "scheduled", dueAt: "2026-12-03T03:00:00Z" },
+      reschedule: async () => {},
+    });
+    await page.getByRole("button", { name: copy.changeTime }).click();
+    await expect.element(page.getByRole("combobox")).toHaveValue("3");
+    expect(
+      page
+        .getByRole("option")
+        .all()
+        .map((option) => option.element().textContent)[0],
+    ).toBe(copy.goesAt("03:00", "06:18"));
+  });
+
   it("Change the time never offers a time too soon: it starts at the first it can go, and moves on as time passes", async () => {
     vi.useFakeTimers({ now: new Date("2026-12-01T08:58:00Z"), toFake: ["Date", "setInterval", "clearInterval"] });
     onTestFinished(() => void vi.useRealTimers());
@@ -280,8 +297,8 @@ describe("MailingView", () => {
     const day = page.getByLabelText(copy.day);
     const hour = page.getByRole("combobox");
     const option = (h: number) => page.getByRole("option", { name: `${String(h).padStart(2, "0")}:18` });
-    // Each hour says when a mailing due then goes: overnight, at the morning's first sending.
-    await expect.element(page.getByRole("option", { name: copy.goesAt("03:00", "06:18") })).toBeInTheDocument();
+    // Each hour says when a mailing due then goes, and those overnight, when nothing is sent, aren't offered.
+    expect(page.getByRole("option").all()[0].element().textContent).toBe("06:18");
     // It goes at 09:00, five minutes from now in London: too soon, so 10:00, and the hours before it can't be.
     await expect.element(day).toHaveAttribute("min", "2026-12-01");
     await expect.element(hour).toHaveValue("10");

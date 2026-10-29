@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useReducer, useState } from "react";
-import { Select, TextInput } from "@/components/ui/Controls";
+import { Select } from "@/components/ui/Controls";
+import DatePicker from "@/components/ui/DatePicker";
 import { Field } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -12,11 +13,23 @@ const copy = staffCopy.mailingPages;
 /** How often a time picker checks the time it shows hasn't become too soon. */
 export const CHECK_EVERY = 30_000;
 
-/** An hour's choice: when a mailing due then goes, "09:18", or overnight, the hour and when it goes. */
+/** Whether the sending runs in `hour` on `day`, in London. */
+const sends = (day: string, hour: number) => londonDayHour(sendsAt(fromLondon(day, hour))).hour === hour;
+
+/** An hour's choice: when a mailing due then goes, "09:18"; or for one chosen overnight, the hour and when it goes. */
 function hourLabel(day: string, hour: number): string {
-  const sends = sendsAt(fromLondon(day, hour));
-  const clock = londonClock(sends);
-  return londonDayHour(sends).hour === hour ? clock : copy.goesAt(`${String(hour).padStart(2, "0")}:00`, clock);
+  const clock = londonClock(sendsAt(fromLondon(day, hour)));
+  return sends(day, hour) ? clock : copy.goesAt(`${String(hour).padStart(2, "0")}:00`, clock);
+}
+
+/**
+ * The hours a mailing can be due at on `day`: those the sending runs in,
+ * so overnight ones aren't offered, as a mailing due then would go in the
+ * morning. Which those are moves with the clocks. Also `kept`, an hour
+ * already chosen, so it shows.
+ */
+function sendingHours(day: string, kept: number | null): number[] {
+  return Array.from({ length: 24 }, (_, h) => h).filter((h) => h === kept || sends(day, h));
 }
 
 /**
@@ -45,17 +58,11 @@ export function DueTimeFields({
   return (
     <>
       <Field label={copy.day} className={dayClass}>
-        <TextInput
-          type="date"
+        <DatePicker
           name={named ? "day" : undefined}
-          // Always a day, so Firefox shows no button to clear it.
-          required
           min={earliest.day}
           value={day}
-          onChange={(event) => {
-            const picked = event.target.value;
-            onChange(picked, hour === null ? null : hourNotTooSoon(picked, hour, earliest));
-          }}
+          onChange={(picked) => onChange(picked, hour === null ? null : hourNotTooSoon(picked, hour, earliest))}
         />
       </Field>
       <Field label={copy.hour} className={hourClass}>
@@ -70,7 +77,7 @@ export function DueTimeFields({
               {copy.choose}
             </option>
           )}
-          {Array.from({ length: 24 }, (_, h) => (
+          {sendingHours(day || earliest.day, hour).map((h) => (
             // On the first day it can go, the hours too soon can't be chosen.
             <option key={h} value={h} disabled={day === earliest.day && h < earliest.hour}>
               {hourLabel(day || earliest.day, h)}

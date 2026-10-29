@@ -299,6 +299,11 @@ describe("MailingEditor", () => {
     await userEvent.keyboard("{Control>}a{/Control}");
     await page.getByRole("button", { name: copy.link }).click();
     await userEvent.keyboard("pauseai.uk/join{Enter}");
+    // Link again shuts the bar, as does the button pressed twice.
+    await page.getByRole("button", { name: copy.link }).click();
+    await expect.element(page.getByRole("textbox", { name: copy.linkBar.address })).toBeVisible();
+    await page.getByRole("button", { name: copy.link }).click();
+    await expect.element(page.getByRole("textbox", { name: copy.linkBar.address })).not.toBeInTheDocument();
     await expect.element(page.getByRole("button", { name: copy.link })).toHaveAttribute("aria-pressed", "true");
     expect(last(onChange).content![0].content![0].marks).toEqual([
       { type: "link", attrs: expect.objectContaining({ href: "https://pauseai.uk/join" }) },

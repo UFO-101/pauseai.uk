@@ -2,6 +2,7 @@
 
 import { EditorContent, Node, useEditor, useEditorState, type Editor, type JSONContent } from "@tiptap/react";
 import { useId, useMemo, useRef, useState } from "react";
+import { LinkIcon, QuoteIcon } from "@/components/ui/EditorIcons";
 import LinkBar from "@/components/ui/LinkBar";
 import { isLinkKey, letterExtensions } from "@/lib/letter-extensions";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -108,7 +109,8 @@ const OnlyFor = Node.create<{ labels: Record<string, string> }>({
 
 /**
  * Bold, italic, links, bullets and quotes, and in a part for only some, the
- * button that makes it for everyone. Link opens the link bar under it.
+ * button that makes it for everyone. Link opens the link bar under it, or
+ * closes it.
  */
 function Toolbar({ editor, onLink }: { editor: Editor; onLink: () => void }) {
   const active = useEditorState({
@@ -135,7 +137,17 @@ function Toolbar({ editor, onLink }: { editor: Editor; onLink: () => void }) {
       pressed: active.italic,
       run: () => editor.chain().focus().toggleItalic().run(),
     },
-    { title: copy.link, label: copy.linkLabel, pressed: active.link, run: onLink },
+    {
+      title: copy.link,
+      label: (
+        <>
+          <LinkIcon />
+          {copy.linkLabel}
+        </>
+      ),
+      pressed: active.link,
+      run: onLink,
+    },
     {
       title: copy.bulletList,
       label: "• List",
@@ -144,7 +156,12 @@ function Toolbar({ editor, onLink }: { editor: Editor; onLink: () => void }) {
     },
     {
       title: copy.quote,
-      label: copy.quoteLabel,
+      label: (
+        <>
+          <QuoteIcon />
+          {copy.quote}
+        </>
+      ),
       pressed: active.blockquote,
       run: () => editor.chain().focus().toggleBlockquote().run(),
     },
@@ -403,7 +420,16 @@ export default function MailingEditor({ initial, onChange, fields, conditions, r
   return (
     <div className={styles.layout}>
       <div className={styles.editorFrame} ref={frame}>
-        {editor && <Toolbar editor={editor} onLink={() => setLinking(true)} />}
+        {editor && (
+          <Toolbar
+            editor={editor}
+            onLink={() => {
+              // Shut, the cursor goes back to the letter, as the bar's own Cancel does.
+              if (linking) editor.commands.focus();
+              setLinking(!linking);
+            }}
+          />
+        )}
         {editor && linking && <LinkBar editor={editor} words={copy.linkBar} onClose={() => setLinking(false)} />}
         <EditorContent editor={editor} />
         {picker && (
