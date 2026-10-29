@@ -171,6 +171,7 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
           "bounced",
           "not_sent",
           "replied",
+          "scheduled",
           "sending",
           "sent",
           "spam_complaint",
