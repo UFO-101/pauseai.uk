@@ -277,6 +277,9 @@ describeWithDatabase("permissionsFor", () => {
     // The join form before it asked what they wanted to do: a volunteer's.
     await member("recT", "t@example.com", "2025-06-06T00:00:00Z", true, false, "+447700900013", null);
     expect((await phoneAnswer("+447700900013", "volunteering"))?.slice(0, 2)).toEqual(["yes", "volunteered"]);
+    // No intent on a record from after the Tally form didn't choose to volunteer.
+    await member("recN", "n@example.com", "2026-09-12T00:00:00Z", true, false, "+447700900014", null);
+    expect((await phoneAnswer("+447700900014", "volunteering"))?.slice(0, 2)).toEqual(["unsure", "gave-number"]);
     await member("recO", "o@example.com", "2026-03-01T00:00:00Z", true, false, "+447700900011", "Act now");
     expect((await phoneAnswer("+447700900011", "volunteering"))?.slice(0, 2)).toEqual(["unsure", "gave-number"]);
     await member("recR", "r@example.com", "2026-09-12T00:00:00Z", true, true, "+447700900012", "Volunteer");
