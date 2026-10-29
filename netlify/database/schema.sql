@@ -268,13 +268,13 @@ CREATE TABLE public.letters (
 --
 
 CREATE TABLE public.letters_from_supporters (
-    id bigint CONSTRAINT supporter_letters_id_not_null NOT NULL,
-    kind text DEFAULT 'supporter'::text CONSTRAINT supporter_letters_kind_not_null NOT NULL,
-    campaign text CONSTRAINT supporter_letters_campaign_not_null NOT NULL,
-    subject text CONSTRAINT supporter_letters_subject_not_null NOT NULL,
+    id bigint NOT NULL,
+    kind text DEFAULT 'supporter'::text NOT NULL,
+    campaign text NOT NULL,
+    subject text NOT NULL,
     reply_hash text,
     airtable_id text,
-    entry_id bigint CONSTRAINT supporter_letters_entry_id_not_null NOT NULL,
+    entry_id bigint NOT NULL,
     CONSTRAINT letters_from_supporters_kind_check CHECK ((kind = 'supporter'::text)),
     CONSTRAINT letters_from_supporters_reply_hash_check CHECK (((reply_hash IS NULL) = (airtable_id IS NOT NULL)))
 );
@@ -1138,6 +1138,7 @@ CREATE TABLE public.email_problems (
     reason text DEFAULT ''::text NOT NULL,
     can_reset boolean NOT NULL,
     details jsonb DEFAULT '{}'::jsonb NOT NULL,
+    gmail_message_id text,
     CONSTRAINT email_problems_address_check CHECK ((address = lower(address))),
     CONSTRAINT email_problems_check CHECK (((kind <> 'complaint'::text) OR (NOT can_reset))),
     CONSTRAINT email_problems_kind_check CHECK ((kind = ANY (ARRAY['hard'::text, 'soft'::text, 'complaint'::text])))
@@ -1168,9 +1169,16 @@ CREATE TABLE public.email_sends (
     address text NOT NULL,
     outcome text NOT NULL,
     message_id text,
+    backend text DEFAULT 'postmark'::text NOT NULL,
+    sender text,
+    rfc_message_id text,
+    gmail_thread_id text,
+    CONSTRAINT email_sends_backend_check CHECK ((backend = ANY (ARRAY['postmark'::text, 'gmail'::text]))),
     CONSTRAINT email_sends_check CHECK (((outcome = 'sent'::text) = (message_id IS NOT NULL))),
+    CONSTRAINT email_sends_gmail_sender CHECK (((backend = 'postmark'::text) OR (sender IS NOT NULL))),
     CONSTRAINT email_sends_outcome_check CHECK ((outcome = ANY (ARRAY['sent'::text, 'refused'::text, 'failed'::text]))),
-    CONSTRAINT email_sends_purpose_check CHECK ((purpose = ANY (ARRAY['letter'::text, 'forwarded-reply'::text, 'staff-login'::text, 'staff-alert'::text, 'mailing-test'::text])))
+    CONSTRAINT email_sends_purpose_check CHECK ((purpose = ANY (ARRAY['letter'::text, 'forwarded-reply'::text, 'staff-login'::text, 'staff-alert'::text, 'mailing'::text, 'mailing-test'::text]))),
+    CONSTRAINT email_sends_sender_check CHECK ((sender = lower(sender)))
 );
 
 --
@@ -1257,15 +1265,51 @@ ALTER TABLE public.letter_events ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTIT
 );
 
 --
+-- Name: letter_replies; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.letter_replies (
+    id bigint NOT NULL,
+    letter_id bigint NOT NULL,
+    account text NOT NULL,
+    gmail_message_id text NOT NULL,
+    gmail_thread_id text NOT NULL,
+    rfc_message_id text,
+    from_address text NOT NULL,
+    from_name text DEFAULT ''::text NOT NULL,
+    subject text DEFAULT ''::text NOT NULL,
+    at timestamp with time zone NOT NULL,
+    from_us boolean NOT NULL,
+    blob_key text NOT NULL,
+    size integer NOT NULL,
+    CONSTRAINT letter_replies_account_check CHECK ((account = lower(account))),
+    CONSTRAINT letter_replies_from_address_check CHECK ((from_address = lower(from_address))),
+    CONSTRAINT letter_replies_size_check CHECK ((size >= 0))
+);
+
+--
+-- Name: letter_replies_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.letter_replies ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.letter_replies_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
 -- Name: letters_from_pauseai; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.letters_from_pauseai (
-    id bigint CONSTRAINT pauseai_letters_id_not_null NOT NULL,
-    kind text DEFAULT 'pauseai'::text CONSTRAINT pauseai_letters_kind_not_null NOT NULL,
-    mailing_id bigint CONSTRAINT pauseai_letters_mailing_id_not_null NOT NULL,
+    id bigint NOT NULL,
+    kind text DEFAULT 'pauseai'::text NOT NULL,
+    mailing_id bigint NOT NULL,
     airtable_id text,
-    personalised boolean DEFAULT false CONSTRAINT pauseai_letters_personalised_not_null NOT NULL,
+    personalised boolean DEFAULT false NOT NULL,
     merge_values jsonb,
     skip_reason text,
     CONSTRAINT letters_from_pauseai_kind_check CHECK ((kind = 'pauseai'::text)),
@@ -1481,18 +1525,6 @@ ALTER TABLE public.opt_outs ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 );
 
 --
--- Name: pauseai_letters; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.pauseai_letters AS
- SELECT id,
-    kind,
-    mailing_id,
-    airtable_id,
-    personalised
-   FROM public.letters_from_pauseai;
-
---
 -- Name: politicians; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1522,8 +1554,13 @@ CREATE TABLE public.staff_accounts (
     added_at timestamp with time zone DEFAULT now() NOT NULL,
     last_login_at timestamp with time zone,
     last_seen_at timestamp with time zone,
+    gmail_token bytea,
+    gmail_connected_at timestamp with time zone,
+    gmail_history_id text,
+    gmail_name text,
     CONSTRAINT staff_accounts_email_check CHECK ((email = lower(email))),
     CONSTRAINT staff_accounts_email_pauseai CHECK ((email ~ '^[^@[:space:]]+@pauseai\.uk$'::text)),
+    CONSTRAINT staff_accounts_gmail_check CHECK ((((gmail_token IS NULL) = (gmail_connected_at IS NULL)) AND ((gmail_token IS NOT NULL) OR (gmail_history_id IS NULL)))),
     CONSTRAINT staff_accounts_permissions_check CHECK ((permissions <@ ARRAY['admin'::text, 'supporters'::text]))
 );
 
@@ -1565,20 +1602,6 @@ CREATE VIEW public.supporter_first_seen AS
            FROM public.supporter_identity i
           WHERE (i.supporter_id = s.id)) AS first_seen_at
    FROM public.supporters s;
-
---
--- Name: supporter_letters; Type: VIEW; Schema: public; Owner: -
---
-
-CREATE VIEW public.supporter_letters AS
- SELECT id,
-    kind,
-    campaign,
-    subject,
-    reply_hash,
-    airtable_id,
-    entry_id
-   FROM public.letters_from_supporters;
 
 --
 -- Name: supporter_links_id_seq; Type: SEQUENCE; Schema: public; Owner: -
@@ -1769,6 +1792,27 @@ ALTER TABLE ONLY public.import_runs
 
 ALTER TABLE ONLY public.letter_events
     ADD CONSTRAINT letter_events_pkey PRIMARY KEY (id);
+
+--
+-- Name: letter_replies letter_replies_account_gmail_message_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.letter_replies
+    ADD CONSTRAINT letter_replies_account_gmail_message_id_key UNIQUE (account, gmail_message_id);
+
+--
+-- Name: letter_replies letter_replies_blob_key_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.letter_replies
+    ADD CONSTRAINT letter_replies_blob_key_key UNIQUE (blob_key);
+
+--
+-- Name: letter_replies letter_replies_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.letter_replies
+    ADD CONSTRAINT letter_replies_pkey PRIMARY KEY (id);
 
 --
 -- Name: letters_from_pauseai letters_from_pauseai_airtable_id_key; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2093,6 +2137,12 @@ CREATE INDEX email_problems_address ON public.email_problems USING btree (addres
 CREATE INDEX email_problems_at ON public.email_problems USING btree (at DESC, id DESC);
 
 --
+-- Name: email_problems_gmail; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX email_problems_gmail ON public.email_problems USING btree (gmail_message_id, address) WHERE (gmail_message_id IS NOT NULL);
+
+--
 -- Name: email_sends_address; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2109,6 +2159,18 @@ CREATE INDEX email_sends_letter ON public.email_sends USING btree (letter_id);
 --
 
 CREATE INDEX email_sends_message_id ON public.email_sends USING btree (message_id);
+
+--
+-- Name: email_sends_rfc_message_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX email_sends_rfc_message_id ON public.email_sends USING btree (rfc_message_id) WHERE (rfc_message_id IS NOT NULL);
+
+--
+-- Name: email_sends_sender; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX email_sends_sender ON public.email_sends USING btree (sender, at) WHERE (sender IS NOT NULL);
 
 --
 -- Name: form_entries_email; Type: INDEX; Schema: public; Owner: -
@@ -2133,6 +2195,12 @@ CREATE INDEX import_runs_job_at ON public.import_runs USING btree (job, at DESC,
 --
 
 CREATE INDEX letter_events_letter_id ON public.letter_events USING btree (letter_id, at);
+
+--
+-- Name: letter_replies_letter; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX letter_replies_letter ON public.letter_replies USING btree (letter_id, at);
 
 --
 -- Name: letters_from_pauseai_mailing; Type: INDEX; Schema: public; Owner: -
@@ -2327,6 +2395,13 @@ ALTER TABLE ONLY public.form_entry_luma
 
 ALTER TABLE ONLY public.letter_events
     ADD CONSTRAINT letter_events_letter_id_fkey FOREIGN KEY (letter_id) REFERENCES public.letters(id) ON DELETE CASCADE;
+
+--
+-- Name: letter_replies letter_replies_letter_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.letter_replies
+    ADD CONSTRAINT letter_replies_letter_id_fkey FOREIGN KEY (letter_id) REFERENCES public.letters(id) ON DELETE CASCADE;
 
 --
 -- Name: letters_from_pauseai letters_from_pauseai_id_kind_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -

@@ -65,6 +65,7 @@ describe("politiciansSearch", () => {
       email: ["none", "blocked", "!yes"],
       ask: BILL,
       answer: "signed",
+      mailed: ["deepmind-letter", "!frontier-ai-letter"],
       sort: "party",
       dir: "desc",
       page: "3",
@@ -80,9 +81,16 @@ describe("politiciansSearch", () => {
         flags: ["important", "removed"],
         country: ["wales"],
         email: ["none", "blocked"],
+        mailed: ["deepmind-letter"],
         ask: BILL,
         answer: "signed",
-        not: { party: ["Reform UK"], flags: ["connection", "test"], country: ["scotland"], email: ["yes"] },
+        not: {
+          party: ["Reform UK"],
+          flags: ["connection", "test"],
+          country: ["scotland"],
+          email: ["yes"],
+          mailed: ["frontier-ai-letter"],
+        },
         sort: { key: "party", dir: "desc" },
         page: 3,
       },
@@ -102,6 +110,7 @@ describe("politiciansSearch", () => {
       flags: undefined,
       country: undefined,
       email: undefined,
+      mailed: undefined,
       ask: undefined,
       answer: undefined,
       not: { flags: ["test"] },
@@ -118,6 +127,7 @@ describe("politiciansSearch", () => {
       email: [],
       ask: "",
       answer: "",
+      mailed: [],
       sort: "",
       dir: "",
       page: "",
@@ -187,7 +197,7 @@ describeWithDatabase("politicians", () => {
     expect((await getPolitician(id))!.statuses[EDINBURGH]).toMatchObject({ status: "declined" });
     await setStatus(id, EDINBURGH, { status: null, date: null, note: "" }, "jo@pauseai.uk");
 
-    await setStatus(id, BILL, { status: null, date: null, note: "" }, "sam@pauseai.uk");
+    await setStatus(id, BILL, { status: null, date: null, note: "" }, "samuel.whitlock@pauseai.uk");
     expect(await statusesOf(id)).toEqual({ [PM]: "signed" });
 
     const politician = await getPolitician(id);
@@ -200,7 +210,7 @@ describeWithDatabase("politicians", () => {
     const log = await query<{ actor: string; action: string }>("SELECT actor, action FROM audit_log ORDER BY id");
     expect(log).toEqual([
       ...Array(4).fill({ actor: "jo@pauseai.uk", action: "set status" }),
-      { actor: "sam@pauseai.uk", action: "set status" },
+      { actor: "samuel.whitlock@pauseai.uk", action: "set status" },
     ]);
   });
 
@@ -440,6 +450,24 @@ describeWithDatabase("politicians", () => {
     // An answer to any ask, or none to any.
     expect(await ids({ answer: "going" })).toEqual([peer]);
     expect(await ids({ answer: "none" })).toEqual([retired]);
+    // Mailed about an ask: a mailing about it went or is going to them, not one stopped or skipped.
+    const [{ id: mailing }] = await query<{ id: number }>(
+      `INSERT INTO mailings (title, ask, audience, channel, state, airtable_sent_between)
+       VALUES ('Edinburgh', $1, 'politicians', 'email', 'sent', '[2026-01-01,2026-01-02)') RETURNING id::int AS id`,
+      [EDINBURGH],
+    );
+    for (const [who, status] of [
+      [mp, "sent"],
+      [peer, "skipped"],
+    ] as const) {
+      const [{ id }] = await query<{ id: number }>(
+        "INSERT INTO letters (kind, notable_person_id, status) VALUES ('pauseai', $1, $2) RETURNING id::int AS id",
+        [who, status],
+      );
+      await query("INSERT INTO letters_from_pauseai (id, mailing_id) VALUES ($1, $2)", [id, mailing]);
+    }
+    expect(await ids({ mailed: [EDINBURGH] })).toEqual([mp]);
+    expect(await ids({ not: { mailed: [EDINBURGH] } })).toEqual([peer, retired].sort());
     // The parties to choose from, without the blank one.
     expect(await listParties()).toEqual(["Crossbench", "Labour (Co-op)"]);
   });
@@ -461,7 +489,7 @@ describeWithDatabase("politicians", () => {
     const peer = await addPeer();
     const mp = await addTestPolitician();
     // As the MP sync logs an edit.
-    await logChange("sam@pauseai.uk", "edit politician", { id: peer, name: "Lord Example" });
+    await logChange("samuel.whitlock@pauseai.uk", "edit politician", { id: peer, name: "Lord Example" });
     await setStatus(mp, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
     await setStatus(peer, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
     await recordProblem({
@@ -485,7 +513,7 @@ describeWithDatabase("politicians", () => {
       ["remove politician", "sync"],
       ["add politician", "jo@pauseai.uk"],
       ["set status", "jo@pauseai.uk"],
-      ["edit politician", "sam@pauseai.uk"],
+      ["edit politician", "samuel.whitlock@pauseai.uk"],
     ]);
     const history = await politicianHistory(mp, "Polly.Placeholder.MP@parliament.uk");
     expect(history.map((c) => c.action)).toEqual(["unblock address", "block address", "set status"]);

@@ -71,14 +71,14 @@ export const exampleChanges: LoggedChange[] = [
     letters: 2,
     members: 0,
   }),
-  change(11, "admin@pauseai.uk", "add staff account", { email: "sam@pauseai.uk", to: [] }),
+  change(11, "admin@pauseai.uk", "add staff account", { email: "samuel.whitlock@pauseai.uk", to: [] }),
   change(12, "admin@pauseai.uk", "set staff permissions", {
-    email: "sam@pauseai.uk",
+    email: "samuel.whitlock@pauseai.uk",
     from: [],
     to: ["supporters", "admin"],
   }),
   change(13, "admin@pauseai.uk", "remove staff account", {
-    email: "sam@pauseai.uk",
+    email: "samuel.whitlock@pauseai.uk",
     permissions: ["supporters", "retired"],
   }),
   change(14, "sync", "hold MP sync", { added: 3, removed: 40, changed: 2 }),

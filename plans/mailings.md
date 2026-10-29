@@ -254,6 +254,22 @@ the `supporters` permission. They are from PauseAI UK, by email or
 text, with consent, opt-outs and a cost, so they have their own pages,
 built on phase 2's. To be designed once phase 2's are settled.
 
+Each letter or message lives in the section of whoever it holds details
+of, which is the rule Blocked emails follows too:
+
+| What | Its list | Its page | Who can open it |
+| --- | --- | --- | --- |
+| A supporter's letter to a politician | Supporters → Letters to MPs | `/staff/letters/<id>` | `supporters` |
+| PauseAI's letter to a politician | Politicians → Mailings, each mailing listing its letters | `/staff/mailings/<mailing>/letters/<id>` | Any staff |
+| PauseAI's message to a supporter | Supporters → Messages | `/staff/messages/<mailing>/<id>` or similar | `supporters` |
+
+A politician's page shows both kinds of letter in its history, each
+linked to its page for those who can open it; staff without `supporters`
+see that a constituent wrote, but not who. A supporter's page shows the
+messages they were sent, linked the same way. There is no list of every
+letter in the Politicians section: it would repeat Mailings, or mix in
+supporters' letters and split the permission within one page.
+
 - "Email these" or "Text these" on the supporters list, following its
   Contact filter. Without a "Can email" or "Can text" filter the button
   is dotted, and clicking it explains which filter to add.

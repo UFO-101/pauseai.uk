@@ -1,12 +1,20 @@
 import "server-only";
-import { checkMailingDoc, isBlankMailing, letterFor, type MailingDoc } from "@/lib/mailing-doc";
+import {
+  checkMailingDoc,
+  isBlankMailing,
+  letterFor,
+  type MailingDoc,
+  type MailingRecipientValues,
+} from "@/lib/mailing-doc";
+import { MAX_ATTACHMENT_BYTES } from "@/lib/mailing-attachments";
 import { scheduleProblems, type ScheduleProblem } from "@/lib/mailing-schedule";
 import { toHtml, toText } from "@/lib/letter-format";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { now } from "@/lib/now";
 import { logChange } from "./audit";
 import { query, transaction } from "./db";
-import { mailingChannel, type ChannelResult } from "./mailing-channels";
+import { gmailAccount } from "./gmail-accounts";
+import { gmailEmail, mailingChannel, postmarkEmail, type ChannelResult } from "./mailing-channels";
 import { politicianAudience, type PoliticianRecipient } from "./mailing-recipients";
 import type { Attachment } from "./outside-services/postmark";
 import type { StoredFilter } from "@/lib/staff-search";
@@ -57,12 +65,6 @@ const COLUMNS: Record<keyof MailingChanges, string> = {
 
 /** A save, or why not: someone else saved since, it's no longer a draft, or it's gone. */
 export type SaveResult = { saved: true; version: number } | { saved: false; reason: "conflict" | "not-draft" | "gone" };
-
-/**
- * The largest file a mailing can attach: it comes in one request, and
- * Netlify takes requests of up to 6MB.
- */
-const MAX_ATTACHMENT_BYTES = 4 * 1024 * 1024;
 
 const SELECT_WRITTEN = `
   SELECT m.id::int AS id, m.filter, m.subject, m.body, m.ask, m.created_by AS "createdBy", m.sent_from AS "sentFrom",
@@ -211,7 +213,7 @@ export async function attachmentFile(
 }
 
 /** A mailing's files, as they're sent. */
-async function attachmentsOf(id: number): Promise<Attachment[]> {
+export async function attachmentsOf(id: number): Promise<Attachment[]> {
   return query<Attachment>(
     `SELECT filename AS "Name", encode(content, 'base64') AS "Content", content_type AS "ContentType"
      FROM mailing_attachments WHERE mailing_id = $1 ORDER BY id`,
@@ -277,10 +279,13 @@ export async function scheduleMailing(
       lacking: audience.fields.filter((field) => field.lacking).map((field) => field.id),
       unknown,
       sends: Boolean(channel?.sendsMailings),
+      connected: Boolean(mailing.sentFrom && (await gmailAccount(mailing.sentFrom))),
     });
     if (problems.length) return { scheduled: false, problems };
     await query(
-      "UPDATE mailings SET state = 'scheduled', version = version + 1, updated_at = now() WHERE id = $1",
+      // With no name of its own, it goes in the name the Gmail account has.
+      `UPDATE mailings SET state = 'scheduled', from_name = coalesce(from_name, ''), version = version + 1, updated_at = now()
+       WHERE id = $1`,
       [id],
       db,
     );
@@ -351,31 +356,32 @@ export async function rescheduleMailing(id: number, dueAt: string, by: string): 
 }
 
 /** One recipient's email of a mailing: its subject, and its letter as HTML and as text. */
-export function emailFor(mailing: WrittenMailing, recipient: PoliticianRecipient) {
+export function emailFor(mailing: Pick<WrittenMailing, "subject" | "body">, recipient: MailingRecipientValues) {
   const letter = letterFor(mailing.body, recipient);
   return { subject: mailing.subject, html: toHtml(letter), text: toText(letter) };
 }
 
 /**
- * Sends `to`, a staff member, one recipient's email of a mailing, as that
- * recipient would get it, attachments and all, whatever the recipient's
- * permissions; by Postmark, addressed to the recipient's name at the staff
- * member's address.
+ * Sends `to`, an address a staff member gave, one recipient's email of a
+ * mailing, as that recipient would get it, attachments and all, whatever
+ * the recipient's permissions, addressed to the recipient's name at `to`:
+ * by the Gmail it's sent from, in its From name or with none the name the
+ * Gmail sends as, as the mailing will go, if that's connected; otherwise by Postmark,
+ * from the test copy's own name.
  */
 export async function sendTestCopy(
   mailing: WrittenMailing,
   recipient: PoliticianRecipient,
   to: string,
-  channel = mailingChannel("email")!,
 ): Promise<ChannelResult> {
   const email = emailFor(mailing, recipient);
-  return channel.send(
-    {
-      from: { name: staffCopy.mailingPages.testFromName, address: to },
-      to: { name: recipient.name, address: to },
-      ...email,
-      attachments: await attachmentsOf(mailing.id),
-    },
+  const gmail = mailing.sentFrom ? await gmailAccount(mailing.sentFrom) : undefined;
+  // From the Gmail, as the mailing will be: in its From name, or with none, the name the Gmail sends as.
+  const from = gmail
+    ? { name: mailing.fromName || gmail.name, address: gmail.email }
+    : { name: staffCopy.mailingPages.testFromName, address: to };
+  return (gmail ? gmailEmail : postmarkEmail).send(
+    { from, to: { name: recipient.name, address: to }, ...email, attachments: await attachmentsOf(mailing.id) },
     "mailing-test",
   );
 }

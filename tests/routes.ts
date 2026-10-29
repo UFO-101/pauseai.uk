@@ -18,11 +18,13 @@ export const DYNAMIC_EXAMPLES: Record<string, string> = {
   "/people/[slug]": `/people/${personSlug(people[0])}`,
   // Without a session this redirects to the login page, which is what the
   // smoke test sees.
+  "/staff/asks/[slug]": "/staff/asks/winter-reception-dec-2026",
   "/staff/import-data/[job]": "/staff/import-data/luma",
   "/staff/letters/[id]": "/staff/letters/1",
   "/staff/letters/supporter/[id]": "/staff/letters/supporter/1",
   "/staff/mailings/[id]": "/staff/mailings/1",
-  "/staff/mailings/[id]/letters/[letter]": "/staff/mailings/1/letters/1",
+  // Edinburgh follow-up's letter to Polly, which she answered (tests/fixtures/staff-data.sql).
+  "/staff/mailings/[id]/letters/[letter]": "/staff/mailings/11/letters/35",
   "/staff/politicians/[id]": "/staff/politicians/1",
   "/staff/supporters/[id]": "/staff/supporters/1",
   "/staff/supporters/[id]/erase": "/staff/supporters/1/erase",

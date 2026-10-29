@@ -178,6 +178,7 @@ describe("MailingView", () => {
       .element(page.getByText(copy.sentLine("20 Oct 2026, 08:00", "Jo Example"), { exact: false }))
       .toBeVisible();
     await expect.element(page.getByText(`11${copy.counts.sent}`)).toBeVisible();
+    await expect.element(page.getByRole("heading", { name: copy.whoTitle(true) })).toBeVisible();
     await expect
       .element(page.getByRole("link", { name: copy.tab(copy.tabs.bounced, 1) }))
       .toHaveAttribute("href", "/staff/mailings/4?tab=bounced");
@@ -223,6 +224,7 @@ describe("MailingView", () => {
     await view({ written: { ...written, state: "scheduled" }, stop: action, reschedule: action });
     await expect.element(page.getByText(copy.sends("Tuesday 1 December at 09:00"))).toBeVisible();
     await expect.element(page.getByText(`11${copy.counts.sent}`)).not.toBeInTheDocument();
+    await expect.element(page.getByRole("heading", { name: copy.whoTitle(false) })).toBeVisible();
     await page.getByRole("button", { name: copy.changeTime }).click();
     await expect.element(page.getByLabelText(copy.day)).toHaveValue("2026-12-01");
     await page.getByRole("combobox").selectOptions("10");
@@ -278,7 +280,7 @@ describe("MailingView", () => {
       ]);
   });
 
-  it("by its address alone, for a sender with no name", async () => {
+  it("by its address alone, for a sender with no name or a blank one", async () => {
     const { rerender } = await view({ written: { ...written, fromName: null } });
     await expect
       .element(page.getByText(copy.sentLine("20 Oct 2026, 08:00", "jo@pauseai.uk"), { exact: false }))
@@ -287,7 +289,7 @@ describe("MailingView", () => {
     await rerender(
       <MailingView
         mailing={mailing}
-        written={{ ...written, fromName: null, state: "scheduled" }}
+        written={{ ...written, fromName: "", state: "scheduled" }}
         asks={exampleAsks}
         stop={noAction}
         reschedule={noAction}
@@ -316,7 +318,7 @@ describe("MailingView, for a mailing imported from Airtable", () => {
     await expect.element(page.getByText(new RegExp(`^${copy.importedLine("1 Oct 2026, 09:00")}`))).toBeVisible();
     await expect.element(page.getByText(`2${copy.counts.sent}`)).toBeVisible();
     await expect.element(page.getByText(mailings.noText)).toBeVisible();
-    await expect.element(page.getByText(copy.whoTitle)).not.toBeInTheDocument();
+    await expect.element(page.getByText(copy.whoTitle(true))).not.toBeInTheDocument();
     expect(headings()).toContain(mailings.recipientColumns.how);
     await expect.element(page.getByRole("cell", { name: mailings.personalised })).toBeInTheDocument();
     await expect.element(page.getByText(mailings.asWritten).first()).toBeInTheDocument();

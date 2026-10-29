@@ -22,7 +22,7 @@ import {
   examplePauseaiLetterDetails,
   exampleSupporterLetterDetails,
 } from "@/app/(staff)/staff/_components/LettersTable.examples";
-import LetterDetails from "@/app/(staff)/staff/_components/LetterDetails";
+import LetterDetails, { GmailLink } from "@/app/(staff)/staff/_components/LetterDetails";
 import DevLogin from "@/app/(staff)/staff/_components/DevLogin";
 import LoginCard from "@/app/(staff)/staff/_components/LoginCard";
 import LoginForm from "@/app/(staff)/staff/_components/LoginForm";
@@ -101,6 +101,12 @@ import {
   examplePoliticiansPage,
 } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
 import AsksTable from "@/app/(staff)/staff/_components/AsksTable";
+import BounceReason from "@/app/(staff)/staff/_components/BounceReason";
+import { GmailConnect, GmailOutcome, SentToday } from "@/app/(staff)/staff/_components/GmailConnect";
+import AccountTitle from "@/app/(staff)/staff/_components/AccountTitle";
+import { AskLead, AskPreview, AskTitle } from "@/app/(staff)/staff/_components/AskLine";
+import LetterThread from "@/app/(staff)/staff/_components/LetterThread";
+import { exampleImportedThread, exampleThread } from "@/app/(staff)/staff/_components/LetterThread.examples";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { ImportJob } from "@/lib/import-runs";
 import type { Group, Variant } from "../_components/types";
@@ -128,6 +134,9 @@ import {
   StaffAccountsTableExample,
   RemoveAccountFormExample,
   UnblockFormExample,
+  AskFormExample,
+  DeleteTwiceExample,
+  MyGmailExample,
 } from "./staff.client";
 
 const [pm] = campaigns;
@@ -167,6 +176,7 @@ const EMPTY_POLITICIAN_FILTERS = {
   email: [] as string[],
   ask: "",
   answer: "",
+  mailed: [] as string[],
   sort: "",
   dir: "",
   page: "",
@@ -202,7 +212,7 @@ const EXAMPLE_NATIONS = [
 // Every page the navigation can mark as current, so a new one is a type error until it's here.
 const PAGES: Record<StaffPageName, true> = {
   home: true,
-  sessions: true,
+  me: true,
   supporters: true,
   letters: true,
   supporterEmails: true,
@@ -620,14 +630,6 @@ export const staff: Group = {
           ),
         },
         {
-          label: "Logged in on three devices: the faint link under Log out",
-          render: () => (
-            <StaffPage as="div">
-              <StaffNav email="jo@pauseai.uk" permissions={[]} sessions={3} current="home" />
-            </StaffPage>
-          ),
-        },
-        {
           label: "For an admin, on each page",
           render: () => (
             <StaffPage as="div">
@@ -984,6 +986,112 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <StaffHome permissions={[]} dashboard={exampleDashboard} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "AccountTitle",
+      file: "app/(staff)/staff/_components/AccountTitle.tsx",
+      variants: [
+        {
+          label: "Your own page's title, and your address",
+          render: () => (
+            <StaffPage as="div">
+              <AccountTitle email="jo@pauseai.uk" />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "MyGmail",
+      file: "app/(staff)/staff/_components/MyGmail.tsx",
+      variants: [
+        {
+          label: "Not connected: what connecting means, and the button",
+          render: () => (
+            <StaffPage as="div">
+              <MyGmailExample connected={false} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Just connected, with today's sends, and Disconnect",
+          render: () => (
+            <StaffPage as="div">
+              <MyGmailExample connected outcome="connected" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Connecting failed: the error, then what connecting means again",
+          render: () => (
+            <StaffPage as="div">
+              <MyGmailExample connected={false} outcome="failed" />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "GmailConnect",
+      file: "app/(staff)/staff/_components/GmailConnect.tsx",
+      variants: [
+        {
+          label: "What connecting means, said before going to Google",
+          render: () => (
+            <StaffPage as="div">
+              <GmailConnect back="/staff/mailings/12" />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "SentToday",
+      file: "app/(staff)/staff/_components/GmailConnect.tsx",
+      variants: [
+        {
+          label: "An account's sends against today's limit",
+          render: () => (
+            <StaffPage as="div">
+              <SentToday sent={120} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "GmailOutcome",
+      file: "app/(staff)/staff/_components/GmailConnect.tsx",
+      variants: (["connected", "other-account", "refused", "failed"] as const).map((outcome) => ({
+        label: `Back from Google: ${outcome}`,
+        render: () => (
+          <StaffPage as="div">
+            <GmailOutcome outcome={outcome} me="jo@pauseai.uk" />
+          </StaffPage>
+        ),
+      })),
+    },
+    {
+      name: "LetterThread",
+      file: "app/(staff)/staff/_components/LetterThread.tsx",
+      variants: [
+        {
+          label: "Sent from Jo's Gmail: Polly's answer, and Jo's that can't be read",
+          render: () => (
+            <StaffPage as="div">
+              <LetterThread thread={exampleThread} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Imported from Airtable, never sent: no text, no replies",
+          render: () => (
+            <StaffPage as="div">
+              <LetterThread thread={exampleImportedThread} />
             </StaffPage>
           ),
         },
@@ -1719,7 +1827,7 @@ export const staff: Group = {
                 accounts={[
                   { email: "admin@pauseai.uk", description: staffCopy.devLogin.permissions("Admin") },
                   { email: "jo@pauseai.uk", description: staffCopy.devLogin.permissions("Supporters") },
-                  { email: "sam@pauseai.uk", description: staffCopy.devLogin.noPermissions },
+                  { email: "samuel.whitlock@pauseai.uk", description: staffCopy.devLogin.noPermissions },
                   { email: "nobody@pauseai.uk", description: staffCopy.devLogin.noAccount },
                 ]}
               />
@@ -1842,6 +1950,116 @@ export const staff: Group = {
       ],
     },
     {
+      name: "AskPreview",
+      file: "app/(staff)/staff/_components/AskLine.tsx",
+      variants: [
+        {
+          label: "An event, with a date and a link, before it's answered",
+          render: () => (
+            <StaffPage as="div">
+              <AskPreview ask={exampleAsks[0]} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "A letter with no link",
+          render: () => (
+            <StaffPage as="div">
+              <AskPreview ask={{ ...exampleAsks[2], url: null, date: null }} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "AskLead",
+      file: "app/(staff)/staff/_components/AskLine.tsx",
+      variants: [
+        {
+          label: "Who asked them to do what, and when, leading into the ask's title",
+          render: () => (
+            <StaffPage as="div">
+              <AskLead ask={exampleAsks[0]} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "AskTitle",
+      file: "app/(staff)/staff/_components/AskLine.tsx",
+      variants: [
+        {
+          label: "Linked to another site, to a page of ours, and not linked",
+          render: () => (
+            <StaffPage as="div">
+              <p>
+                <AskTitle ask={exampleAsks[0]} />
+              </p>
+              <p>
+                <AskTitle ask={{ ...exampleAsks[2], url: "/campaigns/dear-sir-demis-2025" }} />
+              </p>
+              <p>
+                <AskTitle ask={exampleAsks[1]} />
+              </p>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "AskForm",
+      file: "app/(staff)/staff/_components/AskForm.tsx",
+      variants: [
+        {
+          label: "A new ask",
+          render: () => (
+            <StaffPage as="div">
+              <AskFormExample ask="new" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "One staff added, just saved, which nobody has answered: Delete pressed twice",
+          render: () => (
+            <StaffPage as="div">
+              <AskFormExample ask="added" notice="saved" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "One politicians have answered: its kind fixed, and it can't be deleted",
+          render: () => (
+            <StaffPage as="div">
+              <AskFormExample ask="answered" notice="in-use" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "One the site's code names, which can't be changed",
+          render: () => (
+            <StaffPage as="div">
+              <AskFormExample ask="fixed" />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "DeleteTwice",
+      file: "app/(staff)/staff/_components/MailingButtons.tsx",
+      variants: [
+        {
+          label: "Press once to arm it, twice to delete; and one that can't be pressed",
+          render: () => (
+            <StaffPage as="div">
+              <DeleteTwiceExample />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
       name: "AsksTable",
       file: "app/(staff)/staff/_components/AsksTable.tsx",
       variants: [
@@ -1872,6 +2090,28 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <PoliticianTableEmptyExample />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "BounceReason",
+      file: "app/(staff)/staff/_components/BounceReason.tsx",
+      variants: [
+        {
+          label: "Postmark's, and one found in someone's Gmail",
+          render: () => (
+            <StaffPage as="div">
+              <p>
+                <BounceReason reason="Unknown user" foundInGmail={false} />
+              </p>
+              <p>
+                <BounceReason
+                  reason="550 5.1.1 The email account that you tried to reach does not exist."
+                  foundInGmail
+                />
+              </p>
             </StaffPage>
           ),
         },
@@ -2173,11 +2413,35 @@ export const staff: Group = {
           ),
         },
         {
-          label:
-            "PauseAI's letter, personalised, copied from Airtable, found by a Gmail search, nothing recorded since",
+          label: "PauseAI's letter, personalised, copied from Airtable, nothing recorded since",
           render: () => (
             <StaffPage as="div">
               <LetterDetails letter={examplePauseaiLetterDetails} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "GmailLink",
+      file: "app/(staff)/staff/_components/LetterDetails.tsx",
+      variants: [
+        {
+          label: "PauseAI's letter, found by a Gmail search",
+          render: () => (
+            <StaffPage as="div">
+              <GmailLink letter={examplePauseaiLetterDetails} me="jo@pauseai.uk" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Sent from Jo's Gmail, seen by Jo: Open in Gmail, to its thread",
+          render: () => (
+            <StaffPage as="div">
+              <GmailLink
+                letter={{ ...examplePauseaiLetterDetails, sentFrom: "jo@pauseai.uk", gmailThreadId: "thread-seed-2" }}
+                me="jo@pauseai.uk"
+              />
             </StaffPage>
           ),
         },

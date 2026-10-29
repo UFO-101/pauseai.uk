@@ -6,31 +6,40 @@ import sharp from "sharp";
 
 export type FlowStatus = "passed" | "failed" | "timedOut" | "interrupted";
 
+/** The three parts of the page, each under its own heading. */
+export const PARTS = ["Public site", "Staff pages", "Tools and checks"] as const;
+
 /**
- * The sections in the order the page shows them: what a visitor sees first,
- * then what they do, then the staff's screens, then the mechanics. A section
- * not listed here goes after these, alphabetically, so a new spec file still
- * appears; frames.test.ts checks every spec file is listed, so it's placed
- * on purpose.
+ * The sections in the order the page shows them, each with its name on the
+ * page and its part: the public site, what a visitor sees then what they do;
+ * the staff pages; then the tools and the mechanics, the component gallery
+ * last. A section not listed here goes after these, alphabetically, so a new
+ * spec file still appears; frames.test.ts checks every spec file is listed,
+ * so it's placed on purpose.
  */
-export const SECTION_ORDER = [
-  "public-pages",
-  "gallery",
-  "campaigns",
-  "march-signup",
-  "home-events",
-  "staff",
-  "politicians",
-  "mailings",
-  "supporters",
-  "permissions",
-  "collateral",
-  "consent",
-  "mobile-nav",
-  "onboarding-embed",
-  "scroll",
-  "redirects",
+export const SECTIONS: { id: string; name: string; part: (typeof PARTS)[number] }[] = [
+  { id: "public-pages", name: "Every public page", part: "Public site" },
+  { id: "campaigns", name: "Write to your MP", part: "Public site" },
+  { id: "march-signup", name: "March sign-up", part: "Public site" },
+  { id: "home-events", name: "Events on the home page", part: "Public site" },
+  { id: "consent", name: "Cookie consent", part: "Public site" },
+  { id: "mobile-nav", name: "Phone menu", part: "Public site" },
+  { id: "scroll", name: "Scrolling and links", part: "Public site" },
+  { id: "onboarding-embed", name: "Sign-up form", part: "Public site" },
+  { id: "staff-login", name: "Logging in, and your account", part: "Staff pages" },
+  { id: "staff-navigation", name: "Dashboard and getting around", part: "Staff pages" },
+  { id: "politicians", name: "Politicians", part: "Staff pages" },
+  { id: "mailings", name: "Mailings", part: "Staff pages" },
+  { id: "supporters", name: "Supporters", part: "Staff pages" },
+  { id: "letters", name: "Letters and bounces", part: "Staff pages" },
+  { id: "imports", name: "Imports", part: "Staff pages" },
+  { id: "permissions", name: "Permissions", part: "Staff pages" },
+  { id: "collateral", name: "Collateral maker", part: "Tools and checks" },
+  { id: "redirects", name: "Redirects", part: "Tools and checks" },
+  { id: "gallery", name: "Component gallery", part: "Tools and checks" },
 ];
+
+export const SECTION_ORDER = SECTIONS.map((section) => section.id);
 
 /** A test as one run of the suite saw it, with its frames in order. */
 export type FlowRun = {

@@ -251,6 +251,8 @@ describeWithDatabase("a letter for its page", () => {
       mailingId: mailing,
       mailing: "CSRB Iqbal Amendment",
       personalised: true,
+      sentFrom: null,
+      gmailThreadId: null,
       events: [],
     });
   });

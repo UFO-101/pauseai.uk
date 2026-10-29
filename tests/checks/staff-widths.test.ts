@@ -25,12 +25,14 @@ const ALLOWED: Record<string, string> = {
   "MailingWriter.module.css .day": "a field",
   "MailingWriter.module.css .hour": "a field",
   "MailingWriter.module.css .whoShown": "a field",
+  "MailingWriter.module.css .testTo": "a field",
   "StaffNav.module.css .menu > div": "the menu's dropdown",
   // The login page: one card in the middle of the window, with no grid.
   "LoginCard.module.css .login": "the login page",
   "DevLogin.module.css .dev": "the login page",
   // A control's width inside a form.
   "StaffForms.module.css .narrow": "a field",
+  "StaffForms.module.css .short": "a field",
   "FilterBar.module.css .search > :first-child": "the search, so its label fits",
   "Menu.module.css .menu": "a popover",
   "StaffAccountsTable.module.css .add input": "a field",

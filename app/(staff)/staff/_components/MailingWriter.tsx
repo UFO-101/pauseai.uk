@@ -18,7 +18,12 @@ import {
   NOT_CONDITION,
   type MailingDoc,
 } from "@/lib/mailing-doc";
+import { MAX_ATTACHMENT_BYTES } from "@/lib/mailing-attachments";
 import { answerLabels } from "@/lib/mailing-fields";
+import Link from "next/link";
+import { DEFAULT_SENDER } from "@/lib/gmail-connect";
+import { looksLikeEmail } from "@/lib/email-your-mp";
+import { leavePage } from "@/lib/leave-page";
 import { scheduleProblems } from "@/lib/mailing-schedule";
 import { filtersPath } from "@/lib/staff-search";
 import { earliestHour, fromLondon, londonDayHour, londonWhen } from "@/lib/staff-time";
@@ -26,6 +31,7 @@ import type { ChannelResult } from "@/lib/server/mailing-channels";
 import type { MailingAttachmentSummary, SaveResult, ScheduleResult, WrittenMailing } from "@/lib/server/mailing-drafts";
 import type { PreviewRecipient, WriterData } from "@/lib/server/mailing-pages";
 import { CHECK_EVERY, DueTimeFields } from "./DueTime";
+import { SentToday } from "./GmailConnect";
 import { DeleteDraft } from "./MailingButtons";
 import MailingEditor from "./MailingEditor";
 import MailingFiles from "./MailingFiles";
@@ -63,7 +69,7 @@ export type MailingWriterActions = {
   save: (id: number, version: number, changes: unknown) => Promise<SaveResult | undefined>;
   attach: (form: FormData) => Promise<AttachResult | undefined>;
   detach: (id: number, version: number, attachmentId: number) => Promise<AttachResult>;
-  sendTest: (id: number, politicianId: number) => Promise<(ChannelResult & { to: string }) | undefined>;
+  sendTest: (id: number, politicianId: number, to: string) => Promise<(ChannelResult & { to: string }) | undefined>;
   schedule: (id: number, version: number) => Promise<ScheduleResult>;
   deleteDraft: (form: FormData) => void | Promise<void>;
 };
@@ -157,11 +163,15 @@ export default function MailingWriter({
     subject: draft?.subject ?? "",
     body: draft?.body ?? start,
     ask: draft?.ask ?? null,
-    // A new mailing's from the one writing it, to start with.
-    sentFrom: draft ? draft.sentFrom : data.me,
+    // A new mailing's from the policy team's Gmail, if it's connected, or else the first that is.
+    sentFrom: draft
+      ? draft.sentFrom
+      : ((data.senders.find((one) => one.email === DEFAULT_SENDER) ?? data.senders[0])?.email ?? null),
     dueAt: draft?.dueAt ?? null,
   }));
   const latest = useRef(values);
+  // This new mailing's own address, before it's a draft.
+  const newPath = filtersPath("/staff/mailings/new", data.filter.params);
   const [attachments, setAttachments] = useState(draft?.attachments ?? []);
   const [saveState, setSaveState] = useState<SaveState>(draft ? "saved" : "new");
   const [fileProblem, setFileProblem] = useState("");
@@ -234,6 +244,17 @@ export default function MailingWriter({
     later();
   }
 
+  /**
+   * Saves now what's waiting to be saved, before leaving the page or
+   * scheduling, and says where to come back to: the draft, or this new
+   * mailing if nothing's worth keeping yet.
+   */
+  async function saveNow(): Promise<string> {
+    clearTimeout(timer.current);
+    if (id.current === null || Object.keys(pending.current).length) await flush();
+    return id.current === null ? newPath : `/staff/mailings/${id.current}`;
+  }
+
   /** The draft's ID, making it now if it isn't saved yet, as attaching a file is worth keeping. */
   async function draftId(): Promise<number> {
     clearTimeout(timer.current);
@@ -244,15 +265,22 @@ export default function MailingWriter({
     return id.current!;
   }
 
-  /** Attaches each file in turn, stopping at the first that isn't. */
+  /**
+   * Attaches each file in turn, stopping at the first that isn't. One too
+   * big isn't sent, as Next.js would refuse the request before the server
+   * could say why.
+   */
   async function attach(files: File[]) {
     setFileProblem("");
     for (const file of files) {
+      if (file.size > MAX_ATTACHMENT_BYTES) return setFileProblem(copy.tooBig);
       const form = new FormData();
       form.set("id", String(await draftId()));
       form.set("version", String(version.current));
       form.set("file", file);
-      if (!attached(await actions.attach(form))) return;
+      const result = await actions.attach(form).catch(() => null);
+      if (result === null) return setFileProblem(copy.attachFailed);
+      if (!attached(result)) return;
     }
   }
 
@@ -286,6 +314,7 @@ export default function MailingWriter({
   const when: { day: string; hour: number | null } = values.dueAt
     ? londonDayHour(values.dueAt)
     : { day: dayPicked || earliest.day, hour: null };
+  const sender = data.senders.find((one) => one.email === values.sentFrom);
   const lacking = data.fields.filter((field) => field.lacking).map((field) => field.id);
   const written = !unwritten(body);
   const problems = scheduleProblems({
@@ -296,8 +325,16 @@ export default function MailingWriter({
     lacking,
     unknown: data.unknown,
     sends: data.sends,
+    connected: Boolean(sender),
   }).filter((problem) => problem !== "cannot-send");
   const title = values.subject.trim() || copy.newTitle;
+  // The connected accounts, and the one chosen if it isn't one any more.
+  const senderChoices = [
+    ...data.senders.map((one) => ({ ...one, connected: true })),
+    ...(values.sentFrom && !sender ? [{ email: values.sentFrom, remaining: 0, connected: false }] : []),
+  ];
+  // Where Connect Gmail and the Asks page come back to, as the page shows them: this draft, or this new mailing.
+  const writerPath = savedId ? `/staff/mailings/${savedId}` : newPath;
   const noAddress = data.leftOut.filter((one) => one.reason === "no-address").length;
 
   return (
@@ -378,6 +415,19 @@ export default function MailingWriter({
                 </option>
               ))}
             </Select>
+            <Hint>
+              {copy.newAsk.before}
+              <a
+                href={`/staff/asks/new?${new URLSearchParams({ back: writerPath })}`}
+                onClick={async (event) => {
+                  event.preventDefault();
+                  leavePage(`/staff/asks/new?${new URLSearchParams({ back: await saveNow() })}`);
+                }}
+              >
+                {copy.newAsk.link}
+              </a>
+              {copy.newAsk.after}
+            </Hint>
           </div>
           <div className={styles.letter}>
             <p id={letterLabel} className={styles.label}>
@@ -411,27 +461,39 @@ export default function MailingWriter({
             subject={values.subject}
             sentFrom={values.sentFrom}
             written={written}
-            sendTest={async (recipient) => actions.sendTest(await draftId(), recipient)}
+            sendTest={async (recipient, to) => actions.sendTest(await draftId(), recipient, to)}
           />
         </Card>
 
         <Card span={6} title={<Numbered n={4}>{copy.sections.from}</Numbered>} id="from-title">
-          <div className={styles.withHint}>
-            <Field label={copy.fromLegend} className={styles.sender}>
-              <Select value={values.sentFrom ?? ""} onChange={(event) => change({ sentFrom: event.target.value })}>
-                {!values.sentFrom && (
-                  <option value="" disabled>
-                    {copy.choose}
-                  </option>
-                )}
-                {data.senders.map((sender) => (
-                  <option key={sender} value={sender}>
-                    {sender}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Hint>{copy.notConnected}</Hint>
+          {/* The choice of connected Gmails and what the chosen one has sent today, or that there's none; then where to connect one. */}
+          <div className={styles.from}>
+            {senderChoices.length > 0 ? (
+              <>
+                <Field label={copy.fromLegend} className={styles.sender}>
+                  <Select value={values.sentFrom ?? ""} onChange={(event) => change({ sentFrom: event.target.value })}>
+                    {!values.sentFrom && (
+                      <option value="" disabled>
+                        {copy.choose}
+                      </option>
+                    )}
+                    {senderChoices.map((sender) => (
+                      <option key={sender.email} value={sender.email}>
+                        {sender.connected ? sender.email : copy.senderNotConnected(sender.email)}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                {sender && <SentToday sent={sender.sentToday} />}
+              </>
+            ) : (
+              <p>{copy.noSenders}</p>
+            )}
+            {values.sentFrom && !sender && <Hint>{copy.notConnected}</Hint>}
+            {/* Connecting is done on the account's own page, logged in as it. */}
+            <p>
+              <Link href="/staff/me#gmail">{copy.connectOne}</Link>
+            </p>
           </div>
         </Card>
 
@@ -460,8 +522,14 @@ export default function MailingWriter({
               fit
               disabled={problems.length > 0 || !data.sends}
               onClick={async () => {
+                // What's still to be saved, such as a time just chosen, goes first, or it's scheduled without it.
+                await saveNow();
                 const result = await actions.schedule(savedId!, version.current);
-                if (result.scheduled) router.refresh();
+                // The page becomes the scheduled mailing's, which starts at its top, at once, as a new page would.
+                if (result.scheduled) {
+                  window.scrollTo({ top: 0, behavior: "instant" });
+                  router.refresh();
+                }
               }}
             >
               {copy.schedule(data.recipients.length)}
@@ -507,8 +575,14 @@ function Preview({
   /** Whether the letter has anything in it but its greeting, so there's something to test. */
   written: boolean;
   /** Sends the test copy of a recipient's email, saving the draft first if it isn't yet. */
-  sendTest: (recipient: number) => ReturnType<MailingWriterActions["sendTest"]>;
+  sendTest: (recipient: number, to: string) => ReturnType<MailingWriterActions["sendTest"]>;
 }) {
+  // Where the test copy goes: you, unless you give another address.
+  const [testTo, setTestTo] = useState(data.me);
+  const testToId = useId();
+  // The name the Gmail sends as, if it has one of its own, as its From line will show it.
+  const name = data.senders.find((sender) => sender.email === sentFrom)?.name;
+  const fromLine = name ? `${name} <${sentFrom}>` : sentFrom;
   const findLabel = useId();
   const [chosen, setChosen] = useState(data.recipients[0]?.id);
   // The answers pressed, since someone was last chosen; else theirs.
@@ -573,7 +647,7 @@ function Preview({
         <div className={styles.email}>
           <dl className={styles.headers}>
             <dt>{copy.from}</dt>
-            <dd>{sentFrom ? copy.fromGmail(sentFrom) : <Muted>{copy.noSender}</Muted>}</dd>
+            <dd>{sentFrom ? fromLine : <Muted>{copy.noSender}</Muted>}</dd>
             <dt>{copy.to}</dt>
             <dd>{`${recipient.name} <${recipient.email}>`}</dd>
             <dt>{copy.subject}</dt>
@@ -587,21 +661,30 @@ function Preview({
         // No one to fill it in for: no email, rather than one made up.
         <p className={styles.noEmail}>{copy.noOneMix}</p>
       )}
-      <div className={styles.send}>
-        <Button
-          variant="ghost"
-          fit
-          disabled={!written || !recipient}
-          pending={sending}
-          onClick={async () => {
-            setSending(true);
-            const result = await sendTest(recipient!.id);
-            setSending(false);
-            setSent({ to: result?.sent ? result.to : undefined });
-          }}
-        >
-          {copy.sendTest}
-        </Button>
+      <div className={styles.test}>
+        <div className={styles.testRow}>
+          <label htmlFor={testToId} className={styles.testLabel}>
+            {copy.sendTestTo}
+          </label>
+          <span className={styles.testTo}>
+            <TextInput id={testToId} type="email" value={testTo} onChange={(event) => setTestTo(event.target.value)} />
+          </span>
+          <Button
+            variant="primary"
+            fit
+            disabled={!written || !recipient || !looksLikeEmail(testTo.trim())}
+            pending={sending}
+            onClick={async () => {
+              setSending(true);
+              const result = await sendTest(recipient!.id, testTo.trim());
+              setSending(false);
+              setSent({ to: result?.sent ? result.to : undefined });
+            }}
+          >
+            {copy.sendTest}
+          </Button>
+        </div>
+        <Muted>{copy.testVia(data.senders.some((sender) => sender.email === sentFrom) ? sentFrom : null)}</Muted>
         <Muted>
           <span role="status">
             {!written ? copy.testNeedsDraft : sent && (sent.to ? copy.testSent(sent.to) : copy.testFailed)}

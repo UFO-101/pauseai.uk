@@ -16,7 +16,7 @@ beforeEach(() => {
   vi.stubEnv("POSTMARK_WEBHOOK_USER", "postmark");
   vi.stubEnv("POSTMARK_WEBHOOK_PASSWORD", "hunter2");
   vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token");
-  vi.stubEnv("REPLIES_INBOX", "replies@pauseai.uk");
+  vi.stubEnv("POLICY_INBOX", "replies@pauseai.uk");
 });
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -227,7 +227,7 @@ describeWithDatabase("forwardReply", () => {
   });
 
   it("copes without a shared inbox, or with a reply missing its details", async () => {
-    vi.stubEnv("REPLIES_INBOX", "");
+    vi.stubEnv("POLICY_INBOX", "");
     const mailbox = await sentLetter();
     const sent = postmark();
     expect(await forwardReply({ OriginalRecipient: `${mailbox}@letters.pauseai.uk` })).toEqual(["Jane@Example.com"]);

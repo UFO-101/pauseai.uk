@@ -1,21 +1,30 @@
 import { expect, it } from "vitest";
-import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { afterEach, vi } from "vitest";
+import { addTestPolitician, connectTestGmail, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { GMAIL_DAILY_LIMIT } from "./gmail-accounts";
 import { query } from "./db";
 import { createDraft, saveDraft } from "./mailing-drafts";
 import { mailingPageData, newMailingData } from "./mailing-pages";
 
 describeWithDatabase("the mailing pages' data", () => {
   useTestDatabase();
+  afterEach(() => vi.unstubAllEnvs());
 
   it("gives a new mailing who it goes to, what its letter can use, and who it can be from", async () => {
     const polly = await addTestPolitician();
     await addTestPolitician({ name: "Ned Noaddress", airtableId: "rec2", email: null });
-    await query("INSERT INTO staff_accounts (email, added_by) VALUES ('jo@pauseai.uk', 'admin@pauseai.uk')");
+    await query(
+      "INSERT INTO staff_accounts (email, added_by) VALUES ('samuel.whitlock@pauseai.uk', 'admin@pauseai.uk')",
+    );
+    await connectTestGmail("jo@pauseai.uk");
     const data = await newMailingData({ house: "commons", party: "Gone Party", sort: "name" }, "jo@pauseai.uk");
     expect(data.filter).toEqual({ list: "politicians", params: { house: "commons", party: "Gone Party" } });
     expect(data.unknown).toEqual(["party=Gone Party"]);
-    expect(data.senders).toEqual(["jo@pauseai.uk"]);
-    expect(data.sends).toBe(false);
+    // The connected accounts, with what each has left today.
+    expect(data.senders).toEqual([
+      { email: "jo@pauseai.uk", name: "", connectedAt: expect.any(Date), sentToday: 0, remaining: GMAIL_DAILY_LIMIT },
+    ]);
+    expect(data.sends).toBe(true);
     expect(data.me).toBe("jo@pauseai.uk");
     const all = await newMailingData({}, "jo@pauseai.uk");
     expect(all.recipients).toEqual([

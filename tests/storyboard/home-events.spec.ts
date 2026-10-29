@@ -24,7 +24,7 @@ async function openHome(page: Page, query = "") {
   );
 }
 
-test("events near a postcode", { tag: "@phone" }, async ({ page }) => {
+test("Events near a postcode", { tag: "@phone" }, async ({ page }) => {
   await openHome(page);
   await frame(page, "every upcoming event", { of: events(page) });
 
@@ -43,17 +43,17 @@ test("events near a postcode", { tag: "@phone" }, async ({ page }) => {
   await frame(page, "only the events near Westminster", { of: events(page) });
 });
 
-test("only the online events", async ({ page }) => {
+test("Only the online events", async ({ page }) => {
   await openHome(page);
   await page.getByRole("button", { name: copy.online, exact: true }).click();
   await expect(page.getByRole("button", { name: copy.online, exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(events(page).getByText("Introduction to PauseAI UK (online)")).toBeVisible();
   await expect(events(page).getByText("PauseAI Manchester Social")).toHaveCount(0);
   await expect(page).toHaveURL(`${BASE}/?events=online#events`);
-  await frame(page, "only the online events", { of: events(page) });
+  await frame(page, "Only the online events", { of: events(page) });
 });
 
-test("a postcode that isn't found", async ({ page }) => {
+test("A postcode that isn't found", async ({ page }) => {
   await openHome(page);
   await chooseButton(page).click();
   await page.getByLabel(copy.postcodeLabel).fill("ZZ1 1ZZ");
@@ -62,7 +62,7 @@ test("a postcode that isn't found", async ({ page }) => {
   await frame(page, "the postcode not found", { of: events(page) });
 });
 
-test("events near the device's location", async ({ page, context }) => {
+test("Events near your location", async ({ page, context }) => {
   // Manchester's centre.
   await context.grantPermissions(["geolocation"]);
   await context.setGeolocation({ latitude: 53.4808, longitude: -2.2426 });
@@ -82,7 +82,7 @@ test("events near the device's location", async ({ page, context }) => {
   await frame(page, "nothing on near the device's location", { of: events(page) });
 });
 
-test("a local group's events, venue set or not", async ({ page }) => {
+test("A local group's events", async ({ page }) => {
   await openHome(page);
   await chooseButton(page).click();
   await page.getByRole("radio", { name: "Oxford" }).click();
@@ -98,7 +98,7 @@ test("a local group's events, venue set or not", async ({ page }) => {
   await frame(page, "Scotland's meeting, with no venue yet", { of: events(page) });
 });
 
-test("a link to a local group's events, or the online ones", async ({ page }) => {
+test("A link to a local group's or the online events", async ({ page }) => {
   await page.goto(`${BASE}/?events=oxford#events`);
   await hydrated(page);
   await expect(nearButton(page, copy.nearShort("Oxford"))).toHaveAttribute("aria-pressed", "true");

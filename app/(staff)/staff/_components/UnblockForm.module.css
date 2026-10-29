@@ -1,3 +1,10 @@
+/* Unblock the kit's small button wherever the form is, a strip's lighter
+   buttons included, so it's as tall as the note's field beside it. */
+.form {
+  --button-padding: 9px 14px;
+  --button-font-size: 14px;
+}
+
 /* The note's field and Unblock on one line: the field takes the room the
    button leaves, and the button wraps under it only when there's none. */
 .why {

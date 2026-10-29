@@ -7,6 +7,11 @@ import { fixtureResponse } from "./outside-services";
 
 export const server = setupServer(
   http.all("*", async ({ request }) =>
-    fixtureResponse(request.url, { method: request.method, body: await request.text() }),
+    fixtureResponse(request.url, {
+      method: request.method,
+      headers: request.headers,
+      // A PUT stores bytes (Netlify Blobs); everything else sends text.
+      body: request.method === "PUT" ? await request.arrayBuffer() : await request.text(),
+    }),
   ),
 );

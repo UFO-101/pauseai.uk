@@ -60,8 +60,15 @@
 }
 
 /* Fields with their note close under them, not a card's gap away. */
-.withHint {
+/* Sent from: the choice, what it has sent today or that there's none, and the way to connect another, evenly spaced. */
+.from {
   display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+
+.from p {
+  margin: 0;
 }
 
 .when {
@@ -139,6 +146,53 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
+}
+
+/* The test copy: the address and its button on one row, and under them where it went. */
+.test {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+
+/* The address and its button, as tall as each other: the button stretches to the field's height. */
+.testRow {
+  display: flex;
+  gap: var(--space-2);
+  align-items: stretch;
+  width: 100%;
+  --button-padding: 0 16px;
+  --button-font-size: 14px;
+}
+
+/* The address's label, bold, beside it, on its line; over it on a phone, where all three don't fit. */
+.testLabel {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* The address: room for a long one, but no wider, and never pushing its button off the row. */
+.testTo {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 18rem;
+}
+
+@media (max-width: 720px) {
+  .testRow {
+    flex-wrap: wrap;
+  }
+
+  .testLabel {
+    flex-basis: 100%;
+  }
+
+  /* The address shrinks, so its button stays beside it. */
+  .testTo {
+    flex-basis: 0;
+  }
 }
 
 .problems {

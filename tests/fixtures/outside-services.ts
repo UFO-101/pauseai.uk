@@ -9,6 +9,9 @@
 // Matched on host and path rather than the full URL, so query strings
 // (dates, pagination, filters) don't need listing.
 import { createHash } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { gzipSync } from "node:zlib";
 import lumaFuture from "./luma-calendar-future.json";
 import lumaPast from "./luma-calendar-past.json";
 import lumaGuests from "./luma-guests.json";
@@ -239,8 +242,70 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
       Suppressions: Suppressions.map(({ EmailAddress }) => ({ EmailAddress, Status: "Deleted", Message: null })),
     });
   }
+  const google = googleResponse(hostname, pathname, init);
+  if (google) return google;
+  if (hostname === "blobs.fixture.invalid") return blobResponse(pathname, init);
   if (hostname === "challenges.cloudflare.com" && pathname === "/turnstile/v0/siteverify") {
     return json({ success: true, hostname: "localhost" });
   }
   return undefined;
+}
+
+// Google's OAuth and Gmail, for any account. A token names its account
+// (lib/server/outside-services/gmail.ts makes the code "fixture:<account>"),
+// so the profile says whose it is. A mailbox has no messages: the tests
+// that read one give their own.
+function googleResponse(hostname: string, pathname: string, init?: RequestInit): Response | undefined {
+  if (hostname === "oauth2.googleapis.com" && pathname === "/token") {
+    const form = new URLSearchParams(String(init!.body));
+    const account = (form.get("code") ?? form.get("refresh_token")!).replace(/^fixture(-refresh)?:/, "");
+    return json({
+      access_token: `fixture-access:${account}`,
+      expires_in: 3599,
+      ...(form.get("code") && { refresh_token: `fixture-refresh:${account}` }),
+    });
+  }
+  if (hostname === "oauth2.googleapis.com" && pathname === "/revoke") return json({});
+  if (hostname !== "gmail.googleapis.com") return undefined;
+  const account = new Headers(init!.headers).get("authorization")!.replace(/^Bearer fixture-access:/, "");
+  if (pathname.endsWith("/profile")) return json({ emailAddress: account, historyId: "1000" });
+  // The account's name: its address's words, capitalised, as a person would set it.
+  if (pathname.endsWith("/settings/sendAs")) {
+    const name = account
+      .split("@")[0]
+      .split(/[.\-_]/)
+      .map((word) => word[0].toUpperCase() + word.slice(1));
+    return json({ sendAs: [{ sendAsEmail: account, displayName: name.join(" "), isPrimary: true }] });
+  }
+  // The same email gets the same IDs every run, as Postmark's MessageID.
+  if (pathname.endsWith("/messages/send")) {
+    const id = fixtureUuid(String(init!.body)).replace(/-/g, "").slice(0, 16);
+    return json({ id, threadId: id, labelIds: ["SENT"] });
+  }
+  if (pathname.endsWith("/history")) return json({ historyId: "1000" });
+  if (pathname.endsWith("/messages")) return json({ resultSizeEstimate: 0 });
+  return new Response(JSON.stringify({ error: { code: 404 } }), { status: 404 });
+}
+
+// Netlify Blobs, kept for the life of the process, shared by every bundle
+// of the server. A key under fixture/ that wasn't stored is read from
+// tests/fixtures/letter-replies/, gzipped, so a fixture database can name
+// replies that are there from the start.
+const BLOBS = ((globalThis as { fixtureBlobs?: Map<string, Uint8Array> }).fixtureBlobs ??= new Map());
+
+function blobResponse(pathname: string, init?: RequestInit): Response {
+  const key = decodeURIComponent(pathname.split("/").slice(3).join("/"));
+  if (init?.method?.toUpperCase() === "PUT") {
+    BLOBS.set(key, new Uint8Array(init.body as ArrayBuffer));
+    return new Response(null, { status: 200 });
+  }
+  const stored = BLOBS.get(key) ?? fixtureReply(key);
+  return stored ? new Response(stored as BodyInit) : new Response(null, { status: 404 });
+}
+
+function fixtureReply(key: string): Uint8Array | undefined {
+  const name = /^fixture\/([\w-]+\.eml)\.gz$/.exec(key)?.[1];
+  // From the checkout's root, where the tests and fixture builds run: a build's own files are elsewhere.
+  const file = name && join(process.cwd(), "tests/fixtures/letter-replies", name);
+  return file && existsSync(file) ? gzipSync(readFileSync(file)) : undefined;
 }

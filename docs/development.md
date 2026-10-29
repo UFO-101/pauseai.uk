@@ -127,7 +127,7 @@ This:
   staff and an MP who has left; statuses set this week and last; every
   job's runs in every state, including a sync held for a decision; staff
   accounts for jo@pauseai.uk (supporters, with a kept session) and
-  sam@pauseai.uk (none) beside the migration's admin; and an audit log of
+  samuel.whitlock@pauseai.uk (none) beside the migration's admin; and an audit log of
   all that. Dates are relative to when it runs. Without `TEST_MP_EMAIL`,
   the test MPs still go in, with `test-mp@example.org`, since the letters go
   to the fixture outbox anyway. The storyboard's flows start from an empty
@@ -204,14 +204,15 @@ The example `.env.local` sets `DATA_FIXTURES=1`. With it, every call to an outsi
 answer from `tests/fixtures/outside-services.ts` instead. Nothing leaves
 your machine. You need no keys:
 
-| Service                  | What the fixture does                                                                                                                                       |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Luma                     | A few made-up events and guests                                                                                                                             |
-| postcodes.io             | Knows only SW1A 1AA (Cities of London and Westminster); every other postcode is "not found". The test postcodes never ask it.                               |
-| Airtable                 | A politician of each body, one retired and one who left, with their statuses; PauseAI's emails to them; the old form's letters; Go to Parliament's meetings |
-| Parliament's Members API | The same two MPs, with an office email each. Polly Placeholder's differs from Airtable's, so the MP check has something to show.                            |
-| Turnstile                | Accepts every token                                                                                                                                         |
-| Postmark                 | Accepts every email, without needing a token, and writes each one to a mail file (`.eml`) in `OUTBOX_DIR`, or `tmp/outbox/` in the dev server.              |
+| Service                  | What the fixture does                                                                                                                                                                           |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Luma                     | A few made-up events and guests                                                                                                                                                                 |
+| postcodes.io             | Knows only SW1A 1AA (Cities of London and Westminster); every other postcode is "not found". The test postcodes never ask it.                                                                   |
+| Airtable                 | A politician of each body, one retired and one who left, with their statuses; PauseAI's emails to them; the old form's letters; Go to Parliament's meetings                                     |
+| Parliament's Members API | The same two MPs, with an office email each. Polly Placeholder's differs from Airtable's, so the MP check has something to show.                                                                |
+| Turnstile                | Accepts every token                                                                                                                                                                             |
+| Postmark                 | Accepts every email, without needing a token, and writes each one to a mail file (`.eml`) in `OUTBOX_DIR`, or `tmp/outbox/` in the dev server.                                                  |
+| Google (Gmail)           | Connects any account with no consent screen, naming it from its address (policy@ is "Policy"); sends nothing, writing each email to the outbox as Postmark's fake does; reads an empty mailbox. |
 
 #### Send a letter to the test MP
 
@@ -254,7 +255,7 @@ Open http://localhost:3000/staff/login. In a fixture build the login card
 has a hatched purple box under it, the dev login: a button per account
 (admin@pauseai.uk, which every database starts with, and which
 `db:reset` gives the supporters permission as well as admin; and the
-seed's jo@pauseai.uk and sam@pauseai.uk) and one for nobody@pauseai.uk, which has
+seed's jo@pauseai.uk and samuel.whitlock@pauseai.uk) and one for nobody@pauseai.uk, which has
 no account, each signing you in at once, with no email.
 It exists only with `DATA_FIXTURES=1`; its route is a 404 anywhere else.
 
@@ -336,6 +337,8 @@ curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/check-mps
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/import-luma   # the hourly Luma import; with fixtures, the fixture calendar
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/import-members   # the hourly members import; with fixtures, the fixture members
 curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/tidy-logs   # deletes what the import and audit logs no longer keep, and empty drafts
+curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/send-mailings   # starts the mailings due and sends for a few seconds
+curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/read-gmail   # reads the connected Gmail accounts for replies and bounces
 ```
 
 **Postmark's webhooks.** Set `POSTMARK_WEBHOOK_USER=postmark` and
@@ -352,7 +355,7 @@ curl -u postmark:secret -H 'Content-Type: application/json' localhost:3000/api/p
   -d '{"FromFull":{"Email":"test-mp@example.org","Name":"Testy"},"ToFull":[{"Email":"<reply_hash>@letters.pauseai.uk"}],"CcFull":[],"Subject":"Re: hello","TextBody":"Thanks."}'
 ```
 
-With `REPLIES_INBOX` set, the reply is forwarded there too. With fixtures,
+With `POLICY_INBOX` set, the reply is forwarded there too. With fixtures,
 both copies land in the outbox.
 
 **Luma's webhook.** Set `LUMA_WEBHOOK_SECRET=whsec_dev`, then post a
@@ -457,5 +460,6 @@ Set up outside the code:
 - **Daily jobs:** the politician sync, then the Emails sync, runs at 06:21 UTC, the check against Parliament at 06:23, the ControlAI import at 06:25 and the tidying of the logs at 06:27, just after the day's first imports. The database sleeps after five minutes without a query and is billed while it's awake, so every scheduled job starts within a few minutes of the Luma import, sharing one wake an hour, and none runs from midnight to six UTC. The check makes about 650 requests to Parliament, which took 12–18 seconds from a laptop on 14 Oct 2026. A Netlify scheduled function gets 30 seconds, so a daily check that starts timing out has outgrown it.
 - **The Luma import** runs at 17 minutes past every hour from 06:17 to 23:17 UTC, with `LUMA_API_KEY`. Each run fetches for about 20 seconds, then stops and records how many events are still waiting, so the first copy of the calendar (about 430 requests on 21 Oct 2026) takes a few runs; after that a run is a handful of requests. It leaves 50 of Luma's 200 requests a minute for the site's own fetches, and stops early if Luma answers 429. Run it by hand from `/staff/import-data` to see where it's got to.
 - **The members import** runs at 19 minutes past every hour from 06:19 to 23:19 UTC, with `AIRTABLE_TOKEN`, which needs read access to Stichting PauseAI's "Members & Actions" base (`appWPTGqZmUcs3NWu`) as well as the MPs' base; the global team grant it. A run reads every UK member we may hold, about 15 requests, which counts against the global team's Airtable plan's monthly API calls. Run it by hand from `/staff/import-data`.
+- **Gmail:** the PauseAI UK Google Cloud project, under the organisation of PauseAI's Google Workspace. That Workspace's primary domain is pauseai.info and pauseai.uk is in it too, and a Workspace has only one organisation (https://cloud.google.com/resource-manager/docs/creating-managing-organization). The project has the Gmail API turned on; an OAuth consent screen asking for the `gmail.send`, `gmail.readonly` and `userinfo.profile` scopes (the last for the account's name, when its address sends as none of its own), of the Internal user type, so any account in the Workspace can grant access and Google doesn't review the app (https://support.google.com/cloud/answer/15549945); and a web application OAuth client whose redirect URI is `https://pauseai.uk/staff/api/gmail/callback`; its ID and secret go into Netlify as `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, and `GMAIL_TOKEN_KEY` is 32 random bytes in base64. Previews have other addresses, so Gmail can be connected only on the live site. `send-mailings` runs at 18 and `read-gmail` at 20 minutes past every hour from 06:18 to 23:20 UTC; a mailing due overnight goes at 06:18. `send-mailings-background` is a background function, which credit-based plans have (https://docs.netlify.com/build/functions/background-functions/). The replies are kept in Netlify Blobs, in the `letter-replies` store, which needs no setting; the backup Worker copies them with `BACKUP_SECRET`, which goes into Netlify and, as `SITE_BACKUP_SECRET`, the Worker (`backup/README.md`).
 - **A new database:** run the politician sync from `/staff/import-data`, and apply it, then the Emails sync and the two one-off imports (the web form letters and Go to Parliament). Until the sync has run, Email your MP finds no MPs.
 - **Staff accounts:** every database starts with one account, `admin@pauseai.uk`, with the admin permission. Log in as it and add everyone else on `/staff/accounts`: an account alone opens the ordinary pages; the supporters permission opens the supporter pages, admin the accounts page and the audit log. Give admin to at least one other person; the last admin can't be removed. The hourly Luma import fills the supporter pages over its first few runs, and links every letter already written; run it from `/staff/import-data` to watch it. An erasure request is handled as `docs/data-protection.md` says.

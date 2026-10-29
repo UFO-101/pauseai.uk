@@ -15,7 +15,7 @@
 //   npm run storyboard -- --server=URL      # a server you started for this branch (default: Playwright builds one on 3100)
 //   npm run storyboard -- --main-server=URL # a server you started for main
 //   npm run storyboard -- --fresh-main      # run main again even if its frames are kept (below)
-//   npm run storyboard -- staff -g login    # anything else goes to `playwright test`
+//   npm run storyboard -- staff-login -g login    # anything else goes to `playwright test`
 //
 // Each run has its own folder, test-results/storyboard/runs/<when>/, with
 // every picture it shows in it (main's as hard links from the cache), so a

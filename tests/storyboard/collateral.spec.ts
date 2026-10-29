@@ -34,7 +34,7 @@ async function zipNames(file: Download): Promise<string[]> {
     .sort();
 }
 
-test("a single image: an event from the calendar, a photo, a style, then a PNG and a print PDF", async ({ page }) => {
+test("Make an image for an event, then download a PNG and a print PDF", async ({ page }) => {
   await open(page, "Single image", /^Download PNG$/);
   await frame(page, "the maker, as it opens");
 
@@ -79,9 +79,7 @@ test("a single image: an event from the calendar, a photo, a style, then a PNG a
   await frame(page, "opened again, as it was left");
 });
 
-test("a campaign pack: one design, the formats picked, adjusted one at a time, and a zip of them all", async ({
-  page,
-}) => {
+test("Make a campaign pack in several formats, then download the zip", async ({ page }) => {
   await open(page, "Campaign pack", /^Download 6 formats \(\.zip\)$/);
   await frame(page, "the pack, with its six formats");
 
@@ -111,9 +109,7 @@ test("a campaign pack: one design, the formats picked, adjusted one at a time, a
   expect(names.join(" ")).toContain("a4");
 });
 
-test("a gallery: slides with their own photos, styles and captions, in one zip for every platform", async ({
-  page,
-}) => {
+test("Make a set of slides with photos and captions, then download the zip", async ({ page }) => {
   await open(page, "Gallery / carousel", /^Download slides$/);
   await frame(page, "the gallery, with its two example slides");
 

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   accountsSearch,
+  askFormSearch,
+  staffBack,
   emailsSearch,
   letterId,
   mailingId,
@@ -241,5 +243,22 @@ describe("supporterId", () => {
   it("is a whole number from the URL", () => {
     expect(supporterId("12")).toBe(12);
     expect(supporterId("x")).toBeUndefined();
+  });
+});
+
+describe("askFormSearch and staffBack", () => {
+  it("goes back to a staff page given, else the asks page, and says how the last save went", () => {
+    expect(askFormSearch({ back: "/staff/mailings/4", notice: "added" })).toEqual({
+      back: "/staff/mailings/4",
+      notice: "added",
+    });
+    expect(askFormSearch({ back: "https://evil.example" })).toEqual({ back: "/staff/asks", notice: "" });
+  });
+
+  it("takes only a staff page, with its query", () => {
+    expect(staffBack("/staff/politicians?house=lords", "/x")).toBe("/staff/politicians?house=lords");
+    expect(staffBack("/staff//evil.example", "/x")).toBe("/x");
+    expect(staffBack("/staffing", "/x")).toBe("/x");
+    expect(staffBack(undefined, "/x")).toBe("/x");
   });
 });

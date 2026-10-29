@@ -41,10 +41,11 @@ export function FileInput(props: Omit<InputProps, "type">) {
   return <input {...props} type="file" className={styles.file} />;
 }
 
-/** A checkbox with its label beside it. Controlled: `onChange` gets whether it's now ticked. */
+/** A checkbox with its label beside it. Controlled: `onChange` gets whether it's now ticked. A form sends `value` for it, ticked. */
 export function Checkbox({
   id,
   name,
+  value,
   checked,
   disabled,
   onChange,
@@ -52,6 +53,7 @@ export function Checkbox({
 }: {
   id?: string;
   name?: string;
+  value?: string;
   checked: boolean;
   disabled?: boolean;
   onChange: (checked: boolean) => void;
@@ -62,6 +64,7 @@ export function Checkbox({
       <input
         id={id}
         name={name}
+        value={value}
         type="checkbox"
         className={styles.checkbox}
         checked={checked}
@@ -73,17 +76,22 @@ export function Checkbox({
   );
 }
 
-/** A row of mutually exclusive buttons, e.g. a QR code's size. */
+/**
+ * A row of mutually exclusive buttons, e.g. a QR code's size; each with an
+ * icon before its words if it has one. `disabled`, none can be picked.
+ */
 export function Segmented<T extends string | boolean>({
   label,
   options,
   value,
   onChange,
+  disabled = false,
 }: {
   label: string;
-  options: { value: T; label: string }[];
+  options: { value: T; label: string; icon?: ReactNode }[];
   value: T;
   onChange: (value: T) => void;
+  disabled?: boolean;
 }) {
   return (
     <div className={styles.segmented} role="radiogroup" aria-label={label}>
@@ -94,8 +102,10 @@ export function Segmented<T extends string | boolean>({
           role="radio"
           aria-checked={o.value === value}
           className={styles.segment}
+          disabled={disabled}
           onClick={() => onChange(o.value)}
         >
+          {o.icon}
           {o.label}
         </button>
       ))}

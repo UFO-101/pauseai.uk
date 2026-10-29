@@ -93,9 +93,18 @@ export const exampleWriterData: WriterData = {
       option: "Declined",
     },
   ],
-  senders: ["jo@pauseai.uk", "sam@pauseai.uk"],
+  senders: [
+    { email: "al@pauseai.uk", name: "Al Example", connectedAt: "2026-10-01T09:00:00Z", sentToday: 0, remaining: 1800 },
+    {
+      email: "samuel.whitlock@pauseai.uk",
+      name: "",
+      connectedAt: "2026-10-02T09:00:00Z",
+      sentToday: 120,
+      remaining: 1680,
+    },
+  ],
   me: "jo@pauseai.uk",
-  sends: false,
+  sends: true,
 };
 
 /** Jo's draft of it, with a file, from Jo, on 1 December at nine. */

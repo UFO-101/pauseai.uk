@@ -4,8 +4,8 @@ import { endStaffSessions } from "@/lib/server/staff-accounts";
 import { KEEP_COOKIE, LOGIN_PATH, SESSION_COOKIE } from "@/lib/staff-session";
 import { siteUrl } from "@/lib/site-url";
 
-/** Where ending one of your other sessions goes: back to the page of them. */
-const SESSIONS_PATH = "/staff/sessions";
+/** Where ending one of your other sessions goes: back to them, on your own page. */
+const SESSIONS_PATH = "/staff/me#sessions";
 
 /**
  * Ends sessions: a POST, from Log out in the staff navigation, which ends

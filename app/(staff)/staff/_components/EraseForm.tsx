@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Actions from "@/components/ui/Actions";
 import { useState } from "react";
 import { Checkbox, TextInput } from "@/components/ui/Controls";
 import { Field, FieldGroup, Hint } from "@/components/ui/Field";
@@ -42,12 +43,12 @@ export default function EraseForm({
         <Checkbox name="confirm" checked={sure} onChange={setSure}>
           {copy.confirm}
         </Checkbox>
-        <div>
+        <Actions>
           <SubmitButton variant="danger" size="small" fit disabled={!sure}>
             {copy.button}
-          </SubmitButton>{" "}
+          </SubmitButton>
           <Link href={`/staff/supporters/${supporterId}`}>{copy.cancel}</Link>
-        </div>
+        </Actions>
       </FormStack>
     </>
   );

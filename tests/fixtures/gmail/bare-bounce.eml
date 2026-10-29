@@ -1,0 +1,7 @@
+From: MAILER-DAEMON@example.com
+To: jo@pauseai.uk
+Subject: failure notice
+In-Reply-To: <letter-3@pauseai.uk>
+X-Failed-Recipients: a@example.com, ,b@example.com
+
+Sorry, it bounced.

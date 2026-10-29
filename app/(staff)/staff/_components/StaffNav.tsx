@@ -10,13 +10,16 @@ import NavFold from "./ui/NavFold";
 import StaffLink from "./ui/StaffLink";
 import styles from "./StaffNav.module.css";
 
-/** The pages the navigation can mark as current: the home page, your sessions, or any page in a section. */
-export type StaffPage = "home" | "sessions" | StaffPageId;
+/** The pages the navigation can mark as current: the home page, your own page, or any page in a section. */
+export type StaffPage = "home" | "me" | StaffPageId;
 
-/** The page the navigation marks at `path`: the home page, your sessions, or the page in a section it's under. */
+/** Your own page: your Gmail and your sessions. */
+const ME_PATH = "/staff/me";
+
+/** The page the navigation marks at `path`: the home page, your own page, or the page in a section it's under. */
 export function staffPageAt(path: string): StaffPage | undefined {
   if (path === "/staff") return "home";
-  if (path === "/staff/sessions") return "sessions";
+  if (path === ME_PATH) return "me";
   return staffPageOf(path)?.id;
 }
 
@@ -25,8 +28,6 @@ type Props = {
   email?: string;
   /** Their permissions, which decide the pages they see. */
   permissions?: Permission[];
-  /** How many sessions they have open: with more than one, a faint link under Log out to the page of them. */
-  sessions?: number;
   /** The page to mark, as the component gallery shows it; otherwise the one the URL is (staffPageAt). */
   current?: StaffPage;
 };
@@ -35,17 +36,18 @@ type Props = {
  * The staff interface's navigation: a sidebar with Home, then the pages in
  * sections, the current one marked but still a link, so it's the way back from a page
  * under it; who's logged in and the way out; on a phone, a bar with the
- * current page's name opening the same as a dropdown. Each page has its
+ * current page's name opening the same as a dropdown. Who's logged in is a
+ * link to their own page, of their Gmail and sessions. Each page has its
  * icon beside its name. On wider screens, a button on its edge by the title folds the
  * sidebar to a rail of the icons, the sections a rule apart, each page's
  * name showing beside its icon on hover. Under Log out, with
- * more than one session open, a faint link to the page of them. Each page shows
+ * more than one session open, a faint link to them. Each page shows
  * only to those with its permission (lib/staff-sections.ts). The pause symbol and name at the top are the
  * way to the home page. It's drawn once, by the signed-in pages' layout, and
  * stays as they change, marking the page the URL is; the phone's dropdown
  * closes when it does.
  */
-export default function StaffNav({ email, permissions = [], sessions = 1, current: shown }: Props) {
+export default function StaffNav({ email, permissions = [], current: shown }: Props) {
   const path = usePathname();
   const current = shown ?? staffPageAt(path);
   // The pause symbol and the name: the way home, except at home.
@@ -93,20 +95,24 @@ export default function StaffNav({ email, permissions = [], sessions = 1, curren
       </ul>
     </section>
   ));
-  // On one line in the sidebar, cut short if it's long: the whole address on hover.
-  const who = (
-    <span className={styles.who} title={email}>
-      {email}
-    </span>
-  );
-  const others = sessions > 1 && (
-    <StaffLink
-      href="/staff/sessions"
-      className={styles.sessions}
-      aria-current={current === "sessions" ? "page" : undefined}
-    >
-      {staffCopy.nav.sessions(sessions)}
-    </StaffLink>
+  // Your address with an @, as a page under its own heading; in the sidebar on one line, cut short if it's long, the whole address on hover.
+  const profile = (
+    <section className={styles.group}>
+      <h2>{staffCopy.nav.sections.profile}</h2>
+      <ul>
+        <li>
+          <StaffLink
+            href={ME_PATH}
+            className={`${styles.page} ${styles.address}`}
+            title={email}
+            aria-current={current === "me" ? "page" : undefined}
+          >
+            <NavIcon id="me" />
+            <span className={styles.label}>{email}</span>
+          </StaffLink>
+        </li>
+      </ul>
+    </section>
   );
   return (
     <nav className={styles.nav} aria-label={staffCopy.nav.title}>
@@ -118,30 +124,27 @@ export default function StaffNav({ email, permissions = [], sessions = 1, curren
         {home}
         {groups}
         <div className={styles.foot}>
-          {who}
+          {profile}
           <form method="post" action="/staff/api/logout">
             <button type="submit" className={styles.page}>
               <NavIcon id="logout" />
               <span className={styles.label}>{staffCopy.nav.logout}</span>
             </button>
           </form>
-          {others}
         </div>
       </div>
       {/* A phone: a dropdown at the right of the bar, the current page with an arrow. */}
       <details key={path} className={styles.menu}>
-        <summary>{current && (current === "sessions" ? staffCopy.sessions.title : staffCopy.nav[current])}</summary>
+        <summary>{current && (current === "me" ? staffCopy.me.title : staffCopy.nav[current])}</summary>
         <div>
           {home}
           {groups}
-          <hr />
-          {who}
+          {profile}
           <form method="post" action="/staff/api/logout">
             <button type="submit" className={styles.linkButton}>
               {staffCopy.nav.logout}
             </button>
           </form>
-          {others}
         </div>
       </details>
     </nav>

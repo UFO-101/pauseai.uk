@@ -36,10 +36,9 @@
   font-size: var(--text-sm);
 }
 
-/* The button in its own column, the description beside it, wrapping within its own column rather than under the button. */
+/* The button, and what it is under it, however long the address. */
 .choices li {
   display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  gap: var(--space-3);
-  align-items: center;
+  gap: 2px;
+  justify-items: start;
 }

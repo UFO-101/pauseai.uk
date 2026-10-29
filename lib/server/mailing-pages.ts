@@ -3,11 +3,11 @@ import { RECIPIENT_TABS, getMailing, type Mailing, type RecipientTab } from "./m
 import type { MailingChoice } from "@/lib/mailing-fields";
 import type { MailingRecipientValues } from "@/lib/mailing-doc";
 import { listAsks, type Ask } from "./asks";
+import { gmailAccounts, type GmailAccount } from "./gmail-accounts";
 import { mailingChannel } from "./mailing-channels";
 import { getWrittenMailing, openWrittenMailing, type WrittenMailing } from "./mailing-drafts";
 import { politicianAudience, type LeftOut } from "./mailing-recipients";
 import { listParties } from "./politicians";
-import { listStaffAccounts } from "./staff-accounts";
 import { firstOf, pageNumber, storedFilter, type Params, type StoredFilter } from "@/lib/staff-search";
 import { filterProblems } from "./stored-filters";
 
@@ -33,20 +33,23 @@ export type WriterData = FilterWordsData & {
   leftOut: LeftOut[];
   fields: MailingChoice[];
   conditions: MailingChoice[];
-  /** The staff accounts it can be sent from, and the one writing it, whose a new mailing is from to start with. */
-  senders: string[];
+  /**
+   * The connected Gmail accounts it can be sent from, with today's sends;
+   * and the one writing it, whose a new mailing is from to start with.
+   */
+  senders: GmailAccount[];
   me: string;
   /** Whether a mailing can be sent yet. */
   sends: boolean;
 };
 
 async function writerData(filter: StoredFilter, me: string): Promise<WriterData> {
-  const [audience, unknown, asks, parties, accounts] = await Promise.all([
+  const [audience, unknown, asks, parties, senders] = await Promise.all([
     politicianAudience(filter),
     filterProblems(filter),
     listAsks(),
     listParties(),
-    listStaffAccounts(),
+    gmailAccounts(),
   ]);
   return {
     filter,
@@ -64,7 +67,7 @@ async function writerData(filter: StoredFilter, me: string): Promise<WriterData>
     leftOut: audience.leftOut,
     fields: audience.fields,
     conditions: audience.conditions,
-    senders: accounts.map((account) => account.email),
+    senders,
     me,
     sends: Boolean(mailingChannel("email")?.sendsMailings),
   };

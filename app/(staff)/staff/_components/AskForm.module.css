@@ -1,0 +1,26 @@
+/* The form a step down from any notice over it. */
+.form {
+  margin-top: var(--space-4);
+}
+
+/* The title, and its slug close under it: a small label, then the slug in a fixed-width font. */
+.titled {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.slug {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.slug span {
+  font-weight: 600;
+}
+
+.slug code {
+  color: var(--text);
+  font-family: ui-monospace, monospace;
+  font-size: var(--text-sm);
+}

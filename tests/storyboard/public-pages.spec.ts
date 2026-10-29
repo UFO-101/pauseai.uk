@@ -7,7 +7,7 @@ import { hydrated } from "./settle";
 // Every public page on the site (tests/routes.ts), loaded in a real browser
 // against the production build, and pictured. This is the gate for page.tsx
 // and layout.tsx, which sit outside the Vitest coverage report
-// (docs/testing.md). The staff pages are in staff.spec.ts, after logging in.
+// (docs/testing.md). The staff pages are in their own sections, staff-login.spec.ts first.
 //
 // Hydration mismatches are silent by design here: app/layout.tsx sets
 // suppressHydrationWarning on both <html> and <body>, which hides the warning

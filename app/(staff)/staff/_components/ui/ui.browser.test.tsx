@@ -273,13 +273,15 @@ describe("FilterBar", () => {
     await page.getByRole("button", { name: staffCopy.filters.add }).click();
     await page.getByText("Event", { exact: true }).click();
     const list = document.querySelector<HTMLElement>("[popover]:popover-open ul")!;
-    expect(getComputedStyle(list).display).toBe("none");
+    // Before anything's typed, only a choice made shows, and here none is.
+    const shown = () => [...list.querySelectorAll("li")].map((li) => getComputedStyle(li).display !== "none");
+    expect(shown()).toEqual([false, false]);
     const box = page.getByRole("searchbox", { name: staffCopy.filters.narrow });
     await box.fill("oxf");
-    expect(getComputedStyle(list).display).not.toBe("none");
     expect([...list.querySelectorAll("li")].map((li) => li.hidden)).toEqual([true, false]);
+    expect(shown()).toEqual([false, true]);
     await box.fill("");
-    expect(getComputedStyle(list).display).toBe("none");
+    expect(shown()).toEqual([false, false]);
   });
 
   it("takes a place in a small form, keeping the other filters, and says what it found and how far in its chip", async () => {

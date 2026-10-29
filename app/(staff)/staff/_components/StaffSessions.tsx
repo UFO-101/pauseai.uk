@@ -53,7 +53,7 @@ export default function StaffSessions({ sessions }: { sessions: StaffSession[] }
       </Table>
       <form method="post" action="/staff/api/logout" className={styles.actions}>
         <input type="hidden" name="everywhere" value="1" />
-        <Button variant="primary" size="small" type="submit" fit>
+        <Button variant="ghost" size="small" type="submit" fit>
           {copy.logOutEverywhere}
         </Button>
       </form>

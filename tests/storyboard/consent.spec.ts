@@ -29,32 +29,28 @@ async function choose(page: Page, choice: "Accept" | "Decline") {
   await expect(banner(page)).toHaveCount(0);
 }
 
-test(
-  "declining is remembered on the next page, and a later visit loads no analytics",
-  { tag: "@phone" },
-  async ({ page }) => {
-    const requested = await analyticsRequests(page);
-    await page.goto(`${BASE}/privacy`);
-    await expect.poll(() => requested.length).toBeGreaterThan(0);
-    await frame(page, "the privacy page, before any choice");
-    await choose(page, "Decline");
-    await frame(page, "declined");
+test("Decline cookies: remembered, and no analytics on a later visit", { tag: "@phone" }, async ({ page }) => {
+  const requested = await analyticsRequests(page);
+  await page.goto(`${BASE}/privacy`);
+  await expect.poll(() => requested.length).toBeGreaterThan(0);
+  await frame(page, "the privacy page, before any choice");
+  await choose(page, "Decline");
+  await frame(page, "declined");
 
-    // Moving within the site: analytics stays switched off.
-    await page.locator('a[href^="/governance"]').first().dispatchEvent("click");
-    await expect(page).toHaveURL(/\/governance\/?$/);
-    expect(await page.evaluate((key) => (window as unknown as Record<string, unknown>)[key], GA_DISABLED)).toBe(true);
+  // Moving within the site: analytics stays switched off.
+  await page.locator('a[href^="/governance"]').first().dispatchEvent("click");
+  await expect(page).toHaveURL(/\/governance\/?$/);
+  expect(await page.evaluate((key) => (window as unknown as Record<string, unknown>)[key], GA_DISABLED)).toBe(true);
 
-    // A fresh page load never fetches it.
-    requested.length = 0;
-    await page.goto(`${BASE}/what-is-pauseai-uk`, { waitUntil: "load" });
-    expect(requested).toEqual([]);
-    expect(await page.evaluate((key) => localStorage.getItem(key), CONSENT_KEY)).toBe("declined");
-    await frame(page, "the next page: no banner, no analytics");
-  },
-);
+  // A fresh page load never fetches it.
+  requested.length = 0;
+  await page.goto(`${BASE}/what-is-pauseai-uk`, { waitUntil: "load" });
+  expect(requested).toEqual([]);
+  expect(await page.evaluate((key) => localStorage.getItem(key), CONSENT_KEY)).toBe("declined");
+  await frame(page, "the next page: no banner, no analytics");
+});
 
-test("declining removes the analytics cookies for good", async ({ page, context }) => {
+test("Decline cookies: the analytics cookies are deleted", async ({ page, context }) => {
   await analyticsRequests(page);
   await page.goto(`${BASE}/privacy`);
   const { hostname } = new URL(page.url());
@@ -70,7 +66,7 @@ test("declining removes the analytics cookies for good", async ({ page, context 
   expect(names.filter((n) => n.startsWith("_ga") || n === "_gid")).toEqual([]);
 });
 
-test("accepting after declining turns analytics back on, on later pages too", async ({ page }) => {
+test("Accept after declining: analytics come back on", async ({ page }) => {
   await page.addInitScript((key) => {
     // Only the first visit has declined; after that the page's own choice stands.
     if (!sessionStorage.getItem("seeded")) {
@@ -91,7 +87,7 @@ test("accepting after declining turns analytics back on, on later pages too", as
   expect(await page.evaluate((key) => localStorage.getItem(key), CONSENT_KEY)).toBe("accepted");
 });
 
-test("the tools never load analytics, whatever was chosen", async ({ page }) => {
+test("The tools never load analytics", async ({ page }) => {
   const requested = await analyticsRequests(page);
   await page.goto(`${BASE}/privacy`);
   await choose(page, "Accept");

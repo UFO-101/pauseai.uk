@@ -21,7 +21,7 @@ export default function UnblockForm({
 }) {
   if (!block.canReset) return <Muted>{staffCopy.emails.cantReset}</Muted>;
   return (
-    <FilterForm action={action} aria-label={`${staffCopy.emails.unblock}: ${block.address}`}>
+    <FilterForm action={action} aria-label={`${staffCopy.emails.unblock}: ${block.address}`} className={styles.form}>
       <input type="hidden" name="address" value={block.address} />
       <span className={styles.why}>
         <TextInput name="note" required aria-label={staffCopy.emails.note} placeholder={staffCopy.emails.note} />

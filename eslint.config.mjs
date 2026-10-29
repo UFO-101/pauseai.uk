@@ -65,6 +65,12 @@ const SERVICES = [
     host: "api\\.postmarkapp\\.com",
     why: "and email is sent with send() from lib/server/email.ts",
   },
+  {
+    name: "Google's OAuth and Gmail",
+    files: ["gmail.ts"],
+    host: "(?:oauth2|gmail|openidconnect)\\.googleapis\\.com|accounts\\.google\\.com.o.oauth2",
+    why: "and email is sent with send() from lib/server/email.ts",
+  },
   { name: "postcodes.io", files: ["postcodes.ts"], host: "api\\.postcodes\\.io" },
   // Stripe's API, not the donate links, which are payment pages on donate.stripe.com.
   { name: "Stripe's API", files: ["stripe.ts"], host: "api\\.stripe\\.com", why: "and its key stays on the server" },
@@ -85,6 +91,11 @@ const POSTMARK_IMPORT = {
   importNames: ["sendEmail", "unsuppress"],
   message:
     "Send email with send() from lib/server/email.ts, which skips blocked addresses and records each send; unblock with unblock().",
+};
+const GMAIL_IMPORT = {
+  group: ["**/gmail"],
+  importNames: ["sendGmail"],
+  message: "Send email with send() from lib/server/email.ts, which skips blocked addresses and records each send.",
 };
 
 // Packages that make their own requests, which a fixture build can't
@@ -139,7 +150,10 @@ function siteCodeRules({
       "error",
       {
         paths: [...(database ? [] : [PG_IMPORT]), ...NETWORK_IMPORTS],
-        patterns: [...(sendEmail ? [] : [POSTMARK_IMPORT]), ...(outsideFetch ? [] : [OUTSIDE_FETCH_IMPORT])],
+        patterns: [
+          ...(sendEmail ? [] : [POSTMARK_IMPORT, GMAIL_IMPORT]),
+          ...(outsideFetch ? [] : [OUTSIDE_FETCH_IMPORT]),
+        ],
       },
     ],
   };
@@ -254,7 +268,10 @@ const eslintConfig = defineConfig([
   {
     rules: {
       "no-restricted-syntax": ["error", DATABASE_URL_RULE, ...EXTERNAL_LINK_RULES],
-      "no-restricted-imports": ["error", { paths: [PG_IMPORT], patterns: [POSTMARK_IMPORT, OUTSIDE_FETCH_IMPORT] }],
+      "no-restricted-imports": [
+        "error",
+        { paths: [PG_IMPORT], patterns: [POSTMARK_IMPORT, GMAIL_IMPORT, OUTSIDE_FETCH_IMPORT] },
+      ],
     },
   },
   // Component tests link to example.org to exercise a component, not to send

@@ -1,0 +1,15 @@
+.connect {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+
+.connect p,
+.connect ul {
+  margin: 0;
+}
+
+/* Connect Gmail, a step down from the list over it. */
+.connect > a {
+  margin-top: var(--space-2);
+}

@@ -6,9 +6,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { type ImportJob, importPath } from "@/lib/import-runs";
 import { now } from "@/lib/now";
-import { eraseFrom, idFrom, permissionsFrom, statusFrom, unblockFrom } from "@/lib/staff-forms";
+import { staffBack } from "@/lib/staff-search";
+import { askFrom, eraseFrom, idFrom, permissionsFrom, statusFrom, unblockFrom } from "@/lib/staff-forms";
+import { addAsk, deleteAsk, editAsk } from "@/lib/server/asks";
 import { importControlAiLetter } from "@/lib/server/controlai-import";
 import { isPoliticianAddress, unblock } from "@/lib/server/email";
+import { disconnectGmail } from "@/lib/server/gmail-accounts";
 import { eraseSupporter } from "@/lib/server/erasure";
 import { importLuma } from "@/lib/server/luma-import";
 import { importMembers } from "@/lib/server/members-import";
@@ -189,4 +192,50 @@ export async function eraseSupporterNow(form: FormData): Promise<void> {
   if (!result) return;
   revalidatePath("/staff", "layout");
   redirect("/staff/supporters?erased=1");
+}
+
+/** Disconnects your own Gmail, from your page, going back to it saying so, in place of how connecting went. */
+export async function disconnectMyGmail(): Promise<void> {
+  const { email } = await requireStaff();
+  await disconnectGmail(email, email);
+  revalidatePath("/staff/me");
+  redirect("/staff/me?gmail=disconnected");
+}
+
+/**
+ * Where an ask's form goes after a save: `back`, or the asks page; or the
+ * form again, saying why not; or, the ask deleted meanwhile, the asks page
+ * saying so, as its form is gone too.
+ */
+function afterAsk(slug: string, back: string, result: { saved: boolean; reason?: string }, saved: string): never {
+  revalidatePath("/staff/asks");
+  if (result.reason === "gone") redirect("/staff/asks?notice=gone");
+  const form = slug ? `/staff/asks/${slug}` : "/staff/asks/new";
+  const [path, query = ""] = (result.saved ? back : form).split("?");
+  const params = new URLSearchParams(query);
+  params.set("notice", result.saved ? saved : result.reason!);
+  if (!result.saved) params.set("back", back);
+  redirect(`${path}?${params}`);
+}
+
+/** An ask's form: adds the ask, or with its slug, saves it; then goes back to where it was opened from. */
+export async function saveAskNow(form: FormData): Promise<void> {
+  const { email } = await requireStaff();
+  const slug = String(form.get("slug") ?? "");
+  const back = staffBack(String(form.get("back") ?? ""), "/staff/asks");
+  const parsed = askFrom(form);
+  if (!parsed) afterAsk(slug, back, { saved: false, reason: "invalid" }, "");
+  afterAsk(
+    slug,
+    back,
+    slug ? await editAsk(slug, parsed, email) : await addAsk(parsed, email),
+    slug ? "saved" : "added",
+  );
+}
+
+/** An ask's Delete: deletes it, while nothing refers to it, then goes to the asks page. */
+export async function deleteAskNow(form: FormData): Promise<void> {
+  const { email } = await requireStaff();
+  const slug = String(form.get("slug") ?? "");
+  afterAsk(slug, "/staff/asks", await deleteAsk(slug, email), "deleted");
 }

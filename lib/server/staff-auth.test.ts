@@ -56,12 +56,12 @@ describeWithDatabase("staff sessions", () => {
 
   it("gives an address an account with no permissions on its first login, logged, and keeps an existing one", async () => {
     await createSession("jo@pauseai.uk");
-    await saveStaffAccount("sam@pauseai.uk", ["admin"], "jo@pauseai.uk");
-    await createSession("sam@pauseai.uk");
+    await saveStaffAccount("samuel.whitlock@pauseai.uk", ["admin"], "jo@pauseai.uk");
+    await createSession("samuel.whitlock@pauseai.uk");
     await createSession("jo@pauseai.uk");
     expect(await query("SELECT email, permissions, added_by FROM staff_accounts ORDER BY email")).toEqual([
       { email: "jo@pauseai.uk", permissions: [], added_by: "login" },
-      { email: "sam@pauseai.uk", permissions: ["admin"], added_by: "jo@pauseai.uk" },
+      { email: "samuel.whitlock@pauseai.uk", permissions: ["admin"], added_by: "jo@pauseai.uk" },
     ]);
     expect(
       await query("SELECT actor, action, details FROM audit_log WHERE details->>'email' = 'jo@pauseai.uk'"),
@@ -90,7 +90,7 @@ describeWithDatabase("staff sessions", () => {
       "UPDATE staff_sessions SET expires_at = now() - interval '1 minute' WHERE token_hash = encode(sha256($1::bytea), 'hex')",
       [gone],
     );
-    await createSession("sam@pauseai.uk");
+    await createSession("samuel.whitlock@pauseai.uk");
     requestCookies.set("staff_session", token);
     expect(await requireStaff()).toMatchObject({ email: "jo@pauseai.uk", sessions: 2 });
     const sessions = await listSessions("jo@pauseai.uk", token);
@@ -114,7 +114,7 @@ describeWithDatabase("staff sessions", () => {
       ]);
     }
     // Ending one: only your own, logged.
-    expect(await endSession("sam@pauseai.uk", sessionId(kept))).toBe(false);
+    expect(await endSession("samuel.whitlock@pauseai.uk", sessionId(kept))).toBe(false);
     expect(await endSession("Jo@pauseai.uk", sessionId(kept))).toBe(true);
     expect(await listSessions("jo@pauseai.uk", token)).toHaveLength(1);
     expect(await query("SELECT actor, details FROM audit_log WHERE action = 'end staff sessions'")).toEqual([

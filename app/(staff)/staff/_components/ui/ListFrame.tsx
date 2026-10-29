@@ -12,29 +12,33 @@ import styles from "./ListFrame.module.css";
  * A column of a staff list: its heading, its cell, and its value in a
  * download (lib/staff-list.ts). `heading` is its own <th>, such as a
  * SortHeading, in place of the label's. A `short` column's cells never
- * wrap, so the long ones take the room left.
+ * wrap, so the long ones take the room left. An `end` column, a row's
+ * buttons, sits at the right edge.
  */
 export type ListColumn<Row> = DownloadColumn<Row> & {
   cell: (row: Row) => ReactNode;
   heading?: ReactNode;
   short?: boolean;
+  end?: boolean;
   className?: string;
 };
 
-/** Rows as a striped table, a column each. */
+/** Rows as a striped table, a column each; `align="middle"` when its rows hold buttons (docs/style-guide.md, "Tables"). */
 export function ListTable<Row>({
   columns,
   rows,
   rowKey,
+  align,
 }: {
   columns: ListColumn<Row>[];
   rows: Row[];
   rowKey: (row: Row) => string | number;
+  align?: "top" | "middle";
 }) {
   const cellClass = (column: ListColumn<Row>) =>
-    [column.short && styles.short, column.className].filter(Boolean).join(" ") || undefined;
+    [column.short && styles.short, column.end && styles.end, column.className].filter(Boolean).join(" ") || undefined;
   return (
-    <Table>
+    <Table align={align}>
       <thead>
         <tr>{columns.map((column) => column.heading ?? <th key={column.key}>{column.label}</th>)}</tr>
       </thead>
@@ -116,6 +120,8 @@ type Props<Row> = {
   download?: (format: DownloadFormat) => string;
   /** Buttons for what can be done with every row the filters find, before Download. */
   actions?: ReactNode;
+  /** "middle" when its rows hold buttons. */
+  align?: "top" | "middle";
   /** The formats it offers: a spreadsheet's and JSON, and vCards for a list of people. */
   formats?: DownloadFormat[];
   columns: ListColumn<Row>[];
@@ -146,6 +152,7 @@ export default function ListFrame<Row>({
   rows,
   rowKey,
   empty,
+  align,
 }: Props<Row>) {
   const menuId = useId();
   if (total === 0) return <p>{empty}</p>;
@@ -196,7 +203,7 @@ export default function ListFrame<Row>({
           )}
         </div>
       </div>
-      <ListTable columns={columns} rows={rows} rowKey={rowKey} />
+      <ListTable columns={columns} rows={rows} rowKey={rowKey} align={align} />
       {pages > 1 && href && (
         <div className={styles.under}>
           <Muted>{staffCopy.paging.range(from, to, total)}</Muted>

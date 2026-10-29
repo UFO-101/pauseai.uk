@@ -70,7 +70,7 @@ describeWithDatabase("the mailing pages' Server Actions", () => {
       subject: "Hi",
       filter: { list: "politicians", params: { house: "lords" } },
     });
-    expect(revalidatePath).toHaveBeenCalledWith("/staff/mailings");
+    expect(revalidatePath).not.toHaveBeenCalled();
     expect(await saveMailing(id, 1, { sentFrom: "Jo@PauseAI.uk", dueAt: "2026-12-01T09:00:00Z" })).toEqual({
       saved: true,
       version: 2,
@@ -113,18 +113,22 @@ describeWithDatabase("the mailing pages' Server Actions", () => {
     );
     const polly = await addTestPolitician();
     const { id } = (await startMailing({}, { subject: "Hi", body: LETTER }))!;
-    expect(await sendMailingTest(id, polly)).toEqual({ sent: true, id: "m", to: JO });
+    expect(await sendMailingTest(id, polly)).toMatchObject({ sent: true, id: "m", to: JO });
     // To the recipient's name, at the staff member's address.
     expect(to).toBe(`"Polly Placeholder" <${JO}>`);
+    // To another address given; nothing to one that isn't one.
+    expect(await sendMailingTest(id, polly, " sam@example.org ")).toMatchObject({ sent: true, to: "sam@example.org" });
+    expect(to).toBe('"Polly Placeholder" <sam@example.org>');
+    expect(await sendMailingTest(id, polly, "not an address")).toBeUndefined();
     expect(await sendMailingTest(id, polly + 1)).toBeUndefined();
     expect(await sendMailingTest(999, polly)).toBeUndefined();
   });
 
-  it("won't schedule while sending isn't built, and says why", async () => {
+  it("won't schedule while anything stops it, and says why", async () => {
     const { id } = (await startMailing({}, { subject: "Hi" }))!;
     expect(await scheduleMailingNow(id, 1)).toMatchObject({
       scheduled: false,
-      problems: expect.arrayContaining(["cannot-send"]),
+      problems: expect.arrayContaining(["no-sender", "no-letter"]),
     });
   });
 

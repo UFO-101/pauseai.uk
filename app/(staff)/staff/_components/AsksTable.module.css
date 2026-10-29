@@ -1,0 +1,9 @@
+/* How the last save or delete went, a step up from the list. */
+.notice {
+  margin-bottom: var(--space-4);
+}
+
+/* Add an ask, under the table, a step down from it. */
+.add {
+  margin-top: var(--space-5);
+}

@@ -138,7 +138,8 @@ export default function PrivacyPolicy() {
         <li>postcodes.io: looking up postcodes; it keeps nothing.</li>
         <li>Airtable: our records of MPs and of members, and letters sent through our earlier form.</li>
         <li>
-          Google (Gmail): our policy team&apos;s inbox, which gets a copy of each letter and of each MP&apos;s reply.
+          Google (Gmail): our email, where copies of letters to politicians, their replies, and the letters we send them
+          are kept.
         </li>
       </ul>
 

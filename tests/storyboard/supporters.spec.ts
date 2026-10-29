@@ -44,10 +44,7 @@ async function openHistory(page: Page) {
   await page.locator("summary", { has: page.getByRole("heading", { name: copy.detail.activityTitle }) }).click();
 }
 
-test("without the supporters permission, the list is closed and the home page doesn't offer it", async ({
-  page,
-  flowDatabase,
-}) => {
+test("Without Supporters: the list is closed", async ({ page, flowDatabase }) => {
   addStaffAccount(flowDatabase, staffEmail());
   await logInAsStaff(page, BASE, staffEmail());
   await expect(page.getByRole("link", { name: staffCopy.nav.supporters })).toHaveCount(0);
@@ -57,11 +54,7 @@ test("without the supporters permission, the list is closed and the home page do
   await expect(page).toHaveURL(`${BASE}/staff`);
 });
 
-test("the supporters list after the Luma import, filtered, reset and sorted", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("Filter, reset and sort supporters", async ({ page, request, flowDatabase }) => {
   await importLuma(request, BASE);
   await logInWithSupporters(page, flowDatabase);
   await page.getByRole("link", { name: staffCopy.nav.supporters }).first().click();
@@ -111,11 +104,7 @@ test("the supporters list after the Luma import, filtered, reset and sorted", as
   await frame(page, "sorted by name, reversed, by clicking the heading twice");
 });
 
-test("the supporters not at an event, by Except: the guest who declined it, and the contact who never registered", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("Supporters not at an event, with Except", async ({ page, request, flowDatabase }) => {
   await importLuma(request, BASE);
   await logInWithSupporters(page, flowDatabase);
   await page.goto(`${BASE}/staff/supporters`);
@@ -152,7 +141,7 @@ test("the supporters not at an event, by Except: the guest who declined it, and 
   );
 });
 
-test("an MP's constituents, by the MP filter, the page's title saying so", async ({ page, request, flowDatabase }) => {
+test("Filter supporters by their MP", async ({ page, request, flowDatabase }) => {
   await importLuma(request, BASE);
   await syncPoliticians(request, BASE);
   await logInWithSupporters(page, flowDatabase);
@@ -175,11 +164,7 @@ test("an MP's constituents, by the MP filter, the page's title saying so", async
   await frame(page, "Mo Example's constituents: Jane, and the page's title names the filter");
 });
 
-test("a supporter's page: who they are, what they gave, their history, and an opt-out from Luma's webhook", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("A supporter's page, and an opt-out from Luma", async ({ page, request, flowDatabase }) => {
   await importLuma(request, BASE);
   await syncPoliticians(request, BASE);
   // Jane unsubscribed from the calendar's emails, Luma told us, and someone redelivered it.
@@ -237,11 +222,7 @@ test("a supporter's page: who they are, what they gave, their history, and an op
   await frame(page, "the audit log: the download of supporters, and no viewing");
 });
 
-test("a supporter merged into another by their mobile number: the old ID's page goes on to the one kept", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("Supporters merged by phone number: the old page redirects", async ({ page, request, flowDatabase }) => {
   await importLuma(request, BASE);
   // A newer guest gives Jane's mobile, written as people write it; the next pass over everyone's numbers makes them one.
   const [jane] = runSql(
@@ -261,14 +242,13 @@ test("a supporter merged into another by their mobile number: the old ID's page 
   // Both addresses; the name the newest of them gave.
   await expect(page.getByText("jane.fixture@example.com").first()).toBeVisible();
   await expect(page.getByText(email).first()).toBeVisible();
-  await frame(page, "the old ID's page gone on to the one kept, Jane's ID, with both addresses and the newer name");
+  await frame(
+    page,
+    "the old ID's page gone on to the one kept, Jane's ID, with both addresses and the newer name, Dee Clined",
+  );
 });
 
-test("a letter writer is a supporter too, linked from the letters page", async ({
-  page,
-  request,
-  flowDatabase,
-}, testInfo) => {
+test("A letter writer's page, from the letters list", async ({ page, request, flowDatabase }, testInfo) => {
   await syncPoliticians(request, BASE);
   const sender = `jane+${testInfo.testId}@example.com`;
   await fakeTurnstile(page);
@@ -302,10 +282,7 @@ test("a letter writer is a supporter too, linked from the letters page", async (
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Jane Smith");
 });
 
-test("a march sign-up is a supporter, with what they gave and the link they came by", async ({
-  page,
-  flowDatabase,
-}, testInfo) => {
+test("A march sign-up's page", async ({ page, flowDatabase }, testInfo) => {
   const email = `march-${testInfo.testId}@example.org`;
   const form = marchSignupCopy.form;
   await page.goto(`${BASE}/protests/march-against-ai-extinction-nov-26?utm_source=nl#register`);
@@ -346,14 +323,10 @@ test("a march sign-up is a supporter, with what they gave and the link they came
   await frame(page, "Marta's page: her phone, city and postcode, the box she ticked, and the sign-up in her history");
 });
 
-test("a member who also wrote to their MP is one supporter, with how they joined", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("A member who wrote to their MP is one supporter", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await fakeTurnstile(page);
-  await lookUpTestMp(page, BASE, TEST_MPS[0]);
+  await lookUpTestMp(page, BASE, TEST_MPS[0], "Lee Letter");
   await fillLetter(page, "lee.letter@example.com");
   await sendLetter(page, TEST_MPS[0]);
   await importMembers(request, BASE);
@@ -369,7 +342,7 @@ test("a member who also wrote to their MP is one supporter, with how they joined
   await lee.getByRole("link").first().click();
   await expect(page).toHaveURL(/\/staff\/supporters\/\d+$/);
   // The letter's sender's name, as the newest; how they first came, as a member.
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Jane Smith");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Lee Letter");
   await expect(page.getByText(copy.detail.firstVia(copy.sources.member))).toBeVisible();
   await expect(page.getByText("29 Nov 2025", { exact: false }).first()).toBeVisible();
   // Joined before "Keep me informed" was a choice: on the updates.
@@ -383,7 +356,7 @@ test("a member who also wrote to their MP is one supporter, with how they joined
   await frame(page, "Lee's page: joined before the form asked about updates, then wrote to their MP");
 });
 
-test("the list says what each supporter gets, and filters by it", async ({ page, request, flowDatabase }) => {
+test("Filter supporters by what they're subscribed to", async ({ page, request, flowDatabase }) => {
   await importLuma(request, BASE);
   await importMembers(request, BASE);
   // Jane unsubscribed from the calendar's emails, and Luma told us.
@@ -400,7 +373,7 @@ test("the list says what each supporter gets, and filters by it", async ({ page,
   await expect(page.getByRole("row").filter({ hasText: "Jane Fixture" })).toBeVisible();
   // Owen left Keep me informed unticked, which isn't an unsubscribe.
   await expect(page.getByRole("row").filter({ hasText: "Owen Member" })).toHaveCount(0);
-  await frame(page, "Luma by email, can't: Jane, who unsubscribed, as Luma told us");
+  await frame(page, "Luma by email, can't: Jane, who unsubscribed, as Luma told us, and those never Luma's contacts");
 
   // Another topic, from the chip's first half, then its answer.
   await changeFilter(
@@ -415,7 +388,7 @@ test("the list says what each supporter gets, and filters by it", async ({ page,
   await frame(page, "filtered to those who left Keep me informed unticked: Owen");
 });
 
-test("a member who left Keep me informed unticked won't get the updates", async ({ page, request, flowDatabase }) => {
+test("A member who didn't tick Keep me informed gets no updates", async ({ page, request, flowDatabase }) => {
   await importMembers(request, BASE);
   await logInWithSupporters(page, flowDatabase);
   await page.goto(`${BASE}/staff/supporters`);
@@ -431,11 +404,7 @@ test("a member who left Keep me informed unticked won't get the updates", async 
   await frame(page, "Owen's page: declined the updates on joining");
 });
 
-test("a member who re-joined and ticked Keep me informed is on the updates", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("A member who re-joined and ticked it gets updates", async ({ page, request, flowDatabase }) => {
   // Rhea left it unticked on an earlier record; the newest decides.
   await importMembers(request, BASE);
   await logInWithSupporters(page, flowDatabase);
@@ -450,11 +419,7 @@ test("a member who re-joined and ticked Keep me informed is on the updates", asy
   await frame(page, "Rhea's page: asked for the updates on re-joining");
 });
 
-test("erasing a supporter: gone from the list and the next import, with the audit entry", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("Erase a supporter: they stay gone after an import", async ({ page, request, flowDatabase }) => {
   await importLuma(request, BASE);
   await logInWithSupporters(page, flowDatabase);
   await page.goto(`${BASE}/staff/supporters`);
@@ -491,11 +456,7 @@ test("erasing a supporter: gone from the list and the next import, with the audi
   await frame(page, "the audit log: the erasure, by its reference, with no name or address");
 });
 
-test("erasing a member: gone from the list, and the next members import doesn't bring them back", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("Erase a member: they stay gone after a members import", async ({ page, request, flowDatabase }) => {
   await importMembers(request, BASE);
   await logInWithSupporters(page, flowDatabase);
   await page.goto(`${BASE}/staff/supporters`);

@@ -1,7 +1,16 @@
-import { expect, it } from "vitest";
+import { beforeEach, expect, it } from "vitest";
+import { FIXED_ASKS } from "@/lib/asks";
 import { campaigns, copy } from "@/lib/content/email-your-mp";
-import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
-import { asksWithCounts, listAsks, listCampaigns } from "./asks";
+import { migrate } from "@/scripts/db-migrate.mjs";
+import {
+  addTestPolitician,
+  describeWithDatabase,
+  MAKES_DATABASES,
+  useDatabaseUpTo,
+  useTestDatabase,
+} from "@/tests/database";
+import { addAsk, askToEdit, asksWithCounts, deleteAsk, editAsk, listAsks, listCampaigns } from "./asks";
+import { query } from "./db";
 import { setStatus } from "./politicians";
 
 describeWithDatabase("asks and campaigns", () => {
@@ -73,5 +82,96 @@ describeWithDatabase("asks and campaigns", () => {
     expect(rows.map((row) => row.slug)).toEqual(
       expect.arrayContaining(["pauseai-info-frontier-ai", "pauseai-info-liability", "pauseai-info-deepmind"]),
     );
+  });
+});
+
+describeWithDatabase("staff's asks", () => {
+  useTestDatabase();
+  // The asks the migrations add stay; those a test added go.
+  beforeEach(() => query("DELETE FROM asks WHERE slug <> ALL($1)", [FIXED_ASKS]));
+  const JO = "jo@pauseai.uk";
+  const RECEPTION = {
+    title: "Winter reception",
+    kind: "event" as const,
+    date: "2026-12-09",
+    url: null,
+    askedBy: ["pauseai" as const],
+  };
+  const audit = () => query("SELECT actor, action, details FROM audit_log ORDER BY id");
+
+  it("adds an ask, its slug from its title and month, numbered if it's taken, and logs it", async () => {
+    expect(await addAsk(RECEPTION, JO)).toEqual({ saved: true, slug: "winter-reception-dec-2026" });
+    expect(await addAsk(RECEPTION, JO)).toEqual({ saved: true, slug: "winter-reception-dec-2026-2" });
+    expect(await addAsk(RECEPTION, JO)).toEqual({ saved: true, slug: "winter-reception-dec-2026-3" });
+    expect(await askToEdit("winter-reception-dec-2026")).toEqual({
+      slug: "winter-reception-dec-2026",
+      ...RECEPTION,
+      fixed: false,
+      kindFixed: false,
+      deletable: true,
+    });
+    expect((await audit())[0]).toEqual({
+      actor: JO,
+      action: "add ask",
+      details: { slug: "winter-reception-dec-2026", ...RECEPTION },
+    });
+  });
+
+  it("changes an ask but its slug; its kind only while no one has answered it; never one the code names", async () => {
+    await addAsk(RECEPTION, JO);
+    const slug = "winter-reception-dec-2026";
+    expect(await editAsk(slug, { ...RECEPTION, title: "Reception", url: "https://luma.com/x" }, JO)).toEqual({
+      saved: true,
+      slug,
+    });
+    expect(await askToEdit(slug)).toMatchObject({ slug, title: "Reception", url: "https://luma.com/x" });
+    const polly = await addTestPolitician();
+    await setStatus(polly, slug, { status: "going", date: null, note: "" }, JO);
+    expect(await editAsk(slug, { ...RECEPTION, kind: "letter" }, JO)).toEqual({ saved: false, reason: "kind-in-use" });
+    expect(await askToEdit(slug)).toMatchObject({ kindFixed: true, deletable: false });
+    expect(await editAsk(slug, { ...RECEPTION, title: "Reception again" }, JO)).toMatchObject({ saved: true });
+    expect(await editAsk("frontier-ai-letter", RECEPTION, JO)).toEqual({ saved: false, reason: "fixed" });
+    expect(await editAsk("nothing", RECEPTION, JO)).toEqual({ saved: false, reason: "gone" });
+    expect(await askToEdit("frontier-ai-letter")).toMatchObject({ fixed: true, deletable: false });
+    expect(await askToEdit("nothing")).toBeUndefined();
+  });
+
+  it("deletes an ask nothing refers to, logging what it was; not one answered, in a mailing, or the code's", async () => {
+    await addAsk(RECEPTION, JO);
+    await addAsk({ ...RECEPTION, title: "Mailed" }, JO);
+    await query(
+      `INSERT INTO mailings (title, ask, audience, channel, state, airtable_sent_between)
+       VALUES ('M', 'mailed-dec-2026', 'politicians', 'email', 'sent', '[2026-01-01,2026-01-02)')`,
+    );
+    expect(await deleteAsk("mailed-dec-2026", JO)).toEqual({ saved: false, reason: "in-use" });
+    expect(await deleteAsk("frontier-ai-letter", JO)).toEqual({ saved: false, reason: "fixed" });
+    expect(await deleteAsk("nothing", JO)).toEqual({ saved: false, reason: "gone" });
+    expect(await deleteAsk("winter-reception-dec-2026", JO)).toEqual({
+      saved: true,
+      slug: "winter-reception-dec-2026",
+    });
+    expect(await askToEdit("winter-reception-dec-2026")).toBeUndefined();
+    expect((await audit()).at(-1)).toEqual({
+      actor: JO,
+      action: "delete ask",
+      details: { slug: "winter-reception-dec-2026", ...RECEPTION },
+    });
+  });
+});
+
+describeWithDatabase("migration 0061_ask_links_whole", MAKES_DATABASES, () => {
+  const db = useDatabaseUpTo("0060");
+
+  it("puts the site's address in front of an ask's link that's a path of it, and leaves whole links alone", async () => {
+    expect(migrate(db.url, { appliedUpTo: "0060" })).toContain("0061_ask_links_whole");
+    expect(
+      await query(
+        "SELECT slug, url FROM asks WHERE slug IN ('frontier-ai-letter', 'deepmind-letter', 'controlai-letter') ORDER BY slug",
+      ),
+    ).toEqual([
+      { slug: "controlai-letter", url: "https://controlai.org/uk-pm-letter" },
+      { slug: "deepmind-letter", url: "https://pauseai.uk/campaigns/dear-sir-demis-2025" },
+      { slug: "frontier-ai-letter", url: "https://pauseai.uk/pdfs/Frontier-AI-Open-Letter.pdf" },
+    ]);
   });
 });

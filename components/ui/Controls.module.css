@@ -102,3 +102,19 @@
   box-shadow: 0 0 0 1px var(--accent);
   font-weight: 600;
 }
+
+/* An option's icon, before its words. */
+.segment:has(svg) {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.segment svg {
+  flex: none;
+}
+
+.segment:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

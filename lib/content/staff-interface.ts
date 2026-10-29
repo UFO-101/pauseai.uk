@@ -3,6 +3,16 @@
 import type { Channel } from "@/lib/contact-permissions";
 import type { ImportJob } from "@/lib/import-runs";
 
+/**
+ * What can't be done to an ask, said on its form and, the same words, when a
+ * save or a delete is refused for it (staffCopy.asks).
+ */
+const askLimits = {
+  kindFixed: "Kind can't be changed now, as politicians have answered it.",
+  fixed: "Campaigns hard-coded on the site use this ask, so you can't change it here.",
+  notDeletable: "Asks can't be deleted while answers, campaigns or mailings refer to them.",
+};
+
 export const staffCopy = {
   metaTitle: "PauseAI Staff",
   login: {
@@ -44,6 +54,8 @@ export const staffCopy = {
       supporters: "Supporters",
       politicians: "Politicians",
       admin: "Admin",
+      // Over your address, which leads to your own page.
+      profile: "Your account",
     } as Record<string, string>,
     supporters: "Supporters",
     politicians: "Politicians",
@@ -55,13 +67,54 @@ export const staffCopy = {
     supporterEmails: "Blocked emails",
     mpEmails: "Blocked emails",
     logout: "Log out",
-    // Under Log out, faintly, only with more than one session open: how many, linked to the page of them.
-    sessions: (n: number) => `${n} sessions`,
   },
-  // The page of your own sessions (/staff/sessions): one row each, and a way to end them all.
+  // One of PauseAI's letters, and the replies in its thread.
+  letterThread: {
+    title: "Letter and replies",
+    // An imported letter, whose text Airtable didn't keep.
+    noText: "This letter was sent before the site sent mailings, so its text isn't here.",
+    openInGmail: "Open in Gmail",
+    noReplies: "No replies yet.",
+    unreadable: "This message couldn't be read.",
+    // Over each message, as an email shows them.
+    headers: { from: "From", to: "To", date: "Date", subject: "Subject" },
+  },
+  // Your own page: your sessions and your Gmail.
+  me: {
+    title: "Your account",
+    sessionsTitle: "Where you're logged in",
+  },
+  // Connecting a staff member's Gmail, on their own page and in a mailing's Sent from.
+  gmail: {
+    title: "Let staff send mailings from your Gmail",
+    // What connecting it means, said before it goes to Google: a line, then a bullet each.
+    intro: "Usually this is a shared account rather than a person's own: log in here as it, then connect it.",
+    explain: [
+      "Mailings can go from its address, are kept in its Sent mail, and replies come back to it.",
+      "The site reads only those replies and bounces, and never deletes or changes anything.",
+    ],
+    limit: (limit: string) => `At most ${limit} a day, leaving room for the account's other email.`,
+    connect: "Connect Gmail",
+    disconnect: "Disconnect Gmail",
+    // Over when it was connected: the name and address its mail goes out under, as its From line shows them.
+    sendsAs: (from: string) => `Sends as ${from}.`,
+    connected: (when: string) => `Connected ${when}.`,
+    notConnected: "Your Gmail isn't connected.",
+    sentToday: (sent: number, limit: string) => `${sent} of today's ${limit} emails sent.`,
+    // After coming back from Google, or disconnecting.
+    outcomes: {
+      connected: "Your Gmail is connected. All staff will be able to send mailings from it now.",
+      refused: "Gmail wasn't connected, as you didn't allow it.",
+      failed: "Gmail couldn't be connected. Try again.",
+      disconnected: "Your Gmail is disconnected.",
+    } as Record<string, string>,
+    // Back from Google having chosen an account other than the one logged in here, `me`.
+    otherAccount: (me: string) =>
+      `That Google account does not have the same email ${me} as your PauseAI UK staff account. Either pick a different Google account, or log in here with the same email.`,
+  },
+  // Your sessions, on your own page (/staff/me): one row each, and a way to end them all.
   sessions: {
-    title: "Your sessions",
-    intro: "Everywhere you're logged in to the PauseAI Staff pages.",
+    intro: "You're logged into the PauseAI Staff pages on these devices.",
     columns: {
       browser: "Browser",
       system: "System",
@@ -89,7 +142,7 @@ export const staffCopy = {
         heldSync: (changes: number) => `MP import would change ${changes} MPs`,
         // Why it's held, and what to do.
         heldSyncDetail:
-          "That's a lot of MPs, so please check it, and approve or decline it. Fix any problems in Airtable.",
+          "That's a lot of MPs, so please check it, and apply or discard it. Fix any problems in Airtable.",
         decide: "Review import",
         blockedMp: (name: string) => `${name}'s email is bouncing`,
         blockedMpDetail: "Find a working email for this MP if it has changed, or unblock if working now.",
@@ -117,7 +170,7 @@ export const staffCopy = {
         unsubscribes: (n: number) => (n === 1 ? "unsubscribe from Luma emails" : "unsubscribes from Luma emails"),
       } as Record<string, (n: number) => string>,
       // A count of nothing, instead of a 0.
-      none: "None",
+      none: "No",
       // Beside the letters' number: those to the test MPs, left out of it.
       testLetters: (n: number) => `+${n} test`,
       // Under the number: against the window before.
@@ -565,6 +618,8 @@ export const staffCopy = {
     answer: "Answer",
     // In the second half of the ask's chip, before an answer is chosen.
     anyAnswer: "Any answer",
+    // A filter: those a mailing about an ask has gone or is going to.
+    mailed: "Mailed about",
     noAnswer: "Not answered",
     none: "None found.",
     // Over the list: how many there are.
@@ -757,7 +812,7 @@ export const staffCopy = {
     willGet: (n: number) => `${n} ${n === 1 ? "politician" : "politicians"} will be emailed.`,
     // Who's left out: each part only when there are some.
     leftOut: (found: number, noAddress: number, blocked: number) =>
-      `Of the ${found} people the filter found, ${[
+      `Of the ${found} ${found === 1 ? "person" : "people"} the filter found, ${[
         noAddress && `${noAddress} ${noAddress === 1 ? "has" : "have"} no email address`,
         blocked && `${blocked} ${blocked === 1 ? "has an address that's blocked" : "have addresses that are blocked"}`,
       ]
@@ -773,6 +828,8 @@ export const staffCopy = {
       `The saved filter has values that are no longer supported (${values}), you need to change it before carrying on.`,
     subject: "Subject",
     ask: "Ask",
+    // Under the ask: where to add a new one, around a link to the asks page's form, which comes back here.
+    newAsk: { before: "You can add a new ask on the ", link: "Asks page", after: "." },
     // Behind the ? beside Ask.
     askHelpLabel: "Help about what an ask is",
     askHelp:
@@ -790,6 +847,8 @@ export const staffCopy = {
     megabytes: (n: number) => `${n} MB`,
     removeFile: (name: string) => `Remove ${name}`,
     tooBig: "That file is too big - a file can be up to 4MB.",
+    // When uploading a file fails, such as the connection dropping.
+    attachFailed: "That file couldn't be added. Try again.",
     // Over the preview: before a button for each condition the letter's parts use, then over the choice of whose email it shows.
     findRecipient: "Find recipient who:",
     chooseRecipient: "Choose recipient:",
@@ -798,7 +857,14 @@ export const staffCopy = {
     noSender: "Choose who below",
     // When no recipient has the answers chosen.
     noOneMix: "No preview, because none of the recipients match the answers you picked above.",
-    sendTest: "Send this one to me",
+    // The test copy: the address it goes to, yours to start with, and the button.
+    sendTestTo: "Send a test copy to",
+    sendTest: "Send test",
+    // Under it: how the test copy goes, so you know where to look for it.
+    testVia: (gmail: string | null) =>
+      gmail
+        ? `Sends from ${gmail}'s Gmail, so copies also show in Sent.`
+        : "Sends from our own mail service, so it won't be in any Gmail's Sent.",
     testSent: (address: string) => `Sent to ${address}.`,
     // Under the test button, while the letter is empty or only its greeting.
     testNeedsDraft: "Write something first!",
@@ -806,10 +872,16 @@ export const staffCopy = {
     // The first entry of a list while nothing in it is chosen.
     choose: "Choose…",
     fromLegend: "Whose Gmail to send it from",
-    notConnected: "Gmail connection isn't implemented yet.",
+    // A sender, in Sent from's list: their address, and how many more it can send today.
+    // Your own address, before your Gmail's connected.
+    senderNotConnected: (address: string) => `${address} (not connected)`,
+    notConnected: "This Gmail isn't connected. Only its owner can connect it, from their own page.",
+    // With no Gmail connected, in place of the choice of one.
+    noSenders: "No Gmail is connected yet, so nothing can be sent.",
+    // Under the choice of Gmail, to the account page, where one is connected.
+    connectOne: "Connect a Gmail on your account page",
     // In the preview, who it's from: the name comes from the Gmail account.
     from: "From",
-    fromGmail: (address: string) => `Your Gmail's name <${address}>`,
     // The test copy's sender's name.
     testFromName: "PauseAI UK mailing test",
     day: "Day",
@@ -825,6 +897,8 @@ export const staffCopy = {
       "no-recipients": "There's nobody to send to.",
       "field-lacking": "It uses a field some recipients have no value for.",
       "no-sender": "Choose who to send the message from.",
+      "not-connected": "The Gmail you've chosen to send from isn't connected.",
+      "too-many": "This mailing is to more people than one Gmail can send to in a day.",
       "no-time": "Choose what time it will be sent.",
       "time-passed": "You can't send it into the past!",
       "cannot-send": "Sending isn't built yet.",
@@ -845,7 +919,7 @@ export const staffCopy = {
     comingLine: (by: string, when: string, n: number) => `${by} · ${when} · to ${n} ${n === 1 ? "person" : "people"}`,
     // On the politicians list, beside Download.
     mailThese: (n: number) => `Mail these ${n}…`,
-    useThese: (n: number) => `Use these ${n} for the draft`,
+    useThese: (n: number) => (n === 1 ? "Use this one for the draft" : `Use these ${n} for the draft`),
     // A mailing's own page.
     states: {
       draft: "Draft",
@@ -877,7 +951,7 @@ export const staffCopy = {
     // In a mailing's email, who it's to: each recipient, as it's a letter to many.
     toEach: "Each recipient, by name and address",
     emailTitle: "The email",
-    whoTitle: "Who it was for",
+    whoTitle: (sent: boolean) => (sent ? "Who it was for" : "Who it's for"),
     skipReasons: {
       blocked: "Skipped: address blocked",
       "left-office": "Skipped: left office",
@@ -886,7 +960,53 @@ export const staffCopy = {
   // The asks page: each ask, its kind and date, and how many gave each answer.
   asks: {
     title: "Asks",
-    intro: "What we ask notable people to do when writing to them. Make a PR to add a new ask.",
+    intro: "What we ask notable people to do, either by writing to them or by meeting them.",
+    add: "Add an ask",
+    edit: "Edit",
+    // The form, adding an ask or editing one.
+    newTitle: "New ask",
+    editTitle: (title: string) => `Edit the ask “${title}”`,
+    fields: {
+      kind: "We ask them to",
+      askedBy: "Who has or will ask them",
+    },
+    // The rest of the form's fields, by the kind of ask: the title reads on from "sign" or "attend".
+    byKind: {
+      letter: {
+        title: "Which letter",
+        titleExample: "Giant pause button funding request to the Chancellor",
+        date: "When the letter was started",
+        url: "Where to read the letter",
+      },
+      event: {
+        title: "Which event",
+        titleExample: "Tea, biscuits and existential risk conference",
+        date: "When the event is",
+        url: "Where to learn more about the event",
+      },
+    } as Record<string, { title: string; titleExample: string; date: string; url: string }>,
+    // Under the link, in red, while what's in it isn't a whole one.
+    badLink: "Give a full link beginning https://",
+    // Over an ask's slug, which doesn't change.
+    slugLabel: "Identifier: ",
+    kindFixed: askLimits.kindFixed,
+    fixed: askLimits.fixed,
+    // Beside the form: the ask as it will show on a politician's page.
+    previewTitle: "What the ask will look like on a politician's page",
+    save: "Save ask",
+    delete: "Delete ask",
+    notDeletable: askLimits.notDeletable,
+    // After saving or deleting, or failing to.
+    notices: {
+      added: "Ask added.",
+      saved: "Ask saved.",
+      deleted: "Ask deleted.",
+      // The same as the form says, when a save or a delete is refused for it.
+      fixed: askLimits.fixed,
+      "kind-in-use": askLimits.kindFixed,
+      "in-use": askLimits.notDeletable,
+      gone: "That ask has been deleted.",
+    } as Record<string, string>,
     // Over the list: how many there are.
     total: (n: number) => `${n} ${n === 1 ? "ask" : "asks"}`,
     none: "No asks yet.",
@@ -898,7 +1018,7 @@ export const staffCopy = {
       askedBy: "Asked by",
       answers: "Answers",
     },
-    kinds: { letter: "Sign letter", event: "Attend event" } as Record<string, string>,
+    kinds: { letter: "Sign a letter", event: "Attend an event" } as Record<string, string>,
     askedBy: { supporters: "Supporters", pauseai: "PauseAI", controlai: "ControlAI" },
     noAnswers: "No answers yet",
     // Each answer's count links to the politicians who gave it.
@@ -1022,6 +1142,8 @@ export const staffCopy = {
     noBlocks: "No addresses are blocked.",
     // Instead of the history, when nothing has bounced or been complained about.
     noProblems: "Nothing has bounced or been marked as spam.",
+    // Beside a bounce read from someone's Gmail, rather than reported by Postmark.
+    foundInGmail: "found in Gmail",
     kinds: {
       hard: "Bounced",
       soft: "Soft bounce",
@@ -1047,6 +1169,7 @@ export const staffCopy = {
       "forwarded-reply": "Forwarded reply",
       "staff-login": "Staff login link",
       "staff-alert": "Staff alert",
+      mailing: "Mailing",
       "mailing-test": "Test copy of a mailing",
     } as Record<string, string>,
     // A complaint can't be undone by staff, only by the person.
@@ -1060,11 +1183,10 @@ export const staffCopy = {
   // Postmark's reason sometimes ends in a full stop and sometimes doesn't.
   alert: {
     subject: (mp: string) => `A letter to ${mp} bounced`,
+    // The mail server's reason quoted after its own sentence, and the link on a line of its own.
     body: (mp: string, address: string, reason: string, link: string) =>
-      `A letter to ${mp} (${address}) didn't arrive: ${reason.replace(/\.+$/, "")}. Nothing more will be sent to that address until it's fixed in Airtable and unblocked here: ${link}`,
+      `A letter to ${mp} (${address}) didn't arrive. The mail server said: “${reason.replace(/\.+$/, "")}.”\n\nNothing more will be sent to that address until it's fixed in Airtable and unblocked here:\n${link}`,
   },
-  // The nightly copy of ControlAI's letter's signatories into the bill's
-  // statuses (lib/server/controlai-import.ts), on the import page.
   // The web imports, after the Airtable ones on the import page: ControlAI's
   // letter to the PM, copied nightly into the bill's statuses
   // (lib/server/controlai-import.ts).
@@ -1109,7 +1231,8 @@ export const staffCopy = {
     // After the counts, how many pages of contacts the run read (runs kept before this was recorded don't say).
     contactPages: (pages: number) => `${pages} pages of contacts read.`,
     // After that, the postcodes and towns looked up at postcodes.io for where supporters are (runs kept before this was recorded don't say).
-    places: (p: { postcodes: number; towns: number }) => `${p.postcodes} postcodes, ${p.towns} towns looked up.`,
+    places: (p: { postcodes: number; towns: number }) =>
+      `${p.postcodes} ${p.postcodes === 1 ? "postcode" : "postcodes"}, ${p.towns} ${p.towns === 1 ? "town" : "towns"} looked up.`,
     // After that, when postcodes.io failed partway: the next run carries on.
     placesFailed: "Postcodes.io failed: the next run carries on.",
     stoppedBy: {
@@ -1297,6 +1420,10 @@ export const staffCopy = {
         email: "Address",
         from: "From",
         subject: "Subject",
+        // What sending from Gmail and reading its mailbox record.
+        name: "Name",
+        account: "Gmail",
+        status: "Code",
       } as Record<string, string>,
       // A supporter's letter, Bcc'd to policy@: its copy there.
       googleGroup: "Find it in Google Groups",
@@ -1413,19 +1540,20 @@ export const staffCopy = {
     } as Record<string, string>,
     // A held MP import decided, linked to the import's page.
     run: (id: string) => `Import run ${id}`,
-    // After each number an import, a sync or an erasure logged: what it counted.
+    // After each number an import, a sync, an erasure or the end of sessions logged: what it counted, for one and for more.
     counts: {
-      added: "added",
-      removed: "removed",
-      changed: "changed",
-      matched: "matched",
-      alreadySet: "already signed",
-      problems: "problems",
-      lumaUsers: "Luma people",
-      formEntries: "form entries",
-      letters: "letters",
-      members: "member records",
-    } as Record<string, string>,
+      added: () => "added",
+      removed: () => "removed",
+      changed: () => "changed",
+      matched: () => "matched",
+      alreadySet: () => "already signed",
+      problems: (n: number) => (n === 1 ? "problem" : "problems"),
+      lumaUsers: (n: number) => (n === 1 ? "Luma person" : "Luma people"),
+      formEntries: (n: number) => (n === 1 ? "form entry" : "form entries"),
+      letters: (n: number) => (n === 1 ? "letter" : "letters"),
+      members: (n: number) => (n === 1 ? "member record" : "member records"),
+      sessions: (n: number) => (n === 1 ? "session" : "sessions"),
+    } as Record<string, (n: number) => string>,
   },
 };
 

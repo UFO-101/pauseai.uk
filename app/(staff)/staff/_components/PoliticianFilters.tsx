@@ -13,8 +13,9 @@ const copy = staffCopy.politicians;
  * columns in its order, with the nation after the party and whether we can
  * email them after the status. Status is those in
  * office unless another is chosen. An answer is offered once there's an
- * ask, from those its kind allows, and goes with it. Party, nation, email
- * and the markers can each be chosen more than once.
+ * ask, from those its kind allows, and goes with it. Party, nation, email,
+ * the markers and the asks they've been mailed about can each be chosen
+ * more than once; Except on the last finds those not yet mailed about it.
  */
 export function politicianFilters(askSlug: string, parties: string[], asks: Ask[]): Filter[] {
   const ask = asks.find((a) => a.slug === askSlug);
@@ -57,6 +58,12 @@ export function politicianFilters(askSlug: string, parties: string[], asks: Ask[
     {
       name: "ask",
       label: copy.ask,
+      options: asks.map((a) => ({ value: a.slug, label: a.title })),
+    },
+    {
+      name: "mailed",
+      label: copy.mailed,
+      repeat: true,
       options: asks.map((a) => ({ value: a.slug, label: a.title })),
     },
     {

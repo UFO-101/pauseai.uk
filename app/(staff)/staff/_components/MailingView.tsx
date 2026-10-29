@@ -136,7 +136,7 @@ function Standing({
           }
         >
           <strong>{copy.sends(londonWhen(written.dueAt!))}</strong>
-          <span>{copy.scheduledLine(mailing.to, written.fromName ?? written.sentFrom!)}</span>
+          <span>{copy.scheduledLine(mailing.to, written.fromName || written.sentFrom!)}</span>
         </Strip>
       </>
     );
@@ -158,7 +158,7 @@ function Standing({
   return (
     <p>
       {written
-        ? copy.sentLine(staffTime(mailing.sentAt ?? written.dueAt!), written.fromName ?? written.sentFrom!)
+        ? copy.sentLine(staffTime(mailing.sentAt ?? written.dueAt!), written.fromName || written.sentFrom!)
         : mailing.sentAt
           ? copy.importedLine(staffTime(mailing.sentAt))
           : staffCopy.mailings.notSent}
@@ -233,7 +233,7 @@ export default function MailingView({
           />
         </Card>
         {written ? (
-          <Card span={2} look="aside" title={copy.whoTitle} id="who-title">
+          <Card span={2} look="aside" title={copy.whoTitle(written.state === "sent")} id="who-title">
             {who}
             <h3 className={styles.subheading}>{copy.emailTitle}</h3>
             <div className={styles.email}>

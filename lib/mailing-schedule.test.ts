@@ -23,6 +23,7 @@ const READY: SchedulingMailing = {
   lacking: ["constituency"],
   unknown: [],
   sends: true,
+  connected: true,
 };
 
 describe("scheduleProblems", () => {
@@ -44,6 +45,7 @@ describe("scheduleProblems", () => {
         lacking: [],
         unknown: ["party=Gone"],
         sends: false,
+        connected: false,
       }),
     ).toEqual(["no-subject", "no-letter", "unknown-filter", "no-recipients", "no-sender", "no-time", "cannot-send"]);
   });
@@ -53,5 +55,10 @@ describe("scheduleProblems", () => {
       "field-lacking",
       "time-passed",
     ]);
+  });
+
+  it("refuses an account whose Gmail isn't connected, and more recipients than it sends in a day", () => {
+    expect(scheduleProblems({ ...READY, connected: false, recipients: 1801 })).toEqual(["not-connected", "too-many"]);
+    expect(scheduleProblems({ ...READY, recipients: 1800 })).toEqual([]);
   });
 });

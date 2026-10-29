@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import { query } from "@/lib/server/db";
@@ -6,10 +6,15 @@ import { isBlocked, recordProblem } from "@/lib/server/email";
 import { getPolitician } from "@/lib/server/politicians";
 import { createSession } from "@/lib/server/staff-auth";
 import { saveStaffAccount } from "@/lib/server/staff-accounts";
-import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { FIXED_ASKS } from "@/lib/asks";
+import { gmailAccounts } from "@/lib/server/gmail-accounts";
+import { addTestPolitician, connectTestGmail, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { expectRedirect, requestCookies } from "@/tests/next-headers";
 import {
   checkNow,
+  deleteAskNow,
+  disconnectMyGmail,
+  saveAskNow,
   decideSync,
   deletePoliticianNow,
   eraseSupporterNow,
@@ -137,20 +142,21 @@ describeWithDatabase("staff Server Actions", () => {
   });
 
   it("saveStaffAccountNow adds or changes an account and removeStaffAccountNow removes one, as an admin, going back to the page", async () => {
-    const save = () => saveStaffAccountNow(form({ email: "Sam@pauseai.uk", "permission:supporters": "on" }));
+    const save = () =>
+      saveStaffAccountNow(form({ email: "Samuel.Whitlock@pauseai.uk", "permission:supporters": "on" }));
     expect(await expectRedirect(save)).toBe("/staff");
     await saveStaffAccount("jo@pauseai.uk", ["admin"], "a");
     expect(await expectRedirect(save)).toBe("/staff/accounts");
     expect(await query("SELECT email, permissions, added_by FROM staff_accounts ORDER BY email")).toEqual([
       { email: "jo@pauseai.uk", permissions: ["admin"], added_by: "login" },
-      { email: "sam@pauseai.uk", permissions: ["supporters"], added_by: "jo@pauseai.uk" },
+      { email: "samuel.whitlock@pauseai.uk", permissions: ["supporters"], added_by: "jo@pauseai.uk" },
     ]);
     expect(revalidatePath).toHaveBeenCalledWith("/staff/accounts");
     // The last admin can't lose admin, and the page says so.
     expect(await expectRedirect(() => saveStaffAccountNow(form({ email: "jo@pauseai.uk" })))).toBe(
       "/staff/accounts?notice=last-admin",
     );
-    expect(await expectRedirect(() => removeStaffAccountNow(form({ email: "sam@pauseai.uk" })))).toBe(
+    expect(await expectRedirect(() => removeStaffAccountNow(form({ email: "samuel.whitlock@pauseai.uk" })))).toBe(
       "/staff/accounts",
     );
     expect(await query("SELECT count(*)::int AS n FROM staff_accounts")).toEqual([{ n: 1 }]);
@@ -245,17 +251,17 @@ describeWithDatabase("staff Server Actions", () => {
   });
 
   it("endStaffSessionsNow ends an account's sessions, as an admin, going back to the page", async () => {
-    await createSession("sam@pauseai.uk");
-    const end = () => endStaffSessionsNow(form({ email: "sam@pauseai.uk" }));
+    await createSession("samuel.whitlock@pauseai.uk");
+    const end = () => endStaffSessionsNow(form({ email: "samuel.whitlock@pauseai.uk" }));
     expect(await expectRedirect(end)).toBe("/staff");
-    expect(await query("SELECT count(*)::int AS n FROM staff_sessions WHERE email = 'sam@pauseai.uk'")).toEqual([
-      { n: 1 },
-    ]);
+    expect(
+      await query("SELECT count(*)::int AS n FROM staff_sessions WHERE email = 'samuel.whitlock@pauseai.uk'"),
+    ).toEqual([{ n: 1 }]);
     await saveStaffAccount("jo@pauseai.uk", ["admin"], "a");
     expect(await expectRedirect(end)).toBe("/staff/accounts");
-    expect(await query("SELECT count(*)::int AS n FROM staff_sessions WHERE email = 'sam@pauseai.uk'")).toEqual([
-      { n: 0 },
-    ]);
+    expect(
+      await query("SELECT count(*)::int AS n FROM staff_sessions WHERE email = 'samuel.whitlock@pauseai.uk'"),
+    ).toEqual([{ n: 0 }]);
     // A bad form does nothing.
     await endStaffSessionsNow(form({ email: "nobody" }));
     expect(await query("SELECT actor, action FROM audit_log WHERE action = 'end staff sessions'")).toEqual([
@@ -303,5 +309,59 @@ describeWithDatabase("staff Server Actions", () => {
     expect(await isBlocked("a@example.org")).toBe(true);
     expect(error).toHaveBeenCalled();
     error.mockRestore();
+  });
+
+  it("disconnects your own Gmail", async () => {
+    await connectTestGmail("jo@pauseai.uk");
+    expect(await expectRedirect(disconnectMyGmail)).toBe("/staff/me?gmail=disconnected");
+    expect(await gmailAccounts()).toEqual([]);
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/me");
+  });
+
+  describe("asks", () => {
+    beforeEach(() => query("DELETE FROM asks WHERE slug <> ALL($1)", [FIXED_ASKS]));
+    const reception = (extra: Record<string, string> = {}) =>
+      form({ title: "Winter reception", kind: "event", date: "2026-12-09", ...extra });
+
+    it("adds an ask, going back to where it was opened from, or the asks page, saying it's added", async () => {
+      expect(await expectRedirect(() => saveAskNow(reception({ back: "/staff/mailings/4?x=1" })))).toBe(
+        "/staff/mailings/4?x=1&notice=added",
+      );
+      expect(await expectRedirect(() => saveAskNow(reception({ back: "https://evil.example" })))).toBe(
+        "/staff/asks?notice=added",
+      );
+      expect(await expectRedirect(() => saveAskNow(reception()))).toBe("/staff/asks?notice=added");
+      expect(revalidatePath).toHaveBeenCalledWith("/staff/asks");
+    });
+
+    it("saves an ask by its slug, or goes back to its form saying why not", async () => {
+      await expectRedirect(() => saveAskNow(reception()));
+      expect(
+        await expectRedirect(() => saveAskNow(reception({ slug: "winter-reception-dec-2026", title: "Reception" }))),
+      ).toBe("/staff/asks?notice=saved");
+      expect(await expectRedirect(() => saveAskNow(reception({ slug: "frontier-ai-letter" })))).toBe(
+        "/staff/asks/frontier-ai-letter?notice=fixed&back=%2Fstaff%2Fasks",
+      );
+      expect(await expectRedirect(() => saveAskNow(form({ title: "", kind: "event" })))).toBe(
+        "/staff/asks/new?notice=invalid&back=%2Fstaff%2Fasks",
+      );
+    });
+
+    it("deletes an ask, or goes back to its form saying why not, or to the asks if it's gone", async () => {
+      await expectRedirect(() => saveAskNow(reception()));
+      expect(await expectRedirect(() => deleteAskNow(form({ slug: "frontier-ai-letter" })))).toBe(
+        "/staff/asks/frontier-ai-letter?notice=fixed&back=%2Fstaff%2Fasks",
+      );
+      expect(await expectRedirect(() => deleteAskNow(form({ slug: "winter-reception-dec-2026" })))).toBe(
+        "/staff/asks?notice=deleted",
+      );
+      // One already gone, by another tab, has no form to go back to: the asks page says so.
+      expect(await expectRedirect(() => deleteAskNow(new FormData()))).toBe("/staff/asks?notice=gone");
+      expect(
+        await expectRedirect(() =>
+          saveAskNow(form({ slug: "winter-reception-dec-2026", title: "Winter", kind: "event" })),
+        ),
+      ).toBe("/staff/asks?notice=gone");
+    });
   });
 });

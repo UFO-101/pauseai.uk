@@ -15,11 +15,11 @@ import type { StaffAccount } from "@/lib/server/staff-accounts";
 import ChangesTable from "./ChangesTable";
 import EmailBlockFilters from "./EmailBlockFilters";
 import EmailBlocksTable, { blockColumns } from "./EmailBlocksTable";
-import { exampleBlock, exampleComplaint, exampleProblems } from "./EmailBlocksTable.examples";
+import { exampleBlock, exampleComplaint, exampleGmailBlock, exampleProblems } from "./EmailBlocksTable.examples";
 import EmailProblemsTable from "./EmailProblemsTable";
 import { exampleChanges } from "./ChangesTable.examples";
 import LettersTable, { LettersList, letterColumns, letterDownloadColumns } from "./LettersTable";
-import LetterDetails from "./LetterDetails";
+import LetterDetails, { GmailLink } from "./LetterDetails";
 import { examplePauseaiLetterDetails, exampleSupporterLetterDetails } from "./LettersTable.examples";
 import { gmailSearchUrl, googleGroupUrl } from "@/lib/letter-links";
 import { exampleLetter } from "./LettersTable.examples";
@@ -126,7 +126,7 @@ describe("StaffNav", () => {
     await expect.element(page.getByRole("link", { name: staffCopy.nav.title })).toHaveAttribute("href", "/staff");
     // The sidebar is for wider screens than the test's, so it's read from the DOM.
     const nav = document.querySelector("nav")!;
-    expect(nav.querySelector("span[class*=who]")!.textContent).toBe("jo@pauseai.uk");
+    expect(nav.querySelector(`a[href="/staff/me"]`)!.textContent).toBe("jo@pauseai.uk");
     // Home leads the list, a link like the rest.
     expect(nav.querySelector('a[href="/staff"][class*=page]')!.textContent).toBe(staffCopy.nav.home);
     const current = nav.querySelector('a[aria-current="page"]')!;
@@ -167,16 +167,16 @@ describe("StaffNav", () => {
     expect(nav.querySelector("summary")!.textContent).toBe(staffCopy.nav.home);
   });
 
-  it("with more than one session, links faintly to the page of them under Log out, there and in the phone's menu", async () => {
-    const { rerender } = await render(<StaffNav email="jo@pauseai.uk" permissions={[]} sessions={3} current="home" />);
-    const links = document.querySelectorAll('a[href="/staff/sessions"]');
-    expect([...links].map((a) => a.textContent)).toEqual([staffCopy.nav.sessions(3), staffCopy.nav.sessions(3)]);
-    expect(links[0].getAttribute("aria-current")).toBeNull();
-    await rerender(<StaffNav email="jo@pauseai.uk" permissions={[]} sessions={3} current="sessions" />);
-    expect(document.querySelector('a[href="/staff/sessions"]')!.getAttribute("aria-current")).toBe("page");
-    expect(document.querySelector("summary")!.textContent).toBe(staffCopy.sessions.title);
-    await rerender(<StaffNav email="jo@pauseai.uk" permissions={[]} sessions={1} current="home" />);
-    expect(document.querySelector('a[href="/staff/sessions"]')).toBeNull();
+  it("links your address to your own page, marked when you're on it, there and in the phone's menu", async () => {
+    const { rerender } = await render(<StaffNav email="jo@pauseai.uk" permissions={[]} current="home" />);
+    const links = () => [...document.querySelectorAll('a[href="/staff/me"]')];
+    expect(links().map((a) => [a.textContent, a.getAttribute("title"), a.getAttribute("aria-current")])).toEqual([
+      ["jo@pauseai.uk", "jo@pauseai.uk", null],
+      ["jo@pauseai.uk", "jo@pauseai.uk", null],
+    ]);
+    await rerender(<StaffNav email="jo@pauseai.uk" permissions={[]} current="me" />);
+    expect(links()[0].getAttribute("aria-current")).toBe("page");
+    expect(document.querySelector("summary")!.textContent).toBe(staffCopy.me.title);
   });
 
   it("shows the Supporters section, Letters in it, to someone with supporters", async () => {
@@ -209,9 +209,9 @@ describe("StaffNav in the signed-in pages' layout", () => {
     expect(menu().open).toBe(false);
   });
 
-  it("marks home at /staff and your sessions at theirs", async () => {
+  it("marks home at /staff and your own page at yours", async () => {
     expect(staffPageAt("/staff")).toBe("home");
-    expect(staffPageAt("/staff/sessions")).toBe("sessions");
+    expect(staffPageAt("/staff/me")).toBe("me");
     expect(staffPageAt("/staff/politicians/blocked-emails")).toBe("mpEmails");
     expect(staffPageAt("/staff/login")).toBeUndefined();
   });
@@ -403,7 +403,7 @@ describe("StaffDashboard", () => {
     );
     expect(tileLink(copy.metrics.mpsSigned(1))?.getAttribute("href")).toBe("/staff/politicians/7");
 
-    // A quiet month: nothing reads "None", with no test letters and no bar; the change is over 30 days.
+    // A quiet month: nothing reads "No", with no test letters and no bar; the change is over 30 days.
     await rerender(<StaffDashboard dashboard={exampleQuietDashboard} permissions={[]} />);
     const month = page.getByRole("img", { name: copy.series(copy.metrics.eventRegistrations(4), 30, 8) }).element();
     const monthBox = month.getBoundingClientRect();
@@ -565,7 +565,7 @@ describe("StaffAccountsTable", () => {
       sessions: 0,
     },
     {
-      email: "sam@pauseai.uk",
+      email: "samuel.whitlock@pauseai.uk",
       permissions: [],
       addedBy: "login",
       addedAt: "2026-10-21T10:30:00Z",
@@ -607,7 +607,7 @@ describe("StaffAccountsTable", () => {
       copy.never,
       "0",
     ]);
-    expect(row("sam@pauseai.uk").slice(2, 6)).toEqual([
+    expect(row("samuel.whitlock@pauseai.uk").slice(2, 6)).toEqual([
       `21 Oct 2026, 10:30 ${copy.addedByLogin}`,
       "21 Oct 2026, 10:30",
       "21 Oct 2026, 11:00",
@@ -622,9 +622,11 @@ describe("StaffAccountsTable", () => {
     await expect
       .element(form("admin@pauseai.uk").getByRole("button"))
       .toHaveTextContent(staffCopy.accounts.endMySessions);
-    await expect.element(form("sam@pauseai.uk").getByRole("button")).toHaveTextContent(staffCopy.accounts.endSessions);
-    await form("sam@pauseai.uk").getByRole("button").click();
-    await vi.waitFor(() => expect(end.sent).toEqual([{ email: "sam@pauseai.uk" }]));
+    await expect
+      .element(form("samuel.whitlock@pauseai.uk").getByRole("button"))
+      .toHaveTextContent(staffCopy.accounts.endSessions);
+    await form("samuel.whitlock@pauseai.uk").getByRole("button").click();
+    await vi.waitFor(() => expect(end.sent).toEqual([{ email: "samuel.whitlock@pauseai.uk" }]));
   });
 
   it("lists every account, centred in its row, with its boxes, a Remove at the right, and a key to the permissions", async () => {
@@ -1310,7 +1312,7 @@ describe("PoliticianDetails", () => {
       `3 Oct 2026, 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.politician.personalised} · ${staffCopy.letters.status.sent}`,
       // Dated the day before it was recorded, so on that day.
       `1 Oct 2026${statusLine(staffCopy.politician.statusSet(staffCopy.statuses.signed), ask("frontier-ai-letter").title)} · Told us at the march · jo@pauseai.uk`,
-      `30 Sept 2026, 10:00${copy["edit politician"]} Polly Placeholder · polly.placeholder.mp@parliament.uk · sam@pauseai.uk`,
+      `30 Sept 2026, 10:00${copy["edit politician"]} Polly Placeholder · polly.placeholder.mp@parliament.uk · samuel.whitlock@pauseai.uk`,
       `2 Sept 2026, 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.letters.status.sent}`,
       `1 Sept 2026, 10:00${statusLine(staffCopy.politician.statusCleared, "gone")} · jo@pauseai.uk`,
       `15 Aug 2026, 10:00${statusLine(staffCopy.politician.statusSet("odd"), pm.title)} · jo@pauseai.uk`,
@@ -1905,6 +1907,8 @@ describe("AsksTable", () => {
         copy.count(staffCopy.statuses.declined, 50),
         copy.count(staffCopy.statuses.passed_on, 1),
       ].join(" · "),
+      // The code names it, so it has no Edit.
+      "",
     ]);
     // Asked by nobody we record, with no link.
     expect(cells(exampleAsks[1].title)[3]).toBe("");
@@ -1916,8 +1920,9 @@ describe("AsksTable", () => {
       "",
       `${copy.askedBy.supporters}${copy.askedBy.pauseai}`,
       copy.count(staffCopy.statuses.signed, 10),
+      "",
     ]);
-    expect(cells(exampleAsks[2].title).at(-1)).toBe(copy.noAnswers);
+    expect(cells(exampleAsks[2].title).at(-2)).toBe(copy.noAnswers);
     // Another site's page opens in a new tab; ours in this one.
     const event = row(exampleAsks[0].title).getByRole("link", { name: exampleAsks[0].title });
     await expect.element(event).toHaveAttribute("href", "https://luma.com/example");
@@ -1928,6 +1933,20 @@ describe("AsksTable", () => {
     await expect
       .element(page.getByRole("link", { name: copy.count(staffCopy.statuses.passed_on, 1) }))
       .toHaveAttribute("href", "/staff/politicians?ask=edinburgh-conference-2026&answer=passed_on");
+    await expect.element(page.getByRole("link", { name: copy.add })).toHaveAttribute("href", "/staff/asks/new");
+    expect(page.getByRole("status").query()).toBeNull();
+  });
+
+  it("has Edit for an ask staff added, and says how a save or delete went", async () => {
+    const added = { ...exampleAsksWithCounts[0], slug: "winter-reception-dec-2026", title: "Winter reception" };
+    const copy = staffCopy.asks;
+    const { rerender } = await render(<AsksTable asks={[added]} notice="deleted" />);
+    await expect
+      .element(page.getByRole("row").filter({ hasText: "Winter reception" }).getByRole("link", { name: copy.edit }))
+      .toHaveAttribute("href", "/staff/asks/winter-reception-dec-2026");
+    await expect.element(page.getByRole("status")).toHaveTextContent(copy.notices.deleted);
+    await rerender(<AsksTable asks={[added]} notice="in-use" />);
+    await expect.element(page.getByRole("status")).toHaveTextContent(copy.notices["in-use"]);
   });
 });
 
@@ -2429,6 +2448,15 @@ describe("RunList", () => {
 describe("ChangesTable", () => {
   const log = (changes: typeof exampleChanges) => ({ changes, total: changes.length, pages: 1, pageSize: 100 });
 
+  it("leaves a change of nothing out of an entry's fields", async () => {
+    const edit = exampleChanges.find((one) => one.action === "edit politician")!;
+    const empty = { ...edit, details: { ...edit.details, changed: {} } };
+    await render(<ChangesTable log={log([empty])} page={1} airtableTable="https://airtable.com/app/tbl" />);
+    const details = page.getByRole("row").nth(1).getByRole("cell").nth(4).element().textContent!;
+    expect(details).not.toContain("·  ·");
+    expect(details).not.toMatch(/·\s*·/);
+  });
+
   it("lists who changed what, the day in a column of its own, and every field each logged, in words, linked where there's a page", async () => {
     await render(<ChangesTable log={log(exampleChanges)} page={1} airtableTable="https://airtable.com/app/tbl" />);
     const copy = staffCopy.changes;
@@ -2451,7 +2479,7 @@ describe("ChangesTable", () => {
     const signed = staffCopy.politician.statusSet(staffCopy.statuses.signed);
     const cleared = staffCopy.politician.statusCleared;
     const odd = staffCopy.politician.statusSet("odd");
-    const count = (n: number, key: string) => `${n} ${copy.counts[key]}`;
+    const count = (n: number, key: string) => `${n} ${copy.counts[key](n)}`;
     expect(details).toEqual([
       `Polly Placeholder · ${signed.before}${pm.title}${signed.after}, 1 Oct 2026 · ${labels.note} By email`,
       `${copy.gone("99")} · ${cleared.before}controlai-letter${cleared.after}`,
@@ -2463,9 +2491,9 @@ describe("ChangesTable", () => {
       "Jane Example",
       copy.gone("4"),
       `${copy.gone("5")} · ${labels.reference} ICO-12 · ${count(1, "lumaUsers")} · ${count(2, "formEntries")} · ${count(2, "letters")} · ${count(0, "members")}`,
-      `sam@pauseai.uk · ${labels.to} ${copy.noPermissions}`,
-      `sam@pauseai.uk · ${copy.noPermissions} → ${staffCopy.accounts.names.supporters}, ${staffCopy.accounts.names.admin}`,
-      `sam@pauseai.uk · ${labels.permissions} ${staffCopy.accounts.names.supporters}, retired`,
+      `samuel.whitlock@pauseai.uk · ${labels.to} ${copy.noPermissions}`,
+      `samuel.whitlock@pauseai.uk · ${copy.noPermissions} → ${staffCopy.accounts.names.supporters}, ${staffCopy.accounts.names.admin}`,
+      `samuel.whitlock@pauseai.uk · ${labels.permissions} ${staffCopy.accounts.names.supporters}, retired`,
       `${count(3, "added")} · ${count(40, "removed")} · ${count(2, "changed")}`,
       copy.run("12"),
       `${labels.reason} a test · Ids [1,2] · ${fields.house} atlantis · ${labels.status} ${staffCopy.statuses.signed}`,
@@ -2597,7 +2625,8 @@ describe("LetterDetails", () => {
     expect(sending.element().textContent).toContain(copy.status.sending);
     expect(sending.getByRole("button").all()).toHaveLength(0);
     // A hard bounce says no more than its status; the {} has what Postmark said.
-    expect(bounced.element().querySelector("li > span:nth-child(2)")!.textContent).toBe(copy.status.bounced);
+    expect(bounced.element().querySelector("strong")!.textContent).toBe(copy.status.bounced);
+    expect(bounced.element().querySelector("dl")).toBeNull();
     await bounced.getByRole("button", { name: staffCopy.changes.json }).click();
     await expect.element(page.getByText('"type": "HardBounce"', { exact: false })).toBeVisible();
     expect(document.body.textContent).toContain(copy.consent.yes);
@@ -2622,13 +2651,23 @@ describe("LetterDetails", () => {
         }}
       />,
     );
-    // A field with no name in the copy, as recorded, and a value that isn't words, as JSON.
+    // Each change's fields a line each, by name: one with no name in the copy as recorded, a value that isn't
+    // words as JSON, a soft bounce in words, and the address leading to it among the blocked emails.
     const history = page.getByRole("list", { name: copy.detail.historyTitle });
-    expect(history.element().textContent).toContain(`${copy.detail.fields.subject} Thanks · spam 0.1`);
-    // A soft bounce in words, and the address leading to it among the blocked emails.
-    expect(history.element().textContent).toContain(
-      `${copy.status.bounced} · Soft bounce · ${copy.detail.fields.email} jo@example.org`,
+    const fields = [...history.element().querySelectorAll("dl")].map((list) =>
+      [...list.querySelectorAll("dt")].map((name) => [name.textContent, name.nextElementSibling!.textContent]),
     );
+    expect(fields).toEqual([
+      [
+        [copy.detail.fields.subject, "Thanks"],
+        ["spam", "0.1"],
+      ],
+      [
+        [copy.detail.fields.type, "Soft bounce"],
+        [copy.detail.fields.email, "jo@example.org"],
+      ],
+    ]);
+    expect(history.element().textContent).toContain(copy.status.bounced);
     await expect
       .element(history.getByRole("link", { name: "jo@example.org" }))
       .toHaveAttribute("href", "/staff/politicians/blocked-emails?q=jo%40example.org");
@@ -2640,7 +2679,7 @@ describe("LetterDetails", () => {
     expect(page.getByText(copy.detail.sent, { exact: true }).all()).toHaveLength(0);
   });
 
-  it("shows PauseAI's letter: its mailing, a Gmail search for it, and that nothing's recorded since", async () => {
+  it("shows PauseAI's letter: its mailing, whether personalised, and that nothing's recorded since", async () => {
     const letter = examplePauseaiLetterDetails;
     const { rerender } = await render(<LetterDetails letter={letter} />);
     await expect
@@ -2660,20 +2699,41 @@ describe("LetterDetails", () => {
       .element(page.getByRole("link", { name: letter.mpName }))
       .toHaveAttribute("href", "/staff/politicians/1");
     await expect.element(page.getByText(copy.detail.personalised)).toBeVisible();
+    await expect.element(page.getByText(copy.detail.noHistory)).toBeVisible();
+    // Its Gmail link goes with its thread, not in the card.
+    expect(page.getByRole("link", { name: copy.detail.gmail }).all()).toHaveLength(0);
+    await rerender(<LetterDetails letter={{ ...letter, personalised: false }} />);
+    expect(page.getByText(copy.detail.personalised).all()).toHaveLength(0);
+  });
+});
+
+describe("GmailLink", () => {
+  const copy = staffCopy.letters;
+  const letter = examplePauseaiLetterDetails;
+
+  it("searches Gmail for a letter by its MP's address and when it went, or was made; with no address, nothing", async () => {
+    const { rerender } = await render(<GmailLink letter={letter} me="jo@pauseai.uk" />);
     await expect
       .element(page.getByRole("link", { name: copy.detail.gmail }))
       .toHaveAttribute("href", gmailSearchUrl(letter.mpEmail!, letter.sentAt!));
-    await expect.element(page.getByText(copy.detail.noHistory)).toBeVisible();
-    // Not sent yet, it's searched for by when it was made; with no address, not at all.
     await rerender(
-      <LetterDetails letter={{ ...letter, sentAt: null, createdAt: "2026-09-01T08:00:00Z", personalised: false }} />,
+      <GmailLink letter={{ ...letter, sentAt: null, createdAt: "2026-09-01T08:00:00Z" }} me="jo@pauseai.uk" />,
     );
     await expect
       .element(page.getByRole("link", { name: copy.detail.gmail }))
       .toHaveAttribute("href", gmailSearchUrl(letter.mpEmail!, "2026-09-01T08:00:00Z"));
-    expect(page.getByText(copy.detail.personalised).all()).toHaveLength(0);
-    await rerender(<LetterDetails letter={{ ...letter, mpEmail: null }} />);
-    expect(page.getByRole("link", { name: copy.detail.gmail }).all()).toHaveLength(0);
+    await rerender(<GmailLink letter={{ ...letter, mpEmail: null }} me="jo@pauseai.uk" />);
+    expect(page.getByRole("link").all()).toHaveLength(0);
+  });
+
+  it("opens the thread in Gmail for the one it went from, and searches for anyone else", async () => {
+    const fromJo = { ...letter, sentFrom: "jo@pauseai.uk", gmailThreadId: "thread-1" };
+    const { rerender } = await render(<GmailLink letter={fromJo} me="jo@pauseai.uk" />);
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.letterThread.openInGmail }))
+      .toHaveAttribute("href", "https://mail.google.com/mail/u/jo%40pauseai.uk/#all/thread-1");
+    await rerender(<GmailLink letter={fromJo} me="al@pauseai.uk" />);
+    await expect.element(page.getByRole("link", { name: copy.detail.gmail })).toBeVisible();
   });
 });
 
@@ -3599,6 +3659,11 @@ describe("each list's download values and contact cards", () => {
     });
     expect(values(columns, exampleComplaint).sent).toBe(staffCopy.emails.purposes["forwarded-reply"]);
     expect(values(columns, { ...exampleComplaint, purpose: null }).sent).toBeNull();
+    // A bounce found in Gmail says so after its reason.
+    expect(values(columns, exampleBlock).reason).toBe(exampleBlock.reason);
+    expect(values(columns, exampleGmailBlock).reason).toBe(
+      `${exampleGmailBlock.reason} (${staffCopy.emails.foundInGmail})`,
+    );
   });
 
   it("letters: the campaign by its title, or its slug once it's gone, and the history", () => {
@@ -3828,6 +3893,8 @@ describe("PoliticianFilters", () => {
       "Green",
       ...Object.values(copy.emailStates),
       ...Object.values(copy.flags),
+      // Those mailed about each ask.
+      ...exampleAsks.map((ask) => ask.title),
     ]);
     expect(add.find(([text]) => text === "Green")![1]).toBe(
       "/staff/politicians?q=blake&house=lords&status=retired&party=Labour&party=Green&ask=edinburgh-conference-2026&answer=declined&sort=asks&dir=asc",
@@ -3848,6 +3915,7 @@ describe("PoliticianFilters", () => {
       staffCopy.fields.email,
       copy.flag,
       copy.ask,
+      copy.mailed,
     ]);
     expect(page.getByRole("link", { name: staffCopy.resetFilters }).query()).toBeNull();
   });

@@ -146,7 +146,7 @@ function toPolitician({ statuses, ...row }: Row): Politician {
 }
 
 /** The filters that repeat, which can leave out as well as find. */
-type NegatablePoliticianFilter = "party" | "flags" | "country" | "email";
+type NegatablePoliticianFilter = "party" | "flags" | "country" | "email" | "mailed";
 
 /** Who the politicians list shows. */
 export type PoliticianWho = {
@@ -163,6 +163,8 @@ export type PoliticianWho = {
   country?: Country[];
   /** Those with any of these: an address, none, or one that's blocked. */
   email?: EmailState[];
+  /** Those a mailing about any of these asks, by slug, went to or is going to. */
+  mailed?: string[];
   /** Only those who answered this ask: in the way `answer` says, if given. */
   ask?: string;
   /** Only those who gave this answer, to `ask` or, without one, to any ask; "none" for those who gave none. */
@@ -193,6 +195,7 @@ export type PoliticiansSearch = {
   email: string[];
   ask: string;
   answer: string;
+  mailed: string[];
   sort: string;
   dir: string;
   page: string;
@@ -218,13 +221,14 @@ export function politiciansSearch(params: Partial<Record<keyof PoliticiansSearch
   const [q, house, status, ask, answer, sort, dir, page, mailing] = (
     ["q", "house", "status", "ask", "answer", "sort", "dir", "page", "mailing"] as const
   ).map((name) => firstOf(params[name]));
-  const [party, flag, nation, email] = (["party", "flag", "nation", "email"] as const).map((name) =>
+  const [party, flag, nation, email, mailed] = (["party", "flag", "nation", "email", "mailed"] as const).map((name) =>
     valuesOf(params[name]),
   );
   const [parties, notParties] = anyAndNone(party, (values) => values);
   const [flags, notFlags] = anyAndNone(flag, (values) => among(values, POLITICIAN_FLAGS));
   const [countries, notCountries] = anyAndNone(nation, (values) => among(values, COUNTRIES));
   const [emails, notEmails] = anyAndNone(email, (values) => among(values, EMAIL_STATES));
+  const [mailedAbout, notMailedAbout] = anyAndNone(mailed, (values) => values);
   const filter: PoliticianFilter = {
     search: q.trim() || undefined,
     house: isHouse(house) ? house : undefined,
@@ -233,6 +237,7 @@ export function politiciansSearch(params: Partial<Record<keyof PoliticiansSearch
     flags,
     country: countries,
     email: emails,
+    mailed: mailedAbout,
     ask: ask || undefined,
     answer: answer || undefined,
     not: notOf({
@@ -240,6 +245,7 @@ export function politiciansSearch(params: Partial<Record<keyof PoliticiansSearch
       flags: flags?.includes("test") ? notFlags : [...new Set([...(notFlags ?? []), "test" as const])],
       country: notCountries,
       email: notEmails,
+      mailed: notMailedAbout,
     }),
     sort: parseSort(POLITICIAN_SORTS, "name", sort, dir),
     page: pageNumber(page),
@@ -254,6 +260,7 @@ export function politiciansSearch(params: Partial<Record<keyof PoliticiansSearch
     email,
     ask,
     answer,
+    mailed,
     sort,
     dir,
     page,
@@ -278,6 +285,15 @@ const EMAIL_CONDITIONS: Record<EmailState, string> = {
   blocked: BLOCKED,
 };
 
+/**
+ * Whether a mailing about one of `asks` went to a politician, or is going
+ * to: one of its letters to them that wasn't stopped or skipped.
+ */
+const MAILED = (asks: string) => `EXISTS (SELECT 1 FROM letters l JOIN letters_from_pauseai lp USING (id)
+  JOIN mailings m ON m.id = lp.mailing_id
+  WHERE l.notable_person_id = n.id AND m.ask = ANY(${asks})
+    AND l.status IN ('scheduled', 'sending', 'sent', 'bounced', 'spam_complaint'))`;
+
 /** The conditions of the filters that repeat, those that are on: each finds those with any of its values. */
 function anyOf(filter: Pick<PoliticianWho, NegatablePoliticianFilter>, value: (v: unknown) => string): string[] {
   const conditions: string[] = [];
@@ -285,6 +301,7 @@ function anyOf(filter: Pick<PoliticianWho, NegatablePoliticianFilter>, value: (v
   if (filter.flags) conditions.push(filter.flags.map((flag) => FLAG_CONDITIONS[flag]).join(" OR "));
   if (filter.country) conditions.push(`p.country = ANY(${value(filter.country)})`);
   if (filter.email) conditions.push(filter.email.map((state) => EMAIL_CONDITIONS[state]).join(" OR "));
+  if (filter.mailed) conditions.push(MAILED(value(filter.mailed)));
   return conditions.map((condition) => `(${condition})`);
 }
 

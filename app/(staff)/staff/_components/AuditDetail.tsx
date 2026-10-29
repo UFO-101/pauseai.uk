@@ -61,7 +61,7 @@ function Field({ name, value, airtableTable }: { name: string; value: unknown; a
   if (typeof value === "number") {
     return (
       <>
-        {value} {copy.counts[name] ?? name}
+        {value} {copy.counts[name]?.(value) ?? name}
       </>
     );
   }
@@ -157,7 +157,13 @@ export default function AuditDetail({ change, airtableTable }: { change: LoggedC
     take("from", "to");
     lead.push(`${permissionNames(details.from)} → ${permissionNames(details.to)}`);
   }
-  const rest = Object.entries(details).filter(([key, value]) => !used.has(key) && value !== null && value !== "");
+  // Leaving out what has nothing in it: an empty note, a null date, a change of nothing. An empty list
+  // says something ("No permissions"), so it stays.
+  const empty = (value: unknown) =>
+    value === null ||
+    value === "" ||
+    (typeof value === "object" && !Array.isArray(value) && Object.keys(value as object).length === 0);
+  const rest = Object.entries(details).filter(([key, value]) => !used.has(key) && !empty(value));
   return (
     <DotParts>
       {[

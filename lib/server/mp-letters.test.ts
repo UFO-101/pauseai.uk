@@ -147,7 +147,7 @@ describeWithDatabase("submitLetter", () => {
   });
 
   it("sends the letter from its own address, copied to us, replying to the sender and to us, with the PDFs", async () => {
-    vi.stubEnv("REPLIES_INBOX", "replies@pauseai.uk");
+    vi.stubEnv("POLICY_INBOX", "replies@pauseai.uk");
     const sent = postmark(() => HttpResponse.json({ ErrorCode: 0, MessageID: "msg-1" }));
 
     expect(await submitLetter(FORM)).toEqual({ ok: true });
@@ -210,7 +210,7 @@ describeWithDatabase("submitLetter", () => {
   });
 
   it("leaves the shared inbox out of Reply-To and Bcc when there isn't one", async () => {
-    vi.stubEnv("REPLIES_INBOX", "");
+    vi.stubEnv("POLICY_INBOX", "");
     const sent = postmark();
     await submitLetter(FORM);
     const [{ reply_hash }] = await query<{ reply_hash: string }>("SELECT reply_hash FROM letters_from_supporters");

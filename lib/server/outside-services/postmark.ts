@@ -29,6 +29,8 @@ export type Email = {
   Attachments?: Attachment[];
   /** Shown in Postmark's activity log, and sent back with bounces. */
   Metadata?: Record<string, string>;
+  /** Headers of its own, such as a Message-ID that replies can be matched to. */
+  Headers?: { Name: string; Value: string }[];
   Tag?: string;
 };
 

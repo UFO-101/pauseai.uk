@@ -1,0 +1,9 @@
+/* Under the heading: how connecting ended, if it just has, then the rest, evenly spaced. */
+.body {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.body p {
+  margin: 0;
+}
