@@ -333,7 +333,8 @@ stands, then counts, then when. Where a row has a page of its own, the
 first column leads to it, so there's one place to click to open it: a
 supporter's or politician's name. A row with no name, such as a letter,
 starts with what leads to it instead, its status, before who it's from
-and to.
+and to. A log, read by time, newest first, starts with when instead: the
+audit log, an import's runs, a history.
 
 **Filters** (`ui/FilterBar`). Every list's filters are the same bar
 above it, and a list's own filters component only says what its filters
@@ -352,7 +353,9 @@ are:
 - "+ Filter" lists every other filter, a row each, its choices opening
   under it, one at a time; a choice applies at once. A filter has the
   name of the column it filters, and they come in the columns' order. Not
-  every column gets one, only those someone will filter by.
+  every column gets one, only those someone will filter by. A filter with
+  no column of its own goes beside the column it's about: Near and MP by
+  Place, Event by Luma events.
 - A filter that makes sense more than once (`repeat`: a party, a nation,
   an event) can be chosen again, a chip each, and finds what has any of
   them; different filters must all match. An ask's answer doesn't repeat.
