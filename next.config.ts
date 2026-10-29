@@ -103,7 +103,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     // A file attached to a mailing comes in a Server Action's request, up to
-    // MAX_ATTACHMENT_BYTES (lib/server/mailing-drafts.ts) and the form around it.
+    // MAX_ATTACHMENT_BYTES (lib/mailing-attachments.ts) and the form around it.
     serverActions: { bodySizeLimit: "5mb" },
   },
   // The PDFs attached to letters, read from disk when one is sent.

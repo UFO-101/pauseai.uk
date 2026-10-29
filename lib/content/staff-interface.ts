@@ -845,6 +845,8 @@ export const staffCopy = {
     megabytes: (n: number) => `${n} MB`,
     removeFile: (name: string) => `Remove ${name}`,
     tooBig: "That file is too big - a file can be up to 4MB.",
+    // When uploading a file fails, such as the connection dropping.
+    attachFailed: "⁂ That file couldn't be added. Try again.",
     // Over the preview: before a button for each condition the letter's parts use, then over the choice of whose email it shows.
     findRecipient: "Find recipient who:",
     chooseRecipient: "Choose recipient:",

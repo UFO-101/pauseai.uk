@@ -3,6 +3,7 @@ import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { DEFAULT_SENDER } from "@/lib/gmail-connect";
+import { MAX_ATTACHMENT_BYTES } from "@/lib/mailing-attachments";
 import { navigation } from "@/tests/browser/navigation";
 import MailingWriter, { type MailingWriterActions } from "./MailingWriter";
 import { exampleWriterData, exampleWrittenMailing } from "./MailingWriter.examples";
@@ -198,6 +199,20 @@ describe("MailingWriter", () => {
     actions.attach.mockResolvedValueOnce({ saved: false, reason: "conflict", attachments: [FILE] });
     await picker.upload(new File(["x"], "late.pdf"));
     await expect.element(page.getByRole("alert")).toHaveTextContent(copy.saveStates.conflict);
+  });
+
+  it("says a file is too big without sending it, and that one failed to send", async () => {
+    const { actions } = await renderWriter({ draft: exampleWrittenMailing });
+    const picker = page.elementLocator(document.querySelector<HTMLInputElement>('input[type="file"]')!);
+    const big = new File([new Uint8Array(MAX_ATTACHMENT_BYTES + 1)], "big.pdf");
+    await picker.upload([big, new File(["x"], "next.pdf")]);
+    await expect.element(page.getByText(copy.tooBig)).toBeVisible();
+    expect(actions.attach).not.toHaveBeenCalled();
+
+    actions.attach.mockRejectedValueOnce(new Error("Body exceeded 5mb limit"));
+    await picker.upload([new File(["x"], "a.pdf"), new File(["x"], "b.pdf")]);
+    await expect.element(page.getByText(copy.attachFailed)).toBeVisible();
+    expect(actions.attach).toHaveBeenCalledTimes(1);
   });
 
   it("takes a file off a draft", async () => {

@@ -6,6 +6,7 @@ import {
   type MailingDoc,
   type MailingRecipientValues,
 } from "@/lib/mailing-doc";
+import { MAX_ATTACHMENT_BYTES } from "@/lib/mailing-attachments";
 import { scheduleProblems, type ScheduleProblem } from "@/lib/mailing-schedule";
 import { toHtml, toText } from "@/lib/letter-format";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -64,12 +65,6 @@ const COLUMNS: Record<keyof MailingChanges, string> = {
 
 /** A save, or why not: someone else saved since, it's no longer a draft, or it's gone. */
 export type SaveResult = { saved: true; version: number } | { saved: false; reason: "conflict" | "not-draft" | "gone" };
-
-/**
- * The largest file a mailing can attach: it comes in one request, and
- * Netlify takes requests of up to 6MB.
- */
-const MAX_ATTACHMENT_BYTES = 4 * 1024 * 1024;
 
 const SELECT_WRITTEN = `
   SELECT m.id::int AS id, m.filter, m.subject, m.body, m.ask, m.created_by AS "createdBy", m.sent_from AS "sentFrom",

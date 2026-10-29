@@ -18,6 +18,7 @@ import {
   NOT_CONDITION,
   type MailingDoc,
 } from "@/lib/mailing-doc";
+import { MAX_ATTACHMENT_BYTES } from "@/lib/mailing-attachments";
 import { answerLabels } from "@/lib/mailing-fields";
 import Link from "next/link";
 import { DEFAULT_SENDER } from "@/lib/gmail-connect";
@@ -263,15 +264,22 @@ export default function MailingWriter({
     return id.current!;
   }
 
-  /** Attaches each file in turn, stopping at the first that isn't. */
+  /**
+   * Attaches each file in turn, stopping at the first that isn't. One too
+   * big isn't sent, as Next.js would refuse the request before the server
+   * could say why.
+   */
   async function attach(files: File[]) {
     setFileProblem("");
     for (const file of files) {
+      if (file.size > MAX_ATTACHMENT_BYTES) return setFileProblem(copy.tooBig);
       const form = new FormData();
       form.set("id", String(await draftId()));
       form.set("version", String(version.current));
       form.set("file", file);
-      if (!attached(await actions.attach(form))) return;
+      const result = await actions.attach(form).catch(() => null);
+      if (result === null) return setFileProblem(copy.attachFailed);
+      if (!attached(result)) return;
     }
   }
 
