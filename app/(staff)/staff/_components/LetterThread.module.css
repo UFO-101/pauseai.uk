@@ -3,3 +3,8 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+/* Who a message is from: a long address breaks rather than leaving the card. */
+.from {
+  overflow-wrap: anywhere;
+}

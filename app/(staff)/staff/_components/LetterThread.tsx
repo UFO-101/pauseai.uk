@@ -13,7 +13,7 @@ const copy = staffCopy.letterThread;
 function Message({ message }: { message: ThreadMessage }) {
   return (
     <Card span={6} title={message.fromUs ? copy.ourAnswer : message.fromName || message.fromAddress}>
-      <p>
+      <p className={styles.from}>
         <strong>{message.subject}</strong>
         <br />
         <Muted>
@@ -58,7 +58,11 @@ export default function LetterThread({ thread, me }: { thread: Thread; me: strin
           <Message key={message.id} message={message} />
         ))}
       </Grid>
-      {thread.messages.length === 0 && <Muted>{copy.noReplies}</Muted>}
+      {thread.messages.length === 0 && (
+        <p>
+          <Muted>{copy.noReplies}</Muted>
+        </p>
+      )}
     </section>
   );
 }

@@ -1382,6 +1382,12 @@ export const staffCopy = {
         email: "Address",
         from: "From",
         subject: "Subject",
+        // What sending from Gmail and reading its mailbox record.
+        threadId: "⁂ Gmail thread",
+        gmailMessageId: "⁂ Gmail message",
+        name: "⁂ Name",
+        account: "⁂ Gmail",
+        status: "⁂ Code",
       } as Record<string, string>,
       // A supporter's letter, Bcc'd to policy@: its copy there.
       googleGroup: "Find it in Google Groups",
