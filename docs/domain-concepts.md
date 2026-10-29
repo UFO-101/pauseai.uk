@@ -170,7 +170,10 @@ token is kept encrypted (`GMAIL_TOKEN_KEY`), and deleted on disconnecting.
   1,800 a day from an account, counting every mailing, under Gmail's 2,000,
   so the person's own email still goes (`GMAIL_DAILY_LIMIT`).
 - **Sending** (`lib/server/mailing-sending.ts`): the hourly
-  `send-mailings` job starts each scheduled mailing that's due, then sends
+  `send-mailings` job, at 18 minutes past from 06:18 UTC, starts each
+  scheduled mailing that's due, so a mailing due at 09:00 goes at 09:18
+  and one due overnight at 06:18; the staff pages say so (`SENDING` in
+  `lib/staff-time.ts`). Then it sends
   its letters at Gmail's pace, one a second, marking each as it goes. A
   scheduled function has 30 seconds, so while letters are left it starts a
   background function, which calls the site again and again for up to 15

@@ -128,7 +128,7 @@ describe("MailingsOverview", () => {
     await expect.element(page.getByRole("link", { name: copy.untitled })).toBeVisible();
     await expect.element(page.getByText(copy.draftLine("jo@pauseai.uk", 412)).first()).toBeVisible();
     await expect
-      .element(page.getByText(copy.comingLine("jo@pauseai.uk", "Friday 30 October at 09:00", 72)).first())
+      .element(page.getByText(copy.comingLine("jo@pauseai.uk", "Friday 30 October at 09:18", 72)).first())
       .toBeVisible();
     await expect.element(page.getByRole("button", { name: copy.unschedule })).toBeVisible();
     await expect.element(page.getByRole("button", { name: copy.stopSending })).toBeVisible();
@@ -222,7 +222,7 @@ describe("MailingView", () => {
     const forms: FormData[] = [];
     const action = async (form: FormData) => void forms.push(form);
     await view({ written: { ...written, state: "scheduled" }, stop: action, reschedule: action });
-    await expect.element(page.getByText(copy.sends("Tuesday 1 December at 09:00"))).toBeVisible();
+    await expect.element(page.getByText(copy.sends("Tuesday 1 December at 09:18"))).toBeVisible();
     await expect.element(page.getByText(`11${copy.counts.sent}`)).not.toBeInTheDocument();
     await expect.element(page.getByRole("heading", { name: copy.whoTitle(false) })).toBeVisible();
     await page.getByRole("button", { name: copy.changeTime }).click();
@@ -251,7 +251,9 @@ describe("MailingView", () => {
     await page.getByRole("button", { name: copy.changeTime }).click();
     const day = page.getByLabelText(copy.day);
     const hour = page.getByRole("combobox");
-    const option = (h: number) => page.getByRole("option", { name: `${String(h).padStart(2, "0")}:00` });
+    const option = (h: number) => page.getByRole("option", { name: `${String(h).padStart(2, "0")}:18` });
+    // Each hour says when a mailing due then goes: overnight, at the morning's first sending.
+    await expect.element(page.getByRole("option", { name: copy.goesAt("03:00", "06:18") })).toBeInTheDocument();
     // It goes at 09:00, five minutes from now in London: too soon, so 10:00, and the hours before it can't be.
     await expect.element(day).toHaveAttribute("min", "2026-12-01");
     await expect.element(hour).toHaveValue("10");

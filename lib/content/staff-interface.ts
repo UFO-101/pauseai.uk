@@ -886,6 +886,8 @@ export const staffCopy = {
     testFromName: "PauseAI UK mailing test",
     day: "Day",
     hour: "Hour",
+    // An hour overnight, when nothing is sent: the hour, and when a mailing due then goes.
+    goesAt: (hour: string, sends: string) => `⁂ ${hour}, goes at ${sends}`,
     summary: (n: number, from: string | null, when: string | null) =>
       `${n} ${n === 1 ? "email" : "emails"}, from ${from ? `${from}'s Gmail` : "no one yet"}, ${when ? `on ${when}` : "at a time not yet chosen"}.`,
     schedule: (n: number) => `Schedule ${n} ${n === 1 ? "email" : "emails"}`,

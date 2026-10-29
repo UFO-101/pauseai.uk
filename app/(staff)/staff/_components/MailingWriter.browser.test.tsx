@@ -381,7 +381,7 @@ describe("MailingWriter", () => {
       await expect.element(day).toHaveAttribute("min", "2026-07-01");
       await expect.element(hour).toHaveValue("");
       // It's 11:30 in London: noon is the first hour it can go at.
-      const option = (h: number) => when.getByRole("option", { name: `${String(h).padStart(2, "0")}:00` });
+      const option = (h: number) => when.getByRole("option", { name: `${String(h).padStart(2, "0")}:18` });
       await expect.element(option(11)).toBeDisabled();
       await expect.element(option(12)).not.toBeDisabled();
       // Another day, still with no hour, saves nothing.
@@ -391,7 +391,7 @@ describe("MailingWriter", () => {
       await hour.selectOptions("14");
       await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(1);
       expect(actions.save.mock.calls[0][2]).toEqual({ dueAt: "2026-07-03T13:00:00.000Z" });
-      await expect.element(page.getByText(copy.summary(2, "jo@pauseai.uk", "Friday 3 July at 14:00"))).toBeVisible();
+      await expect.element(page.getByText(copy.summary(2, "jo@pauseai.uk", "Friday 3 July at 14:18"))).toBeVisible();
       // Back to today, an hour too soon moves on to the first it can go at; another keeps it.
       await hour.selectOptions("9");
       await day.fill("2026-07-01");

@@ -147,14 +147,14 @@ test("Reschedule a mailing, then unschedule it", async ({ page, request, flowDat
   await frame(page, "the mailings: one coming up, with Unschedule, over those sent");
 
   await page.getByRole("link", { name: "Edinburgh reminder" }).click();
-  await expect(page.getByText(copy.sends("Friday 30 October at 09:00"))).toBeVisible();
+  await expect(page.getByText(copy.sends("Friday 30 October at 09:18"))).toBeVisible();
   await frame(page, "scheduled: when it sends, and to whom");
 
   await page.getByRole("button", { name: copy.changeTime }).click();
   await page.getByLabel(copy.hour, { exact: false }).selectOption("14");
   await frame(page, "a new time, in London's hours", { window: true });
   await page.getByRole("button", { name: copy.saveTime }).click();
-  await expect(page.getByText(copy.sends("Friday 30 October at 14:00"))).toBeVisible();
+  await expect(page.getByText(copy.sends("Friday 30 October at 14:18"))).toBeVisible();
 
   await page.getByRole("button", { name: copy.unschedule }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Edinburgh reminder");
@@ -220,8 +220,8 @@ test("Send a mailing from a connected Gmail: schedule it, and the hourly job sen
 
   await page.getByLabel(copy.hour, { exact: false }).selectOption("14");
   await page.getByRole("button", { name: copy.schedule(1) }).click();
-  await expect(page.getByText(copy.sends("Friday 16 October at 14:00"))).toBeVisible();
-  await frame(page, "scheduled for 14:00, from your Gmail");
+  await expect(page.getByText(copy.sends("Friday 16 October at 14:18"))).toBeVisible();
+  await frame(page, "scheduled for 14:18, from your Gmail");
 
   // Its time come, the hourly job starts it and sends it.
   const [id] = runSql(flowDatabase, "SELECT id FROM mailings WHERE title = 'See you in Edinburgh'");
@@ -237,7 +237,7 @@ test("Send a mailing from a connected Gmail: schedule it, and the hourly job sen
 
   await page.reload();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("See you in Edinburgh");
-  await expect(page.getByText(copy.sends("Friday 16 October at 14:00"))).not.toBeVisible();
+  await expect(page.getByText(copy.sends("Friday 16 October at 14:18"))).not.toBeVisible();
   await frame(page, "sent: its counts and its one recipient");
 
   await page

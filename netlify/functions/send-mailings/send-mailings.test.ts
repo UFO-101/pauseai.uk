@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import { moreToSend } from "./more-to-send";
+import { SENDING } from "@/lib/staff-time";
 import sendMailings, { config } from "./send-mailings";
 
 beforeEach(() => {
@@ -29,6 +30,8 @@ function site(run: object, background = 202) {
 describe("the hourly sending function", () => {
   it("runs hourly from 06:18 to 23:18 UTC, and hands on to the background function only while there's more to send", async () => {
     expect(config.schedule).toBe("18 6-23 * * *");
+    // What the staff pages say of when a mailing goes.
+    expect(config.schedule).toBe(`${SENDING.minute} ${SENDING.firstHour}-23 * * *`);
     expect(site(RUN).length).toBe(0);
     expect(await (await sendMailings()).json()).toEqual(RUN);
     const calls = site({ ...RUN, sent: 7, left: 3 });
