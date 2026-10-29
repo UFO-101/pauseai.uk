@@ -49,8 +49,12 @@ describe("HexMap", () => {
     const { onHover, screen } = await renderMap({ hovered: WESTMINSTER });
     await expect.element(screen.getByText("Cities of London and Westminster")).toBeVisible();
     await expect.element(screen.getByText("42 here")).toBeVisible();
+    // Chromium sends a real pointerover when the map is drawn under the
+    // test browser's still cursor, for whichever hexagon is under it: so
+    // only what follows this test's own events counts.
+    onHover.mockClear();
     hex(EDINBURGH).dispatchEvent(new PointerEvent("pointerover", { bubbles: true, pointerType: "touch" }));
-    expect(onHover).not.toHaveBeenCalled();
+    expect(onHover).not.toHaveBeenCalledWith(EDINBURGH);
     hex(EDINBURGH).dispatchEvent(new PointerEvent("pointerover", { bubbles: true, pointerType: "mouse" }));
     expect(onHover).toHaveBeenLastCalledWith(EDINBURGH);
     // React reads leaving from the pointer going out to something outside.
