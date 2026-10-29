@@ -44,6 +44,7 @@ export default defineConfig({
             "**/*.browser.test.*",
           ],
           setupFiles: ["./tests/vitest.setup.node.ts"],
+          globalSetup: ["./tests/vitest.global-setup.node.ts"],
         },
       },
       {
