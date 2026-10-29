@@ -36,7 +36,7 @@ export function AskLead({ ask }: { ask: Ask }) {
 /**
  * An ask as it shows among a politician's asks once they've said yes:
  * AskLead, and beside it, in a column of its own, their answer, ticked in
- * green, dated the ask's day, or today if it has none.
+ * green, dated the ask's day if it has one.
  */
 export function AskPreview({ ask }: { ask: Ask }) {
   return (
@@ -47,7 +47,7 @@ export function AskPreview({ ask }: { ask: Ask }) {
         </div>
         <div className={`${styles.answer} ${styles.yes}`}>
           <span>{staffCopy.statuses[ask.kind === "letter" ? "signed" : "going"]}</span>
-          <span className={styles.askMeta}>{staffDate(ask.date ?? new Date().toISOString())}</span>
+          {ask.date && <span className={styles.askMeta}>{staffDate(ask.date)}</span>}
         </div>
       </div>
     </div>

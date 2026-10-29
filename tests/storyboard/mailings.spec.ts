@@ -64,6 +64,10 @@ function addMailing(database: string, title: string, state: string, statuses: st
 test("Write a new mailing, save it, preview it and send yourself a test", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
+  // Your Gmail connected, on your account page, so there's one to send from.
+  await page.goto(`${BASE}/staff/me`);
+  await page.getByRole("link", { name: staffCopy.gmail.connect }).click();
+  await expect(page.getByText(staffCopy.gmail.outcomes.connected)).toBeVisible();
   await page.goto(`${BASE}/staff/politicians?nation=scotland`);
   await expect(page.getByRole("link", { name: copy.mailThese(1) })).toBeVisible();
   await frame(page, "the politicians in Scotland, with Mail these beside Download");
@@ -80,7 +84,6 @@ test("Write a new mailing, save it, preview it and send yourself a test", async 
   await letter.click();
   await page.keyboard.press("Control+End");
   await page.keyboard.type("We hope to see you there.");
-  await page.getByLabel(copy.fromLegend, { exact: false }).selectOption(staffEmail());
   await expect(page.getByRole("status").first()).toHaveText(copy.savePill.saved);
   await expect(page).toHaveURL(/\/staff\/mailings\/\d+$/);
   const preview = page.getByRole("region", { name: copy.sections.preview });
