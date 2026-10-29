@@ -62,11 +62,7 @@ async function postBounce(request: APIRequestContext, address: string) {
 const politicianId = (database: string, name: string) =>
   runSql(database, `SELECT id FROM notable_people WHERE name = '${name}'`)[0];
 
-test("with no permissions, no page shows a supporter's name or email, nor sends one in its RSC payload", async ({
-  page,
-  request,
-  flowDatabase,
-}, testInfo) => {
+test("No permissions: no page shows a supporter's name or email", async ({ page, request, flowDatabase }, testInfo) => {
   await syncPoliticians(request, BASE);
   await importLuma(request, BASE);
   await importMembers(request, BASE);
@@ -124,7 +120,7 @@ test("with no permissions, no page shows a supporter's name or email, nor sends 
   await frame(page, "an MP's page with no permissions: the letter, without who wrote it");
 });
 
-test("without supporters, Letters and Supporters' blocked emails are closed, and Politicians' blocked emails names letters without linking them", async ({
+test("Without Supporters: letters and supporters' blocked emails are closed", async ({
   page,
   request,
   flowDatabase,
@@ -175,11 +171,7 @@ test("without supporters, Letters and Supporters' blocked emails are closed, and
   await frame(page, "with supporters, the letter it names opens");
 });
 
-test("a supporter's bounced address is on Supporters' blocked emails, not Politicians' blocked emails, and staff with supporters unblock it", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("Unblock a supporter's bounced address", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await importLuma(request, BASE);
   await postBounce(request, "jane.fixture@example.com");
@@ -209,11 +201,7 @@ async function otherBrowser(browser: Browser, database: string, email: string): 
   return page;
 }
 
-test("logged in on two browsers, a faint link under Log out leads to both sessions, and logs out of both", async ({
-  page,
-  browser,
-  flowDatabase,
-}) => {
+test("Logged in on two browsers: log out of both", async ({ page, browser, flowDatabase }) => {
   const other = await otherBrowser(browser, flowDatabase, staffEmail());
   await logIn(page, flowDatabase);
   const link = page.getByRole("link", { name: staffCopy.nav.sessions(2) }).filter({ visible: true });
@@ -236,11 +224,7 @@ test("logged in on two browsers, a faint link under Log out leads to both sessio
   await other.context().close();
 });
 
-test("an admin sees when each account last logged in and was seen, and its sessions, and logs a colleague out everywhere", async ({
-  page,
-  browser,
-  flowDatabase,
-}, testInfo) => {
+test("An admin logs a colleague out everywhere", async ({ page, browser, flowDatabase }, testInfo) => {
   const colleague = `colleague-${testInfo.testId.replace(/\W/g, "").slice(-8)}@pauseai.uk`;
   const theirs = await otherBrowser(browser, flowDatabase, colleague);
   await logIn(page, flowDatabase, ["admin"]);

@@ -26,11 +26,7 @@ async function openPolitician(page: Page, name: string) {
   await expect(page.getByRole("heading", { level: 1 })).toContainText(name);
 }
 
-test("a politician from Airtable: their markers, notes, answers and PauseAI's emails", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("A politician's page: markers, notes, answers and emails", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   await openPolitician(page, "Polly Placeholder");
@@ -45,7 +41,7 @@ test("a politician from Airtable: their markers, notes, answers and PauseAI's em
   await frame(page, "Polly's page: important, with notes, her answers from Airtable and PauseAI's invitation");
 });
 
-test("a peer with only their title, an MSP, and an MP who left office", async ({ page, request, flowDatabase }) => {
+test("A peer, an MSP, and an MP who left office", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   await openPolitician(page, "Lord Seedling of Example");
@@ -62,11 +58,7 @@ test("a peer with only their title, an MSP, and an MP who left office", async ({
   await frame(page, "an MP who left office: formerly MP, kept");
 });
 
-test("the politicians list, filtered by status, marker and an answer to an ask, then reset", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("Filter politicians by status, marker and answer, then reset", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/politicians`);
@@ -116,11 +108,7 @@ test("the politicians list, filtered by status, marker and an answer to an ask, 
   await expect(rows.filter({ hasText: "Polly Placeholder" })).toBeVisible();
 });
 
-test("the politicians list's houses are tabs, each keeping the other filters", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("Switch house tabs: the filters stay", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/politicians?status=any`);
@@ -146,7 +134,7 @@ test("the politicians list's houses are tabs, each keeping the other filters", a
   await frame(page, "only the Scottish Parliament");
 });
 
-test("the politicians list pages through many, a count and downloads over it", async ({ page, flowDatabase }) => {
+test("Page through the politicians, and download them", async ({ page, flowDatabase }) => {
   // 250 made-up MPs, the test MPs left out: three pages.
   runSql(
     flowDatabase,
@@ -196,11 +184,7 @@ test("the politicians list pages through many, a count and downloads over it", a
   await expect(page).toHaveURL(`${BASE}/staff/politicians?house=lords&status=any`);
 });
 
-test("searching the politicians: each word anywhere, those not in office or test politicians, and the nearest to a typo", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("Search politicians, with a typo and for those not in office", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/politicians`);
@@ -246,11 +230,7 @@ test("searching the politicians: each word anywhere, those not in office or test
   await frame(page, "a test politician is left out of a search, but one click finds them");
 });
 
-test("a politician whose record has gone from Airtable, and who's had no letters, is deleted", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("A politician gone from Airtable is deleted", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   runSql(flowDatabase, "UPDATE notable_people SET airtable_removed_at = now() WHERE name = 'Rita Retired'");
   await logIn(page, flowDatabase);
@@ -273,7 +253,7 @@ test("a politician whose record has gone from Airtable, and who's had no letters
   await frame(page, "the list of everyone, without her");
 });
 
-test("PauseAI's mailings: the list, one mailing's recipients, and back to it from a politician's history", async ({
+test("Mailings: the list, one mailing's recipients, and back from a politician", async ({
   page,
   request,
   flowDatabase,
@@ -298,11 +278,7 @@ test("PauseAI's mailings: the list, one mailing's recipients, and back to it fro
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(invitation);
 });
 
-test("the asks page counts each answer, and an answer leads to who gave it", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("Asks: each answer's count leads to who gave it", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/asks`);
@@ -315,7 +291,7 @@ test("the asks page counts each answer, and an answer leads to who gave it", asy
   await frame(page, "the politicians going to the conference");
 });
 
-test("the politicians mailed about an ask, and those not yet", async ({ page, request, flowDatabase }) => {
+test("Find who has and hasn't been mailed about an ask", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/politicians?mailed=edinburgh-conference-2026`);
@@ -326,7 +302,7 @@ test("the politicians mailed about an ask, and those not yet", async ({ page, re
   await frame(page, "and with Except, those not yet: the ones to mail next");
 });
 
-test("an ask added, changed, then deleted", async ({ page, flowDatabase }) => {
+test("Add an ask, change it, then delete it", async ({ page, flowDatabase }) => {
   await logIn(page, flowDatabase);
   const asks = staffCopy.asks;
   await page.goto(`${BASE}/staff/asks`);
@@ -355,11 +331,7 @@ test("an ask added, changed, then deleted", async ({ page, flowDatabase }) => {
   await frame(page, "deleted");
 });
 
-test("PauseAI's emails: copied once, with one held back for a mailing nobody has added", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("Sync PauseAI's emails: one held back with no mailing", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   // With no permissions: PauseAI's letters are the politicians section's.
   await logIn(page, flowDatabase);
@@ -391,11 +363,7 @@ test("PauseAI's emails: copied once, with one held back for a mailing nobody has
   await frame(page, "one of PauseAI's emails to Polly: its mailing, and a Gmail search for it");
 });
 
-test("the one-off imports: pauseai.info's letters and their senders, and Go to Parliament's meetings", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("Import pauseai.info's letters and Go to Parliament's meetings", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase, ["supporters"]);
   await page.goto(`${BASE}/staff/import-data/web-form-letters`);

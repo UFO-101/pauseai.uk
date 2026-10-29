@@ -5,7 +5,7 @@ import { hydrated } from "./settle";
 // (app/(site)/_components/OnboardingFormEmbed.tsx): the two things about it
 // that only a real build in a real browser can show.
 
-test("the onboarding form appears even when hydration is slow", async ({ page }) => {
+test("The sign-up form shows even when the page is slow", async ({ page }) => {
   // The embed is covered with a skeleton until it posts its height. It only
   // posts when its height changes: a burst while it loads, then nothing. The
   // iframe is in the server-rendered HTML, so it can finish that burst before
@@ -36,7 +36,7 @@ test("the onboarding form appears even when hydration is slow", async ({ page })
   await frame(page, "the home page, hydrated late, with the form showing");
 });
 
-test("the onboarding embed ignores messages from other origins", async ({ page }) => {
+test("The sign-up form ignores messages from other sites", async ({ page }) => {
   // The embed resizes its iframe from postMessage events, and guards them
   // with a single line:
   //

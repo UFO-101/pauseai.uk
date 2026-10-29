@@ -66,7 +66,7 @@ async function fillAndPreview(page: Page, email: string) {
 }
 
 test(
-  "the ZZ99ZZ flow: postcode, form, preview, sent, and a reply forwarded",
+  "Write to your MP (ZZ99ZZ): postcode, letter, preview, send, reply forwarded",
   { tag: "@phone" },
   async ({ page, request }, testInfo) => {
     // Each flow writes as its own sender, so its letter is its own in the outbox.
@@ -149,7 +149,7 @@ test(
   },
 );
 
-test("finding the MP opens the page to write the letter, and going back keeps the form as it was", async ({ page }) => {
+test("Find your MP, then go back: the form is as you left it", async ({ page }) => {
   await lookUp(page);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.write.title);
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
@@ -246,9 +246,7 @@ async function paste(page: Page, html: string, text: string) {
   );
 }
 
-test("the letter's toolbar and a paste from another app: what the preview shows is what the MP gets", async ({
-  page,
-}, testInfo) => {
+test("Format the letter and paste into it: the preview is what the MP gets", async ({ page }, testInfo) => {
   const sender = `jane+${testInfo.testId}@example.com`;
   await lookUp(page);
   const letter = editor(page);
@@ -314,9 +312,7 @@ test("the letter's toolbar and a paste from another app: what the preview shows 
   );
 });
 
-test("the letter as written survives the preview's Edit, the back button and a reload, until a new lookup", async ({
-  page,
-}) => {
+test("Your letter is kept through Edit, Back and reload, until a new postcode", async ({ page }) => {
   await lookUp(page);
   const letter = editor(page);
   await newParagraphAboveSignOff(page);
@@ -359,7 +355,7 @@ test("the letter as written survives the preview's Edit, the back button and a r
   await frame(page, "a new lookup by someone else, a new letter signed by them");
 });
 
-test("no Ads event when the server refuses the letter, which can then be edited as it was", async ({ page }) => {
+test("The server refuses the letter: no Ads event, and you can edit it", async ({ page }) => {
   await lookUp(page);
   // A blank letter: only the server checks for that.
   await page.getByRole("textbox", { name: copy.form.letterLabel, exact: true }).fill("");
@@ -376,9 +372,7 @@ test("no Ads event when the server refuses the letter, which can then be edited 
   await frame(page, "back to editing, as it was");
 });
 
-test("the write, preview and sent pages, opened without a lookup or a letter, link back to the form", async ({
-  page,
-}) => {
+test("Open a later step directly: it links back to the start", async ({ page }) => {
   for (const step of ["write", "preview", "sent"]) {
     await page.goto(`${PAGE}/${step}`);
     await frame(page, `/${step} with nothing to show`);
@@ -387,7 +381,7 @@ test("the write, preview and sent pages, opened without a lookup or a letter, li
   }
 });
 
-test("the Postmark webhooks refuse requests without our credentials", async ({ request }) => {
+test("Postmark webhooks refuse calls without our credentials", async ({ request }) => {
   const wrong = `Basic ${Buffer.from("postmark:guess").toString("base64")}`;
   for (const path of ["/api/postmark/bounce", "/api/postmark/inbound"]) {
     expect((await request.post(`${BASE}${path}`, { data: {} })).status(), path).toBe(401);
@@ -402,9 +396,7 @@ test("the Postmark webhooks refuse requests without our credentials", async ({ r
   expect(await bounce.json()).toEqual({ recorded: false });
 });
 
-test("ZZ99ZS has signed, so the PM letter's page moves on to the bill's, to write to them about that", async ({
-  page,
-}) => {
+test("An MP who has signed (ZZ99ZS): sent on to the bill's letter", async ({ page }) => {
   await openLookup(page, BASE, "ZZ9 9ZS");
   await expect(page.locator("summary", { hasText: "ZZ9 9ZZ" })).toBeVisible();
   await page.getByRole("button", { name: copy.lookup.button }).click();
@@ -423,7 +415,7 @@ test("ZZ99ZS has signed, so the PM letter's page moves on to the bill's, to writ
   await frame(page, "the bill's letter to Signy McTestface MP");
 });
 
-test("ZZ99ZB signed ControlAI's letter backing the bill, so the bill's letter thanks them", async ({ page }) => {
+test("An MP who backs the bill (ZZ99ZB): the letter thanks them", async ({ page }) => {
   await openLookup(page, BASE, "ZZ9 9ZB", `/campaigns/${campaigns[1].slug}`);
   await page.getByRole("button", { name: copy.lookup.button }).click();
 
@@ -434,7 +426,7 @@ test("ZZ99ZB signed ControlAI's letter backing the bill, so the bill's letter th
   await frame(page, "the bill's letter thanks Backy McTestface MP");
 });
 
-test("ZZ99ZN has no email, so there's no letter to write", async ({ page }) => {
+test("An MP with no email (ZZ99ZN): no letter to write", async ({ page }) => {
   await openLookup(page, BASE, "ZZ9 9ZN");
   await page.getByRole("button", { name: copy.lookup.button }).click();
 
@@ -446,10 +438,7 @@ test("ZZ99ZN has no email, so there's no letter to write", async ({ page }) => {
   await frame(page, "an MP with no email");
 });
 
-test("each campaign has its own page, plain /campaigns opens the first, and an unknown one is a 404", async ({
-  page,
-  request,
-}) => {
+test("Each campaign's page; /campaigns opens the first; an unknown one is a 404", async ({ page, request }) => {
   for (const campaign of campaigns) {
     await page.goto(`${BASE}/campaigns/${campaign.slug}`);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -461,7 +450,7 @@ test("each campaign has its own page, plain /campaigns opens the first, and an u
   expect((await request.get(`${BASE}/campaigns/no-such-campaign`)).status()).toBe(404);
 });
 
-test("the nav's Campaigns menu links each campaign's page", { tag: "@desktop-only" }, async ({ page }) => {
+test("The Campaigns menu links every campaign", { tag: "@desktop-only" }, async ({ page }) => {
   await page.goto(`${BASE}/campaigns/${campaigns[0].slug}`);
   const trigger = page.getByRole("link", { name: "Campaigns", exact: true });
   const menu = trigger.locator("..");
@@ -480,10 +469,7 @@ test("the nav's Campaigns menu links each campaign's page", { tag: "@desktop-onl
   await frame(page, "the bill's page, from the menu");
 });
 
-test("the campaign pages are in search and the sitemap, and the old /campaigns-v2 links redirect", async ({
-  page,
-  request,
-}) => {
+test("Campaign pages are in search; old /campaigns-v2 links redirect", async ({ page, request }) => {
   const sitemap = await (await request.get(`${BASE}/sitemap.xml`)).text();
   for (const campaign of campaigns) {
     expect(sitemap).toContain(`/campaigns/${campaign.slug}<`);

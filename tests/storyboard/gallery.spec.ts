@@ -53,7 +53,7 @@ async function open(page: import("@playwright/test").Page, path: string) {
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, nofollow/);
 }
 
-test("the gallery's index: a card for each group", async ({ page }) => {
+test("gallery: index", async ({ page }) => {
   await open(page, "/gallery");
   const hrefs = await page
     .getByRole("main")
