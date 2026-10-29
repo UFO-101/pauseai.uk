@@ -1,0 +1,116 @@
+import "server-only";
+import { gunzipSync } from "node:zlib";
+import { checkMailingDoc, letterFor, type MailingRecipientValues } from "@/lib/mailing-doc";
+import type { LetterDoc } from "@/lib/letter-format";
+import { query } from "./db";
+import { firstOfType, parseMime, partText } from "./mime";
+import { letterReply } from "./outside-services/blobs";
+
+// The whole thread of one of PauseAI's letters, for staff: the letter as
+// it went, rebuilt from its mailing's letter and the values it was sent
+// with, then each later message in the thread read from Gmail (letter_replies),
+// the politician's replies and our answers, oldest first.
+
+/** A later message in a letter's thread, with its text. */
+export type ThreadMessage = {
+  id: number;
+  at: string;
+  fromName: string;
+  fromAddress: string;
+  /** Our answer, rather than their reply. */
+  fromUs: boolean;
+  subject: string;
+  /** Its plain text, or its HTML's text; null if the kept message can't be read. */
+  text: string | null;
+};
+
+export type LetterThread = {
+  letterId: number;
+  mailingId: number;
+  mailingTitle: string;
+  politician: { id: number; name: string; email: string | null };
+  status: string;
+  sentAt: string | null;
+  subject: string;
+  /** The letter as it went; null for one imported, whose text we don't have. */
+  letter: LetterDoc | null;
+  /** The account it went from and the name it was from, and its Gmail thread if Gmail sent it. */
+  sentFrom: string | null;
+  fromName: string | null;
+  gmailThreadId: string | null;
+  /** What else happened to it: automatic replies, bounces. */
+  events: { at: string; status: string }[];
+  messages: ThreadMessage[];
+};
+
+/** An HTML part's text: its tags gone, its breaks kept. */
+function htmlText(html: string): string {
+  return html
+    .replace(/<(style|script)[^>]*>[\s\S]*?<\/\1>/gi, "")
+    .replace(/<br\s*\/?>|<\/(p|div|li|tr|h\d)>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/** A kept message's text: its plain text if it has one, else its HTML's; null if it's gone or has neither. */
+export async function messageText(blobKey: string): Promise<string | null> {
+  const gzipped = await letterReply(blobKey);
+  if (!gzipped) return null;
+  const message = parseMime(gunzipSync(gzipped).toString("latin1"));
+  const plain = firstOfType(message, "text/plain");
+  if (plain) return partText(plain).replace(/\r\n/g, "\n").trim();
+  const html = firstOfType(message, "text/html");
+  return html ? htmlText(partText(html)) : null;
+}
+
+/** One of a mailing's letters and its thread; undefined if the mailing has no such letter. */
+export async function letterThread(mailingId: number, letterId: number): Promise<LetterThread | undefined> {
+  const [row] = await query<
+    Omit<LetterThread, "letter" | "messages" | "events"> & {
+      body: unknown;
+      mergeValues: MailingRecipientValues | null;
+    }
+  >(
+    `SELECT l.id::int AS "letterId", m.id::int AS "mailingId", m.title AS "mailingTitle",
+       json_build_object('id', n.id, 'name', n.name, 'email', n.email) AS politician,
+       l.status, l.sent_at AS "sentAt", m.subject, m.body, p.merge_values AS "mergeValues",
+       m.sent_from AS "sentFrom", m.from_name AS "fromName",
+       (SELECT s.gmail_thread_id FROM email_sends s WHERE s.letter_id = l.id AND s.outcome = 'sent'
+        ORDER BY s.id DESC LIMIT 1) AS "gmailThreadId"
+     FROM letters_from_pauseai p JOIN letters l USING (id) JOIN mailings m ON m.id = p.mailing_id
+       JOIN notable_people n ON n.id = l.notable_person_id
+     WHERE p.mailing_id = $1 AND l.id = $2`,
+    [mailingId, letterId],
+  );
+  if (!row) return undefined;
+  const [replies, events] = await Promise.all([
+    query<Omit<ThreadMessage, "text"> & { blobKey: string }>(
+      `SELECT id::int AS id, at, from_name AS "fromName", from_address AS "fromAddress", from_us AS "fromUs", subject,
+         blob_key AS "blobKey"
+       FROM letter_replies WHERE letter_id = $1 ORDER BY at, id`,
+      [letterId],
+    ),
+    query<{ at: string; status: string }>(
+      `SELECT at, status FROM letter_events WHERE letter_id = $1 AND status IN ('auto_reply', 'bounced', 'skipped', 'failed')
+       ORDER BY at, id`,
+      [letterId],
+    ),
+  ]);
+  const { body: stored, mergeValues, ...thread } = row;
+  const body = checkMailingDoc(stored);
+  return {
+    ...thread,
+    letter: body && mergeValues ? letterFor(body, mergeValues) : null,
+    events,
+    messages: await Promise.all(
+      replies.map(async ({ blobKey, ...reply }) => ({ ...reply, text: await messageText(blobKey) })),
+    ),
+  };
+}

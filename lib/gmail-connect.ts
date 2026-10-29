@@ -1,6 +1,7 @@
-// Connecting a staff member's Gmail: the route that goes to Google's
-// consent, and the one it comes back to, which goes back to the page it
-// started from (app/(staff)/staff/api/gmail/).
+// Staff members' Gmail, for the pages: connecting it, through the route
+// that goes to Google's consent and the one it comes back to, which goes
+// back to the page it started from (app/(staff)/staff/api/gmail/); the
+// daily limit; and links to a thread in it.
 
 /**
  * The most the site sends from one account in a day, counting every
@@ -34,4 +35,12 @@ export function backWithOutcome(back: string, outcome: GmailConnectOutcome): str
   const params = new URLSearchParams(query);
   params.set("gmail", outcome);
   return `${path}?${params}`;
+}
+
+/**
+ * A thread in Gmail, opened in `account`'s mailbox, for the person it's in:
+ * the URL Gmail itself uses, which Google doesn't document.
+ */
+export function gmailThreadUrl(account: string, threadId: string): string {
+  return `https://mail.google.com/mail/u/${encodeURIComponent(account)}/#all/${threadId}`;
 }

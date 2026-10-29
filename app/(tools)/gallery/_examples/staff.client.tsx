@@ -5,7 +5,11 @@
 import type { EmailBlock } from "@/lib/server/email";
 import type { Politician } from "@/lib/server/politicians";
 import EmailBlocksTable from "@/app/(staff)/staff/_components/EmailBlocksTable";
-import { exampleBlock, exampleComplaint } from "@/app/(staff)/staff/_components/EmailBlocksTable.examples";
+import {
+  exampleBlock,
+  exampleComplaint,
+  exampleGmailBlock,
+} from "@/app/(staff)/staff/_components/EmailBlocksTable.examples";
 import { ImportJobPage } from "@/app/(staff)/staff/_components/ImportJob";
 import JobActions from "@/app/(staff)/staff/_components/JobActions";
 import PoliticianDetails from "@/app/(staff)/staff/_components/PoliticianDetails";
@@ -139,7 +143,7 @@ export function PoliticianDetailsExample({
 
 /** Blocked addresses, a bounce and a complaint unless told otherwise, their unblocking logged. */
 export function EmailBlocksTableExample({
-  blocks = [exampleBlock, exampleComplaint],
+  blocks = [exampleBlock, exampleGmailBlock, exampleComplaint],
   letterLinks = true,
 }: {
   blocks?: EmailBlock[];

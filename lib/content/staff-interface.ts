@@ -59,6 +59,28 @@ export const staffCopy = {
     sessions: (n: number) => `${n} sessions`,
   },
   // The page of your own sessions (/staff/sessions): one row each, and a way to end them all.
+  // One of PauseAI's letters, and the replies in its thread.
+  letterThread: {
+    title: (name: string) => `⁂ Letter to ${name}`,
+    to: "⁂ To",
+    from: "⁂ From",
+    sent: "⁂ Sent",
+    status: "⁂ Status",
+    notSent: "⁂ Not sent",
+    // An imported letter, whose text Airtable didn't keep.
+    noText: "⁂ This letter was sent before the site sent mailings, so its text isn't here.",
+    openInGmail: "⁂ Open in Gmail",
+    replies: "⁂ Replies",
+    noReplies: "⁂ No replies yet.",
+    ourAnswer: "⁂ Our answer",
+    unreadable: "⁂ This message couldn't be read.",
+    events: {
+      auto_reply: "⁂ Automatic reply",
+      bounced: "⁂ Bounced",
+      skipped: "⁂ Skipped",
+      failed: "⁂ Couldn't be sent",
+    } as Record<string, string>,
+  },
   // Your own page: your sessions and your Gmail.
   me: {
     title: "⁂ You",
@@ -1061,6 +1083,8 @@ export const staffCopy = {
     noBlocks: "No addresses are blocked.",
     // Instead of the history, when nothing has bounced or been complained about.
     noProblems: "Nothing has bounced or been marked as spam.",
+    // Beside a bounce read from someone's Gmail, rather than reported by Postmark.
+    foundInGmail: "⁂ found in Gmail",
     kinds: {
       hard: "Bounced",
       soft: "Soft bounce",
@@ -1086,6 +1110,7 @@ export const staffCopy = {
       "forwarded-reply": "Forwarded reply",
       "staff-login": "Staff login link",
       "staff-alert": "Staff alert",
+      mailing: "⁂ Mailing",
       "mailing-test": "Test copy of a mailing",
     } as Record<string, string>,
     // A complaint can't be undone by staff, only by the person.

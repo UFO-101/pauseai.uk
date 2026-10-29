@@ -1,25 +1,33 @@
 import type { Metadata } from "next";
+import { staffCopy } from "@/lib/content/staff-interface";
 import { found } from "@/lib/found";
-import { getPauseaiLetter } from "@/lib/server/letters";
+import { letterThread } from "@/lib/server/letter-threads";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { letterId, mailingId } from "@/lib/staff-search";
-import LetterDetails, { letterTitle } from "../../../../../_components/LetterDetails";
+import Breadcrumb from "../../../../../_components/Breadcrumb";
+import LetterThread from "../../../../../_components/LetterThread";
 
 type Params = { params: Promise<{ id: string; letter: string }> };
 
-/** PauseAI's letter with the IDs in the URL, its mailing's and its own; or a 404. */
-async function letterOf(params: Params["params"]) {
+/** The mailing's letter in the URL, with its thread, or a 404. */
+async function threadOf(params: Params["params"]) {
   const { id, letter } = await params;
-  return found(await getPauseaiLetter(found(mailingId(id)), found(letterId(letter))));
+  return found(await letterThread(found(mailingId(id)), found(letterId(letter))));
 }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   await requireStaff();
-  return { title: letterTitle(await letterOf(params)) };
+  return { title: staffCopy.letterThread.title((await threadOf(params)).politician.name) };
 }
 
-/** One of a mailing's letters: to whom, how it stands, what happened to it, and where to find it in Gmail. */
-export default async function MailingLetterPage({ params }: Params) {
-  await requireStaff();
-  return <LetterDetails letter={await letterOf(params)} />;
+/** One of PauseAI's letters, as it went, and every reply in its thread; Open in Gmail for the one who sent it. */
+export default async function LetterThreadPage({ params }: Params) {
+  const { email } = await requireStaff();
+  const thread = await threadOf(params);
+  return (
+    <>
+      <Breadcrumb href={`/staff/mailings/${thread.mailingId}`}>{thread.mailingTitle}</Breadcrumb>
+      <LetterThread thread={thread} me={email} />
+    </>
+  );
 }

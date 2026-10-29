@@ -4,6 +4,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import type { EmailBlock } from "@/lib/server/email";
 import type { DownloadFormat } from "@/lib/staff-list";
 import { staffTime } from "@/lib/staff-time";
+import Reason from "./BounceReason";
 import LetterLink from "./LetterLink";
 import UnblockForm from "./UnblockForm";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
@@ -48,7 +49,12 @@ export function blockColumns(
       text: (b) => copy.kinds[b.kind],
       cell: (b) => copy.kinds[b.kind],
     },
-    { key: "reason", label: copy.columns.reason, text: (b) => b.reason, cell: (b) => b.reason },
+    {
+      key: "reason",
+      label: copy.columns.reason,
+      text: (b) => (b.foundInGmail ? `${b.reason} (${copy.foundInGmail})` : b.reason),
+      cell: (b) => <Reason reason={b.reason} foundInGmail={b.foundInGmail} />,
+    },
     {
       key: "sent",
       label: copy.columns.sent,

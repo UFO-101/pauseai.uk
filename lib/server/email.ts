@@ -180,6 +180,8 @@ export type EmailBlock = {
   /** When the problem that blocked it came. */
   since: string;
   canReset: boolean;
+  /** The bounce was read from a staff member's Gmail, not reported by Postmark. */
+  foundInGmail: boolean;
   /** The politicians with this address. */
   politicians: { id: number; name: string }[];
   /** The letter whose email found it out, if one did, and the politician it was to. */
@@ -192,6 +194,7 @@ export type EmailBlock = {
 
 const SELECT_BLOCKS = `
   SELECT b.address, p.kind, p.reason, p.at AS since, p.can_reset AS "canReset",
+    p.gmail_message_id IS NOT NULL AS "foundInGmail",
     coalesce((SELECT json_agg(json_build_object('id', pol.id, 'name', pol.name) ORDER BY pol.name)
               FROM notable_people pol WHERE lower(pol.email) = b.address), '[]') AS politicians,
     (SELECT json_build_object('id', l.id, 'to', pol.name)
@@ -248,6 +251,8 @@ export type ProblemSummary = {
   address: string;
   kind: DeliveryProblem["kind"];
   reason: string;
+  /** Read from a staff member's Gmail, not reported by Postmark. */
+  foundInGmail: boolean;
   /** What the email was, if we sent it. */
   purpose: Purpose | null;
   /** The letter it was, if it was one, and the politician it was to. */
@@ -257,7 +262,7 @@ export type ProblemSummary = {
 /** The latest bounces and complaints to addresses in `scope`, soft bounces too, newest first. */
 export async function recentProblems(scope: EmailScope, limit = 100): Promise<ProblemSummary[]> {
   return query<ProblemSummary>(
-    `SELECT p.id::int AS id, p.at, p.address, p.kind, p.reason, s.purpose,
+    `SELECT p.id::int AS id, p.at, p.address, p.kind, p.reason, s.purpose, p.gmail_message_id IS NOT NULL AS "foundInGmail",
        CASE WHEN pol.id IS NOT NULL THEN json_build_object('id', l.id, 'to', pol.name) END AS letter
      FROM email_problems p LEFT JOIN email_sends s ON s.message_id = p.message_id
        LEFT JOIN letters l ON l.id = s.letter_id LEFT JOIN notable_people pol ON pol.id = l.notable_person_id
