@@ -18,7 +18,7 @@ import { permissionsFor } from "./contact-permissions";
 import { optedOutOfLuma } from "./opt-outs";
 import { refreshSupporterFacts } from "./supporter-facts";
 import { SUPPORTER_SOURCES } from "./supporter-sources";
-import { contains, everyWord } from "./search";
+import { contains, everyWord, phoneSearch } from "./search";
 import { placeFor, type FoundPlace } from "./outside-services/postcodes";
 
 // Supporters: one per person, tied to each record about them in a source
@@ -203,14 +203,17 @@ export async function listSupporters(
     return `$${values.length}`;
   };
   if (filter.search) {
+    const words = everyWord(
+      filter.search,
+      add,
+      (like) =>
+        `${contains("s.name", like)} OR EXISTS (SELECT 1 FROM unnest(s.phones) n WHERE n ILIKE ${like})
+         OR EXISTS (SELECT 1 FROM unnest(s.emails) e WHERE e ILIKE ${like})`,
+    );
+    // A number typed as people write them, 07700 900001, is found among the numbers as they're stored, +447700900001.
+    const phone = phoneSearch(filter.search);
     where.push(
-      everyWord(
-        filter.search,
-        add,
-        (like) =>
-          `${contains("s.name", like)} OR EXISTS (SELECT 1 FROM unnest(s.phones) n WHERE n ILIKE ${like})
-           OR EXISTS (SELECT 1 FROM unnest(s.emails) e WHERE e ILIKE ${like})`,
-      ),
+      phone ? `(${words} OR EXISTS (SELECT 1 FROM unnest(s.phones) n WHERE n LIKE ${add(`%${phone}%`)}))` : words,
     );
   }
   where.push(...anyOf(filter, add));

@@ -351,6 +351,10 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     expect(await names({ search: "jane pat" })).toEqual([]);
     expect(await names({ search: "pat@" })).toEqual(["Pat"]);
     expect(await names({ search: "0900001" })).toEqual(["Jane"]);
+    // Her number is stored +447700900001: as it's written in the UK, it finds her too, whole or its start.
+    expect(await names({ search: "07700 900001" })).toEqual(["Jane"]);
+    expect(await names({ search: "07700" })).toEqual(["Jane"]);
+    expect(await names({ search: "07701" })).toEqual([]);
     expect(await names({ activity: ["letter"] })).toEqual(["Pat"]);
     expect(await names({ activity: ["registered"] })).toEqual(["Sam", "Jane", "Old"]);
     expect(await names({ activity: ["lumaContact"] })).toEqual(["Jane"]);

@@ -41,3 +41,18 @@ export function closeness(column: string, text: string): string {
 
 /** The closeness below which a row isn't offered as near what was typed. */
 export const CLOSE_ENOUGH = 0.4;
+
+/**
+ * What a search typed as a phone number, or part of one, is in the form
+ * phone_number() stores numbers in, as far as it can tell from the start:
+ * "07700 900" is "+447700900". Undefined for a search that isn't one: not
+ * four or more digits, with only spaces, brackets, dots or dashes between.
+ */
+export function phoneSearch(text: string): string | undefined {
+  const digits = text.replace(/[\s().-]/g, "");
+  if (!/^\+?\d{4,}$/.test(digits)) return undefined;
+  if (digits.startsWith("+440")) return `+44${digits.slice(4)}`;
+  if (digits.startsWith("00")) return `+${digits.slice(2)}`;
+  if (digits.startsWith("0")) return `+44${digits.slice(1)}`;
+  return digits;
+}
