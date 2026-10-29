@@ -1,0 +1,9 @@
+.notice {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--status-amber-bg);
+  color: var(--status-amber);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-align: center;
+}

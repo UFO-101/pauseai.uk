@@ -6,6 +6,7 @@ import {
   WESTMINSTER,
   exampleRows,
 } from "@/app/(site)/campaigns/constituencies/_components/ConstituencyMap.examples";
+import DraftNotice from "@/app/(site)/campaigns/constituencies/_components/DraftNotice";
 import ConstituencyTable from "@/app/(site)/campaigns/constituencies/_components/ConstituencyTable";
 import MapKey from "@/app/(site)/campaigns/constituencies/_components/MapKey";
 import MapSection from "@/app/(site)/campaigns/constituencies/_components/MapSection";
@@ -17,6 +18,11 @@ export const constituencyMap: Group = {
   id: "constituency-map",
   title: "Constituency map",
   examples: [
+    {
+      name: "DraftNotice",
+      file: "app/(site)/campaigns/constituencies/_components/DraftNotice.tsx",
+      variants: [{ label: "Over the page", render: () => <DraftNotice /> }],
+    },
     {
       name: "ConstituencyMap",
       file: "app/(site)/campaigns/constituencies/_components/ConstituencyMap.tsx",
