@@ -36,6 +36,8 @@ npm run test:storyboard           # Playwright: the storyboard's gate, on fixtur
 (cd backup && npm ci && npm test && npm run typecheck)   # the backup Worker's own package
 ```
 
+Run them as CI does, in parallel, which takes two or three minutes rather than six: the four linters one after another, alongside `npm test`, `npm run test:storyboard` and the backup Worker's tests. Skip `npm run build` locally: it repeats the unit tests and linters, and the storyboard already builds the site. Never run two `next build`s at once in one checkout, as they share `.next`.
+
 If the prek Git hook is installed (`npm run hooks:install`), commits run Prettier, ESLint and Stylelint on the staged files first. Prettier rewrites them, so `git add` and commit again. That's only part of the gate.
 
 Running one Vitest project (`npm run test:node`, `npm run test:browser`) or one file doesn't check coverage, so it isn't the gate. The tests that need a database make their own in Postgres (`docs/testing.md`).

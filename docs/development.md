@@ -318,6 +318,11 @@ its API ID (`evt-…`): on Luma, open the event's manage page, and it's in the
 address (`luma.com/event/manage/evt-…`). When registering fails, the server
 logs a `[march]` line saying why.
 
+To try it end to end, register with a real address. Luma drops addresses
+at throwaway mail services without saying so: it answers that none were
+skipped, but never adds them (mail.tm and Guerrilla Mail, tried in
+October 2026).
+
 ## 5. Things that run on a schedule, or from outside
 
 None of these run under `npm run dev` by themselves. Call them by hand.
