@@ -80,7 +80,7 @@ export const staffCopy = {
   gmail: {
     title: "Let staff send mailings from your Gmail",
     // What connecting it means, said before it goes to Google: a line, then a bullet each.
-    intro: "⁂ Usually this is a shared account rather than a person's own: log in here as it, then connect it.",
+    intro: "Usually this is a shared account rather than a person's own: log in here as it, then connect it.",
     explain: [
       "⁂ Mailings go from its address, kept in its Sent mail, and replies come back to it.",
       "⁂ The site reads only those replies and bounces, and never deletes or changes anything.",
@@ -102,8 +102,7 @@ export const staffCopy = {
   },
   // Your sessions, on your own page (/staff/me): one row each, and a way to end them all.
   sessions: {
-    title: "Your sessions",
-    intro: "Everywhere you're logged in to the PauseAI Staff pages.",
+    intro: "You're logged into the PauseAI Staff pages on these devices.",
     columns: {
       browser: "Browser",
       system: "System",
