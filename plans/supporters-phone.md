@@ -15,8 +15,8 @@ Mailings to supporters by WhatsApp, then by text, on the staff pages in
   and allow texts only. A handful are from our march form, live since
   28 October.
 - `contact_permission()` answers for numbers, and `TOPIC_WAYS` in
-  `lib/contact-permissions.ts` says which ways each topic allows.
-  WhatsApp isn't one yet.
+  `lib/contact-permissions.ts` says which ways each topic allows: calls,
+  texts or both.
 - The site sends neither. Our giffgaff number has the WhatsApp Business
   app on Reuben's phone, but its broadcast lists only reach people who
   have saved the number, so we need the API.
@@ -27,10 +27,11 @@ Mailings to supporters by WhatsApp, then by text, on the staff pages in
   texts and app messages as electronic mail, and the soft opt-in doesn't
   cover political campaigning
   ([ICO](https://ico.org.uk/for-organisations/direct-marketing-and-privacy-and-electronic-communications/guide-to-pecr/electronic-and-telephone-marketing/electronic-mail-marketing/)).
-- Texts and WhatsApp are one channel, as they are to the people we
-  message: a yes to texts is a yes to WhatsApp, and a stop of either
-  stops both. Meta accepts an opt-in that names us without naming
-  WhatsApp
+- Texts and WhatsApp are one way, "text", as they are to the people we
+  message: a yes to texts allows both, and a stop of either stops both.
+  Staff write a text mailing once, and each message goes by WhatsApp if
+  the number is on it, and by text if not. Meta accepts an opt-in that
+  names us without naming WhatsApp
   ([opt-in](https://developers.facebook.com/documentation/business-messaging/whatsapp/getting-opt-in)).
 - A message stays within what the person agreed to: a `march-day` text
   is about the march, sent on the day.
@@ -90,8 +91,9 @@ and event messages.
 
 ### Steps
 
-1. WhatsApp as a way to contact someone, allowed by every topic that
-   allows texts.
+1. A text mailing records, on each message, whether it went by
+   WhatsApp or by text. `mailings.channel` loses `whatsapp`: a mailing
+   is by email or by text.
 2. Opt-ins: the box on Email your MP and our other forms; the Luma
    checkbox, which the import reads as it reads the postcode question;
    and staff recording a yes given elsewhere, with how it was given.
@@ -143,12 +145,14 @@ An easy Stop button means people stop rather than block us.
    ([overview](https://developers.facebook.com/documentation/business-messaging/whatsapp/marketing-messages/overview.md)).
    Meta charges for each delivered message, by category
    ([rate card](https://whatsappbusiness.com/products/platform-pricing/)).
-2. Templates, written on the site: a name, a category, `en_GB`, a body
-   with named parameters, and a Stop button on marketing ones. The site
-   submits each to Meta, whose review takes up to 24 hours, and reads
-   their status back hourly and by webhook. Only approved templates can
-   be sent, and a template Meta pauses stops the mailings using it
+2. Templates. WhatsApp only sends approved templates, so the site
+   submits each text mailing's words to Meta as one: a category,
+   `en_GB`, a body with named parameters for the merge fields, and a
+   Stop button on marketing ones. Review takes up to 24 hours, so a
+   mailing can't be scheduled sooner. The site reads the status back
+   hourly and by webhook, and a template Meta pauses stops its mailing
    ([templates](https://developers.facebook.com/documentation/business-messaging/whatsapp/templates/overview)).
+   Until texts are built, a text mailing skips numbers not on WhatsApp.
 3. A webhook at `/api/whatsapp`, which checks `X-Hub-Signature-256`
    ([webhooks](https://developers.facebook.com/documentation/business-messaging/whatsapp/webhooks/create-webhook-endpoint.md))
    and:
@@ -169,9 +173,9 @@ An easy Stop button means people stop rather than block us.
 
 1. A text provider in `lib/server/outside-services/`, with a fake for
    tests, sending from a real UK number so people can reply.
-2. Texts are free text, with no approval, and end with how to stop,
-   such as "Reply STOP to stop". The new message page counts
-   160-character segments, as each is charged.
+2. A text mailing's words go as they are to numbers not on WhatsApp,
+   ending with how to stop, such as "Reply STOP to stop". The new
+   message page counts 160-character segments, as each is charged.
 3. The provider's webhook records deliveries and failures, STOP as a
    stop, and other replies.
 4. Staff can reply at any time, each reply charged as a text.
