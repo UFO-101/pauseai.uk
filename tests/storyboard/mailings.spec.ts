@@ -177,7 +177,7 @@ test("A mailing sending, and one sent with bounces", async ({ page, request, flo
   await page.getByRole("table").getByRole("link", { name: staffCopy.letters.status.bounced }).click();
   await expect(page).toHaveURL(new RegExp(`/staff/mailings/${sent}/letters/\\d+$`));
   await expect(page.getByRole("navigation").getByRole("link", { name: "Edinburgh follow-up" })).toBeVisible();
-  await frame(page, "the letter that bounced: to whom, how it stands, and what happened to it");
+  await frame(page, "the letter that bounced: to whom and how it stands, with no history, as Airtable kept none");
 });
 
 test("Send a mailing from a connected Gmail: schedule it, and the hourly job sends it", async ({

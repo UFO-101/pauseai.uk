@@ -115,7 +115,7 @@ test("The MPs signed tile: who signed, then everyone", async ({ page, request, f
   await expect(page.getByRole("heading", { level: 1, name: "Polly Placeholder" })).toBeVisible();
   await frame(page, "the tile leads to her page");
 
-  // ControlAI's letter adds several: the tile is everyone who signed anything, newest first.
+  // ControlAI's letter adds several: the tile is everyone who signed anything, the latest recorded first.
   await page.goto(`${BASE}/staff/import-data/controlai`);
   await page.getByRole("button", { name: staffCopy.controlAi.importNow }).click();
   await expect(page.getByText(/6 names/)).toBeVisible();
@@ -130,7 +130,7 @@ test("The MPs signed tile: who signed, then everyone", async ({ page, request, f
   ).toBeVisible();
   await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toHaveCount(0);
-  await frame(page, "everyone who signed anything, newest first");
+  await frame(page, "everyone who signed anything, the latest recorded first: the import just recorded the peer's");
 });
 
 test("Open a politician's page and sort the list", async ({ page, request, flowDatabase }) => {

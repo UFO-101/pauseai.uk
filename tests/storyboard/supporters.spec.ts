@@ -242,7 +242,10 @@ test("Supporters merged by phone number: the old page redirects", async ({ page,
   // Both addresses; the name the newest of them gave.
   await expect(page.getByText("jane.fixture@example.com").first()).toBeVisible();
   await expect(page.getByText(email).first()).toBeVisible();
-  await frame(page, "the old ID's page gone on to the one kept, Jane's ID, with both addresses and the newer name");
+  await frame(
+    page,
+    "the old ID's page gone on to the one kept, Jane's ID, with both addresses and the newer name, Dee Clined",
+  );
 });
 
 test("A letter writer's page, from the letters list", async ({ page, request, flowDatabase }, testInfo) => {
@@ -370,7 +373,7 @@ test("Filter supporters by what they're subscribed to", async ({ page, request, 
   await expect(page.getByRole("row").filter({ hasText: "Jane Fixture" })).toBeVisible();
   // Owen left Keep me informed unticked, which isn't an unsubscribe.
   await expect(page.getByRole("row").filter({ hasText: "Owen Member" })).toHaveCount(0);
-  await frame(page, "Luma by email, can't: Jane, who unsubscribed, as Luma told us");
+  await frame(page, "Luma by email, can't: Jane, who unsubscribed, as Luma told us, and those never Luma's contacts");
 
   // Another topic, from the chip's first half, then its answer.
   await changeFilter(

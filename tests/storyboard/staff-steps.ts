@@ -92,10 +92,16 @@ export async function postBounce(request: APIRequestContext, messageId?: string)
   expect(await bounce.json()).toEqual({ recorded: true });
 }
 
-/** Writes to `mp` as `sender`, then, logged in, reads the letter's Postmark MessageID from its link to the policy@ group. */
-export async function sentLetterId(page: Page, database: string, sender: string, mp = TEST_MPS[0]): Promise<string> {
+/** Writes to `mp` as `sender`, signed `name`, then, logged in, reads the letter's Postmark MessageID from its link to the policy@ group. */
+export async function sentLetterId(
+  page: Page,
+  database: string,
+  sender: string,
+  mp = TEST_MPS[0],
+  name = "Jane Smith",
+): Promise<string> {
   await fakeTurnstile(page);
-  await lookUpTestMp(page, BASE, mp);
+  await lookUpTestMp(page, BASE, mp, name);
   await fillLetter(page, sender);
   await sendLetter(page, mp);
   await page.goto(`${BASE}/staff/letters`);

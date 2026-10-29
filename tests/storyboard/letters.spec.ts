@@ -12,7 +12,7 @@ test("Filter letters by status and campaign, then reset", async ({ page, request
   const jane = `jane+${testInfo.testId}@example.com`;
   const sam = `sam+${testInfo.testId}@example.com`;
   await sentLetterId(page, flowDatabase, jane);
-  await postBounce(request, await sentLetterId(page, flowDatabase, sam, bouncy));
+  await postBounce(request, await sentLetterId(page, flowDatabase, sam, bouncy, "Sam Smith"));
 
   await page.reload();
   const janes = page.getByRole("row").filter({ hasText: jane });
