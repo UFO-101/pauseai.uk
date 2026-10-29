@@ -28,6 +28,9 @@ export type ThreadMessage = {
 export type LetterThread = {
   mailingTitle: string;
   subject: string;
+  /** Whom it went to, and when. */
+  to: { name: string; email: string | null };
+  sentAt: string | null;
   /** The letter as it went; null for one imported, whose text we don't have. */
   letter: LetterDoc | null;
   /** The account it went from and the name it was from, and its Gmail thread if Gmail sent it. */
@@ -72,11 +75,13 @@ export async function letterThread(mailingId: number, letterId: number): Promise
       mergeValues: MailingRecipientValues | null;
     }
   >(
-    `SELECT m.title AS "mailingTitle", m.subject, m.body, p.merge_values AS "mergeValues",
+    `SELECT m.title AS "mailingTitle", m.subject, json_build_object('name', n.name, 'email', n.email) AS "to",
+       l.sent_at AS "sentAt", m.body, p.merge_values AS "mergeValues",
        m.sent_from AS "sentFrom", m.from_name AS "fromName",
        (SELECT s.gmail_thread_id FROM email_sends s WHERE s.letter_id = l.id AND s.outcome = 'sent'
         ORDER BY s.id DESC LIMIT 1) AS "gmailThreadId"
      FROM letters_from_pauseai p JOIN letters l USING (id) JOIN mailings m ON m.id = p.mailing_id
+       JOIN notable_people n ON n.id = l.notable_person_id
      WHERE p.mailing_id = $1 AND l.id = $2`,
     [mailingId, letterId],
   );

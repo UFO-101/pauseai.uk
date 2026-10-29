@@ -71,34 +71,64 @@ describe("AccountTitle", () => {
 
 describe("LetterThread", () => {
   const copy = staffCopy.letterThread;
+  /** Each email's headers, as name and value pairs. */
+  const headers = () =>
+    [...document.querySelectorAll("article dl")].map((list) =>
+      [...list.querySelectorAll("dt")].map((name) => [name.textContent, name.nextElementSibling!.textContent]),
+    );
 
-  it("shows the Gmail it went from, the letter as it went, and each reply", async () => {
+  it("shows each message as an email: the letter from the Gmail it went from, then each reply and answer", async () => {
     await render(<LetterThread thread={exampleThread} />);
     await expect.element(page.getByRole("heading", { level: 2, name: copy.title })).toBeVisible();
-    await expect.element(page.getByText(copy.sentFrom("Jo Seed <jo@pauseai.uk>"))).toBeVisible();
+    const polly = "Polly Placeholder <polly.placeholder.mp@parliament.uk>";
+    expect(headers()).toEqual([
+      [
+        [copy.headers.from, "Jo Seed <jo@pauseai.uk>"],
+        [copy.headers.to, polly],
+        [copy.headers.date, "9 Oct 2026, 09:00"],
+        [copy.headers.subject, "Edinburgh follow-up"],
+      ],
+      [
+        [copy.headers.from, polly],
+        [copy.headers.to, "Jo Seed <jo@pauseai.uk>"],
+        [copy.headers.date, "10 Oct 2026, 09:00"],
+        [copy.headers.subject, "Re: Edinburgh follow-up"],
+      ],
+      [
+        [copy.headers.from, "Jo Seed <jo@pauseai.uk>"],
+        [copy.headers.to, polly],
+        [copy.headers.date, "10 Oct 2026, 11:30"],
+        [copy.headers.subject, "Re: Edinburgh follow-up"],
+      ],
+    ]);
     await expect.element(page.getByText("Will you come and meet us?")).toBeVisible();
     await expect.element(page.getByText(/I'd be glad to meet/)).toBeVisible();
     await expect.element(page.getByText(copy.unreadable)).toBeVisible();
     expect(page.getByText(copy.noReplies).query()).toBeNull();
   });
 
-  it("names a reply with no name by its address", async () => {
+  it("names someone with no name by their address", async () => {
     const reply = { ...exampleThread.messages[0], fromName: "" };
-    await render(<LetterThread thread={{ ...exampleThread, messages: [reply] }} />);
-    await expect.element(page.getByRole("heading", { name: reply.fromAddress })).toBeVisible();
-  });
-
-  it("gives the address alone with no name", async () => {
-    await render(<LetterThread thread={{ ...exampleThread, fromName: "" }} />);
-    await expect.element(page.getByText(copy.sentFrom("jo@pauseai.uk"))).toBeVisible();
+    await render(<LetterThread thread={{ ...exampleThread, fromName: "", messages: [reply] }} />);
+    expect(headers()[1][0]).toEqual([copy.headers.from, "polly.placeholder.mp@parliament.uk"]);
+    expect(headers()[0][0]).toEqual([copy.headers.from, "jo@pauseai.uk"]);
   });
 
   it("says an imported letter's text isn't here, and that nothing's come back", async () => {
-    await render(<LetterThread thread={{ ...exampleImportedThread, subject: "" }} />);
+    await render(
+      <LetterThread
+        thread={{ ...exampleImportedThread, subject: "", to: { name: "Polly Placeholder", email: null } }}
+      />,
+    );
     await expect.element(page.getByText(copy.noText)).toBeVisible();
     await expect.element(page.getByText(copy.noReplies)).toBeVisible();
-    await expect.element(page.getByRole("heading", { name: exampleThread.mailingTitle })).toBeVisible();
-    expect(page.getByText(copy.sentFrom("jo@pauseai.uk")).query()).toBeNull();
+    expect(headers()).toEqual([
+      [
+        [copy.headers.from, staffCopy.letters.fromPauseai],
+        [copy.headers.to, "Polly Placeholder"],
+        [copy.headers.subject, exampleThread.mailingTitle],
+      ],
+    ]);
   });
 });
 

@@ -5,6 +5,8 @@ import type { EditableAsk } from "./AskForm";
 /** Jo's letter to Polly, from Jo's Gmail, which Polly answered and Jo answered back. */
 export const exampleThread: LetterThread = {
   mailingTitle: "Edinburgh follow-up",
+  to: { name: "Polly Placeholder", email: "polly.placeholder.mp@parliament.uk" },
+  sentAt: "2026-10-09T09:00:00Z",
   subject: "Edinburgh follow-up",
   letter: {
     type: "doc",
@@ -45,6 +47,7 @@ export const exampleImportedThread: LetterThread = {
   sentFrom: null,
   fromName: null,
   gmailThreadId: null,
+  sentAt: null,
   messages: [],
 };
 

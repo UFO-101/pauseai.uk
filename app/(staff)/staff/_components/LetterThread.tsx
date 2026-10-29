@@ -1,52 +1,80 @@
+import type { ReactNode } from "react";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
-import type { LetterThread as Thread, ThreadMessage } from "@/lib/server/letter-threads";
+import type { LetterThread as Thread } from "@/lib/server/letter-threads";
 import { staffTime } from "@/lib/staff-time";
 import { MailingLetter } from "./MailingLetter";
-import Grid, { Card } from "./ui/Grid";
 import styles from "./LetterThread.module.css";
 
 const copy = staffCopy.letterThread;
 
-/** A later message in the thread: who wrote it and when, its subject, and its text. */
-function Message({ message }: { message: ThreadMessage }) {
+/** Someone as an email names them: their name and address, or their address alone. */
+const named = (name: string | null, address: string | null) =>
+  name && address ? `${name} <${address}>` : (address ?? name ?? "");
+
+/** One message of the thread as an email shows it: who it's from and to, when, and its subject, over its text. */
+function Email({
+  from,
+  to,
+  at,
+  subject,
+  children,
+}: {
+  from: string;
+  to: string;
+  at: string | null;
+  subject: string;
+  children: ReactNode;
+}) {
   return (
-    <Card span={6} title={message.fromUs ? copy.ourAnswer : message.fromName || message.fromAddress}>
-      <p className={styles.from}>
-        <strong>{message.subject}</strong>
-        <br />
-        <Muted>
-          {`${message.fromName} <${message.fromAddress}>`} · {staffTime(message.at)}
-        </Muted>
-      </p>
-      {message.text === null ? <Muted>{copy.unreadable}</Muted> : <div className={styles.text}>{message.text}</div>}
-    </Card>
+    <article className={styles.email} aria-label={subject}>
+      <dl className={styles.headers}>
+        <dt>{copy.headers.from}</dt>
+        <dd>{from}</dd>
+        <dt>{copy.headers.to}</dt>
+        <dd>{to}</dd>
+        {at && (
+          <>
+            <dt>{copy.headers.date}</dt>
+            <dd>{staffTime(at)}</dd>
+          </>
+        )}
+        <dt>{copy.headers.subject}</dt>
+        <dd>
+          <strong>{subject}</strong>
+        </dd>
+      </dl>
+      <div className={styles.body}>{children}</div>
+    </article>
   );
 }
 
 /**
- * One of PauseAI's letters' thread, below its page's facts and history:
- * the Gmail it went from; the letter as it went, or a note that an imported one's text isn't kept;
- * then each reply and answer, oldest first.
+ * One of PauseAI's letters' thread, below its page's facts and history,
+ * each message as an email: the letter as it went, from the Gmail it went
+ * from, or a note that an imported one's text isn't kept; then each reply
+ * and answer, oldest first.
  */
 export default function LetterThread({ thread }: { thread: Thread }) {
+  const politician = named(thread.to.name, thread.to.email);
+  const ours = thread.sentFrom ? named(thread.fromName, thread.sentFrom) : staffCopy.letters.fromPauseai;
   return (
-    <section aria-labelledby="letter-thread">
+    <section aria-labelledby="letter-thread" className={styles.thread}>
       <h2 id="letter-thread">{copy.title}</h2>
-      {thread.sentFrom && (
-        <p>
-          {/* With no name of its own, it went in the Gmail account's. */}
-          <span>{copy.sentFrom(thread.fromName ? `${thread.fromName} <${thread.sentFrom}>` : thread.sentFrom)}</span>
-        </p>
-      )}
-      <Grid>
-        <Card span={6} title={thread.subject || thread.mailingTitle}>
-          {thread.letter ? <MailingLetter doc={thread.letter} /> : <Muted>{copy.noText}</Muted>}
-        </Card>
-        {thread.messages.map((message) => (
-          <Message key={message.id} message={message} />
-        ))}
-      </Grid>
+      <Email from={ours} to={politician} at={thread.sentAt} subject={thread.subject || thread.mailingTitle}>
+        {thread.letter ? <MailingLetter doc={thread.letter} /> : <Muted>{copy.noText}</Muted>}
+      </Email>
+      {thread.messages.map((message) => (
+        <Email
+          key={message.id}
+          from={named(message.fromName, message.fromAddress)}
+          to={message.fromUs ? politician : ours}
+          at={message.at}
+          subject={message.subject}
+        >
+          {message.text === null ? <Muted>{copy.unreadable}</Muted> : <div className={styles.text}>{message.text}</div>}
+        </Email>
+      ))}
       {thread.messages.length === 0 && (
         <p>
           <Muted>{copy.noReplies}</Muted>
