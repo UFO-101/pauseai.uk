@@ -106,7 +106,7 @@ export const staffCopy = {
       connected: "Your Gmail is connected. All staff will be able to send mailings from it now.",
       refused: "Gmail wasn't connected, as you didn't allow it.",
       failed: "Gmail couldn't be connected. Try again.",
-      disconnected: "⁂ Your Gmail is disconnected.",
+      disconnected: "Your Gmail is disconnected.",
     } as Record<string, string>,
     // Back from Google having chosen an account other than the one logged in here, `me`.
     otherAccount: (me: string) =>
@@ -866,11 +866,11 @@ export const staffCopy = {
     // A sender, in Sent from's list: their address, and how many more it can send today.
     // Your own address, before your Gmail's connected.
     senderNotConnected: (address: string) => `⁂ ${address} (not connected)`,
-    notConnected: "⁂ This Gmail isn't connected. Only its owner can connect it, from their own page.",
+    notConnected: "This Gmail isn't connected. Only its owner can connect it, from their own page.",
     // With no Gmail connected, in place of the choice of one.
-    noSenders: "⁂ No Gmail is connected yet, so nothing can be sent.",
+    noSenders: "No Gmail is connected yet, so nothing can be sent.",
     // Under the choice of Gmail, to the account page, where one is connected.
-    connectOne: "⁂ Connect a Gmail on your account page",
+    connectOne: "Connect a Gmail on your account page",
     // In the preview, who it's from: the name comes from the Gmail account.
     from: "From",
     fromGmail: (address: string) => `⁂ The name of the Gmail account <${address}>`,
