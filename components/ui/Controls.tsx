@@ -76,17 +76,22 @@ export function Checkbox({
   );
 }
 
-/** A row of mutually exclusive buttons, e.g. a QR code's size. */
+/**
+ * A row of mutually exclusive buttons, e.g. a QR code's size; each with an
+ * icon before its words if it has one. `disabled`, none can be picked.
+ */
 export function Segmented<T extends string | boolean>({
   label,
   options,
   value,
   onChange,
+  disabled = false,
 }: {
   label: string;
-  options: { value: T; label: string }[];
+  options: { value: T; label: string; icon?: ReactNode }[];
   value: T;
   onChange: (value: T) => void;
+  disabled?: boolean;
 }) {
   return (
     <div className={styles.segmented} role="radiogroup" aria-label={label}>
@@ -97,8 +102,10 @@ export function Segmented<T extends string | boolean>({
           role="radio"
           aria-checked={o.value === value}
           className={styles.segment}
+          disabled={disabled}
           onClick={() => onChange(o.value)}
         >
+          {o.icon}
           {o.label}
         </button>
       ))}

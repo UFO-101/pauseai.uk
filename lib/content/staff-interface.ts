@@ -947,7 +947,7 @@ export const staffCopy = {
     editTitle: (title: string) => `Edit the ask “${title}”`,
     fields: {
       kind: "We ask them to",
-      askedBy: "Who asks them",
+      askedBy: "Who has or will ask them",
     },
     // The rest of the form's fields, by the kind of ask: the title reads on from "sign" or "attend".
     byKind: {
@@ -961,7 +961,7 @@ export const staffCopy = {
         title: "Which event",
         titleExample: "Tea, biscuits and existential risk conference",
         date: "When the event is",
-        url: "Event's page",
+        url: "Where to learn more about the event",
       },
     } as Record<string, { title: string; titleExample: string; date: string; url: string }>,
     // Over an ask's slug, which doesn't change.
@@ -970,15 +970,15 @@ export const staffCopy = {
     fixed: "⁂ The site's code uses this ask, so it can't be changed here.",
     // Beside the form: the ask as it will show on a politician's page.
     previewTitle: "Preview of how it will look on a politician's page",
-    save: "⁂ Save",
-    delete: "⁂ Delete ask",
+    save: "Save",
+    delete: "Delete ask",
     notDeletable: "⁂ It can't be deleted while answers, campaigns or mailings refer to it.",
     // After saving or deleting, or failing to.
     notices: {
       added: "⁂ The ask is added.",
       saved: "⁂ The ask is saved.",
       deleted: "⁂ The ask is deleted.",
-      invalid: "⁂ Give it a title and a kind, and a link starting / or https://.",
+      invalid: "⁂ The link must be a whole one, starting https://.",
       fixed: "⁂ The site's code uses this ask, so it can't be changed here.",
       "kind-in-use": "⁂ Its kind can't change, as politicians have answered it.",
       "in-use": "⁂ It can't be deleted while answers, campaigns or mailings refer to it.",
@@ -1146,7 +1146,7 @@ export const staffCopy = {
       "forwarded-reply": "Forwarded reply",
       "staff-login": "Staff login link",
       "staff-alert": "Staff alert",
-      mailing: "⁂ Mailing",
+      mailing: "Mailing",
       "mailing-test": "Test copy of a mailing",
     } as Record<string, string>,
     // A complaint can't be undone by staff, only by the person.

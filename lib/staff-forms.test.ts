@@ -86,13 +86,18 @@ describe("eraseFrom", () => {
 
 describe("askFrom", () => {
   it("reads an ask's title, kind, date, link and who asks it, each asker once", () => {
-    const data = form({ title: " Winter reception ", kind: "event", date: "2026-12-09", url: "/events" });
+    const data = form({
+      title: " Winter reception ",
+      kind: "event",
+      date: "2026-12-09",
+      url: "https://luma.com/winter",
+    });
     for (const asker of ["pauseai", "supporters", "pauseai", "someone"]) data.append("askedBy", asker);
     expect(askFrom(data)).toEqual({
       title: "Winter reception",
       kind: "event",
       date: "2026-12-09",
-      url: "/events",
+      url: "https://luma.com/winter",
       askedBy: ["pauseai", "supporters"],
     });
     expect(askFrom(form({ title: "Letter", kind: "letter", date: "", url: "https://example.org" }))).toEqual({
@@ -105,12 +110,13 @@ describe("askFrom", () => {
     expect(askFrom(form({ title: "Letter", kind: "letter" }))).toMatchObject({ date: null, url: null });
   });
 
-  it("refuses one without a title or a kind it knows, a date that isn't one, or a link elsewhere", () => {
+  it("refuses one without a title or a kind it knows, a date that isn't one, or a link that isn't a whole https one", () => {
     expect(askFrom(form({ title: "", kind: "event" }))).toBeUndefined();
     expect(askFrom(form({ title: "A", kind: "petition" }))).toBeUndefined();
     expect(askFrom(form({ title: "A", kind: "toString" }))).toBeUndefined();
     expect(askFrom(form({ title: "A", kind: "event", date: "9 Dec" }))).toBeUndefined();
     expect(askFrom(form({ title: "A", kind: "event", date: "2026-13-45" }))).toBeUndefined();
     expect(askFrom(form({ title: "A", kind: "event", url: "http://example.org" }))).toBeUndefined();
+    expect(askFrom(form({ title: "A", kind: "event", url: "/events" }))).toBeUndefined();
   });
 });

@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import Actions from "@/components/ui/Actions";
 import { Button } from "@/components/ui/Button";
-import { Checkbox, TextInput } from "@/components/ui/Controls";
+import { Checkbox, Segmented, TextInput } from "@/components/ui/Controls";
 import { Field, FieldSet, Hint } from "@/components/ui/Field";
 import { FormStack } from "@/components/ui/Form";
 import { ASK_STATUSES, ASKERS, askSlug, type AskKind, type Asker } from "@/lib/asks";
@@ -93,106 +93,102 @@ export default function AskForm({
         </Strip>
       )}
       {fixed && <Strip tone="amber">{copy.fixed}</Strip>}
-      <Grid>
-        <Card span={3}>
-          <FormStack id="ask-form" action={save}>
-            <input type="hidden" name="back" value={back} />
-            {ask && <input type="hidden" name="slug" value={ask.slug} />}
-            <FieldSet label={copy.fields.kind}>
-              <div className={styles.kinds}>
-                {Object.keys(ASK_STATUSES).map((one) => (
-                  <label key={one} className={styles.kind}>
-                    <input
-                      type="radio"
-                      name="kind"
-                      value={one}
-                      checked={kind === one}
-                      onChange={() => setKind(one as AskKind)}
-                      disabled={fixed || ask?.kindFixed}
-                    />
-                    {KIND_ICONS[one as AskKind]}
-                    <span>{copy.kinds[one]}</span>
-                  </label>
-                ))}
+      <div className={styles.form}>
+        <Grid>
+          <Card span={3}>
+            <FormStack id="ask-form" action={save}>
+              <input type="hidden" name="back" value={back} />
+              {ask && <input type="hidden" name="slug" value={ask.slug} />}
+              <Field label={copy.fields.kind}>
+                <Segmented
+                  label={copy.fields.kind}
+                  options={Object.keys(ASK_STATUSES).map((one) => ({
+                    value: one as AskKind,
+                    label: copy.kinds[one],
+                    icon: KIND_ICONS[one as AskKind],
+                  }))}
+                  value={kind}
+                  onChange={setKind}
+                  disabled={fixed || ask?.kindFixed}
+                />
+              </Field>
+              <input type="hidden" name="kind" value={kind} />
+              {ask?.kindFixed && !fixed && <Hint>{copy.kindFixed}</Hint>}
+              {/* The title, and under it the slug it gives a new ask, or an ask's own, which doesn't change. */}
+              <div className={styles.titled}>
+                <Field label={words.title}>
+                  <TextInput
+                    name="title"
+                    required
+                    value={title}
+                    placeholder={words.titleExample}
+                    onChange={(event) => setTitle(event.target.value)}
+                    disabled={fixed}
+                  />
+                </Field>
+                {(ask || title.trim()) && (
+                  <p className={styles.slug}>
+                    <span>{copy.slugLabel}</span> <code>{ask ? ask.slug : askSlug(title, date || null)}</code>
+                  </p>
+                )}
               </div>
-            </FieldSet>
-            {/* A disabled choice sends nothing, so its kind goes as it is. */}
-            {ask?.kindFixed && <input type="hidden" name="kind" value={ask.kind} />}
-            {ask?.kindFixed && !fixed && <Hint>{copy.kindFixed}</Hint>}
-            {/* The title, and under it the slug it gives a new ask, or an ask's own, which doesn't change. */}
-            <div className={styles.titled}>
-              <Field label={words.title}>
+              <Field label={words.date} className={forms.short}>
                 <TextInput
-                  name="title"
-                  required
-                  value={title}
-                  placeholder={words.titleExample}
-                  onChange={(event) => setTitle(event.target.value)}
+                  name="date"
+                  type="date"
+                  value={date}
+                  onChange={(event) => setDate(event.target.value)}
                   disabled={fixed}
                 />
               </Field>
-              {(ask || title.trim()) && (
-                <p className={styles.slug}>
-                  <span>{copy.slugLabel}</span> <code>{ask ? ask.slug : askSlug(title, date || null)}</code>
-                </p>
-              )}
-            </div>
-            <Field label={words.date} className={forms.short}>
-              <TextInput
-                name="date"
-                type="date"
-                value={date}
-                onChange={(event) => setDate(event.target.value)}
-                disabled={fixed}
-              />
-            </Field>
-            <Field label={words.url}>
-              <TextInput
-                name="url"
-                value={url}
-                placeholder="https://"
-                onChange={(event) => setUrl(event.target.value)}
-                disabled={fixed}
-              />
-            </Field>
-            <FieldSet label={copy.fields.askedBy}>
-              {ASKERS.map((asker) => (
-                <Checkbox
-                  key={asker}
-                  name="askedBy"
-                  value={asker}
-                  checked={askedBy.includes(asker)}
+              <Field label={words.url}>
+                <TextInput
+                  name="url"
+                  value={url}
+                  placeholder="https://"
+                  onChange={(event) => setUrl(event.target.value)}
                   disabled={fixed}
-                  onChange={(on) => setAskedBy(on ? [...askedBy, asker] : askedBy.filter((one) => one !== asker))}
-                >
-                  {copy.askedBy[asker]}
-                </Checkbox>
-              ))}
-            </FieldSet>
-          </FormStack>
-          {!fixed && (
-            <Actions>
-              <Button type="submit" form="ask-form" variant="primary" fit disabled={!title.trim()}>
-                {copy.save}
-              </Button>
-              {ask?.deletable && <DeleteTwice name="slug" value={ask.slug} label={copy.delete} action={remove} />}
-            </Actions>
-          )}
-          {ask && !fixed && !ask.deletable && <Hint>{copy.notDeletable}</Hint>}
-        </Card>
-        <Card span={3} look="aside" title={copy.previewTitle} id="ask-preview">
-          <AskPreview
-            ask={{
-              slug: ask?.slug ?? "",
-              kind,
-              title: title || words.titleExample,
-              date: date || null,
-              url: url || null,
-              askedBy,
-            }}
-          />
-        </Card>
-      </Grid>
+                />
+              </Field>
+              <FieldSet label={copy.fields.askedBy}>
+                {ASKERS.map((asker) => (
+                  <Checkbox
+                    key={asker}
+                    name="askedBy"
+                    value={asker}
+                    checked={askedBy.includes(asker)}
+                    disabled={fixed}
+                    onChange={(on) => setAskedBy(on ? [...askedBy, asker] : askedBy.filter((one) => one !== asker))}
+                  >
+                    {copy.askedBy[asker]}
+                  </Checkbox>
+                ))}
+              </FieldSet>
+            </FormStack>
+            {!fixed && (
+              <Actions>
+                <Button type="submit" form="ask-form" variant="primary" fit disabled={!title.trim() || !date}>
+                  {copy.save}
+                </Button>
+                {ask?.deletable && <DeleteTwice name="slug" value={ask.slug} label={copy.delete} action={remove} />}
+              </Actions>
+            )}
+            {ask && !fixed && !ask.deletable && <Hint>{copy.notDeletable}</Hint>}
+          </Card>
+          <Card span={3} look="aside" title={copy.previewTitle} id="ask-preview">
+            <AskPreview
+              ask={{
+                slug: ask?.slug ?? "",
+                kind,
+                title: title || words.titleExample,
+                date: date || null,
+                url: url || null,
+                askedBy,
+              }}
+            />
+          </Card>
+        </Grid>
+      </div>
     </>
   );
 }

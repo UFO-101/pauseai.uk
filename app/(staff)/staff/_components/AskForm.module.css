@@ -1,52 +1,6 @@
-/* The kinds of ask side by side, each a tile: its picture over its words,
-   the one chosen bordered in the accent. The radio itself is hidden; the
-   tile is its label, and shows its focus. */
-.kinds {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-}
-
-.kind {
-  position: relative;
-  display: grid;
-  justify-items: center;
-  gap: var(--space-1);
-  min-width: 8rem;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  background: var(--surface);
-  color: var(--text-secondary);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.kind:hover {
-  border-color: var(--accent);
-}
-
-.kind:has(input:checked) {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
-  background: var(--accent-light);
-  color: var(--text);
-}
-
-.kind:has(input:focus-visible) {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.kind:has(input:disabled) {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.kind input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
+/* The form a step down from any notice over it. */
+.form {
+  margin-top: var(--space-4);
 }
 
 /* The title, and its slug close under it: a small label, then the slug in a fixed-width font. */

@@ -137,9 +137,10 @@ describe("AskForm", () => {
       .element(field(copy.byKind.letter.title))
       .toHaveAttribute("placeholder", copy.byKind.letter.titleExample);
     await expect.element(preview().getByRole("group", { name: copy.byKind.letter.titleExample })).toBeVisible();
-    await page.getByText(copy.kinds.event).click();
+    await page.getByRole("radio", { name: copy.kinds.event }).click();
     await expect.element(page.getByRole("radio", { name: copy.kinds.event })).toBeChecked();
     await field(copy.byKind.event.title).fill("Winter reception");
+    await expect.element(page.getByRole("button", { name: copy.save })).toBeDisabled();
     await field(copy.byKind.event.date).fill("2026-12-09");
     await field(copy.byKind.event.url).fill("https://luma.com/winter");
     await expect.element(page.getByText("winter-reception-dec-2026", { exact: true })).toBeVisible();

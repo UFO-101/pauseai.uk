@@ -86,6 +86,6 @@ export function askFrom(form: FormData): AskForm | undefined {
   const askedBy = form.getAll("askedBy").filter((one): one is Asker => (ASKERS as readonly unknown[]).includes(one));
   if (!title || !Object.hasOwn(ASK_STATUSES, kind)) return undefined;
   if (date && !(/^\d{4}-\d{2}-\d{2}$/.test(date) && !Number.isNaN(Date.parse(date)))) return undefined;
-  if (url && !/^(https:\/\/|\/)/.test(url)) return undefined;
+  if (url && !url.startsWith("https://")) return undefined;
   return { title, kind: kind as AskKind, date: date || null, url: url || null, askedBy: [...new Set(askedBy)] };
 }
