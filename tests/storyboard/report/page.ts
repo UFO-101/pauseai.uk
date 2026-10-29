@@ -255,8 +255,10 @@ function render() {
     const sec = el("section", { id }, [el("h3", {}, [sectionName(section)])]);
     for (const { flow, frames } of shown) {
       const flowId = slug(section, flow.flow);
+      // The first flow's link lands on its section's heading, just above it, so that's seen too.
+      const target = flow === shown[0].flow ? id : flowId;
       group.append(
-        el("a", { href: "#" + flowId, "data-flow": flowId, class: flow.status !== "passed" ? "failed" : "" }, [
+        el("a", { href: "#" + target, "data-flow": flowId, class: flow.status !== "passed" ? "failed" : "" }, [
           el("span", { class: "name" + (flow.flow.startsWith("/") ? " route" : "") }, marked(flow.flow, terms)),
           el("span", { class: "count" + (flow.changed ? " changed" : "") }, [
             flow.frames === 0 ? "–" : data.withMain ? flow.changed + "/" + flow.frames : String(flow.frames),

@@ -27,7 +27,7 @@ export const SECTIONS: { id: string; name: string; part: (typeof PARTS)[number] 
   { id: "scroll", name: "Scrolling and links", part: "Public site" },
   { id: "onboarding-embed", name: "Sign-up form", part: "Public site" },
   { id: "staff-login", name: "Logging in, and your account", part: "Staff pages" },
-  { id: "staff-navigation", name: "The dashboard, the sidebar and lists", part: "Staff pages" },
+  { id: "staff-navigation", name: "Dashboard and getting around", part: "Staff pages" },
   { id: "politicians", name: "Politicians", part: "Staff pages" },
   { id: "mailings", name: "Mailings", part: "Staff pages" },
   { id: "supporters", name: "Supporters", part: "Staff pages" },

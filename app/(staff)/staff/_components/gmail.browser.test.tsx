@@ -138,7 +138,11 @@ describe("AskForm", () => {
     await field(copy.byKind.event.title).fill("Winter reception");
     await expect.element(page.getByRole("button", { name: copy.save })).toBeDisabled();
     await field(copy.byKind.event.date).fill("2026-12-09");
+    await field(copy.byKind.event.url).fill("luma.com/winter");
+    await expect.element(page.getByText(copy.badLink)).toBeVisible();
+    await expect.element(page.getByRole("button", { name: copy.save })).toBeDisabled();
     await field(copy.byKind.event.url).fill("https://luma.com/winter");
+    expect(page.getByText(copy.badLink).query()).toBeNull();
     await expect.element(page.getByText("winter-reception-dec-2026", { exact: true })).toBeVisible();
     await page.getByLabelText(copy.askedBy.supporters).click();
     await page.getByLabelText(copy.askedBy.pauseai).click();

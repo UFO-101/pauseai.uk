@@ -4,7 +4,7 @@ import { useState, type ReactNode } from "react";
 import Actions from "@/components/ui/Actions";
 import { Button } from "@/components/ui/Button";
 import { Checkbox, Segmented, TextInput } from "@/components/ui/Controls";
-import { Field, FieldSet, Hint } from "@/components/ui/Field";
+import { Field, FieldError, FieldSet, Hint } from "@/components/ui/Field";
 import { FormStack } from "@/components/ui/Form";
 import { ASK_STATUSES, ASKERS, askSlug, type AskKind, type Asker } from "@/lib/asks";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -85,6 +85,8 @@ export default function AskForm({
   const [askedBy, setAskedBy] = useState<Asker[]>(ask?.askedBy ?? ["pauseai"]);
   const fixed = Boolean(ask?.fixed);
   const words = copy.byKind[kind];
+  // A link that isn't a whole one, which the server would refuse (askFrom).
+  const badLink = Boolean(url) && !url.startsWith("https://");
   return (
     <>
       {copy.notices[notice] && (
@@ -148,8 +150,11 @@ export default function AskForm({
                   placeholder="https://"
                   onChange={(event) => setUrl(event.target.value)}
                   disabled={fixed}
+                  aria-invalid={badLink}
+                  aria-describedby={badLink ? "ask-link-error" : undefined}
                 />
               </Field>
+              {badLink && <FieldError id="ask-link-error">{copy.badLink}</FieldError>}
               <FieldSet label={copy.fields.askedBy}>
                 {ASKERS.map((asker) => (
                   <Checkbox
@@ -167,7 +172,13 @@ export default function AskForm({
             </FormStack>
             {!fixed && (
               <Actions>
-                <Button type="submit" form="ask-form" variant="primary" fit disabled={!title.trim() || !date}>
+                <Button
+                  type="submit"
+                  form="ask-form"
+                  variant="primary"
+                  fit
+                  disabled={!title.trim() || !date || badLink}
+                >
                   {copy.save}
                 </Button>
                 {ask?.deletable && <DeleteTwice name="slug" value={ask.slug} label={copy.delete} action={remove} />}

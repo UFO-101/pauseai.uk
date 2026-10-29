@@ -967,6 +967,8 @@ export const staffCopy = {
         url: "Where to learn more about the event",
       },
     } as Record<string, { title: string; titleExample: string; date: string; url: string }>,
+    // Under the link, in red, while what's in it isn't a whole one.
+    badLink: "Give a full link beginning https://",
     // Over an ask's slug, which doesn't change.
     slugLabel: "URL slug",
     kindFixed: "⁂ Its kind can't change, as politicians have answered it.",
@@ -978,10 +980,9 @@ export const staffCopy = {
     notDeletable: "⁂ It can't be deleted while answers, campaigns or mailings refer to it.",
     // After saving or deleting, or failing to.
     notices: {
-      added: "⁂ The ask is added.",
-      saved: "⁂ The ask is saved.",
-      deleted: "⁂ The ask is deleted.",
-      invalid: "⁂ The link must be a whole one, starting https://.",
+      added: "Ask added.",
+      saved: "Ask saved.",
+      deleted: "Ask deleted.",
       fixed: "⁂ The site's code uses this ask, so it can't be changed here.",
       "kind-in-use": "⁂ Its kind can't change, as politicians have answered it.",
       "in-use": "⁂ It can't be deleted while answers, campaigns or mailings refer to it.",
