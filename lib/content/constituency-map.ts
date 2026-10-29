@@ -16,7 +16,7 @@ export const constituencyMapCopy = {
   layerLabel: "⁂ Show",
   layers: {
     supporters: "⁂ Supporters",
-    frontier: "⁂ Letters: frontier AI",
+    frontier: "Regulate AI developers",
     sobel: "⁂ Letters: Superintelligence Bill",
   } satisfies Record<MapLayer, string>,
 

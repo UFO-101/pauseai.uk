@@ -18,6 +18,7 @@ const GROUPS = [
   "blog-donate-events",
   "campaigns-page",
   "campaigns-letter",
+  "constituency-map",
   "pages",
   "march-signup",
   "track-record",

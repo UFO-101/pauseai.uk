@@ -13,20 +13,18 @@ import NextSteps from "@/app/(site)/campaigns/constituencies/_components/NextSte
 import type { Group } from "../_components/types";
 import { ConstituencyCardExample, HexMapExample, PostcodeFinderExample } from "./constituency-map.client";
 
-const DIR = "app/(site)/campaigns/constituencies/_components";
-
 export const constituencyMap: Group = {
   id: "constituency-map",
   title: "Constituency map",
   examples: [
     {
       name: "ConstituencyMap",
-      file: `${DIR}/ConstituencyMap.tsx`,
+      file: "app/(site)/campaigns/constituencies/_components/ConstituencyMap.tsx",
       variants: [{ label: "The map and its panel", render: () => <ConstituencyMap rows={exampleRows} /> }],
     },
     {
       name: "HexMap",
-      file: `${DIR}/HexMap.tsx`,
+      file: "app/(site)/campaigns/constituencies/_components/HexMap.tsx",
       variants: [
         { label: "Supporters, one picked and one hovered", render: () => <HexMapExample /> },
         { label: "Letters about the bill", render: () => <HexMapExample layer="sobel" /> },
@@ -34,7 +32,7 @@ export const constituencyMap: Group = {
     },
     {
       name: "MapKey",
-      file: `${DIR}/MapKey.tsx`,
+      file: "app/(site)/campaigns/constituencies/_components/MapKey.tsx",
       variants: [
         { label: "Supporters", render: () => <MapKey layer="supporters" /> },
         { label: "Letters", render: () => <MapKey layer="frontier" /> },
@@ -42,7 +40,7 @@ export const constituencyMap: Group = {
     },
     {
       name: "ConstituencyCard",
-      file: `${DIR}/ConstituencyCard.tsx`,
+      file: "app/(site)/campaigns/constituencies/_components/ConstituencyCard.tsx",
       variants: [
         { label: "None picked", render: () => <ConstituencyCardExample code={null} /> },
         { label: "Picked on the map", render: () => <ConstituencyCardExample code={EDINBURGH} /> },
@@ -52,22 +50,22 @@ export const constituencyMap: Group = {
     },
     {
       name: "PostcodeFinder",
-      file: `${DIR}/PostcodeFinder.tsx`,
+      file: "app/(site)/campaigns/constituencies/_components/PostcodeFinder.tsx",
       variants: [{ label: "Empty", render: () => <PostcodeFinderExample /> }],
     },
     {
       name: "ConstituencyTable",
-      file: `${DIR}/ConstituencyTable.tsx`,
+      file: "app/(site)/campaigns/constituencies/_components/ConstituencyTable.tsx",
       variants: [{ label: "Folded", render: () => <ConstituencyTable rows={exampleRows} /> }],
     },
     {
       name: "MapSection",
-      file: `${DIR}/MapSection.tsx`,
+      file: "app/(site)/campaigns/constituencies/_components/MapSection.tsx",
       variants: [{ label: "The page's band", render: () => <MapSection rows={exampleRows} /> }],
     },
     {
       name: "NextSteps",
-      file: `${DIR}/NextSteps.tsx`,
+      file: "app/(site)/campaigns/constituencies/_components/NextSteps.tsx",
       variants: [{ label: "Under the map", render: () => <NextSteps /> }],
     },
   ],
