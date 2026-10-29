@@ -20,7 +20,7 @@ export type MailingSummary = {
   /** Copied from Airtable, so with no text, sender or attachments. */
   imported: boolean;
   state: MailingState;
-  /** Who wrote it, and the name it's from; neither for one imported. */
+  /** Who wrote it, and the name it's from, or with none the Gmail it goes from; neither for one imported. */
   createdBy: string | null;
   fromName: string | null;
   /** When it goes, or went. */
@@ -78,7 +78,8 @@ const RECIPIENTS_PAGE_SIZE = 100;
 
 const SELECT_MAILINGS = `
   SELECT m.id::int AS id, m.title, m.ask, a.title AS "askTitle", (m.airtable_field IS NOT NULL OR m.airtable_sent_between IS NOT NULL) AS imported,
-    m.state, m.created_by AS "createdBy", m.from_name AS "fromName", m.due_at AS "dueAt", m.updated_at AS "updatedAt",
+    m.state, m.created_by AS "createdBy", coalesce(nullif(m.from_name, ''), m.sent_from) AS "fromName", m.due_at AS "dueAt",
+    m.updated_at AS "updatedAt",
     min(l.sent_at) AS "sentAt",
     count(l.id)::int AS "to",
     count(l.id) FILTER (WHERE l.status IN ('sent', 'bounced', 'spam_complaint'))::int AS sent,

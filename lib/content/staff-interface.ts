@@ -933,7 +933,7 @@ export const staffCopy = {
     // In a mailing's email, who it's to: each recipient, as it's a letter to many.
     toEach: "Each recipient, by name and address",
     emailTitle: "The email",
-    whoTitle: "Who it was for",
+    whoTitle: (sent: boolean) => (sent ? "Who it was for" : "Who it's for"),
     skipReasons: {
       blocked: "Skipped: address blocked",
       "left-office": "Skipped: left office",
@@ -970,7 +970,7 @@ export const staffCopy = {
     // Under the link, in red, while what's in it isn't a whole one.
     badLink: "Give a full link beginning https://",
     // Over an ask's slug, which doesn't change.
-    slugLabel: "URL slug: ",
+    slugLabel: "Identifier: ",
     kindFixed: "⁂ Its kind can't change, as politicians have answered it.",
     fixed: "⁂ The site's code uses this ask, so it can't be changed here.",
     // Beside the form: the ask as it will show on a politician's page.
