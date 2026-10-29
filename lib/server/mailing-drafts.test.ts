@@ -301,7 +301,11 @@ describeWithDatabase("mailing drafts", () => {
     expect(raw).toContain('To: "Polly Placeholder" <al@pauseai.uk>');
     await saveDraft(id, (await getWrittenMailing(id))!.version, { fromName: null });
     await sendTestCopy((await getWrittenMailing(id))!, polly, "al@pauseai.uk");
-    expect(raw).toContain(`From: "${staffCopy.mailingPages.testFromName}" <jo@pauseai.uk>`);
+    // With no From name, as the mailing will go: in the name the Gmail sends as, or with none known, the address alone.
+    expect(raw).toMatch(/^From: jo@pauseai\.uk\r?$/m);
+    await query("UPDATE staff_accounts SET gmail_name = 'Jo Gmail' WHERE email = 'jo@pauseai.uk'");
+    await sendTestCopy((await getWrittenMailing(id))!, polly, "al@pauseai.uk");
+    expect(raw).toContain('From: "Jo Gmail" <jo@pauseai.uk>');
   });
 
   it("won't schedule a letter with a field a recipient has no value for", async () => {

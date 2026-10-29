@@ -106,8 +106,12 @@ export async function sendDueLetters({
 }): Promise<SendingRun> {
   const run: SendingRun = { sent: 0, skipped: 0, failed: 0, left: 0, waiting: [] };
   const mailings = await query<Mailing>(
-    `SELECT id::int AS id, subject, body, sent_from AS "sentFrom", from_name AS "fromName"
-     FROM mailings WHERE state = 'sending' ORDER BY due_at, id`,
+    // In its From name, or with none the name its Gmail sends as, written into the From line: whether
+    // Gmail would fill in a name left out isn't documented, so none is left to it.
+    `SELECT m.id::int AS id, m.subject, m.body, m.sent_from AS "sentFrom",
+       coalesce(nullif(m.from_name, ''), a.gmail_name, '') AS "fromName"
+     FROM mailings m LEFT JOIN staff_accounts a ON a.email = m.sent_from
+     WHERE m.state = 'sending' ORDER BY m.due_at, m.id`,
   );
   let last = 0;
   for (const mailing of mailings) {

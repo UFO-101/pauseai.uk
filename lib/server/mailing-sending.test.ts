@@ -120,6 +120,20 @@ describeWithDatabase("sending mailings", () => {
     expect(await state(id)).toBe("sent");
   });
 
+  it("sends in the name the Gmail sends as when the mailing gives none", async () => {
+    await addTestPolitician({ airtableId: null, name: "Polly Placeholder", email: "polly@example.org" });
+    await connectTestGmail(JO);
+    await query("UPDATE staff_accounts SET gmail_name = 'Jo Gmail' WHERE email = $1", [JO]);
+    const { id } = await createDraft(JO, { list: "politicians", params: {} }, { subject: "AI", body: LETTER });
+    const saved = await saveDraft(id, 1, { sentFrom: JO, fromName: "", dueAt: "2026-11-01T10:00:00Z" });
+    await scheduleMailing(id, (saved as { version: number }).version, JO);
+    vi.setSystemTime(new Date("2026-11-01T10:00:00Z"));
+    await startDueMailings();
+    const { sent, channel } = recording(SENT);
+    await sendDueLetters({ until: Infinity, gap: 0, channel });
+    expect(sent.map((m) => m.from)).toEqual([{ name: "Jo Gmail", address: JO }]);
+  });
+
   it("skips anyone who has left office or whose address is blocked since, and marks a failure", async () => {
     await addTestPolitician({ airtableId: null, name: "Ann Away", email: "ann@example.org" });
     await addTestPolitician({ airtableId: null, name: "Bob Bounced", email: "bob@example.org" });

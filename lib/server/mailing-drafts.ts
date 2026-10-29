@@ -364,8 +364,10 @@ export function emailFor(mailing: Pick<WrittenMailing, "subject" | "body">, reci
 /**
  * Sends `to`, an address a staff member gave, one recipient's email of a
  * mailing, as that recipient would get it, attachments and all, whatever
- * the recipient's permissions, addressed to the recipient's name at `to`: by the Gmail it's sent from, in its sender's name, if that's
- * connected; otherwise by Postmark.
+ * the recipient's permissions, addressed to the recipient's name at `to`:
+ * by the Gmail it's sent from, in its From name or with none the name the
+ * Gmail sends as, as the mailing will go, if that's connected; otherwise by Postmark,
+ * from the test copy's own name.
  */
 export async function sendTestCopy(
   mailing: WrittenMailing,
@@ -374,8 +376,9 @@ export async function sendTestCopy(
 ): Promise<ChannelResult> {
   const email = emailFor(mailing, recipient);
   const gmail = mailing.sentFrom ? await gmailAccount(mailing.sentFrom) : undefined;
+  // From the Gmail, as the mailing will be: in its From name, or with none, the name the Gmail sends as.
   const from = gmail
-    ? { name: mailing.fromName || staffCopy.mailingPages.testFromName, address: gmail.email }
+    ? { name: mailing.fromName || gmail.name, address: gmail.email }
     : { name: staffCopy.mailingPages.testFromName, address: to };
   return (gmail ? gmailEmail : postmarkEmail).send(
     { from, to: { name: recipient.name, address: to }, ...email, attachments: await attachmentsOf(mailing.id) },
