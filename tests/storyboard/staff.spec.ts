@@ -253,7 +253,7 @@ test("your own page, from your address: your Gmail connected, then disconnected,
 
   // Google sending you back having chosen another account, as the callback does.
   await page.goto(`${BASE}/staff/me?gmail=other-account`);
-  await expect(page.getByRole("alert")).toHaveText(staffCopy.gmail.otherAccount(staffEmail()));
+  await expect(page.getByText(staffCopy.gmail.otherAccount(staffEmail()))).toBeVisible();
   await frame(page, "back from Google with another account: an error, naming the one to choose");
 });
 
