@@ -44,6 +44,8 @@ export const staffCopy = {
       supporters: "Supporters",
       politicians: "Politicians",
       admin: "Admin",
+      // Over your address, which leads to your own page.
+      profile: "Profile",
     } as Record<string, string>,
     supporters: "Supporters",
     politicians: "Politicians",
