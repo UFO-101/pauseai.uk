@@ -329,7 +329,11 @@ the audit log. A table that isn't a whole list, inside a card, is a
 `ListTable`, or a plain `Table`: striped, with no count or downloads.
 
 Columns go in the same order in every list: who it is, then how it
-stands, then counts, then when.
+stands, then counts, then when. Where a row has a page of its own, the
+first column leads to it, so there's one place to click to open it: a
+supporter's or politician's name. A row with no name, such as a letter,
+starts with what leads to it instead, its status, before who it's from
+and to.
 
 **Filters** (`ui/FilterBar`). Every list's filters are the same bar
 above it, and a list's own filters component only says what its filters

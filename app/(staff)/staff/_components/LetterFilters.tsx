@@ -9,14 +9,14 @@ const copy = staffCopy.letters;
 export function letterFilters(): Filter[] {
   return [
     {
-      name: "campaign",
-      label: copy.columns.campaign,
-      options: campaigns.map((campaign) => ({ value: campaign.slug, label: campaign.title })),
-    },
-    {
       name: "status",
       label: copy.columns.status,
       options: Object.entries(copy.status).map(([value, label]) => ({ value, label })),
+    },
+    {
+      name: "campaign",
+      label: copy.columns.campaign,
+      options: campaigns.map((campaign) => ({ value: campaign.slug, label: campaign.title })),
     },
     {
       name: "consent",

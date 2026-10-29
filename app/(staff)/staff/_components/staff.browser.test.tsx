@@ -3889,8 +3889,8 @@ describe("LetterFilters", () => {
     await expect.element(page.getByRole("searchbox", { name: copy.search })).toHaveValue("jane");
     // In the columns' order.
     expect(chips()).toEqual([
-      `${copy.columns.campaign}: ${campaignBySlug("support-sobel-bill")!.title}`,
       `${copy.columns.status}: ${copy.status.sent}`,
+      `${copy.columns.campaign}: ${campaignBySlug("support-sobel-bill")!.title}`,
     ]);
     const add = await menu(staffCopy.filters.add);
     expect(add[0]).toEqual([

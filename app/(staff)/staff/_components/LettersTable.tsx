@@ -18,13 +18,20 @@ const statusOf = (status: string) => copy.status[status] ?? status;
 
 /**
  * The letters list's columns, as every list's go (docs/style-guide.md):
- * who it was from (leading to their supporter) and their email, and to
- * (leading to the MP's page), and the campaign (leading to its page on
- * the site); then how it stands, its status (leading to the letter's
- * page) and whether the sender agreed to hear from us; then when it was
- * sent and when the MP answered.
+ * first its status, leading to the letter's page, as a letter has no
+ * name; who it was from (leading to their supporter) and their email, and
+ * to (leading to the MP's page), and the campaign (leading to its page on
+ * the site); whether the sender agreed to hear from us; then when it was
+ * sent and when the MP replied.
  */
 export const letterColumns: ListColumn<LetterSummary>[] = [
+  {
+    key: "status",
+    label: copy.columns.status,
+    short: true,
+    text: (l) => statusOf(l.status),
+    cell: (l) => <Link href={`/staff/letters/${l.id}`}>{statusOf(l.status)}</Link>,
+  },
   {
     key: "from",
     label: copy.columns.from,
@@ -61,13 +68,6 @@ export const letterColumns: ListColumn<LetterSummary>[] = [
         <CampaignName slug={l.campaign} /> {l.imported && <Tag>{copy.imported}</Tag>}
       </>
     ),
-  },
-  {
-    key: "status",
-    label: copy.columns.status,
-    short: true,
-    text: (l) => statusOf(l.status),
-    cell: (l) => <Link href={`/staff/letters/${l.id}`}>{statusOf(l.status)}</Link>,
   },
   {
     key: "consent",
