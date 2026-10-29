@@ -135,7 +135,8 @@ dialog::backdrop { background: #000; }
 #lightbox-close { font: inherit; font-size: 20px; background: none; color: #eee; border: 0; cursor: pointer; }
 .lightbox-image { overflow: auto; height: calc(100vh - 41px); }
 .lightbox-image img { display: block; margin: 0 auto; max-width: none; }
-@media (max-width: 800px) { .layout { grid-template-columns: 1fr; } #sidebar { position: static; height: auto; padding-bottom: 12px; } .frame { grid-template-columns: 1fr; } #filter { width: 100%; } }
+/* Narrow: the bar scrolls away, the sidebar is a list above the board, and the frames stack. */
+@media (max-width: 800px) { .bar { position: static; } :root { --bar: 0px; } .layout { grid-template-columns: 1fr; } #sidebar { position: static; height: auto; padding-bottom: 12px; } #sidebar .part { position: static; } main { padding: 8px 16px 40px; } .frame { grid-template-columns: 1fr; } #filter { width: 100%; } }
 `;
 
 const JS = `
@@ -308,7 +309,10 @@ function flowInView() {
 // The sidebar follows the board: the section in view is open, unless it was
 // shut by hand, and the one left behind shuts, unless it was opened by hand;
 // the flow in view is marked, and kept in the sidebar's view. While
-// filtering, every section that matches stays open.
+// filtering, every section that matches stays open. On a narrow screen the
+// sidebar is above the board, so opening and shutting there would move the
+// page: it only marks.
+const narrow = window.matchMedia("(max-width: 800px)");
 let here = { section: null, flow: null };
 function trackPlace() {
   const flow = flowInView();
@@ -318,7 +322,7 @@ function trackPlace() {
   for (const group of document.querySelectorAll("#sidebar details")) {
     const id = group.dataset.section;
     group.classList.toggle("current", id === section);
-    if (filtering || state.opened.has(id)) continue;
+    if (filtering || narrow.matches || state.opened.has(id)) continue;
     group.open = id === section && !state.closed.has(id);
   }
   for (const link of document.querySelectorAll("#sidebar a[aria-current]")) link.removeAttribute("aria-current");
@@ -326,6 +330,7 @@ function trackPlace() {
   here = { section, flow: flow?.id ?? null };
   if (!link) return;
   link.setAttribute("aria-current", "true");
+  if (narrow.matches) return;
   // Into the sidebar's own view, below its part's heading. Not scrollIntoView:
   // on a phone the sidebar isn't sticky, and that would scroll the page to it.
   const sidebar = document.getElementById("sidebar");
