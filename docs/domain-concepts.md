@@ -72,7 +72,12 @@ letter, come to an event (`asks`, `lib/asks.ts`). Each has a slug, a title,
 a kind (`letter` or `event`), a date, a link to the letter or the
 event, and who asks it: supporters, in their letters or in person, PauseAI,
 in its own emails, ControlAI, for its own statement and letter, or more than
-one. A migration adds each.
+one. Staff add, change and delete them on `/staff/asks`, or from a
+mailing's Ask: the slug is made from the title and the date's month, and
+never changes; the kind is fixed once anyone has answered; an ask can be
+deleted only while no answer, campaign or mailing refers to it. The asks
+`lib/asks.ts` names (`FIXED_ASKS`) can't be changed there, as imports and
+campaigns depend on them.
 
 A person's answer to an ask is a status (`ask_statuses`): one row per
 person per ask, with a status, a date, a note, and who set it; no answer,
@@ -146,6 +151,48 @@ adds what its kind has, joined as notable people are:
   fields had. Those with no address, or a blocked one, are left out.
 
 A letter's ask is its campaign's or its mailing's, never its own.
+
+### Mailings to politicians
+
+A mailing written on the site goes from a staff member's own Gmail, as if
+they'd written each letter, one at a time: no unsubscribe link, no consent
+check, as to public figures in their public role. Each staff member
+connects their own Gmail, on their page (`/staff/me`) or from a mailing's
+Sent from (`lib/server/gmail-accounts.ts`); once it's connected, any staff
+member can send a mailing from it. The Google Cloud project's consent
+screen is Internal, so only pauseai.uk accounts can connect. The refresh
+token is kept encrypted (`GMAIL_TOKEN_KEY`), and deleted on disconnecting.
+
+- **Scheduling** needs the Gmail it's from connected, and no more
+  recipients than one account sends in a day: the site sends at most
+  1,800 a day from an account, counting every mailing, under Gmail's 2,000,
+  so the person's own email still goes (`GMAIL_DAILY_LIMIT`).
+- **Sending** (`lib/server/mailing-sending.ts`): the hourly
+  `send-mailings` job starts each scheduled mailing that's due, then sends
+  its letters at Gmail's pace, one a second, marking each as it goes. A
+  scheduled function has 30 seconds, so while letters are left it starts a
+  background function, which calls the site again and again for up to 15
+  minutes; the next hour takes up the rest. Each letter is checked just
+  before it goes: a politician out of office, or whose address has been
+  blocked since, is skipped, and the letter says why. An account at its
+  limit, or no longer connected, waits.
+- **Message-IDs.** Every letter of a mailing goes with a Message-ID of ours
+  (`email_sends.rfc_message_id`), whichever backend sends it, so a reply
+  is matched by the IDs it names. `send()` takes a backend: Postmark, or a
+  connected Gmail.
+- **Reading** (`lib/server/gmail-reading.ts`): the hourly `read-gmail` job
+  lists each mailbox's new messages since the last `historyId`, and
+  fetches only their reply headers. It fetches whole only the messages in
+  our letters' threads, and bounces. A bounce, from mailer-daemon or
+  postmaster, is recorded as Postmark's are, marked found in Gmail; as a
+  bounce from another server may not be in the thread, the last three days'
+  are searched for too. An automatic reply is an event on the letter. Any
+  other message in the thread, the politician's reply or our answer, is
+  kept whole, gzipped, in Netlify Blobs, with a row in `letter_replies`;
+  the backup Worker copies them (`backup/README.md`).
+- **Threads.** Each PauseAI letter has a page with its whole thread
+  (`/staff/mailings/<id>/letters/<letter>`), from the politician's history
+  and the mailing's recipients, with Open in Gmail for whoever sent it.
 
 ## Form entries
 
@@ -372,8 +419,10 @@ for the purpose's topic as it checks `email_blocks`.
 
 Everything the site sends, to anyone (`lib/server/email.ts`). Every email
 goes through `send()` with its purpose: `letter`, `forwarded-reply`,
-`staff-login` or `staff-alert`. Each try is logged (`email_sends`): when,
-why, to whom, and whether it went.
+`staff-login`, `staff-alert`, `mailing` or `mailing-test`. Each try is
+logged (`email_sends`): when, why, to whom, whether it went, and which
+backend sent it, Postmark or a staff member's Gmail ("Mailings to
+politicians", above).
 
 When an email bounces or its recipient marks it as spam, the problem is
 recorded against the address (`email_problems`). A hard bounce or a

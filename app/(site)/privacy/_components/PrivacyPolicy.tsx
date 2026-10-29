@@ -97,6 +97,13 @@ export default function PrivacyPolicy() {
         bounces or is marked as spam, we keep a record of that against the address so we don&apos;t send to it again.
       </p>
 
+      <h2>⁂ Our letters to politicians</h2>
+      <p>
+        ⁂ We write to politicians from our staff&apos;s own Gmail accounts. We keep their replies in full, as they write
+        in their public role, including any mention of a constituent. If you&apos;re named in one and want it removed,
+        write to us.
+      </p>
+
       <h2>Events and Luma</h2>
       <p>
         Our events run on Luma. When you register for one of our events, or follow our calendar, Luma gives us your
@@ -138,7 +145,8 @@ export default function PrivacyPolicy() {
         <li>postcodes.io: looking up postcodes; it keeps nothing.</li>
         <li>Airtable: our records of MPs and of members, and letters sent through our earlier form.</li>
         <li>
-          Google (Gmail): our policy team&apos;s inbox, which gets a copy of each letter and of each MP&apos;s reply.
+          Google (Gmail): our policy team&apos;s inbox, which gets a copy of each letter and of each MP&apos;s reply,
+          and our staff&apos;s mailboxes, which our letters to politicians are sent from. ⁂
         </li>
       </ul>
 
