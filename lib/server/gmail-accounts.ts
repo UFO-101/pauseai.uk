@@ -1,4 +1,5 @@
 import "server-only";
+import { GMAIL_DAILY_LIMIT } from "@/lib/gmail-connect";
 import { logChange } from "./audit";
 import { query } from "./db";
 import { decryptToken, encryptToken } from "./gmail-tokens";
@@ -11,12 +12,7 @@ import { exchangeGmailCode, gmailAccessToken, gmailProfile, GmailError, revokeGm
 // encrypted on their account (staff_accounts), and deleted when they
 // disconnect or their account is removed.
 
-/**
- * The most the site sends from one account in a day, counting every
- * mailing: under Gmail's 2,000 (https://support.google.com/a/answer/166852),
- * so the person's own email still goes.
- */
-export const GMAIL_DAILY_LIMIT = 1800;
+export { GMAIL_DAILY_LIMIT };
 
 /** A connected account, with how many it has sent in the last day and how many more it can. */
 export type GmailAccount = { email: string; connectedAt: string; sentToday: number; remaining: number };
@@ -66,7 +62,6 @@ export async function connectGmail(account: string, code: string, redirectUri: s
     `UPDATE staff_accounts SET gmail_token = $2, gmail_connected_at = now(), gmail_history_id = $3 WHERE email = $1`,
     [account.toLowerCase(), encryptToken(refreshToken), profile.historyId],
   );
-  accessTokens.delete(account.toLowerCase());
   await logChange(account, "connect gmail", { email: account.toLowerCase() });
   return { connected: true };
 }
@@ -79,7 +74,6 @@ async function forget(account: string, by: string, why: string): Promise<string 
      FROM old WHERE a.email = old.email RETURNING old.gmail_token AS token`,
     [account.toLowerCase()],
   );
-  accessTokens.delete(account.toLowerCase());
   if (!row) return undefined;
   await logChange(by, "disconnect gmail", { email: account.toLowerCase(), why });
   return decryptToken(row.token);
@@ -93,7 +87,10 @@ export async function disconnectGmail(account: string, by: string): Promise<bool
   return true;
 }
 
-/** Access tokens, by account, until a minute before they expire. */
+/**
+ * Access tokens, until a minute before they expire, by the stored refresh
+ * token they came from, so connecting again starts afresh.
+ */
 const accessTokens = new Map<string, { token: string; until: number }>();
 
 /**
@@ -104,16 +101,17 @@ const accessTokens = new Map<string, { token: string; until: number }>();
  */
 export async function gmailAccess(account: string): Promise<string> {
   const email = account.toLowerCase();
-  const cached = accessTokens.get(email);
-  if (cached && cached.until > Date.now()) return cached.token;
   const [row] = await query<{ token: Buffer | null }>(
     "SELECT gmail_token AS token FROM staff_accounts WHERE email = $1",
     [email],
   );
   if (!row?.token) throw new GmailError(`${email}'s Gmail isn't connected`, 0);
+  const key = row.token.toString("base64");
+  const cached = accessTokens.get(key);
+  if (cached && cached.until > Date.now()) return cached.token;
   try {
     const { token, expiresIn } = await gmailAccessToken(decryptToken(row.token));
-    accessTokens.set(email, { token, until: Date.now() + (expiresIn - 60) * 1000 });
+    accessTokens.set(key, { token, until: Date.now() + (expiresIn - 60) * 1000 });
     return token;
   } catch (error) {
     if (error instanceof GmailError && error.revoked) await forget(email, "google", "access revoked");

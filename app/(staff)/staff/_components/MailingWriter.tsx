@@ -26,6 +26,7 @@ import type { ChannelResult } from "@/lib/server/mailing-channels";
 import type { MailingAttachmentSummary, SaveResult, ScheduleResult, WrittenMailing } from "@/lib/server/mailing-drafts";
 import type { PreviewRecipient, WriterData } from "@/lib/server/mailing-pages";
 import { CHECK_EVERY, DueTimeFields } from "./DueTime";
+import { GmailConnect, GmailOutcome, SentToday } from "./GmailConnect";
 import { DeleteDraft } from "./MailingButtons";
 import MailingEditor from "./MailingEditor";
 import MailingFiles from "./MailingFiles";
@@ -286,6 +287,7 @@ export default function MailingWriter({
   const when: { day: string; hour: number | null } = values.dueAt
     ? londonDayHour(values.dueAt)
     : { day: dayPicked || earliest.day, hour: null };
+  const sender = data.senders.find((one) => one.email === values.sentFrom);
   const lacking = data.fields.filter((field) => field.lacking).map((field) => field.id);
   const written = !unwritten(body);
   const problems = scheduleProblems({
@@ -296,8 +298,19 @@ export default function MailingWriter({
     lacking,
     unknown: data.unknown,
     sends: data.sends,
+    connected: Boolean(sender),
   }).filter((problem) => problem !== "cannot-send");
   const title = values.subject.trim() || copy.newTitle;
+  // The connected accounts, and the one chosen or your own if they aren't.
+  const senderChoices = [
+    ...data.senders.map((one) => ({ ...one, connected: true })),
+    ...[data.me, values.sentFrom]
+      .filter((email, i, all): email is string => !!email && all.indexOf(email) === i)
+      .filter((email) => !data.senders.some((one) => one.email === email))
+      .map((email) => ({ email, remaining: 0, connected: false })),
+  ];
+  // Where connecting Gmail comes back to: this draft, or this new mailing.
+  const writerPath = savedId ? `/staff/mailings/${savedId}` : filtersPath("/staff/mailings/new", data.filter.params);
   const noAddress = data.leftOut.filter((one) => one.reason === "no-address").length;
 
   return (
@@ -315,6 +328,7 @@ export default function MailingWriter({
       <h1 ref={heading} className={styles.title}>
         {title}
       </h1>
+      <GmailOutcome />
       {!data.sends && <Strip tone="amber">{copy.cantSend}</Strip>}
       {saveState === "conflict" && (
         <Strip tone="red" announce>
@@ -424,15 +438,19 @@ export default function MailingWriter({
                     {copy.choose}
                   </option>
                 )}
-                {data.senders.map((sender) => (
-                  <option key={sender} value={sender}>
-                    {sender}
+                {senderChoices.map((sender) => (
+                  <option key={sender.email} value={sender.email}>
+                    {sender.connected
+                      ? copy.sender(sender.email, sender.remaining.toLocaleString("en-GB"))
+                      : copy.senderNotConnected(sender.email)}
                   </option>
                 ))}
               </Select>
             </Field>
-            <Hint>{copy.notConnected}</Hint>
+            {sender && <SentToday sent={sender.sentToday} />}
           </div>
+          {!sender && values.sentFrom === data.me && <GmailConnect back={writerPath} onConnect={flush} />}
+          {!sender && values.sentFrom && values.sentFrom !== data.me && <Hint>{copy.notConnected}</Hint>}
         </Card>
 
         <Card span={6} title={<Numbered n={5}>{copy.sections.when}</Numbered>} id="when-title">

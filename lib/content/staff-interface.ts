@@ -59,6 +59,37 @@ export const staffCopy = {
     sessions: (n: number) => `${n} sessions`,
   },
   // The page of your own sessions (/staff/sessions): one row each, and a way to end them all.
+  // Your own page: your sessions and your Gmail.
+  me: {
+    title: "⁂ You",
+    intro: "⁂ Your Gmail, and where you're logged in.",
+    sessionsTitle: "⁂ Where you're logged in",
+  },
+  // Connecting a staff member's Gmail, on their own page and in a mailing's Sent from.
+  gmail: {
+    title: "⁂ Your Gmail",
+    // What connecting it means, said before it goes to Google.
+    explain: [
+      "⁂ Connecting your Gmail lets the site send mailings to politicians from your address, as if you'd written each one. They're kept in your Sent mail, and replies come back to you.",
+      "⁂ Once it's connected, any staff member can send a mailing from it.",
+      "⁂ The site reads only the replies to those letters, and bounces: it looks at the headers of new messages to find them, and opens nothing else. It never deletes or changes anything.",
+    ],
+    limit: (limit: string) =>
+      `⁂ It sends at most ${limit} emails a day from one account, so your own email still goes.`,
+    connect: "⁂ Connect Gmail",
+    disconnect: "⁂ Disconnect Gmail",
+    connected: (when: string) => `⁂ Connected ${when}.`,
+    notConnected: "⁂ Your Gmail isn't connected.",
+    sentToday: (sent: number, limit: string) => `⁂ ${sent} of today's ${limit} sent.`,
+    // After coming back from Google.
+    outcomes: {
+      connected: "⁂ Your Gmail is connected.",
+      "other-account": "⁂ That was another Google account. Connect your own pauseai.uk Gmail.",
+      refused: "⁂ Gmail wasn't connected, as you didn't allow it.",
+      failed: "⁂ Gmail couldn't be connected. Try again.",
+    } as Record<string, string>,
+    disconnected: "⁂ Your Gmail is disconnected.",
+  },
   sessions: {
     title: "Your sessions",
     intro: "Everywhere you're logged in to the PauseAI Staff pages.",
@@ -806,7 +837,11 @@ export const staffCopy = {
     // The first entry of a list while nothing in it is chosen.
     choose: "Choose…",
     fromLegend: "Whose Gmail to send it from",
-    notConnected: "Gmail connection isn't implemented yet.",
+    // A sender, in Sent from's list: their address, and how many more it can send today.
+    sender: (address: string, left: string) => `⁂ ${address} (${left} left today)`,
+    // Your own address, before your Gmail's connected.
+    senderNotConnected: (address: string) => `⁂ ${address} (not connected)`,
+    notConnected: "⁂ This Gmail isn't connected. Only its owner can connect it, from their own page.",
     // In the preview, who it's from: the name comes from the Gmail account.
     from: "From",
     fromGmail: (address: string) => `Your Gmail's name <${address}>`,
@@ -825,6 +860,8 @@ export const staffCopy = {
       "no-recipients": "There's nobody to send to.",
       "field-lacking": "It uses a field some recipients have no value for.",
       "no-sender": "Choose who to send the message from.",
+      "not-connected": "⁂ The Gmail it's sent from isn't connected.",
+      "too-many": "⁂ It goes to more people than one Gmail can send to in a day.",
       "no-time": "Choose what time it will be sent.",
       "time-passed": "You can't send it into the past!",
       "cannot-send": "Sending isn't built yet.",

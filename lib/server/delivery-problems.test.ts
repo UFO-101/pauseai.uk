@@ -56,6 +56,23 @@ describeWithDatabase("handleDeliveryProblem", () => {
   const letter = async () => (await query<{ status: string }>("SELECT status FROM letters"))[0].status;
   const events = () => query("SELECT status, details FROM letter_events");
 
+  it("marks a mailing's letter that bounced, without emailing staff", async () => {
+    const mp = await addTestMp();
+    const [{ id }] = await query<{ id: number }>(
+      "INSERT INTO letters (kind, notable_person_id, status) VALUES ('pauseai', $1, 'sent') RETURNING id::int AS id",
+      [mp],
+    );
+    await query(
+      "INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id, backend, sender) VALUES ('mailing', $1, 'test-mp@example.org', 'sent', 'msg-1', 'gmail', 'jo@pauseai.uk')",
+      [id],
+    );
+    const sent = postmark();
+    await handleDeliveryProblem(BOUNCE, REQUEST);
+    expect(await letter()).toBe("bounced");
+    expect(await events()).toMatchObject([{ status: "bounced" }]);
+    expect(sent).toEqual([]);
+  });
+
   it("marks a letter that hard-bounced, blocks the address, and emails staff a link to the blocked addresses", async () => {
     await sentEmail();
     const sent = postmark();

@@ -12,7 +12,8 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { now } from "@/lib/now";
 import { logChange } from "./audit";
 import { query, transaction } from "./db";
-import { mailingChannel, type ChannelResult } from "./mailing-channels";
+import { gmailAccount } from "./gmail-accounts";
+import { gmailEmail, mailingChannel, postmarkEmail, type ChannelResult } from "./mailing-channels";
 import { politicianAudience, type PoliticianRecipient } from "./mailing-recipients";
 import type { Attachment } from "./outside-services/postmark";
 import type { StoredFilter } from "@/lib/staff-search";
@@ -283,6 +284,7 @@ export async function scheduleMailing(
       lacking: audience.fields.filter((field) => field.lacking).map((field) => field.id),
       unknown,
       sends: Boolean(channel?.sendsMailings),
+      connected: Boolean(mailing.sentFrom && (await gmailAccount(mailing.sentFrom))),
     });
     if (problems.length) return { scheduled: false, problems };
     await query(
@@ -365,23 +367,22 @@ export function emailFor(mailing: Pick<WrittenMailing, "subject" | "body">, reci
 /**
  * Sends `to`, a staff member, one recipient's email of a mailing, as that
  * recipient would get it, attachments and all, whatever the recipient's
- * permissions; by Postmark, addressed to the recipient's name at the staff
- * member's address.
+ * permissions, addressed to the recipient's name at the staff member's
+ * address: by the Gmail it's sent from, in its sender's name, if that's
+ * connected; otherwise by Postmark.
  */
 export async function sendTestCopy(
   mailing: WrittenMailing,
   recipient: PoliticianRecipient,
   to: string,
-  channel = mailingChannel("email")!,
 ): Promise<ChannelResult> {
   const email = emailFor(mailing, recipient);
-  return channel.send(
-    {
-      from: { name: staffCopy.mailingPages.testFromName, address: to },
-      to: { name: recipient.name, address: to },
-      ...email,
-      attachments: await attachmentsOf(mailing.id),
-    },
+  const gmail = mailing.sentFrom ? await gmailAccount(mailing.sentFrom) : undefined;
+  const from = gmail
+    ? { name: mailing.fromName || staffCopy.mailingPages.testFromName, address: gmail.email }
+    : { name: staffCopy.mailingPages.testFromName, address: to };
+  return (gmail ? gmailEmail : postmarkEmail).send(
+    { from, to: { name: recipient.name, address: to }, ...email, attachments: await attachmentsOf(mailing.id) },
     "mailing-test",
   );
 }

@@ -1,3 +1,4 @@
+import { GMAIL_DAILY_LIMIT } from "./gmail-connect";
 import { fieldsIn, isBlankMailing, type MailingDoc } from "./mailing-doc";
 import { now } from "./now";
 
@@ -11,6 +12,8 @@ export type ScheduleProblem =
   | "no-recipients"
   | "field-lacking"
   | "no-sender"
+  | "not-connected"
+  | "too-many"
   | "no-time"
   | "time-passed"
   | "cannot-send";
@@ -29,6 +32,8 @@ export type SchedulingMailing = {
   unknown: string[];
   /** Whether its channel sends mailings yet. */
   sends: boolean;
+  /** Whether the account it's sent from has its Gmail connected. */
+  connected: boolean;
 };
 
 /** What stops a mailing being scheduled: none, for one that can be. A field it uses must have a value for everyone. */
@@ -40,6 +45,9 @@ export function scheduleProblems(mailing: SchedulingMailing): ScheduleProblem[] 
     ["no-recipients", mailing.recipients === 0],
     ["field-lacking", fieldsIn(mailing.body).some((field) => mailing.lacking.includes(field))],
     ["no-sender", !mailing.sentFrom],
+    ["not-connected", Boolean(mailing.sentFrom) && !mailing.connected],
+    // One account sends at most a day's limit, so a mailing to more can't go.
+    ["too-many", mailing.recipients > GMAIL_DAILY_LIMIT],
     ["no-time", !mailing.dueAt],
     ["time-passed", Boolean(mailing.dueAt) && new Date(mailing.dueAt!) <= now()],
     ["cannot-send", !mailing.sends],

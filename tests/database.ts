@@ -1,7 +1,8 @@
 // A fresh Postgres database for each test file that needs one, with the
 // migrations applied (scripts/fresh-database.mjs). See docs/testing.md.
-import { afterAll, beforeAll, beforeEach, describe } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, vi } from "vitest";
 import { closeDb, query } from "@/lib/server/db";
+import { encryptToken } from "@/lib/server/gmail-tokens";
 import { dropDatabase, freshDatabase } from "@/scripts/fresh-database.mjs";
 
 /**
@@ -28,6 +29,7 @@ const TABLES = [
   "email_sends",
   "import_runs",
   "letter_events",
+  "letter_replies",
   "letters",
   "form_entries",
   "form_entry_luma",
@@ -215,4 +217,25 @@ export async function withDatabaseDown<T>(work: () => Promise<T>): Promise<T> {
     await closeDb();
     process.env.NETLIFY_DB_URL = url;
   }
+}
+
+/** A test key for Gmail's tokens (GMAIL_TOKEN_KEY), the same in every test. */
+export const TEST_GMAIL_TOKEN_KEY = Buffer.alloc(32, 1).toString("base64");
+
+/**
+ * Gives `email` a staff account with its Gmail connected, straight into the
+ * table, read up to `historyId`. Its token is the Gmail fixture's
+ * (tests/fixtures/outside-services.ts), which knows the account by it.
+ * Sets GMAIL_TOKEN_KEY and the OAuth client's settings; the test unstubs them.
+ */
+export async function connectTestGmail(email = "jo@pauseai.uk", historyId = "1000"): Promise<void> {
+  vi.stubEnv("GMAIL_TOKEN_KEY", TEST_GMAIL_TOKEN_KEY);
+  vi.stubEnv("GOOGLE_CLIENT_ID", "client-id");
+  vi.stubEnv("GOOGLE_CLIENT_SECRET", "client-secret");
+  await query(
+    `INSERT INTO staff_accounts (email, added_by, gmail_token, gmail_connected_at, gmail_history_id)
+     VALUES ($1, 'test', $2, now(), $3)
+     ON CONFLICT (email) DO UPDATE SET gmail_token = $2, gmail_connected_at = now(), gmail_history_id = $3`,
+    [email, encryptToken(`fixture-refresh:${email}`), historyId],
+  );
 }

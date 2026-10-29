@@ -1,7 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
-import { addTestLetter, addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import {
+  addTestLetter,
+  addTestMp,
+  addTestPolitician,
+  connectTestGmail,
+  describeWithDatabase,
+  useTestDatabase,
+} from "@/tests/database";
 import { query } from "./db";
 import {
   bareAddress,
@@ -51,7 +58,7 @@ describeWithDatabase("send", () => {
 
   it("sends the email, and logs it with what it was for", async () => {
     server.use(http.post(POSTMARK, () => HttpResponse.json({ ErrorCode: 0, MessageID: "msg-1" })));
-    expect(await send(EMAIL, "staff-login")).toEqual({ sent: true, id: "msg-1" });
+    expect(await send(EMAIL, "staff-login")).toEqual({ sent: true, id: "msg-1", messageId: null, threadId: null });
     expect(await sends()).toEqual([
       { purpose: "staff-login", letterId: null, address: "jo@example.org", outcome: "sent", messageId: "msg-1" },
     ]);
@@ -90,6 +97,70 @@ describeWithDatabase("send", () => {
     expect(error.mock.calls[0][0]).toBe("Couldn't send an email (staff-alert):");
     expect(await sends()).toMatchObject([{ outcome: "failed", messageId: null }]);
     expect(await isBlocked("jo@example.org")).toBe(false);
+  });
+
+  it("sends with a Message-ID of ours when given one, as a mailing's letter, counting it against its sender", async () => {
+    let headers: unknown;
+    server.use(
+      http.post(POSTMARK, async ({ request }) => {
+        headers = ((await request.json()) as { Headers: unknown }).Headers;
+        return HttpResponse.json({ ErrorCode: 0, MessageID: "msg-2" });
+      }),
+    );
+    expect(await send(EMAIL, "mailing", null, { sender: "jo@pauseai.uk", messageId: "m@pauseai.uk" })).toEqual({
+      sent: true,
+      id: "msg-2",
+      messageId: "m@pauseai.uk",
+      threadId: null,
+    });
+    expect(headers).toEqual([{ Name: "Message-ID", Value: "<m@pauseai.uk>" }]);
+    expect(await query("SELECT backend, sender, rfc_message_id FROM email_sends")).toEqual([
+      { backend: "postmark", sender: "jo@pauseai.uk", rfc_message_id: "m@pauseai.uk" },
+    ]);
+  });
+});
+
+describeWithDatabase("send by Gmail", () => {
+  useTestDatabase();
+  const GMAIL = { name: "gmail" as const, account: "jo@pauseai.uk" };
+  const SEND = "https://gmail.googleapis.com/gmail/v1/users/me/messages/send";
+
+  it("sends as the account, with a Message-ID of ours, and logs the backend, sender and thread", async () => {
+    await connectTestGmail();
+    let auth: string | null = null;
+    server.use(
+      http.post(SEND, ({ request }) => {
+        auth = request.headers.get("authorization");
+        return HttpResponse.json({ id: "g1", threadId: "t1" });
+      }),
+    );
+    const sent = await send({ ...EMAIL, Tag: "mailing" }, "mailing", null, { backend: GMAIL });
+    expect(sent).toEqual({ sent: true, id: "g1", messageId: expect.stringMatching(/@pauseai\.uk$/), threadId: "t1" });
+    expect(auth).toBe("Bearer fixture-access:jo@pauseai.uk");
+    expect(await query("SELECT backend, sender, message_id, rfc_message_id, gmail_thread_id FROM email_sends")).toEqual(
+      [
+        {
+          backend: "gmail",
+          sender: "jo@pauseai.uk",
+          message_id: "g1",
+          rfc_message_id: (sent as { messageId: string }).messageId,
+          gmail_thread_id: "t1",
+        },
+      ],
+    );
+    await send(EMAIL, "mailing", null, { backend: GMAIL, messageId: "given@pauseai.uk" });
+    expect(await query("SELECT rfc_message_id FROM email_sends ORDER BY id DESC LIMIT 1")).toEqual([
+      { rfc_message_id: "given@pauseai.uk" },
+    ]);
+  });
+
+  it("fails, saying which account, when Gmail can't send or the account isn't connected", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(await send(EMAIL, "mailing", null, { backend: GMAIL })).toEqual({ sent: false, reason: "failed" });
+    expect(error.mock.calls[0][0]).toBe("Couldn't send an email (mailing, by Gmail as jo@pauseai.uk):");
+    expect(await query("SELECT outcome, backend, sender, rfc_message_id FROM email_sends")).toEqual([
+      { outcome: "failed", backend: "gmail", sender: "jo@pauseai.uk", rfc_message_id: null },
+    ]);
   });
 });
 

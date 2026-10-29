@@ -289,7 +289,7 @@ const BLOBS = ((globalThis as { fixtureBlobs?: Map<string, Uint8Array> }).fixtur
 
 function blobResponse(pathname: string, init?: RequestInit): Response {
   const key = decodeURIComponent(pathname.split("/").slice(3).join("/"));
-  if (init?.method === "PUT") {
+  if (init?.method?.toUpperCase() === "PUT") {
     BLOBS.set(key, new Uint8Array(init.body as ArrayBuffer));
     return new Response(null, { status: 200 });
   }

@@ -2,6 +2,13 @@
 // consent, and the one it comes back to, which goes back to the page it
 // started from (app/(staff)/staff/api/gmail/).
 
+/**
+ * The most the site sends from one account in a day, counting every
+ * mailing: under Gmail's 2,000 (https://support.google.com/a/answer/166852),
+ * so the person's own email still goes.
+ */
+export const GMAIL_DAILY_LIMIT = 1800;
+
 export const GMAIL_CONNECT_PATH = "/staff/api/gmail/connect";
 export const GMAIL_CALLBACK_PATH = "/staff/api/gmail/callback";
 
