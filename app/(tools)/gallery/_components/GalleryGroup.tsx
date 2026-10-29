@@ -10,7 +10,7 @@ import styles from "./Gallery.module.css";
  */
 export default function GalleryGroup({ group, browser = false }: { group: Group; browser?: boolean }) {
   return (
-    <main className={styles.gallery} data-gallery-group={group.id}>
+    <main className={`${styles.gallery} ${styles.group}`} data-gallery-group={group.id}>
       <div className="container">
         <Link className={styles.back} href="/gallery">
           ← Component gallery
