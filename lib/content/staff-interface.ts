@@ -928,7 +928,7 @@ export const staffCopy = {
     save: "Save",
     // The fields of the box at the top.
     status: "Status",
-    country: "Country",
+    country: "Nation",
     notes: "Notes",
     // Over how to write to them: their address and salutation.
     writing: "Writing to them",

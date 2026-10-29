@@ -68,7 +68,7 @@ test("a new mailing from the politicians list: written, saved as a draft, previe
 }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
-  await page.goto(`${BASE}/staff/politicians?country=scotland`);
+  await page.goto(`${BASE}/staff/politicians?nation=scotland`);
   await expect(page.getByRole("link", { name: copy.mailThese(1) })).toBeVisible();
   await frame(page, "the politicians in Scotland, with Mail these beside Download");
 

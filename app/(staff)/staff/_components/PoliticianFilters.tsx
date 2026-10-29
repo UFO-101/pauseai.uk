@@ -20,7 +20,7 @@ export function politicianFilters(askSlug: string, parties: string[], asks: Ask[
   const ask = asks.find((a) => a.slug === askSlug);
   return [
     {
-      name: "country",
+      name: "nation",
       label: staffCopy.politician.country,
       repeat: true,
       options: COUNTRIES.map((country) => ({ value: country, label: staffCopy.countries[country] })),

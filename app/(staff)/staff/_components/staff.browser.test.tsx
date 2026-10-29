@@ -2836,6 +2836,20 @@ describe("SupportersTable", () => {
       expect(keys).not.toContain("registrations");
       expect(keys).not.toContain("wrote");
     }
+    // The Nation filter leaving one out, or finding two, adds their nation after where they are; one found fixes it.
+    for (const nation of [["!scotland"], ["wales", "scotland"]]) {
+      const keys = supporterColumns(supportersSearch({ nation })).map((c) => c.key);
+      expect(keys.indexOf("nation")).toBe(keys.indexOf("place") + 1);
+    }
+    expect(supporterColumns(supportersSearch({ nation: "wales" })).map((c) => c.key)).not.toContain("nation");
+    const nation = supporterColumns(supportersSearch({ nation: "!scotland" })).find((c) => c.key === "nation")!;
+    const cardiff = {
+      ...rows[0],
+      place: { name: "Cardiff", basis: "city" as const, given: "Cardiff", country: "wales" },
+    };
+    expect(nation.text!(cardiff)).toBe(staffCopy.countries.wales);
+    expect(nation.cell(cardiff)).toBe(staffCopy.countries.wales);
+    expect(nation.text!({ ...rows[0], place: null })).toBeNull();
   });
 
   it("sorts by a heading, reversing when clicked again, and marks the current one", async () => {
@@ -3616,6 +3630,14 @@ describe("each list's download values and contact cards", () => {
         status: "retired" as const,
       },
     ];
+    // The Nation filter leaving one out adds their nation, after the constituency.
+    const byNation = politicianColumns(exampleAsks, { status: "any", nation: ["!scotland"] });
+    const keys = byNation.map((c) => c.key);
+    expect(keys.indexOf("country")).toBe(keys.indexOf("constituency") + 1);
+    const nation = byNation.find((c) => c.key === "country")!;
+    expect(nation.text!(rows[0])).toBe(staffCopy.countries[examplePolitician.country!]);
+    expect(nation.cell(rows[0])).toBe(staffCopy.countries[examplePolitician.country!]);
+    expect(nation.text!(rows[1])).toBeNull();
     const columns = politicianColumns(exampleAsks, { status: "any" });
     expect(values(columns, rows[0])).toMatchObject({
       house: staffCopy.houses.commons,

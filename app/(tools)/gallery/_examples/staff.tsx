@@ -163,7 +163,7 @@ const EMPTY_POLITICIAN_FILTERS = {
   status: "",
   party: [] as string[],
   flag: [] as string[],
-  country: [] as string[],
+  nation: [] as string[],
   email: [] as string[],
   ask: "",
   answer: "",
@@ -188,7 +188,7 @@ const EXAMPLE_FILTERS = [
 // A filter that repeats, so it can leave out as well as find.
 const EXAMPLE_NATIONS = [
   {
-    name: "country",
+    name: "nation",
     label: "Nation",
     repeat: true,
     options: [
@@ -1823,7 +1823,7 @@ export const staff: Group = {
                   status: "in_office",
                   party: ["Labour", "Green"],
                   flag: ["important"],
-                  country: ["wales"],
+                  nation: ["wales"],
                   email: ["blocked"],
                   ask: "edinburgh-conference-2026",
                   answer: "declined",
@@ -1952,7 +1952,7 @@ export const staff: Group = {
             <StaffPage as="div">
               <FilterBar
                 path="#"
-                values={{ country: ["scotland", "!wales"] }}
+                values={{ nation: ["scotland", "!wales"] }}
                 search={{ name: "q", label: "Name" }}
                 filters={EXAMPLE_NATIONS}
               />

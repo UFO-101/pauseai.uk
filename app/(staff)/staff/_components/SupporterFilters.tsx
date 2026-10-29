@@ -53,7 +53,7 @@ function supporterFilters(
   const { columns } = staffCopy.supporters;
   return [
     {
-      name: "country",
+      name: "nation",
       label: staffCopy.politician.country,
       repeat: true,
       options: Object.entries(staffCopy.countries).map(([value, label]) => ({ value, label })),

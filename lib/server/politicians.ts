@@ -188,7 +188,8 @@ export type PoliticiansSearch = {
   status: string;
   party: string[];
   flag: string[];
-  country: string[];
+  /** Nations, as COUNTRIES. */
+  nation: string[];
   email: string[];
   ask: string;
   answer: string;
@@ -217,12 +218,12 @@ export function politiciansSearch(params: Partial<Record<keyof PoliticiansSearch
   const [q, house, status, ask, answer, sort, dir, page, mailing] = (
     ["q", "house", "status", "ask", "answer", "sort", "dir", "page", "mailing"] as const
   ).map((name) => firstOf(params[name]));
-  const [party, flag, country, email] = (["party", "flag", "country", "email"] as const).map((name) =>
+  const [party, flag, nation, email] = (["party", "flag", "nation", "email"] as const).map((name) =>
     valuesOf(params[name]),
   );
   const [parties, notParties] = anyAndNone(party, (values) => values);
   const [flags, notFlags] = anyAndNone(flag, (values) => among(values, POLITICIAN_FLAGS));
-  const [countries, notCountries] = anyAndNone(country, (values) => among(values, COUNTRIES));
+  const [countries, notCountries] = anyAndNone(nation, (values) => among(values, COUNTRIES));
   const [emails, notEmails] = anyAndNone(email, (values) => among(values, EMAIL_STATES));
   const filter: PoliticianFilter = {
     search: q.trim() || undefined,
@@ -249,7 +250,7 @@ export function politiciansSearch(params: Partial<Record<keyof PoliticiansSearch
     status,
     party,
     flag,
-    country,
+    nation,
     email,
     ask,
     answer,

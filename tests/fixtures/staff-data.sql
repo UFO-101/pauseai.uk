@@ -477,7 +477,7 @@ SELECT m.title, m.title, 'politicians', 'email', m.filter::jsonb, b.body, 'jo@pa
   'edinburgh-conference-2026', now() + coalesce(m.due, interval '0') - interval '2 days', now() - interval '1 hour'
 FROM seed_letter b, (VALUES
   ('Meet us in Westminster', '{"list": "politicians", "params": {"house": "commons"}}', NULL, NULL, NULL::interval, 'draft'),
-  ('Edinburgh reminder', '{"list": "politicians", "params": {"country": "scotland"}}', 'jo@pauseai.uk', 'Jo Seed', interval '3 days', 'scheduled'),
+  ('Edinburgh reminder', '{"list": "politicians", "params": {"nation": "scotland"}}', 'jo@pauseai.uk', 'Jo Seed', interval '3 days', 'scheduled'),
   ('Edinburgh follow-up', '{"list": "politicians", "params": {}}', 'jo@pauseai.uk', 'Jo Seed', interval '-7 days', 'sent')
 ) m (title, filter, sent_from, from_name, due, state);
 INSERT INTO mailing_attachments (mailing_id, filename, content_type, content)

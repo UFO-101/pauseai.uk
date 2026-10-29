@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { migrate } from "@/scripts/db-migrate.mjs";
+import {
+  addTestPolitician,
+  describeWithDatabase,
+  MAKES_DATABASES,
+  useDatabaseUpTo,
+  useTestDatabase,
+} from "@/tests/database";
 import { query } from "./db";
 import { storedFilter } from "@/lib/staff-search";
 import { checkStoredFilter, filterProblems } from "./stored-filters";
@@ -59,7 +66,7 @@ describeWithDatabase("filterProblems", () => {
           status: "any",
           party: ["Labour", "!Labour"],
           flag: "!test",
-          country: "wales",
+          nation: "wales",
           email: "yes",
           ask: "frontier-ai-letter",
           answer: "signed",
@@ -103,7 +110,7 @@ describeWithDatabase("filterProblems", () => {
           event: ["evt-1", "!evt-1"],
           campaign: "support-sobel-bill",
           wrote: "no",
-          country: "scotland",
+          nation: "scotland",
           mp: [String(mp), `!${mp}`],
           near: "EH1",
           within: "10",
@@ -131,6 +138,28 @@ describeWithDatabase("filterProblems", () => {
       "wrote=maybe",
       `mp=${mp + 1}`,
       "within=3",
+    ]);
+  });
+});
+
+describeWithDatabase("migration 0059_filters_by_nation", MAKES_DATABASES, () => {
+  const db = useDatabaseUpTo("0058");
+
+  it("renames a saved filter's country to nation, leaving the rest of it and filters without one", async () => {
+    await query(
+      `INSERT INTO mailings (title, audience, channel, topic, filter, body, created_by, sent_from, from_name, due_at, state)
+       SELECT title, 'politicians', 'email', NULL, filter::jsonb, '{}', 'jo@pauseai.uk', 'jo@pauseai.uk', 'PauseAI UK', now(), 'draft'
+       FROM (VALUES ('Scotland', '{"list": "politicians", "params": {"country": ["!scotland"], "party": "Green"}}'),
+                    ('Greens', '{"list": "politicians", "params": {"party": "Green"}}')) v (title, filter)`,
+    );
+
+    expect(migrate(db.url, { appliedUpTo: "0058" })).toContain("0059_filters_by_nation");
+
+    expect(
+      await query("SELECT title, filter FROM mailings WHERE title IN ('Greens', 'Scotland') ORDER BY title"),
+    ).toEqual([
+      { title: "Greens", filter: { list: "politicians", params: { party: "Green" } } },
+      { title: "Scotland", filter: { list: "politicians", params: { nation: ["!scotland"], party: "Green" } } },
     ]);
   });
 });
