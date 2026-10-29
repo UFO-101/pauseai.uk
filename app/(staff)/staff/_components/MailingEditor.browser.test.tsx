@@ -53,14 +53,21 @@ function last(onChange: Awaited<ReturnType<typeof renderEditor>>): JSONContent {
 }
 
 /**
- * Clicks into a line of the letter, then waits for the cursor to be in it:
- * a key sent before the editor has taken the click lands where the cursor
- * was, not in the line.
+ * Puts the cursor at the start or end of a line of the letter: clicks it,
+ * then presses Home or End until the cursor is there. Under load the
+ * editor can take the click after a key, putting the cursor back where it
+ * clicked, so one press isn't enough; another does no harm.
  */
-async function clickInto(line: string) {
+async function cursorAt(line: string, end: "start" | "end") {
   await editor().getByText(line).click();
   await expect.element(editor()).toHaveFocus();
-  await expect.poll(() => document.getSelection()?.anchorNode?.textContent).toBe(line);
+  await expect
+    .poll(async () => {
+      await userEvent.keyboard(end === "start" ? "{Home}" : "{End}");
+      const selection = document.getSelection();
+      return selection?.anchorNode?.textContent === line ? selection.anchorOffset : -1;
+    })
+    .toBe(end === "start" ? 0 : line.length);
 }
 
 /** Puts the cursor at the end of the letter. */
@@ -222,8 +229,7 @@ describe("MailingEditor", () => {
         box(conditions[0].id, paragraph(text("Thanks."))),
         box("going:edinburgh", paragraph(text("See you there."))),
       ]);
-      await clickInto("See you there.");
-      await userEvent.keyboard("{Home}");
+      await cursorAt("See you there.", "start");
       await userEvent.keyboard("{Backspace}");
       expect(last(onChange).content).toEqual([
         box(conditions[0].id, paragraph(text("Thanks."))),
@@ -233,8 +239,7 @@ describe("MailingEditor", () => {
 
     it("inside a box, deletes as anywhere else: a letter, a selection, or the break before a second line", async () => {
       const onChange = await renderEditor([box(conditions[0].id, paragraph(text("One")), paragraph(text("Two")))]);
-      await clickInto("Two");
-      await userEvent.keyboard("{End}");
+      await cursorAt("Two", "end");
       await userEvent.keyboard("{Backspace}");
       expect(last(onChange).content).toEqual([box(conditions[0].id, paragraph(text("One")), paragraph(text("Tw")))]);
       await userEvent.keyboard("{Shift>}{Home}{/Shift}");
@@ -246,8 +251,7 @@ describe("MailingEditor", () => {
 
     it("at the start of a line in no box, joins it to the line before", async () => {
       const onChange = await renderEditor([paragraph(text("One")), paragraph(text("Two"))]);
-      await clickInto("Two");
-      await userEvent.keyboard("{Home}");
+      await cursorAt("Two", "start");
       await userEvent.keyboard("{Backspace}");
       expect(last(onChange).content).toEqual([paragraph(text("OneTwo"))]);
     });
