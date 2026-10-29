@@ -55,11 +55,6 @@
   max-width: 24rem;
 }
 
-/* Under the ask: a new one, on the asks page. */
-.newAsk {
-  margin-top: var(--space-2);
-}
-
 .sender {
   max-width: 22rem;
 }

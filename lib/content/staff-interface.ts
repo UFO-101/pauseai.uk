@@ -96,9 +96,9 @@ export const staffCopy = {
     limit: (limit: string) => `At most ${limit} a day, leaving room for the account's other email.`,
     connect: "Connect Gmail",
     disconnect: "Disconnect Gmail",
-    connected: (when: string) => `⁂ Connected ${when}.`,
+    connected: (when: string) => `Connected ${when}.`,
     notConnected: "Your Gmail isn't connected.",
-    sentToday: (sent: number, limit: string) => `${sent} of today's ${limit} sent.`,
+    sentToday: (sent: number, limit: string) => `${sent} of today's ${limit} emails sent.`,
     // After coming back from Google, or disconnecting.
     outcomes: {
       connected: "Your Gmail is connected. All staff will be able to send mailings from it now.",
@@ -826,8 +826,8 @@ export const staffCopy = {
       `The saved filter has values that are no longer supported (${values}), you need to change it before carrying on.`,
     subject: "Subject",
     ask: "Ask",
-    // Under the ask: a new one, on the asks page, which comes back here.
-    newAsk: "⁂ Add an ask",
+    // Under the ask: where to add a new one, around a link to the asks page's form, which comes back here.
+    newAsk: { before: "You can add a new ask on the ", link: "Asks page", after: "." },
     // Behind the ? beside Ask.
     askHelpLabel: "Help about what an ask is",
     askHelp:

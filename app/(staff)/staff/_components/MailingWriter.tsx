@@ -3,7 +3,7 @@
 import type { JSONContent } from "@tiptap/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { Button, ButtonAnchor } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import { Select, TextInput } from "@/components/ui/Controls";
 import { Field, Hint, Label } from "@/components/ui/Field";
 import { Muted } from "@/components/ui/Text";
@@ -324,7 +324,7 @@ export default function MailingWriter({
     ...data.senders.map((one) => ({ ...one, connected: true })),
     ...(values.sentFrom && !sender ? [{ email: values.sentFrom, remaining: 0, connected: false }] : []),
   ];
-  // Where Connect Gmail and Add an ask come back to, as the page shows them: this draft, or this new mailing.
+  // Where Connect Gmail and the Asks page come back to, as the page shows them: this draft, or this new mailing.
   const writerPath = savedId ? `/staff/mailings/${savedId}` : newPath;
   const noAddress = data.leftOut.filter((one) => one.reason === "no-address").length;
 
@@ -406,19 +406,19 @@ export default function MailingWriter({
                 </option>
               ))}
             </Select>
-            <ButtonAnchor
-              variant="ghost"
-              size="small"
-              fit
-              className={styles.newAsk}
-              href={`/staff/asks/new?${new URLSearchParams({ back: writerPath })}`}
-              onClick={async (event) => {
-                event.preventDefault();
-                leavePage(`/staff/asks/new?${new URLSearchParams({ back: await saveNow() })}`);
-              }}
-            >
-              {copy.newAsk}
-            </ButtonAnchor>
+            <Hint>
+              {copy.newAsk.before}
+              <a
+                href={`/staff/asks/new?${new URLSearchParams({ back: writerPath })}`}
+                onClick={async (event) => {
+                  event.preventDefault();
+                  leavePage(`/staff/asks/new?${new URLSearchParams({ back: await saveNow() })}`);
+                }}
+              >
+                {copy.newAsk.link}
+              </a>
+              {copy.newAsk.after}
+            </Hint>
           </div>
           <div className={styles.letter}>
             <p id={letterLabel} className={styles.label}>
