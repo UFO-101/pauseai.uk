@@ -173,6 +173,13 @@
   white-space: nowrap;
 }
 
+/* The address: room for a long one, but no wider, and never pushing its button off the row. */
+.testTo {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 18rem;
+}
+
 @media (max-width: 720px) {
   .testRow {
     flex-wrap: wrap;
@@ -186,13 +193,6 @@
   .testTo {
     flex-basis: 0;
   }
-}
-
-/* The address: room for a long one, but no wider, and never pushing its button off the row. */
-.testTo {
-  flex: 1 1 auto;
-  min-width: 0;
-  max-width: 18rem;
 }
 
 .problems {
