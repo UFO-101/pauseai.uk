@@ -646,7 +646,7 @@ export const staffCopy = {
     noRecipients: "Nobody yet.",
     recipientColumns: {
       name: "Politician",
-      status: "Outcome",
+      status: "Status",
       sentAt: "Sent",
       replied: "Replied",
       how: "Written",
