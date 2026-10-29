@@ -91,8 +91,9 @@ closes a Luma one; a yes given again on a form or to staff closes one
 too.
 
 A stop covers every topic, and texts and WhatsApp as one: a WhatsApp
-stop stops texts too, and a text STOP stops WhatsApp messages. Calls
-are separate; staff recording a stop can widen it to calls.
+stop stops texts too, and a text STOP stops WhatsApp messages. It
+doesn't stop calls: someone may want no texts but be glad of a call
+from their local group. Calls have their own stop ("Calls", below).
 
 ## 1. Groundwork
 
@@ -226,8 +227,18 @@ Then, once sending works, to keep the account in good standing:
 
 ## Calls
 
-Not built here, but the permissions already say who allows calls. The
-Telephone Preference Service only matters for live calls, not texts or
+Not built here, but the permissions already say who allows calls. Calls
+aren't automated: volunteers make them, as local groups do now, from
+numbers staff give them. A number is never offered for calling when it
+has a stop for calls, which comes two ways, apart from messages:
+
+- **The TPS.** A number on it isn't called, unless the person told us
+  by name that they're happy to be called (below).
+- **Someone asking not to be called**, usually on a call. The volunteer
+  who called, or staff, records it, with a note of how it was given.
+  Like other stops, it's kept after erasure.
+
+The Preference Service only matters for live calls, not texts or
 WhatsApp. We may call a number on the TPS only if that person told us,
 PauseAI UK by name, that they're happy to get our calls, and we have a
 record of it
@@ -264,8 +275,9 @@ WhatsApp messages to politicians, and a calling tool.
 2. What should the checkbox say? The same words should be used on Luma
    and our own forms, and a person needs to write them. They need to
    name PauseAI UK, and say messages and calls.
-3. Should a stop of messages stop calls too, or only when the person
-   says so?
+3. How does a volunteer who isn't on staff record a stop for calls:
+   by telling staff, or on a page of their own for the numbers they
+   were given?
 4. Should a resume in WhatsApp's settings undo any stop of messages, or
    only one made in WhatsApp's settings, leaving a "Stop" button, a
    "stop" reply or a text STOP in force?
