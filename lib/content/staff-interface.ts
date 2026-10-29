@@ -74,7 +74,7 @@ export const staffCopy = {
   // Your own page: your sessions and your Gmail.
   me: {
     title: "⁂ Your account",
-    sessionsTitle: "⁂ Where you're logged in",
+    sessionsTitle: "Where you're logged in",
   },
   // Connecting a staff member's Gmail, on their own page and in a mailing's Sent from.
   gmail: {

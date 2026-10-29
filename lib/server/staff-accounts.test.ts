@@ -106,11 +106,11 @@ describeWithDatabase("staff accounts", () => {
   it("removes an account with its sessions and links, and does nothing for one that isn't there", async () => {
     await saveStaffAccount("jo@pauseai.uk", ["admin"], "x");
     await saveStaffAccount("samuel.whitlock@pauseai.uk", ["supporters"], "x");
-    const token = await createSession("Sam@pauseai.uk");
+    const token = await createSession("Samuel.Whitlock@pauseai.uk");
     await query(
       "INSERT INTO staff_login_links (token_hash, email, expires_at) VALUES ('h', 'samuel.whitlock@pauseai.uk', now() + interval '1 hour')",
     );
-    expect(await removeStaffAccount("Sam@pauseai.uk", "jo@pauseai.uk")).toBe("changed");
+    expect(await removeStaffAccount("Samuel.Whitlock@pauseai.uk", "jo@pauseai.uk")).toBe("changed");
     expect(await removeStaffAccount("samuel.whitlock@pauseai.uk", "jo@pauseai.uk")).toBe("unchanged");
     expect(await accountOf("samuel.whitlock@pauseai.uk")).toBeUndefined();
     expect(await sessionEmail(token)).toBeUndefined();

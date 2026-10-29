@@ -142,7 +142,8 @@ describeWithDatabase("staff Server Actions", () => {
   });
 
   it("saveStaffAccountNow adds or changes an account and removeStaffAccountNow removes one, as an admin, going back to the page", async () => {
-    const save = () => saveStaffAccountNow(form({ email: "Sam@pauseai.uk", "permission:supporters": "on" }));
+    const save = () =>
+      saveStaffAccountNow(form({ email: "Samuel.Whitlock@pauseai.uk", "permission:supporters": "on" }));
     expect(await expectRedirect(save)).toBe("/staff");
     await saveStaffAccount("jo@pauseai.uk", ["admin"], "a");
     expect(await expectRedirect(save)).toBe("/staff/accounts");
