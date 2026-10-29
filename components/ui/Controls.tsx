@@ -41,10 +41,11 @@ export function FileInput(props: Omit<InputProps, "type">) {
   return <input {...props} type="file" className={styles.file} />;
 }
 
-/** A checkbox with its label beside it. Controlled: `onChange` gets whether it's now ticked. */
+/** A checkbox with its label beside it. Controlled: `onChange` gets whether it's now ticked. A form sends `value` for it, ticked. */
 export function Checkbox({
   id,
   name,
+  value,
   checked,
   disabled,
   onChange,
@@ -52,6 +53,7 @@ export function Checkbox({
 }: {
   id?: string;
   name?: string;
+  value?: string;
   checked: boolean;
   disabled?: boolean;
   onChange: (checked: boolean) => void;
@@ -62,6 +64,7 @@ export function Checkbox({
       <input
         id={id}
         name={name}
+        value={value}
         type="checkbox"
         className={styles.checkbox}
         checked={checked}

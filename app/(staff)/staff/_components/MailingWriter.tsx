@@ -19,6 +19,7 @@ import {
   type MailingDoc,
 } from "@/lib/mailing-doc";
 import { answerLabels } from "@/lib/mailing-fields";
+import { leavePage } from "@/lib/leave-page";
 import { scheduleProblems } from "@/lib/mailing-schedule";
 import { filtersPath } from "@/lib/staff-search";
 import { earliestHour, fromLondon, londonDayHour, londonWhen } from "@/lib/staff-time";
@@ -163,6 +164,8 @@ export default function MailingWriter({
     dueAt: draft?.dueAt ?? null,
   }));
   const latest = useRef(values);
+  // This new mailing's own address, before it's a draft.
+  const newPath = filtersPath("/staff/mailings/new", data.filter.params);
   const [attachments, setAttachments] = useState(draft?.attachments ?? []);
   const [saveState, setSaveState] = useState<SaveState>(draft ? "saved" : "new");
   const [fileProblem, setFileProblem] = useState("");
@@ -233,6 +236,17 @@ export default function MailingWriter({
     setValues(latest.current);
     pending.current = { ...pending.current, ...changes };
     later();
+  }
+
+  /**
+   * Saves now what's waiting to be saved, before leaving the page or
+   * scheduling, and says where to come back to: the draft, or this new
+   * mailing if nothing's worth keeping yet.
+   */
+  async function saveNow(): Promise<string> {
+    clearTimeout(timer.current);
+    if (id.current === null || Object.keys(pending.current).length) await flush();
+    return id.current === null ? newPath : `/staff/mailings/${id.current}`;
   }
 
   /** The draft's ID, making it now if it isn't saved yet, as attaching a file is worth keeping. */
@@ -309,8 +323,8 @@ export default function MailingWriter({
       .filter((email) => !data.senders.some((one) => one.email === email))
       .map((email) => ({ email, remaining: 0, connected: false })),
   ];
-  // Where connecting Gmail comes back to: this draft, or this new mailing.
-  const writerPath = savedId ? `/staff/mailings/${savedId}` : filtersPath("/staff/mailings/new", data.filter.params);
+  // Where Connect Gmail and Add an ask come back to, as the page shows them: this draft, or this new mailing.
+  const writerPath = savedId ? `/staff/mailings/${savedId}` : newPath;
   const noAddress = data.leftOut.filter((one) => one.reason === "no-address").length;
 
   return (
@@ -396,11 +410,8 @@ export default function MailingWriter({
               className={styles.newAsk}
               href={`/staff/asks/new?${new URLSearchParams({ back: writerPath })}`}
               onClick={async (event) => {
-                // Saves what's waiting to be saved before leaving the page.
                 event.preventDefault();
-                const href = event.currentTarget.href;
-                await flush();
-                window.location.assign(href);
+                leavePage(`/staff/asks/new?${new URLSearchParams({ back: await saveNow() })}`);
               }}
             >
               {copy.newAsk}
@@ -462,7 +473,7 @@ export default function MailingWriter({
             </Field>
             {sender && <SentToday sent={sender.sentToday} />}
           </div>
-          {!sender && values.sentFrom === data.me && <GmailConnect back={writerPath} onConnect={flush} />}
+          {!sender && values.sentFrom === data.me && <GmailConnect back={writerPath} onConnect={saveNow} />}
           {!sender && values.sentFrom && values.sentFrom !== data.me && <Hint>{copy.notConnected}</Hint>}
         </Card>
 
@@ -492,8 +503,7 @@ export default function MailingWriter({
               disabled={problems.length > 0 || !data.sends}
               onClick={async () => {
                 // What's still to be saved, such as a time just chosen, goes first, or it's scheduled without it.
-                clearTimeout(timer.current);
-                await flush();
+                await saveNow();
                 const result = await actions.schedule(savedId!, version.current);
                 if (result.scheduled) router.refresh();
               }}

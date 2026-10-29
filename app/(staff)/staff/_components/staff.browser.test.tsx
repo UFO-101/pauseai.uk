@@ -126,7 +126,7 @@ describe("StaffNav", () => {
     await expect.element(page.getByRole("link", { name: staffCopy.nav.title })).toHaveAttribute("href", "/staff");
     // The sidebar is for wider screens than the test's, so it's read from the DOM.
     const nav = document.querySelector("nav")!;
-    expect(nav.querySelector("span[class*=who]")!.textContent).toBe("jo@pauseai.uk");
+    expect(nav.querySelector("a[class*=who]")!.textContent).toBe("jo@pauseai.uk");
     // Home leads the list, a link like the rest.
     expect(nav.querySelector('a[href="/staff"][class*=page]')!.textContent).toBe(staffCopy.nav.home);
     const current = nav.querySelector('a[aria-current="page"]')!;
@@ -1913,6 +1913,8 @@ describe("AsksTable", () => {
         copy.count(staffCopy.statuses.declined, 50),
         copy.count(staffCopy.statuses.passed_on, 1),
       ].join(" · "),
+      // The code names it, so it has no Edit.
+      "",
     ]);
     // Asked by nobody we record, with no link.
     expect(cells(exampleAsks[1].title)[3]).toBe("");
@@ -1924,8 +1926,9 @@ describe("AsksTable", () => {
       "",
       `${copy.askedBy.supporters}${copy.askedBy.pauseai}`,
       copy.count(staffCopy.statuses.signed, 10),
+      "",
     ]);
-    expect(cells(exampleAsks[2].title).at(-1)).toBe(copy.noAnswers);
+    expect(cells(exampleAsks[2].title).at(-2)).toBe(copy.noAnswers);
     // Another site's page opens in a new tab; ours in this one.
     const event = row(exampleAsks[0].title).getByRole("link", { name: exampleAsks[0].title });
     await expect.element(event).toHaveAttribute("href", "https://luma.com/example");
@@ -1936,6 +1939,20 @@ describe("AsksTable", () => {
     await expect
       .element(page.getByRole("link", { name: copy.count(staffCopy.statuses.passed_on, 1) }))
       .toHaveAttribute("href", "/staff/politicians?ask=edinburgh-conference-2026&answer=passed_on");
+    await expect.element(page.getByRole("link", { name: copy.add })).toHaveAttribute("href", "/staff/asks/new");
+    expect(page.getByRole("status").query()).toBeNull();
+  });
+
+  it("has Edit for an ask staff added, and says how a save or delete went", async () => {
+    const added = { ...exampleAsksWithCounts[0], slug: "winter-reception-dec-2026", title: "Winter reception" };
+    const copy = staffCopy.asks;
+    const { rerender } = await render(<AsksTable asks={[added]} notice="deleted" />);
+    await expect
+      .element(page.getByRole("row").filter({ hasText: "Winter reception" }).getByRole("link", { name: copy.edit }))
+      .toHaveAttribute("href", "/staff/asks/winter-reception-dec-2026");
+    await expect.element(page.getByRole("status")).toHaveTextContent(copy.notices.deleted);
+    await rerender(<AsksTable asks={[added]} notice="in-use" />);
+    await expect.element(page.getByRole("status")).toHaveTextContent(copy.notices["in-use"]);
   });
 });
 
@@ -3607,6 +3624,11 @@ describe("each list's download values and contact cards", () => {
     });
     expect(values(columns, exampleComplaint).sent).toBe(staffCopy.emails.purposes["forwarded-reply"]);
     expect(values(columns, { ...exampleComplaint, purpose: null }).sent).toBeNull();
+    // A bounce found in Gmail says so after its reason.
+    expect(values(columns, exampleBlock).reason).toBe(exampleBlock.reason);
+    expect(values(columns, { ...exampleBlock, foundInGmail: true }).reason).toBe(
+      `${exampleBlock.reason} (${staffCopy.emails.foundInGmail})`,
+    );
   });
 
   it("letters: the campaign by its title, or its slug once it's gone, and the history", () => {
@@ -3836,6 +3858,8 @@ describe("PoliticianFilters", () => {
       "Green",
       ...Object.values(copy.emailStates),
       ...Object.values(copy.flags),
+      // Those mailed about each ask.
+      ...exampleAsks.map((ask) => ask.title),
     ]);
     expect(add.find(([text]) => text === "Green")![1]).toBe(
       "/staff/politicians?q=blake&house=lords&status=retired&party=Labour&party=Green&ask=edinburgh-conference-2026&answer=declined&sort=asks&dir=asc",
@@ -3856,6 +3880,7 @@ describe("PoliticianFilters", () => {
       staffCopy.fields.email,
       copy.flag,
       copy.ask,
+      copy.mailed,
     ]);
     expect(page.getByRole("link", { name: staffCopy.resetFilters }).query()).toBeNull();
   });

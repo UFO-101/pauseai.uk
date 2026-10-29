@@ -1,10 +1,15 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { navigation } from "@/tests/browser/navigation";
 import MailingWriter, { type MailingWriterActions } from "./MailingWriter";
 import { exampleWriterData, exampleWrittenMailing } from "./MailingWriter.examples";
+
+// Following a link that saves first leaves the page, which would take the test with it.
+const { leavePage } = vi.hoisted(() => ({ leavePage: vi.fn() }));
+vi.mock("@/lib/leave-page", () => ({ leavePage }));
+afterEach(() => leavePage.mockClear());
 
 const copy = staffCopy.mailingPages;
 const WAIT = { timeout: 3000 };
@@ -382,8 +387,11 @@ describe("MailingWriter", () => {
     }
   });
 
-  it("can't be scheduled while anything stops it, says what, and that sending isn't built under Send", async () => {
-    await renderWriter({ draft: { ...exampleWrittenMailing, sentFrom: null } });
+  it("can't be scheduled while anything stops it, and says what", async () => {
+    await renderWriter({
+      draft: { ...exampleWrittenMailing, sentFrom: null },
+      data: { ...exampleWriterData, sends: false },
+    });
     const send = region(copy.sections.send);
     await expect.element(send.getByRole("button", { name: copy.schedule(2) })).toBeDisabled();
     await expect.element(send.getByText(copy.problems["no-sender"])).toBeVisible();
@@ -400,8 +408,8 @@ describe("MailingWriter", () => {
   });
 
   it("schedules one that's ready, and shows it scheduled; not one someone changed first", async () => {
-    const ready = { ...exampleWrittenMailing, dueAt: "2099-12-01T09:00:00Z" };
-    const data = { ...exampleWriterData, sends: true, fields: [] };
+    const ready = { ...exampleWrittenMailing, sentFrom: "sam@pauseai.uk", dueAt: "2099-12-01T09:00:00Z" };
+    const data = { ...exampleWriterData, fields: [] };
     const { actions } = await renderWriter({ data, draft: ready });
     await expect.element(page.getByText(copy.cantSend)).not.toBeInTheDocument();
     await page.getByRole("button", { name: copy.schedule(2) }).click();
@@ -411,6 +419,52 @@ describe("MailingWriter", () => {
     await page.getByRole("button", { name: copy.schedule(2) }).click();
     await expect.poll(() => actions.schedule.mock.calls.length).toBe(2);
     expect(navigation.refreshes).toBe(1);
+  });
+
+  it("is sent from a connected Gmail, saying what each has left today; your own offers Connect Gmail, saving first", async () => {
+    const { actions } = await renderWriter({ data: { ...exampleWriterData, gmailOutcome: "connected" } });
+    await expect
+      .element(page.getByRole("status").filter({ hasText: staffCopy.gmail.outcomes.connected }))
+      .toBeVisible();
+    const from = region(copy.sections.from);
+    expect(
+      from
+        .getByRole("option")
+        .all()
+        .map((option) => option.element().textContent),
+    ).toEqual([
+      copy.sender("al@pauseai.uk", "1,800"),
+      copy.sender("sam@pauseai.uk", "1,680"),
+      copy.senderNotConnected("jo@pauseai.uk"),
+    ]);
+    // Your own, not connected: what connecting means, and the way to.
+    const connect = from.getByRole("link", { name: staffCopy.gmail.connect });
+    await expect.element(connect).toHaveAttribute("href", expect.stringContaining("back=%2Fstaff%2Fmailings%2Fnew"));
+    await subject().fill("Hello");
+    await connect.click();
+    await expect.poll(() => leavePage.mock.calls.length, WAIT).toBe(1);
+    expect(actions.start).toHaveBeenCalledTimes(1);
+    // Back to the draft the click saved, not the new mailing it was.
+    expect(leavePage.mock.calls[0][0]).toMatch(/^\/staff\/api\/gmail\/connect\?back=%2Fstaff%2Fmailings%2F\d+$/);
+    // A connected one: what it has sent today.
+    await field(copy.fromLegend).selectOptions("sam@pauseai.uk");
+    await expect.element(from.getByText(staffCopy.gmail.sentToday(120, "1,800"))).toBeVisible();
+    expect(from.getByRole("link", { name: staffCopy.gmail.connect }).query()).toBeNull();
+  });
+
+  it("says only its owner can connect someone else's Gmail, chosen before it was disconnected", async () => {
+    await renderWriter({ draft: { ...exampleWrittenMailing, sentFrom: "kim@pauseai.uk" } });
+    const from = region(copy.sections.from);
+    await expect.element(from.getByText(copy.notConnected)).toBeVisible();
+    await expect.element(field(copy.fromLegend)).toHaveValue("kim@pauseai.uk");
+    await expect.element(region(copy.sections.send).getByText(copy.problems["not-connected"])).toBeVisible();
+  });
+
+  it("adds an ask on the asks page, saving first, and coming back to the draft", async () => {
+    await renderWriter({ draft: exampleWrittenMailing });
+    await page.getByRole("link", { name: copy.newAsk }).click();
+    await expect.poll(() => leavePage.mock.calls.length, WAIT).toBe(1);
+    expect(leavePage.mock.calls[0][0]).toMatch(/\/staff\/asks\/new\?back=%2Fstaff%2Fmailings%2F12$/);
   });
 
   it("previews an empty letter for one it can't read, such as a part for only some in a list", async () => {

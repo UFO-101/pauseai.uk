@@ -83,6 +83,7 @@ export default function AskForm({
             <Checkbox
               key={asker}
               name="askedBy"
+              value={asker}
               checked={askedBy.includes(asker)}
               disabled={fixed}
               onChange={(on) => setAskedBy(on ? [...askedBy, asker] : askedBy.filter((one) => one !== asker))}
