@@ -184,7 +184,10 @@ describe("MailingView", () => {
     // Past the right of a phone's window, so in the page rather than seen.
     await expect.element(page.getByRole("cell", { name: staffCopy.statuses.going })).toBeInTheDocument();
     expect(headings()).toContain("Edinburgh conference");
-    await expect.element(page.getByText(copy.skipReasons["left-office"])).toBeVisible();
+    // One skipped says why, leading to its letter's page too.
+    await expect
+      .element(page.getByRole("link", { name: copy.skipReasons["left-office"] }))
+      .toHaveAttribute("href", expect.stringMatching(/^\/staff\/mailings\/4\/letters\/\d+$/));
     // Each one sent leads to its letter's page, under the mailing.
     await expect
       .element(page.getByRole("link", { name: staffCopy.letters.status.sent }).first())

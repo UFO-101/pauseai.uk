@@ -56,14 +56,15 @@ function recipientColumns(mailing: Mailing): ListColumn<MailingRecipient>[] {
     {
       key: "status",
       label: staffCopy.mailings.recipientColumns.status,
-      cell: (r) =>
-        r.skipReason ? (
-          <span className={styles.skipped}>{copy.skipReasons[r.skipReason]}</span>
-        ) : (
-          <Link href={`/staff/mailings/${mailing.id}/letters/${r.letterId}`}>
-            {staffCopy.letters.status[r.status] ?? r.status}
-          </Link>
-        ),
+      cell: (r) => (
+        <Link href={`/staff/mailings/${mailing.id}/letters/${r.letterId}`}>
+          {r.skipReason ? (
+            <span className={styles.skipped}>{copy.skipReasons[r.skipReason]}</span>
+          ) : (
+            (staffCopy.letters.status[r.status] ?? r.status)
+          )}
+        </Link>
+      ),
     },
     {
       key: "sentAt",

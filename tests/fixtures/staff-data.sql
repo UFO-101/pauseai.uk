@@ -507,6 +507,19 @@ FROM seed_written w;
 INSERT INTO letters_from_pauseai (id, mailing_id, merge_values)
 SELECT w.id, w.mailing_id, json_build_object('values', json_build_object('salutation', w.salutation, 'name', w.name), 'meets', '[]'::json)
 FROM seed_written w;
+-- What happened to each: scheduled; then, in the mailing sent, sent with
+-- the message's ID, and for the first a bounce, for the second a reply.
+INSERT INTO letter_events (letter_id, at, status, details)
+SELECT id, due_at - interval '2 days', 'scheduled', '{}' FROM seed_written;
+INSERT INTO letter_events (letter_id, at, status, details)
+SELECT id, due_at, 'sent', jsonb_build_object('messageId', 'seed-mailing-' || id) FROM seed_written WHERE state = 'sent';
+INSERT INTO letter_events (letter_id, at, status, details)
+SELECT w.id, w.due_at + interval '1 minute', 'bounced',
+  jsonb_build_object('type', 'HardBounce', 'reason', 'The address does not exist', 'email', n.email)
+FROM seed_written w JOIN notable_people n ON n.id = w.person WHERE w.state = 'sent' AND w.n = 1;
+INSERT INTO letter_events (letter_id, at, status, details)
+SELECT id, due_at + interval '1 day', 'replied', jsonb_build_object('from', name, 'subject', 'Re: Edinburgh follow-up')
+FROM seed_written WHERE state = 'sent' AND n = 2;
 
 -- A mailing to supporters, by email, to those following the calendar:
 -- one delivered, one that failed, one skipped as they'd unsubscribed since.
