@@ -108,4 +108,30 @@ describe("fixtureResponse", () => {
     expect(fixtureResponse("https://members-api.parliament.uk/api/Members/90001")).toBeUndefined();
     expect(fixtureResponse("https://example.com/")).toBeUndefined();
   });
+
+  it("answers Google for any account, by its token; a message it hasn't, Gmail's 404", async () => {
+    const token = (body: string) =>
+      fixtureResponse("https://oauth2.googleapis.com/token", { method: "POST", body })!.json();
+    expect(await token("code=fixture%3Ajo%40pauseai.uk")).toEqual({
+      access_token: "fixture-access:jo@pauseai.uk",
+      expires_in: 3599,
+      refresh_token: "fixture-refresh:jo@pauseai.uk",
+    });
+    expect(await token("refresh_token=fixture-refresh%3Ajo%40pauseai.uk")).toEqual({
+      access_token: "fixture-access:jo@pauseai.uk",
+      expires_in: 3599,
+    });
+    expect(fixtureResponse("https://oauth2.googleapis.com/revoke?token=x", { method: "POST" })!.status).toBe(200);
+    const gmail = (path: string, init: RequestInit = {}) =>
+      fixtureResponse(`https://gmail.googleapis.com/gmail/v1/users/me${path}`, {
+        ...init,
+        headers: { authorization: "Bearer fixture-access:jo@pauseai.uk" },
+      })!;
+    expect(await gmail("/profile").json()).toEqual({ emailAddress: "jo@pauseai.uk", historyId: "1000" });
+    const sent = await gmail("/messages/send", { method: "POST", body: '{"raw":"x"}' }).json();
+    expect(sent).toEqual(await gmail("/messages/send", { method: "POST", body: '{"raw":"x"}' }).json());
+    expect(await gmail("/history?startHistoryId=1").json()).toEqual({ historyId: "1000" });
+    expect(await gmail("/messages?q=x").json()).toEqual({ resultSizeEstimate: 0 });
+    expect(gmail("/messages/abc").status).toBe(404);
+  });
 });

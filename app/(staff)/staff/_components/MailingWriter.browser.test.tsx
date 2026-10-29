@@ -460,6 +460,14 @@ describe("MailingWriter", () => {
     await expect.element(region(copy.sections.send).getByText(copy.problems["not-connected"])).toBeVisible();
   });
 
+  it("adds an ask from a new mailing with nothing worth keeping, coming back to the new mailing", async () => {
+    const { actions } = await renderWriter();
+    await page.getByRole("link", { name: copy.newAsk }).click();
+    await expect.poll(() => leavePage.mock.calls.length, WAIT).toBe(1);
+    expect(actions.start).not.toHaveBeenCalled();
+    expect(leavePage.mock.calls[0][0]).toMatch(/\/staff\/asks\/new\?back=%2Fstaff%2Fmailings%2Fnew/);
+  });
+
   it("adds an ask on the asks page, saving first, and coming back to the draft", async () => {
     await renderWriter({ draft: exampleWrittenMailing });
     await page.getByRole("link", { name: copy.newAsk }).click();

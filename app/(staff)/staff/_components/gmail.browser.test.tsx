@@ -77,6 +77,13 @@ describe("LetterThread", () => {
     expect(page.getByText(copy.noReplies).query()).toBeNull();
   });
 
+  it("names a reply with no name by its address, and a status it doesn't know by itself", async () => {
+    const reply = { ...exampleThread.messages[0], fromName: "" };
+    await render(<LetterThread thread={{ ...exampleThread, status: "odd", messages: [reply] }} me="jo@pauseai.uk" />);
+    await expect.element(page.getByRole("heading", { name: reply.fromAddress })).toBeVisible();
+    await expect.element(page.getByText("odd", { exact: true })).toBeVisible();
+  });
+
   it("has no Open in Gmail for anyone else, and the address alone with no name", async () => {
     await render(
       <LetterThread

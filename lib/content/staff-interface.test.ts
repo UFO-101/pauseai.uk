@@ -21,6 +21,10 @@ describe("staff interface copy", () => {
     for (const n of ["12", "3", "4", "5", "6"]) expect(meetings).toContain(n);
   });
 
+  it("names the ask being edited", () => {
+    expect(staffCopy.asks.editTitle("Winter reception")).toContain("Winter reception");
+  });
+
   it("ends the bounce's reason with one full stop, whether Postmark's has one or not", () => {
     for (const reason of ["Mailbox not found.", "Mailbox not found"]) {
       expect(staffCopy.alert.body("Testy MP", "testy@example.org", reason, "https://example.org")).toContain(

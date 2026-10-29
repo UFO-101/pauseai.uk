@@ -72,7 +72,9 @@ describeWithDatabase("gmailEmail", () => {
     expect(await query("SELECT purpose, letter_id, sender FROM email_sends")).toEqual([
       { purpose: "mailing", letter_id: String(letterId), sender: "jo@pauseai.uk" },
     ]);
-    await gmailEmail.send({ ...MESSAGE_TO_POLLY }, "mailing-test");
+    // With no name of its own, in the account's.
+    await gmailEmail.send({ ...MESSAGE_TO_POLLY, from: { name: "", address: "jo@pauseai.uk" } }, "mailing-test");
+    expect(parseMime(raw).headers.get("from")).toBe("jo@pauseai.uk");
     expect(await query("SELECT letter_id FROM email_sends WHERE purpose = 'mailing-test'")).toEqual([
       { letter_id: null },
     ]);

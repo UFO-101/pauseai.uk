@@ -257,8 +257,8 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
 // that read one give their own.
 function googleResponse(hostname: string, pathname: string, init?: RequestInit): Response | undefined {
   if (hostname === "oauth2.googleapis.com" && pathname === "/token") {
-    const form = new URLSearchParams(String(init?.body ?? ""));
-    const account = (form.get("code") ?? form.get("refresh_token") ?? "").replace(/^fixture(-refresh)?:/, "");
+    const form = new URLSearchParams(String(init!.body));
+    const account = (form.get("code") ?? form.get("refresh_token")!).replace(/^fixture(-refresh)?:/, "");
     return json({
       access_token: `fixture-access:${account}`,
       expires_in: 3599,
@@ -267,13 +267,11 @@ function googleResponse(hostname: string, pathname: string, init?: RequestInit):
   }
   if (hostname === "oauth2.googleapis.com" && pathname === "/revoke") return json({});
   if (hostname !== "gmail.googleapis.com") return undefined;
-  const account = new Headers(init?.headers).get("authorization")?.replace(/^Bearer fixture-access:/, "") ?? "";
+  const account = new Headers(init!.headers).get("authorization")!.replace(/^Bearer fixture-access:/, "");
   if (pathname.endsWith("/profile")) return json({ emailAddress: account, historyId: "1000" });
   // The same email gets the same IDs every run, as Postmark's MessageID.
   if (pathname.endsWith("/messages/send")) {
-    const id = fixtureUuid(String(init?.body ?? ""))
-      .replace(/-/g, "")
-      .slice(0, 16);
+    const id = fixtureUuid(String(init!.body)).replace(/-/g, "").slice(0, 16);
     return json({ id, threadId: id, labelIds: ["SENT"] });
   }
   if (pathname.endsWith("/history")) return json({ historyId: "1000" });
