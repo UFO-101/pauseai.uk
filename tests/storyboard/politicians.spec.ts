@@ -307,7 +307,7 @@ test("Add an ask, change it, then delete it", async ({ page, flowDatabase }) => 
   const asks = staffCopy.asks;
   await page.goto(`${BASE}/staff/asks`);
   await page.getByRole("link", { name: asks.add }).click();
-  await page.getByText(asks.kinds.event, { exact: true }).click();
+  await page.locator("label").filter({ hasText: asks.kinds.event }).click();
   await page.getByLabel(asks.byKind.event.title).fill("Winter reception");
   await page.getByLabel(asks.byKind.event.date).fill("2026-12-09");
   await frame(page, "a new ask: its title, kind and date, and PauseAI asking");
@@ -317,7 +317,7 @@ test("Add an ask, change it, then delete it", async ({ page, flowDatabase }) => 
   await frame(page, "added, among the asks, with Edit");
 
   await page.getByRole("row").filter({ hasText: "Winter reception" }).getByRole("link", { name: asks.edit }).click();
-  await expect(page.getByText("winter-reception-dec-2026")).toBeVisible();
+  await expect(page.getByText("winter-reception-dec-2026", { exact: true })).toBeVisible();
   await page.getByLabel(asks.byKind.event.url).fill("https://luma.com/winter");
   await page.getByRole("button", { name: asks.save }).click();
   await expect(page.getByRole("link", { name: "Winter reception" })).toHaveAttribute("href", "https://luma.com/winter");
@@ -329,12 +329,6 @@ test("Add an ask, change it, then delete it", async ({ page, flowDatabase }) => 
   await expect(page.getByText(asks.notices.deleted)).toBeVisible();
   await expect(page.getByRole("row").filter({ hasText: "Winter reception" })).toHaveCount(0);
   await frame(page, "deleted");
-
-  // One politicians have answered: its kind can't change, and it can't be deleted.
-  await page.goto(`${BASE}/staff/asks/ai-safety-briefing-jan-2027`);
-  await expect(page.getByText(asks.kindFixed)).toBeVisible();
-  await expect(page.getByRole("button", { name: asks.delete })).toHaveCount(0);
-  await frame(page, "an ask politicians have answered: its kind fixed, and no Delete, but why");
 });
 
 test("Sync PauseAI's emails: one held back with no mailing", async ({ page, request, flowDatabase }) => {

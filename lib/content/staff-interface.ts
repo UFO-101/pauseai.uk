@@ -953,13 +953,13 @@ export const staffCopy = {
     byKind: {
       letter: {
         title: "Which letter",
-        titleExample: "Letter to the Chancellor asking for one (1) off switch",
+        titleExample: "Giant pause button funding request to the Chancellor",
         date: "When the letter was started",
         url: "Where to read the letter",
       },
       event: {
-        title: "⁂ Which event",
-        titleExample: "⁂ Tea, biscuits and existential risk, March 2027",
+        title: "Which event",
+        titleExample: "Tea, biscuits and existential risk conference",
         date: "When the event is",
         url: "Event's page",
       },
