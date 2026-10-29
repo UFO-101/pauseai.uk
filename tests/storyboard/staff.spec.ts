@@ -229,6 +229,29 @@ test(
   },
 );
 
+test("your own page, from your address: your Gmail connected, then disconnected, and your sessions", async ({
+  page,
+  flowDatabase,
+}) => {
+  await logIn(page, flowDatabase);
+  await page.goto(`${BASE}/staff`);
+  // Your address in the navigation leads to your page (on a phone, inside the menu).
+  await expect(page.locator('nav a[href="/staff/me"]').first()).toHaveText(staffEmail());
+  await page.goto(`${BASE}/staff/me`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.me.title);
+  await expect(page.getByRole("link", { name: staffCopy.gmail.connect })).toBeVisible();
+  await frame(page, "your page: your Gmail not connected, what connecting means, then where you're logged in");
+
+  await page.getByRole("link", { name: staffCopy.gmail.connect }).click();
+  await expect(page.getByText(staffCopy.gmail.outcomes.connected)).toBeVisible();
+  await expect(page.getByRole("button", { name: staffCopy.gmail.disconnect })).toBeVisible();
+  await frame(page, "back from Google: connected, with today's sends, and Disconnect");
+
+  await page.getByRole("button", { name: staffCopy.gmail.disconnect }).click();
+  await expect(page.getByRole("link", { name: staffCopy.gmail.connect })).toBeVisible();
+  await frame(page, "disconnected: Connect Gmail again");
+});
+
 test("a login link works once, and only in the browser that asked for it", async ({
   page,
   browser,

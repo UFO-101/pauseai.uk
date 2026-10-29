@@ -12,7 +12,7 @@ import { headerName, notifyDomain, type Attachment } from "./outside-services/po
 
 /** One message, as a channel sends it. */
 export type ChannelMessage = {
-  /** The name it's from, and the account it's sent from; and who it's to. Each always has a name. */
+  /** The name it's from, and the account it's sent from; and who it's to. Each has a name but the sender, whose may be blank. */
   from: { name: string; address: string };
   to: { name: string; address: string };
   subject: string;
@@ -83,7 +83,8 @@ export const gmailEmail: MailingChannel = {
   send: (message, purpose) =>
     send(
       {
-        From: `"${headerName(message.from.name)}" <${message.from.address}>`,
+        // Without a name, Gmail sends it in the account's own.
+        From: message.from.name ? `"${headerName(message.from.name)}" <${message.from.address}>` : message.from.address,
         To: `"${headerName(message.to.name)}" <${message.to.address}>`,
         Subject: message.subject,
         TextBody: message.text,

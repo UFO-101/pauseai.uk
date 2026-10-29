@@ -16,12 +16,11 @@ function Message({ message }: { message: ThreadMessage }) {
   return (
     <Card span={6} title={message.fromUs ? copy.ourAnswer : message.fromName || message.fromAddress}>
       <p>
+        <strong>{message.subject}</strong>
+        <br />
         <Muted>
           {`${message.fromName} <${message.fromAddress}>`} · {staffTime(message.at)}
         </Muted>
-      </p>
-      <p>
-        <strong>{message.subject}</strong>
       </p>
       {message.text === null ? <Muted>{copy.unreadable}</Muted> : <div className={styles.text}>{message.text}</div>}
     </Card>
@@ -49,7 +48,8 @@ export default function LetterThread({ thread, me }: { thread: Thread; me: strin
         {thread.sentFrom && (
           <>
             <dt>{copy.from}</dt>
-            <dd>{`${thread.fromName} <${thread.sentFrom}>`}</dd>
+            {/* With no name of its own, it went in the Gmail account's. */}
+            <dd>{thread.fromName ? `${thread.fromName} <${thread.sentFrom}>` : thread.sentFrom}</dd>
           </>
         )}
         <dt>{copy.sent}</dt>

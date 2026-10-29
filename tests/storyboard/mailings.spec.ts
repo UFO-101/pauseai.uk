@@ -6,10 +6,10 @@ import { BASE, emailFrame, expect, frame, test } from "./fixtures";
 
 // Mailings to politicians written on the site: started from the politicians
 // list, written and saved as a draft, previewed and sent to yourself as a
-// test; who it's to changed from the list, and a draft deleted; and the pages
-// of mailings scheduled, sending and sent. Until a channel sends, nothing
-// can be scheduled from the page, so those mailings are made in the
-// database, as scheduling would make them.
+// test; who it's to changed from the list, and a draft deleted; one sent
+// from your Gmail, connected from the page, scheduled and sent by the
+// hourly job; and the pages of mailings scheduled, sending and sent, made in
+// the database as scheduling would make them.
 
 const copy = staffCopy.mailingPages;
 
@@ -191,4 +191,71 @@ test("a mailing sending, and one sent: its counts, and its recipients that bounc
   await expect(page).toHaveURL(new RegExp(`/staff/mailings/${sent}/letters/\\d+$`));
   await expect(page.getByRole("navigation").getByRole("link", { name: "Edinburgh follow-up" })).toBeVisible();
   await frame(page, "the letter that bounced: to whom, how it stands, and what happened to it");
+});
+
+test("Gmail connected from Sent from, the mailing scheduled, then sent by the hourly job", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await syncPoliticians(request, BASE);
+  await logIn(page, flowDatabase);
+  await page.goto(`${BASE}/staff/politicians?country=scotland`);
+  await page.getByRole("link", { name: copy.mailThese(1) }).click();
+  await page.getByLabel(copy.subject).fill("See you in Edinburgh");
+  await page.getByRole("textbox", { name: copy.letter }).click();
+  await page.keyboard.press("Control+End");
+  await page.keyboard.type("We hope to see you there.");
+  await expect(page.getByRole("status").first()).toHaveText(copy.savePill.saved);
+  await expect(page).toHaveURL(/\/staff\/mailings\/\d+$/);
+  const from = page.getByRole("region", { name: copy.sections.from });
+  await expect(from.getByRole("link", { name: staffCopy.gmail.connect })).toBeVisible();
+  await frame(page, "Sent from: your Gmail isn't connected, so what connecting means, before going to Google");
+
+  await from.getByRole("link", { name: staffCopy.gmail.connect }).click();
+  await expect(page.getByText(staffCopy.gmail.outcomes.connected)).toBeVisible();
+  await expect(page.getByLabel(copy.fromLegend, { exact: false })).toHaveValue(staffEmail());
+  await expect(from.getByText(staffCopy.gmail.sentToday(0, "1,800"))).toBeVisible();
+  await frame(page, "back from Google, connected: Sent from says how many it has sent of today's 1,800");
+
+  await page.getByLabel(copy.hour, { exact: false }).selectOption("14");
+  await page.getByRole("button", { name: copy.schedule(1) }).click();
+  await expect(page.getByText(copy.sends("Friday 16 October at 14:00"))).toBeVisible();
+  await frame(page, "scheduled for 14:00, from your Gmail");
+
+  // Its time come, the hourly job starts it and sends it.
+  const [id] = runSql(flowDatabase, "SELECT id FROM mailings WHERE title = 'See you in Edinburgh'");
+  runSql(flowDatabase, `UPDATE mailings SET due_at = '2026-10-16T11:00:00Z' WHERE id = ${id}`);
+  const sent = await request.post(`${BASE}/api/cron/send-mailings`, {
+    headers: { Authorization: "Bearer fixture-cron-secret" },
+  });
+  expect(await sent.json()).toMatchObject({ started: [Number(id)], sent: 1, left: 0 });
+  const letter = newestEmail((one) => one.To === '"Morag Example" <morag.example.msp@parliament.example>')!;
+  expect(letter.From).toBe(staffEmail());
+  await emailFrame(page, letter, "the letter as Morag got it, from your Gmail");
+
+  await page.reload();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("See you in Edinburgh");
+  await expect(page.getByText(copy.sends("Friday 16 October at 14:00"))).not.toBeVisible();
+  await frame(page, "sent: its counts and its one recipient");
+
+  await page
+    .getByRole("row", { name: /Morag Example/ })
+    .getByRole("link", { name: staffCopy.letters.status.sent })
+    .click();
+  await expect(page.getByRole("link", { name: staffCopy.letterThread.openInGmail })).toBeVisible();
+  await frame(page, "the letter as it went, with Open in Gmail for you who sent it, and no replies yet");
+
+  // Morag answers, and the hourly read of your Gmail keeps her reply (tests/fixtures/letter-replies/).
+  const letterId = page.url().split("/").at(-1);
+  runSql(
+    flowDatabase,
+    `INSERT INTO letter_replies (letter_id, account, gmail_message_id, gmail_thread_id, from_address, from_name, subject, at,
+       from_us, blob_key, size)
+     VALUES (${letterId}, '${staffEmail()}', 'reply-1', 'thread-1', 'morag.example.msp@parliament.example', 'Morag Example',
+       'Re: See you in Edinburgh', '2026-10-16T15:00:00Z', false, 'fixture/polly-thanks.eml.gz', 512)`,
+  );
+  await page.reload();
+  await expect(page.getByText("I share many")).toBeVisible();
+  await frame(page, "her reply, under the letter");
 });

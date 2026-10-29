@@ -491,6 +491,9 @@ export default function MailingWriter({
               fit
               disabled={problems.length > 0 || !data.sends}
               onClick={async () => {
+                // What's still to be saved, such as a time just chosen, goes first, or it's scheduled without it.
+                clearTimeout(timer.current);
+                await flush();
                 const result = await actions.schedule(savedId!, version.current);
                 if (result.scheduled) router.refresh();
               }}

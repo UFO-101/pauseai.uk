@@ -315,6 +315,46 @@ test("the asks page counts each answer, and an answer leads to who gave it", asy
   await frame(page, "the politicians going to the conference");
 });
 
+test("the politicians mailed about an ask, and those not yet", async ({ page, request, flowDatabase }) => {
+  await syncPoliticians(request, BASE);
+  await logIn(page, flowDatabase);
+  await page.goto(`${BASE}/staff/politicians?mailed=edinburgh-conference-2026`);
+  await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toBeVisible();
+  await frame(page, "those mailed about the conference");
+  await page.goto(`${BASE}/staff/politicians?mailed=!edinburgh-conference-2026`);
+  await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toHaveCount(0);
+  await frame(page, "and with Except, those not yet: the ones to mail next");
+});
+
+test("an ask added, changed, then deleted", async ({ page, flowDatabase }) => {
+  await logIn(page, flowDatabase);
+  const asks = staffCopy.asks;
+  await page.goto(`${BASE}/staff/asks`);
+  await page.getByRole("link", { name: asks.add }).click();
+  await page.getByLabel(asks.fields.title).fill("Winter reception");
+  await page.getByLabel(asks.fields.kind).selectOption("event");
+  await page.getByLabel(asks.fields.date).fill("2026-12-09");
+  await frame(page, "a new ask: its title, kind and date, and PauseAI asking");
+  await page.getByRole("button", { name: asks.save }).click();
+  await expect(page.getByText(asks.notices.added)).toBeVisible();
+  await expect(page.getByRole("row").filter({ hasText: "Winter reception" })).toBeVisible();
+  await frame(page, "added, among the asks, with Edit");
+
+  await page.getByRole("row").filter({ hasText: "Winter reception" }).getByRole("link", { name: asks.edit }).click();
+  await expect(page.getByText(asks.slugHint("winter-reception-dec-2026"))).toBeVisible();
+  await page.getByLabel(asks.fields.url).fill("https://luma.com/winter");
+  await page.getByRole("button", { name: asks.save }).click();
+  await expect(page.getByRole("link", { name: "Winter reception" })).toHaveAttribute("href", "https://luma.com/winter");
+  await page.getByRole("row").filter({ hasText: "Winter reception" }).getByRole("link", { name: asks.edit }).click();
+  await page.getByRole("button", { name: asks.delete }).click();
+  await expect(page.getByRole("button", { name: staffCopy.mailingPages.deleteIt })).toBeFocused();
+  await frame(page, "Delete, pressed once, asking to be pressed again", { window: true });
+  await page.getByRole("button", { name: staffCopy.mailingPages.deleteIt }).click();
+  await expect(page.getByText(asks.notices.deleted)).toBeVisible();
+  await expect(page.getByRole("row").filter({ hasText: "Winter reception" })).toHaveCount(0);
+  await frame(page, "deleted");
+});
+
 test("PauseAI's emails: copied once, with one held back for a mailing nobody has added", async ({
   page,
   request,

@@ -288,7 +288,9 @@ export async function scheduleMailing(
     });
     if (problems.length) return { scheduled: false, problems };
     await query(
-      "UPDATE mailings SET state = 'scheduled', version = version + 1, updated_at = now() WHERE id = $1",
+      // With no name of its own, it goes in the name the Gmail account has.
+      `UPDATE mailings SET state = 'scheduled', from_name = coalesce(from_name, ''), version = version + 1, updated_at = now()
+       WHERE id = $1`,
       [id],
       db,
     );

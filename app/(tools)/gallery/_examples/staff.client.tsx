@@ -35,7 +35,10 @@ import MailingEditor from "@/app/(staff)/staff/_components/MailingEditor";
 import ButtonRow from "@/components/ui/ButtonRow";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { ChangeTimeForm, DueTimeFields } from "@/app/(staff)/staff/_components/DueTime";
-import { DeleteDraft, StopMailing } from "@/app/(staff)/staff/_components/MailingButtons";
+import { DeleteDraft, DeleteTwice, StopMailing } from "@/app/(staff)/staff/_components/MailingButtons";
+import AskForm from "@/app/(staff)/staff/_components/AskForm";
+import MyGmail from "@/app/(staff)/staff/_components/MyGmail";
+import { exampleEditableAsk, exampleGmailAccount } from "@/app/(staff)/staff/_components/LetterThread.examples";
 import MailingFiles from "@/app/(staff)/staff/_components/MailingFiles";
 import MailingFor from "@/app/(staff)/staff/_components/MailingFor";
 import { FilterPills } from "@/app/(staff)/staff/_components/MailingParts";
@@ -520,6 +523,58 @@ export function MailingFilesExample({ editable }: { editable: boolean }) {
           onAdd={editable ? log("onAdd") : undefined}
           onRemove={editable ? log("onRemove") : undefined}
         />
+      )}
+    </Logged>
+  );
+}
+
+/** Your Gmail on your own page, connected or not, Disconnect logged. */
+export function MyGmailExample({ connected, outcome = "" }: { connected: boolean; outcome?: string }) {
+  return (
+    <Logged>
+      {(log) => (
+        <MyGmail
+          account={connected ? exampleGmailAccount : undefined}
+          outcome={outcome}
+          disconnect={log("disconnect")}
+        />
+      )}
+    </Logged>
+  );
+}
+
+/** An ask's form: a new one, one staff added, one answered, or one the code names; saves and deletes logged. */
+export function AskFormExample({ ask, notice = "" }: { ask: "new" | "added" | "answered" | "fixed"; notice?: string }) {
+  const asks = {
+    new: null,
+    added: exampleEditableAsk,
+    answered: { ...exampleEditableAsk, kindFixed: true, deletable: false },
+    fixed: {
+      ...exampleEditableAsk,
+      slug: "frontier-ai-letter",
+      title: "Frontier AI letter",
+      fixed: true,
+      deletable: false,
+    },
+  };
+  return (
+    <Logged>
+      {(log) => (
+        <AskForm ask={asks[ask]} back="/staff/asks" notice={notice} save={log("save")} remove={log("delete")} />
+      )}
+    </Logged>
+  );
+}
+
+/** A delete pressed twice, logged; and one that can't be pressed. */
+export function DeleteTwiceExample() {
+  return (
+    <Logged>
+      {(log) => (
+        <>
+          <DeleteTwice name="slug" value="winter-reception-dec-2026" label="Delete ask" action={log("delete")} />
+          <DeleteTwice name="slug" value="frontier-ai-letter" label="Delete ask" disabled action={log("delete")} />
+        </>
       )}
     </Logged>
   );

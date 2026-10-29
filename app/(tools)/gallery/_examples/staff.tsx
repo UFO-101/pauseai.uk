@@ -101,6 +101,10 @@ import {
   examplePoliticiansPage,
 } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
 import AsksTable from "@/app/(staff)/staff/_components/AsksTable";
+import BounceReason from "@/app/(staff)/staff/_components/BounceReason";
+import { GmailConnect, GmailOutcome, SentToday } from "@/app/(staff)/staff/_components/GmailConnect";
+import LetterThread from "@/app/(staff)/staff/_components/LetterThread";
+import { exampleImportedThread, exampleThread } from "@/app/(staff)/staff/_components/LetterThread.examples";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { ImportJob } from "@/lib/import-runs";
 import type { Group, Variant } from "../_components/types";
@@ -128,6 +132,9 @@ import {
   StaffAccountsTableExample,
   RemoveAccountFormExample,
   UnblockFormExample,
+  AskFormExample,
+  DeleteTwiceExample,
+  MyGmailExample,
 } from "./staff.client";
 
 const [pm] = campaigns;
@@ -991,6 +998,98 @@ export const staff: Group = {
       ],
     },
     {
+      name: "MyGmail",
+      file: "app/(staff)/staff/_components/MyGmail.tsx",
+      variants: [
+        {
+          label: "Not connected: what connecting means, and the button",
+          render: () => (
+            <StaffPage as="div">
+              <MyGmailExample connected={false} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Just connected, with today's sends, and Disconnect",
+          render: () => (
+            <StaffPage as="div">
+              <MyGmailExample connected outcome="connected" />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "GmailConnect",
+      file: "app/(staff)/staff/_components/GmailConnect.tsx",
+      variants: [
+        {
+          label: "What connecting means, said before going to Google",
+          render: () => (
+            <StaffPage as="div">
+              <GmailConnect back="/staff/mailings/12" />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "SentToday",
+      file: "app/(staff)/staff/_components/GmailConnect.tsx",
+      variants: [
+        {
+          label: "An account's sends against today's limit",
+          render: () => (
+            <StaffPage as="div">
+              <SentToday sent={120} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "GmailOutcome",
+      file: "app/(staff)/staff/_components/GmailConnect.tsx",
+      variants: (["connected", "other-account", "refused", "failed"] as const).map((outcome) => ({
+        label: `Back from Google: ${outcome}`,
+        render: () => (
+          <StaffPage as="div">
+            <GmailOutcome outcome={outcome} />
+          </StaffPage>
+        ),
+      })),
+    },
+    {
+      name: "LetterThread",
+      file: "app/(staff)/staff/_components/LetterThread.tsx",
+      variants: [
+        {
+          label: "Sent from Jo's Gmail, seen by Jo: an automatic reply, Polly's answer, and Jo's that can't be read",
+          render: () => (
+            <StaffPage as="div">
+              <LetterThread thread={exampleThread} me="jo@pauseai.uk" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Seen by someone else: no Open in Gmail",
+          render: () => (
+            <StaffPage as="div">
+              <LetterThread thread={exampleThread} me="sam@pauseai.uk" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Imported from Airtable, never sent: no text, no replies",
+          render: () => (
+            <StaffPage as="div">
+              <LetterThread thread={exampleImportedThread} me="jo@pauseai.uk" />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
       name: "StaffSessions",
       file: "app/(staff)/staff/_components/StaffSessions.tsx",
       variants: [
@@ -1843,6 +1942,58 @@ export const staff: Group = {
       ],
     },
     {
+      name: "AskForm",
+      file: "app/(staff)/staff/_components/AskForm.tsx",
+      variants: [
+        {
+          label: "A new ask",
+          render: () => (
+            <StaffPage as="div">
+              <AskFormExample ask="new" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "One staff added, just saved, which nobody has answered: Delete pressed twice",
+          render: () => (
+            <StaffPage as="div">
+              <AskFormExample ask="added" notice="saved" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "One politicians have answered: its kind fixed, and it can't be deleted",
+          render: () => (
+            <StaffPage as="div">
+              <AskFormExample ask="answered" notice="in-use" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "One the site's code names, which can't be changed",
+          render: () => (
+            <StaffPage as="div">
+              <AskFormExample ask="fixed" />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "DeleteTwice",
+      file: "app/(staff)/staff/_components/MailingButtons.tsx",
+      variants: [
+        {
+          label: "Press once to arm it, twice to delete; and one that can't be pressed",
+          render: () => (
+            <StaffPage as="div">
+              <DeleteTwiceExample />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
       name: "AsksTable",
       file: "app/(staff)/staff/_components/AsksTable.tsx",
       variants: [
@@ -1873,6 +2024,28 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <PoliticianTableEmptyExample />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "BounceReason",
+      file: "app/(staff)/staff/_components/BounceReason.tsx",
+      variants: [
+        {
+          label: "Postmark's, and one found in someone's Gmail",
+          render: () => (
+            <StaffPage as="div">
+              <p>
+                <BounceReason reason="Unknown user" foundInGmail={false} />
+              </p>
+              <p>
+                <BounceReason
+                  reason="550 5.1.1 The email account that you tried to reach does not exist."
+                  foundInGmail
+                />
+              </p>
             </StaffPage>
           ),
         },

@@ -3,6 +3,7 @@ import { ASK_STATUSES, FIXED_ASKS } from "@/lib/asks";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { AskWithCounts } from "@/lib/server/asks";
 import { staffDate } from "@/lib/staff-time";
+import Strip from "./ui/Strip";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
 import { Muted } from "@/components/ui/Text";
 
@@ -86,10 +87,15 @@ const editColumn: ListColumn<AskWithCounts> = {
   cell: (a) => !FIXED_ASKS.includes(a.slug) && <Link href={`/staff/asks/${a.slug}`}>{copy.edit}</Link>,
 };
 
-/** Every ask, newest first, in the list frame: how many, their downloads, a row each with Edit; and Add an ask. */
-export default function AsksTable({ asks }: { asks: AskWithCounts[] }) {
+/** Every ask, newest first, in the list frame: how many, their downloads, a row each with Edit; and Add an ask; over them, `notice`, how the last save or delete went. */
+export default function AsksTable({ asks, notice = "" }: { asks: AskWithCounts[]; notice?: string }) {
   return (
     <>
+      {copy.notices[notice] && (
+        <Strip tone={["added", "saved", "deleted"].includes(notice) ? "green" : "amber"} announce>
+          {copy.notices[notice]}
+        </Strip>
+      )}
       <p>
         <Link href="/staff/asks/new">{copy.add}</Link>
       </p>
