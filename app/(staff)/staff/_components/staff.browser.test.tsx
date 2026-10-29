@@ -2633,7 +2633,8 @@ describe("LetterDetails", () => {
     expect(sending.element().textContent).toContain(copy.status.sending);
     expect(sending.getByRole("button").all()).toHaveLength(0);
     // A hard bounce says no more than its status; the {} has what Postmark said.
-    expect(bounced.element().querySelector("li > span:nth-child(2)")!.textContent).toBe(copy.status.bounced);
+    expect(bounced.element().querySelector("strong")!.textContent).toBe(copy.status.bounced);
+    expect(bounced.element().querySelector("dl")).toBeNull();
     await bounced.getByRole("button", { name: staffCopy.changes.json }).click();
     await expect.element(page.getByText('"type": "HardBounce"', { exact: false })).toBeVisible();
     expect(document.body.textContent).toContain(copy.consent.yes);

@@ -149,9 +149,10 @@ function EventFields({ event }: { event: LetterEvent }) {
 }
 
 /**
- * Each change of a letter's status, newest first: its time, the status, and
- * under it every field it recorded, a line each, in words; and a {} button that opens them as
- * recorded, as the audit log has.
+ * Each change of a letter's status, newest first: the status and its time
+ * on a line, with a {} button at its right that opens what it recorded as
+ * recorded, as the audit log has; under them every field, a line each, in
+ * words.
  */
 function History({ events }: { events: LetterEvent[] }) {
   if (events.length === 0) return <p className={styles.none}>{copy.detail.noHistory}</p>;
@@ -159,14 +160,14 @@ function History({ events }: { events: LetterEvent[] }) {
     <ol className={`${styles.history} ${styles.events}`} aria-label={copy.detail.historyTitle}>
       {events.map((event, i) => (
         <li key={i}>
-          <span className={styles.when}>{staffTime(event.at)}</span>
-          <span>
+          <p className={styles.eventHead}>
             <strong>{statusOf(event.status)}</strong>
-            <EventFields event={event} />
-          </span>
+            <span className={styles.eventWhen}>{staffTime(event.at)}</span>
+          </p>
           <span>
             {Object.keys(event.details).length > 0 && <LoggedJson id={`event-${i}`} details={event.details} />}
           </span>
+          <EventFields event={event} />
         </li>
       ))}
     </ol>
