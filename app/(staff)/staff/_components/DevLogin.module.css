@@ -36,10 +36,16 @@
   font-size: var(--text-sm);
 }
 
-/* The button in its own column, the description beside it, wrapping within its own column rather than under the button. */
+/* The button, and the description beside it while both fit on the line,
+   or whole on the next line when they don't, never squeezed beside it. */
 .choices li {
-  display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  gap: var(--space-3);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
   align-items: center;
+}
+
+.choices li > span {
+  flex: 0 0 auto;
+  max-width: 100%;
 }
