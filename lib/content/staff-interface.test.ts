@@ -51,7 +51,7 @@ describe("staff interface copy", () => {
   it("ends the bounce's reason with one full stop, whether Postmark's has one or not", () => {
     for (const reason of ["Mailbox not found.", "Mailbox not found"]) {
       expect(staffCopy.alert.body("Testy MP", "testy@example.org", reason, "https://example.org")).toContain(
-        "didn't arrive: Mailbox not found. Nothing more",
+        "The mail server said: “Mailbox not found.”",
       );
     }
   });

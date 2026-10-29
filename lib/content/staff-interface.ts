@@ -1175,11 +1175,10 @@ export const staffCopy = {
   // Postmark's reason sometimes ends in a full stop and sometimes doesn't.
   alert: {
     subject: (mp: string) => `A letter to ${mp} bounced`,
+    // The mail server's reason quoted after its own sentence, and the link on a line of its own.
     body: (mp: string, address: string, reason: string, link: string) =>
-      `A letter to ${mp} (${address}) didn't arrive: ${reason.replace(/\.+$/, "")}. Nothing more will be sent to that address until it's fixed in Airtable and unblocked here: ${link}`,
+      `A letter to ${mp} (${address}) didn't arrive. The mail server said: “${reason.replace(/\.+$/, "")}.”\n\nNothing more will be sent to that address until it's fixed in Airtable and unblocked here:\n${link}`,
   },
-  // The nightly copy of ControlAI's letter's signatories into the bill's
-  // statuses (lib/server/controlai-import.ts), on the import page.
   // The web imports, after the Airtable ones on the import page: ControlAI's
   // letter to the PM, copied nightly into the bill's statuses
   // (lib/server/controlai-import.ts).
