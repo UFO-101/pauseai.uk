@@ -411,7 +411,7 @@ describe("StaffDashboard", () => {
     );
     expect(tileLink(copy.metrics.mpsSigned(1))?.getAttribute("href")).toBe("/staff/politicians/7");
 
-    // A quiet month: nothing reads "None", with no test letters and no bar; the change is over 30 days.
+    // A quiet month: nothing reads "No", with no test letters and no bar; the change is over 30 days.
     await rerender(<StaffDashboard dashboard={exampleQuietDashboard} permissions={[]} />);
     const month = page.getByRole("img", { name: copy.series(copy.metrics.eventRegistrations(4), 30, 8) }).element();
     const monthBox = month.getBoundingClientRect();
