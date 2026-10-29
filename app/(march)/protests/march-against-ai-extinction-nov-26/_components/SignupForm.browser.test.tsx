@@ -5,7 +5,7 @@ import type { MarchRegisterResult } from "@/lib/march-registration";
 import SignupForm from "./SignupForm";
 
 /** The form, still, with nothing listening for it to move on. */
-const formProps = { onRegistered: () => {}, motion: "still" as const, onLeft: () => {} };
+const formProps = { signups: null, onRegistered: () => {}, motion: "still" as const, onLeft: () => {} };
 
 async function fillIn() {
   await page.getByLabelText("Full name").fill("Testy McTestface");

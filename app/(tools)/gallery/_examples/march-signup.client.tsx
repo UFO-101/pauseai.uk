@@ -5,6 +5,7 @@
 // that logs what it's sent and says Luma failed, so the form stays put.
 import type { MarchRegisterResult } from "@/lib/march-registration";
 import MarchSignupFrame from "@/app/(march)/protests/march-against-ai-extinction-nov-26/_components/MarchSignupFrame";
+import MarchSignups from "@/app/(march)/protests/march-against-ai-extinction-nov-26/_components/MarchSignups";
 import ShareCard from "@/app/(march)/protests/march-against-ai-extinction-nov-26/_components/ShareCard";
 import SignupForm from "@/app/(march)/protests/march-against-ai-extinction-nov-26/_components/SignupForm";
 import SignupRegister from "@/app/(march)/protests/march-against-ai-extinction-nov-26/_components/SignupRegister";
@@ -33,7 +34,9 @@ export function SignupRegisterExample() {
     <Logged>
       {(log) => (
         <MarchSignupFrame>
-          <SignupRegister register={loggedRegister(log)} />
+          <MarchSignups signups={1234}>
+            <SignupRegister register={loggedRegister(log)} />
+          </MarchSignups>
         </MarchSignupFrame>
       )}
     </Logged>
@@ -47,6 +50,7 @@ export function SignupFormExample() {
       {(log) =>
         card(
           <SignupForm
+            signups={1234}
             register={loggedRegister(log)}
             onRegistered={log("onRegistered")}
             motion="still"

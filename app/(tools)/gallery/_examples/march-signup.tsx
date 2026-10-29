@@ -2,6 +2,8 @@
 // each in the sub-site's frame, which gives it its type and colours.
 import type { ReactNode } from "react";
 import MarchSignupFrame from "@/app/(march)/protests/march-against-ai-extinction-nov-26/_components/MarchSignupFrame";
+import MarchSignups from "@/app/(march)/protests/march-against-ai-extinction-nov-26/_components/MarchSignups";
+import SignupCount from "@/app/(march)/protests/march-against-ai-extinction-nov-26/_components/SignupCount";
 import SignupCase from "@/app/(march)/protests/march-against-ai-extinction-nov-26/_components/SignupCase";
 import SignupDay from "@/app/(march)/protests/march-against-ai-extinction-nov-26/_components/SignupDay";
 import SignupDemand from "@/app/(march)/protests/march-against-ai-extinction-nov-26/_components/SignupDemand";
@@ -39,7 +41,18 @@ export const marchSignup: Group = {
     {
       name: "SignupHero",
       file: "app/(march)/protests/march-against-ai-extinction-nov-26/_components/SignupHero.tsx",
-      variants: [{ label: "The sign-up page's first screen", render: () => inFrame(<SignupHero />) }],
+      variants: [
+        {
+          label: "The sign-up page's first screen, with how many have registered",
+          render: () =>
+            inFrame(
+              <MarchSignups signups={1234}>
+                <SignupHero />
+              </MarchSignups>,
+            ),
+        },
+        { label: "When Luma can't say how many", render: () => inFrame(<SignupHero />) },
+      ],
     },
     {
       name: "SignupHeroScroll",
@@ -90,6 +103,35 @@ export const marchSignup: Group = {
       name: "SignupForm",
       file: "app/(march)/protests/march-against-ai-extinction-nov-26/_components/SignupForm.tsx",
       variants: [{ label: "The form, whose action logs what it's sent", render: () => <SignupFormExample /> }],
+    },
+    {
+      name: "SignupCount",
+      file: "app/(march)/protests/march-against-ai-extinction-nov-26/_components/SignupCount.tsx",
+      variants: [
+        {
+          label: "How many have registered, as in the form's corner",
+          render: () => inFrame(<SignupCount count={1234} />),
+        },
+        {
+          label: "On ink, as beside the hero's button",
+          render: () =>
+            inFrame(
+              <div style={{ display: "flex", padding: 24, background: "var(--march-ink)" }}>
+                <SignupCount count={1234} onInk />
+              </div>,
+            ),
+        },
+      ],
+    },
+    {
+      name: "MarchSignups",
+      file: "app/(march)/protests/march-against-ai-extinction-nov-26/_components/MarchSignups.tsx",
+      variants: [
+        {
+          label: "The count for the hero and the form, the register band in it",
+          render: () => <SignupRegisterExample />,
+        },
+      ],
     },
     {
       name: "SignupFlow",

@@ -119,6 +119,23 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
     const guests = lumaGuests.entries.map((guest) => ({ ...guest, id: `${guest.id}-${eventId}`, api_id: undefined }));
     return json(pageOf(guests, searchParams.get("pagination_cursor"), 3));
   }
+  if (hostname === "public-api.luma.com" && pathname === "/v1/events/get") {
+    // Any event's details, as far as the site reads them: its guest counts,
+    // which Luma gives for an event our calendar manages.
+    const status = (guests: number) => ({ guests, tickets: guests });
+    return json({
+      id: searchParams.get("event_id"),
+      access: "manage",
+      guest_counts: {
+        approved: status(1234),
+        pending_approval: status(0),
+        waitlist: status(0),
+        invited: status(5),
+        declined: status(12),
+        checked_in: status(0),
+      },
+    });
+  }
   if (hostname === "public-api.luma.com" && pathname === "/v1/calendars/contacts/list") {
     return json(pageOf(lumaContacts.entries, searchParams.get("pagination_cursor"), 2));
   }

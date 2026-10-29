@@ -94,6 +94,28 @@ test("Register with a name the server refuses", async ({ page }) => {
   await frame(page, "the form asks for a valid email");
 });
 
+test("how many have registered, asked for again on coming back to the page", { tag: "@phone" }, async ({ page }) => {
+  await openSignup(page);
+  // The fixture event's approved guests, beside the hero's button too.
+  const hero = page.locator("section").filter({ has: page.getByRole("heading", { level: 1 }) });
+  await expect(hero).toContainText(`1,234 ${copy.form.count}`);
+  await expect(hero.getByText(`1,234 ${copy.form.count}`)).toBeInViewport();
+  await frame(page, "the hero, with how many have registered beside its button");
+
+  await page.getByRole("link", { name: "Register now" }).click();
+  await scrollSettled(page);
+  const form = page.locator("form");
+  await expect(form).toContainText(`1,234 ${copy.form.count}`);
+  await frame(page, "the form, with how many have registered in its corner");
+
+  // Coming back to the page asks the count's endpoint again, at once.
+  const asked = page.waitForResponse((res) => res.url().endsWith("/api/march/signups") && res.ok());
+  await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+  expect(await (await asked).json()).toEqual({ count: 1234 });
+  await expect(form).toContainText(`1,234 ${copy.form.count}`);
+  await expect(hero).toContainText(`1,234 ${copy.form.count}`);
+});
+
 test("The scroll cue: past the photos, the header follows", async ({ page }) => {
   await openSignup(page);
   await page.getByRole("button", { name: "Scroll down" }).click();

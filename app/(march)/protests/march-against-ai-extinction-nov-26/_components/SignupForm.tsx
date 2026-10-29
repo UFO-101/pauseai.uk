@@ -8,6 +8,7 @@ import type { MarchRegisterResult } from "@/lib/march-registration";
 import { track } from "./analytics";
 import { cardMotionProps, type CardMotion } from "./card-motion";
 import { m } from "./classes";
+import SignupCount from "./SignupCount";
 
 const copy = marchSignupCopy.form;
 
@@ -23,14 +24,17 @@ function errorFor(result: Exclude<MarchRegisterResult, { ok: true }> | "unreacha
  * The registration form, the register band's first card. `register` sends it
  * to app/api/march/register (./register.ts), which adds the person to the
  * Luma event and keeps the rest; once Luma has them, `onRegistered` moves on
- * to the share card, with the email they gave.
+ * to the share card, with the email they gave. `signups` is how many have
+ * registered so far, shown in its top corner when Luma could say.
  */
 export default function SignupForm({
+  signups,
   register,
   onRegistered,
   motion,
   onLeft,
 }: {
+  signups: number | null;
   register: (input: unknown) => Promise<MarchRegisterResult>;
   onRegistered: (email: string) => void;
   motion: CardMotion;
@@ -75,7 +79,10 @@ export default function SignupForm({
 
   return (
     <form className={m("signup")} method="post" onSubmit={handleSubmit} {...cardMotionProps(motion, onLeft)}>
-      <p className={m("signup-head")}>{copy.head}</p>
+      <div className={m("signup-top")}>
+        <p className={m("signup-head")}>{copy.head}</p>
+        <SignupCount count={signups} />
+      </div>
 
       <div className={m("field")}>
         <label htmlFor="name">{copy.name}</label>

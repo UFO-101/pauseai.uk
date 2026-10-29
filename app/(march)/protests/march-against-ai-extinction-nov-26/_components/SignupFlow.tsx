@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { MarchRegisterResult } from "@/lib/march-registration";
 import type { CardMotion } from "./card-motion";
 import { m } from "./classes";
+import { useSignups } from "./MarchSignups";
 import ShareCard from "./ShareCard";
 import SignupForm from "./SignupForm";
 import { registerForMarch } from "./register";
@@ -17,12 +18,14 @@ const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").match
  * next: the form, then, once registered, the share card, which can start the
  * form again for someone else. `register` sends the
  * form; it's app/api/march/register unless a test or the gallery gives one.
+ * The form shows the count from the MarchSignups around it.
  */
 export default function SignupFlow({
   register = registerForMarch,
 }: {
   register?: (input: unknown) => Promise<MarchRegisterResult>;
 }) {
+  const count = useSignups();
   const [card, setCard] = useState<Card>("form");
   const [motion, setMotion] = useState<CardMotion>("still");
   const [next, setNext] = useState<Card>("form");
@@ -61,6 +64,7 @@ export default function SignupFlow({
     <div ref={wrap} className={m("card-wrap")}>
       {card === "form" && (
         <SignupForm
+          signups={count}
           register={register}
           onRegistered={(given) => {
             setEmail(given);

@@ -2,7 +2,7 @@ import type { MarchRegisterResult } from "@/lib/march-registration";
 import { m } from "./classes";
 import SignupFlow from "./SignupFlow";
 
-/** The register band: what to expect, and the form and the cards after it. `register` is as SignupFlow's. */
+/** The register band: what to expect, and the form and the cards after it. Its props are SignupFlow's. */
 export default function SignupRegister({ register }: { register?: (input: unknown) => Promise<MarchRegisterResult> }) {
   return (
     <section id="register" className={m("band band-ink")}>

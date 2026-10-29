@@ -4,11 +4,18 @@ import Image from "next/image";
 import { march } from "@/lib/content/march";
 import { m } from "./classes";
 import { useSignupHero } from "./MarchSignupFrame";
+import { useSignups } from "./MarchSignups";
+import SignupCount from "./SignupCount";
 import SignupHeroScroll from "./SignupHeroScroll";
 
-/** The sign-up page's first screen: the march's name, when and where, and the button to the form. */
+/**
+ * The sign-up page's first screen: the march's name, when and where, and the
+ * button to the form, with how many have registered beside it when the
+ * MarchSignups around it can say.
+ */
 export default function SignupHero() {
   const { setHero } = useSignupHero();
+  const signups = useSignups();
   return (
     <section ref={setHero} className={m("hero")}>
       <Image className={m("hero-photo")} src="/images/march-signup/hero-march.jpg" alt="" fill sizes="100vw" priority />
@@ -62,6 +69,7 @@ export default function SignupHero() {
           <a className={m("btn large on-ink")} href="#register">
             Register now
           </a>
+          <SignupCount count={signups} onInk />
         </div>
       </div>
       <SignupHeroScroll />
