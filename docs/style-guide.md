@@ -294,7 +294,9 @@ each at the top of the home page, one at the top of an MP's page whose
 address is blocked, one for an error after a form. Inside a card, a strip
 is that thing's state: an import job's newest run, a campaign's status, a
 mailing list's answer. A strip that's an answer, not a warning, leaves out
-the icon (`icon={false}`).
+the icon (`icon={false}`). After something a person did, a strip says how
+it went: green when it worked, amber a warning, red an error, the amber
+and red with their icon.
 
 **Tables** (`components/ui/Table`). White, every other row tinted
 (`--table-stripe`), so the eye keeps to a row across. A cell's content sits at its top, so

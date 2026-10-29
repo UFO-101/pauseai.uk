@@ -11,6 +11,9 @@ import styles from "./GmailConnect.module.css";
 const copy = staffCopy.gmail;
 const LIMIT = GMAIL_DAILY_LIMIT.toLocaleString("en-GB");
 
+/** Each way connecting can end, in its tone: green connected, amber when you didn't allow it, red any error. */
+const OUTCOME_TONES: Record<string, "green" | "amber"> = { connected: "green", refused: "amber" };
+
 /**
  * What connecting a Gmail means, said before it goes to Google: which
  * account, then in bullets what it's for, what the site reads, and the
@@ -56,7 +59,7 @@ export function GmailOutcome({ outcome }: { outcome: string }) {
   const words = copy.outcomes[outcome];
   if (!words) return null;
   return (
-    <Strip tone={outcome === "connected" ? "green" : "amber"} announce>
+    <Strip tone={OUTCOME_TONES[outcome] ?? "red"} announce>
       {words}
     </Strip>
   );

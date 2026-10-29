@@ -29,11 +29,13 @@ describe("GmailConnect, SentToday and GmailOutcome", () => {
     await expect.element(page.getByText(gmail.sentToday(12, "1,800"))).toBeVisible();
   });
 
-  it("says how connecting ended, green if it did, and nothing for an outcome it doesn't know", async () => {
+  it("says how connecting ended, green if it did, amber if refused, red for an error, and nothing for an outcome it doesn't know", async () => {
     const { rerender } = await render(<GmailOutcome outcome="connected" />);
     await expect.element(page.getByRole("status")).toHaveTextContent(gmail.outcomes.connected);
     await rerender(<GmailOutcome outcome="refused" />);
     await expect.element(page.getByRole("status")).toHaveTextContent(gmail.outcomes.refused);
+    await rerender(<GmailOutcome outcome="other-account" />);
+    await expect.element(page.getByRole("alert")).toHaveTextContent(gmail.outcomes["other-account"]);
     await rerender(<GmailOutcome outcome="" />);
     expect(page.getByRole("status").query()).toBeNull();
   });
@@ -52,7 +54,7 @@ describe("MyGmail", () => {
 
   it("not connected: what connecting means, and the button, coming back here", async () => {
     await render(<MyGmail account={undefined} outcome="failed" disconnect={vi.fn()} />);
-    await expect.element(page.getByRole("status")).toHaveTextContent(gmail.outcomes.failed);
+    await expect.element(page.getByRole("alert")).toHaveTextContent(gmail.outcomes.failed);
     await expect
       .element(page.getByRole("link", { name: gmail.connect }))
       .toHaveAttribute("href", "/staff/api/gmail/connect?back=%2Fstaff%2Fme");

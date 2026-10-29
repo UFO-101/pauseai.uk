@@ -1032,6 +1032,14 @@ export const staff: Group = {
             </StaffPage>
           ),
         },
+        {
+          label: "Connecting failed: the error, then what connecting means again",
+          render: () => (
+            <StaffPage as="div">
+              <MyGmailExample connected={false} outcome="failed" />
+            </StaffPage>
+          ),
+        },
       ],
     },
     {

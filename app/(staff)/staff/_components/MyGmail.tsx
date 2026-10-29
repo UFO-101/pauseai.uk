@@ -3,6 +3,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import type { GmailAccount } from "@/lib/server/gmail-accounts";
 import { staffDate } from "@/lib/staff-time";
 import { GmailConnect, GmailOutcome, SentToday } from "./GmailConnect";
+import styles from "./MyGmail.module.css";
 
 const copy = staffCopy.gmail;
 
@@ -24,21 +25,23 @@ export default function MyGmail({
   return (
     <>
       <h2 id="gmail">{copy.title}</h2>
-      <GmailOutcome outcome={outcome} />
-      {account ? (
-        <>
-          <p>
-            {copy.connected(staffDate(account.connectedAt))} <SentToday sent={account.sentToday} />
-          </p>
-          <form action={disconnect}>
-            <Button type="submit" variant="ghost" size="small" fit>
-              {copy.disconnect}
-            </Button>
-          </form>
-        </>
-      ) : (
-        <GmailConnect back="/staff/me" />
-      )}
+      <div className={styles.body}>
+        <GmailOutcome outcome={outcome} />
+        {account ? (
+          <>
+            <p>
+              {copy.connected(staffDate(account.connectedAt))} <SentToday sent={account.sentToday} />
+            </p>
+            <form action={disconnect}>
+              <Button type="submit" variant="ghost" size="small" fit>
+                {copy.disconnect}
+              </Button>
+            </form>
+          </>
+        ) : (
+          <GmailConnect back="/staff/me" />
+        )}
+      </div>
     </>
   );
 }
