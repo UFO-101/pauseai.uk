@@ -306,8 +306,11 @@ test("Format the letter and paste into it: the preview is what the MP gets", asy
   expect(sent.HtmlBody).toMatch(/<ul>\s*<li><p>First reason<\/p><\/li>\s*<li><p>Second reason<\/p><\/li>\s*<\/ul>/);
   expect(sent.HtmlBody).toContain('See <a href="https://example.com/">this report</a> and red words.');
   expect(sent.HtmlBody).not.toMatch(/<h1|<ol|style=/);
-  // The pasted link is gone: the only one is the drafted letter's address, which the HTML links.
-  expect(sent.HtmlBody?.match(/<a [^>]*>/g)).toEqual([`<a href="mailto:${site.policyEmail}">`]);
+  // The drafted letter's address, which the HTML links, and the pasted link, kept.
+  expect(sent.HtmlBody?.match(/<a [^>]*>/g)).toEqual([
+    `<a href="mailto:${site.policyEmail}">`,
+    '<a href="https://example.com/">',
+  ]);
   await emailFrame(page, sent, "the letter as the MP gets it, formatted");
   // All of it above the sign-off, which is as it was drafted.
   expect(sent.TextBody).toMatch(
