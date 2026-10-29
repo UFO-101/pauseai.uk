@@ -1,5 +1,11 @@
 import "server-only";
-import { checkMailingDoc, isBlankMailing, letterFor, type MailingDoc } from "@/lib/mailing-doc";
+import {
+  checkMailingDoc,
+  isBlankMailing,
+  letterFor,
+  type MailingDoc,
+  type MailingRecipientValues,
+} from "@/lib/mailing-doc";
 import { scheduleProblems, type ScheduleProblem } from "@/lib/mailing-schedule";
 import { toHtml, toText } from "@/lib/letter-format";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -211,7 +217,7 @@ export async function attachmentFile(
 }
 
 /** A mailing's files, as they're sent. */
-async function attachmentsOf(id: number): Promise<Attachment[]> {
+export async function attachmentsOf(id: number): Promise<Attachment[]> {
   return query<Attachment>(
     `SELECT filename AS "Name", encode(content, 'base64') AS "Content", content_type AS "ContentType"
      FROM mailing_attachments WHERE mailing_id = $1 ORDER BY id`,
@@ -351,7 +357,7 @@ export async function rescheduleMailing(id: number, dueAt: string, by: string): 
 }
 
 /** One recipient's email of a mailing: its subject, and its letter as HTML and as text. */
-export function emailFor(mailing: WrittenMailing, recipient: PoliticianRecipient) {
+export function emailFor(mailing: Pick<WrittenMailing, "subject" | "body">, recipient: MailingRecipientValues) {
   const letter = letterFor(mailing.body, recipient);
   return { subject: mailing.subject, html: toHtml(letter), text: toText(letter) };
 }

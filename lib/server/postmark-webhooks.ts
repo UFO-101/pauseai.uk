@@ -68,15 +68,20 @@ const AUTO_REPLY_SUBJECT = /^\s*(automatic reply|auto[- ]?reply|auto[- ]?respons
  * or failing those, a subject such as Outlook's "Automatic reply:".
  */
 export function isAutoReply(email: InboundEmail): boolean {
-  const header = (name: string) =>
-    email.Headers?.find((h) => h.Name?.toLowerCase() === name)
-      ?.Value?.trim()
-      .toLowerCase();
-  const autoSubmitted = header("auto-submitted");
+  return isMachineReply(
+    (name) => email.Headers?.find((h) => h.Name?.toLowerCase() === name)?.Value,
+    email.Subject ?? "",
+  );
+}
+
+/** isAutoReply(), for an email whatever it came in: `header` finds a header by its lowercased name. */
+export function isMachineReply(header: (name: string) => string | undefined, subject: string): boolean {
+  const value = (name: string) => header(name)?.trim().toLowerCase();
+  const autoSubmitted = value("auto-submitted");
   if (autoSubmitted && autoSubmitted !== "no") return true;
-  if (header("x-autoreply") !== undefined || header("x-autorespond") !== undefined) return true;
-  if (["auto_reply", "bulk", "junk"].includes(header("precedence") ?? "")) return true;
-  return AUTO_REPLY_SUBJECT.test(email.Subject ?? "");
+  if (value("x-autoreply") !== undefined || value("x-autorespond") !== undefined) return true;
+  if (["auto_reply", "bulk", "junk"].includes(value("precedence") ?? "")) return true;
+  return AUTO_REPLY_SUBJECT.test(subject);
 }
 
 /**

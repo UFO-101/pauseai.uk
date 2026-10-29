@@ -1,18 +1,37 @@
 import "server-only";
 import { logChange } from "./audit";
 import { query, transaction } from "./db";
+import { gmailAccess } from "./gmail-accounts";
+import { newMessageId } from "./mime";
+import { GmailError, sendGmail } from "./outside-services/gmail";
 import { PostmarkError, sendEmail, unsuppress, type Email } from "./outside-services/postmark";
+import { now } from "@/lib/now";
 
 // Every email the site sends goes through send(), whatever it's for. A bounce
 // or complaint is about an address, not about the email that found it out:
 // once an address hard-bounces or complains, nothing is sent to it again
-// until staff unblock it. The provider (lib/server/outside-services/postmark.ts) is behind
-// sendEmail and unsuppress, and its webhooks become a DeliveryProblem.
+// until staff unblock it. It goes by Postmark (lib/server/outside-services/postmark.ts),
+// whose webhooks become a DeliveryProblem, or by a staff member's connected
+// Gmail (gmail.ts there), whose bounces are read from the mailbox
+// (gmail-reading.ts).
 
 /** What an email is for. Each has its own way of handling a bounce (delivery-problems.ts). */
-export type Purpose = "letter" | "forwarded-reply" | "staff-login" | "staff-alert" | "mailing-test";
+export type Purpose = "letter" | "forwarded-reply" | "staff-login" | "staff-alert" | "mailing" | "mailing-test";
 
-export type SendResult = { sent: true; id: string } | { sent: false; reason: "blocked" | "failed" };
+/** What sends an email: Postmark, or a staff member's connected Gmail, as that account. */
+export type Backend = { name: "postmark" } | { name: "gmail"; account: string };
+
+export type SendOptions = {
+  backend?: Backend;
+  /** The connected Gmail account a mailing goes from, whichever backend sends it, to count against its daily limit. */
+  sender?: string;
+  /** The Message-ID to send it with, so replies can be matched to it; Gmail's sends always have one. */
+  messageId?: string;
+};
+
+export type SendResult =
+  | { sent: true; id: string; messageId: string | null; threadId: string | null }
+  | { sent: false; reason: "blocked" | "failed" };
 
 /** A bounce or spam complaint, as any provider reports it. */
 export type DeliveryProblem = {
@@ -26,6 +45,8 @@ export type DeliveryProblem = {
   /** Whether the provider will send to the address again if asked. */
   canReset: boolean;
   details?: object;
+  /** The bounce's own message, when it was read from a Gmail mailbox rather than reported by Postmark. */
+  gmailMessageId?: string;
 };
 
 /** Who the audit log says blocked an address. */
@@ -47,35 +68,50 @@ export async function isBlocked(address: string): Promise<boolean> {
  * email_sends; a failure is logged to the console as well. Never throws for
  * the provider: callers decide what to tell people.
  */
-export async function send(email: Email, purpose: Purpose, letterId: number | null = null): Promise<SendResult> {
+export async function send(
+  email: Email,
+  purpose: Purpose,
+  letterId: number | null = null,
+  { backend = { name: "postmark" }, sender, messageId }: SendOptions = {},
+): Promise<SendResult> {
   const address = bareAddress(email.To);
-  const log = (outcome: "sent" | "refused" | "failed", messageId: string | null = null) =>
-    query("INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id) VALUES ($1, $2, $3, $4, $5)", [
-      purpose,
-      letterId,
-      address,
-      outcome,
-      messageId,
-    ]);
+  const from = backend.name === "gmail" ? backend.account : (sender ?? null);
+  const rfcId = backend.name === "gmail" ? (messageId ?? newMessageId()) : (messageId ?? null);
+  const log = (outcome: "sent" | "refused" | "failed", id: string | null = null, threadId: string | null = null) =>
+    query(
+      `INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id, backend, sender, rfc_message_id, gmail_thread_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [purpose, letterId, address, outcome, id, backend.name, from, outcome === "sent" ? rfcId : null, threadId],
+    );
   if (await isBlocked(address)) {
     await log("refused");
     return { sent: false, reason: "blocked" };
   }
   let id: string;
+  let threadId: string | null = null;
   try {
-    id = await sendEmail(email);
+    if (backend.name === "gmail") {
+      const sent = await sendGmail(await gmailAccess(backend.account), { ...email, MessageId: rfcId!, Date: now() });
+      id = sent.id;
+      threadId = sent.threadId;
+    } else {
+      id = await sendEmail(rfcId ? { ...email, Headers: [{ Name: "Message-ID", Value: `<${rfcId}>` }] } : email);
+    }
   } catch (error) {
     if (error instanceof PostmarkError && error.inactive) {
       await recordProblem({ address, messageId: null, kind: "hard", reason: error.message, canReset: true });
       await log("refused");
       return { sent: false, reason: "blocked" };
     }
-    console.error(`Couldn't send an email (${purpose}):`, error);
+    console.error(
+      `Couldn't send an email (${purpose}${error instanceof GmailError ? `, by Gmail as ${from}` : ""}):`,
+      error,
+    );
     await log("failed");
     return { sent: false, reason: "failed" };
   }
-  await log("sent", id);
-  return { sent: true, id };
+  await log("sent", id, threadId);
+  return { sent: true, id, messageId: rfcId, threadId };
 }
 
 /**
@@ -88,9 +124,17 @@ export async function recordProblem(problem: DeliveryProblem): Promise<boolean> 
   const canReset = problem.kind !== "complaint" && problem.canReset;
   return transaction(async (db) => {
     const [{ id }] = await query<{ id: number }>(
-      `INSERT INTO email_problems (address, message_id, kind, reason, can_reset, details)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id::int AS id`,
-      [address, problem.messageId, problem.kind, problem.reason, canReset, JSON.stringify(problem.details ?? {})],
+      `INSERT INTO email_problems (address, message_id, kind, reason, can_reset, details, gmail_message_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id::int AS id`,
+      [
+        address,
+        problem.messageId,
+        problem.kind,
+        problem.reason,
+        canReset,
+        JSON.stringify(problem.details ?? {}),
+        problem.gmailMessageId ?? null,
+      ],
       db,
     );
     if (problem.kind === "soft") return false;

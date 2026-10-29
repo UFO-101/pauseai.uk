@@ -1,0 +1,30 @@
+// Connecting a staff member's Gmail: the route that goes to Google's
+// consent, and the one it comes back to, which goes back to the page it
+// started from (app/(staff)/staff/api/gmail/).
+
+export const GMAIL_CONNECT_PATH = "/staff/api/gmail/connect";
+export const GMAIL_CALLBACK_PATH = "/staff/api/gmail/callback";
+
+/** The cookie that holds the consent's state, to check it comes back to the browser that started it, and the page to go back to. */
+export const GMAIL_STATE_COOKIE = "staff_gmail";
+
+/** How connecting ended, in the `gmail` parameter of the page it goes back to. */
+export type GmailConnectOutcome = "connected" | "other-account" | "refused" | "failed";
+
+/** A staff page to go back to: one of ours, never another site; the page of your own otherwise. */
+export function backPath(back: string | null | undefined): string {
+  return back && /^\/staff(\/[\w\-/]*)?(\?[^#]*)?$/.test(back) && !back.includes("//") ? back : "/staff/me";
+}
+
+/** Where connecting from `back` starts. */
+export function connectPath(back: string): string {
+  return `${GMAIL_CONNECT_PATH}?${new URLSearchParams({ back })}`;
+}
+
+/** `back`, saying how connecting ended. */
+export function backWithOutcome(back: string, outcome: GmailConnectOutcome): string {
+  const [path, query = ""] = back.split("?");
+  const params = new URLSearchParams(query);
+  params.set("gmail", outcome);
+  return `${path}?${params}`;
+}
