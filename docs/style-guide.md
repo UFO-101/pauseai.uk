@@ -398,6 +398,16 @@ it in the middle as a fallback; that's the only place it goes there. A
 choice that needs confirming is confirmed in place, as Delete draft is
 pressed twice.
 
+**JSON from the database is shown in words** (`Logged.tsx`). A column of
+details stored as JSON, as the audit log's and a letter's history are,
+is never shown raw. Each field gets its label in bold from the copy, then
+its value in words: a status by its name, a date as a date, someone
+linked to their page. The fields go between middle dots (`DotParts`). A
+field with no label in the copy shows its key as stored, so nothing
+logged is hidden. Beside it, a {} button (`LoggedJson`) opens the JSON
+exactly as stored, in a bubble by the button. That's the fallback, for
+checking exactly what was recorded or a field the words don't cover yet.
+
 **The sidebar** (`StaffNav`). Each page has its icon (`NavIcon`) beside
 its name. Fold, at its foot, folds it to a rail of the icons on wider
 screens, the sections a rule apart, each name showing beside its icon on
