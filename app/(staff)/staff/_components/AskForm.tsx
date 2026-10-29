@@ -52,6 +52,8 @@ export default function AskForm({
   const [askedBy, setAskedBy] = useState<Asker[]>(ask?.askedBy ?? ["pauseai"]);
   const fixed = Boolean(ask?.fixed);
   const words = copy.byKind[kind];
+  // What's missing before it can be saved, as the server would refuse it (askFrom).
+  const missing = !title.trim() ? words.needsTitle : url && !/^(https:\/\/|\/)/.test(url) ? copy.needsLink : null;
   return (
     <>
       {copy.notices[notice] && (
@@ -124,9 +126,10 @@ export default function AskForm({
           </FormStack>
           {!fixed && (
             <Actions>
-              <Button type="submit" form="ask-form" variant="primary" fit>
+              <Button type="submit" form="ask-form" variant="primary" fit disabled={Boolean(missing)}>
                 {copy.save}
               </Button>
+              {missing && <Hint>{missing}</Hint>}
               {ask?.deletable && <DeleteTwice name="slug" value={ask.slug} label={copy.delete} action={remove} />}
             </Actions>
           )}

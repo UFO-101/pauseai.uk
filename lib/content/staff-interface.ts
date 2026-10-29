@@ -955,6 +955,7 @@ export const staffCopy = {
         title: "⁂ Which letter",
         titleExample: "⁂ Letter to the Chancellor asking for one (1) off switch",
         titleHint: "⁂ What the letter is and who it's to, as you'd say it after “sign the”.",
+        needsTitle: "⁂ Say which letter to save it.",
         date: "⁂ When the letter was sent",
         url: "⁂ Where to read the letter",
       },
@@ -962,10 +963,16 @@ export const staffCopy = {
         title: "⁂ Which event",
         titleExample: "⁂ Tea, biscuits and existential risk, March 2027",
         titleHint: "⁂ What the event is, and when, as you'd say it after “come to the”.",
+        needsTitle: "⁂ Say which event to save it.",
         date: "⁂ When the event is",
         url: "⁂ The event's page",
       },
-    } as Record<string, { title: string; titleExample: string; titleHint: string; date: string; url: string }>,
+    } as Record<
+      string,
+      { title: string; titleExample: string; titleHint: string; needsTitle: string; date: string; url: string }
+    >,
+    // Beside a disabled Save: a link that isn't a whole one.
+    needsLink: "⁂ Give the whole link, starting https://.",
     slugHint: (slug: string) => `⁂ Its address in links is ${slug}, which doesn't change.`,
     kindFixed: "⁂ Its kind can't change, as politicians have answered it.",
     fixed: "⁂ The site's code uses this ask, so it can't be changed here.",
