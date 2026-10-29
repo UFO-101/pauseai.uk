@@ -316,6 +316,10 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await page.goto(`${BASE}/staff/audit-log`);
   await expect(page.getByRole("cell", { name: "set status" }).first()).toBeVisible();
   await frame(page, "the audit log");
+  await page.getByRole("button", { name: staffCopy.changes.json }).first().click();
+  await expect(page.locator("pre:popover-open")).toBeVisible();
+  await frame(page, "an entry's {}: what it logged, as JSON, in a bubble by the button", { window: true });
+  await page.keyboard.press("Escape");
 
   // The import page: a card per job; each opens the job's own page.
   await page.goto(`${BASE}/staff/import-data`);
@@ -640,6 +644,10 @@ test("a letter that bounces: staff are emailed, and the address is blocked", asy
   await expect(page.getByText(sender)).toBeVisible();
   await expect(page.getByText(staffCopy.letters.status.bounced).first()).toBeVisible();
   await frame(page, "the letter's page: from and to whom, bounced, and what happened to it");
+  await page.getByRole("list", { name: staffCopy.letters.detail.historyTitle }).getByRole("button").last().click();
+  await expect(page.locator("pre:popover-open")).toContainText('"reason"');
+  await frame(page, "the bounce's {}: what Postmark said, as JSON, in a bubble by the button", { window: true });
+  await page.keyboard.press("Escape");
   await page.getByRole("link", { name: staffCopy.nav.letters }).first().click();
   await expect(page).toHaveURL(`${BASE}/staff/letters`);
 });
