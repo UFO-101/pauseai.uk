@@ -39,7 +39,7 @@ export default function LetterThread({ thread, me }: { thread: Thread; me: strin
       {thread.sentFrom && (
         <p>
           {/* With no name of its own, it went in the Gmail account's. */}
-          {copy.sentFrom(thread.fromName ? `${thread.fromName} <${thread.sentFrom}>` : thread.sentFrom)}
+          <span>{copy.sentFrom(thread.fromName ? `${thread.fromName} <${thread.sentFrom}>` : thread.sentFrom)}</span>
           {inGmail && (
             <>
               {" · "}

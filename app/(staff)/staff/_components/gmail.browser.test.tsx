@@ -90,7 +90,7 @@ describe("LetterThread", () => {
     await expect.element(page.getByText(copy.noText)).toBeVisible();
     await expect.element(page.getByText(copy.noReplies)).toBeVisible();
     await expect.element(page.getByRole("heading", { name: exampleThread.mailingTitle })).toBeVisible();
-    expect(page.getByText(/^⁂ Sent from/).query()).toBeNull();
+    expect(page.getByText(copy.sentFrom("jo@pauseai.uk")).query()).toBeNull();
   });
 });
 
