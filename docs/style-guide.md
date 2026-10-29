@@ -329,7 +329,8 @@ the audit log. A table that isn't a whole list, inside a card, is a
 `ListTable`, or a plain `Table`: striped, with no count or downloads.
 
 Columns go in the same order in every list: who it is, then how it
-stands, then counts, then when. Where a row has a page of its own, the
+stands, then counts, then when. The times that date a status, such as a
+letter's sent and replied, can sit beside it instead, read with it. Where a row has a page of its own, the
 first column leads to it, so there's one place to click to open it: a
 supporter's or politician's name. A row with no name, such as a letter,
 starts with what leads to it instead, its status, before who it's from

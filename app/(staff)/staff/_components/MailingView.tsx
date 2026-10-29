@@ -43,18 +43,13 @@ function letterLabels(asks: Ask[]): { fields: Record<string, string>; conditions
 }
 
 /**
- * A recipient's columns, as every list's go (docs/style-guide.md): who;
- * how it stands, what happened to their letter, leading to its page, their
- * answer to its ask, and how it was written; then when it was sent and
- * replied to.
+ * A recipient's columns, as every list's go (docs/style-guide.md): what
+ * happened to their letter, leading to its page; who; when it was sent
+ * and replied to, beside the status they date; then how it was written
+ * and their answer to its ask.
  */
 function recipientColumns(mailing: Mailing): ListColumn<MailingRecipient>[] {
   return [
-    {
-      key: "name",
-      label: staffCopy.mailings.recipientColumns.name,
-      cell: (r) => <Link href={`/staff/politicians/${r.politicianId}`}>{r.name}</Link>,
-    },
     {
       key: "status",
       label: staffCopy.mailings.recipientColumns.status,
@@ -68,26 +63,11 @@ function recipientColumns(mailing: Mailing): ListColumn<MailingRecipient>[] {
         </Link>
       ),
     },
-    ...(mailing.ask
-      ? [
-          {
-            key: "answer",
-            label: mailing.askTitle!,
-            cell: (r: MailingRecipient) => (r.answer ? staffCopy.statuses[r.answer] : <Muted>–</Muted>),
-          },
-        ]
-      : []),
-    // Airtable kept how each was written.
-    ...(mailing.imported
-      ? [
-          {
-            key: "how",
-            label: staffCopy.mailings.recipientColumns.how,
-            cell: (r: MailingRecipient) =>
-              r.personalised ? staffCopy.mailings.personalised : <Muted>{staffCopy.mailings.asWritten}</Muted>,
-          },
-        ]
-      : []),
+    {
+      key: "name",
+      label: staffCopy.mailings.recipientColumns.name,
+      cell: (r) => <Link href={`/staff/politicians/${r.politicianId}`}>{r.name}</Link>,
+    },
     {
       key: "sentAt",
       label: staffCopy.mailings.recipientColumns.sentAt,
@@ -100,6 +80,26 @@ function recipientColumns(mailing: Mailing): ListColumn<MailingRecipient>[] {
       short: true,
       cell: (r) => (r.repliedAt ? staffDate(r.repliedAt) : <Muted>–</Muted>),
     },
+    // Airtable kept how each was written.
+    ...(mailing.imported
+      ? [
+          {
+            key: "how",
+            label: staffCopy.mailings.recipientColumns.how,
+            cell: (r: MailingRecipient) =>
+              r.personalised ? staffCopy.mailings.personalised : <Muted>{staffCopy.mailings.asWritten}</Muted>,
+          },
+        ]
+      : []),
+    ...(mailing.ask
+      ? [
+          {
+            key: "answer",
+            label: mailing.askTitle!,
+            cell: (r: MailingRecipient) => (r.answer ? staffCopy.statuses[r.answer] : <Muted>–</Muted>),
+          },
+        ]
+      : []),
   ];
 }
 
