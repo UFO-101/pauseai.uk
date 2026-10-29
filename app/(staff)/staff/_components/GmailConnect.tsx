@@ -29,7 +29,7 @@ export function GmailConnect({ back, onConnect }: { back: string; onConnect?: ()
         <li>{copy.limit(LIMIT)}</li>
       </ul>
       <a
-        className={buttonClass({ variant: "primary", fit: true })}
+        className={buttonClass({ variant: "primary", size: "small", fit: true })}
         href={href}
         // `onConnect` saves what's waiting to be saved before leaving, and says where to come back to.
         onClick={
