@@ -177,7 +177,7 @@ Then supporters who gave the same UK mobile number (`+447…` as
 `phone_number()` writes it) are one person, whatever their emails:
 `merge_supporters_by_phone()` moves the newer one's links and messages to
 the older and deletes it, and `supporter_merges` keeps its ID, so its old
-page, `/staff/supporters/<id>`, shows the one it went into. Landlines and
+page, `/staff/supporters/<id>`, redirects to the one it went into. Landlines and
 numbers abroad aren't matched, as households and offices share them.
 
 Each source (`lib/server/supporter-sources.ts`) gives three views in one

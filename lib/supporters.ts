@@ -1,5 +1,6 @@
 // Supporters, as the staff pages show them: the shapes the server
 // (lib/server/supporters.ts) gives the components.
+import { permanentRedirect } from "next/navigation";
 import { staffCopy } from "./content/staff-interface";
 import type { ContactPermission, ContactState } from "./contact-permissions";
 import type { SortColumns, SortDirection } from "./staff-sort";
@@ -185,4 +186,14 @@ export function registrationStatus(status: string | null): string {
 /** A supporter's page's name: theirs, or the stand-in for one with none. */
 export function supporterTitle(summary: Pick<SupporterSummary, "name">): string {
   return summary.name ?? staffCopy.supporters.noName;
+}
+
+/**
+ * The supporter the URL's ID found, or a redirect to their own page when
+ * that ID was merged into theirs (supporter_merges): a phone match makes
+ * two supporters one, and an old link goes on to the one kept.
+ */
+export function canonicalSupporter(given: number, supporter: SupporterDetails): SupporterDetails {
+  if (supporter.summary.id !== given) permanentRedirect(`/staff/supporters/${supporter.summary.id}`);
+  return supporter;
 }

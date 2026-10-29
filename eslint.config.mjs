@@ -236,7 +236,7 @@ const PAGE_REDIRECT = {
   name: "next/navigation",
   importNames: ["redirect", "permanentRedirect"],
   message:
-    "Send people elsewhere from next.config.ts's redirects(): a page that redirects while rendering shows the layout empty for a moment on a client-side navigation.",
+    "Send people elsewhere from next.config.ts's redirects(), or, for a redirect that depends on the request, a lib/ helper the page calls first: a page that redirects while rendering shows the layout empty for a moment on a client-side navigation.",
 };
 const LAYERS = [
   { files: ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}"], patterns: ROUTE_IMPORTS },

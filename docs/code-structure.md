@@ -84,7 +84,14 @@ the code should go instead. The rules below say which ones are enforced.
   `redirect()`: on a click within the site, a page that redirects while
   rendering shows the layout's header and footer with nothing between them
   for a moment. A `page.tsx` may not import `redirect` or
-  `permanentRedirect` (`PAGE_REDIRECT` in `eslint.config.mjs`).
+  `permanentRedirect` (`PAGE_REDIRECT` in `eslint.config.mjs`). A
+  redirect that depends on what only the request can tell, such as who's
+  logged in or a record merged into another, is made by a helper in `lib/`
+  that the page calls before anything else: `requireStaff()`
+  (`lib/server/staff-auth.ts`), or `canonicalSupporter()`
+  (`lib/supporters.ts`) for a merged supporter's old ID. Links within the
+  site never lead to these, so no one clicking around sees the empty
+  layout.
 - **Pages are thin.** A `page.tsx` holds its metadata, its data loading
   (calling `lib/`) and the order of its sections. Content and markup belong
   in components, and helper functions in `lib/`, where they can be tested.

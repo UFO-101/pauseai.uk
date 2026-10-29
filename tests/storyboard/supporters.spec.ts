@@ -237,6 +237,33 @@ test("a supporter's page: who they are, what they gave, their history, and an op
   await frame(page, "the audit log: the download of supporters, and no viewing");
 });
 
+test("a supporter merged into another by their mobile number: the old ID's page goes on to the one kept", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await importLuma(request, BASE);
+  // A newer guest gives Jane's mobile, written as people write it; the next pass over everyone's numbers makes them one.
+  const [jane] = runSql(
+    flowDatabase,
+    "SELECT supporter_id FROM supporter_links WHERE matched_value = 'jane.fixture@example.com' LIMIT 1",
+  );
+  const [guest, other, email] = runSql(
+    flowDatabase,
+    `SELECT g.user_id, k.supporter_id, k.matched_value FROM luma_guests g JOIN supporter_links k ON k.luma_user_id = g.user_id
+     WHERE k.supporter_id > ${jane} ORDER BY k.supporter_id DESC LIMIT 1`,
+  )[0].split("\t");
+  runSql(flowDatabase, `UPDATE luma_guests SET phone = '07700 900001' WHERE user_id = '${guest}'`);
+  runSql(flowDatabase, "SELECT count(*) FROM merge_supporters_by_phone(); REFRESH MATERIALIZED VIEW supporters_list");
+  await logInWithSupporters(page, flowDatabase);
+  await page.goto(`${BASE}/staff/supporters/${other}`);
+  await expect(page).toHaveURL(`${BASE}/staff/supporters/${jane}`);
+  // Both addresses; the name the newest of them gave.
+  await expect(page.getByText("jane.fixture@example.com").first()).toBeVisible();
+  await expect(page.getByText(email).first()).toBeVisible();
+  await frame(page, "the old ID's page gone on to the one kept, Jane's ID, with both addresses and the newer name");
+});
+
 test("a letter writer is a supporter too, linked from the letters page", async ({
   page,
   request,
