@@ -586,8 +586,8 @@ test("letters are listed, sent and bounced, and can be filtered by status and ca
   await page.reload();
   const janes = page.getByRole("row").filter({ hasText: jane });
   const sams = page.getByRole("row").filter({ hasText: sam });
-  await expect(janes.locator("td").nth(5)).toHaveText(staffCopy.letters.status.sent);
-  await expect(sams.locator("td").nth(5)).toHaveText(staffCopy.letters.status.bounced);
+  await expect(janes.locator("td").first()).toHaveText(staffCopy.letters.status.sent);
+  await expect(sams.locator("td").first()).toHaveText(staffCopy.letters.status.bounced);
   await frame(page, "the letters list: one sent, one bounced");
 
   await addFilter(page, staffCopy.letters.columns.status, staffCopy.letters.status.bounced);
