@@ -538,6 +538,7 @@ export function MyGmailExample({ connected, outcome = "" }: { connected: boolean
     <Logged>
       {(log) => (
         <MyGmail
+          me="jo@pauseai.uk"
           account={connected ? exampleGmailAccount : undefined}
           outcome={outcome}
           disconnect={log("disconnect")}

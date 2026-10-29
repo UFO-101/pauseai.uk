@@ -93,11 +93,13 @@ export const staffCopy = {
     sentToday: (sent: number, limit: string) => `⁂ ${sent} of today's ${limit} sent.`,
     // After coming back from Google.
     outcomes: {
-      connected: "⁂ Your Gmail is connected.",
-      "other-account": "⁂ That was another Google account. Connect your own pauseai.uk Gmail.",
+      connected: "Your Gmail is connected. All staff will be able to send mailings from it now.",
       refused: "Gmail wasn't connected, as you didn't allow it.",
       failed: "Gmail couldn't be connected. Try again.",
     } as Record<string, string>,
+    // Back from Google having chosen an account other than the one logged in here, `me`.
+    otherAccount: (me: string) =>
+      `⁂ That was a different Google account. To connect, choose ${me} when Google asks which account to use.`,
     disconnected: "⁂ Your Gmail is disconnected.",
   },
   // Your sessions, on your own page (/staff/me): one row each, and a way to end them all.

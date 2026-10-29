@@ -54,9 +54,12 @@ export function SentToday({ sent }: { sent: number }) {
   return <Muted>{copy.sentToday(sent, LIMIT)}</Muted>;
 }
 
-/** How connecting ended, when Google has sent the staff member back here: green if connected, amber if not. */
-export function GmailOutcome({ outcome }: { outcome: string }) {
-  const words = copy.outcomes[outcome];
+/**
+ * How connecting ended, when Google has sent the staff member `me` back
+ * here, in its tone: another account than theirs names theirs.
+ */
+export function GmailOutcome({ outcome, me }: { outcome: string; me: string }) {
+  const words = outcome === "other-account" ? copy.otherAccount(me) : copy.outcomes[outcome];
   if (!words) return null;
   return (
     <Strip tone={OUTCOME_TONES[outcome] ?? "red"} announce>

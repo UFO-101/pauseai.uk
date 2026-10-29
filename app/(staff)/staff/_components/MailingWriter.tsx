@@ -342,7 +342,7 @@ export default function MailingWriter({
       <h1 ref={heading} className={styles.title}>
         {title}
       </h1>
-      <GmailOutcome outcome={data.gmailOutcome} />
+      <GmailOutcome outcome={data.gmailOutcome} me={data.me} />
       {!data.sends && <Strip tone="amber">{copy.cantSend}</Strip>}
       {saveState === "conflict" && (
         <Strip tone="red" announce>

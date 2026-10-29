@@ -1077,7 +1077,7 @@ export const staff: Group = {
         label: `Back from Google: ${outcome}`,
         render: () => (
           <StaffPage as="div">
-            <GmailOutcome outcome={outcome} />
+            <GmailOutcome outcome={outcome} me="jo@pauseai.uk" />
           </StaffPage>
         ),
       })),

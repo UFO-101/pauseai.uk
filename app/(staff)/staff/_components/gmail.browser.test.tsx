@@ -30,13 +30,13 @@ describe("GmailConnect, SentToday and GmailOutcome", () => {
   });
 
   it("says how connecting ended, green if it did, amber if refused, red for an error, and nothing for an outcome it doesn't know", async () => {
-    const { rerender } = await render(<GmailOutcome outcome="connected" />);
+    const { rerender } = await render(<GmailOutcome outcome="connected" me="jo@pauseai.uk" />);
     await expect.element(page.getByRole("status")).toHaveTextContent(gmail.outcomes.connected);
-    await rerender(<GmailOutcome outcome="refused" />);
+    await rerender(<GmailOutcome outcome="refused" me="jo@pauseai.uk" />);
     await expect.element(page.getByRole("status")).toHaveTextContent(gmail.outcomes.refused);
-    await rerender(<GmailOutcome outcome="other-account" />);
-    await expect.element(page.getByRole("alert")).toHaveTextContent(gmail.outcomes["other-account"]);
-    await rerender(<GmailOutcome outcome="" />);
+    await rerender(<GmailOutcome outcome="other-account" me="jo@pauseai.uk" />);
+    await expect.element(page.getByRole("alert")).toHaveTextContent(gmail.otherAccount("jo@pauseai.uk"));
+    await rerender(<GmailOutcome outcome="" me="jo@pauseai.uk" />);
     expect(page.getByRole("status").query()).toBeNull();
   });
 });
@@ -44,7 +44,7 @@ describe("GmailConnect, SentToday and GmailOutcome", () => {
 describe("MyGmail", () => {
   it("connected: since when, today's sends, and Disconnect", async () => {
     const disconnect = vi.fn();
-    await render(<MyGmail account={exampleGmailAccount} outcome="" disconnect={disconnect} />);
+    await render(<MyGmail me="jo@pauseai.uk" account={exampleGmailAccount} outcome="" disconnect={disconnect} />);
     await expect
       .element(page.getByText(gmail.connected("1 Oct 2026"), { exact: false }))
       .toHaveTextContent(`${gmail.connected("1 Oct 2026")} ${gmail.sentToday(120, "1,800")}`);
@@ -53,7 +53,7 @@ describe("MyGmail", () => {
   });
 
   it("not connected: what connecting means, and the button, coming back here", async () => {
-    await render(<MyGmail account={undefined} outcome="failed" disconnect={vi.fn()} />);
+    await render(<MyGmail me="jo@pauseai.uk" account={undefined} outcome="failed" disconnect={vi.fn()} />);
     await expect.element(page.getByRole("alert")).toHaveTextContent(gmail.outcomes.failed);
     await expect
       .element(page.getByRole("link", { name: gmail.connect }))

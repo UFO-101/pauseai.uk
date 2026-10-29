@@ -20,7 +20,12 @@ export default async function MePage({ searchParams }: { searchParams: Promise<R
       <h2 id="sessions">{staffCopy.me.sessionsTitle}</h2>
       <p>{staffCopy.sessions.intro}</p>
       <StaffSessions sessions={sessions} />
-      <MyGmail account={account} outcome={firstOf((await searchParams).gmail)} disconnect={disconnectMyGmail} />
+      <MyGmail
+        me={email}
+        account={account}
+        outcome={firstOf((await searchParams).gmail)}
+        disconnect={disconnectMyGmail}
+      />
     </>
   );
 }
