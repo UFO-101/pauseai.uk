@@ -2456,6 +2456,15 @@ describe("RunList", () => {
 describe("ChangesTable", () => {
   const log = (changes: typeof exampleChanges) => ({ changes, total: changes.length, pages: 1, pageSize: 100 });
 
+  it("leaves a change of nothing out of an entry's fields", async () => {
+    const edit = exampleChanges.find((one) => one.action === "edit politician")!;
+    const empty = { ...edit, details: { ...edit.details, changed: {} } };
+    await render(<ChangesTable log={log([empty])} page={1} airtableTable="https://airtable.com/app/tbl" />);
+    const details = page.getByRole("row").nth(1).getByRole("cell").nth(4).element().textContent!;
+    expect(details).not.toContain("·  ·");
+    expect(details).not.toMatch(/·\s*·/);
+  });
+
   it("lists who changed what, the day in a column of its own, and every field each logged, in words, linked where there's a page", async () => {
     await render(<ChangesTable log={log(exampleChanges)} page={1} airtableTable="https://airtable.com/app/tbl" />);
     const copy = staffCopy.changes;

@@ -971,7 +971,7 @@ export const staffCopy = {
     badLink: "Give a full link beginning https://",
     // Over an ask's slug, which doesn't change.
     slugLabel: "Identifier: ",
-    kindFixed: "⁂ Its kind can't change, as politicians have answered it.",
+    kindFixed: "Kind can't be changed now, as politicians have answered it.",
     fixed: "⁂ The site's code uses this ask, so it can't be changed here.",
     // Beside the form: the ask as it will show on a politician's page.
     previewTitle: "What the ask will look like on a politician's page",

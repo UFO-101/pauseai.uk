@@ -1,5 +1,6 @@
 // Politicians as the sync copies them from Airtable's UK Parliamentarians
 // (lib/server/outside-services/airtable.ts), and what a sync would change.
+import { changedFields } from "./field-changes";
 import type { AskStatus } from "./asks";
 
 /** A politician as we store them, by their Airtable record. */
@@ -50,7 +51,8 @@ export function comparePoliticians(
     removed: before.filter((p) => !fresh.has(p.airtableId)),
     changed: after.filter((p) => {
       const was = old.get(p.airtableId);
-      return gone.has(p.airtableId) || (was !== undefined && JSON.stringify(was) !== JSON.stringify(p));
+      // Field by field, as the audit log tells it: the order of a record's fields, or one left out rather than null, is no change.
+      return gone.has(p.airtableId) || (was !== undefined && Object.keys(changedFields(was, p)).length > 0);
     }),
   };
 }
