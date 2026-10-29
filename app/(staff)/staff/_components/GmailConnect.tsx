@@ -4,7 +4,6 @@ import { buttonClass } from "@/components/ui/Button";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { connectPath, GMAIL_DAILY_LIMIT } from "@/lib/gmail-connect";
-import { leavePage } from "@/lib/leave-page";
 import Strip from "./ui/Strip";
 import styles from "./GmailConnect.module.css";
 
@@ -24,8 +23,7 @@ const OUTCOME_TONES: Record<string, "green" | "amber"> = {
  * daily limit; then the button, which goes to Google and comes back to
  * `back`.
  */
-export function GmailConnect({ back, onConnect }: { back: string; onConnect?: () => Promise<string> }) {
-  const href = connectPath(back);
+export function GmailConnect({ back }: { back: string }) {
   return (
     <div className={styles.connect}>
       <p>{copy.intro}</p>
@@ -35,18 +33,7 @@ export function GmailConnect({ back, onConnect }: { back: string; onConnect?: ()
         ))}
         <li>{copy.limit(LIMIT)}</li>
       </ul>
-      <a
-        className={buttonClass({ variant: "primary", size: "small", fit: true })}
-        href={href}
-        // `onConnect` saves what's waiting to be saved before leaving, and says where to come back to.
-        onClick={
-          onConnect &&
-          (async (event) => {
-            event.preventDefault();
-            leavePage(connectPath(await onConnect()));
-          })
-        }
-      >
+      <a className={buttonClass({ variant: "primary", size: "small", fit: true })} href={connectPath(back)}>
         {copy.connect}
       </a>
     </div>

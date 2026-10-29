@@ -104,7 +104,6 @@ export const exampleWriterData: WriterData = {
   ],
   me: "jo@pauseai.uk",
   sends: true,
-  gmailOutcome: "",
 };
 
 /** Jo's draft of it, with a file, from Jo, on 1 December at nine. */

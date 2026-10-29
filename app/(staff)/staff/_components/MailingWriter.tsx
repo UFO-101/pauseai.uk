@@ -19,6 +19,8 @@ import {
   type MailingDoc,
 } from "@/lib/mailing-doc";
 import { answerLabels } from "@/lib/mailing-fields";
+import Link from "next/link";
+import { DEFAULT_SENDER } from "@/lib/gmail-connect";
 import { leavePage } from "@/lib/leave-page";
 import { scheduleProblems } from "@/lib/mailing-schedule";
 import { filtersPath } from "@/lib/staff-search";
@@ -27,7 +29,7 @@ import type { ChannelResult } from "@/lib/server/mailing-channels";
 import type { MailingAttachmentSummary, SaveResult, ScheduleResult, WrittenMailing } from "@/lib/server/mailing-drafts";
 import type { PreviewRecipient, WriterData } from "@/lib/server/mailing-pages";
 import { CHECK_EVERY, DueTimeFields } from "./DueTime";
-import { GmailConnect, GmailOutcome, SentToday } from "./GmailConnect";
+import { SentToday } from "./GmailConnect";
 import { DeleteDraft } from "./MailingButtons";
 import MailingEditor from "./MailingEditor";
 import MailingFiles from "./MailingFiles";
@@ -159,8 +161,10 @@ export default function MailingWriter({
     subject: draft?.subject ?? "",
     body: draft?.body ?? start,
     ask: draft?.ask ?? null,
-    // A new mailing's from the one writing it, to start with.
-    sentFrom: draft ? draft.sentFrom : data.me,
+    // A new mailing's from the policy team's Gmail, if it's connected, or else the first that is.
+    sentFrom: draft
+      ? draft.sentFrom
+      : ((data.senders.find((one) => one.email === DEFAULT_SENDER) ?? data.senders[0])?.email ?? null),
     dueAt: draft?.dueAt ?? null,
   }));
   const latest = useRef(values);
@@ -315,13 +319,10 @@ export default function MailingWriter({
     connected: Boolean(sender),
   }).filter((problem) => problem !== "cannot-send");
   const title = values.subject.trim() || copy.newTitle;
-  // The connected accounts, and the one chosen or your own if they aren't.
+  // The connected accounts, and the one chosen if it isn't one any more.
   const senderChoices = [
     ...data.senders.map((one) => ({ ...one, connected: true })),
-    ...[data.me, values.sentFrom]
-      .filter((email, i, all): email is string => !!email && all.indexOf(email) === i)
-      .filter((email) => !data.senders.some((one) => one.email === email))
-      .map((email) => ({ email, remaining: 0, connected: false })),
+    ...(values.sentFrom && !sender ? [{ email: values.sentFrom, remaining: 0, connected: false }] : []),
   ];
   // Where Connect Gmail and Add an ask come back to, as the page shows them: this draft, or this new mailing.
   const writerPath = savedId ? `/staff/mailings/${savedId}` : newPath;
@@ -342,7 +343,6 @@ export default function MailingWriter({
       <h1 ref={heading} className={styles.title}>
         {title}
       </h1>
-      <GmailOutcome outcome={data.gmailOutcome} me={data.me} />
       {!data.sends && <Strip tone="amber">{copy.cantSend}</Strip>}
       {saveState === "conflict" && (
         <Strip tone="red" announce>
@@ -457,27 +457,34 @@ export default function MailingWriter({
         </Card>
 
         <Card span={6} title={<Numbered n={4}>{copy.sections.from}</Numbered>} id="from-title">
-          <div className={styles.withHint}>
-            <Field label={copy.fromLegend} className={styles.sender}>
-              <Select value={values.sentFrom ?? ""} onChange={(event) => change({ sentFrom: event.target.value })}>
-                {!values.sentFrom && (
-                  <option value="" disabled>
-                    {copy.choose}
-                  </option>
-                )}
-                {senderChoices.map((sender) => (
-                  <option key={sender.email} value={sender.email}>
-                    {sender.connected
-                      ? copy.sender(sender.email, sender.remaining.toLocaleString("en-GB"))
-                      : copy.senderNotConnected(sender.email)}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            {sender && <SentToday sent={sender.sentToday} />}
-          </div>
-          {!sender && values.sentFrom === data.me && <GmailConnect back={writerPath} onConnect={saveNow} />}
-          {!sender && values.sentFrom && values.sentFrom !== data.me && <Hint>{copy.notConnected}</Hint>}
+          {senderChoices.length > 0 ? (
+            <div className={styles.withHint}>
+              <Field label={copy.fromLegend} className={styles.sender}>
+                <Select value={values.sentFrom ?? ""} onChange={(event) => change({ sentFrom: event.target.value })}>
+                  {!values.sentFrom && (
+                    <option value="" disabled>
+                      {copy.choose}
+                    </option>
+                  )}
+                  {senderChoices.map((sender) => (
+                    <option key={sender.email} value={sender.email}>
+                      {sender.connected
+                        ? copy.sender(sender.email, sender.remaining.toLocaleString("en-GB"))
+                        : copy.senderNotConnected(sender.email)}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              {sender && <SentToday sent={sender.sentToday} />}
+            </div>
+          ) : (
+            <p>{copy.noSenders}</p>
+          )}
+          {values.sentFrom && !sender && <Hint>{copy.notConnected}</Hint>}
+          {/* Connecting is done on the account's own page, logged in as it. */}
+          <p className={styles.connectOne}>
+            <Link href="/staff/me#gmail">{copy.connectOne}</Link>
+          </p>
         </Card>
 
         <Card span={6} title={<Numbered n={5}>{copy.sections.when}</Numbered>} id="when-title">

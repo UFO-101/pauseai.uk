@@ -41,11 +41,9 @@ export type WriterData = FilterWordsData & {
   me: string;
   /** Whether a mailing can be sent yet. */
   sends: boolean;
-  /** How connecting Gmail ended, if Google has just sent the writer back. */
-  gmailOutcome: string;
 };
 
-async function writerData(filter: StoredFilter, me: string, gmailOutcome: string): Promise<WriterData> {
+async function writerData(filter: StoredFilter, me: string): Promise<WriterData> {
   const [audience, unknown, asks, parties, senders] = await Promise.all([
     politicianAudience(filter),
     filterProblems(filter),
@@ -72,13 +70,12 @@ async function writerData(filter: StoredFilter, me: string, gmailOutcome: string
     senders,
     me,
     sends: Boolean(mailingChannel("email")?.sendsMailings),
-    gmailOutcome,
   };
 }
 
 /** A new mailing to the politicians the list's `params` find, written by `me`. */
 export async function newMailingData(params: Params, me: string): Promise<WriterData> {
-  return writerData(storedFilter("politicians", params), me, firstOf(params.gmail));
+  return writerData(storedFilter("politicians", params), me);
 }
 
 export type MailingPageData =
@@ -94,13 +91,13 @@ export type MailingPageData =
  */
 export async function mailingPageData(
   id: number,
-  search: { page?: string | string[]; tab?: string | string[]; gmail?: string | string[] },
+  search: { page?: string | string[]; tab?: string | string[] },
   me: string,
 ): Promise<MailingPageData | undefined> {
   const written = await getWrittenMailing(id);
   if (written?.state === "draft") {
     const draft = (await openWrittenMailing(id))!;
-    return { kind: "draft", draft, ...(await writerData(draft.filter, me, firstOf(search.gmail))) };
+    return { kind: "draft", draft, ...(await writerData(draft.filter, me)) };
   }
   const tab = RECIPIENT_TABS.find((one) => one === firstOf(search.tab)) ?? "all";
   const mailing = await getMailing(id, pageNumber(firstOf(search.page)), tab as RecipientTab);

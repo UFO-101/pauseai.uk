@@ -69,6 +69,12 @@
   display: grid;
 }
 
+/* Under the choice of Gmail: the way to connect another. */
+.connectOne {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+}
+
 .when {
   display: flex;
   flex-wrap: wrap;

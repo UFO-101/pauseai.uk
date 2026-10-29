@@ -858,6 +858,10 @@ export const staffCopy = {
     // Your own address, before your Gmail's connected.
     senderNotConnected: (address: string) => `⁂ ${address} (not connected)`,
     notConnected: "⁂ This Gmail isn't connected. Only its owner can connect it, from their own page.",
+    // With no Gmail connected, in place of the choice of one.
+    noSenders: "⁂ No Gmail is connected yet, so nothing can be sent.",
+    // Under the choice of Gmail, to the account page, where one is connected.
+    connectOne: "⁂ Connect a Gmail on your account page",
     // In the preview, who it's from: the name comes from the Gmail account.
     from: "From",
     fromGmail: (address: string) => `Your Gmail's name <${address}>`,
@@ -969,8 +973,8 @@ export const staffCopy = {
     kindFixed: "⁂ Its kind can't change, as politicians have answered it.",
     fixed: "⁂ The site's code uses this ask, so it can't be changed here.",
     // Beside the form: the ask as it will show on a politician's page.
-    previewTitle: "Preview of how it will look on a politician's page",
-    save: "Save",
+    previewTitle: "What the ask will look like on a politician's page",
+    save: "Save ask",
     delete: "Delete ask",
     notDeletable: "⁂ It can't be deleted while answers, campaigns or mailings refer to it.",
     // After saving or deleting, or failing to.

@@ -177,13 +177,24 @@ test("A mailing sending, and one sent with bounces", async ({ page, request, flo
   await frame(page, "the letter that bounced: to whom, how it stands, and what happened to it");
 });
 
-test("Connect Gmail from a mailing, schedule it, and the hourly job sends it", async ({
+test("Send a mailing from a connected Gmail: schedule it, and the hourly job sends it", async ({
   page,
   request,
   flowDatabase,
 }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
+  // With no Gmail connected, a mailing can't be sent, and Sent from says where to connect one.
+  await page.goto(`${BASE}/staff/politicians?nation=scotland`);
+  await page.getByRole("link", { name: copy.mailThese(1) }).click();
+  const from = page.getByRole("region", { name: copy.sections.from });
+  await expect(from.getByText(copy.noSenders)).toBeVisible();
+  await frame(page, "Sent from, with no Gmail connected: where to connect one");
+
+  // Connected on your account page, it's the one a new mailing is sent from.
+  await from.getByRole("link", { name: copy.connectOne }).click();
+  await page.getByRole("link", { name: staffCopy.gmail.connect }).click();
+  await expect(page.getByText(staffCopy.gmail.outcomes.connected)).toBeVisible();
   await page.goto(`${BASE}/staff/politicians?nation=scotland`);
   await page.getByRole("link", { name: copy.mailThese(1) }).click();
   await page.getByLabel(copy.subject).fill("See you in Edinburgh");
@@ -192,15 +203,9 @@ test("Connect Gmail from a mailing, schedule it, and the hourly job sends it", a
   await page.keyboard.type("We hope to see you there.");
   await expect(page.getByRole("status").first()).toHaveText(copy.savePill.saved);
   await expect(page).toHaveURL(/\/staff\/mailings\/\d+$/);
-  const from = page.getByRole("region", { name: copy.sections.from });
-  await expect(from.getByRole("link", { name: staffCopy.gmail.connect })).toBeVisible();
-  await frame(page, "Sent from: your Gmail isn't connected, so what connecting means, before going to Google");
-
-  await from.getByRole("link", { name: staffCopy.gmail.connect }).click();
-  await expect(page.getByText(staffCopy.gmail.outcomes.connected)).toBeVisible();
   await expect(page.getByLabel(copy.fromLegend, { exact: false })).toHaveValue(staffEmail());
   await expect(from.getByText(staffCopy.gmail.sentToday(0, "1,800"))).toBeVisible();
-  await frame(page, "back from Google, connected: Sent from says how many it has sent of today's 1,800");
+  await frame(page, "Sent from your connected Gmail, with how many it has sent of today's 1,800");
 
   await page.getByLabel(copy.hour, { exact: false }).selectOption("14");
   await page.getByRole("button", { name: copy.schedule(1) }).click();
