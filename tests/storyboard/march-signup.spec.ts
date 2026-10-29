@@ -77,12 +77,18 @@ test("Register when Luma fails", { tag: "@phone" }, async ({ page }) => {
   await openSignup(page);
   await fillIn(page, "luma-fails@example.org");
   await page.getByRole("button", { name: copy.form.submit, exact: true }).click();
-  await expect(page.locator("form").getByRole("alert")).toContainText(copy.form.failed);
+  const alert = page.locator("form").getByRole("alert");
+  await expect(alert).toContainText(copy.form.failed);
   await expect(page.getByRole("link", { name: copy.form.lumaFallback })).toHaveAttribute(
     "href",
     "https://luma.com/pauseai-nov26",
   );
   await expect(page).toHaveURL(`${BASE}/protests/march-against-ai-extinction-nov-26#register`);
+  // The click leaves the window wherever scrolling the button into view put
+  // it, which varies between runs, so the message goes mid-window every time.
+  await alert.evaluate((el) => el.scrollIntoView({ block: "center", behavior: "instant" }));
+  await scrollSettled(page);
+  await expect(alert).toBeInViewport();
   await frame(page, "the form says it didn't go through, and offers Luma's page");
 });
 
