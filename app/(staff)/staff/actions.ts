@@ -9,6 +9,7 @@ import { now } from "@/lib/now";
 import { eraseFrom, idFrom, permissionsFrom, statusFrom, unblockFrom } from "@/lib/staff-forms";
 import { importControlAiLetter } from "@/lib/server/controlai-import";
 import { isPoliticianAddress, unblock } from "@/lib/server/email";
+import { disconnectGmail } from "@/lib/server/gmail-accounts";
 import { eraseSupporter } from "@/lib/server/erasure";
 import { importLuma } from "@/lib/server/luma-import";
 import { importMembers } from "@/lib/server/members-import";
@@ -189,4 +190,11 @@ export async function eraseSupporterNow(form: FormData): Promise<void> {
   if (!result) return;
   revalidatePath("/staff", "layout");
   redirect("/staff/supporters?erased=1");
+}
+
+/** Disconnects your own Gmail, from your page. */
+export async function disconnectMyGmail(): Promise<void> {
+  const { email } = await requireStaff();
+  await disconnectGmail(email, email);
+  revalidatePath("/staff/me");
 }

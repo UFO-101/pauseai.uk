@@ -146,6 +146,8 @@ const nextConfig: NextConfig = {
       // to politicians.
       { source: "/staff/blocked-addresses", destination: "/staff/politicians/blocked-emails", permanent: true },
       { source: "/staff/blocked-emails", destination: "/staff/politicians/blocked-emails", permanent: true },
+      // Your sessions are on your own page, with your Gmail.
+      { source: "/staff/sessions", destination: "/staff/me#sessions", permanent: true },
       // The Glasgow local group became the Scotland local group.
       { source: "/glasgow", destination: "/scotland", permanent: true },
       // There's no list of protests yet, so /protests goes to the current one.

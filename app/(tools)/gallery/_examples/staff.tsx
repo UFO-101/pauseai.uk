@@ -167,6 +167,7 @@ const EMPTY_POLITICIAN_FILTERS = {
   email: [] as string[],
   ask: "",
   answer: "",
+  mailed: [] as string[],
   sort: "",
   dir: "",
   page: "",
@@ -202,7 +203,7 @@ const EXAMPLE_NATIONS = [
 // Every page the navigation can mark as current, so a new one is a type error until it's here.
 const PAGES: Record<StaffPageName, true> = {
   home: true,
-  sessions: true,
+  me: true,
   supporters: true,
   letters: true,
   supporterEmails: true,

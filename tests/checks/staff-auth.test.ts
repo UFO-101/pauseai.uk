@@ -88,7 +88,7 @@ function problems(name: string, source: string): string[] {
 }
 
 /** The staff pages under no section of the navigation: the home page, and your sessions, linked under Log out. */
-const OUTSIDE_NAVIGATION = new Set(["/staff", "/staff/sessions"]);
+const OUTSIDE_NAVIGATION = new Set(["/staff", "/staff/me"]);
 
 /** The string a requireStaff() call in this code asks for: a permission, "account", or undefined for none given. */
 function requirement(node: ts.Node): string | undefined {

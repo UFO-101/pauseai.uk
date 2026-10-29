@@ -506,8 +506,10 @@ The accounts page shows when each account was added and by whom (or by
 its login), when it last logged in and was last seen (`last_login_at` and
 `last_seen_at`, kept on the account, as sessions are deleted when they
 end), and its sessions open, which an admin can end. Anyone logged in on
-more than one device sees how many under Log out, linked to the page of
-their sessions (`/staff/sessions`), where they can end them all.
+more than one device sees how many under Log out. Their address in the
+navigation links to their own page (`/staff/me`): their sessions, where
+they can end them all, and their Gmail, which they connect there to send
+mailings from (below, "Mailings to politicians").
 
 Each page in the navigation, and so each page under it, has the permission
 `lib/staff-sections.ts` gives it, and asks for it in `requireStaff()`: an

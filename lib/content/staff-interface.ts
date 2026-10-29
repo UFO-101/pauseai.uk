@@ -596,6 +596,8 @@ export const staffCopy = {
     answer: "Answer",
     // In the second half of the ask's chip, before an answer is chosen.
     anyAnswer: "Any answer",
+    // A filter: those a mailing about an ask has gone or is going to.
+    mailed: "⁂ Mailed about",
     noAnswer: "Not answered",
     none: "None found.",
     // Over the list: how many there are.

@@ -167,16 +167,24 @@ describe("StaffNav", () => {
     expect(nav.querySelector("summary")!.textContent).toBe(staffCopy.nav.home);
   });
 
-  it("with more than one session, links faintly to the page of them under Log out, there and in the phone's menu", async () => {
+  it("links your address to your own page, marked when you're on it, there and in the phone's menu", async () => {
+    const { rerender } = await render(<StaffNav email="jo@pauseai.uk" permissions={[]} current="home" />);
+    const links = () => [...document.querySelectorAll('a[href="/staff/me"]')];
+    expect(links().map((a) => [a.textContent, a.getAttribute("title"), a.getAttribute("aria-current")])).toEqual([
+      ["jo@pauseai.uk", "jo@pauseai.uk", null],
+      ["jo@pauseai.uk", "jo@pauseai.uk", null],
+    ]);
+    await rerender(<StaffNav email="jo@pauseai.uk" permissions={[]} current="me" />);
+    expect(links()[0].getAttribute("aria-current")).toBe("page");
+    expect(document.querySelector("summary")!.textContent).toBe(staffCopy.me.title);
+  });
+
+  it("with more than one session, links faintly to them under Log out, there and in the phone's menu", async () => {
     const { rerender } = await render(<StaffNav email="jo@pauseai.uk" permissions={[]} sessions={3} current="home" />);
-    const links = document.querySelectorAll('a[href="/staff/sessions"]');
+    const links = document.querySelectorAll('a[href="/staff/me#sessions"]');
     expect([...links].map((a) => a.textContent)).toEqual([staffCopy.nav.sessions(3), staffCopy.nav.sessions(3)]);
-    expect(links[0].getAttribute("aria-current")).toBeNull();
-    await rerender(<StaffNav email="jo@pauseai.uk" permissions={[]} sessions={3} current="sessions" />);
-    expect(document.querySelector('a[href="/staff/sessions"]')!.getAttribute("aria-current")).toBe("page");
-    expect(document.querySelector("summary")!.textContent).toBe(staffCopy.sessions.title);
     await rerender(<StaffNav email="jo@pauseai.uk" permissions={[]} sessions={1} current="home" />);
-    expect(document.querySelector('a[href="/staff/sessions"]')).toBeNull();
+    expect(document.querySelector('a[href="/staff/me#sessions"]')).toBeNull();
   });
 
   it("shows the Supporters section, Letters in it, to someone with supporters", async () => {
@@ -209,9 +217,9 @@ describe("StaffNav in the signed-in pages' layout", () => {
     expect(menu().open).toBe(false);
   });
 
-  it("marks home at /staff and your sessions at theirs", async () => {
+  it("marks home at /staff and your own page at yours", async () => {
     expect(staffPageAt("/staff")).toBe("home");
-    expect(staffPageAt("/staff/sessions")).toBe("sessions");
+    expect(staffPageAt("/staff/me")).toBe("me");
     expect(staffPageAt("/staff/politicians/blocked-emails")).toBe("mpEmails");
     expect(staffPageAt("/staff/login")).toBeUndefined();
   });

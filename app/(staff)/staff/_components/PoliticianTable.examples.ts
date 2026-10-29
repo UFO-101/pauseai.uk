@@ -110,6 +110,7 @@ export const emptyPoliticiansSearch: PoliticiansSearch = {
   flag: [],
   nation: [],
   email: [],
+  mailed: [],
   ask: "",
   answer: "",
   sort: "",

@@ -60,10 +60,10 @@ describeWithDatabase("POST /staff/api/logout", () => {
     };
 
     // Someone else's is left alone.
-    expect((await post(sessionId(sam))).headers.get("location")).toBe("https://pauseai.uk/staff/sessions");
+    expect((await post(sessionId(sam))).headers.get("location")).toBe("https://pauseai.uk/staff/me#sessions");
     expect(await sessionEmail(sam)).toBe("sam@pauseai.uk");
     const res = await post(sessionId(other));
-    expect(res.headers.get("location")).toBe("https://pauseai.uk/staff/sessions");
+    expect(res.headers.get("location")).toBe("https://pauseai.uk/staff/me#sessions");
     expect(res.headers.getSetCookie()).toEqual([]);
     expect(await sessionEmail(other)).toBeUndefined();
     expect(await sessionEmail(token)).toBe("jo@pauseai.uk");

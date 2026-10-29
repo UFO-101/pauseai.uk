@@ -60,6 +60,7 @@ async function politicianValues(params: Params): Promise<Known> {
     email: EMAIL_STATES,
     ask: asks.map((one) => one.slug),
     answer: [...answers, "none"],
+    mailed: asks.map((one) => one.slug),
   };
 }
 

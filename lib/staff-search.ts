@@ -265,7 +265,7 @@ export type StoredFilter = { list: FilterList; params: Params };
 
 /** Each list's parameters that choose who it shows. */
 export const WHO_PARAMS: Record<FilterList, readonly string[]> = {
-  politicians: ["q", "house", "status", "party", "flag", "nation", "email", "ask", "answer"],
+  politicians: ["q", "house", "status", "party", "flag", "nation", "email", "ask", "answer", "mailed"],
   supporters: ["q", "activity", "contact", "event", "campaign", "wrote", "nation", "mp", "near", "within"],
 };
 
