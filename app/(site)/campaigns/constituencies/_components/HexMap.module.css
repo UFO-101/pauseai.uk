@@ -1,0 +1,96 @@
+.map {
+  position: relative;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* A constituency with none is hollow: paper with a pencil line round it,
+   a gap to fill. Each step after is a darker orange. */
+.hex {
+  cursor: pointer;
+  fill: var(--bg);
+  stroke: var(--border-strong);
+  stroke-width: 0.9;
+  transition: fill 0.25s ease;
+}
+
+.hex[data-step="1"],
+.hex[data-step="2"],
+.hex[data-step="3"],
+.hex[data-step="4"] {
+  stroke: none;
+}
+
+.hex[data-step="1"] {
+  fill: var(--map-1);
+}
+
+.hex[data-step="2"] {
+  fill: var(--map-2);
+}
+
+.hex[data-step="3"] {
+  fill: var(--map-3);
+}
+
+.hex[data-step="4"] {
+  fill: var(--map-4);
+}
+
+.hex:hover {
+  stroke: var(--text);
+  stroke-width: 1.5;
+}
+
+.picked {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 2.5;
+  pointer-events: none;
+}
+
+/* The nations' and London's names, haloed in paper so they read over the
+   hexagons. In the map's own units: a hexagon is 17 wide. */
+.area {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 900;
+  fill: var(--text);
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.tip {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--charcoal);
+  color: var(--on-dark);
+  font-size: var(--text-sm);
+  line-height: 1.3;
+  white-space: nowrap;
+  pointer-events: none;
+  /* Above the hexagon, clear of the pointer. */
+  transform: translate(-50%, calc(-100% - 14px));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hex {
+    transition: none;
+  }
+}

@@ -175,6 +175,13 @@
   --brand-gmail-red: #ea4335;
   --brand-gmail-dark-red: #c5221f;
 
+  /* The constituency map's steps, fewest to most: one hue, each darker,
+     the palest still 2:1 on --bg, the second the site's orange. */
+  --map-1: #efa06a;
+  --map-2: var(--accent);
+  --map-3: #b54a10;
+  --map-4: #73290a;
+
   /* The march sign-up (app/(march)/): ink and paper, and a hotter orange
      than the site's, for a page that looks like a poster. */
   --march-ink: #0b0908;

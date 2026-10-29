@@ -1,0 +1,60 @@
+.key {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.label {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.steps li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.swatch {
+  width: 18px;
+  height: 18px;
+}
+
+.swatch path {
+  fill: var(--bg);
+  stroke: var(--border-strong);
+  stroke-width: 1.2;
+}
+
+.swatch path[data-step="1"] {
+  fill: var(--map-1);
+  stroke: none;
+}
+
+.swatch path[data-step="2"] {
+  fill: var(--map-2);
+  stroke: none;
+}
+
+.swatch path[data-step="3"] {
+  fill: var(--map-3);
+  stroke: none;
+}
+
+.swatch path[data-step="4"] {
+  fill: var(--map-4);
+  stroke: none;
+}
