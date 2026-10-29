@@ -1,0 +1,70 @@
+/* Who a mailing is to, as pills that can't be changed: the filter bar's
+   chips, without their menus. */
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pills li {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.everyone {
+  margin: 0;
+}
+
+/* A mailing's counts, side by side, each tinted for what it is. */
+.counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.counts li {
+  flex: 1 1 8rem;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+
+.counts strong {
+  display: block;
+  font-size: 1.5rem;
+}
+
+.green {
+  background: var(--status-green-bg);
+  color: var(--status-green);
+}
+
+.blue {
+  background: var(--status-blue-bg);
+  color: var(--status-blue);
+}
+
+.red {
+  background: var(--status-red-bg);
+  color: var(--status-red);
+}
+
+.amber {
+  background: var(--status-amber-bg);
+  color: var(--status-amber);
+}
+
+.plain {
+  background: var(--surface-2);
+  color: var(--text-secondary);
+}

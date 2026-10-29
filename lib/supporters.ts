@@ -128,8 +128,8 @@ export const NEAR_MILES = [5, 10, 25, 50] as const;
 /** The filters that repeat, which can leave out as well as find. */
 export type NegatableSupporterFilter = "activity" | "contact" | "event" | "country";
 
-/** The list's filters, as the server applies them. A filter that repeats finds those with any of its values. */
-export type SupporterFilter = {
+/** Who the list shows, as the server finds them. A filter that repeats finds those with any of its values. */
+export type SupporterWho = {
   /** Over names, emails and phones. */
   search?: string;
   /** Has any of these lozenges in the Activities column. */
@@ -146,7 +146,11 @@ export type SupporterFilter = {
   /** Within `miles` of what was typed: a postcode, the first half of one, or a town. */
   near?: { text: string; miles: number };
   /** Those with none of these, each a filter above that repeats. */
-  not?: Pick<SupporterFilter, NegatableSupporterFilter>;
+  not?: Pick<SupporterWho, NegatableSupporterFilter>;
+};
+
+/** Who the list shows, and how: its sort and page. */
+export type SupporterFilter = SupporterWho & {
   sort: SupporterSort;
   dir: SortDirection;
   page: number;

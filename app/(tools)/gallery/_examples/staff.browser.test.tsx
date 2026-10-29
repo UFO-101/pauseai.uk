@@ -5,6 +5,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import {
   HeldSyncExample,
+  MailingWriterExample,
   PoliticianDetailsExample,
   PoliticianTableEmptyExample,
   PoliticianTableExample,
@@ -12,6 +13,7 @@ import {
 
 // The staff examples' Server Actions are logged, not sent: pressing each adds its line to the event log.
 const log = () => page.getByRole("list", { name: "Event log" }).getByRole("listitem");
+const subject = () => page.getByLabelText(new RegExp(`^${staffCopy.mailingPages.subject}`));
 
 describe("the staff examples", () => {
   it("logs a held sync's apply and discard", async () => {
@@ -38,6 +40,18 @@ describe("the staff examples", () => {
     await render(<PoliticianDetailsExample fromAirtable senders={false} />);
     await expect.element(page.getByText(staffCopy.politician.history.unsignedLetter, { exact: false })).toBeVisible();
     await expect.element(page.getByText(exampleLetter.senderName)).not.toBeInTheDocument();
+  });
+
+  it("logs a new mailing's start", async () => {
+    await render(<MailingWriterExample draft={false} />);
+    await subject().fill("Hello");
+    await expect.poll(() => log().nth(0).query()?.textContent).toMatch(/^startMailing\(/);
+  });
+
+  it("logs a draft's save", async () => {
+    await render(<MailingWriterExample draft />);
+    await subject().fill("Hello again");
+    await expect.poll(() => log().last().query()?.textContent).toMatch(/^saveMailing\(/);
   });
 
   it("lists politicians with no buttons", async () => {

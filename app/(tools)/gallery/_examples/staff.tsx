@@ -44,16 +44,19 @@ import StaffNav, { type StaffPage as StaffPageName } from "@/app/(staff)/staff/_
 import AccountsNotice from "@/app/(staff)/staff/_components/AccountsNotice";
 import Breadcrumb from "@/app/(staff)/staff/_components/Breadcrumb";
 import EraseLink from "@/app/(staff)/staff/_components/EraseLink";
-import MailingDetails from "@/app/(staff)/staff/_components/MailingDetails";
 import MailingsTable from "@/app/(staff)/staff/_components/MailingsTable";
-import { exampleMailing, exampleMailings } from "@/app/(staff)/staff/_components/MailingsTable.examples";
+import NotIcon from "@/app/(staff)/staff/_components/ui/NotIcon";
+import { MailingLetter } from "@/app/(staff)/staff/_components/MailingLetter";
+import { FilterPills, MailingCounts } from "@/app/(staff)/staff/_components/MailingParts";
+import { exampleMailingLetter, exampleWriterData } from "@/app/(staff)/staff/_components/MailingWriter.examples";
+import { exampleMailings } from "@/app/(staff)/staff/_components/MailingsTable.examples";
 import ListFrame, { ListTable, type ListColumn } from "@/app/(staff)/staff/_components/ui/ListFrame";
 import ChoiceSearch from "@/app/(staff)/staff/_components/ui/ChoiceSearch";
 import NavFold from "@/app/(staff)/staff/_components/ui/NavFold";
 import FormPending from "@/app/(staff)/staff/_components/ui/FormPending";
 import StaffLink from "@/app/(staff)/staff/_components/ui/StaffLink";
 import NavIcon from "@/app/(staff)/staff/_components/NavIcon";
-import PoliticiansList, { HouseTabs } from "@/app/(staff)/staff/_components/PoliticiansList";
+import { HouseTabs } from "@/app/(staff)/staff/_components/PoliticiansList";
 import ErasedNotice from "@/app/(staff)/staff/_components/ErasedNotice";
 import ImportCard, { ImportCards } from "@/app/(staff)/staff/_components/ImportCard";
 import KeepSignedIn from "@/app/(staff)/staff/_components/KeepSignedIn";
@@ -100,6 +103,15 @@ import {
   HeldSyncExample,
   ImportJobPageExample,
   JobActionsExample,
+  MailingEditorExample,
+  MailingButtonsExample,
+  MailingFilesExample,
+  MailingForExample,
+  MailingsOverviewExample,
+  MailingViewExample,
+  MailingWriterExample,
+  ChangeWhoListExample,
+  PoliticiansListExample,
   PoliticianDetailsExample,
   PoliticianTableEmptyExample,
   PoliticianTableExample,
@@ -150,6 +162,7 @@ const EMPTY_POLITICIAN_FILTERS = {
   sort: "",
   dir: "",
   page: "",
+  mailing: "",
 };
 
 // A blocked address list's filter, for the filter bar's examples.
@@ -1186,10 +1199,18 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/PoliticiansList.tsx",
       variants: [
         {
+          label: "After a draft's Change who: the button makes the draft go to these",
+          render: () => (
+            <StaffPage as="div">
+              <ChangeWhoListExample />
+            </StaffPage>
+          ),
+        },
+        {
           label: "A search's page of politicians, with more in other houses and out of office",
           render: () => (
             <StaffPage as="div">
-              <PoliticiansList
+              <PoliticiansListExample
                 list={{ ...examplePoliticiansPage, total: 150, pages: 2, outOfOffice: 3, otherHouses: 2, tests: 1 }}
                 search={{ ...EMPTY_POLITICIAN_FILTERS, q: "pol" }}
                 asks={exampleAsks}
@@ -1201,11 +1222,25 @@ export const staff: Group = {
           label: "A search that finds no one, with the nearest names",
           render: () => (
             <StaffPage as="div">
-              <PoliticiansList
+              <PoliticiansListExample
                 list={{ ...examplePoliticiansPage, politicians: [], total: 0, closest: [examplePolitician] }}
                 search={{ ...EMPTY_POLITICIAN_FILTERS, q: "Polly Plaseholder" }}
                 asks={exampleAsks}
               />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "MailingEditor",
+      file: "app/(staff)/staff/_components/MailingEditor.tsx",
+      variants: [
+        {
+          label: "A letter with a merge field and a part only for those who signed; type { for the fields",
+          render: () => (
+            <StaffPage as="div">
+              <MailingEditorExample />
             </StaffPage>
           ),
         },
@@ -1227,31 +1262,221 @@ export const staff: Group = {
       ],
     },
     {
-      name: "MailingDetails",
-      file: "app/(staff)/staff/_components/MailingDetails.tsx",
+      name: "MailingFiles",
+      file: "app/(staff)/staff/_components/MailingFiles.tsx",
       variants: [
         {
-          label: "A mailing from Airtable, with no text, and its recipients",
+          label: "A draft's: a PDF, an image and a file of no kind to draw, with the box for more",
           render: () => (
             <StaffPage as="div">
-              <MailingDetails mailing={exampleMailing} />
+              <MailingFilesExample editable />
             </StaffPage>
           ),
         },
         {
-          label: "One with no ask, not sent yet",
+          label: "A mailing sent's, to open",
           render: () => (
             <StaffPage as="div">
-              <MailingDetails
-                mailing={{
-                  ...exampleMailings[0],
-                  recipients: [],
-                  recipientsTotal: 0,
-                  page: 1,
-                  pages: 1,
-                  pageSize: 100,
-                }}
-              />
+              <MailingFilesExample editable={false} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "NotIcon",
+      file: "app/(staff)/staff/_components/ui/NotIcon.tsx",
+      variants: [
+        {
+          label: "Before Except, and a condition the preview shows those who don't meet",
+          render: () => (
+            <StaffPage as="div">
+              <p>
+                <NotIcon />
+                Except
+              </p>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "MailingsOverview",
+      file: "app/(staff)/staff/_components/MailingsOverview.tsx",
+      variants: [
+        {
+          label: "Two drafts, one coming up, and those sent",
+          render: () => (
+            <StaffPage as="div">
+              <MailingsOverviewExample />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "No drafts and nothing coming up",
+          render: () => (
+            <StaffPage as="div">
+              <MailingsOverviewExample empty />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "MailingWriter",
+      file: "app/(staff)/staff/_components/MailingWriter.tsx",
+      variants: [
+        {
+          label: "A new mailing to the Commons who aren't Labour, nothing written yet",
+          render: () => (
+            <StaffPage as="div">
+              <MailingWriterExample draft={false} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Jo's draft of it, with a file, from Jo, on 1 December",
+          render: () => (
+            <StaffPage as="div">
+              <MailingWriterExample draft />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "MailingView",
+      file: "app/(staff)/staff/_components/MailingView.tsx",
+      variants: [
+        {
+          label: "One imported from Airtable: who got it and how it was written, no text",
+          render: () => (
+            <StaffPage as="div">
+              <MailingViewExample state="imported" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Scheduled, with Change the time and Stop",
+          render: () => (
+            <StaffPage as="div">
+              <MailingViewExample state="scheduled" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Sending, with how far it's got",
+          render: () => (
+            <StaffPage as="div">
+              <MailingViewExample state="sending" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Sent, with its counts and recipients",
+          render: () => (
+            <StaffPage as="div">
+              <MailingViewExample state="sent" />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "MailingFor",
+      file: "app/(staff)/staff/_components/MailingFor.tsx",
+      variants: [
+        {
+          label: "A draft",
+          render: () => (
+            <StaffPage as="div">
+              <MailingForExample kind="draft" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "One sent",
+          render: () => (
+            <StaffPage as="div">
+              <MailingForExample kind="written" />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "MailingLetter",
+      file: "app/(staff)/staff/_components/MailingLetter.tsx",
+      variants: [
+        {
+          label: "A letter with fields, a part only for some, bold, italic and a list",
+          render: () => (
+            <StaffPage as="div">
+              <MailingLetter doc={exampleMailingLetter} fields={{ salutation: "Salutation" }} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "FilterPills",
+      file: "app/(staff)/staff/_components/MailingParts.tsx",
+      variants: [
+        {
+          label: "The Commons who aren't Labour, who answered an ask",
+          render: () => (
+            <StaffPage as="div">
+              <FilterPills data={exampleWriterData} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Everyone in office",
+          render: () => (
+            <StaffPage as="div">
+              <FilterPills data={{ ...exampleWriterData, filter: { list: "politicians", params: {} } }} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "MailingCounts",
+      file: "app/(staff)/staff/_components/MailingParts.tsx",
+      variants: [
+        {
+          label: "Sent, replied, bounced, skipped and answered",
+          render: () => (
+            <StaffPage as="div">
+              <MailingCounts mailing={exampleMailings[0]} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "DeleteDraft",
+      file: "app/(staff)/staff/_components/MailingButtons.tsx",
+      variants: [
+        {
+          label: "Delete draft, which asks to be sure, and Stop",
+          render: () => (
+            <StaffPage as="div">
+              <MailingButtonsExample id={5} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "StopMailing",
+      file: "app/(staff)/staff/_components/MailingButtons.tsx",
+      variants: [
+        {
+          label: "Beside Delete draft",
+          render: () => (
+            <StaffPage as="div">
+              <MailingButtonsExample id={6} />
             </StaffPage>
           ),
         },

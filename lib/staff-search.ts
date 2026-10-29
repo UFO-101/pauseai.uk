@@ -245,3 +245,33 @@ export function supportersSearch(
 export function accountsSearch({ notice = "" }: { notice?: string }): { notice: string } {
   return { notice: notice === "last-admin" || notice === "not-pauseai" ? notice : "" };
 }
+
+// Who a list shows, kept apart from how it shows them (the sort and the
+// page), as its URL parameters, so a mailing can keep it and run it again
+// (lib/server/stored-filters.ts reads it back strictly).
+
+/** The lists a mailing can be to. */
+export const FILTER_LISTS = ["politicians", "supporters"] as const;
+export type FilterList = (typeof FILTER_LISTS)[number];
+
+/** Who a list shows: the list, and its parameters that choose who. */
+export type StoredFilter = { list: FilterList; params: Params };
+
+/** Each list's parameters that choose who it shows. */
+export const WHO_PARAMS: Record<FilterList, readonly string[]> = {
+  politicians: ["q", "house", "status", "party", "flag", "country", "email", "ask", "answer"],
+  supporters: ["q", "activity", "contact", "event", "campaign", "wrote", "country", "near", "within"],
+};
+
+/** Who a list's URL parameters show, without the sort, the page or anything else, nor blanks. */
+export function storedFilter<List extends FilterList>(
+  list: List,
+  params: Partial<Record<string, string | string[]>>,
+): StoredFilter & { list: List } {
+  const kept: Params = {};
+  for (const name of WHO_PARAMS[list]) {
+    const values = valuesOf(params[name]);
+    if (values.length) kept[name] = values.length === 1 ? values[0] : values;
+  }
+  return { list, params: kept };
+}

@@ -1,109 +1,272 @@
 # Mailings
 
-Staff filter a list, press a button, write a mailing and schedule it.
-This plan builds what every mailing shares, up to scheduling. Each
-channel's real sending comes after, in its own plan:
+Staff choose people from the politicians or supporters list, write a
+mailing to them and schedule it. This plan builds the parts every
+mailing needs. Sending by each channel is in its own plan:
 
-- `plans/politician-email.md`: politicians, from a staff member's Gmail.
-- `plans/supporters-email.md`: supporters, by email.
-- `plans/supporters-phone.md`: supporters, by text and WhatsApp.
+- `plans/politician-email.md`: email to politicians, sent by Gmail.
+- `plans/supporters-email.md`: email to supporters.
+- `plans/supporters-phone.md`: texts and WhatsApp to supporters.
 
-One pull request. Nothing outside blocks it. Once it's merged, staff on
-the live site can make a mailing, dry-run it and test-send it to
-themselves; scheduling turns on for a channel when its plan lands.
+It is three pull requests, none depending on anything outside the site:
 
-## What's there
+1. Data: the tables, stored filters, templates and channels, with
+   nothing new for staff to see but the editor in the gallery.
+2. Mailings: the staff pages for mailings to politicians.
+3. Messages: the staff pages for messages to supporters.
 
-- `mailings`: title, ask, and where Airtable's ones came from
-  (`airtable_field` or `airtable_sent_between`). Every row is imported.
-- `pauseai_letters`: one politician's letter of a mailing, a kind of
-  `letters`.
-- `/staff/mailings` and a mailing's page, listing the imported ones and
-  their recipients (`lib/server/mailings.ts`).
-- `send()` in `lib/server/email.ts`: Postmark only, refuses blocked
-  addresses, logs to `email_sends`.
-- `contact_permission(topic, channel, address)`: yes, unsure or no, for
-  email and phone. Phone numbers are compared as `phone_number()` writes
-  them, E.164 where it can.
-- `SupporterFilter` and `PoliticianFilter`: each list's filters, parsed
-  from its URL, with sort and page mixed in.
+After phase 2, staff can make a mailing to politicians on the live
+site, see who it would go to, and send a test copy to themselves. They
+can schedule one once Gmail is built (`plans/politician-email.md`).
 
-## The model
+## What we have now
 
-A mailing is the parent; who it went to is a child table per audience,
-as `letters` has `supporter_letters` and `pauseai_letters`.
+- The `mailings` table holds the mailings imported from Airtable, with
+  their title and ask, and the tick box (`airtable_field`) or dates
+  (`airtable_sent_between`) that identify them in Airtable.
+- `letters` holds every letter to a notable person. It has two child
+  tables: `supporter_letters`, a supporter's letter in a campaign, and
+  `pauseai_letters`, PauseAI's letter in a mailing.
+- `/staff/mailings` lists the imported mailings, and each has a page
+  (`lib/server/mailings.ts`).
+- `send()` in `lib/server/email.ts` sends by Postmark, refuses blocked
+  addresses and logs each send to `email_sends`.
+- `contact_permission(topic, channel, address)` says whether we may
+  contact an email address or phone number about a topic: yes, unsure
+  or no.
+- `SupporterFilter` and `PoliticianFilter` hold each list's filters.
+  They are read from the page's URL, together with the sort order and
+  page number.
+
+## Data model
+
+A letter is an email to a notable person. A message is an email, text
+or WhatsApp message to a supporter. Each table's name says which way it
+goes, so "supporter" never means "from" in one table and "to" in the
+next. The first step renames the tables we have:
+
+| Now                 | Renamed                   | One row is                                                |
+| ------------------- | ------------------------- | --------------------------------------------------------- |
+| `letters`           | `letters`                 | A letter to a notable person, from anyone                 |
+| `supporter_letters` | `letters_from_supporters` | A supporter's letter to a politician, in a campaign       |
+| `pauseai_letters`   | `letters_from_pauseai`    | PauseAI's letter to a politician, in a mailing            |
+| (new)               | `messages_to_supporters`  | PauseAI's message to a supporter, in a mailing            |
+| `letter_events`     | `letter_events`           | Something that happened to a letter: sent, bounced…       |
+| (new)               | `message_events`          | Something that happened to a message: delivered, failed…  |
+| (later)             | `letter_replies`          | A later email in a letter's thread (`politician-email.md`) |
+| (later)             | `message_replies`         | A supporter's reply, or our answer (`supporters-phone.md`) |
+
+`letters.kind` keeps its values, `supporter` and `pauseai`, which now
+read as who it is from. A text to a politician, if we ever send one,
+would not be a letter; it would need its own table.
+
+Mail to politicians:
 
 ```
-mailings ──┬── pauseai_letters      politicians (exists)
-           └── supporter_messages   supporters (new)
+                     notable_people ── politicians
+                           ▲
+                           │ to
+                        letters ◄── letter_events
+                           │
+              ┌────────────┴─────────────┐
+              │ one of                   │ one of
+  letters_from_supporters        letters_from_pauseai
+     │            │                      │
+     │ in         │ written in           │ in
+     ▼            ▼                      ▼
+ campaigns    form_entries            mailings
+     │            ▲                      │
+     │ asks       │ linked by            │ asks
+     ▼            │                      ▼
+   asks     supporter_links ──► supporters
 ```
 
-- **`mailings`** gains: audience (`politicians`, `supporters`), channel
-  (`email`, `whatsapp`), the stored filter, the template and
-  what it binds, who made it, the sender, when it's due, and its state
-  (`draft`, `scheduled`, `sending`, `sent`, `cancelled`). Imported
-  mailings are `politicians` and `email`, and a CHECK lets only them lack
-  a template.
-- **`supporter_messages`**: one supporter's message. The supporter, the
-  address or number, status (`scheduled`, `sent`, `delivered`, `failed`,
-  `skipped`), the provider's ID, the merge values, and why it was
-  skipped. Erasure deletes the address and merge values and keeps the
-  row.
-- **`message_events`**: what happened to each message after it was sent,
-  for either child.
+Mail to supporters:
 
-A message's text isn't stored: it's the mailing's template with the
-recipient's merge values. The mailing keeps the template as rendered
-when sent, so a change to the renderer can't change it.
+```
+ mailings ◄── messages_to_supporters ──► supporters
+                        ▲
+                        └── message_events
+```
+
+A mailing's recipients are in one of two tables, by audience:
+
+```
+               mailings
+        ┌─────────┴──────────┐
+letters_from_pauseai   messages_to_supporters
+  (politicians)            (supporters)
+```
+
+- `mailings` gets new columns: the audience (`politicians` or
+  `supporters`), the channel (`email`, `text` or `whatsapp`), the
+  stored filter, the template and its merge fields, who made it, who it
+  is sent from, when it is due, and its state (`draft`, `scheduled`,
+  `sending`, `sent` or `cancelled`). Only the imported mailings may
+  have no template.
+- `messages_to_supporters` has one row per supporter in a mailing: the
+  supporter, the address or number used, the status (`scheduled`,
+  `sent`, `delivered`, `failed` or `skipped`), the provider's message
+  ID, the merge values, and the reason if it was skipped. Erasure
+  deletes the address and merge values but keeps the row.
+
+We don't store each message's text. It can be rebuilt from the template
+and the recipient's merge values. The mailing keeps a copy of the
+template as it was when sent, so later changes to the template code
+don't change it.
 
 ## Rules
 
-- **Recipients are fixed when it's scheduled**, a child row each, so who
-  got it never depends on rerunning a filter.
-- **Every send is checked again at send time.** Supporters by
-  `contact_permission()` for the mailing's topic; politicians by blocks
-  and being in office. Anyone who fails is skipped, with the reason.
-- **Who can send is who can see the list.** Any staff account can mail
-  politicians; only one with the `supporters` permission can mail
-  supporters. No new permission.
-- **A stored filter is read strictly.** A URL drops what it doesn't
-  know; a mailing refuses the whole filter and says which value failed,
-  so a renamed topic or deleted event can't widen the audience.
+- The recipients are fixed when the mailing is scheduled, with one row
+  each. Who received a mailing never depends on running its filter
+  again.
+- Each message is checked again just before it is sent. For a
+  supporter, `contact_permission()` must still say yes for the
+  mailing's topic. For a politician, their address must not be blocked
+  and they must still be in office. Anyone who fails the check is
+  skipped, and the reason is recorded.
+- Someone with no address for the channel, or whose address is
+  blocked, is never in a mailing: they are left out when it starts, and
+  the page says how many and who, rather than skipping them at sending.
+  Only what changes after scheduling is skipped: an address blocked
+  since, or leaving office.
+- Anyone who can see a list can send a mailing to it. Every staff
+  account can mail politicians. Only accounts with the `supporters`
+  permission can mail supporters.
+- Supporters can only be messaged from a list filtered to those we can
+  contact: a Contact filter answered "Can email" or "Can text" for one
+  topic. That filter decides the mailing's channel and topic, so the
+  Mail button on the supporters list offers email for a "Can email"
+  filter and text for a "Can text" one. Without such a filter the
+  button can't be pressed, and says which filter to add. "Not sure"
+  isn't enough, so members can't be emailed about PauseAI updates until
+  we can read CiviCRM's unsubscribes (`plans/supporters-email.md`).
+- A stored filter is read strictly. If it contains a value the site no
+  longer recognises, such as a renamed topic or a deleted event, the
+  mailing can't be scheduled until someone fixes it. Otherwise the
+  filter would silently match more people.
 
-## Steps
+## Phase 1: Data
 
-1. **Stored filters.** Split who a list shows from how it's shown, for
-   supporters and politicians, into one validated value a mailing stores
-   as JSON. A mailing's page shows it in words and reruns it to show who
-   it would pick now.
-2. **Templates.** Email your MP's format (`lib/letter-format.ts`), plus
-   merge fields per recipient and blocks only some see (`[if signed
-   frontier-ai-letter] … [end]`). A field the site can't fill for
-   someone skips them.
-3. **Channels.** `Channel` is a type: send one message, how many more
-   today, and turn a provider's report into an event. Each real channel
-   has a fake one for fixture builds, dev and tests, which writes what it
-   would send to the outbox (`tests/fixtures/outbox.ts`) and lets a test
-   report what happens next (delivered, failed, bounced, opted out,
-   replied) through the same code a webhook uses. This plan uses the
-   fake email that exists.
-4. **The `send-mailings` job**, hourly, in the database wake the other
-   jobs share. It sends what fits in 30 seconds and leaves the rest.
-5. **Staff pages**:
-   - "Mail these" on Politicians and Supporters.
-   - New mailing: recipients with untick boxes, channel, template,
-     preview as any recipient, schedule, cancel.
-   - **Dry run**, on any channel: who it would go to, who would be
-     skipped and why, then stop. Nothing is recorded as sent.
-   - **Test send to yourself**: a real message, rendered as a chosen
-     recipient would get it, to your own pauseai.uk address through
-     Postmark's ordinary stream, logged as `mailing-test`. It isn't a
-     recipient and skips the permission check. Once a channel is built,
-     its test send goes by that channel (from your Gmail, to your
-     WhatsApp).
-   - A mailing's page: each recipient's outcome, counts, and the filter
-     in words.
-   - Mailings: both audiences together.
+1. Rename the tables, in a migration and a commit of their own, before
+   anything else. `supporter_letters` is used in 22 files and
+   `pauseai_letters` in 12, including erasure, supporter links, the
+   supporter views, `contact_permission()`, the backup Worker's checks
+   and the docs.
+2. Add the new columns to `mailings`, and the `messages_to_supporters`
+   and `message_events` tables. A draft is a `mailings` row in the
+   `draft` state, saved with a version number so a second person
+   editing it is told rather than overwritten.
+3. Store filters. Separate who a list shows from how it is shown, for
+   both lists, as one validated value that a mailing stores as JSON,
+   and that can be shown in words or run again.
+4. Templates. Extend Email your MP's document (`lib/letter-format.ts`)
+   and its Tiptap editor with two nodes: a merge field, an inline chip
+   that is deleted, copied and moved whole, which typing `{` offers; and
+   a block shown only to some recipients, such as those who signed an
+   ask. Staff never see or type markup. The editor is built and in the
+   component gallery (`MailingEditor`). The server checks the document
+   as it checks letters, and one function writes a recipient's HTML and
+   plain text from it, for the preview, test sends and sending. Only
+   merge fields every recipient has a value for can be used: the others
+   are offered ghosted, saying how many lack one. For politicians the
+   fields are salutation, name, constituency, party and house. The
+   "Only for those who…" choices are one per answer an ask has had,
+   such as "signed the Frontier AI letter" or "are going to the
+   Edinburgh conference", from `ask_statuses`. The editor and its
+   toolbar exist (`app/(staff)/staff/_components/MailingEditor.tsx`);
+   dragging a lozenge in from a sidebar, and ghosting, don't yet.
+5. Channels. `Channel` is a type with four functions: send one message,
+   say how many more can be sent today, say what one message costs, and
+   turn a provider's report into an event. Each channel also has a fake
+   version for fixture builds, the dev server and tests. The fake writes
+   each message to the outbox (`tests/fixtures/outbox.ts`), and a test
+   can report deliveries, failures, bounces, opt-outs and replies
+   through the same code as the real webhook. This plan uses the fake
+   email channel that already exists.
+6. Tidying: the daily `tidy-logs` job deletes drafts with no subject or
+   letter that nobody has opened for a day. The job that sends is built
+   with the first channel that really sends, in
+   `plans/politician-email.md`.
 
-   Designed first, as mock-ups on the real staff components, desktop and
-   phone, for staff to choose from.
+## Phase 2: Mailings
+
+Mailings to politicians, under Politicians in the menu, as now. Mail to
+politicians is from a person, a letter at a time, with replies and
+answers to an ask, so it has its own pages, sharing the data, editor,
+drafts and sending with Messages. Designed first as mock-ups on the
+real staff components, on a design canvas:
+https://claude.ai/artifact/3qi42XAhd2qwYBTRYVGZoz
+
+- A "Mail these" button on the politicians list, beside Download over
+  the table, with the count in it ("Mail these 129…") (chosen on the
+  canvas).
+- A new mailing on one page (chosen on the canvas), in six numbered
+  sections down the page:
+  1. Who: the filter as read-only pills with "Change who", which goes
+     back to the list with the filter filled in, where the button
+     updates this draft's recipients; how many will get it; and how
+     many of those the filter finds are left out for having no address
+     or a blocked one, with "See who".
+  2. Write: subject, ask, the editor and attachments, with a sidebar of
+     lozenges to drag in or click: the merge fields, those not every
+     recipient has ghosted, with a hover saying how many lack one; and
+     "Only for those who…", one per ask answer, each with how many it
+     covers.
+  3. Preview: a search by name or constituency picks whose email is
+     shown, rendered as they'll get it, with "Send this one to me": one
+     real message to your own pauseai.uk address by Postmark, logged as
+     `mailing-test`, skipping permissions, or by Gmail once it's built.
+  4. Sent from: whose Gmail, each connected one with today's sends
+     against the limit. Picking your own before it's connected shows
+     "Connect Gmail", which goes to Google once and comes back here.
+     Then the name it's from.
+  5. When: a day and an hour; it goes on the hour.
+  6. Send: one sentence of what will go, to whom, from whom and when,
+     and the button to schedule it.
+
+  Until a channel really sends, the page shows "Mailings can't be sent
+  yet" at the top, and the schedule button is greyed and says so.
+  Everything else works, including the test send by Postmark.
+- Drafts. A mailing becomes a draft at the first change worth keeping:
+  writing in the subject or letter, or attaching a file. Until then nothing is saved. A draft saves itself a
+  moment after each change. A draft with no subject or letter is
+  deleted after a day unopened. "Delete draft" deletes it after one
+  confirmation; a draft has sent nothing, so it isn't archived.
+- A mailing's page (chosen on the canvas): its title and state, when
+  and from whom it went, and its ask; a coloured count each of sent,
+  replied, bounced, skipped and answered the ask; then the recipients
+  in a table, with tabs for all, replied, bounced and skipped, beside
+  the email and who it was for, as read-only pills. Scheduled, a band
+  says when it sends, with "Change the time" and Stop, which turns it
+  back into a draft. Sending, a progress bar and each recipient ticked
+  as it goes, with Stop, which sends no more. A sent mailing can't be
+  deleted.
+- The list of mailings, in three parts (chosen on the canvas): drafts,
+  each with Delete draft; coming up, each with Stop; and a table of
+  those sent, with how many were sent, bounced, replied and answered
+  the ask.
+
+## Phase 3: Messages
+
+Messages to supporters, under Supporters in the menu, seen only with
+the `supporters` permission. They are from PauseAI UK, by email or
+text, with consent, opt-outs and a cost, so they have their own pages,
+built on phase 2's. To be designed once phase 2's are settled.
+
+- "Email these" or "Text these" on the supporters list, following its
+  Contact filter. Without a "Can email" or "Can text" filter the button
+  is dotted, and clicking it explains which filter to add.
+- The same page, with the channel and topic fixed by the filter, a
+  count of texts and their cost, and opt-outs among the reasons to be
+  skipped.
+- A message's page and the list of messages, with delivered, failed,
+  opted out, replies and cost.
+
+## Done means
+
+For each phase, as `AGENTS.md` asks: 100% test coverage; a storyboard
+flow for each thing a person does on the new pages, with a line for it
+in `docs/testing.md`; a gallery example for each new component; copy as
+placeholders, marked with the asterism, for a person to write; and `docs/data-protection.md`
+updated for what's stored about recipients.

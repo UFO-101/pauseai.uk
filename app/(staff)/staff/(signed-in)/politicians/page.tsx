@@ -3,6 +3,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { listAsks } from "@/lib/server/asks";
 import { listParties, politiciansPage, politiciansSearch, type PoliticiansSearch } from "@/lib/server/politicians";
 import { requireStaff } from "@/lib/server/staff-auth";
+import { changeMailingWho } from "../../mailing-actions";
 import PoliticianFilters from "../../_components/PoliticianFilters";
 import PoliticiansList, { HouseTabs } from "../../_components/PoliticiansList";
 
@@ -17,7 +18,7 @@ export default async function PoliticiansPage({ searchParams }: { searchParams: 
       <h1>{staffCopy.politicians.title}</h1>
       <HouseTabs search={search} />
       <PoliticianFilters search={search} asks={asks} parties={parties} />
-      <PoliticiansList list={list} search={search} asks={asks} />
+      <PoliticiansList list={list} search={search} asks={asks} changeWho={changeMailingWho} />
     </>
   );
 }

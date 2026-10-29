@@ -28,6 +28,14 @@
   margin: 0;
 }
 
+/* Any actions and Download, together at the right, wrapping as one. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
 /* The Download button: its arrow, its word, and a ▾ for its menu. */
 .download {
   gap: var(--space-1);

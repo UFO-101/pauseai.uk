@@ -79,6 +79,7 @@ export const DENSITY_TOKENS = [
   "--form-gap",
   "--table-font-size",
   "--table-cell-padding",
+  "--table-tag-white-space",
   "--tag-font-size",
   "--tag-padding",
 ];

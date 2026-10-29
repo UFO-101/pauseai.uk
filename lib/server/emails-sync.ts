@@ -6,7 +6,7 @@ import { keepingFailure, recordRun } from "./import-runs";
 import { airtableToken, fetchEmails, fetchTestPoliticianIds } from "./outside-services/airtable";
 
 // Copies PauseAI's emails to politicians from Airtable's Emails table
-// into pauseai_letters, nightly (app/api/cron/sync-politicians, after the
+// into letters_from_pauseai, nightly (app/api/cron/sync-politicians, after the
 // politicians) or when staff ask, each run in the import log as
 // "sync-emails". An email is added once, by its record's ID, as a letter of
 // the mailing whose tick box is ticked, or with no box ticked, of the one
@@ -49,7 +49,7 @@ export function syncEmails(startedBy: string): Promise<EmailSyncResult> {
       const known = new Set(
         (
           await query<{ airtableId: string }>(
-            `SELECT airtable_id AS "airtableId" FROM pauseai_letters WHERE airtable_id = ANY($1::text[])`,
+            `SELECT airtable_id AS "airtableId" FROM letters_from_pauseai WHERE airtable_id = ANY($1::text[])`,
             [emails.map((email) => email.airtableId)],
             db,
           )
@@ -83,7 +83,7 @@ export function syncEmails(startedBy: string): Promise<EmailSyncResult> {
           db,
         );
         await query(
-          `INSERT INTO pauseai_letters (id, mailing_id, airtable_id, personalised) VALUES ($1, $2, $3, $4)`,
+          `INSERT INTO letters_from_pauseai (id, mailing_id, airtable_id, personalised) VALUES ($1, $2, $3, $4)`,
           [id, mailing, email.airtableId, email.personalised],
           db,
         );

@@ -101,6 +101,11 @@ const nextConfig: NextConfig = {
     // link in an email and every redirect. Empty for a local build.
     SITE_ORIGIN: (process.env.CONTEXT === "production" ? process.env.URL : process.env.DEPLOY_PRIME_URL) ?? "",
   },
+  experimental: {
+    // A file attached to a mailing comes in a Server Action's request, up to
+    // MAX_ATTACHMENT_BYTES (lib/server/mailing-drafts.ts) and the form around it.
+    serverActions: { bodySizeLimit: "5mb" },
+  },
   // The PDFs attached to letters, read from disk when one is sent.
   outputFileTracingIncludes: {
     "/api/email-your-mp/letters": ["./public/pdfs/*.pdf"],

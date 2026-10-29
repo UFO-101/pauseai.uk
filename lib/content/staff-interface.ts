@@ -618,6 +618,7 @@ export const staffCopy = {
       skipped: "Skipped",
       bounced: "Bounced",
       replied: "Replied",
+      answered: "Answered",
     },
     // A mailing copied from Airtable, which kept only who got it.
     imported: "From Airtable",
@@ -635,7 +636,7 @@ export const staffCopy = {
     noAsk: "None",
     textTitle: "The email",
     noText:
-      "Text not avilable. This was imported from the Airtable's Emails table, which keeps only who got it and how it was written. It was sent with Gmail, look there.",
+      "Text not available. This was imported from Airtable's Emails table, which keeps only who got it and how it was written. It was sent with Gmail, look there.",
     recipientsTitle: "Recipients",
     // Over the recipients: how many; instead of them, when there are none.
     recipientsCount: (n: number) => `${n} ${n === 1 ? "recipient" : "recipients"}`,
@@ -650,8 +651,234 @@ export const staffCopy = {
     // How a recipient's letter was written.
     personalised: "personalised",
     asWritten: "as written",
-    // Over a mailing's recipients: how many, and how many of those replied.
-    counts: (sent: number, replied: number) => `Sent to ${sent}; ${replied} replied.`,
+  },
+  // A mailing's editor: the letter, with merge fields and parts only some recipients get.
+  mailingEditor: {
+    bold: "Bold",
+    italic: "Italic",
+    bulletList: "Bullet point",
+    // The toolbar over the letter, for screen readers.
+    formatting: "Formatting",
+    // Over the merge fields beside the letter, to click or drag in.
+    fieldsHeading: "Fields",
+    // On hovering a field or a condition beside the letter.
+    dragHint: "Click to insert it where the cursor is, or drag it to where you want in the letter",
+    // On hovering a field some recipients have no value for, which can't be used.
+    lacking: (n: number) => `${n} ${n === 1 ? "recipient has" : "recipients have"} none, so it can't be used`,
+    // Over the two menus of who a part of the letter is for.
+    partsHeading: "Conditional parts",
+    // The menu that puts the paragraphs at the cursor in a part only those who gave an answer get.
+    addOnlyFor: "+ Only for those who…",
+    // The menu that puts them in a part everyone but those who gave an answer gets.
+    except: "Except those who…",
+    // In the menu of an ask's answers, back to the asks.
+    backToAsks: "‹ Asks",
+    // Instead of them, when no recipient has answered an ask.
+    noConditions: "None available, because no recipient has answered an ask.",
+    // After each: how many recipients gave that answer.
+    covers: (n: number) => `${n}`,
+    // On the box round such a part: who gets it.
+    onlyForLabel: (who: string) => `Only for those who ${who}`,
+    // On the box round a part all but some get: who doesn't.
+    exceptLabel: (who: string) => `Except those who ${who}`,
+    // Takes the part at the cursor out of its box, so everyone gets it.
+    forEveryone: "For everyone",
+    // The menu typing { opens, of the merge fields.
+    pickField: "Insert a field",
+    // Each merge field of a mailing to politicians, as its chip says it.
+    fields: {
+      salutation: "Salutation",
+      name: "Name",
+      constituency: "Constituency",
+      party: "Party",
+      house: "House",
+    },
+    // Who a part is for: those who gave an answer to an ask, after "Only for those who", as in
+    // "Only for those who signed the Frontier AI letter". Each answer's words, then the ask's title.
+    answerWords: {
+      signed: "signed",
+      going: "are going to",
+      tentative: "are tentatively going to",
+      meeting_staff: "are sending staff to meet us instead of",
+      tentative_staff: "may send staff to",
+      declined: "declined",
+      declined_surgery: "declined, offering a surgery instead of",
+      passed_on: "passed on",
+    } as Record<string, string>,
+    answered: (words: string, ask: string) => `${words} ${ask}`,
+  },
+  // The pages for writing a mailing, its own page once it's scheduled, and the list of them.
+  mailingPages: {
+    // Who a mailing is to, when its filter has nothing chosen.
+    everyone: "Every politician in office",
+    whoLabel: "Who it's for",
+    // A search, as a pill of who a mailing is to.
+    searchPill: (typed: string) => `Search "${typed}"`,
+    // A mailing's coloured counts.
+    counts: {
+      sent: "sent",
+      replied: "replied",
+      bounced: "bounced",
+      skipped: "skipped",
+      answered: "answered the ask",
+    },
+    newTitle: "New mailing",
+    // A draft with no subject yet, in the list and as its page's title.
+    untitled: "Untitled draft",
+    // At the top of a new mailing, until a channel sends.
+    cantSend: "Mailings can't be sent yet. Everything else should work, and you can send a test copy to yourself.",
+    // Beside the title: whether the draft is saved.
+    saveStates: {
+      conflict:
+        "Sorry! Someone else has changed this draft since you opened it, so what you've done hasn't been saved. Reload the page to see their changes.",
+    } as Record<string, string>,
+    // In the window's corner, whether the draft is saved.
+    savePill: {
+      saving: "Saving…",
+      saved: "Saved",
+      failed: "Couldn't save. Make another change to try saving again.",
+      conflict: "Not saved because someone else changed the same draft!",
+    } as Record<string, string>,
+    deleteDraft: "Delete draft",
+    // Delete draft after its first press, asking for a second.
+    deleteIt: "Press again to delete it",
+    // The numbered sections of a new mailing.
+    sections: {
+      who: "Who",
+      write: "Write",
+      preview: "Preview",
+      from: "Sent from",
+      when: "When",
+      send: "Send",
+    },
+    willGet: (n: number) => `${n} ${n === 1 ? "politician" : "politicians"} will be emailed.`,
+    // Who's left out: each part only when there are some.
+    leftOut: (found: number, noAddress: number, blocked: number) =>
+      `Of the ${found} people the filter found, ${[
+        noAddress && `${noAddress} ${noAddress === 1 ? "has" : "have"} no email address`,
+        blocked && `${blocked} ${blocked === 1 ? "has an address that's blocked" : "have addresses that are blocked"}`,
+      ]
+        .filter(Boolean)
+        .join(" and ")}, so they're left out.`,
+    seeWho: "See who",
+    leftOutReasons: {
+      "no-address": "no email address",
+      blocked: "address blocked",
+    } as Record<string, string>,
+    changeWho: "Change who",
+    unknownFilter: (values: string) =>
+      `The saved filter has values that are no longer supported (${values}), you need to change it before carrying on.`,
+    subject: "Subject",
+    ask: "Ask",
+    // Behind the ? beside Ask.
+    askHelpLabel: "Help about what an ask is",
+    askHelp:
+      "What this mailing asks the recipients to do, such as come to an event or sign a letter. These are recorded either manually by staff, or with an import job.",
+    // The start of a new letter, before the salutation or name.
+    greeting: "Dear",
+    noAsk: "None",
+    letter: "Letter",
+    attachments: "Attachments",
+    addFiles: "Add files",
+    dropFiles: "Drop files here, or",
+    // A file's size.
+    bytes: (n: number) => `${n} bytes`,
+    kilobytes: (n: number) => `${n} KB`,
+    megabytes: (n: number) => `${n} MB`,
+    removeFile: (name: string) => `Remove ${name}`,
+    tooBig: "That file is too big - a file can be up to 4MB.",
+    // Over the preview: before a button for each condition the letter's parts use, then over the choice of whose email it shows.
+    findRecipient: "Find recipient who:",
+    chooseRecipient: "Choose recipient:",
+    noOne: "There are no recipients to choose from.",
+    to: "To",
+    noSender: "Choose who below",
+    // When no recipient has the answers chosen.
+    noOneMix: "No preview, because none of the recipients match the answers you picked above.",
+    sendTest: "Send this one to me",
+    testSent: (address: string) => `Sent to ${address}.`,
+    // Under the test button, while the letter is empty or only its greeting.
+    testNeedsDraft: "Write something first!",
+    testFailed: "It couldn't be sent. Try again in a minute.",
+    // The first entry of a list while nothing in it is chosen.
+    choose: "Choose…",
+    fromLegend: "Whose Gmail to send it from",
+    notConnected: "Gmail connection isn't implemented yet.",
+    // In the preview, who it's from: the name comes from the Gmail account.
+    from: "From",
+    fromGmail: (address: string) => `Your Gmail's name <${address}>`,
+    // The test copy's sender's name.
+    testFromName: "PauseAI UK mailing test",
+    day: "Day",
+    hour: "Hour",
+    summary: (n: number, from: string | null, when: string | null) =>
+      `${n} ${n === 1 ? "email" : "emails"}, from ${from ? `${from}'s Gmail` : "no one yet"}, ${when ? `on ${when}` : "at a time not yet chosen"}.`,
+    schedule: (n: number) => `Schedule ${n} ${n === 1 ? "email" : "emails"}`,
+    // Why the schedule button can't be pressed.
+    problems: {
+      "no-subject": "Fill in the subject.",
+      "no-letter": "Write the letter.",
+      "unknown-filter": "The filter has values that have changed or are no longer supported.",
+      "no-recipients": "There's nobody to send to.",
+      "field-lacking": "It uses a field some recipients have no value for.",
+      "no-sender": "Choose who to send the message from.",
+      "no-time": "Choose what time it will be sent.",
+      "time-passed": "You can't send it into the past!",
+      "cannot-send": "Sending isn't built yet.",
+    } as Record<string, string>,
+    // The list of mailings.
+    // Under the drafts: how to start a mailing, around a link to the politicians list.
+    howToStart: {
+      before: "To start a new mailing, first choose who it's for on the ",
+      link: "politicians list",
+      after: ", then press “Mail these”.",
+    },
+    drafts: "Drafts",
+    comingUp: "Coming up",
+    sent: "Sent",
+    noDrafts: "No drafts.",
+    noneComing: "Nothing scheduled.",
+    draftLine: (by: string, n: number) => `${by} · to ${n} ${n === 1 ? "person" : "people"}`,
+    comingLine: (by: string, when: string, n: number) => `${by} · ${when} · to ${n} ${n === 1 ? "person" : "people"}`,
+    // On the politicians list, beside Download.
+    mailThese: (n: number) => `Mail these ${n}…`,
+    useThese: (n: number) => `Use these ${n} for the draft`,
+    // A mailing's own page.
+    states: {
+      draft: "Draft",
+      scheduled: "Scheduled",
+      sending: "Sending",
+      sent: "Sent",
+      cancelled: "Stopped",
+    } as Record<string, string>,
+    sentLine: (when: string, from: string) => `Sent ${when}, from ${from}`,
+    // A mailing imported from Airtable, which kept when it went but not who from.
+    importedLine: (when: string) => `Sent ${when}, recorded in Airtable`,
+    sends: (when: string) => `Sends on ${when}`,
+    scheduledLine: (n: number, from: string) => `${n} ${n === 1 ? "email" : "emails"} from ${from}.`,
+    changeTime: "Change the time",
+    saveTime: "Change it",
+    // Takes a scheduled mailing back to a draft, sending nothing.
+    unschedule: "Unschedule",
+    sending: (n: number, of: number) => `${n} of ${of} sent`,
+    stopSending: "Stop sending",
+    sentLabel: "Sent",
+    tabs: {
+      all: "All",
+      replied: "Replied",
+      bounced: "Bounced",
+      skipped: "Skipped",
+    },
+    tab: (label: string, n: number) => `${label} ${n}`,
+    tabsLabel: "Which recipients",
+    // In a mailing's email, who it's to: each recipient, as it's a letter to many.
+    toEach: "Each recipient, by name and address",
+    emailTitle: "The email",
+    whoTitle: "Who it was for",
+    skipReasons: {
+      blocked: "Skipped: address blocked",
+      "left-office": "Skipped: left office",
+    } as Record<string, string>,
   },
   // The asks page: each ask, its kind and date, and how many gave each answer.
   asks: {
@@ -817,6 +1044,7 @@ export const staffCopy = {
       "forwarded-reply": "Forwarded reply",
       "staff-login": "Staff login link",
       "staff-alert": "Staff alert",
+      "mailing-test": "Test copy of a mailing",
     } as Record<string, string>,
     // A complaint can't be undone by staff, only by the person.
     cantReset: "Can't be unblocked: they marked our email as spam.",
@@ -1056,6 +1284,10 @@ export const staffCopy = {
       spam_complaint: "Spam complaint",
       replied: "Replied",
       auto_reply: "Auto-reply",
+      // PauseAI's letters of a mailing written here, before and instead of sending.
+      scheduled: "Scheduled",
+      cancelled: "Stopped",
+      skipped: "Skipped",
     } as Record<string, string>,
     columns: {
       created: "Created",

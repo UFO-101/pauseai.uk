@@ -161,6 +161,7 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
         expect(runSql(name, "SELECT DISTINCT status FROM letters ORDER BY 1")).toEqual([
           "bounced",
           "not_sent",
+          "scheduled",
           "sending",
           "sent",
           "spam_complaint",
@@ -231,13 +232,23 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
             "SELECT DISTINCT CASE WHEN updated_by LIKE '%@%' THEN 'staff' ELSE updated_by END FROM ask_statuses ORDER BY 1",
           ),
         ).toEqual(["airtable", "controlai", "staff", "sync"]);
-        // Letters of both kinds: a supporter's through the site and through the old form, and PauseAI's of each mailing.
+        // Letters of both kinds: a supporter's through the site and through the old form, and PauseAI's of each mailing to politicians but a draft.
         expect(
-          runSql(name, "SELECT DISTINCT kind || ' ' || (airtable_id IS NOT NULL) FROM supporter_letters ORDER BY 1"),
+          runSql(
+            name,
+            "SELECT DISTINCT kind || ' ' || (airtable_id IS NOT NULL) FROM letters_from_supporters ORDER BY 1",
+          ),
         ).toEqual(["supporter false", "supporter true"]);
         expect(
-          runSql(name, "SELECT count(DISTINCT mailing_id) = (SELECT count(*) FROM mailings) FROM pauseai_letters"),
+          runSql(
+            name,
+            "SELECT count(DISTINCT mailing_id) = (SELECT count(*) FROM mailings WHERE audience = 'politicians' AND state <> 'draft') FROM letters_from_pauseai",
+          ),
         ).toEqual(["t"]);
+        // Mailings written here in every state but those a stop makes, to supporters too.
+        expect(
+          runSql(name, "SELECT DISTINCT audience || ' ' || state FROM mailings WHERE body IS NOT NULL ORDER BY 1"),
+        ).toEqual(["politicians draft", "politicians scheduled", "politicians sent", "supporters sent"]);
         // Opt-outs told by every source, and every answer to whether we'd email someone.
         expect(runSql(name, "SELECT DISTINCT list || ' ' || source FROM opt_outs ORDER BY 1")).toEqual([
           "luma-calendar luma-contacts",

@@ -1,0 +1,348 @@
+/* A new mailing, on one page: its title and whether it's saved, then its
+   numbered sections, each a card. */
+
+/* The title, leaving room at the right for whether it's saved, which the
+   bar's frame puts there. */
+.title {
+  margin: 0;
+  padding-right: 10rem;
+}
+
+/* A section's number, in a dark circle before its name. */
+.number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-right: var(--space-3);
+  border-radius: 50%;
+  background: var(--text);
+  color: var(--surface);
+  font-size: var(--text-sm);
+  vertical-align: 0.1em;
+}
+
+.who {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.count {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.leftOut summary {
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.seeWho {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.leftOut ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+}
+
+/* Each field as wide as what goes in it, not the card. */
+.ask {
+  max-width: 24rem;
+}
+
+.sender {
+  max-width: 22rem;
+}
+
+/* Fields with their note close under them, not a card's gap away. */
+.withHint {
+  display: grid;
+}
+
+.when {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-4);
+}
+
+.day {
+  max-width: 11rem;
+}
+
+.hour {
+  max-width: 7rem;
+}
+
+/* A field's label with its "?" just after it. */
+.withHelp {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.help {
+  display: inline-grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+  margin-bottom: var(--field-gap);
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.help:hover,
+.help:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.helpBox {
+  max-width: min(22rem, calc(100vw - 2 * var(--space-4)));
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: 0 6px 24px rgb(var(--text-rgb) / 0.15);
+  color: var(--text);
+  font-size: var(--text-sm);
+}
+
+@supports (position-area: bottom) {
+  .helpBox {
+    margin: var(--space-1) 0;
+    position-area: bottom span-right;
+    position-try-fallbacks: flip-inline;
+  }
+}
+
+.label {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.send {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.problems {
+  margin: 0;
+  padding-left: var(--space-5);
+  color: var(--text-secondary);
+}
+
+/* "Letter" close over the letter, and "Find recipient who:" over its buttons. */
+.letter,
+.find {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.letter .label,
+.find .label {
+  margin: 0;
+}
+
+/* Over the preview, a button for each condition the letter's parts use:
+   green while it shows those who meet it, grey and struck through while
+   it shows those who don't, as the parts' boxes are. */
+/* The choice of whose email the preview shows, a name's width. */
+.whoShown {
+  max-width: 28rem;
+}
+
+.toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.toggles button {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border: 1px dashed var(--text-secondary);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.toggles button[aria-pressed="true"] {
+  border-color: var(--status-green);
+  background: var(--status-green-bg);
+  color: var(--status-green);
+}
+
+.toggles button:hover {
+  border-style: solid;
+}
+
+/* Where the email would be, when no one has the answers chosen. */
+.noEmail {
+  margin: 0;
+  padding: var(--space-6) var(--space-4);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* The email, as a mail app shows one: who to and the subject, then the letter. */
+.email {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.headers {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.headers dt {
+  color: var(--text-secondary);
+}
+
+.headers dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.email > :last-child {
+  padding: var(--space-3) var(--space-4);
+}
+
+/* Whether the draft is saved: grey saving, green saved, red not saved. */
+.saveState {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.saveDot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentcolor;
+}
+
+.saveState[data-state="saving"] .saveDot {
+  animation: pulse 0.8s ease-in-out infinite;
+}
+
+.saveState[data-state="saved"] {
+  color: var(--status-green);
+}
+
+.saveState[data-state="failed"],
+.saveState[data-state="conflict"] {
+  color: var(--status-red);
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* The bar with the title and whether it's saved, at the top of the window
+   once the title has scrolled off: a frame of no height, so it takes no room
+   in the page, and the bar in it, showing only whether it's saved until then. */
+.barFrame {
+  position: relative;
+  z-index: 5;
+  height: 0;
+}
+
+/* Until the title has gone, it scrolls with the page; then it stays at the top. */
+.barFrame[data-shown] {
+  position: sticky;
+  top: 0;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid transparent;
+  border-top: 0;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  pointer-events: none;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    padding-top 0.2s ease;
+}
+
+/* Until then, only whether it's saved shows, at the title's top right,
+   a little lower, level with the title's words. */
+.barFrame:not([data-shown]) .bar {
+  padding-top: var(--space-4);
+}
+
+.bar strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  visibility: hidden;
+}
+
+.barFrame[data-shown] .bar {
+  border-color: var(--border);
+  background: var(--surface);
+  box-shadow: 0 2px 8px rgb(var(--text-rgb) / 0.1);
+  pointer-events: auto;
+}
+
+.barFrame[data-shown] .bar strong {
+  visibility: visible;
+}
+
+.bar [role="status"] {
+  margin-left: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar {
+    transition: none;
+  }
+
+  .saveState[data-state="saving"] .saveDot {
+    animation: none;
+  }
+}

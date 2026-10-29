@@ -25,7 +25,7 @@ import { latestRun } from "./import-runs";
 
 /** Letters, statuses and their politician, so test MPs can be left out. */
 const LETTERS = "letters l JOIN politicians p ON p.id = l.notable_person_id";
-const SUPPORTER_LETTERS = `${LETTERS} JOIN supporter_letters sl ON sl.id = l.id`;
+const SUPPORTER_LETTERS = `${LETTERS} JOIN letters_from_supporters sl ON sl.id = l.id`;
 const STATUSES = "ask_statuses s JOIN politicians p ON p.id = s.notable_person_id";
 
 /** Each metric's rows: a table with a condition, and the column that dates them. Counted in each window. */

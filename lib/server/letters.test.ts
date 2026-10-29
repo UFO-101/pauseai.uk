@@ -89,7 +89,7 @@ describeWithDatabase("recentLetters", () => {
     await query("INSERT INTO supporters DEFAULT VALUES");
     await query(
       `INSERT INTO supporter_links (supporter_id, form_entry_id, matched_by, matched_value)
-       SELECT 1, entry_id, 'email', 'jane@example.com' FROM supporter_letters WHERE id = 1`,
+       SELECT 1, entry_id, 'email', 'jane@example.com' FROM letters_from_supporters WHERE id = 1`,
     );
     const ids = async (filter: Parameters<typeof recentLetters>[0]) => (await recentLetters(filter)).map((l) => l.id);
     expect(await ids({ search: "SMITH" })).toEqual([1]);
@@ -99,11 +99,11 @@ describeWithDatabase("recentLetters", () => {
     expect(await ids({ search: "McTestface" })).toEqual([2, 1]);
     expect(await ids({ answered: true })).toEqual([2]);
     expect(await ids({ answered: false })).toEqual([1]);
-    await query("UPDATE supporter_letters SET campaign = 'support-sobel-bill' WHERE id = 2");
+    await query("UPDATE letters_from_supporters SET campaign = 'support-sobel-bill' WHERE id = 2");
     expect(await ids({ campaign: "support-sobel-bill" })).toEqual([2]);
     expect(await ids({ campaign: "regulate-letter-pm" })).toEqual([1]);
     await query(
-      "UPDATE form_entries SET contact_consent = true WHERE id = (SELECT entry_id FROM supporter_letters WHERE id = 1)",
+      "UPDATE form_entries SET contact_consent = true WHERE id = (SELECT entry_id FROM letters_from_supporters WHERE id = 1)",
     );
     expect(await ids({ consent: true })).toEqual([1]);
     expect(await ids({ consent: false })).toEqual([2]);
@@ -161,7 +161,7 @@ describeWithDatabase("pauseaiLetters", () => {
         [mp, at],
       );
       await query(
-        `INSERT INTO pauseai_letters (id, mailing_id, personalised)
+        `INSERT INTO letters_from_pauseai (id, mailing_id, personalised)
          SELECT $1, id, $2 FROM mailings WHERE airtable_field = 'CSRB Iqbal Amendment'`,
         [id, personalised],
       );

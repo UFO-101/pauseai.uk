@@ -36,7 +36,10 @@ const TABLES = [
   "luma_guests",
   "luma_import_state",
   "luma_people",
+  "mailing_attachments",
   "members",
+  "message_events",
+  "messages_to_supporters",
   "members_erased",
   "named_places",
   "notable_people",
@@ -46,7 +49,7 @@ const TABLES = [
   "staff_login_links",
   "staff_accounts",
   "staff_sessions",
-  "supporter_letters",
+  "letters_from_supporters",
   "supporter_links",
   "supporters",
 ];
@@ -64,6 +67,8 @@ export function useTestDatabase(extraTables: string[] = []) {
   });
   beforeEach(async () => {
     await query(`TRUNCATE ${[...TABLES, ...extraTables].join(", ")} RESTART IDENTITY CASCADE`);
+    // The mailings written here; the imported ones come with the migrations.
+    await query("DELETE FROM mailings WHERE body IS NOT NULL");
     // The kept supporters list, emptied with the tables it's made from.
     await query("REFRESH MATERIALIZED VIEW supporters_list");
   });
@@ -174,7 +179,7 @@ export async function addTestLetter(letter: {
     ],
   );
   await query(
-    "INSERT INTO supporter_letters (id, entry_id, campaign, subject, reply_hash) VALUES ($1, $2, $3, $4, $5)",
+    "INSERT INTO letters_from_supporters (id, entry_id, campaign, subject, reply_hash) VALUES ($1, $2, $3, $4, $5)",
     [
       id,
       entry.id,

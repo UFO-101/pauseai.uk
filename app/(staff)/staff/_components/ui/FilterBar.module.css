@@ -102,14 +102,6 @@
   background: var(--surface);
 }
 
-.notIcon {
-  margin-right: var(--space-1);
-  fill: none;
-  stroke: currentcolor;
-  stroke-width: 2;
-  vertical-align: -2px;
-}
-
 /* A filter and the one after it: one lozenge, cut down the middle. */
 .pair {
   display: flex;

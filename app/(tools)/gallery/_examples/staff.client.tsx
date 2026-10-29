@@ -11,7 +11,9 @@ import JobActions from "@/app/(staff)/staff/_components/JobActions";
 import PoliticianDetails from "@/app/(staff)/staff/_components/PoliticianDetails";
 import PoliticianTable from "@/app/(staff)/staff/_components/PoliticianTable";
 import {
+  emptyPoliticiansSearch,
   exampleAsks,
+  examplePoliticiansPage,
   examplePolitician,
   examplePoliticianHistory,
 } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
@@ -23,7 +25,27 @@ import RemoveAccountForm from "@/app/(staff)/staff/_components/RemoveAccountForm
 import StaffAccountsTable from "@/app/(staff)/staff/_components/StaffAccountsTable";
 import UnblockForm from "@/app/(staff)/staff/_components/UnblockForm";
 import { exampleFailedRun, exampleHeldSync, exampleRun } from "@/app/(staff)/staff/_components/RunList.examples";
-import { Logged } from "../_components/wiring";
+import type { JSONContent } from "@tiptap/react";
+import { useId } from "react";
+import MailingEditor from "@/app/(staff)/staff/_components/MailingEditor";
+import ButtonRow from "@/components/ui/ButtonRow";
+import { staffCopy } from "@/lib/content/staff-interface";
+import { DeleteDraft, StopMailing } from "@/app/(staff)/staff/_components/MailingButtons";
+import MailingFiles from "@/app/(staff)/staff/_components/MailingFiles";
+import MailingFor from "@/app/(staff)/staff/_components/MailingFor";
+import { FilterPills } from "@/app/(staff)/staff/_components/MailingParts";
+import MailingView from "@/app/(staff)/staff/_components/MailingView";
+import MailingWriter from "@/app/(staff)/staff/_components/MailingWriter";
+import { exampleWriterData, exampleWrittenMailing } from "@/app/(staff)/staff/_components/MailingWriter.examples";
+import MailingsOverview from "@/app/(staff)/staff/_components/MailingsOverview";
+import {
+  exampleDraft,
+  exampleMailing,
+  exampleMailings,
+  exampleScheduled,
+} from "@/app/(staff)/staff/_components/MailingsTable.examples";
+import PoliticiansList from "@/app/(staff)/staff/_components/PoliticiansList";
+import { Controlled, Logged } from "../_components/wiring";
 
 /** The table of politicians: one function for both examples. */
 function LoggedPoliticianTable({ politicians }: { politicians: Politician[] }) {
@@ -240,6 +262,245 @@ export function EraseFormExample() {
   return (
     <Logged>
       {(log) => <EraseForm supporter={{ id: 7, name: "Jane Example" }} action={log("eraseSupporterNow")} />}
+    </Logged>
+  );
+}
+
+/** The merge fields and who a part can be for, as a mailing to politicians offers them: two lords have no constituency. */
+const mailingFields = [
+  { id: "salutation", label: "salutation", lacking: 0 },
+  { id: "name", label: "name", lacking: 0 },
+  { id: "constituency", label: "constituency", lacking: 2 },
+];
+const mailingConditions = [
+  {
+    id: "frontier-ai-letter:signed",
+    label: "signed the Frontier AI letter",
+    covers: 12,
+    group: "Frontier AI letter",
+    option: "Signed",
+  },
+  {
+    id: "edinburgh-conference-2026:going",
+    label: "are going to the Edinburgh conference",
+    covers: 3,
+    group: "Edinburgh conference",
+    option: "Going",
+  },
+  {
+    id: "edinburgh-conference-2026:declined",
+    label: "declined the Edinburgh conference",
+    covers: 5,
+    group: "Edinburgh conference",
+    option: "Declined",
+  },
+];
+
+/** An invitation with a salutation, and a thank-you only for those who signed. */
+const mailingLetter: JSONContent = {
+  type: "doc",
+  content: [
+    {
+      type: "paragraph",
+      content: [
+        { type: "text", text: "Dear " },
+        { type: "field", attrs: { field: "salutation" } },
+        { type: "text", text: "," },
+      ],
+    },
+    {
+      type: "paragraph",
+      content: [{ type: "text", text: "I'm writing to invite you to our conference on AI safety in Edinburgh." }],
+    },
+    {
+      type: "onlyFor",
+      attrs: { condition: "frontier-ai-letter:signed" },
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Thank you again for signing our open letter to the Prime Minister." }],
+        },
+      ],
+    },
+    { type: "paragraph", content: [{ type: "text", text: "Yours sincerely," }] },
+  ],
+};
+
+export function MailingEditorExample() {
+  const label = useId();
+  return (
+    <Controlled initial={mailingLetter} show={(doc) => JSON.stringify(doc)}>
+      {(value, set) => (
+        <>
+          <p id={label}>Letter</p>
+          <MailingEditor
+            initial={value}
+            onChange={set}
+            fields={mailingFields}
+            conditions={mailingConditions}
+            labelledBy={label}
+          />
+        </>
+      )}
+    </Controlled>
+  );
+}
+
+/** The mailing pages' actions, each logged; saves go through, as a draft's would. */
+function mailingActions(log: (name: string) => (...args: unknown[]) => void) {
+  let version = 3;
+  const logged =
+    <T,>(name: string, answer: T) =>
+    async (...args: unknown[]) => {
+      log(name)(...args);
+      return answer;
+    };
+  return {
+    start: logged("startMailing", { id: 12, version: 1 }),
+    save: async (...args: unknown[]) => {
+      log("saveMailing")(...args);
+      return { saved: true as const, version: ++version };
+    },
+    attach: logged("attachToMailing", {
+      saved: true as const,
+      version: 4,
+      attachments: exampleWrittenMailing.attachments,
+    }),
+    detach: logged("detachFromMailing", { saved: true as const, version: 4, attachments: [] }),
+    sendTest: logged("sendMailingTest", { sent: true as const, id: "example", to: "jo@pauseai.uk" }),
+    schedule: logged("scheduleMailingNow", { scheduled: true as const }),
+    deleteDraft: logged("deleteMailingDraft", undefined),
+    stop: logged("stopMailingNow", undefined),
+    reschedule: logged("rescheduleMailingNow", undefined),
+  };
+}
+
+/** A new mailing, or Jo's draft of it, with its actions logged. */
+export function MailingWriterExample({ draft }: { draft: boolean }) {
+  return (
+    <Logged>
+      {(log) => (
+        <MailingWriter
+          data={exampleWriterData}
+          draft={draft ? exampleWrittenMailing : null}
+          who={<FilterPills data={exampleWriterData} />}
+          actions={mailingActions(log)}
+        />
+      )}
+    </Logged>
+  );
+}
+
+/** A mailing's page in each state but draft, or one imported from Airtable, with none. */
+export function MailingViewExample({ state }: { state: "scheduled" | "sending" | "sent" | "imported" }) {
+  return (
+    <Logged>
+      {(log) => (
+        <MailingView
+          mailing={state === "imported" ? exampleMailing : { ...exampleMailing, ...exampleMailings[0] }}
+          written={state === "imported" ? undefined : { ...exampleWrittenMailing, state }}
+          who={<FilterPills data={exampleWriterData} />}
+          asks={exampleAsks}
+          stop={log("stopMailingNow")}
+          reschedule={log("rescheduleMailingNow")}
+        />
+      )}
+    </Logged>
+  );
+}
+
+/** The list of mailings: two drafts, one coming up, and those sent; or none of the first two. */
+export function MailingsOverviewExample({ empty = false }: { empty?: boolean }) {
+  return (
+    <Logged>
+      {(log) => (
+        <MailingsOverview
+          drafts={empty ? [] : [exampleDraft, { ...exampleDraft, id: 7, title: "" }]}
+          comingUp={empty ? [] : [exampleScheduled]}
+          sent={exampleMailings}
+          deleteDraft={log("deleteMailingDraft")}
+          stop={log("stopMailingNow")}
+        />
+      )}
+    </Logged>
+  );
+}
+
+/** Delete draft and Stop, for draft `id`, each page's own, so two on a page don't share a box. */
+export function MailingButtonsExample({ id }: { id: number }) {
+  return (
+    <Logged>
+      {(log) => (
+        <ButtonRow>
+          <DeleteDraft id={id} action={log("deleteMailingDraft")} />
+          <StopMailing id={id} label={staffCopy.mailingPages.unschedule} action={log("stopMailingNow")} />
+        </ButtonRow>
+      )}
+    </Logged>
+  );
+}
+
+/** A mailing's page as it stands: a draft, or one sent. */
+export function MailingForExample({ kind }: { kind: "draft" | "written" }) {
+  return (
+    <Logged>
+      {(log) => (
+        <MailingFor
+          data={
+            kind === "draft"
+              ? { kind, draft: exampleWrittenMailing, ...exampleWriterData }
+              : {
+                  kind,
+                  mailing: exampleMailing,
+                  written: { ...exampleWrittenMailing, state: "sent" },
+                  filter: exampleWriterData.filter,
+                  parties: exampleWriterData.parties,
+                  asks: exampleAsks,
+                }
+          }
+          actions={mailingActions(log)}
+        />
+      )}
+    </Logged>
+  );
+}
+
+/** The politicians list, its Change who logged. */
+export function PoliticiansListExample(props: Omit<Parameters<typeof PoliticiansList>[0], "changeWho">) {
+  return (
+    <Logged>
+      {(log) => <PoliticiansList {...props} changeWho={log("changeMailingWho") as (form: FormData) => Promise<void>} />}
+    </Logged>
+  );
+}
+
+/** The politicians list after a draft's Change who: its button makes the draft go to these. */
+export function ChangeWhoListExample() {
+  return (
+    <PoliticiansListExample
+      list={examplePoliticiansPage}
+      search={{ ...emptyPoliticiansSearch, house: "commons", mailing: "12" }}
+      asks={exampleAsks}
+    />
+  );
+}
+
+/**
+ * A mailing's files: a PDF, an image and a file of no kind to draw; with the
+ * box for more, and each to take off. There's no mailing to serve them in the
+ * gallery, so each shows the sheet with its kind.
+ */
+export function MailingFilesExample({ editable }: { editable: boolean }) {
+  return (
+    <Logged>
+      {(log) => (
+        <MailingFiles
+          files={exampleWrittenMailing.attachments}
+          base="/staff/mailings/12/files"
+          onAdd={editable ? log("onAdd") : undefined}
+          onRemove={editable ? log("onRemove") : undefined}
+        />
+      )}
     </Logged>
   );
 }

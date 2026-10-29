@@ -171,14 +171,14 @@ describeWithDatabase("migration 0043_form_entries", MAKES_DATABASES, () => {
       expect.objectContaining({ id: jane2, form: "email-your-mp", email: "jane@example.com", contact_consent: false }),
       expect.objectContaining({ id: sam, form: "email-your-mp", address: "3 High St", postcode: "M1 1AE" }),
     ]);
-    expect(await query("SELECT id::int AS id, entry_id::int AS entry FROM supporter_letters ORDER BY id")).toEqual(
-      [wendy, jane1, jane2, sam].map((id) => ({ id, entry: id })),
-    );
+    expect(
+      await query("SELECT id::int AS id, entry_id::int AS entry FROM letters_from_supporters ORDER BY id"),
+    ).toEqual([wendy, jane1, jane2, sam].map((id) => ({ id, entry: id })));
     // The sender's columns, and the links' letter column, are gone.
     expect(
       await query(
         `SELECT table_name, column_name FROM information_schema.columns
-         WHERE (table_name = 'supporter_letters' AND (column_name LIKE 'sender_%' OR column_name = 'contact_consent'))
+         WHERE (table_name = 'letters_from_supporters' AND (column_name LIKE 'sender_%' OR column_name = 'contact_consent'))
             OR (table_name = 'supporter_links' AND column_name = 'letter_id')`,
       ),
     ).toEqual([]);

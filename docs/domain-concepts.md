@@ -118,7 +118,7 @@ was made and sent, and its status (`sending`, `sent`, `not_sent`,
 (`letter_events`), including replies and automatic replies. A child row
 adds what its kind has, joined as notable people are:
 
-- **A supporter's letter** (`supporter_letters`): the campaign and subject,
+- **A supporter's letter** (`letters_from_supporters`): the campaign and subject,
   and the form entry of the person who sent it (`entry_id`; "Form
   entries", below), which holds their name, email, address, postcode and
   consent. Sent through the
@@ -130,13 +130,20 @@ adds what its kind has, joined as notable people are:
   pauseai.info's old form were imported once from Airtable
   (`lib/server/web-form-import.ts`), keyed by the record, with no address
   of their own.
-- **PauseAI's letter** (`pauseai_letters`): one person's letter of a mailing
+- **PauseAI's letter** (`letters_from_pauseai`): one person's letter of a mailing
   (`mailings`), which may make an ask. Those sent before the site could send
   them are copied nightly from Airtable's Emails table
   (`lib/server/emails-sync.ts`): who, when, and whether it was
   personalised, but no text. Each mailing there is a
   tick box, named by `mailings.airtable_field`; an email with no box we know
   is held back and reported until a migration adds its mailing.
+  A mailing written on the site (`lib/server/mailing-drafts.ts`) holds the
+  politicians list's filter that chose its recipients, as the list's URL
+  parameters (`StoredFilter`), and its letter, a document with merge fields
+  and parts only some recipients get (`lib/mailing-doc.ts`). It's a draft,
+  saved with a version number, until it's scheduled, which fixes its
+  recipients: a scheduled PauseAI letter each, keeping the values its
+  fields had. Those with no address, or a blocked one, are left out.
 
 A letter's ask is its campaign's or its mailing's, never its own.
 
@@ -148,7 +155,7 @@ from us (`contact_consent`), where they came from (`utm_source`) and when.
 `form` says which form: `email-your-mp`, `march-2026-11`, or
 `web-form` for pauseai.info's old letter form. What only some forms make
 hangs off the entry, one to one: a letter's sender is the entry its
-`supporter_letters` row points at.
+`letters_from_supporters` row points at.
 
 A new form is a value in the `CHECK` on `form`, a label in the staff
 interface's `sources`, and, if it makes more than an entry, a child table

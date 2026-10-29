@@ -358,16 +358,16 @@ FROM seeded_letters s JOIN politicians p ON p.test_postcode = s.postcode;
 INSERT INTO form_entries (id, form, created_at, name, email, address, postcode, contact_consent) OVERRIDING SYSTEM VALUE
 SELECT s.id, 'email-your-mp', l.created_at, s.sender, s.email, s.address, s.sender_postcode, s.consent
 FROM seeded_letters s JOIN letters l ON l.id = s.id;
-INSERT INTO supporter_letters (id, entry_id, campaign, subject, reply_hash)
+INSERT INTO letters_from_supporters (id, entry_id, campaign, subject, reply_hash)
 SELECT s.id, s.id, s.campaign, s.subject, 'seed-' || s.hash FROM seeded_letters s JOIN letters l ON l.id = s.id;
 -- Most of the recent letters went to Airtable's two MPs, so the dashboard,
 -- which leaves the test MPs out, counts them; the bounces stay on Bouncy's.
 UPDATE letters SET notable_person_id = (SELECT id FROM notable_people WHERE airtable_id = 'recDummy')
-WHERE id IN (SELECT id FROM supporter_letters WHERE reply_hash IN ('seed-prev-lee', 'seed-prev-li', 'seed-week-ben', 'seed-week-kwame', 'seed-week-noah'));
+WHERE id IN (SELECT id FROM letters_from_supporters WHERE reply_hash IN ('seed-prev-lee', 'seed-prev-li', 'seed-week-ben', 'seed-week-kwame', 'seed-week-noah'));
 UPDATE letters SET notable_person_id = (SELECT id FROM notable_people WHERE airtable_id = 'recPlaceholder')
-WHERE id IN (SELECT id FROM supporter_letters WHERE reply_hash IN ('seed-prev-omar', 'seed-week-sam', 'seed-week-grace', 'seed-week-mia'));
+WHERE id IN (SELECT id FROM letters_from_supporters WHERE reply_hash IN ('seed-prev-omar', 'seed-week-sam', 'seed-week-grace', 'seed-week-mia'));
 -- The seed letters, with their handles.
-CREATE TEMP VIEW seed_letter_rows AS SELECT l.*, s.reply_hash FROM letters l JOIN supporter_letters s USING (id) WHERE s.reply_hash LIKE 'seed-%';
+CREATE TEMP VIEW seed_letter_rows AS SELECT l.*, s.reply_hash FROM letters l JOIN letters_from_supporters s USING (id) WHERE s.reply_hash LIKE 'seed-%';
 
 -- Their history: sending, then sent, then what followed.
 INSERT INTO letter_events (letter_id, at, status, details) SELECT id, created_at, 'sending', '{}' FROM seed_letter_rows WHERE true;
@@ -431,7 +431,7 @@ SELECT w.id, 'supporter', n.id, 'sent', now() - w.sent, now() - w.sent + interva
 FROM seeded_web_form w JOIN notable_people n ON n.airtable_id = w.politician;
 INSERT INTO form_entries (id, form, created_at, name, email, postcode, contact_consent) OVERRIDING SYSTEM VALUE
 SELECT w.id, 'web-form', l.created_at, w.sender, w.email, w.postcode, w.consent FROM seeded_web_form w JOIN letters l ON l.id = w.id;
-INSERT INTO supporter_letters (id, entry_id, campaign, subject, airtable_id)
+INSERT INTO letters_from_supporters (id, entry_id, campaign, subject, airtable_id)
 SELECT w.id, w.id, w.campaign, w.subject, w.airtable_id FROM seeded_web_form w JOIN letters l ON l.id = w.id;
 SELECT setval(pg_get_serial_sequence('form_entries', 'id'), (SELECT max(id) FROM form_entries));
 
@@ -465,9 +465,59 @@ SELECT nextval(pg_get_serial_sequence('letters', 'id')) AS id, e.* FROM seed_ema
 INSERT INTO letters (id, kind, notable_person_id, status, created_at, sent_at) OVERRIDING SYSTEM VALUE
 SELECT e.id, 'pauseai', n.id, 'sent', now() - e.sent, now() - e.sent
 FROM seeded_emails e JOIN notable_people n ON n.airtable_id = e.politician;
-INSERT INTO pauseai_letters (id, mailing_id, airtable_id, personalised)
+INSERT INTO letters_from_pauseai (id, mailing_id, airtable_id, personalised)
 SELECT e.id, m.id, e.airtable_id, e.personalised FROM seeded_emails e
 JOIN mailings m ON coalesce(m.airtable_field, m.title) = e.mailing;
+
+-- Mailings written on the site: Jo's draft to the Commons, with a merge
+-- field, a part only for those who signed the Frontier AI letter, and a
+-- file; one scheduled for three days' time; one sent last week, one letter
+-- of it bounced and one replied to.
+CREATE TEMP TABLE seed_letter ON COMMIT DROP AS SELECT
+  '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Dear "}, {"type": "field", "attrs": {"field": "salutation"}}, {"type": "text", "text": ","}]}, {"type": "onlyFor", "attrs": {"condition": "frontier-ai-letter:signed"}, "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Thank you for signing the letter."}]}]}, {"type": "paragraph", "content": [{"type": "text", "text": "Will you come and meet us?"}]}]}'::jsonb AS body;
+INSERT INTO mailings (title, subject, audience, channel, filter, body, created_by, sent_from, from_name, due_at, state, ask, created_at, opened_at)
+SELECT m.title, m.title, 'politicians', 'email', m.filter::jsonb, b.body, 'jo@pauseai.uk', m.sent_from, m.from_name, now() + m.due, m.state,
+  'edinburgh-conference-2026', now() + coalesce(m.due, interval '0') - interval '2 days', now() - interval '1 hour'
+FROM seed_letter b, (VALUES
+  ('Meet us in Westminster', '{"list": "politicians", "params": {"house": "commons"}}', NULL, NULL, NULL::interval, 'draft'),
+  ('Edinburgh reminder', '{"list": "politicians", "params": {"country": "scotland"}}', 'jo@pauseai.uk', 'Jo Seed', interval '3 days', 'scheduled'),
+  ('Edinburgh follow-up', '{"list": "politicians", "params": {}}', 'jo@pauseai.uk', 'Jo Seed', interval '-7 days', 'sent')
+) m (title, filter, sent_from, from_name, due, state);
+INSERT INTO mailing_attachments (mailing_id, filename, content_type, content)
+-- A one-page PDF, the smallest a reader draws: "Briefing" on an A4 page.
+SELECT id, 'briefing.pdf', 'application/pdf', convert_to($pdf$%PDF-1.4
+1 0 obj <</Type /Catalog /Pages 2 0 R>> endobj
+2 0 obj <</Type /Pages /Kids [3 0 R] /Count 1>> endobj
+3 0 obj <</Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources <</Font <</F1 5 0 R>>>>>> endobj
+4 0 obj <</Length 39>> stream
+BT /F1 48 Tf 72 720 Td (Briefing) Tj ET
+endstream endobj
+5 0 obj <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>> endobj
+trailer <</Root 1 0 R>>
+%%EOF
+$pdf$, 'UTF8') FROM mailings WHERE title = 'Meet us in Westminster';
+CREATE TEMP TABLE seed_written ON COMMIT DROP AS
+SELECT nextval(pg_get_serial_sequence('letters', 'id')) AS id, m.id AS mailing_id, m.state, m.due_at, n.id AS person,
+  n.salutation, n.name, row_number() OVER (PARTITION BY m.id ORDER BY n.name) AS n
+FROM mailings m JOIN notable_people n ON n.airtable_id IN ('recDummy', 'recPlaceholder', 'recMorag')
+WHERE m.title IN ('Edinburgh reminder', 'Edinburgh follow-up');
+INSERT INTO letters (id, kind, notable_person_id, status, created_at, sent_at, replied_at) OVERRIDING SYSTEM VALUE
+SELECT w.id, 'pauseai', w.person,
+  CASE WHEN w.state = 'scheduled' THEN 'scheduled' WHEN w.n = 1 THEN 'bounced' ELSE 'sent' END,
+  w.due_at - interval '2 days', CASE WHEN w.state = 'sent' THEN w.due_at END,
+  CASE WHEN w.state = 'sent' AND w.n = 2 THEN w.due_at + interval '1 day' END
+FROM seed_written w;
+INSERT INTO letters_from_pauseai (id, mailing_id, merge_values)
+SELECT w.id, w.mailing_id, json_build_object('values', json_build_object('salutation', w.salutation, 'name', w.name), 'meets', '[]'::json)
+FROM seed_written w;
+
+-- A mailing to supporters, by email, to those following the calendar:
+-- one delivered, one that failed, one skipped as they'd unsubscribed since.
+INSERT INTO mailings (title, subject, audience, channel, topic, filter, body, created_by, sent_from, from_name, due_at, state)
+SELECT 'Events this month', 'Events this month', 'supporters', 'email', 'luma-calendar',
+  '{"list": "supporters", "params": {"contact": "email:luma-calendar:yes"}}', b.body, 'jo@pauseai.uk', 'jo@pauseai.uk',
+  'PauseAI UK', now() - interval '4 days', 'sent'
+FROM seed_letter b;
 
 -- ---------------------------------------------------------- import log
 
@@ -601,3 +651,19 @@ SELECT k.id, f.id, 'email', k.email, f.created_at FROM keyed k JOIN form_entries
 
 -- Each supporter's first seen, as refreshSupporterFacts() (lib/server/supporter-facts.ts) sets it after linking.
 UPDATE supporters s SET first_seen_at = f.first_seen_at FROM supporter_first_seen f WHERE f.supporter_id = s.id;
+
+-- The supporters mailing's messages, now there are supporters to send them to.
+WITH m AS (SELECT id, due_at FROM mailings WHERE title = 'Events this month'),
+  three AS (SELECT s.id, row_number() OVER (ORDER BY s.id) AS n FROM supporters s ORDER BY s.id LIMIT 3),
+  messages AS (
+    INSERT INTO messages_to_supporters (mailing_id, supporter_id, address, status, provider_message_id, merge_values, skip_reason, sent_at)
+    SELECT m.id, t.id, 'supporter' || t.n || '@example.com',
+      (ARRAY['delivered', 'failed', 'skipped'])[t.n], CASE WHEN t.n < 3 THEN 'seed-message-' || t.n END, '{}',
+      CASE WHEN t.n = 3 THEN 'unsubscribed' END, CASE WHEN t.n < 3 THEN m.due_at END
+    FROM m, three t
+    RETURNING id, status, sent_at
+  )
+INSERT INTO message_events (message_id, at, kind)
+SELECT id, sent_at, 'sent' FROM messages WHERE status <> 'skipped'
+UNION ALL
+SELECT id, sent_at + interval '1 minute', CASE status WHEN 'delivered' THEN 'delivered' ELSE 'failed' END FROM messages WHERE status <> 'skipped';

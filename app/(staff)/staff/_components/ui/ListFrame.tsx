@@ -114,6 +114,8 @@ type Props<Row> = {
   href?: (page: number) => string;
   /** The URL of every row the list's filters find, in a format; none for a list with no downloads. */
   download?: (format: DownloadFormat) => string;
+  /** Buttons for what can be done with every row the filters find, before Download. */
+  actions?: ReactNode;
   /** The formats it offers: a spreadsheet's and JSON, and vCards for a list of people. */
   formats?: DownloadFormat[];
   columns: ListColumn<Row>[];
@@ -125,8 +127,8 @@ type Props<Row> = {
 
 /**
  * Every staff list (docs/style-guide.md, "Lists"): over the table, how
- * many and which of them this page shows, and a Download button whose
- * menu has each format of every page; the striped table; and under it, which rows these are and the way
+ * many and which of them this page shows, any actions on them, and a
+ * Download button whose menu has each format of every page; the striped table; and under it, which rows these are and the way
  * to the other pages. It's as wide as the window, past the content's
  * width, so a wide table wraps less.
  */
@@ -138,6 +140,7 @@ export default function ListFrame<Row>({
   pageSize,
   href,
   download,
+  actions,
   formats = ["csv", "json"],
   columns,
   rows,
@@ -156,39 +159,42 @@ export default function ListFrame<Row>({
           <strong>{count}</strong>
           {pages > 1 && <Muted> · {copy.showing(from, to)}</Muted>}
         </p>
-        {download && (
-          <Menu
-            id={`download-${menuId}`}
-            trigger={buttonClass({ variant: "ghost", size: "small", fit: true, className: styles.download })}
-            label={
-              <>
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  aria-hidden="true"
-                >
-                  <path d="M12 4v12M6 11l6 6 6-6M5 20h14" />
-                </svg>
-                {copy.download}
-              </>
-            }
-          >
-            <ul className={styles.formats}>
-              {formats.map((format) => (
-                <li key={format}>
-                  <a href={download(format)} download>
-                    {copy.formats[format]}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </Menu>
-        )}
+        <div className={styles.actions}>
+          {actions}
+          {download && (
+            <Menu
+              id={`download-${menuId}`}
+              trigger={buttonClass({ variant: "ghost", size: "small", fit: true, className: styles.download })}
+              label={
+                <>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 4v12M6 11l6 6 6-6M5 20h14" />
+                  </svg>
+                  {copy.download}
+                </>
+              }
+            >
+              <ul className={styles.formats}>
+                {formats.map((format) => (
+                  <li key={format}>
+                    <a href={download(format)} download>
+                      {copy.formats[format]}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </Menu>
+          )}
+        </div>
       </div>
       <ListTable columns={columns} rows={rows} rowKey={rowKey} />
       {pages > 1 && href && (

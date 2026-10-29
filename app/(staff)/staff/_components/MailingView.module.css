@@ -1,0 +1,84 @@
+/* A mailing's page, once scheduled: its parts a gap apart, so the bar of
+   when it sends, or its counts, doesn't run into the recipients. */
+.page {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* Its title with its state beside it. */
+.heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-4);
+}
+
+.heading h1 {
+  margin: 0;
+}
+
+/* The bar's buttons, at their full height: a strip makes its buttons small
+   (Strip.module.css), but these are what the page is for. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  --button-padding: initial;
+  --button-font-size: initial;
+  --button-font-weight: initial;
+}
+
+.progress {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-2);
+  accent-color: var(--status-green);
+}
+
+.skipped {
+  color: var(--status-amber);
+}
+
+.subheading {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-md);
+}
+
+/* Change the time's form, in the menu hung from its button. */
+.changeTime {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* The email, as a mail app shows one: who from and to and the subject,
+   then the letter, with its fields as chips, and its files under it. */
+.email {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.headers {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-sm);
+}
+
+.headers dt {
+  color: var(--text-secondary);
+}
+
+.headers dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.body {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+}

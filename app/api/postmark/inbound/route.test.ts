@@ -47,7 +47,7 @@ describeWithDatabase("POST /api/postmark/inbound", () => {
     expect(await query("SELECT status, details FROM letter_events")).toEqual([
       { status: "replied", details: { from: "test-mp@example.org", name: "Testy McTestface MP", messageId: null } },
     ]);
-    expect(JSON.stringify(await query("SELECT * FROM letters JOIN supporter_letters USING (id)"))).not.toContain(
+    expect(JSON.stringify(await query("SELECT * FROM letters JOIN letters_from_supporters USING (id)"))).not.toContain(
       "Thanks.",
     );
   });

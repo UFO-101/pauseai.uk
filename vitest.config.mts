@@ -87,6 +87,7 @@ export default defineConfig({
             "jsqr",
             "@tiptap/react",
             "@tiptap/starter-kit",
+            "unpdf",
           ],
         },
         test: {

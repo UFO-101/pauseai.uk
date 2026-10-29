@@ -1,0 +1,61 @@
+/* A mailing's letter as it reads: as the editor shows it
+   (MailingEditor.module.css), its fields as chips and its parts for only
+   some in a box, but with nothing to edit. */
+.letter {
+  font-size: var(--text-md);
+  line-height: 1.6;
+}
+
+.letter p {
+  margin: 0 0 var(--space-3);
+}
+
+.letter ul {
+  margin: 0 0 var(--space-3);
+  padding-left: var(--space-5);
+}
+
+.letter li p {
+  margin: 0;
+}
+
+.letter > :last-child {
+  margin-bottom: 0;
+}
+
+.field {
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--status-blue-bg);
+  color: var(--status-blue);
+  font-weight: 600;
+}
+
+.onlyFor {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--status-green);
+  border-radius: var(--radius-md);
+  background: var(--status-green-bg);
+}
+
+.letter .onlyForLabel {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--status-green);
+}
+
+.onlyFor > :last-child {
+  margin-bottom: 0;
+}
+
+/* A part all but some get, grey. */
+.onlyFor[data-except] {
+  border-color: var(--text-secondary);
+  background: var(--surface-2);
+}
+
+.onlyFor[data-except] .onlyForLabel {
+  color: var(--text-secondary);
+}

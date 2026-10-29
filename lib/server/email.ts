@@ -10,7 +10,7 @@ import { PostmarkError, sendEmail, unsuppress, type Email } from "./outside-serv
 // sendEmail and unsuppress, and its webhooks become a DeliveryProblem.
 
 /** What an email is for. Each has its own way of handling a bounce (delivery-problems.ts). */
-export type Purpose = "letter" | "forwarded-reply" | "staff-login" | "staff-alert";
+export type Purpose = "letter" | "forwarded-reply" | "staff-login" | "staff-alert" | "mailing-test";
 
 export type SendResult = { sent: true; id: string } | { sent: false; reason: "blocked" | "failed" };
 

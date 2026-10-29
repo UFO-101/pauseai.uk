@@ -62,7 +62,7 @@ export function importWebFormLetters(startedBy: string): Promise<WebFormImportRe
         }
         const campaign = CAMPAIGNS[letter.campaign];
         const [here] = await query(
-          `SELECT 1 FROM supporter_letters s JOIN letters l ON l.id = s.id JOIN campaigns c ON c.slug = s.campaign
+          `SELECT 1 FROM letters_from_supporters s JOIN letters l ON l.id = s.id JOIN campaigns c ON c.slug = s.campaign
              JOIN form_entries f ON f.id = s.entry_id
            WHERE s.airtable_id = $1
               OR (lower(trim(f.email)) = lower(trim($2)) AND l.notable_person_id = $3
@@ -94,7 +94,7 @@ export function importWebFormLetters(startedBy: string): Promise<WebFormImportRe
           db,
         );
         await query(
-          `INSERT INTO supporter_letters (id, entry_id, campaign, subject, airtable_id) VALUES ($1, $2, $3, $4, $5)`,
+          `INSERT INTO letters_from_supporters (id, entry_id, campaign, subject, airtable_id) VALUES ($1, $2, $3, $4, $5)`,
           [id, entry.id, campaign, letter.subject, letter.airtableId],
           db,
         );

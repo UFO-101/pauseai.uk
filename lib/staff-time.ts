@@ -17,3 +17,40 @@ export function staffClock(at: string): string {
 export function staffDay(at: string): string {
   return new Date(at).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
 }
+
+/** The day, as yyyy-mm-dd, and the hour, in London, of a moment: what a mailing's When says. */
+export function londonDayHour(at: string): { day: string; hour: number } {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/London",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(new Date(at))
+      .map((part) => [part.type, part.value]),
+  );
+  return { day: `${parts.year}-${parts.month}-${parts.day}`, hour: Number(parts.hour) };
+}
+
+/** The moment, as an ISO string, that's `hour` o'clock on `day` (yyyy-mm-dd) in London. */
+export function fromLondon(day: string, hour: number): string {
+  const guess = Date.parse(`${day}T${String(hour).padStart(2, "0")}:00:00Z`);
+  // London is never behind UTC: the guess, or an hour before it in summer time.
+  const summer = londonDayHour(new Date(guess).toISOString()).hour !== hour;
+  return new Date(guess - (summer ? 3_600_000 : 0)).toISOString();
+}
+
+/** When a mailing goes, in London: "Thursday 30 October at 09:00". */
+export function londonWhen(at: string): string {
+  const { hour } = londonDayHour(at);
+  const day = new Date(at).toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: "Europe/London",
+  });
+  return `${day} at ${String(hour).padStart(2, "0")}:00`;
+}

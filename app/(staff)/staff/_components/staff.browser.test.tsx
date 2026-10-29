@@ -63,9 +63,8 @@ import EraseLink from "./EraseLink";
 import DeletePolitician from "./DeletePolitician";
 import PoliticiansList, { HouseTabs } from "./PoliticiansList";
 import { emptyPoliticiansSearch, examplePoliticiansPage } from "./PoliticianTable.examples";
-import MailingDetails from "./MailingDetails";
 import MailingsTable, { mailingColumns } from "./MailingsTable";
-import { exampleMailing, exampleMailings } from "./MailingsTable.examples";
+import { exampleMailings } from "./MailingsTable.examples";
 import ImportCard, { ImportCards } from "./ImportCard";
 import DevLogin from "./DevLogin";
 import KeepSignedIn from "./KeepSignedIn";
@@ -817,15 +816,41 @@ describe("PoliticiansList", () => {
   const copy = staffCopy.politicians;
   const search = { ...emptyPoliticiansSearch, q: "pol", page: "2" };
 
+  it("after a draft's Change who, makes the draft go to who the filters find", async () => {
+    const changeWho = vi.fn(async (form: FormData) => {
+      expect([...form.entries()]).toEqual([
+        ["id", "12"],
+        ["q", "pol"],
+        ["party", "Green"],
+        ["party", "!Labour"],
+      ]);
+    });
+    await render(
+      <PoliticiansList
+        list={{ ...examplePoliticiansPage, total: 150 }}
+        search={{ ...search, party: ["Green", "!Labour"], mailing: "12" }}
+        asks={exampleAsks}
+        changeWho={changeWho}
+      />,
+    );
+    await page.getByRole("button", { name: staffCopy.mailingPages.useThese(150) }).click();
+    await expect.poll(() => changeWho.mock.calls.length).toBe(1);
+  });
+
   it("is the count, the table and the pages, and links to those the search finds elsewhere", async () => {
     await render(
       <PoliticiansList
         list={{ ...examplePoliticiansPage, total: 150, page: 2, pages: 2, outOfOffice: 3, otherHouses: 2, tests: 1 }}
         search={search}
         asks={exampleAsks}
+        changeWho={vi.fn()}
       />,
     );
     await expect.element(page.getByText(copy.total(150))).toBeVisible();
+    // Mail these: a new mailing to who the list's filters find, without its page.
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.mailingPages.mailThese(150) }))
+      .toHaveAttribute("href", "/staff/mailings/new?q=pol");
     await expect.element(page.getByRole("link", { name: "Polly Placeholder" })).toBeVisible();
     expect(await downloads()).toContain("/staff/politicians/download?q=pol&format=vcf");
     await expect
@@ -848,12 +873,18 @@ describe("PoliticiansList", () => {
         list={{ ...examplePoliticiansPage, politicians: [], total: 0, closest: examplePoliticiansPage.politicians }}
         search={search}
         asks={exampleAsks}
+        changeWho={vi.fn()}
       />,
     );
     await expect.element(page.getByText(copy.closest)).toBeVisible();
     await expect.element(page.getByRole("link", { name: "Polly Placeholder" })).toBeVisible();
     await rerender(
-      <PoliticiansList list={{ ...examplePoliticiansPage, politicians: [], total: 0 }} search={search} asks={[]} />,
+      <PoliticiansList
+        list={{ ...examplePoliticiansPage, politicians: [], total: 0 }}
+        search={search}
+        asks={[]}
+        changeWho={vi.fn()}
+      />,
     );
     await expect.element(page.getByText(copy.none)).toBeVisible();
     expect(page.getByRole("link").all()).toHaveLength(0);
@@ -872,7 +903,7 @@ describe("MailingsTable", () => {
 
   it("lists each mailing: its page, its ask's politicians, where it came from, when, and its counts", async () => {
     await render(<MailingsTable mailings={exampleMailings} />);
-    expect(cells("Edinburgh")).toEqual([
+    expect(cells("Nov 26")).toEqual([
       "Edinburgh Conference Nov 26 Invitation",
       "Edinburgh conference",
       copy.imported,
@@ -881,6 +912,18 @@ describe("MailingsTable", () => {
       "1",
       "1",
       "1",
+      "1",
+    ]);
+    expect(cells("AI safety conference")).toEqual([
+      "Invitation: AI safety conference, Edinburgh",
+      "Edinburgh conference",
+      "Jo Example",
+      "20 Oct 2026",
+      "11",
+      "1",
+      "1",
+      "2",
+      "3",
     ]);
     expect(cells("Ben Lake")).toEqual([
       "Ben Lake October 2026 Debate",
@@ -891,82 +934,19 @@ describe("MailingsTable", () => {
       "–",
       "–",
       "–",
+      "–",
     ]);
     await expect
       .element(page.getByRole("link", { name: "Edinburgh Conference Nov 26 Invitation" }))
       .toHaveAttribute("href", "/staff/mailings/2");
     await expect
-      .element(page.getByRole("link", { name: "Edinburgh conference" }))
+      .element(page.getByRole("link", { name: "Edinburgh conference" }).first())
       .toHaveAttribute("href", "/staff/politicians?ask=edinburgh-conference-2026");
   });
 
   it("says when there are none", async () => {
     await render(<MailingsTable mailings={[]} />);
     await expect.element(page.getByText(copy.none)).toBeVisible();
-  });
-});
-
-describe("MailingDetails", () => {
-  const copy = staffCopy.mailings;
-
-  it("is what the mailing was, that it has no text, and each recipient's outcome, linked to them", async () => {
-    const { rerender } = await render(<MailingDetails mailing={exampleMailing} />);
-    await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent(exampleMailing.title);
-    await expect.element(page.getByText(copy.counts(2, 1))).toBeVisible();
-    await expect.element(page.getByText(copy.noText)).toBeVisible();
-    await expect.element(page.getByText(copy.imported)).toBeVisible();
-    await expect
-      .element(page.getByRole("link", { name: "Edinburgh conference" }))
-      .toHaveAttribute("href", "/staff/politicians?ask=edinburgh-conference-2026");
-    const cells = (name: string) =>
-      page
-        .getByRole("row")
-        .filter({ hasText: name })
-        .getByRole("cell")
-        .all()
-        .map((c) => c.element().textContent);
-    expect(cells("Polly")).toEqual([
-      "Polly Placeholder",
-      staffCopy.letters.status.sent,
-      "1 Oct 2026",
-      "3 Oct 2026",
-      copy.personalised,
-    ]);
-    expect(cells("Morag")[4]).toBe(copy.asWritten);
-    expect(cells("Dora")).toEqual(["Dora Dummy", staffCopy.letters.status.not_sent, "–", "–", copy.asWritten]);
-    await expect
-      .element(page.getByRole("link", { name: "Morag Example" }))
-      .toHaveAttribute("href", "/staff/politicians/8");
-    // A status nobody knows any more, as it's stored.
-    await rerender(
-      <MailingDetails
-        mailing={{ ...exampleMailing, recipients: [{ ...exampleMailing.recipients[0], status: "queued" }] }}
-      />,
-    );
-    expect(cells("Polly")[1]).toBe("queued");
-  });
-
-  it("pages its recipients, a hundred at a time, saying how many there are", async () => {
-    await render(<MailingDetails mailing={{ ...exampleMailing, recipientsTotal: 250, page: 2, pages: 3 }} />);
-    await expect.element(page.getByText(copy.recipientsCount(250))).toBeVisible();
-    await expect
-      .element(page.getByRole("link", { name: staffCopy.paging.next }))
-      .toHaveAttribute("href", `/staff/mailings/${exampleMailing.id}?page=3`);
-    await expect
-      .element(page.getByRole("link", { name: staffCopy.paging.previous }))
-      .toHaveAttribute("href", `/staff/mailings/${exampleMailing.id}`);
-  });
-
-  it("says when there's no ask, and when it isn't sent yet", async () => {
-    await render(
-      <MailingDetails
-        mailing={{ ...exampleMailings[0], recipients: [], recipientsTotal: 0, page: 1, pages: 1, pageSize: 100 }}
-      />,
-    );
-    await expect.element(page.getByText(copy.noAsk)).toBeVisible();
-    await expect.element(page.getByText(copy.notSent)).toBeVisible();
-    await expect.element(page.getByText(copy.imported)).not.toBeInTheDocument();
-    await expect.element(page.getByText(copy.noRecipients)).toBeVisible();
   });
 });
 
@@ -3462,8 +3442,12 @@ describe("each list's download values and contact cards", () => {
     expect(typeof row.history).toBe("string");
   });
 
-  it("mailings: copied from Airtable, or no sender recorded", () => {
-    expect(exampleMailings.map((m) => values(mailingColumns, m).sender)).toEqual([null, staffCopy.mailings.imported]);
+  it("mailings: from whom, copied from Airtable, or no sender recorded", () => {
+    expect(exampleMailings.map((m) => values(mailingColumns, m).sender)).toEqual([
+      "Jo Example",
+      null,
+      staffCopy.mailings.imported,
+    ]);
   });
 
   it("politicians: every column, and as cards, with what they have", async () => {

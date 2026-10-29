@@ -104,6 +104,8 @@
   --form-gap: var(--space-5);
   --table-font-size: var(--text-md);
   --table-cell-padding: var(--space-2) var(--space-3);
+  /* A lozenge in a table cell wraps like the words round it (ui/Tag). */
+  --table-tag-white-space: normal;
   --tag-font-size: var(--text-sm);
   --tag-padding: var(--space-1) var(--space-3);
 
@@ -188,6 +190,8 @@
   --form-gap: var(--space-3);
   --table-font-size: var(--text-sm);
   --table-cell-padding: var(--space-1) var(--space-2);
+  /* Kept whole, so a narrow column doesn't split it. */
+  --table-tag-white-space: nowrap;
   --tag-font-size: var(--text-xs);
   --tag-padding: 0 var(--space-2);
 }

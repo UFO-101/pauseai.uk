@@ -46,7 +46,7 @@ async function janeWithEverything(mp: number): Promise<number> {
   );
   await linkSupporters();
   const [{ id }] = await query<{ id: number }>(
-    `SELECT k.supporter_id::int AS id FROM supporter_links k JOIN supporter_letters s ON s.entry_id = k.form_entry_id
+    `SELECT k.supporter_id::int AS id FROM supporter_links k JOIN letters_from_supporters s ON s.entry_id = k.form_entry_id
      WHERE s.id = $1`,
     [letterId],
   );
@@ -59,6 +59,16 @@ describeWithDatabase("eraseSupporter", () => {
   it("deletes what each source holds, keeps what stops us mailing the address, blocks the Luma user from coming back, and logs it", async () => {
     const mp = await addTestMp();
     const id = await janeWithEverything(mp);
+    // A mailing that went to her.
+    await query(
+      `WITH m AS (
+         INSERT INTO mailings (title, audience, channel, topic, filter, body, created_by, sent_from, from_name, due_at, state)
+         VALUES ('Events', 'supporters', 'email', 'luma-calendar', '{}', '{}', 'jo@pauseai.uk', 'jo@pauseai.uk', 'PauseAI UK', now(), 'sent')
+         RETURNING id)
+       INSERT INTO messages_to_supporters (mailing_id, supporter_id, address, status, merge_values, sent_at)
+       SELECT id, $1, 'jane.fixture@example.com', 'delivered', '{"name": "Jane"}', now() FROM m`,
+      [id],
+    );
 
     expect(await eraseSupporter(id, "ICO-123", "jo@pauseai.uk")).toEqual({
       lumaUsers: 1,
@@ -70,7 +80,7 @@ describeWithDatabase("eraseSupporter", () => {
     expect(await query("SELECT 1 FROM luma_people WHERE user_id = 'usr-fixture-1'")).toEqual([]);
     expect(await query("SELECT 1 FROM luma_guests WHERE user_id = 'usr-fixture-1'")).toEqual([]);
     expect(await query("SELECT 1 FROM form_entries WHERE email = 'jane.fixture@example.com'")).toEqual([]);
-    expect(await query("SELECT 1 FROM supporter_letters")).toEqual([]);
+    expect(await query("SELECT 1 FROM letters_from_supporters")).toEqual([]);
     expect(await query("SELECT 1 FROM form_entry_luma")).toEqual([]);
     expect(await query("SELECT count(*)::int AS n FROM letter_events")).toEqual([{ n: 0 }]);
     // The letter's own send and the copy to the shared inbox stay, without their letter; the one to Jane goes.
@@ -85,6 +95,10 @@ describeWithDatabase("eraseSupporter", () => {
     expect(await query("SELECT user_id FROM luma_erased")).toEqual([{ user_id: "usr-fixture-1" }]);
     expect(await query("SELECT 1 FROM members WHERE email = 'jane.fixture@example.com'")).toEqual([]);
     expect(await query("SELECT id FROM members_erased")).toEqual([{ id: "recMemberJane" }]);
+    // The message stays, as one delivered, without who to or what it said.
+    expect(await query("SELECT supporter_id, address, merge_values, status FROM messages_to_supporters")).toEqual([
+      { supporter_id: null, address: null, merge_values: null, status: "delivered" },
+    ]);
     expect(await query("SELECT actor, action, details FROM audit_log ORDER BY id DESC LIMIT 1")).toEqual([
       {
         actor: "jo@pauseai.uk",

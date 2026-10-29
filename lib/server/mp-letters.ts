@@ -196,7 +196,7 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
     await randomId(4, async () => {
       // The sender and how many they've sent: a different seed for each letter.
       const [{ sent }] = await query<{ sent: number }>(
-        "SELECT count(*)::int AS sent FROM supporter_letters s JOIN form_entries f ON f.id = s.entry_id WHERE lower(trim(f.email)) = lower(trim($1))",
+        "SELECT count(*)::int AS sent FROM letters_from_supporters s JOIN form_entries f ON f.id = s.entry_id WHERE lower(trim(f.email)) = lower(trim($1))",
         [form.email],
       );
       return `letter ${form.email} ${sent}`;
@@ -210,7 +210,7 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
       await query("SELECT pg_advisory_xact_lock(hashtext(lower($1)))", [form.email], db);
       if (!mp.isTest) {
         const [{ count }] = await query<{ count: number }>(
-          `SELECT count(*)::int AS count FROM supporter_letters s JOIN letters l ON l.id = s.id
+          `SELECT count(*)::int AS count FROM letters_from_supporters s JOIN letters l ON l.id = s.id
              JOIN form_entries f ON f.id = s.entry_id JOIN politicians p ON p.id = l.notable_person_id
            WHERE lower(trim(f.email)) = lower(trim($1)) AND s.campaign = $2 AND NOT p.is_test AND l.status <> 'not_sent'`,
           [form.email, campaign.slug],
@@ -230,7 +230,7 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
         db,
       );
       await query(
-        `INSERT INTO supporter_letters (id, entry_id, campaign, subject, reply_hash) VALUES ($1, $2, $3, $4, $5)`,
+        `INSERT INTO letters_from_supporters (id, entry_id, campaign, subject, reply_hash) VALUES ($1, $2, $3, $4, $5)`,
         [id, entry.id, campaign.slug, form.subject, mailbox],
         db,
       );
@@ -275,7 +275,7 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
       // The letter, then the entry made for it, which takes the sender's link with it.
       const sender = await transaction(async (db) => {
         const [letter] = await query<{ entryId: number }>(
-          `SELECT s.entry_id::int AS "entryId" FROM supporter_letters s WHERE s.id = $1`,
+          `SELECT s.entry_id::int AS "entryId" FROM letters_from_supporters s WHERE s.id = $1`,
           [id],
           db,
         );
