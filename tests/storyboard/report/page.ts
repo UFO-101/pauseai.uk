@@ -319,8 +319,10 @@ function flowInView() {
 // the flow in view is marked, and kept in the sidebar's view. While
 // filtering, every section that matches stays open. On a narrow screen the
 // sidebar is above the board, so opening and shutting there would move the
-// page: it only marks.
+// page: it only marks. Nor does it open anything until the page is first
+// scrolled, so it starts with every section shut.
 const narrow = window.matchMedia("(max-width: 800px)");
+let scrolled = false;
 let here = { section: null, flow: null };
 function trackPlace() {
   const flow = flowInView();
@@ -330,7 +332,7 @@ function trackPlace() {
   for (const group of document.querySelectorAll("#sidebar details")) {
     const id = group.dataset.section;
     group.classList.toggle("current", id === section);
-    if (filtering || narrow.matches || state.opened.has(id)) continue;
+    if (filtering || narrow.matches || !scrolled || state.opened.has(id)) continue;
     group.open = id === section && !state.closed.has(id);
   }
   for (const link of document.querySelectorAll("#sidebar a[aria-current]")) link.removeAttribute("aria-current");
@@ -352,7 +354,14 @@ let tracking = false;
 document.addEventListener("scroll", () => {
   if (tracking) return;
   tracking = true;
-  requestAnimationFrame(() => { tracking = false; trackPlace(); });
+  requestAnimationFrame(() => {
+    tracking = false;
+    if (!scrolled) {
+      scrolled = true;
+      here = { section: null, flow: null };
+    }
+    trackPlace();
+  });
 }, { passive: true });
 
 const lightbox = document.getElementById("lightbox");
