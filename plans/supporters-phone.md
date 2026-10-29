@@ -75,14 +75,14 @@ reach us:
   opt-out too. Anything less clear, such as "not interested", is shown
   to staff on the supporter's page with a button to record it as an
   opt-out.
-- **Global's CRM**, for members, if the chapter contacts API gives
-  `do_not_sms` and `do_not_phone` (`plans/supporters-email.md`): the
-  first is a stop of messages, the second of calls.
 - **Anywhere else**: an email, a word at an event, a call. Staff record
   it on the supporter's page, with a note of how it was given.
 - **A page on pauseai.uk**, linked from each message, where someone can
   stop by number, and choose what to stop, as `plans/supporters-email.md`
   offers fewer emails before none.
+
+Global doesn't call or text, so these stops are ours alone; the chapter
+contacts API in `plans/supporters-email.md` is for email.
 
 Each opt-out goes in `opt_outs`, with the way it came by and its source
 (`whatsapp-webhook`, `text-provider`, `reply`, `staff`, `site`), so

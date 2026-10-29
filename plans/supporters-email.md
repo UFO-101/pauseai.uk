@@ -150,6 +150,4 @@ stop.
 1. Which of the members we import aren't chapter contacts, and why?
    Will the API give each contact's Airtable record ID, so we can
    match them exactly?
-2. Will the API give `do_not_phone` and `do_not_sms`, so the phone
-   plan honours stops given to Global?
-3. Will UK staff still send anything through CiviCRM?
+2. Will UK staff still send anything through CiviCRM?
