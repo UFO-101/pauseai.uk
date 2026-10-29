@@ -285,7 +285,13 @@ describeWithDatabase("listBlocks, blockOn and recentProblems", () => {
     );
     await recordProblem({ ...BOUNCE, address: "test-mp@example.org" });
     await recordProblem({ ...BOUNCE, address: "other@example.org", messageId: null, kind: "complaint" });
-    await recordProblem({ ...BOUNCE, address: "soft@example.org", messageId: null, kind: "soft" });
+    await recordProblem({
+      ...BOUNCE,
+      address: "soft@example.org",
+      messageId: null,
+      kind: "soft",
+      gmailMessageId: "g1",
+    });
     // One refused before the bounce, which doesn't count, and one after.
     await query(
       `INSERT INTO email_sends (at, purpose, address, outcome) VALUES
@@ -302,6 +308,7 @@ describeWithDatabase("listBlocks, blockOn and recentProblems", () => {
         reason: "Unknown user",
         since: expect.any(Date),
         canReset: true,
+        foundInGmail: false,
         politicians: [
           { id: polly, name: "Polly Placeholder" },
           { id: mp, name: "Testy McTestface MP" },
@@ -332,7 +339,13 @@ describeWithDatabase("listBlocks, blockOn and recentProblems", () => {
     expect(await blockOn(null)).toBeUndefined();
 
     expect(await recentProblems("others")).toEqual([
-      expect.objectContaining({ address: "soft@example.org", kind: "soft", purpose: null, letter: null }),
+      expect.objectContaining({
+        address: "soft@example.org",
+        kind: "soft",
+        purpose: null,
+        letter: null,
+        foundInGmail: true,
+      }),
       expect.objectContaining({ address: "other@example.org", kind: "complaint" }),
     ]);
     expect(await recentProblems("politicians")).toEqual([

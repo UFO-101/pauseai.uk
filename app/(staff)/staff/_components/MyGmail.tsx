@@ -14,15 +14,18 @@ const copy = staffCopy.gmail;
  */
 export default function MyGmail({
   account,
+  outcome,
   disconnect,
 }: {
   account: GmailAccount | undefined;
+  /** How connecting ended, if Google has just sent you back. */
+  outcome: string;
   disconnect: (form: FormData) => void | Promise<void>;
 }) {
   return (
     <Grid>
       <Card span={6} title={copy.title} id="gmail-title">
-        <GmailOutcome />
+        <GmailOutcome outcome={outcome} />
         {account ? (
           <>
             <p>

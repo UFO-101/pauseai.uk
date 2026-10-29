@@ -98,7 +98,8 @@ export const exampleWriterData: WriterData = {
     { email: "sam@pauseai.uk", connectedAt: "2026-10-02T09:00:00Z", sentToday: 120, remaining: 1680 },
   ],
   me: "jo@pauseai.uk",
-  sends: false,
+  sends: true,
+  gmailOutcome: "",
 };
 
 /** Jo's draft of it, with a file, from Jo, on 1 December at nine. */

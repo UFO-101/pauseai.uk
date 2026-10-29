@@ -1,6 +1,5 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import { buttonClass } from "@/components/ui/Button";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -50,9 +49,8 @@ export function SentToday({ sent }: { sent: number }) {
 }
 
 /** How connecting ended, when Google has sent the staff member back here: green if connected, amber if not. */
-export function GmailOutcome() {
-  const outcome = useSearchParams().get("gmail");
-  const words = outcome ? copy.outcomes[outcome] : undefined;
+export function GmailOutcome({ outcome }: { outcome: string }) {
+  const words = copy.outcomes[outcome];
   if (!words) return null;
   return (
     <Strip tone={outcome === "connected" ? "green" : "amber"} announce>

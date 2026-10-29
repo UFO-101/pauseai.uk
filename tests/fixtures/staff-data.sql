@@ -117,6 +117,10 @@ FROM people p JOIN made_politicians m USING (airtable_id);
 UPDATE notable_people SET airtable_id = NULL WHERE airtable_id IN (SELECT airtable_id FROM made_politicians);
 DROP TABLE made_politicians;
 
+-- An ask staff added, which no one has answered, so it can be changed or deleted.
+INSERT INTO asks (slug, title, kind, date, url, asked_by) VALUES
+  ('winter-reception-dec-2026', 'Winter reception', 'event', '2026-12-09', NULL, '{pauseai}');
+
 -- Statuses: Polly signed the letter to the PM last month; Dora this week;
 -- the peer backs the bill, from ControlAI's letter, the week before; Backy
 -- McTestface MP's bill status (lib/test-mps.json) was already there. Then
@@ -507,19 +511,39 @@ FROM seed_written w;
 INSERT INTO letters_from_pauseai (id, mailing_id, merge_values)
 SELECT w.id, w.mailing_id, json_build_object('values', json_build_object('salutation', w.salutation, 'name', w.name), 'meets', '[]'::json)
 FROM seed_written w;
--- What happened to each: scheduled; then, in the mailing sent, sent with
--- the message's ID, and for the first a bounce, for the second a reply.
+-- The follow-up went from Jo's Gmail: each letter's send, with its
+-- Message-ID and thread; the first bounced, as Jo's mailbox showed, and the
+-- second was answered, the reply kept whole (tests/fixtures/letter-replies/).
+INSERT INTO email_sends (at, purpose, letter_id, address, outcome, message_id, backend, sender, rfc_message_id, gmail_thread_id)
+SELECT w.due_at, 'mailing', w.id, lower(n.email), 'sent', 'gmail-seed-' || w.n, 'gmail', 'jo@pauseai.uk',
+  'fixture-letter-' || w.n || '@pauseai.uk', 'thread-seed-' || w.n
+FROM seed_written w JOIN notable_people n ON n.id = w.person WHERE w.state = 'sent';
+SELECT setval(pg_get_serial_sequence('email_problems', 'id'), (SELECT max(id) FROM email_problems));
+INSERT INTO email_problems (at, address, message_id, kind, reason, can_reset, gmail_message_id)
+SELECT w.due_at + interval '5 minutes', lower(n.email), 'gmail-seed-1', 'soft',
+  '452 4.2.2 The recipient''s inbox is out of storage space.', true, 'gmail-seed-bounce'
+FROM seed_written w JOIN notable_people n ON n.id = w.person WHERE w.state = 'sent' AND w.n = 1;
+INSERT INTO letter_replies (letter_id, account, gmail_message_id, gmail_thread_id, rfc_message_id, from_address, from_name,
+  subject, at, from_us, blob_key, size)
+SELECT w.id, 'jo@pauseai.uk', 'gmail-seed-reply', 'thread-seed-2', 'fixture-polly-thanks@example.org', lower(n.email), n.name,
+  'Re: Edinburgh follow-up', w.due_at + interval '1 day', false, 'fixture/polly-thanks.eml.gz', 512
+FROM seed_written w JOIN notable_people n ON n.id = w.person WHERE w.state = 'sent' AND w.n = 2;
+-- What happened to each, as sending and reading Jo's Gmail record it:
+-- scheduled; then, in the mailing sent, sent, and the bounce and the reply.
 INSERT INTO letter_events (letter_id, at, status, details)
 SELECT id, due_at - interval '2 days', 'scheduled', '{}' FROM seed_written;
 INSERT INTO letter_events (letter_id, at, status, details)
-SELECT id, due_at, 'sent', jsonb_build_object('messageId', 'seed-mailing-' || id) FROM seed_written WHERE state = 'sent';
+SELECT id, due_at, 'sent', jsonb_build_object('from', 'jo@pauseai.uk', 'messageId', 'fixture-letter-' || n || '@pauseai.uk',
+  'threadId', 'thread-seed-' || n)
+FROM seed_written WHERE state = 'sent';
 INSERT INTO letter_events (letter_id, at, status, details)
-SELECT w.id, w.due_at + interval '1 minute', 'bounced',
-  jsonb_build_object('type', 'HardBounce', 'reason', 'The address does not exist', 'email', n.email)
+SELECT w.id, w.due_at + interval '5 minutes', 'bounced', jsonb_build_object('status', '4.2.2', 'account', 'jo@pauseai.uk',
+  'reason', '452 4.2.2 The recipient''s inbox is out of storage space.', 'email', lower(n.email))
 FROM seed_written w JOIN notable_people n ON n.id = w.person WHERE w.state = 'sent' AND w.n = 1;
 INSERT INTO letter_events (letter_id, at, status, details)
-SELECT id, due_at + interval '1 day', 'replied', jsonb_build_object('from', name, 'subject', 'Re: Edinburgh follow-up')
-FROM seed_written WHERE state = 'sent' AND n = 2;
+SELECT w.id, w.due_at + interval '1 day', 'replied', jsonb_build_object('from', lower(n.email), 'name', n.name,
+  'gmailMessageId', 'gmail-seed-reply')
+FROM seed_written w JOIN notable_people n ON n.id = w.person WHERE w.state = 'sent' AND w.n = 2;
 
 -- A mailing to supporters, by email, to those following the calendar:
 -- one delivered, one that failed, one skipped as they'd unsubscribed since.

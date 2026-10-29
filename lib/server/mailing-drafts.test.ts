@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { addTestPolitician, connectTestGmail, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { server } from "@/tests/fixtures/msw";
 import { http, HttpResponse } from "msw";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -63,8 +63,9 @@ describeWithDatabase("mailing drafts", () => {
     vi.unstubAllEnvs();
   });
 
-  /** A draft ready to schedule, to everyone, and its version. */
+  /** A draft ready to schedule, to everyone, from Jo's connected Gmail, and its version. */
   async function readyDraft() {
+    await connectTestGmail(STAFF);
     const { id } = await createDraft(STAFF, POLITICIANS, { subject: "Hello", body: LETTER });
     const saved = await saveDraft(id, 1, { sentFrom: STAFF, fromName: "Jo Staff", dueAt: TOMORROW });
     return { id, version: (saved as { version: number }).version };
@@ -169,8 +170,14 @@ describeWithDatabase("mailing drafts", () => {
       [polly],
     );
     const { id, version } = await readyDraft();
-    // Until a channel really sends, nothing can be scheduled.
-    expect(await scheduleMailing(id, version, STAFF)).toEqual({ scheduled: false, problems: ["cannot-send"] });
+    // Nothing can be scheduled by a channel that doesn't send, nor from a Gmail not connected.
+    expect(await scheduleMailing(id, version, STAFF, { ...SENDS, sendsMailings: false })).toEqual({
+      scheduled: false,
+      problems: ["cannot-send"],
+    });
+    await query("UPDATE staff_accounts SET gmail_token = NULL, gmail_connected_at = NULL, gmail_history_id = NULL");
+    expect(await scheduleMailing(id, version, STAFF)).toEqual({ scheduled: false, problems: ["not-connected"] });
+    await connectTestGmail(STAFF);
     expect(await scheduleMailing(id, version - 1, STAFF, SENDS)).toEqual({ scheduled: false, reason: "conflict" });
     expect(await scheduleMailing(999, 1, STAFF, SENDS)).toEqual({ scheduled: false, reason: "gone" });
 
@@ -257,7 +264,9 @@ describeWithDatabase("mailing drafts", () => {
         return HttpResponse.json({ MessageID: "test-copy", ErrorCode: 0 });
       }),
     );
-    expect(await sendTestCopy(mailing, polly, STAFF)).toEqual({ sent: true, id: "test-copy" });
+    // Without the Gmail it's sent from, by Postmark, from the notification domain.
+    await query("UPDATE staff_accounts SET gmail_token = NULL, gmail_connected_at = NULL, gmail_history_id = NULL");
+    expect(await sendTestCopy(mailing, polly, STAFF)).toMatchObject({ sent: true, id: "test-copy" });
     expect(sent).toMatchObject({
       From: `"${staffCopy.mailingPages.testFromName}" <noreply@notify.pauseai.uk>`,
       ReplyTo: `"${staffCopy.mailingPages.testFromName}" <${STAFF}>`,
@@ -271,6 +280,28 @@ describeWithDatabase("mailing drafts", () => {
     expect(await query("SELECT purpose, address FROM email_sends")).toEqual([
       { purpose: "mailing-test", address: STAFF },
     ]);
+  });
+
+  it("sends the test copy by the Gmail it's sent from, in its sender's name, when that's connected", async () => {
+    await addTestPolitician();
+    const { id } = await readyDraft();
+    const [polly] = (await politicianAudience(POLITICIANS)).recipients;
+    let raw = "";
+    server.use(
+      http.post("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", async ({ request }) => {
+        raw = Buffer.from(((await request.json()) as { raw: string }).raw, "base64url").toString();
+        return HttpResponse.json({ id: "g1", threadId: "t1" });
+      }),
+    );
+    expect(await sendTestCopy((await getWrittenMailing(id))!, polly, "al@pauseai.uk")).toMatchObject({
+      sent: true,
+      id: "g1",
+    });
+    expect(raw).toContain('From: "Jo Staff" <jo@pauseai.uk>');
+    expect(raw).toContain('To: "Polly Placeholder" <al@pauseai.uk>');
+    await saveDraft(id, (await getWrittenMailing(id))!.version, { fromName: null });
+    await sendTestCopy((await getWrittenMailing(id))!, polly, "al@pauseai.uk");
+    expect(raw).toContain(`From: "${staffCopy.mailingPages.testFromName}" <jo@pauseai.uk>`);
   });
 
   it("won't schedule a letter with a field a recipient has no value for", async () => {

@@ -113,18 +113,18 @@ describeWithDatabase("the mailing pages' Server Actions", () => {
     );
     const polly = await addTestPolitician();
     const { id } = (await startMailing({}, { subject: "Hi", body: LETTER }))!;
-    expect(await sendMailingTest(id, polly)).toEqual({ sent: true, id: "m", to: JO });
+    expect(await sendMailingTest(id, polly)).toMatchObject({ sent: true, id: "m", to: JO });
     // To the recipient's name, at the staff member's address.
     expect(to).toBe(`"Polly Placeholder" <${JO}>`);
     expect(await sendMailingTest(id, polly + 1)).toBeUndefined();
     expect(await sendMailingTest(999, polly)).toBeUndefined();
   });
 
-  it("won't schedule while sending isn't built, and says why", async () => {
+  it("won't schedule while anything stops it, and says why", async () => {
     const { id } = (await startMailing({}, { subject: "Hi" }))!;
     expect(await scheduleMailingNow(id, 1)).toMatchObject({
       scheduled: false,
-      problems: expect.arrayContaining(["cannot-send"]),
+      problems: expect.arrayContaining(["no-sender", "no-letter"]),
     });
   });
 

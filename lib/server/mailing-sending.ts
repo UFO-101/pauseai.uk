@@ -1,5 +1,6 @@
 import "server-only";
 import { checkMailingDoc, type MailingRecipientValues } from "@/lib/mailing-doc";
+import { now } from "@/lib/now";
 import { logChange } from "./audit";
 import { query } from "./db";
 import { isBlocked } from "./email";
@@ -24,7 +25,8 @@ export const SEND_GAP_MS = 1000;
 export async function startDueMailings(): Promise<number[]> {
   const started = await query<{ id: number }>(
     `UPDATE mailings SET state = 'sending', updated_at = now()
-     WHERE state = 'scheduled' AND due_at <= now() RETURNING id::int AS id`,
+     WHERE state = 'scheduled' AND due_at <= $1 RETURNING id::int AS id`,
+    [now()],
   );
   for (const { id } of started) await logChange(JOB, "start mailing", { id });
   return started.map(({ id }) => id).sort((a, b) => a - b);
