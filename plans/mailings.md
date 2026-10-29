@@ -8,8 +8,8 @@ messages to supporters, by email or text, built on those for
 politicians. Sending by each channel has its own plan:
 
 - `plans/supporters-email.md`: email.
-- `plans/supporters-phone.md`: texts, which go by WhatsApp where they
-  can.
+- `plans/supporters-phone.md`: text, sent by WhatsApp if the number is
+  on it and by SMS if not. Staff choose text, never the backend.
 
 This is one pull request, designed first as mock-ups on the real staff
 components, as the politicians' pages were.

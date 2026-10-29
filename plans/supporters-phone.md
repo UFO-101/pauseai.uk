@@ -1,11 +1,13 @@
-# WhatsApp and texts to supporters
+# Texts to supporters
 
-Mailings to supporters by WhatsApp, then by text, on the staff pages in
-`plans/mailings.md`. Three pull requests:
+Mailings to supporters by text, on the staff pages in
+`plans/mailings.md`. A mailing is by email or by text. A text is sent
+by one of two backends: WhatsApp if the number is on it, SMS if not.
+Three pull requests:
 
 1. Groundwork: consent, opt-outs and replies.
-2. WhatsApp, which comes next.
-3. Texts, for people who aren't on WhatsApp.
+2. The WhatsApp backend, which comes next.
+3. The SMS backend, for numbers not on WhatsApp.
 
 ## Now
 
@@ -17,20 +19,19 @@ Mailings to supporters by WhatsApp, then by text, on the staff pages in
 - `contact_permission()` answers for numbers, and `TOPIC_WAYS` in
   `lib/contact-permissions.ts` says which ways each topic allows: calls,
   texts or both.
-- The site sends neither. Our giffgaff number has the WhatsApp Business
+- The site doesn't send texts. Our giffgaff number has the WhatsApp Business
   app on Reuben's phone, but its broadcast lists only reach people who
   have saved the number, so we need the API.
 
 ## Rules
 
 - We only message someone in a way they said yes to. The ICO treats
-  texts and app messages as electronic mail, and the soft opt-in doesn't
+  SMS and app messages as electronic mail, and the soft opt-in doesn't
   cover political campaigning
   ([ICO](https://ico.org.uk/for-organisations/direct-marketing-and-privacy-and-electronic-communications/guide-to-pecr/electronic-and-telephone-marketing/electronic-mail-marketing/)).
-- Texts and WhatsApp are one way, "text", as they are to the people we
-  message: a yes to texts allows both, and a stop of either stops both.
-  Staff write a text mailing once, and each message goes by WhatsApp if
-  the number is on it, and by text if not. Meta accepts an opt-in that
+- Text is one way to contact someone, whichever backend sends it, as
+  it is to the people we message: a yes to texts allows WhatsApp and
+  SMS, and a stop by either stops both. Meta accepts an opt-in that
   names us without naming WhatsApp
   ([opt-in](https://developers.facebook.com/documentation/business-messaging/whatsapp/getting-opt-in)).
 - A message stays within what the person agreed to: a `march-day` text
@@ -51,7 +52,7 @@ wants every request to stop honoured, however it's made
   A marketing message to someone who has stopped fails with error
   131050.
 - From the "Stop" button on every marketing template.
-- As a reply: STOP to a text (some providers handle it and tell us by
+- As a reply: STOP by SMS (some providers handle it and tell us by
   webhook), or "stop" or "unsubscribe" on WhatsApp. Anything less clear,
   such as "not interested", is shown to staff with a button to record it
   as a stop.
@@ -63,7 +64,7 @@ that person stop being delivered, and a number never delivered to is
 skipped after a few tries, as one not on WhatsApp is.
 
 Each stop is a row in `opt_outs` with its source (`whatsapp-webhook`,
-`text-provider`, `reply` or `staff`), so `contact_permission()` says no
+`sms-provider`, `reply` or `staff`), so `contact_permission()` says no
 for every topic from then on and `contact_unsubscribes` lists it. It's
 kept after erasure. A resume in WhatsApp's settings closes the stop it
 made; a new yes, on a form or to staff, closes any.
@@ -83,7 +84,7 @@ reminders.
 
 The proposal, to decide with Joseph, is to ask for a number on every
 event, with a checkbox that gives the same permission as joining as a
-member: the weekly email, WhatsApp messages and texts about events, and
+member: the weekly email, texts about events, and
 calls from volunteers. Existing Luma contacts are asked by a calendar
 newsletter linking to a page on pauseai.uk. We measure how many tick it
 on each event, and if it's few, ask for less, starting with the weekly
@@ -91,9 +92,8 @@ and event messages.
 
 ### Steps
 
-1. A text mailing records, on each message, whether it went by
-   WhatsApp or by text. `mailings.channel` loses `whatsapp`: a mailing
-   is by email or by text.
+1. Each message in a text mailing records which backend sent it.
+   `mailings.channel` loses `whatsapp`, leaving `email` and `text`.
 2. Opt-ins: the box on Email your MP and our other forms; the Luma
    checkbox, which the import reads as it reads the postcode question;
    and staff recording a yes given elsewhere, with how it was given.
@@ -107,7 +107,7 @@ and event messages.
    the `supporters` permission can reply, and each reply records who
    sent it.
 
-## 2. WhatsApp
+## 2. The WhatsApp backend
 
 ### Applying
 
@@ -139,7 +139,7 @@ An easy Stop button means people stop rather than block us.
 
 ### Steps
 
-1. A WhatsApp channel in `lib/server/outside-services/whatsapp.ts`,
+1. The WhatsApp backend in `lib/server/outside-services/whatsapp.ts`,
    with a fake for tests. Marketing messages go through the Marketing
    Messages API, as the Cloud API stops sending them on 13 October 2027
    ([overview](https://developers.facebook.com/documentation/business-messaging/whatsapp/marketing-messages/overview.md)).
@@ -152,7 +152,8 @@ An easy Stop button means people stop rather than block us.
    mailing can't be scheduled sooner. The site reads the status back
    hourly and by webhook, and a template Meta pauses stops its mailing
    ([templates](https://developers.facebook.com/documentation/business-messaging/whatsapp/templates/overview)).
-   Until texts are built, a text mailing skips numbers not on WhatsApp.
+   Until the SMS backend is built, a text mailing skips numbers not on
+   WhatsApp.
 3. A webhook at `/api/whatsapp`, which checks `X-Hub-Signature-256`
    ([webhooks](https://developers.facebook.com/documentation/business-messaging/whatsapp/webhooks/create-webhook-endpoint.md))
    and:
@@ -169,16 +170,16 @@ An easy Stop button means people stop rather than block us.
    at no charge, and after that only with a template
    ([pricing](https://developers.facebook.com/docs/whatsapp/pricing)).
 
-## 3. Texts
+## 3. The SMS backend
 
-1. A text provider in `lib/server/outside-services/`, with a fake for
+1. An SMS provider in `lib/server/outside-services/`, with a fake for
    tests, sending from a real UK number so people can reply.
 2. A text mailing's words go as they are to numbers not on WhatsApp,
    ending with how to stop, such as "Reply STOP to stop". The new
    message page counts 160-character segments, as each is charged.
 3. The provider's webhook records deliveries and failures, STOP as a
    stop, and other replies.
-4. Staff can reply at any time, each reply charged as a text.
+4. Staff can reply at any time, each reply charged as an SMS.
 
 ## Calls
 
@@ -201,7 +202,7 @@ for calls, which comes two ways:
 ## Data protection
 
 Record in `docs/data-protection.md`: messaging numbers that said yes;
-the new opt-in sources; the text provider and Meta as processors of
+the new opt-in sources; the SMS provider and Meta as processors of
 numbers, messages and delivery receipts; read receipts, which are new
 data about a person; stops kept after erasure; replies, shown to staff
 and deleted on erasure; and, with calls, the TPS checker as a processor.
@@ -224,12 +225,12 @@ and a calling tool.
 3. How does a volunteer who isn't staff record a stop for calls: by
    telling staff, or on a page of the numbers they were given?
 4. Should a resume in WhatsApp's settings undo any stop, or only one
-   made there, leaving a Stop button, a reply or a text STOP in force?
+   made there, leaving a Stop button, a reply or an SMS STOP in force?
 5. A person with a WhatsApp username can hide their number, and Meta's
    webhooks then give only an ID for them that's particular to us. Do we
    store that ID against the number when we send, so a later stop can be
    matched?
-6. Which text provider, and can it take over the giffgaff number?
+6. Which SMS provider, and can it take over the giffgaff number?
 7. Once the join form stops asking intent, where do we learn who wants
    to volunteer: Global's `volunteer_updates` list, our own join form,
    or something else?
