@@ -1273,8 +1273,8 @@ export const staffCopy = {
     // Over the list: how many there are.
     total: (total: number) => `${total} ${total === 1 ? "letter" : "letters"}`,
     search: "Sender or MP",
-    // The Answered filter: whether the MP replied.
-    answered: { yes: "Answered", no: "Not answered" },
+    // The Replied filter: whether the MP replied.
+    answered: { yes: "Replied", no: "Not replied" },
     // The titles of a letter's own page, and of a supporter's letters' page.
     oneTitle: (from: string, to: string) => `Letter from ${from} to ${to}`,
     fromTitle: (name: string) => `Letters from ${name}`,
@@ -1325,7 +1325,7 @@ export const staffCopy = {
       to: "To",
       campaign: "Campaign",
       status: "Status",
-      replied: "Answered",
+      replied: "Replied",
       history: "History",
     },
     consent: { yes: "Yes", no: "No" },
