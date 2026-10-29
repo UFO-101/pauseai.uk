@@ -151,7 +151,7 @@ export const examplePoliticianHistory: PoliticianChange[] = [
   {
     id: 9,
     at: "2026-09-30T10:00:00Z",
-    actor: "sam@pauseai.uk",
+    actor: "samuel.whitlock@pauseai.uk",
     action: "edit politician",
     details: { id: 7, name: "Polly Placeholder", email: "polly.placeholder.mp@parliament.uk" },
   },

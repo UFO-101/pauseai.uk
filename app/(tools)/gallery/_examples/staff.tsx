@@ -1090,7 +1090,7 @@ export const staff: Group = {
           label: "Seen by someone else: no Open in Gmail",
           render: () => (
             <StaffPage as="div">
-              <LetterThread thread={exampleThread} me="sam@pauseai.uk" />
+              <LetterThread thread={exampleThread} me="samuel.whitlock@pauseai.uk" />
             </StaffPage>
           ),
         },
@@ -1834,7 +1834,7 @@ export const staff: Group = {
                 accounts={[
                   { email: "admin@pauseai.uk", description: staffCopy.devLogin.permissions("Admin") },
                   { email: "jo@pauseai.uk", description: staffCopy.devLogin.permissions("Supporters") },
-                  { email: "sam@pauseai.uk", description: staffCopy.devLogin.noPermissions },
+                  { email: "samuel.whitlock@pauseai.uk", description: staffCopy.devLogin.noPermissions },
                   { email: "nobody@pauseai.uk", description: staffCopy.devLogin.noAccount },
                 ]}
               />

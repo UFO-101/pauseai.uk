@@ -32,7 +32,7 @@ describeWithDatabase("POST /staff/api/logout", () => {
   it("with everywhere, ends every session of yours, logged, and leaves others' alone", async () => {
     const token = await createSession("jo@pauseai.uk");
     const other = await createSession("jo@pauseai.uk", true);
-    const sam = await createSession("sam@pauseai.uk");
+    const sam = await createSession("samuel.whitlock@pauseai.uk");
     requestCookies.set("staff_session", token);
     const body = new FormData();
     body.set("everywhere", "1");
@@ -42,7 +42,7 @@ describeWithDatabase("POST /staff/api/logout", () => {
     expect(res.headers.get("location")).toBe("https://pauseai.uk/staff/login");
     expect(await sessionEmail(token)).toBeUndefined();
     expect(await sessionEmail(other)).toBeUndefined();
-    expect(await sessionEmail(sam)).toBe("sam@pauseai.uk");
+    expect(await sessionEmail(sam)).toBe("samuel.whitlock@pauseai.uk");
     expect(await query("SELECT actor, action FROM audit_log WHERE action = 'end staff sessions'")).toEqual([
       { actor: "jo@pauseai.uk", action: "end staff sessions" },
     ]);
@@ -51,7 +51,7 @@ describeWithDatabase("POST /staff/api/logout", () => {
   it("with a session of yours, ends that one: another goes back to the page of them, this one logs out", async () => {
     const token = await createSession("jo@pauseai.uk");
     const other = await createSession("jo@pauseai.uk");
-    const sam = await createSession("sam@pauseai.uk");
+    const sam = await createSession("samuel.whitlock@pauseai.uk");
     requestCookies.set("staff_session", token);
     const post = (session: string) => {
       const body = new FormData();
@@ -61,7 +61,7 @@ describeWithDatabase("POST /staff/api/logout", () => {
 
     // Someone else's is left alone.
     expect((await post(sessionId(sam))).headers.get("location")).toBe("https://pauseai.uk/staff/me#sessions");
-    expect(await sessionEmail(sam)).toBe("sam@pauseai.uk");
+    expect(await sessionEmail(sam)).toBe("samuel.whitlock@pauseai.uk");
     const res = await post(sessionId(other));
     expect(res.headers.get("location")).toBe("https://pauseai.uk/staff/me#sessions");
     expect(res.headers.getSetCookie()).toEqual([]);

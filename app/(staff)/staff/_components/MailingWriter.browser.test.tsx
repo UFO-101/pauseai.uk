@@ -89,10 +89,10 @@ describe("MailingWriter", () => {
       .toHaveAttribute("href", "/staff/politicians?house=commons&party=%21Labour&ask=frontier-ai-letter&mailing=21");
 
     // Each change after, a moment later, as a save of only what changed.
-    await field(copy.fromLegend).selectOptions("sam@pauseai.uk");
+    await field(copy.fromLegend).selectOptions("samuel.whitlock@pauseai.uk");
     await field(copy.ask).selectOptions("");
     await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(1);
-    expect(actions.save.mock.calls[0]).toEqual([21, 1, { sentFrom: "sam@pauseai.uk", ask: null }]);
+    expect(actions.save.mock.calls[0]).toEqual([21, 1, { sentFrom: "samuel.whitlock@pauseai.uk", ask: null }]);
     await field(copy.fromLegend).selectOptions("jo@pauseai.uk");
     await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(2);
     expect(actions.save.mock.calls[1]).toEqual([21, 2, { sentFrom: "jo@pauseai.uk" }]);
@@ -140,9 +140,12 @@ describe("MailingWriter", () => {
     actions.save.mockRejectedValueOnce(new Error("offline"));
     await subject().fill("One");
     await expect.element(status()).toHaveTextContent(copy.savePill.failed);
-    await field(copy.fromLegend).selectOptions("sam@pauseai.uk");
+    await field(copy.fromLegend).selectOptions("samuel.whitlock@pauseai.uk");
     await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(2);
-    expect(actions.save.mock.calls[1][2]).toEqual({ subject: "One", sentFrom: "sam@pauseai.uk" });
+    expect(actions.save.mock.calls[1][2]).toEqual({
+      subject: "One",
+      sentFrom: "samuel.whitlock@pauseai.uk",
+    });
   });
 
   it("waits for a save under way before the next", async () => {
@@ -153,12 +156,12 @@ describe("MailingWriter", () => {
     );
     await subject().fill("One");
     await expect.element(status()).toHaveTextContent(copy.savePill.saving);
-    await field(copy.fromLegend).selectOptions("sam@pauseai.uk");
+    await field(copy.fromLegend).selectOptions("samuel.whitlock@pauseai.uk");
     await pause(1200);
     expect(actions.save).toHaveBeenCalledTimes(1);
     finish();
     await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(2);
-    expect(actions.save.mock.calls[1]).toEqual([12, 4, { sentFrom: "sam@pauseai.uk" }]);
+    expect(actions.save.mock.calls[1]).toEqual([12, 4, { sentFrom: "samuel.whitlock@pauseai.uk" }]);
   });
 
   it("attaches files dropped or picked, making the draft first, and stops at one too big or saved by someone else", async () => {
@@ -408,7 +411,11 @@ describe("MailingWriter", () => {
   });
 
   it("schedules one that's ready, and shows it scheduled; not one someone changed first", async () => {
-    const ready = { ...exampleWrittenMailing, sentFrom: "sam@pauseai.uk", dueAt: "2099-12-01T09:00:00Z" };
+    const ready = {
+      ...exampleWrittenMailing,
+      sentFrom: "samuel.whitlock@pauseai.uk",
+      dueAt: "2099-12-01T09:00:00Z",
+    };
     const data = { ...exampleWriterData, fields: [] };
     const { actions } = await renderWriter({ data, draft: ready });
     await expect.element(page.getByText(copy.cantSend)).not.toBeInTheDocument();
@@ -434,7 +441,7 @@ describe("MailingWriter", () => {
         .map((option) => option.element().textContent),
     ).toEqual([
       copy.sender("al@pauseai.uk", "1,800"),
-      copy.sender("sam@pauseai.uk", "1,680"),
+      copy.sender("samuel.whitlock@pauseai.uk", "1,680"),
       copy.senderNotConnected("jo@pauseai.uk"),
     ]);
     // Your own, not connected: what connecting means, and the way to.
@@ -447,7 +454,7 @@ describe("MailingWriter", () => {
     // Back to the draft the click saved, not the new mailing it was.
     expect(leavePage.mock.calls[0][0]).toMatch(/^\/staff\/api\/gmail\/connect\?back=%2Fstaff%2Fmailings%2F\d+$/);
     // A connected one: what it has sent today.
-    await field(copy.fromLegend).selectOptions("sam@pauseai.uk");
+    await field(copy.fromLegend).selectOptions("samuel.whitlock@pauseai.uk");
     await expect.element(from.getByText(staffCopy.gmail.sentToday(120, "1,800"))).toBeVisible();
     expect(from.getByRole("link", { name: staffCopy.gmail.connect }).query()).toBeNull();
   });

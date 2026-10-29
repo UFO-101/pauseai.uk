@@ -169,8 +169,8 @@ describeWithDatabase("login links", () => {
     );
     for (let i = 0; i <= HOURLY_LINKS; i++)
       await sendLoginLink(i % 2 ? "JO@pauseai.uk" : "jo@pauseai.uk", REQUEST, BROWSER);
-    await sendLoginLink("sam@pauseai.uk", REQUEST, BROWSER);
-    expect(sent.map((e) => e.To)).toEqual([...Array(HOURLY_LINKS).fill("jo@pauseai.uk"), "sam@pauseai.uk"]);
+    await sendLoginLink("samuel.whitlock@pauseai.uk", REQUEST, BROWSER);
+    expect(sent.map((e) => e.To)).toEqual([...Array(HOURLY_LINKS).fill("jo@pauseai.uk"), "samuel.whitlock@pauseai.uk"]);
     expect(await query("SELECT 1 FROM staff_login_links WHERE token_hash = 'old'")).toEqual([]);
 
     await query("UPDATE staff_login_links SET created_at = now() - interval '61 minutes'");

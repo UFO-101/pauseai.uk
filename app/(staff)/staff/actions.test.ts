@@ -148,14 +148,14 @@ describeWithDatabase("staff Server Actions", () => {
     expect(await expectRedirect(save)).toBe("/staff/accounts");
     expect(await query("SELECT email, permissions, added_by FROM staff_accounts ORDER BY email")).toEqual([
       { email: "jo@pauseai.uk", permissions: ["admin"], added_by: "login" },
-      { email: "sam@pauseai.uk", permissions: ["supporters"], added_by: "jo@pauseai.uk" },
+      { email: "samuel.whitlock@pauseai.uk", permissions: ["supporters"], added_by: "jo@pauseai.uk" },
     ]);
     expect(revalidatePath).toHaveBeenCalledWith("/staff/accounts");
     // The last admin can't lose admin, and the page says so.
     expect(await expectRedirect(() => saveStaffAccountNow(form({ email: "jo@pauseai.uk" })))).toBe(
       "/staff/accounts?notice=last-admin",
     );
-    expect(await expectRedirect(() => removeStaffAccountNow(form({ email: "sam@pauseai.uk" })))).toBe(
+    expect(await expectRedirect(() => removeStaffAccountNow(form({ email: "samuel.whitlock@pauseai.uk" })))).toBe(
       "/staff/accounts",
     );
     expect(await query("SELECT count(*)::int AS n FROM staff_accounts")).toEqual([{ n: 1 }]);
@@ -250,17 +250,17 @@ describeWithDatabase("staff Server Actions", () => {
   });
 
   it("endStaffSessionsNow ends an account's sessions, as an admin, going back to the page", async () => {
-    await createSession("sam@pauseai.uk");
-    const end = () => endStaffSessionsNow(form({ email: "sam@pauseai.uk" }));
+    await createSession("samuel.whitlock@pauseai.uk");
+    const end = () => endStaffSessionsNow(form({ email: "samuel.whitlock@pauseai.uk" }));
     expect(await expectRedirect(end)).toBe("/staff");
-    expect(await query("SELECT count(*)::int AS n FROM staff_sessions WHERE email = 'sam@pauseai.uk'")).toEqual([
-      { n: 1 },
-    ]);
+    expect(
+      await query("SELECT count(*)::int AS n FROM staff_sessions WHERE email = 'samuel.whitlock@pauseai.uk'"),
+    ).toEqual([{ n: 1 }]);
     await saveStaffAccount("jo@pauseai.uk", ["admin"], "a");
     expect(await expectRedirect(end)).toBe("/staff/accounts");
-    expect(await query("SELECT count(*)::int AS n FROM staff_sessions WHERE email = 'sam@pauseai.uk'")).toEqual([
-      { n: 0 },
-    ]);
+    expect(
+      await query("SELECT count(*)::int AS n FROM staff_sessions WHERE email = 'samuel.whitlock@pauseai.uk'"),
+    ).toEqual([{ n: 0 }]);
     // A bad form does nothing.
     await endStaffSessionsNow(form({ email: "nobody" }));
     expect(await query("SELECT actor, action FROM audit_log WHERE action = 'end staff sessions'")).toEqual([

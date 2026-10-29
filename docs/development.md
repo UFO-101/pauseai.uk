@@ -127,7 +127,7 @@ This:
   staff and an MP who has left; statuses set this week and last; every
   job's runs in every state, including a sync held for a decision; staff
   accounts for jo@pauseai.uk (supporters, with a kept session) and
-  sam@pauseai.uk (none) beside the migration's admin; and an audit log of
+  samuel.whitlock@pauseai.uk (none) beside the migration's admin; and an audit log of
   all that. Dates are relative to when it runs. Without `TEST_MP_EMAIL`,
   the test MPs still go in, with `test-mp@example.org`, since the letters go
   to the fixture outbox anyway. The storyboard's flows start from an empty
@@ -254,7 +254,7 @@ Open http://localhost:3000/staff/login. In a fixture build the login card
 has a hatched purple box under it, the dev login: a button per account
 (admin@pauseai.uk, which every database starts with, and which
 `db:reset` gives the supporters permission as well as admin; and the
-seed's jo@pauseai.uk and sam@pauseai.uk) and one for nobody@pauseai.uk, which has
+seed's jo@pauseai.uk and samuel.whitlock@pauseai.uk) and one for nobody@pauseai.uk, which has
 no account, each signing you in at once, with no email.
 It exists only with `DATA_FIXTURES=1`; its route is a 404 anywhere else.
 

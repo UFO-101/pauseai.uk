@@ -573,7 +573,7 @@ describe("StaffAccountsTable", () => {
       sessions: 0,
     },
     {
-      email: "sam@pauseai.uk",
+      email: "samuel.whitlock@pauseai.uk",
       permissions: [],
       addedBy: "login",
       addedAt: "2026-10-21T10:30:00Z",
@@ -615,7 +615,7 @@ describe("StaffAccountsTable", () => {
       copy.never,
       "0",
     ]);
-    expect(row("sam@pauseai.uk").slice(2, 6)).toEqual([
+    expect(row("samuel.whitlock@pauseai.uk").slice(2, 6)).toEqual([
       `21 Oct 2026, 10:30 ${copy.addedByLogin}`,
       "21 Oct 2026, 10:30",
       "21 Oct 2026, 11:00",
@@ -630,9 +630,11 @@ describe("StaffAccountsTable", () => {
     await expect
       .element(form("admin@pauseai.uk").getByRole("button"))
       .toHaveTextContent(staffCopy.accounts.endMySessions);
-    await expect.element(form("sam@pauseai.uk").getByRole("button")).toHaveTextContent(staffCopy.accounts.endSessions);
-    await form("sam@pauseai.uk").getByRole("button").click();
-    await vi.waitFor(() => expect(end.sent).toEqual([{ email: "sam@pauseai.uk" }]));
+    await expect
+      .element(form("samuel.whitlock@pauseai.uk").getByRole("button"))
+      .toHaveTextContent(staffCopy.accounts.endSessions);
+    await form("samuel.whitlock@pauseai.uk").getByRole("button").click();
+    await vi.waitFor(() => expect(end.sent).toEqual([{ email: "samuel.whitlock@pauseai.uk" }]));
   });
 
   it("lists every account, centred in its row, with its boxes, a Remove at the right, and a key to the permissions", async () => {
@@ -1318,7 +1320,7 @@ describe("PoliticianDetails", () => {
       `3 Oct 2026, 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.politician.personalised} · ${staffCopy.letters.status.sent}`,
       // Dated the day before it was recorded, so on that day.
       `1 Oct 2026${statusLine(staffCopy.politician.statusSet(staffCopy.statuses.signed), ask("frontier-ai-letter").title)} · Told us at the march · jo@pauseai.uk`,
-      `30 Sept 2026, 10:00${copy["edit politician"]} Polly Placeholder · polly.placeholder.mp@parliament.uk · sam@pauseai.uk`,
+      `30 Sept 2026, 10:00${copy["edit politician"]} Polly Placeholder · polly.placeholder.mp@parliament.uk · samuel.whitlock@pauseai.uk`,
       `2 Sept 2026, 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.letters.status.sent}`,
       `1 Sept 2026, 10:00${statusLine(staffCopy.politician.statusCleared, "gone")} · jo@pauseai.uk`,
       `15 Aug 2026, 10:00${statusLine(staffCopy.politician.statusSet("odd"), pm.title)} · jo@pauseai.uk`,
@@ -2488,9 +2490,9 @@ describe("ChangesTable", () => {
       "Jane Example",
       copy.gone("4"),
       `${copy.gone("5")} · ${labels.reference} ICO-12 · ${count(1, "lumaUsers")} · ${count(2, "formEntries")} · ${count(2, "letters")} · ${count(0, "members")}`,
-      `sam@pauseai.uk · ${labels.to} ${copy.noPermissions}`,
-      `sam@pauseai.uk · ${copy.noPermissions} → ${staffCopy.accounts.names.supporters}, ${staffCopy.accounts.names.admin}`,
-      `sam@pauseai.uk · ${labels.permissions} ${staffCopy.accounts.names.supporters}, retired`,
+      `samuel.whitlock@pauseai.uk · ${labels.to} ${copy.noPermissions}`,
+      `samuel.whitlock@pauseai.uk · ${copy.noPermissions} → ${staffCopy.accounts.names.supporters}, ${staffCopy.accounts.names.admin}`,
+      `samuel.whitlock@pauseai.uk · ${labels.permissions} ${staffCopy.accounts.names.supporters}, retired`,
       `${count(3, "added")} · ${count(40, "removed")} · ${count(2, "changed")}`,
       copy.run("12"),
       `${labels.reason} a test · Ids [1,2] · ${fields.house} atlantis · ${labels.status} ${staffCopy.statuses.signed}`,

@@ -78,7 +78,7 @@ describeWithDatabase("connected Gmail accounts", () => {
   it("lists the connected accounts with what each has sent in the last day, and what's left", async () => {
     await connectTestGmail(JO);
     await connectTestGmail("al@pauseai.uk");
-    await query("INSERT INTO staff_accounts (email, added_by) VALUES ('sam@pauseai.uk', 'test')");
+    await query("INSERT INTO staff_accounts (email, added_by) VALUES ('samuel.whitlock@pauseai.uk', 'test')");
     await sendFrom(JO, "1 hour");
     await sendFrom(JO, "2 hours");
     await sendFrom(JO, "2 hours", "failed");
@@ -88,9 +88,9 @@ describeWithDatabase("connected Gmail accounts", () => {
       { email: JO, connectedAt: expect.any(Date), sentToday: 2, remaining: GMAIL_DAILY_LIMIT - 2 },
     ]);
     expect(await gmailAccount("JO@pauseai.uk")).toMatchObject({ email: JO });
-    expect(await gmailAccount("sam@pauseai.uk")).toBeUndefined();
+    expect(await gmailAccount("samuel.whitlock@pauseai.uk")).toBeUndefined();
     expect(await sentToday(JO)).toBe(2);
-    expect(await sentToday("sam@pauseai.uk")).toBe(0);
+    expect(await sentToday("samuel.whitlock@pauseai.uk")).toBe(0);
   });
 
   it("has none left past the limit", async () => {
@@ -167,9 +167,9 @@ describeWithDatabase("connected Gmail accounts", () => {
 
   it("keeps where reading each account got to", async () => {
     await connectTestGmail(JO, "5");
-    await query("INSERT INTO staff_accounts (email, added_by) VALUES ('sam@pauseai.uk', 'test')");
+    await query("INSERT INTO staff_accounts (email, added_by) VALUES ('samuel.whitlock@pauseai.uk', 'test')");
     await saveHistoryId(JO, "9");
-    await saveHistoryId("sam@pauseai.uk", "9");
+    await saveHistoryId("samuel.whitlock@pauseai.uk", "9");
     expect(await gmailReadingState()).toEqual([{ email: JO, historyId: "9" }]);
   });
 });

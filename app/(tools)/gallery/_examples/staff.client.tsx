@@ -237,7 +237,7 @@ export function StaffAccountsTableExample() {
               sessions: 2,
             },
             {
-              email: "sam@pauseai.uk",
+              email: "samuel.whitlock@pauseai.uk",
               permissions: [],
               addedBy: "login",
               addedAt: "2026-10-21T10:30:00Z",
@@ -253,7 +253,11 @@ export function StaffAccountsTableExample() {
 }
 
 export function RemoveAccountFormExample() {
-  return <Logged>{(log) => <RemoveAccountForm email="sam@pauseai.uk" remove={log("removeStaffAccount")} />}</Logged>;
+  return (
+    <Logged>
+      {(log) => <RemoveAccountForm email="samuel.whitlock@pauseai.uk" remove={log("removeStaffAccount")} />}
+    </Logged>
+  );
 }
 
 export function DeletePoliticianExample() {

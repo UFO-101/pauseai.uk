@@ -22,7 +22,7 @@
 -- logged in; and someone removed last month.
 INSERT INTO staff_accounts (email, permissions, added_by, added_at, last_login_at, last_seen_at) VALUES
   ('jo@pauseai.uk', '{supporters}', 'admin@pauseai.uk', now() - interval '40 days', now() - interval '3 hours', now() - interval '20 minutes'),
-  ('sam@pauseai.uk', '{}', 'admin@pauseai.uk', now() - interval '6 days', NULL, NULL);
+  ('samuel.whitlock@pauseai.uk', '{}', 'admin@pauseai.uk', now() - interval '6 days', NULL, NULL);
 INSERT INTO staff_sessions (token_hash, email, created_at, expires_at, remember, user_agent) VALUES
   ('seed-session-jo-kept', 'jo@pauseai.uk', now() - interval '3 days', now() + interval '27 days', true,
    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15'),
@@ -31,7 +31,7 @@ INSERT INTO staff_sessions (token_hash, email, created_at, expires_at, remember,
   ('seed-session-jo-old', 'jo@pauseai.uk', now() - interval '20 days', now() - interval '19 days', false, NULL);
 INSERT INTO staff_login_links (token_hash, email, browser_hash, created_at, expires_at, used_at, remember) VALUES
   ('seed-link-used', 'jo@pauseai.uk', 'seed-browser', now() - interval '3 days', now() - interval '3 days' + interval '15 minutes', now() - interval '3 days' + interval '2 minutes', true),
-  ('seed-link-expired', 'sam@pauseai.uk', 'seed-browser', now() - interval '1 day', now() - interval '1 day' + interval '15 minutes', NULL, false);
+  ('seed-link-expired', 'samuel.whitlock@pauseai.uk', 'seed-browser', now() - interval '1 day', now() - interval '1 day' + interval '15 minutes', NULL, false);
 
 -- ---------------------------------------------------------- politicians
 
@@ -131,7 +131,7 @@ INSERT INTO asks (slug, title, kind, date, url, asked_by) VALUES
 INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, note, updated_by, updated_at)
 SELECT id, 'frontier-ai-letter', 'letter', 'signed', (now() - interval '35 days')::date, 'Told us at the march', 'jo@pauseai.uk', now() - interval '34 days' FROM notable_people WHERE airtable_id = 'recPlaceholder';
 INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, note, updated_by, updated_at)
-SELECT id, 'frontier-ai-letter', 'letter', 'signed', (now() - interval '2 days')::date, '', 'sam@pauseai.uk', now() - interval '2 days' FROM notable_people WHERE airtable_id = 'recDummy';
+SELECT id, 'frontier-ai-letter', 'letter', 'signed', (now() - interval '2 days')::date, '', 'samuel.whitlock@pauseai.uk', now() - interval '2 days' FROM notable_people WHERE airtable_id = 'recDummy';
 INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, note, updated_by, updated_at)
 SELECT id, 'controlai-letter', 'letter', 'signed', '2026-09-11', '', 'controlai', now() - interval '10 days' FROM notable_people WHERE name = 'Lord Seedling of Example';
 INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, note, updated_by, updated_at)
@@ -387,7 +387,7 @@ INSERT INTO email_sends (at, purpose, letter_id, address, outcome, message_id)
 SELECT replied_at + interval '1 minute', 'forwarded-reply', id, 'replies@pauseai.uk', 'sent', 'seed-forward-' || id FROM seed_letter_rows WHERE replied_at IS NOT NULL AND reply_hash IN ('seed-week-sam', 'seed-week-grace');
 INSERT INTO email_sends (at, purpose, letter_id, address, outcome, message_id) VALUES
   (now() - interval '3 days', 'staff-login', NULL, 'jo@pauseai.uk', 'sent', 'seed-login-jo'),
-  (now() - interval '1 day', 'staff-login', NULL, 'sam@pauseai.uk', 'sent', 'seed-login-sam'),
+  (now() - interval '1 day', 'staff-login', NULL, 'samuel.whitlock@pauseai.uk', 'sent', 'seed-login-sam'),
   (now() - interval '3 days' + interval '5 minutes', 'staff-alert', NULL, 'admin@pauseai.uk', 'sent', 'seed-alert-bounce'),
   (now() - interval '1 day', 'letter', NULL, 'no-such-mailbox@pauseai.uk', 'refused', NULL),
   (now() - interval '8 days', 'letter', NULL, 'polly.placeholder.mp@parliament.uk', 'failed', NULL);
@@ -625,15 +625,15 @@ INSERT INTO audit_log (at, actor, action, details) VALUES
   (now() - interval '10 days', 'controlai', 'set status', '{"politicianId": 0, "ask": "controlai-letter", "status": "signed", "date": "2026-09-11", "note": ""}'),
   (now() - interval '9 days', 'sync', 'edit politician', '{"id": 0, "airtableId": "recPlaceholder", "house": "commons", "name": "Polly Placeholder", "salutation": "Ms Placeholder", "constituency": "Cities of London and Westminster", "party": "Labour (Co-op)", "email": "polly.placeholder.mp@parliament.uk"}'),
   (now() - interval '15 days', 'jo@pauseai.uk', 'erase supporter', '{"id": 99, "reference": "GDPR-2026-014", "letters": 1, "lumaUsers": 1, "members": 1}'),
-  (now() - interval '12 days', 'sam@pauseai.uk', 'edit politician', '{"id": 0, "house": "lords", "name": "Lord Seedling of Example", "salutation": "Lord Seedling", "constituency": null, "party": "Crossbench", "email": null}'),
+  (now() - interval '12 days', 'samuel.whitlock@pauseai.uk', 'edit politician', '{"id": 0, "house": "lords", "name": "Lord Seedling of Example", "salutation": "Lord Seedling", "constituency": null, "party": "Crossbench", "email": null}'),
   (now() - interval '12 days' + interval '1 minute', 'postmark', 'block address', '{"address": "no-such-mailbox@pauseai.uk", "kind": "hard"}'),
   (now() - interval '9 days', 'postmark', 'block address', '{"address": "gordon.gone.mp@parliament.uk", "kind": "hard"}'),
-  (now() - interval '6 days', 'admin@pauseai.uk', 'add staff account', '{"email": "sam@pauseai.uk", "to": []}'),
+  (now() - interval '6 days', 'admin@pauseai.uk', 'add staff account', '{"email": "samuel.whitlock@pauseai.uk", "to": []}'),
   (now() - interval '5 days' + interval '3 hours', 'postmark', 'block address', '{"address": "grumpy@example.com", "kind": "complaint"}'),
-  (now() - interval '4 days', 'admin@pauseai.uk', 'set staff permissions', '{"email": "sam@pauseai.uk", "from": [], "to": []}'),
+  (now() - interval '4 days', 'admin@pauseai.uk', 'set staff permissions', '{"email": "samuel.whitlock@pauseai.uk", "from": [], "to": []}'),
   (now() - interval '3 days', 'jo@pauseai.uk', 'view supporter', '{"id": 1}'),
   (now() - interval '3 days', 'jo@pauseai.uk', 'set status', '{"politicianId": 0, "ask": "controlai-letter", "status": "signed", "date": null, "note": ""}'),
-  (now() - interval '2 days', 'sam@pauseai.uk', 'set status', '{"politicianId": 0, "ask": "frontier-ai-letter", "status": "signed", "date": null, "note": ""}'),
+  (now() - interval '2 days', 'samuel.whitlock@pauseai.uk', 'set status', '{"politicianId": 0, "ask": "frontier-ai-letter", "status": "signed", "date": null, "note": ""}'),
   (now() - interval '2 days' + interval '1 hour', 'jo@pauseai.uk', 'unblock address', '{"address": "polly.placeholder.mp@parliament.uk", "note": "Mailbox emptied, their office says"}'),
   (now() - interval '1 day', 'jo@pauseai.uk', 'set status', '{"politicianId": 0, "ask": "frontier-ai-letter", "status": "signed", "date": null, "note": "Confirmed by their office"}'),
   (now() - interval '1 day' + interval '2 hours', 'nightly', 'import ControlAI letter', '{"error": "No PDF linked from the letter page"}'),
@@ -651,7 +651,7 @@ UPDATE audit_log a SET details = jsonb_set(a.details, '{id}', to_jsonb(p.id)) FR
   WHERE a.action IN ('add politician', 'edit politician', 'remove politician') AND p.name = a.details->>'name';
 UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM notable_people WHERE name = 'Lord Seedling of Example'))) WHERE action = 'set status' AND actor = 'controlai';
 UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM politicians WHERE test_postcode = 'ZZ99ZZ'))) WHERE action = 'set status' AND details->>'ask' = 'controlai-letter' AND actor = 'jo@pauseai.uk';
-UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM notable_people WHERE airtable_id = 'recDummy'))) WHERE action = 'set status' AND details->>'note' = '' AND actor = 'sam@pauseai.uk';
+UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM notable_people WHERE airtable_id = 'recDummy'))) WHERE action = 'set status' AND details->>'note' = '' AND actor = 'samuel.whitlock@pauseai.uk';
 UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM politicians WHERE test_postcode = 'ZZ99ZH'))) WHERE action = 'set status' AND details->>'note' = 'Confirmed by their office';
 UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SELECT id FROM notable_people WHERE airtable_id = 'recPlaceholder'))) WHERE action = 'set status' AND actor = 'airtable';
 

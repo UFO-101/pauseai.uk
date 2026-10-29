@@ -210,11 +210,11 @@ describeWithDatabase("unblock", () => {
       }),
     );
     await recordProblem(BOUNCE);
-    expect(await unblock("jo@example.org", "sam@pauseai.uk", "Fixed")).toBe(true);
+    expect(await unblock("jo@example.org", "samuel.whitlock@pauseai.uk", "Fixed")).toBe(true);
     expect(asked).toEqual({ Suppressions: [{ EmailAddress: "jo@example.org" }] });
     expect(await isBlocked("jo@example.org")).toBe(false);
     expect((await audit()).at(-1)).toEqual({
-      actor: "sam@pauseai.uk",
+      actor: "samuel.whitlock@pauseai.uk",
       action: "unblock address",
       details: { address: "jo@example.org", note: "Fixed" },
     });
@@ -225,16 +225,16 @@ describeWithDatabase("unblock", () => {
   it("refuses a complaint, one Postmark can't reset, and an address that isn't blocked", async () => {
     await recordProblem({ ...BOUNCE, kind: "complaint" });
     await recordProblem({ ...BOUNCE, address: "b@example.org", canReset: false });
-    expect(await unblock("jo@example.org", "sam@pauseai.uk", "Fixed")).toBe(false);
-    expect(await unblock("b@example.org", "sam@pauseai.uk", "Fixed")).toBe(false);
-    expect(await unblock("c@example.org", "sam@pauseai.uk", "Fixed")).toBe(false);
+    expect(await unblock("jo@example.org", "samuel.whitlock@pauseai.uk", "Fixed")).toBe(false);
+    expect(await unblock("b@example.org", "samuel.whitlock@pauseai.uk", "Fixed")).toBe(false);
+    expect(await unblock("c@example.org", "samuel.whitlock@pauseai.uk", "Fixed")).toBe(false);
     expect(await isBlocked("jo@example.org")).toBe(true);
   });
 
   it("leaves it blocked if Postmark can't be reached", async () => {
     server.use(http.post(UNSUPPRESS, () => new HttpResponse(null, { status: 500 })));
     await recordProblem(BOUNCE);
-    await expect(unblock("jo@example.org", "sam@pauseai.uk", "Fixed")).rejects.toThrow("500");
+    await expect(unblock("jo@example.org", "samuel.whitlock@pauseai.uk", "Fixed")).rejects.toThrow("500");
     expect(await isBlocked("jo@example.org")).toBe(true);
   });
 
@@ -247,7 +247,7 @@ describeWithDatabase("unblock", () => {
       }),
     );
     await recordProblem(BOUNCE);
-    expect(await unblock("jo@example.org", "sam@pauseai.uk", " ")).toBe(false);
+    expect(await unblock("jo@example.org", "samuel.whitlock@pauseai.uk", " ")).toBe(false);
     expect(asked).toBe(false);
     expect(await isBlocked("jo@example.org")).toBe(true);
     await expect(
@@ -266,7 +266,7 @@ describeWithDatabase("unblock", () => {
         return HttpResponse.json({ Suppressions: [] });
       }),
     );
-    expect(await unblock("jo@example.org", "sam@pauseai.uk", "Fixed")).toBe(false);
+    expect(await unblock("jo@example.org", "samuel.whitlock@pauseai.uk", "Fixed")).toBe(false);
     expect((await audit()).map((a) => a.action)).toEqual(["block address"]);
   });
 });

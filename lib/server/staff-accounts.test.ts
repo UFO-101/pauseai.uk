@@ -32,11 +32,11 @@ describeWithDatabase("staff accounts", () => {
     expect(await saveStaffAccount("jo@pauseai.uk", ["supporters", "supporters", "admin"], "admin@pauseai.uk")).toBe(
       "changed",
     );
-    expect(await saveStaffAccount("sam@pauseai.uk", ["supporters"], "jo@pauseai.uk")).toBe("changed");
+    expect(await saveStaffAccount("samuel.whitlock@pauseai.uk", ["supporters"], "jo@pauseai.uk")).toBe("changed");
     const list = await listStaffAccounts();
     expect(list.map((a) => [a.email, a.permissions, a.addedBy])).toEqual([
       ["jo@pauseai.uk", ["admin", "supporters"], "admin@pauseai.uk"],
-      ["sam@pauseai.uk", ["supporters"], "jo@pauseai.uk"],
+      ["samuel.whitlock@pauseai.uk", ["supporters"], "jo@pauseai.uk"],
     ]);
     expect(list[0].addedAt).toBeInstanceOf(Date);
     expect(await admins()).toEqual(["jo@pauseai.uk"]);
@@ -47,12 +47,16 @@ describeWithDatabase("staff accounts", () => {
         action: "set staff permissions",
         details: { email: "jo@pauseai.uk", from: [], to: ["admin", "supporters"] },
       },
-      { actor: "jo@pauseai.uk", action: "add staff account", details: { email: "sam@pauseai.uk", to: ["supporters"] } },
+      {
+        actor: "jo@pauseai.uk",
+        action: "add staff account",
+        details: { email: "samuel.whitlock@pauseai.uk", to: ["supporters"] },
+      },
     ]);
   });
 
   it("lists when each last logged in and was seen, never until it has, and its sessions not yet expired", async () => {
-    await saveStaffAccount("sam@pauseai.uk", [], "admin@pauseai.uk");
+    await saveStaffAccount("samuel.whitlock@pauseai.uk", [], "admin@pauseai.uk");
     const jo = await createSession("jo@pauseai.uk");
     await createSession("Jo@pauseai.uk", true);
     await createSession("jo@pauseai.uk");
@@ -69,17 +73,22 @@ describeWithDatabase("staff accounts", () => {
     // Seen just now, through the session; logged in two hours ago.
     expect(Date.now() - new Date(joRow.lastSeenAt!).getTime()).toBeLessThan(60_000);
     expect(new Date(joRow.lastLoginAt!).getTime()).toBeLessThan(new Date(joRow.lastSeenAt!).getTime());
-    expect(samRow).toMatchObject({ email: "sam@pauseai.uk", lastLoginAt: null, lastSeenAt: null, sessions: 0 });
+    expect(samRow).toMatchObject({
+      email: "samuel.whitlock@pauseai.uk",
+      lastLoginAt: null,
+      lastSeenAt: null,
+      sessions: 0,
+    });
   });
 
   it("ends every session of an account, logging it, and logs nothing when there were none", async () => {
     const jo = await createSession("jo@pauseai.uk");
     await createSession("jo@pauseai.uk");
-    const sam = await createSession("sam@pauseai.uk");
+    const sam = await createSession("samuel.whitlock@pauseai.uk");
     expect(await endStaffSessions("Jo@pauseai.uk", "admin@pauseai.uk")).toBe(2);
     expect(await endStaffSessions("jo@pauseai.uk", "admin@pauseai.uk")).toBe(0);
     expect(await sessionEmail(jo)).toBeUndefined();
-    expect(await sessionEmail(sam)).toBe("sam@pauseai.uk");
+    expect(await sessionEmail(sam)).toBe("samuel.whitlock@pauseai.uk");
     expect((await log()).filter((entry) => entry.action === "end staff sessions")).toEqual([
       { actor: "admin@pauseai.uk", action: "end staff sessions", details: { email: "jo@pauseai.uk", sessions: 2 } },
     ]);
@@ -96,20 +105,20 @@ describeWithDatabase("staff accounts", () => {
 
   it("removes an account with its sessions and links, and does nothing for one that isn't there", async () => {
     await saveStaffAccount("jo@pauseai.uk", ["admin"], "x");
-    await saveStaffAccount("sam@pauseai.uk", ["supporters"], "x");
+    await saveStaffAccount("samuel.whitlock@pauseai.uk", ["supporters"], "x");
     const token = await createSession("Sam@pauseai.uk");
     await query(
-      "INSERT INTO staff_login_links (token_hash, email, expires_at) VALUES ('h', 'sam@pauseai.uk', now() + interval '1 hour')",
+      "INSERT INTO staff_login_links (token_hash, email, expires_at) VALUES ('h', 'samuel.whitlock@pauseai.uk', now() + interval '1 hour')",
     );
     expect(await removeStaffAccount("Sam@pauseai.uk", "jo@pauseai.uk")).toBe("changed");
-    expect(await removeStaffAccount("sam@pauseai.uk", "jo@pauseai.uk")).toBe("unchanged");
-    expect(await accountOf("sam@pauseai.uk")).toBeUndefined();
+    expect(await removeStaffAccount("samuel.whitlock@pauseai.uk", "jo@pauseai.uk")).toBe("unchanged");
+    expect(await accountOf("samuel.whitlock@pauseai.uk")).toBeUndefined();
     expect(await sessionEmail(token)).toBeUndefined();
     expect(await query("SELECT 1 FROM staff_login_links")).toEqual([]);
     expect((await log()).at(-1)).toEqual({
       actor: "jo@pauseai.uk",
       action: "remove staff account",
-      details: { email: "sam@pauseai.uk", permissions: ["supporters"] },
+      details: { email: "samuel.whitlock@pauseai.uk", permissions: ["supporters"] },
     });
   });
 
@@ -118,9 +127,9 @@ describeWithDatabase("staff accounts", () => {
     expect(await removeStaffAccount("jo@pauseai.uk", "jo@pauseai.uk")).toBe("last-admin");
     expect(await saveStaffAccount("jo@pauseai.uk", ["supporters"], "jo@pauseai.uk")).toBe("last-admin");
     expect(await accountOf("jo@pauseai.uk")).toEqual({ permissions: ["admin"] });
-    await saveStaffAccount("sam@pauseai.uk", ["admin"], "jo@pauseai.uk");
+    await saveStaffAccount("samuel.whitlock@pauseai.uk", ["admin"], "jo@pauseai.uk");
     expect(await saveStaffAccount("jo@pauseai.uk", ["supporters"], "jo@pauseai.uk")).toBe("changed");
-    expect(await removeStaffAccount("sam@pauseai.uk", "jo@pauseai.uk")).toBe("last-admin");
-    expect(await admins()).toEqual(["sam@pauseai.uk"]);
+    expect(await removeStaffAccount("samuel.whitlock@pauseai.uk", "jo@pauseai.uk")).toBe("last-admin");
+    expect(await admins()).toEqual(["samuel.whitlock@pauseai.uk"]);
   });
 });

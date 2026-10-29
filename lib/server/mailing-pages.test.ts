@@ -13,7 +13,9 @@ describeWithDatabase("the mailing pages' data", () => {
   it("gives a new mailing who it goes to, what its letter can use, and who it can be from", async () => {
     const polly = await addTestPolitician();
     await addTestPolitician({ name: "Ned Noaddress", airtableId: "rec2", email: null });
-    await query("INSERT INTO staff_accounts (email, added_by) VALUES ('sam@pauseai.uk', 'admin@pauseai.uk')");
+    await query(
+      "INSERT INTO staff_accounts (email, added_by) VALUES ('samuel.whitlock@pauseai.uk', 'admin@pauseai.uk')",
+    );
     await connectTestGmail("jo@pauseai.uk");
     const data = await newMailingData({ house: "commons", party: "Gone Party", sort: "name" }, "jo@pauseai.uk");
     expect(data.filter).toEqual({ list: "politicians", params: { house: "commons", party: "Gone Party" } });

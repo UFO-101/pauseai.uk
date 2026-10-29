@@ -197,7 +197,7 @@ describeWithDatabase("politicians", () => {
     expect((await getPolitician(id))!.statuses[EDINBURGH]).toMatchObject({ status: "declined" });
     await setStatus(id, EDINBURGH, { status: null, date: null, note: "" }, "jo@pauseai.uk");
 
-    await setStatus(id, BILL, { status: null, date: null, note: "" }, "sam@pauseai.uk");
+    await setStatus(id, BILL, { status: null, date: null, note: "" }, "samuel.whitlock@pauseai.uk");
     expect(await statusesOf(id)).toEqual({ [PM]: "signed" });
 
     const politician = await getPolitician(id);
@@ -210,7 +210,7 @@ describeWithDatabase("politicians", () => {
     const log = await query<{ actor: string; action: string }>("SELECT actor, action FROM audit_log ORDER BY id");
     expect(log).toEqual([
       ...Array(4).fill({ actor: "jo@pauseai.uk", action: "set status" }),
-      { actor: "sam@pauseai.uk", action: "set status" },
+      { actor: "samuel.whitlock@pauseai.uk", action: "set status" },
     ]);
   });
 
@@ -489,7 +489,7 @@ describeWithDatabase("politicians", () => {
     const peer = await addPeer();
     const mp = await addTestPolitician();
     // As the MP sync logs an edit.
-    await logChange("sam@pauseai.uk", "edit politician", { id: peer, name: "Lord Example" });
+    await logChange("samuel.whitlock@pauseai.uk", "edit politician", { id: peer, name: "Lord Example" });
     await setStatus(mp, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
     await setStatus(peer, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
     await recordProblem({
@@ -513,7 +513,7 @@ describeWithDatabase("politicians", () => {
       ["remove politician", "sync"],
       ["add politician", "jo@pauseai.uk"],
       ["set status", "jo@pauseai.uk"],
-      ["edit politician", "sam@pauseai.uk"],
+      ["edit politician", "samuel.whitlock@pauseai.uk"],
     ]);
     const history = await politicianHistory(mp, "Polly.Placeholder.MP@parliament.uk");
     expect(history.map((c) => c.action)).toEqual(["unblock address", "block address", "set status"]);

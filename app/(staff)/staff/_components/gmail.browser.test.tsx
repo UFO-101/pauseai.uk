@@ -90,7 +90,7 @@ describe("LetterThread", () => {
   });
 
   it("has no Open in Gmail for anyone else, and the address alone with no name", async () => {
-    await render(<LetterThread thread={{ ...exampleThread, fromName: "" }} me="sam@pauseai.uk" />);
+    await render(<LetterThread thread={{ ...exampleThread, fromName: "" }} me="samuel.whitlock@pauseai.uk" />);
     expect(page.getByRole("link", { name: copy.openInGmail }).query()).toBeNull();
     await expect.element(page.getByText(copy.sentFrom("jo@pauseai.uk"))).toBeVisible();
   });
