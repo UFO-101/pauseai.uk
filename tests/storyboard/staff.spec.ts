@@ -250,6 +250,11 @@ test("your own page, from your address: your Gmail connected, then disconnected,
   await page.getByRole("button", { name: staffCopy.gmail.disconnect }).click();
   await expect(page.getByRole("link", { name: staffCopy.gmail.connect })).toBeVisible();
   await frame(page, "disconnected: Connect Gmail again");
+
+  // Google sending you back having chosen another account, as the callback does.
+  await page.goto(`${BASE}/staff/me?gmail=other-account`);
+  await expect(page.getByRole("alert")).toHaveText(staffCopy.gmail.otherAccount(staffEmail()));
+  await frame(page, "back from Google with another account: an error, naming the one to choose");
 });
 
 test("a login link works once, and only in the browser that asked for it", async ({
