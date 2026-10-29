@@ -202,9 +202,14 @@ export async function disconnectMyGmail(): Promise<void> {
   redirect("/staff/me?gmail=disconnected");
 }
 
-/** Where an ask's form goes after a save: `back`, or the asks page; or the form again, saying why not. */
+/**
+ * Where an ask's form goes after a save: `back`, or the asks page; or the
+ * form again, saying why not; or, the ask deleted meanwhile, the asks page
+ * saying so, as its form is gone too.
+ */
 function afterAsk(slug: string, back: string, result: { saved: boolean; reason?: string }, saved: string): never {
   revalidatePath("/staff/asks");
+  if (result.reason === "gone") redirect("/staff/asks?notice=gone");
   const form = slug ? `/staff/asks/${slug}` : "/staff/asks/new";
   const [path, query = ""] = (result.saved ? back : form).split("?");
   const params = new URLSearchParams(query);

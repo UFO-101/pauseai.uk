@@ -44,19 +44,18 @@
 }
 
 /* Each address or number the topic has an answer for, its answer at the
-   right, under it when both don't fit; its own reason under it when the
-   answers' reasons differ. */
+   right, the address wrapping in its own column so the two stay side by
+   side; its own reason under it when the answers' reasons differ. */
 .answer {
   display: grid;
   gap: 2px;
 }
 
 .line {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-2);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
   align-items: center;
-  justify-content: space-between;
 }
 
 /* In the "?" box, a channel's part, named with its icon. */
