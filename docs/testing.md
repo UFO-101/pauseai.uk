@@ -437,9 +437,14 @@ not a mock.
 
 - **Each test file gets its own database.** Wrap the tests in
   `describeWithDatabase` and call `useTestDatabase()` (`tests/database.ts`).
-  It makes a fresh database, applies the migrations with `psql`
-  (`scripts/fresh-database.mjs`, the same way Netlify does), empties the
-  tables before each test, and drops the database afterwards.
+  It copies a template database, empties the tables before each test, and
+  drops the copy afterwards. The node project's global setup
+  (`tests/vitest.global-setup.node.ts`) makes the template once for the run,
+  applying the migrations with `psql` (`scripts/fresh-database.mjs`, the
+  same way Netlify does), and drops it at the end. Postgres copies a
+  database's files, so a copy takes tens of milliseconds however many
+  migrations there are, where every file running them at once outlasted
+  the hook timeout on a loaded CI runner.
   `addTestPolitician()` and `addTestMp()` add rows.
 - **A data migration gets a test while its tables are still changing.** A
   migration that moves or reshapes rows, not only tables, is tested with
@@ -457,7 +462,8 @@ not a mock.
   server's socket in `/var/run/postgresql` or `/tmp`, else localhost. CI
   runs a Postgres service.
 - **Netlify's build has no Postgres**, so `npm run build` skips these tests
-  there (`NETLIFY=true`). CI runs them.
+  there (`NETLIFY=true`), and the global setup makes no template. CI runs
+  them.
 - **The storyboard** builds against its own database, made fresh by the
   `webServer` command (`scripts/serve-fixture.mjs`), and gives each flow a
   copy of a template database (above). Each checkout has its own: the

@@ -1,9 +1,9 @@
-// A fresh Postgres database for each test file that needs one, with the
-// migrations applied (scripts/fresh-database.mjs). See docs/testing.md.
-import { afterAll, beforeAll, beforeEach, describe, vi } from "vitest";
+// A Postgres database for each test file that needs one, a copy of the
+// migrated template (tests/vitest.global-setup.node.ts). See docs/testing.md.
+import { afterAll, beforeAll, beforeEach, describe, inject, vi } from "vitest";
 import { closeDb, query } from "@/lib/server/db";
 import { encryptToken } from "@/lib/server/gmail-tokens";
-import { dropDatabase, freshDatabase } from "@/scripts/fresh-database.mjs";
+import { copyDatabase, databaseUrl, dropDatabase, freshDatabase } from "@/scripts/fresh-database.mjs";
 
 /**
  * describe() for tests that need the database. Netlify's build runs the unit
@@ -57,15 +57,17 @@ const TABLES = [
 ];
 
 /**
- * Gives this test file its own database, empty before each test. Call at the
- * top of a describeWithDatabase block.
+ * Gives this test file its own database, empty before each test: a copy of
+ * the migrated template made once for the run (tests/vitest.global-setup.node.ts).
+ * Call at the top of a describeWithDatabase block.
  */
 export function useTestDatabase(extraTables: string[] = []) {
   const name = `test_${process.pid}_${Math.random().toString(36).slice(2, 8)}`;
   const original = process.env.NETLIFY_DB_URL;
 
   beforeAll(() => {
-    process.env.NETLIFY_DB_URL = freshDatabase(name);
+    copyDatabase(name, inject("templateDatabase"));
+    process.env.NETLIFY_DB_URL = databaseUrl(name);
   });
   beforeEach(async () => {
     await query(`TRUNCATE ${[...TABLES, ...extraTables].join(", ")} RESTART IDENTITY CASCADE`);
