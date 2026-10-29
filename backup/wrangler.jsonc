@@ -23,8 +23,10 @@
   "vars": {
     // Postmark sends from a domain it has verified: the site's notify domain.
     "ALERT_FROM": "backups@notify.pauseai.uk",
+    // The site, whose read-only routes send the replies it keeps outside the database.
+    "SITE_URL": "https://pauseai.uk",
   },
   // Secrets, set by ./setup.sh (wrangler secret put): DATABASE_URL,
-  // POSTMARK_SERVER_TOKEN, ALERT_TO, RUN_SECRET, and HEALTHCHECK_URL if
-  // used. A var of the same name would hide a secret, so none is here.
+  // POSTMARK_SERVER_TOKEN, ALERT_TO, RUN_SECRET, SITE_BACKUP_SECRET, and
+  // HEALTHCHECK_URL if used. A var of the same name would hide a secret, so none is here.
 }

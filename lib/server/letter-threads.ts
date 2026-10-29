@@ -114,3 +114,17 @@ export async function letterThread(mailingId: number, letterId: number): Promise
     ),
   };
 }
+
+/** The kept messages after `after`, by ID, as many as `limit`, for the backup: each one's ID and key. */
+export async function repliesAfter(after: number, limit = 100): Promise<{ id: number; key: string }[]> {
+  return query<{ id: number; key: string }>(
+    `SELECT id::int AS id, blob_key AS key FROM letter_replies WHERE id > $1 ORDER BY id LIMIT $2`,
+    [after, limit],
+  );
+}
+
+/** A kept message, gzipped, by its row's ID; undefined if there's no such row or message. */
+export async function replyFile(id: number): Promise<Buffer | undefined> {
+  const [row] = await query<{ key: string }>("SELECT blob_key AS key FROM letter_replies WHERE id = $1", [id]);
+  return row && letterReply(row.key);
+}

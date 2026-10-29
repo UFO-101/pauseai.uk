@@ -42,6 +42,12 @@ the backup before:
   has last night's data.
 - `politicians` has at least 600 rows
 
+Then it copies the replies to PauseAI's letters that the site has kept
+since the last run. The site keeps each whole, gzipped, in Netlify Blobs,
+outside the database, so the dump doesn't hold them; the Worker fetches the
+new ones through the site's read-only routes (`app/api/backup/letter-replies`),
+with the site's `BACKUP_SECRET`, and keeps the last it copied.
+
 Any problem, or a backup that fails outright, is emailed through Postmark.
 If a Healthchecks.io ping URL is set, every run pings it, so it emails when
 a night's backup never runs at all.
@@ -53,6 +59,8 @@ The bucket holds:
 | `dumps/<time>.dump`     | the dump, kept for 90 days (an R2 lifecycle rule)            |
 | `manifests/<time>.json` | its manifest, kept for good: a history of the counts         |
 | `latest.json`           | the newest manifest, which the next run compares itself with |
+| `replies/<key>`         | a reply to one of our letters, gzipped, kept for good        |
+| `replies/latest.json`   | the last reply copied, which the next run starts after       |
 
 ## Set it up
 
@@ -65,6 +73,8 @@ need (https://developers.cloudflare.com/containers/pricing/), Docker running
   (https://docs.netlify.com/build/data-and-storage/netlify-database/access-control/)
 - a **Postmark server token** that can send from `ALERT_FROM` in
   `wrangler.jsonc`, and the address to send problems to
+- the site's **`BACKUP_SECRET`**, from its Netlify settings, for copying the
+  replies to letters
 - optionally, a **Healthchecks.io** check (https://healthchecks.io/docs/):
   a period of 1 day, and a few hours' grace
 

@@ -51,6 +51,8 @@ export function fixtureEnv({ outboxDir }) {
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: "fixture",
     TEST_MP_EMAIL,
     CRON_SECRET: "fixture-cron-secret",
+    // Encrypts the fixture Gmail's tokens when a flow connects it.
+    GMAIL_TOKEN_KEY: Buffer.alloc(32, 1).toString("base64"),
     POSTMARK_SERVER_TOKEN: "fixture",
     POSTMARK_WEBHOOK_USER: "postmark",
     POSTMARK_WEBHOOK_PASSWORD: "fixture-webhook-password",

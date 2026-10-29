@@ -37,6 +37,8 @@ beforeEach(() => {
   env = {
     DATABASE_URL: "postgresql://reader@db/site",
     RUN_SECRET: "s3cret",
+    SITE_URL: "https://site.example",
+    SITE_BACKUP_SECRET: "site-secret",
     POSTMARK_SERVER_TOKEN: "token",
     ALERT_FROM: "backups@example.org",
     ALERT_TO: "me@example.org",
@@ -51,7 +53,10 @@ beforeEach(() => {
   containerFetch.mockImplementation(async (request) =>
     new URL(request.url).pathname === "/backup" ? Response.json(REPORT) : new Response("DUMP"),
   );
-  send.mockResolvedValue(new Response("ok"));
+  // The site has no replies kept; anything else is Postmark or Healthchecks, which take it.
+  send.mockImplementation(async (url) =>
+    String(url).startsWith("https://site.example/") ? Response.json({ replies: [] }) : new Response("ok"),
+  );
   vi.stubGlobal("fetch", send);
   // Cloudflare's stream that insists on a length; a plain pass-through here.
   vi.stubGlobal(
@@ -85,6 +90,30 @@ describe("backUpAndReport", () => {
     const [request] = containerFetch.mock.calls[0];
     expect(request.method).toBe("POST");
     expect(new URL(request.url).pathname).toBe("/backup");
+  });
+});
+
+describe("backUpAndReport and the replies", () => {
+  it("copies the site's new replies, asking with the site's secret", async () => {
+    send.mockImplementation(async (url, init) => {
+      const path = String(url);
+      expect(new Headers(init?.headers).get("authorization")).toBe(
+        path.startsWith("https://site.example/") ? "Bearer site-secret" : null,
+      );
+      if (path.endsWith("letter-replies?after=0")) return Response.json({ replies: [{ id: 1, key: "jo/m1.eml.gz" }] });
+      if (path.endsWith("letter-replies/1")) return new Response("GZ");
+      if (path.startsWith("https://site.example/")) return Response.json({ replies: [] });
+      return new Response("ok");
+    });
+    const outcome = await backUpAndReport(env, new Date(Date.now() + 1000));
+    expect(outcome.problems).toEqual([]);
+    expect(stored["replies/jo/m1.eml.gz"].value).toBe("GZ");
+  });
+
+  it("says so when it can't, as without the site's secret", async () => {
+    env.SITE_BACKUP_SECRET = undefined;
+    const outcome = await backUpAndReport(env, new Date(Date.now() + 1000));
+    expect(outcome.problems).toEqual(["SITE_BACKUP_SECRET isn't set, so the replies to letters weren't copied."]);
   });
 });
 

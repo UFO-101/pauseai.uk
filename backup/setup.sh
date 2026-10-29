@@ -60,6 +60,10 @@ echo "Problems are emailed through Postmark, from ALERT_FROM in wrangler.jsonc."
 ask POSTMARK_SERVER_TOKEN "Postmark server token" required
 ask ALERT_TO "The address problems go to" required
 echo
+echo "The site's BACKUP_SECRET, in Netlify's settings: the Worker sends it to"
+echo "copy the replies to letters, which the site keeps outside the database."
+ask SITE_BACKUP_SECRET "SITE_BACKUP_SECRET" required
+echo
 echo "Optional: a Healthchecks.io check's ping URL (a daily period, a few hours'"
 echo "grace), which emails if a night's backup never reports at all."
 ask HEALTHCHECK_URL "Ping URL" optional
