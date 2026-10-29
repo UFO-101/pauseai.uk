@@ -36,7 +36,7 @@ INSERT INTO staff_login_links (token_hash, email, browser_hash, created_at, expi
 -- ---------------------------------------------------------- politicians
 
 -- Airtable's politicians, as the sync copies them (airtable-politicians.json,
--- by the same IDs): two MPs, one an important target with notes; an MSP, a
+-- by the same IDs): three MPs, one an important target with notes; an MSP, a
 -- personal connection; one who retired and one who left office. Then a peer
 -- the signatory import added, whom the sync takes to be Airtable's; a peer
 -- who died; and an MP whose record is gone from Airtable, kept. Then made-up
@@ -48,6 +48,7 @@ INSERT INTO seed_politicians VALUES
   ('recPlaceholder', 'commons', 'Polly Placeholder', 'Ms Placeholder', 'Cities of London and Westminster', 'Labour (Co-op)', 'england', 'polly.placeholder.mp@parliament.uk', 'in_office', E'Met at the example fair.\nRecommended', true, false, NULL, '60 days', '9 days'),
   ('recMorag', 'scottish-parliament', 'Morag Example', 'Ms Example', 'Exampleshire North', 'Example Party', 'scotland', 'morag.example.msp@parliament.example', 'in_office', '', false, true, NULL, '40 days', '40 days'),
   ('recRetired', 'commons', 'Rita Retired', 'Ms Retired', 'Old Seat', 'Independent', 'wales', NULL, 'retired', '', false, false, NULL, '40 days', '40 days'),
+  ('recMo', 'commons', 'Mo Example', 'Mx Example', 'Manchester Central', 'Labour', 'england', 'mp90003.office@parliament.uk', 'in_office', '', false, false, NULL, '60 days', '60 days'),
   ('recGone', 'commons', 'Gordon Gone', 'Mr Gone', 'Former Seat', 'Independent', 'england', 'gordon.gone.mp@parliament.uk', 'left_office', '', false, false, NULL, '60 days', '20 days'),
   (NULL, 'lords', 'Lord Seedling of Example', 'Lord Seedling', NULL, 'Crossbench', NULL, NULL, 'in_office', '', false, false, NULL, '30 days', '12 days'),
   ('recDeparted', 'lords', 'Lord Departed of Example', 'Lord Departed', NULL, 'Crossbench', NULL, NULL, 'died', '', false, false, NULL, '40 days', '25 days'),
@@ -84,7 +85,7 @@ SELECT i, 'recMade' || i AS airtable_id,
   -- every 20, which would give peers the same names.
   CASE WHEN i % 10 IN (6, 7) THEN (ARRAY['Ashford','Bramley','Colton','Dunmore','Eastwick','Farley','Glenholm','Harwood','Inverby','Kelso','Langley','Morden','Northam','Oxley','Penrith','Rydal','Stanmore','Tarleton','Westby','Yarrow'])[1 + (i / 10 * 2 + i % 10 - 6 + i / 20) % 20] END AS seat,
   CASE WHEN i % 10 < 6 THEN 'commons' WHEN i % 10 < 8 THEN 'lords' WHEN i % 10 = 8 THEN 'scottish-parliament' WHEN i % 20 = 9 THEN 'senedd' ELSE 'ni-assembly' END AS house
-FROM generate_series(1, 228) i;
+FROM generate_series(1, 227) i;
 WITH people AS (
   INSERT INTO notable_people (kind, airtable_id, name, salutation, email, status, notes, important_target, personal_connection, created_at, updated_at)
   SELECT 'politician', airtable_id,
@@ -293,14 +294,9 @@ INSERT INTO postcode_places (postcode, latitude, longitude, place, country) VALU
   ('ZZ99ZN', NULL, NULL, NULL, NULL),
   ('ZZ99ZS', NULL, NULL, NULL, NULL),
   ('ZZ99ZZ', NULL, NULL, NULL, NULL);
--- And each one's constituency, where a fixture MP has it: Jane's in
--- Manchester is the first made-up MP's, there being no fixture MP there.
+-- And each one's constituency, where a fixture MP has it.
 UPDATE postcode_places SET constituency_checked = true,
-  constituency = CASE postcode WHEN 'EC1A1BB' THEN 'Cities of London and Westminster' END;
-UPDATE postcode_places SET constituency = (
-  SELECT p.constituency FROM politicians p JOIN notable_people n ON n.id = p.id
-  WHERE n.airtable_id LIKE 'recMade%' AND p.house = 'commons' AND n.status = 'in_office' ORDER BY p.id LIMIT 1
-) WHERE postcode = 'M11AE';
+  constituency = CASE postcode WHEN 'EC1A1BB' THEN 'Cities of London and Westminster' WHEN 'M11AE' THEN 'Manchester Central' END;
 INSERT INTO named_places (name, latitude, longitude, place, country) VALUES
   ('manchester', 53.4794, -2.2453, 'Manchester', 'england'),
   ('london', 51.5072, -0.1276, 'London', 'england'),
