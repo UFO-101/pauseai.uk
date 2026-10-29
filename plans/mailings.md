@@ -6,7 +6,7 @@ mailing needs. Sending by each channel is in its own plan:
 
 - `plans/politician-email.md`: email to politicians, sent by Gmail.
 - `plans/supporters-email.md`: email to supporters.
-- `plans/supporters-phone.md`: texts and WhatsApp to supporters.
+- `plans/supporters-phone.md`: WhatsApp and texts to supporters.
 
 It is three pull requests, none depending on anything outside the site:
 
@@ -134,10 +134,11 @@ don't change it.
   account can mail politicians. Only accounts with the `supporters`
   permission can mail supporters.
 - Supporters can only be messaged from a list filtered to those we can
-  contact: a Contact filter answered "Can email" or "Can text" for one
-  topic. That filter decides the mailing's channel and topic, so the
+  contact: a Contact filter answered "Can email", "Can WhatsApp" or
+  "Can text" for one topic. That filter decides the mailing's channel and topic, so the
   Mail button on the supporters list offers email for a "Can email"
-  filter and text for a "Can text" one. Without such a filter the
+  filter, WhatsApp for a "Can WhatsApp" one and text for a "Can text"
+  one. Without such a filter the
   button can't be pressed, and says which filter to add. "Not sure"
   isn't enough, so members can't be emailed about PauseAI updates until
   we can read CiviCRM's unsubscribes (`plans/supporters-email.md`).
@@ -250,8 +251,8 @@ https://claude.ai/artifact/3qi42XAhd2qwYBTRYVGZoz
 ## Phase 3: Messages
 
 Messages to supporters, under Supporters in the menu, seen only with
-the `supporters` permission. They are from PauseAI UK, by email or
-text, with consent, opt-outs and a cost, so they have their own pages,
+the `supporters` permission. They are from PauseAI UK, by email,
+WhatsApp or text, with consent, opt-outs and a cost, so they have their own pages,
 built on phase 2's. To be designed once phase 2's are settled.
 
 Each letter or message lives in the section of whoever it holds details
@@ -270,11 +271,12 @@ messages they were sent, linked the same way. There is no list of every
 letter in the Politicians section: it would repeat Mailings, or mix in
 supporters' letters and split the permission within one page.
 
-- "Email these" or "Text these" on the supporters list, following its
-  Contact filter. Without a "Can email" or "Can text" filter the button
+- "Email these", "WhatsApp these" or "Text these" on the supporters
+  list, following its Contact filter. Without a "Can email", "Can
+  WhatsApp" or "Can text" filter the button
   is dotted, and clicking it explains which filter to add.
 - The same page, with the channel and topic fixed by the filter, a
-  count of texts and their cost, and opt-outs among the reasons to be
+  count of messages and their cost, and opt-outs among the reasons to be
   skipped.
 - A message's page and the list of messages, with delivered, failed,
   opted out, replies and cost.
