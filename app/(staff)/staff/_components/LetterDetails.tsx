@@ -8,6 +8,7 @@ import Tag from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
 import Breadcrumb from "./Breadcrumb";
 import CampaignName from "./CampaignName";
+import { DotParts, LoggedJson } from "./Logged";
 import Grid, { Card } from "./ui/Grid";
 import styles from "./Details.module.css";
 
@@ -89,20 +90,41 @@ function Sender({ letter }: { letter: Details }) {
   );
 }
 
-/** Each change of a letter's status, oldest first, with what the change recorded. */
+/** One field a change recorded: its name, in bold, then its value; one with no name in the copy, as recorded. */
+function EventField({ name, value }: { name: string; value: unknown }) {
+  return (
+    <>
+      <strong>{copy.detail.fields[name] ?? name}</strong> {typeof value === "string" ? value : JSON.stringify(value)}
+    </>
+  );
+}
+
+/**
+ * Each change of a letter's status, oldest first: its time, the status and
+ * every field it recorded, in words, and a {} button that opens them as
+ * recorded, as the audit log has.
+ */
 function History({ events }: { events: LetterEvent[] }) {
   if (events.length === 0) return <p className={styles.none}>{copy.detail.noHistory}</p>;
   return (
-    <ol className={styles.history} aria-label={copy.detail.historyTitle}>
-      {events.map((event, i) => (
-        <li key={i}>
-          <span className={styles.when}>{staffTime(event.at)}</span>
-          <span>
-            {statusOf(event.status)}
-            {Object.keys(event.details).length > 0 && <code> {JSON.stringify(event.details)}</code>}
-          </span>
-        </li>
-      ))}
+    <ol className={`${styles.history} ${styles.events}`} aria-label={copy.detail.historyTitle}>
+      {events.map((event, i) => {
+        const fields = Object.entries(event.details);
+        return (
+          <li key={i}>
+            <span className={styles.when}>{staffTime(event.at)}</span>
+            <span>
+              <DotParts>
+                {[
+                  statusOf(event.status),
+                  ...fields.map(([name, value]) => <EventField key={name} name={name} value={value} />),
+                ]}
+              </DotParts>
+            </span>
+            <span>{fields.length > 0 && <LoggedJson id={`event-${i}`} details={event.details} />}</span>
+          </li>
+        );
+      })}
     </ol>
   );
 }

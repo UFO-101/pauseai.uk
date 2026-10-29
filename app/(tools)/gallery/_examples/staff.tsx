@@ -12,6 +12,7 @@ import { exampleProblems } from "@/app/(staff)/staff/_components/EmailBlocksTabl
 import EmailProblemsTable from "@/app/(staff)/staff/_components/EmailProblemsTable";
 import { exampleChanges } from "@/app/(staff)/staff/_components/ChangesTable.examples";
 import AuditDetail, { FieldChanges } from "@/app/(staff)/staff/_components/AuditDetail";
+import { DotParts, LoggedJson } from "@/app/(staff)/staff/_components/Logged";
 import CampaignName from "@/app/(staff)/staff/_components/CampaignName";
 import LetterFilters from "@/app/(staff)/staff/_components/LetterFilters";
 import LetterLink from "@/app/(staff)/staff/_components/LetterLink";
@@ -2205,6 +2206,34 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <FieldChanges changed={{ party: ["Labour", "Independent"], email: [null, "polly@example.org"] }} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "DotParts",
+      file: "app/(staff)/staff/_components/Logged.tsx",
+      variants: [
+        {
+          label: "Parts of a line, between middle dots",
+          render: () => (
+            <StaffPage as="div">
+              <DotParts>{["Bounced", "Type HardBounce", "Address jo.mp@parliament.uk"]}</DotParts>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "LoggedJson",
+      file: "app/(staff)/staff/_components/Logged.tsx",
+      variants: [
+        {
+          label: "The {} button, which opens what was logged as JSON",
+          render: () => (
+            <StaffPage as="div">
+              <LoggedJson id="gallery-logged-json" details={{ type: "HardBounce", description: "No such address" }} />
             </StaffPage>
           ),
         },

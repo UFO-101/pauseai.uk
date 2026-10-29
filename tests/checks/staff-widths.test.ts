@@ -14,7 +14,7 @@ const COMPONENTS = join(ROOT, "app", "(staff)", "staff", "_components");
 /** Rules whose width isn't the page's to set, by file and selector, and why. */
 const ALLOWED: Record<string, string> = {
   // Over the page, where the grid doesn't reach.
-  "ChangesTable.module.css .json": "a popover",
+  "Logged.module.css .json": "a popover",
   "PermissionTiles.module.css .popover": "a popover",
   "Details.module.css .editPopover": "a popover",
   "DeletePolitician.module.css .confirm": "a popover",

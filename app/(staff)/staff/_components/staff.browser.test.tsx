@@ -2586,9 +2586,14 @@ describe("LetterDetails", () => {
     await expect
       .element(page.getByRole("link", { name: copy.detail.googleGroup }))
       .toHaveAttribute("href", googleGroupUrl(letter.postmarkId!));
+    // Each change in words, and a {} for those that recorded anything, opening it as recorded.
     const history = page.getByRole("list", { name: copy.detail.historyTitle });
-    expect(history.element().textContent).toContain(copy.status.bounced);
-    await expect.element(history.getByText('{"type":"HardBounce"}', { exact: false })).toBeVisible();
+    const [sending, bounced] = history.getByRole("listitem").all();
+    expect(sending.element().textContent).toContain(copy.status.sending);
+    expect(sending.getByRole("button").all()).toHaveLength(0);
+    expect(bounced.element().textContent).toContain(`${copy.status.bounced} · ${copy.detail.fields.type} HardBounce`);
+    await bounced.getByRole("button", { name: staffCopy.changes.json }).click();
+    await expect.element(page.getByText('"type": "HardBounce"', { exact: false })).toBeVisible();
     expect(document.body.textContent).toContain(copy.consent.yes);
   });
 
@@ -2604,8 +2609,13 @@ describe("LetterDetails", () => {
           status: "odd",
           sentAt: null,
           repliedAt: "2026-10-13T09:00:00Z",
+          events: [{ at: "2026-10-14T10:00:00Z", status: "replied", details: { subject: "Thanks", spam: 0.1 } }],
         }}
       />,
+    );
+    // A field with no name in the copy, as recorded, and a value that isn't words, as JSON.
+    expect(page.getByRole("list", { name: copy.detail.historyTitle }).element().textContent).toContain(
+      `${copy.detail.fields.subject} Thanks · spam 0.1`,
     );
     expect(page.getByRole("link", { name: exampleSupporterLetterDetails.senderName }).all()).toHaveLength(0);
     expect(page.getByRole("link", { name: copy.detail.googleGroup }).all()).toHaveLength(0);

@@ -1287,6 +1287,16 @@ export const staffCopy = {
       personalised: "⁂ Personalised",
       historyTitle: "⁂ What happened to it",
       noHistory: "⁂ Nothing recorded yet.",
+      // What a change of status recorded, each field's name before its value: Postmark's, a bounce's, a reply's.
+      fields: {
+        messageId: "⁂ Message ID",
+        type: "⁂ Type",
+        description: "⁂ Description",
+        reason: "⁂ Reason",
+        email: "⁂ Address",
+        from: "⁂ From",
+        subject: "⁂ Subject",
+      } as Record<string, string>,
       // A supporter's letter, Bcc'd to policy@: its copy there.
       googleGroup: "Find it in Google Groups",
       // PauseAI's letter, sent from Gmail: a search for it.

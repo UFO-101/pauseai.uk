@@ -234,9 +234,19 @@
   padding-right: var(--space-4);
 }
 
-/* What a change recorded, as JSON: an ID has no spaces, so it breaks anywhere rather than past the card. */
-.history code {
+/* A letter's history: each change's time, what it recorded, and its {} button. */
+.history.events {
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+}
+
+/* What a change recorded: an ID has no spaces, so it breaks anywhere rather than past the card. */
+.events li > :nth-child(2) {
   overflow-wrap: anywhere;
+}
+
+/* The {} button, clear of the words. */
+.events li > :nth-child(3) {
+  padding-left: var(--space-3);
 }
 
 /* A card with nothing in it yet. */
