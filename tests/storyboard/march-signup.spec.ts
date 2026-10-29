@@ -47,7 +47,7 @@ async function fillIn(page: Page, email: string) {
   await page.getByLabel(copy.form.email).fill(email);
 }
 
-test("registering, and the form turns into the share card", { tag: "@phone" }, async ({ page }, testInfo) => {
+test("Register: the form becomes the share card", { tag: "@phone" }, async ({ page }, testInfo) => {
   await openSignup(page);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(/March AgainstAI Extinction/);
   // Over the hero the header is out of sight; the site's own nav isn't there at all.
@@ -73,7 +73,7 @@ test("registering, and the form turns into the share card", { tag: "@phone" }, a
   await frame(page, "the share card, where the form was, saying they're registered");
 });
 
-test("a registration Luma doesn't take", { tag: "@phone" }, async ({ page }) => {
+test("Register when Luma fails", { tag: "@phone" }, async ({ page }) => {
   await openSignup(page);
   await fillIn(page, "luma-fails@example.org");
   await page.getByRole("button", { name: copy.form.submit, exact: true }).click();
@@ -86,7 +86,7 @@ test("a registration Luma doesn't take", { tag: "@phone" }, async ({ page }) => 
   await frame(page, "the form says it didn't go through, and offers Luma's page");
 });
 
-test("a name the server won't take", async ({ page }) => {
+test("Register with a name the server refuses", async ({ page }) => {
   await openSignup(page);
   await fillIn(page, "testy@example");
   await page.getByRole("button", { name: copy.form.submit, exact: true }).click();
@@ -94,7 +94,7 @@ test("a name the server won't take", async ({ page }) => {
   await frame(page, "the form asks for a valid email");
 });
 
-test("the scroll cue glides past the hero, and the header comes with it", async ({ page }) => {
+test("The scroll cue: past the photos, the header follows", async ({ page }) => {
   await openSignup(page);
   await page.getByRole("button", { name: "Scroll down" }).click();
   await expect(page.getByRole("heading", { name: /Why we.re marching/ })).toBeInViewport();
@@ -103,7 +103,7 @@ test("the scroll cue glides past the hero, and the header comes with it", async 
   await frame(page, "past the hero, the header in");
 });
 
-test("sharing, then registering someone new", { tag: "@phone" }, async ({ page, context }) => {
+test("Share, then register someone else", { tag: "@phone" }, async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await openSignup(page);
   await fillIn(page, "testy@example.org");
@@ -131,7 +131,7 @@ test("sharing, then registering someone new", { tag: "@phone" }, async ({ page, 
   await frame(page, "the form again, empty, for someone new");
 });
 
-test("pressing the header's button pushes it into its shadow", { tag: "@desktop-only" }, async ({ page }) => {
+test("Press the header's button", { tag: "@desktop-only" }, async ({ page }) => {
   await openSignup(page);
   await page.getByRole("button", { name: "Scroll down" }).click();
   await expect(header(page)).toBeInViewport();
@@ -144,7 +144,7 @@ test("pressing the header's button pushes it into its shadow", { tag: "@desktop-
   await page.mouse.up();
 });
 
-test("tapping Register leaves no app highlighted under the finger", { tag: "@phone-only" }, async ({ page }) => {
+test("Tap Register: no grey flash", { tag: "@phone-only" }, async ({ page }) => {
   await openSignup(page);
   await fillIn(page, "testy@example.org");
   await page.getByRole("button", { name: copy.form.submit, exact: true }).tap();
@@ -168,7 +168,7 @@ test("tapping Register leaves no app highlighted under the finger", { tag: "@pho
   await frame(page, "the share card, no app highlighted");
 });
 
-test("swiping through the photos, a dot for each", { tag: "@phone-only" }, async ({ page }) => {
+test("Swipe through the photos", { tag: "@phone-only" }, async ({ page }) => {
   await openSignup(page);
   const strip = page.getByRole("region", { name: "Photos from previous marches" });
   await strip.scrollIntoViewIfNeeded();

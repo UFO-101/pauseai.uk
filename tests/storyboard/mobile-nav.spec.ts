@@ -29,7 +29,7 @@ const item = (page: Page, i: number) => trigger(page, i).locator("..");
 const bodyHasLock = (page: Page) => page.evaluate(() => getComputedStyle(document.body).overflow === "hidden");
 
 test.describe("mobile nav", { tag: "@phone-only" }, () => {
-  test("starts closed", async ({ page }) => {
+  test("Starts closed", async ({ page }) => {
     await openPage(page);
 
     await expect(burger(page)).toBeVisible();
@@ -39,7 +39,7 @@ test.describe("mobile nav", { tag: "@phone-only" }, () => {
     await frame(page, "the menu closed");
   });
 
-  test("the burger opens the menu and locks background scrolling", async ({ page }) => {
+  test("Open the menu: the page behind can't scroll", async ({ page }) => {
     await openPage(page);
 
     await burger(page).click();
@@ -50,7 +50,7 @@ test.describe("mobile nav", { tag: "@phone-only" }, () => {
     await frame(page, "the menu open");
   });
 
-  test("the burger closes the menu again", async ({ page }) => {
+  test("Close the menu", async ({ page }) => {
     await openPage(page);
 
     await burger(page).click();
@@ -63,7 +63,7 @@ test.describe("mobile nav", { tag: "@phone-only" }, () => {
     expect(await bodyHasLock(page)).toBe(false);
   });
 
-  test("the menu panel sits below the header, not under it", async ({ page }) => {
+  test("The menu sits below the header", async ({ page }) => {
     await openPage(page);
 
     await burger(page).click();
@@ -80,7 +80,7 @@ test.describe("mobile nav", { tag: "@phone-only" }, () => {
     expect(Math.abs(navTop - headerBottom)).toBeLessThan(2);
   });
 
-  test("tapping a link closes the menu and navigates", async ({ page }) => {
+  test("Tap a link: the menu closes and the page opens", async ({ page }) => {
     await openPage(page);
 
     await burger(page).click();
@@ -94,7 +94,7 @@ test.describe("mobile nav", { tag: "@phone-only" }, () => {
     await frame(page, "after tapping Blog in the menu");
   });
 
-  test("background scrolling is released after navigating with the menu open", async ({ page }) => {
+  test("After following a link, the page scrolls again", async ({ page }) => {
     // The header stays mounted across pages, and the new page starts with the
     // menu closed. If that regresses, the page you land on cannot be scrolled.
     await openPage(page);
@@ -110,7 +110,7 @@ test.describe("mobile nav", { tag: "@phone-only" }, () => {
     expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
   });
 
-  test("a dropdown trigger opens its submenu instead of navigating", async ({ page }) => {
+  test("Tap a dropdown: its submenu opens", async ({ page }) => {
     await openPage(page);
     const urlBefore = page.url();
 
@@ -123,7 +123,7 @@ test.describe("mobile nav", { tag: "@phone-only" }, () => {
     await frame(page, "the About dropdown open");
   });
 
-  test("opening a second dropdown closes the first", async ({ page }) => {
+  test("Open a second dropdown: the first closes", async ({ page }) => {
     await openPage(page);
 
     await burger(page).click();
@@ -139,7 +139,7 @@ test.describe("mobile nav", { tag: "@phone-only" }, () => {
     await frame(page, "the Local groups dropdown open, About closed");
   });
 
-  test("a second tap on an open dropdown closes it", async ({ page }) => {
+  test("Tap an open dropdown: it closes", async ({ page }) => {
     await openPage(page);
 
     await burger(page).click();

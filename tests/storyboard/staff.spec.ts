@@ -43,7 +43,7 @@ async function logIn(page: Page, database: string, permissions: string[] = []) {
   return logInAsStaff(page, BASE, staffEmail());
 }
 
-test("the dev login signs in as a seeded account in one click, in a fixture build", async ({ page, flowDatabase }) => {
+test("Dev login: sign in with one click", async ({ page, flowDatabase }) => {
   addStaffAccount(flowDatabase, "jo@pauseai.uk", ["supporters"]);
   await page.goto(`${BASE}/staff/login`);
   const dev = page.getByRole("region", { name: staffCopy.devLogin.title });
@@ -55,44 +55,40 @@ test("the dev login signs in as a seeded account in one click, in a fixture buil
   await frame(page, "signed in as jo, with the supporters permission");
 });
 
-test(
-  "the sidebar folds to a rail of icons, each named on hover, and stays folded on the next page",
-  { tag: "@desktop-only" },
-  async ({ page, flowDatabase }) => {
-    await logIn(page, flowDatabase, ["supporters", "admin"]);
-    await page.goto(`${BASE}/staff/politicians`);
-    const nav = page.getByRole("navigation", { name: staffCopy.nav.title });
-    await expect(nav.getByRole("link", { name: staffCopy.nav.supporters })).toBeVisible();
-    await frame(
-      page,
-      "the sidebar open: each page's icon beside its name, and a round fold button on its edge at its foot",
-    );
+test("Fold the sidebar to icons", { tag: "@desktop-only" }, async ({ page, flowDatabase }) => {
+  await logIn(page, flowDatabase, ["supporters", "admin"]);
+  await page.goto(`${BASE}/staff/politicians`);
+  const nav = page.getByRole("navigation", { name: staffCopy.nav.title });
+  await expect(nav.getByRole("link", { name: staffCopy.nav.supporters })).toBeVisible();
+  await frame(
+    page,
+    "the sidebar open: each page's icon beside its name, and a round fold button on its edge at its foot",
+  );
 
-    // Folding moves the icons sideways only: each stays at the height it was.
-    const heights = () =>
-      nav.locator("li svg, form svg").evaluateAll((icons) => icons.map((icon) => icon.getBoundingClientRect().top));
-    const open = await heights();
-    await nav.getByRole("button", { name: staffCopy.nav.fold }).click();
-    await expect(nav.getByRole("button", { name: staffCopy.nav.unfold })).toBeVisible();
-    await expect(nav.getByRole("heading", { name: staffCopy.nav.sections.admin })).toBeHidden();
-    expect(await heights()).toEqual(open);
-    await frame(page, "folded: a rail of icons, each where it was, the sections a rule apart, and the list wider");
+  // Folding moves the icons sideways only: each stays at the height it was.
+  const heights = () =>
+    nav.locator("li svg, form svg").evaluateAll((icons) => icons.map((icon) => icon.getBoundingClientRect().top));
+  const open = await heights();
+  await nav.getByRole("button", { name: staffCopy.nav.fold }).click();
+  await expect(nav.getByRole("button", { name: staffCopy.nav.unfold })).toBeVisible();
+  await expect(nav.getByRole("heading", { name: staffCopy.nav.sections.admin })).toBeHidden();
+  expect(await heights()).toEqual(open);
+  await frame(page, "folded: a rail of icons, each where it was, the sections a rule apart, and the list wider");
 
-    // Tabbed to, as the frame moves the mouse away: a hover shows the same.
-    await nav.getByRole("link", { name: staffCopy.nav.home }).focus();
-    await page.keyboard.press("Tab");
-    await expect(nav.getByRole("link", { name: staffCopy.nav.supporters })).toBeFocused();
-    await frame(page, "a page's name beside its icon, tabbed to or hovered over");
+  // Tabbed to, as the frame moves the mouse away: a hover shows the same.
+  await nav.getByRole("link", { name: staffCopy.nav.home }).focus();
+  await page.keyboard.press("Tab");
+  await expect(nav.getByRole("link", { name: staffCopy.nav.supporters })).toBeFocused();
+  await frame(page, "a page's name beside its icon, tabbed to or hovered over");
 
-    await nav.getByRole("link", { name: staffCopy.nav.supporters }).click();
-    await expect(page).toHaveURL(`${BASE}/staff/supporters`);
-    await expect(nav.getByRole("button", { name: staffCopy.nav.unfold })).toBeVisible();
-    await frame(page, "the next page, still folded");
+  await nav.getByRole("link", { name: staffCopy.nav.supporters }).click();
+  await expect(page).toHaveURL(`${BASE}/staff/supporters`);
+  await expect(nav.getByRole("button", { name: staffCopy.nav.unfold })).toBeVisible();
+  await frame(page, "the next page, still folded");
 
-    await nav.getByRole("button", { name: staffCopy.nav.unfold }).click();
-    await expect(nav.getByRole("heading", { name: staffCopy.nav.sections.admin })).toBeVisible();
-  },
-);
+  await nav.getByRole("button", { name: staffCopy.nav.unfold }).click();
+  await expect(nav.getByRole("heading", { name: staffCopy.nav.sections.admin })).toBeVisible();
+});
 
 /**
  * Holds the next request for the page at a URL matching `target` (a
@@ -127,10 +123,7 @@ const loadingLine = (page: Page) =>
     return line.content !== "none" && line.opacity === "1";
   });
 
-test("a sort or search shows chosen at once, the list staying put until the new one arrives", async ({
-  page,
-  flowDatabase,
-}) => {
+test("Sort or search: the choice shows at once", async ({ page, flowDatabase }) => {
   // The line along the top slides while it waits; held still, so each frame of it is the same.
   await page.emulateMedia({ reducedMotion: "reduce" });
   await logIn(page, flowDatabase, ["supporters", "admin"]);
@@ -161,10 +154,7 @@ test("a sort or search shows chosen at once, the list staying put until the new 
   await frame(page, "what the search found");
 });
 
-test("another page shows chosen in the sidebar at once, the page staying put until the next arrives", async ({
-  page,
-  flowDatabase,
-}) => {
+test("Click a sidebar link: it's marked at once", async ({ page, flowDatabase }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await logIn(page, flowDatabase, ["supporters", "admin"]);
   await page.goto(`${BASE}/staff/politicians`);
@@ -186,9 +176,7 @@ test("another page shows chosen in the sidebar at once, the page staying put unt
   await frame(page, "the Asks page arrived");
 });
 
-test("every staff page, without a session, goes to the login page, to come back to once logged in", async ({
-  request,
-}) => {
+test("Logged out: every staff page asks you to log in", async ({ request }) => {
   expect(STAFF_PAGES.length).toBeGreaterThan(4);
   for (const route of STAFF_PAGES) {
     const res = await request.get(`${BASE}${route}`, { maxRedirects: 0 });
@@ -199,7 +187,7 @@ test("every staff page, without a session, goes to the login page, to come back 
   }
 });
 
-test("staff API routes and Server Actions, without a session, change nothing", async ({ request }) => {
+test("Logged out: the staff API changes nothing", async ({ request }) => {
   const logout = await request.post(`${BASE}/staff/api/logout`, { maxRedirects: 0 });
   expect(logout.status()).toBe(401);
 
@@ -217,24 +205,15 @@ test("staff API routes and Server Actions, without a session, change nothing", a
   expect(forged.status()).toBe(307);
 });
 
-test(
-  "an address outside pauseai.uk gets no link, though the page doesn't say so",
-  { tag: "@phone" },
-  async ({ page }) => {
-    await page.goto(`${BASE}/staff/login`);
-    await frame(page, "the login page");
-    expect(await logInAsStaff(page, BASE, "someone@gmail.com")).toBe(false);
-    await frame(page, "check your inbox, for an address that gets nothing");
-    expect(await logInAsStaff(page, BASE, "someone@pauseai.uk.evil.example")).toBe(false);
-  },
-);
+test("An address outside pauseai.uk gets no login link", { tag: "@phone" }, async ({ page }) => {
+  await page.goto(`${BASE}/staff/login`);
+  await frame(page, "the login page");
+  expect(await logInAsStaff(page, BASE, "someone@gmail.com")).toBe(false);
+  await frame(page, "check your inbox, for an address that gets nothing");
+  expect(await logInAsStaff(page, BASE, "someone@pauseai.uk.evil.example")).toBe(false);
+});
 
-test("a login link works once, and only in the browser that asked for it", async ({
-  page,
-  browser,
-  request,
-  flowDatabase,
-}) => {
+test("A login link works once, in the browser that asked", async ({ page, browser, request, flowDatabase }) => {
   const email = staffEmail();
   addStaffAccount(flowDatabase, email);
   await askForLoginLink(page, BASE, email, true);
@@ -269,7 +248,7 @@ test("a login link works once, and only in the browser that asked for it", async
   await frame(page, "the link opened a second time");
 });
 
-test("staff log in, set a status that shows on /campaigns, and log out", async ({ page, request, flowDatabase }) => {
+test("Log in, set an MP's status, see it on /campaigns, log out", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase, ["admin"]);
   // Logging in lands on the home page: the dashboard, with this admin's permission under their address in the sidebar.
@@ -358,11 +337,7 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await expect(page).toHaveURL(`${BASE}/staff/login`);
 });
 
-test("the MPs signed tile leads to the one who signed, then to everyone who signed anything, newest first", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("The MPs signed tile: who signed, then everyone", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase, ["admin"]);
   await page.goto(`${BASE}/staff/politicians`);
@@ -399,10 +374,7 @@ test("the MPs signed tile leads to the one who signed, then to everyone who sign
   await frame(page, "everyone who signed anything, newest first");
 });
 
-test("the Luma import copies the calendar's events, guests and contacts, and finds nothing new the second time", async ({
-  page,
-  flowDatabase,
-}) => {
+test("Run the Luma import twice", async ({ page, flowDatabase }) => {
   await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/import-data/luma`);
   await page.getByRole("button", { name: staffCopy.luma.importNow }).click();
@@ -441,10 +413,7 @@ test("the Luma import copies the calendar's events, guests and contacts, and fin
   await frame(page, "run again: nothing new");
 });
 
-test("the members import copies the UK members, skips one erased, and finds nothing new the second time", async ({
-  page,
-  flowDatabase,
-}) => {
+test("Run the members import twice", async ({ page, flowDatabase }) => {
   runSql(flowDatabase, "INSERT INTO members_erased (id) VALUES ('recMemberErased')");
   await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/import-data/members`);
@@ -471,7 +440,7 @@ test("the members import copies the UK members, skips one erased, and finds noth
   await frame(page, "run again: nothing new");
 });
 
-test("a politician's own page", async ({ page, request, flowDatabase }) => {
+test("Open a politician's page and sort the list", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/politicians?flag=test`);
@@ -498,11 +467,7 @@ test("a politician's own page", async ({ page, request, flowDatabase }) => {
   await frame(page, "the politicians sorted by constituency, reversed");
 });
 
-test("an import's own page lists every run it has made, and the import page shows the newest", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("An import's page lists its runs", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   // The check, twice: its page lists both runs, under the day's heading, and none of the MP import's.
@@ -573,11 +538,7 @@ async function sentLetterId(page: Page, database: string, sender: string, mp = T
   return id;
 }
 
-test("letters are listed, sent and bounced, and can be filtered by status and campaign, and reset", async ({
-  page,
-  request,
-  flowDatabase,
-}, testInfo) => {
+test("Filter letters by status and campaign, then reset", async ({ page, request, flowDatabase }, testInfo) => {
   const jane = `jane+${testInfo.testId}@example.com`;
   const sam = `sam+${testInfo.testId}@example.com`;
   await sentLetterId(page, flowDatabase, jane);
@@ -612,7 +573,7 @@ test("letters are listed, sent and bounced, and can be filtered by status and ca
   await frame(page, "reset: both letters again");
 });
 
-test("a letter that bounces: staff are emailed, and the address is blocked", async ({
+test("A letter bounces: staff are emailed, the address is blocked", async ({
   page,
   request,
   flowDatabase,
@@ -652,11 +613,7 @@ test("a letter that bounces: staff are emailed, and the address is blocked", asy
   await expect(page).toHaveURL(`${BASE}/staff/letters`);
 });
 
-test("an MP whose address bounced can't be written to until staff unblock it", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("Unblock an MP's bounced address", async ({ page, request, flowDatabase }) => {
   await postBounce(request);
   await fakeTurnstile(page);
   await openLookup(page, BASE, "ZZ9 9ZH");
@@ -705,11 +662,7 @@ test("an MP whose address bounced can't be written to until staff unblock it", a
   await frame(page, "the form writes to them again");
 });
 
-test("a politician import that would change too many is held, then discarded, and then applied", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("A big politician import is held: discard it, then apply it", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   // Twenty-one MPs Airtable no longer lists: the next import would mark them
   // all gone from it, more than it may without a person checking.
@@ -764,11 +717,7 @@ test("a politician import that would change too many is held, then discarded, an
   await frame(page, "the audit log: who discarded and who applied");
 });
 
-test("a politician import that renames anyone is held, in case Airtable reused the record", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("A politician import that renames someone is held", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   // Polly's record had another name here: Airtable now names someone else in it.
   runSql(flowDatabase, "UPDATE notable_people SET name = 'Penny Previous' WHERE airtable_id = 'recPlaceholder'");
@@ -780,10 +729,7 @@ test("a politician import that renames anyone is held, in case Airtable reused t
   await frame(page, "held: one record renamed, shown from and to");
 });
 
-test("a first login makes an account with no permissions; an admin adds, changes and removes accounts", async ({
-  page,
-  flowDatabase,
-}, testInfo) => {
+test("First login, then an admin manages accounts", async ({ page, flowDatabase }, testInfo) => {
   const colleague = `colleague-${testInfo.testId.replace(/\W/g, "").slice(-8)}@pauseai.uk`;
   // Logged in for the first time, with no account: one is made, with no permissions, so the dashboard and the pages any account opens.
   await logInAsStaff(page, BASE, staffEmail());
@@ -835,7 +781,7 @@ test("a first login makes an account with no permissions; an admin adds, changes
   await frame(page, "the audit log: added on first login, then added, changed and removed");
 });
 
-test("staff pages are kept out of search and the sitemap", async ({ page, request }) => {
+test("Staff pages are kept out of search", async ({ page, request }) => {
   await page.goto(`${BASE}/staff/login`);
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
   expect(await (await request.get(`${BASE}/sitemap.xml`)).text()).not.toContain("/staff");

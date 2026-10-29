@@ -178,13 +178,17 @@ pair whose files are the same, and the review opens
 newest run's page: the flows in
 sections, each frame captioned and pictured on desktop and phone, with this
 branch's picture, main's and the diff, a lightbox, a phone/desktop toggle
-that stays on the flow being looked at, a "changed only" filter, and a
-failed flow's message under its last frame. The sections come in the order
-of `SECTION_ORDER` (`tests/storyboard/report/frames.ts`): the public pages
-first, then what a visitor does, the staff screens, then the mechanics; the
-flows in each keep their spec file's order. The sidebar marks the section
-in view; its lists open and close only when clicked, and the "changed only"
-filter is kept on a reload. The same data is in
+that stays on the flow being looked at, a "changed only" filter, a box
+that filters flows by their section, title or captions (`/` to start,
+Escape to clear), and a failed flow's message under its last frame. The
+sections come under three headings, the public site, the staff pages, and
+the tools and checks, in the order of `SECTIONS`
+(`tests/storyboard/report/frames.ts`), which names each; the component
+gallery is last. The flows in each keep their spec file's order. The
+sidebar follows the page: the section in view is open and the flow in
+view marked, the rest folded, but a section opened or shut by hand stays
+so. The "changed only" filter and the filter's words are kept on a
+reload. The same data is in
 `test-results/storyboard/latest/storyboard.json`, for an agent.
 Both are local only and gitignored. A difference never fails; only this
 branch's checks do, and the exit code is theirs.
@@ -284,6 +288,10 @@ order, alongside the others:
   flow ("Email", above).
 - Flows stay small: one thing a person does, about ten frames at most.
   Sections split past a dozen flows.
+- A flow's title says what the person does, in a few plain words, as
+  they'd say it: "Reschedule a mailing, then unschedule it", "Register
+  when Luma fails". It starts with a capital, and leaves the details to
+  the captions.
 - Tag a flow `@phone` to run it on the phone in the gate too; `@phone-only`
   for one that only makes sense there (the mobile nav), `@desktop-only` for
   the reverse. The review runs every other flow on both viewports.

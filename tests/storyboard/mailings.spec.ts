@@ -61,11 +61,7 @@ function addMailing(database: string, title: string, state: string, statuses: st
   return id;
 }
 
-test("a new mailing from the politicians list: written, saved as a draft, previewed and sent to yourself", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("Write a new mailing, save it, preview it and send yourself a test", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/politicians?nation=scotland`);
@@ -105,11 +101,7 @@ test("a new mailing from the politicians list: written, saved as a draft, previe
   await expect(page.getByLabel(copy.fromLegend, { exact: false })).toHaveValue(staffEmail());
 });
 
-test("Change who: a draft goes to who the list finds instead; then it's deleted", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("Change who a draft goes to, then delete it", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   await startDraft(page, "Lords only");
@@ -135,11 +127,7 @@ test("Change who: a draft goes to who the list finds instead; then it's deleted"
   await frame(page, "the mailings, with no drafts left");
 });
 
-test("a scheduled mailing: when it sends, a new time, then unscheduled and a draft again", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("Reschedule a mailing, then unschedule it", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   const id = addMailing(flowDatabase, "Edinburgh reminder", "scheduled", ["scheduled", "scheduled", "scheduled"]);
@@ -164,11 +152,7 @@ test("a scheduled mailing: when it sends, a new time, then unscheduled and a dra
   await frame(page, "unscheduled: a draft again, to change and schedule again");
 });
 
-test("a mailing sending, and one sent: its counts, and its recipients that bounced", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("A mailing sending, and one sent with bounces", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   const sending = addMailing(flowDatabase, "Going out now", "sending", ["sent", "scheduled", "scheduled"]);

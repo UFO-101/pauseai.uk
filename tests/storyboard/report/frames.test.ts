@@ -154,6 +154,7 @@ describe("sortRuns", () => {
       .map((f) => f.replace(/\.spec\.ts$/, ""));
     expect([...SECTION_ORDER].sort()).toEqual(specs.sort());
     expect(SECTION_ORDER[0]).toBe("public-pages");
+    expect(SECTION_ORDER.at(-1)).toBe("gallery");
   });
 
   it("orders the flows of both runs, whatever order they finished in", async () => {
@@ -292,6 +293,9 @@ describe("renderStoryboardPage", () => {
     const html = renderStoryboardPage(board);
     expect(html).toContain("<title>Storyboard</title>");
     expect(html).toContain('<script id="data" type="application/json">');
+    expect(html).toContain(
+      '<script id="sections" type="application/json">[{"id":"public-pages","name":"Every public page"',
+    );
     expect(html).not.toContain("</script><b>");
     expect(JSON.parse(html.match(/type="application\/json">([\s\S]*?)<\/script>/)![1])).toEqual(board);
   });
