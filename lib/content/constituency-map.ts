@@ -10,7 +10,7 @@ const counted = (n: number, one: string, many: string) => `${n.toLocaleString("e
 export const constituencyMapCopy = {
   title: "⁂ Fill the map",
   description: "⁂ Where PauseAI supporters are, and which MPs have heard from them, constituency by constituency.",
-  lede: "⁂ Every MP counts the same in a vote, so every constituency is one hexagon. An empty one is an MP who hasn't heard from anyone about AI risk yet.",
+  lede: "Help us make sure every MP is briefed by their own constituents about the risk of runaway AI.",
 
   /** The switch between layers, and each layer's name on it. */
   layerLabel: "⁂ Show",
