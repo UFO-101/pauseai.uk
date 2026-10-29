@@ -16,7 +16,8 @@ messages to supporters, and is three pull requests:
 - `contact_permission()` answers for phone numbers. Each topic lists
   the ways it allows (`TOPIC_WAYS` in `lib/contact-permissions.ts`):
   `volunteering` and `site-forms` allow calls and texts, and
-  `march-day` and `luma-calendar` allow texts. None allows WhatsApp.
+  `march-day` and `luma-calendar` allow texts. WhatsApp isn't a way
+  yet.
 - We have about 750 numbers. Roughly 470 are from volunteers on the
   join form, which allow calls and texts; numbers from the Tally form,
   before it asked what people wanted to do, count as volunteers' too.
@@ -34,11 +35,11 @@ messages to supporters, and is three pull requests:
   texts and messages in apps as electronic mail, and the soft opt-in
   doesn't cover political campaigning
   ([ICO](https://ico.org.uk/for-organisations/direct-marketing-and-privacy-and-electronic-communications/guide-to-pecr/electronic-and-telephone-marketing/electronic-mail-marketing/)).
-  Meta accepts an opt-in that doesn't name WhatsApp, as long as it
-  names us and the law is met
-  ([opt-in](https://developers.facebook.com/documentation/business-messaging/whatsapp/getting-opt-in)),
-  but what people were told is what counts, so a yes to texts isn't a
-  yes to WhatsApp unless they were told it might be.
+  A yes to texts is a yes to WhatsApp too: to the people we message
+  they're the same thing, a message to their phone. Meta accepts an
+  opt-in that doesn't name WhatsApp, as long as it names us and the
+  law is met
+  ([opt-in](https://developers.facebook.com/documentation/business-messaging/whatsapp/getting-opt-in)).
 - A message stays within what the person agreed to. For example, a
   `march-day` text is about the march, sent on the day.
 - Every message says how to stop, and a stop is honoured at once,
@@ -89,10 +90,9 @@ in WhatsApp's settings closes the opt-out it made, as `luma-contacts`
 closes a Luma one; a yes given again on a form or to staff closes one
 too.
 
-What a stop covers is an open question (below). The proposal: a stop
-covers every topic, for the way it came by. A WhatsApp stop stops all
-WhatsApp messages from us, as Meta's own control does; a text STOP
-stops all texts. Staff recording a stop can widen it to every way.
+A stop covers every topic, and texts and WhatsApp as one: a WhatsApp
+stop stops texts too, and a text STOP stops WhatsApp messages. Calls
+are separate; staff recording a stop can widen it to calls.
 
 ## 1. Groundwork
 
@@ -120,7 +120,7 @@ less, starting with the weekly and event messages.
 ### Steps
 
 1. Add WhatsApp as a way to contact someone, alongside calls and texts,
-   and say which topics allow it.
+   allowed by every topic that allows texts.
 2. Collect opt-ins: the box on Email your MP and our other forms; the
    Luma checkbox, which the import reads as it reads the postcode
    question; and a way for staff to record a yes given in person or
@@ -164,7 +164,7 @@ The application should show that plainly and consistently:
 Then, once sending works, to keep the account in good standing:
 
 - Send first to the people most likely to want it: staff, then
-  volunteers who said yes to WhatsApp, then one local group, before
+  volunteers, then one local group, before
   anyone else.
 - Keep the first templates useful and expected, such as an event
   reminder, and watch each template's quality rating, which Meta lowers
@@ -263,20 +263,14 @@ WhatsApp messages to politicians, and a calling tool.
    Or a new number just for the API.
 2. What should the checkbox say? The same words should be used on Luma
    and our own forms, and a person needs to write them. They need to
-   name PauseAI UK and each way we'd contact someone, WhatsApp
-   included.
-3. Do the join form's volunteers allow WhatsApp? They gave a number for
-   volunteers' messages. If what they were told covers WhatsApp, the
-   first mailings have about 470 people to go to; if not, they need
-   asking first, perhaps by a text or email with a link to say yes.
-4. What does a stop cover? The proposal above is every topic, for the
-   way it came by. Should a WhatsApp stop also stop texts, or a stop
-   by any way stop every way?
-5. Should a resume in WhatsApp's settings undo any WhatsApp stop, or
-   only one made in WhatsApp's settings, leaving a "Stop" button or a
-   "stop" reply in force?
-6. People with a WhatsApp username can hide their number from
+   name PauseAI UK, and say messages and calls.
+3. Should a stop of messages stop calls too, or only when the person
+   says so?
+4. Should a resume in WhatsApp's settings undo any stop of messages, or
+   only one made in WhatsApp's settings, leaving a "Stop" button, a
+   "stop" reply or a text STOP in force?
+5. People with a WhatsApp username can hide their number from
    businesses, and Meta's webhooks then identify them only by an ID it
    gives each person for our business. Do we store that ID against the
    number when we send, so a later stop can be matched?
-7. Which text provider, and can it take over the giffgaff number?
+6. Which text provider, and can it take over the giffgaff number?
