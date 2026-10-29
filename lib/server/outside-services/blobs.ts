@@ -12,7 +12,7 @@ import { outsideFetch } from "./outside-fetch";
 const LETTER_REPLIES = "letter-replies";
 
 /** Where a fixture build's store is, which only the fixtures answer. */
-export const FIXTURE_BLOBS_URL = "https://blobs.fixture.invalid";
+const FIXTURE_BLOBS_URL = "https://blobs.fixture.invalid";
 
 function store() {
   const fixtures = process.env.DATA_FIXTURES === "1";

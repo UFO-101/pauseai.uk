@@ -15,7 +15,7 @@ import type { StaffAccount } from "@/lib/server/staff-accounts";
 import ChangesTable from "./ChangesTable";
 import EmailBlockFilters from "./EmailBlockFilters";
 import EmailBlocksTable, { blockColumns } from "./EmailBlocksTable";
-import { exampleBlock, exampleComplaint, exampleProblems } from "./EmailBlocksTable.examples";
+import { exampleBlock, exampleComplaint, exampleGmailBlock, exampleProblems } from "./EmailBlocksTable.examples";
 import EmailProblemsTable from "./EmailProblemsTable";
 import { exampleChanges } from "./ChangesTable.examples";
 import LettersTable, { LettersList, letterColumns, letterDownloadColumns } from "./LettersTable";
@@ -3626,8 +3626,8 @@ describe("each list's download values and contact cards", () => {
     expect(values(columns, { ...exampleComplaint, purpose: null }).sent).toBeNull();
     // A bounce found in Gmail says so after its reason.
     expect(values(columns, exampleBlock).reason).toBe(exampleBlock.reason);
-    expect(values(columns, { ...exampleBlock, foundInGmail: true }).reason).toBe(
-      `${exampleBlock.reason} (${staffCopy.emails.foundInGmail})`,
+    expect(values(columns, exampleGmailBlock).reason).toBe(
+      `${exampleGmailBlock.reason} (${staffCopy.emails.foundInGmail})`,
     );
   });
 

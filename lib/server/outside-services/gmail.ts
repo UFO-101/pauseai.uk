@@ -19,10 +19,7 @@ const REVOKE_URL = "https://oauth2.googleapis.com/revoke";
 const API = "https://gmail.googleapis.com/gmail/v1/users/me";
 
 /** What the site asks for: to send as the account, and to read it (it reads only replies to our letters, and bounces). */
-export const GMAIL_SCOPES = [
-  "https://www.googleapis.com/auth/gmail.send",
-  "https://www.googleapis.com/auth/gmail.readonly",
-];
+const GMAIL_SCOPES = ["https://www.googleapis.com/auth/gmail.send", "https://www.googleapis.com/auth/gmail.readonly"];
 
 export class GmailError extends Error {
   /** Google no longer accepts the refresh token: it was revoked, or the account's access removed. */

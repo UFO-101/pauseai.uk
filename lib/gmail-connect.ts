@@ -12,7 +12,7 @@ import { staffBack } from "./staff-search";
  */
 export const GMAIL_DAILY_LIMIT = 1800;
 
-export const GMAIL_CONNECT_PATH = "/staff/api/gmail/connect";
+const GMAIL_CONNECT_PATH = "/staff/api/gmail/connect";
 export const GMAIL_CALLBACK_PATH = "/staff/api/gmail/callback";
 
 /** The cookie that holds the consent's state, to check it comes back to the browser that started it, and the page to go back to. */

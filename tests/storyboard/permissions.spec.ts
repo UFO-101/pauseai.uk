@@ -91,10 +91,16 @@ test("with no permissions, no page shows a supporter's name or email, nor sends 
     flowDatabase,
     "SELECT '/staff/mailings/' || mailing_id || '/letters/' || id FROM letters_from_pauseai ORDER BY id LIMIT 1",
   );
+  // The route list's examples of letters and asks are the fixture database's.
   const routes = [
     ...ROUTES.filter(
-      (route) => route.startsWith("/staff") && !route.startsWith("/staff/login") && !route.includes("/letters/1"),
+      (route) =>
+        route.startsWith("/staff") &&
+        !route.startsWith("/staff/login") &&
+        !route.includes("/letters/1") &&
+        !/^\/staff\/(asks\/|mailings\/\d+\/letters)/.test(route),
     ),
+    "/staff/asks/frontier-ai-letter",
     pauseaiLetter,
     ...IMPORT_JOBS.map(importPath),
     `/staff/politicians/${testyId}`,
@@ -217,7 +223,7 @@ test("logged in on two browsers, a faint link under Log out leads to both sessio
   await frame(page, "the home: a faint link under Log out, logged in on two devices");
 
   await link.click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.sessions.title);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.me.title);
   await expect(page.getByRole("row")).toHaveCount(3);
   await expect(page.getByRole("row").filter({ hasText: staffCopy.sessions.thisBrowser })).toHaveCount(1);
   await frame(page, "your sessions: this browser's and the other one");

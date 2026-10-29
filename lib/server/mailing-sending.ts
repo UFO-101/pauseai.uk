@@ -19,7 +19,7 @@ import { mailingChannel, type MailingChannel } from "./mailing-channels";
 const JOB = "send-mailings";
 
 /** The gap between two sends from one account: Gmail takes 60 a minute. */
-export const SEND_GAP_MS = 1000;
+const SEND_GAP_MS = 1000;
 
 /** Starts every scheduled mailing that's due. Returns their IDs. */
 export async function startDueMailings(): Promise<number[]> {
