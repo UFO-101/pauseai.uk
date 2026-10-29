@@ -100,9 +100,11 @@ export default function AsksTable({ asks, notice = "" }: { asks: AskWithCounts[]
   return (
     <>
       {copy.notices[notice] && (
-        <Strip tone={["added", "saved", "deleted"].includes(notice) ? "green" : "amber"} announce>
-          {copy.notices[notice]}
-        </Strip>
+        <div className={styles.notice}>
+          <Strip tone={["added", "saved", "deleted"].includes(notice) ? "green" : "amber"} announce>
+            {copy.notices[notice]}
+          </Strip>
+        </div>
       )}
       <ListFrame
         count={copy.total(asks.length)}
