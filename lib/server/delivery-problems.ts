@@ -11,7 +11,7 @@ import { notifyDomain } from "./outside-services/postmark";
 
 type Sent = { purpose: Purpose; letterId: number | null };
 
-type Hook = (sent: Sent, problem: DeliveryProblem, request: Request) => Promise<void>;
+type Hook = (sent: Sent, problem: DeliveryProblem, request: Request | undefined) => Promise<void>;
 
 const nothing: Hook = async () => {};
 
@@ -80,9 +80,10 @@ const HOOKS: Record<Purpose, Hook> = {
 /**
  * Records a bounce or complaint, then hands it to the purpose of the email
  * it was about, if we sent it. `request` is the call that brought it,
- * Postmark's webhook or the job that reads Gmail, for siteUrl().
+ * Postmark's webhook or the job that reads Gmail, for siteUrl(); none when
+ * staff read Gmail from its page.
  */
-export async function handleDeliveryProblem(problem: DeliveryProblem, request: Request): Promise<void> {
+export async function handleDeliveryProblem(problem: DeliveryProblem, request?: Request): Promise<void> {
   await recordProblem(problem);
   const [sent] = await query<Sent>(
     `SELECT purpose, letter_id::int AS "letterId" FROM email_sends WHERE message_id = $1`,

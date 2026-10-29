@@ -47,6 +47,7 @@ import {
   exampleGoToParliamentResult,
   exampleHeldSync,
   exampleLumaResult,
+  exampleGmailResult,
   exampleMembersResult,
   exampleRun,
   exampleSyncedMp,
@@ -1733,6 +1734,7 @@ describe("ImportOverview", () => {
     const newest: (AnyImportRun | undefined)[] = [
       ran("import-luma", { ...exampleLumaResult, stoppedBy: "time" }, { at: "2026-10-21T11:17:00Z" }),
       ran("import-members", exampleMembersResult, { at: "2026-10-21T11:47:00Z" }),
+      ran("read-gmail", { accounts: [] }, { at: "2026-10-21T11:20:00Z", status: "unchanged" }),
       exampleHeldSync,
       ran("sync-emails", exampleEmailsResult, { at: "2026-10-21T06:22:00Z" }),
       ran("check-mps", { problems: [] }, { at: "2026-10-21T01:00:00Z", status: "ok" }),
@@ -1753,6 +1755,7 @@ describe("ImportOverview", () => {
     expect(cards.map((card) => card.querySelector("h3 a")!.getAttribute("href"))).toEqual([
       "/staff/import-data/luma",
       "/staff/import-data/members",
+      "/staff/import-data/gmail",
       "/staff/import-data/politicians",
       "/staff/import-data/emails",
       "/staff/import-data/mp-check",
@@ -1763,6 +1766,7 @@ describe("ImportOverview", () => {
     expect(cards.map((card) => card.querySelector("h3 a")!.textContent)).toEqual([
       jobTitles["import-luma"],
       jobTitles["import-members"],
+      jobTitles["read-gmail"],
       jobTitles["sync-politicians"],
       jobTitles["sync-emails"],
       jobTitles["check-mps"],
@@ -1774,8 +1778,9 @@ describe("ImportOverview", () => {
     const status = (i: number) => cards[i].querySelector("h3 + div > div")!;
     expect(status(0).textContent).toBe(`${staffCopy.runs.status.incomplete}21 Oct 2026, 11:17`);
     // The Emails sync held some back, so it's amber too.
-    expect([0, 1, 2, 3, 4, 5, 6].map((i) => status(i).className.match(/green|amber|red/)?.[0])).toEqual([
+    expect([0, 1, 2, 3, 4, 5, 6, 7].map((i) => status(i).className.match(/green|amber|red/)?.[0])).toEqual([
       "amber",
+      "green",
       "green",
       "amber",
       "amber",
@@ -1783,20 +1788,21 @@ describe("ImportOverview", () => {
       "red",
       "green",
     ]);
-    expect(status(7).textContent).toBe(staffCopy.goToParliament.never);
-    expect(status(7).className).not.toMatch(/green|amber|red/);
+    expect(status(8).textContent).toBe(staffCopy.goToParliament.never);
+    expect(status(8).className).not.toMatch(/green|amber|red/);
     // The Airtable jobs link the table they read; the politicians' sync also says the test MPs stay.
     const link = (i: number) => cards[i].querySelector(":scope > p a")!.getAttribute("href");
-    expect(link(2)).toBe("https://airtable.com/app/tblPoliticians");
-    expect(cards[2].querySelector(":scope > p")!.textContent).toContain(staffCopy.syncs.testMps);
-    expect([3, 6, 7].map(link)).toEqual([
+    expect(link(3)).toBe("https://airtable.com/app/tblPoliticians");
+    expect(cards[3].querySelector(":scope > p")!.textContent).toContain(staffCopy.syncs.testMps);
+    expect([4, 7, 8].map(link)).toEqual([
       "https://airtable.com/app/tblp4nH5Jymq48rcm",
       "https://airtable.com/app/tblkzjrRHiZiqMDGR",
       "https://airtable.com/app/tblminXS1xSuBbEjz",
     ]);
-    expect(cards[4].querySelector(":scope > p")!.textContent).not.toContain(staffCopy.syncs.testMps);
-    // The members come from the join form.
-    expect(cards[1].querySelector(":scope > p a")!.getAttribute("href")).toBe("https://pauseai.info/join");
+    expect(cards[5].querySelector(":scope > p")!.textContent).not.toContain(staffCopy.syncs.testMps);
+    // The members come from the join form; Gmail's card leads to where it's connected.
+    expect(link(1)).toBe("https://pauseai.info/join");
+    expect(link(2)).toBe("/staff/me");
   });
 
   it("shows an applied run, and one that changed nothing, in green, and one discarded plainly", async () => {
@@ -1807,15 +1813,18 @@ describe("ImportOverview", () => {
     );
     const unchanged = ran("import-luma", exampleLumaResult, { status: "unchanged" });
     const { rerender } = await render(
-      <ImportOverview newest={[unchanged, undefined, exampleAppliedSync, undefined, undefined]} airtableTable="x" />,
+      <ImportOverview
+        newest={[unchanged, undefined, undefined, exampleAppliedSync, undefined, undefined]}
+        airtableTable="x"
+      />,
     );
     const status = (i: number) => document.querySelectorAll("section")[i].querySelector("h3 + div > div")!.className;
     expect(status(0)).toMatch(/green/);
-    expect(status(2)).toMatch(/green/);
+    expect(status(3)).toMatch(/green/);
     await rerender(
-      <ImportOverview newest={[undefined, undefined, discarded, undefined, undefined]} airtableTable="x" />,
+      <ImportOverview newest={[undefined, undefined, undefined, discarded, undefined, undefined]} airtableTable="x" />,
     );
-    expect(status(2)).not.toMatch(/green|amber|red/);
+    expect(status(3)).not.toMatch(/green|amber|red/);
   });
 });
 
@@ -2351,6 +2360,24 @@ describe("RunList", () => {
       .toHaveTextContent(
         `${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.hourly} · ${staffCopy.runs.error("Airtable answered 503")}`,
       );
+  });
+
+  it("shows a Gmail read's totals, then each account, with one searched afresh and one that couldn't be read", async () => {
+    const accounts = [{ ...exampleGmailResult.accounts[0], restarted: true }, exampleGmailResult.accounts[1]];
+    await render(
+      <RunList
+        runs={[ran("read-gmail", { accounts }, { id: 1 }), failed("read-gmail", "Database down", { id: 2 })]}
+        none="None"
+      />,
+    );
+    const [first, second] = page.getByRole("status").all();
+    await expect.element(first).toHaveTextContent(staffCopy.gmailReading.result(accounts));
+    await expect.element(first).toHaveTextContent(staffCopy.runs.status.incomplete);
+    await expect.element(second).toHaveTextContent(staffCopy.runs.error("Database down"));
+    await expect
+      .element(page.getByText(`${staffCopy.gmailReading.account(accounts[0])} ${staffCopy.gmailReading.restarted}`))
+      .toBeVisible();
+    await expect.element(page.getByText(staffCopy.gmailReading.failed("Error: invalid_grant"))).toBeVisible();
   });
 
   it("says how many pages of contacts a Luma run read", async () => {

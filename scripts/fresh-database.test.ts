@@ -195,6 +195,7 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
           "import-members",
           "import-signatories",
           "import-web-form-letters",
+          "read-gmail",
           "sync-emails",
           "sync-politicians",
         ]);

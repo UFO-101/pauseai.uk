@@ -191,7 +191,9 @@ token is kept encrypted (`GMAIL_TOKEN_KEY`), and deleted on disconnecting.
   are searched for too. An automatic reply is an event on the letter. Any
   other message in the thread, the politician's reply or our answer, is
   kept whole, gzipped, in Netlify Blobs, with a row in `letter_replies`;
-  the backup Worker copies them (`backup/README.md`).
+  the backup Worker copies them (`backup/README.md`). Each run is in the
+  import log, with what it found in each account, and staff can run it
+  from its page under Import data.
 - **Threads.** Each PauseAI letter has a page with its whole thread
   (`/staff/mailings/<id>/letters/<letter>`), from the politician's history
   and the mailing's recipients, with Open in Gmail for whoever sent it.

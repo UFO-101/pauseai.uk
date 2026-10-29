@@ -593,7 +593,9 @@ INSERT INTO import_runs (at, job, started_by, status, error, result, decided_by)
   (now() - interval '30 days', 'import-signatories', 'admin@pauseai.uk', 'ok', NULL, '{"matched": 2, "added": 1, "alreadySet": 0}', NULL),
   (now() - interval '1 day' + interval '47 minutes', 'import-members', 'nightly', 'failed', 'Airtable request failed with status 503: Service Unavailable', '{}', NULL),
   (now() - interval '3 days 2 hours 13 minutes', 'import-members', 'nightly', 'ok', NULL, '{"members": 7, "added": 1, "changed": 0, "removed": 0, "supportersAdded": 1, "linked": 1}', NULL),
-  (now() - interval '1 hour' + interval '47 minutes', 'import-members', 'nightly', 'unchanged', NULL, '{"members": 8, "added": 0, "changed": 0, "removed": 0, "supportersAdded": 0, "linked": 0}', NULL);
+  (now() - interval '1 hour' + interval '47 minutes', 'import-members', 'nightly', 'unchanged', NULL, '{"members": 8, "added": 0, "changed": 0, "removed": 0, "supportersAdded": 0, "linked": 0}', NULL),
+  (now() - interval '2 hours' + interval '20 minutes', 'read-gmail', 'nightly', 'ok', NULL, '{"accounts": [{"account": "mailings@pauseai.uk", "replies": 1, "autoReplies": 2, "bounces": 0}]}', NULL),
+  (now() - interval '1 hour' + interval '20 minutes', 'read-gmail', 'nightly', 'unchanged', NULL, '{"accounts": [{"account": "mailings@pauseai.uk", "replies": 0, "autoReplies": 0, "bounces": 0}]}', NULL);
 
 -- The held sync keeps every record, as it read them: those here, with
 -- Airtable's statuses, and Nina New, so applying it changes only what it

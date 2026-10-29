@@ -13,6 +13,7 @@ import {
   importLumaNow,
   importMembersNow,
   importWebFormLettersNow,
+  readGmailNow,
   syncEmailsNow,
   syncNow,
 } from "../../../actions";
@@ -30,6 +31,7 @@ const RUN_NOW: Record<ImportJob, () => Promise<void>> = {
   "check-mps": checkNow,
   "import-controlai": importControlAiNow,
   "import-members": importMembersNow,
+  "read-gmail": readGmailNow,
 };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {

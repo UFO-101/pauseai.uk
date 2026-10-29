@@ -1,8 +1,10 @@
 import "server-only";
 import { gzipSync } from "node:zlib";
+import type { GmailRead, GmailReadResult } from "@/lib/import-runs";
 import { query } from "./db";
 import { handleDeliveryProblem } from "./delivery-problems";
 import { gmailAccess, gmailReadingState, saveGmailName, saveHistoryId } from "./gmail-accounts";
+import { keepingFailure, recordRun } from "./import-runs";
 import { allParts, fromAddress, messageIds, parseHeaders, parseMime, partText, type MimePart } from "./mime";
 import { saveLetterReply } from "./outside-services/blobs";
 import {
@@ -22,7 +24,10 @@ import { isMachineReply } from "./postmark-webhooks";
 // answers; it fetches whole only the messages in our letters' threads, and
 // bounces. A politician's reply, or our answer to it, is kept whole
 // (letter_replies, and the message in Netlify Blobs); an automatic reply is
-// only noted on the letter; a bounce is recorded as Postmark's are.
+// only noted on the letter; a bounce is recorded as Postmark's are. Each
+// run is in the import log as "read-gmail".
+
+const JOB = "read-gmail";
 
 /** The headers that say what a message is and what it answers. */
 const HEADERS = [
@@ -46,17 +51,6 @@ const BOUNCE_SEARCH = "from:mailer-daemon OR from:postmaster newer_than:3d";
 
 /** When the mailbox's history has gone, what's searched instead, to miss nothing since the last read. */
 const RESTART_SEARCH = "newer_than:3d";
-
-/** What reading one account found. */
-export type GmailRead = {
-  account: string;
-  replies: number;
-  autoReplies: number;
-  bounces: number;
-  /** The mailbox's history had gone, so it was searched instead. */
-  restarted?: boolean;
-  error?: string;
-};
 
 /** Whether a sender is a mail server reporting a bounce. */
 const isBounceSender = (address: string) => /^(mailer-daemon|postmaster)@/.test(address);
@@ -194,7 +188,7 @@ async function recordBounce(
   account: string,
   token: string,
   message: GmailMessageHeaders,
-  request: Request,
+  request: Request | undefined,
 ): Promise<number> {
   const [seen] = await query("SELECT 1 FROM email_problems WHERE gmail_message_id = $1", [message.id]);
   if (seen) return 0;
@@ -221,7 +215,7 @@ async function recordBounce(
 }
 
 /** Reads one message: a bounce, a reply to a letter, or something else, left alone. */
-async function readMessage(account: string, token: string, id: string, read: GmailRead, request: Request) {
+async function readMessage(account: string, token: string, id: string, read: GmailRead, request: Request | undefined) {
   const message = await gmailMessageHeaders(token, id, HEADERS);
   const from = fromAddress(message.headers.get("from")).address;
   if (isBounceSender(from)) {
@@ -244,7 +238,7 @@ async function readMessage(account: string, token: string, id: string, read: Gma
 }
 
 /** Reads one account, from where it last got to, and saves where it got to. */
-async function readAccount(account: string, historyId: string, request: Request): Promise<GmailRead> {
+async function readAccount(account: string, historyId: string, request: Request | undefined): Promise<GmailRead> {
   const read: GmailRead = { account, replies: 0, autoReplies: 0, bounces: 0 };
   const token = await gmailAccess(account);
   let history = await gmailHistory(token, historyId);
@@ -262,19 +256,24 @@ async function readAccount(account: string, historyId: string, request: Request)
 }
 
 /**
- * Reads every connected account. One that fails is logged and said so,
- * and the next is read all the same; it's read again from where it got to
- * next time. `request` is the job's call, for links in alerts.
+ * Reads every connected account, keeping the run. One that fails is logged
+ * and said so, and the next is read all the same; it's read again from
+ * where it got to next time. `request` is the job's call, for links in
+ * alerts; a staff member's run has none.
  */
-export async function readGmail(request: Request): Promise<GmailRead[]> {
-  const reads: GmailRead[] = [];
-  for (const { email, historyId } of await gmailReadingState()) {
-    try {
-      reads.push(await readAccount(email, historyId, request));
-    } catch (error) {
-      console.error(`Couldn't read ${email}'s Gmail:`, error);
-      reads.push({ account: email, replies: 0, autoReplies: 0, bounces: 0, error: String(error) });
+export function readGmail(startedBy: string, request?: Request): Promise<GmailReadResult> {
+  return keepingFailure(JOB, startedBy, async () => {
+    const accounts: GmailRead[] = [];
+    for (const { email, historyId } of await gmailReadingState()) {
+      try {
+        accounts.push(await readAccount(email, historyId, request));
+      } catch (error) {
+        console.error(`Couldn't read ${email}'s Gmail:`, error);
+        accounts.push({ account: email, replies: 0, autoReplies: 0, bounces: 0, error: String(error) });
+      }
     }
-  }
-  return reads;
+    const found = accounts.some((a) => a.replies + a.autoReplies + a.bounces > 0 || a.restarted || a.error);
+    await recordRun(JOB, startedBy, found ? "ok" : "unchanged", { accounts });
+    return { accounts };
+  });
 }

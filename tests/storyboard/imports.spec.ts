@@ -7,7 +7,7 @@ import { syncPoliticians } from "../steps";
 import { BASE, expect, frame, test } from "./fixtures";
 import { staffEmail, logIn } from "./staff-steps";
 
-// The imports staff run and watch: Luma's and the members', each import's
+// The imports staff run and watch: Luma's, the members' and Gmail's, each import's
 // own page of its runs, and a politician import held for a person to decide.
 // Each flow on its own database.
 
@@ -75,6 +75,24 @@ test("Run the members import twice", async ({ page, flowDatabase }) => {
   await expect(page.getByText(staffCopy.runs.status.unchanged)).toBeVisible();
   await page.getByRole("heading", { name: staffCopy.members.title }).scrollIntoViewIfNeeded();
   await frame(page, "run again: nothing new");
+});
+
+test("Read the connected Gmail from its page", async ({ page, flowDatabase }) => {
+  await logIn(page, flowDatabase);
+  await page.goto(`${BASE}/staff/me`);
+  await page.getByRole("link", { name: staffCopy.gmail.connect }).click();
+  await expect(page.getByText(staffCopy.gmail.outcomes.connected)).toBeVisible();
+  await page.goto(`${BASE}/staff/import-data/gmail`);
+  await expect(page.getByText(staffCopy.gmailReading.never)).toBeVisible();
+  await frame(page, "Gmail's page: not read yet");
+
+  await page.getByRole("button", { name: staffCopy.gmailReading.readNow }).click();
+  // The fixture mailbox has nothing new in it.
+  const read = { account: staffEmail(), replies: 0, autoReplies: 0, bounces: 0 };
+  await expect(page.getByText(staffCopy.gmailReading.account(read))).toBeVisible();
+  await expect(page.getByText(staffCopy.runs.status.unchanged)).toBeVisible();
+  await page.getByRole("heading", { name: staffCopy.gmailReading.title }).scrollIntoViewIfNeeded();
+  await frame(page, "read: your account, with nothing new");
 });
 
 test("An import's page lists its runs", async ({ page, request, flowDatabase }) => {

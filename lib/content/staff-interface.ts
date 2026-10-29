@@ -1241,6 +1241,26 @@ export const staffCopy = {
       running: "Another run was already going.",
     } as Record<string, string>,
   },
+  // The hourly read of the connected Gmail accounts for replies to our
+  // letters and bounces (lib/server/gmail-reading.ts), on the import page.
+  gmailReading: {
+    title: "⁂ Replies and bounces from Gmail",
+    intro: {
+      before: "⁂ Reads the replies to our letters, and their bounces, in each ",
+      link: "⁂ connected Gmail account",
+      after: "⁂ .",
+    },
+    readNow: "⁂ Read Gmail now",
+    never: "⁂ Not read yet.",
+    // The run's totals, over every account, then a line for each.
+    result: (accounts: { replies: number; autoReplies: number; bounces: number }[]) =>
+      `⁂ ${accounts.length} accounts read: ${accounts.reduce((n, a) => n + a.replies, 0)} replies, ${accounts.reduce((n, a) => n + a.autoReplies, 0)} automatic replies, ${accounts.reduce((n, a) => n + a.bounces, 0)} bounces.`,
+    account: (a: { account: string; replies: number; autoReplies: number; bounces: number }) =>
+      `⁂ ${a.account}: ${a.replies} replies, ${a.autoReplies} automatic replies, ${a.bounces} bounces.`,
+    // After an account's line: its history had gone, so the last few days were searched instead.
+    restarted: "⁂ Searched the last three days, as Gmail no longer had where the last read got to.",
+    failed: (error: string) => `⁂ Couldn't be read: ${error}`,
+  },
   // The hourly copy of PauseAI's UK members (lib/server/members-import.ts),
   // on the import page.
   // PauseAI's emails to politicians, from Airtable's Emails table.
@@ -1386,6 +1406,7 @@ export const staffCopy = {
     airtable: "Airtable",
     web: "Web",
     luma: "Luma",
+    gmail: "⁂ Gmail",
     nightly: "Nightly",
     hourly: "Hourly",
     oneOff: "One-off",
@@ -1567,4 +1588,5 @@ export const jobTitles: Record<ImportJob, string> = {
   "import-controlai": staffCopy.controlAi.title,
   "import-luma": staffCopy.luma.title,
   "import-members": staffCopy.members.title,
+  "read-gmail": staffCopy.gmailReading.title,
 };

@@ -4,6 +4,7 @@ import {
   exampleAppliedSync,
   exampleEmailsResult,
   exampleFailedRun,
+  exampleGmailResult,
   exampleHeldSync,
   exampleLumaResult,
   exampleRun,
@@ -43,6 +44,12 @@ it("says an Emails sync that held emails back is incomplete, but not one that he
   expect(runStatus(exampleRun("sync-emails", exampleEmailsResult))).toBe("incomplete");
   expect(runStatus(exampleRun("sync-emails", { ...exampleEmailsResult, unplaced: [] }))).toBe("ok");
   expect(runStatus(exampleFailedRun("sync-emails", "boom", {}))).toBe("failed");
+});
+
+it("says a Gmail read that couldn't read an account is incomplete, but not one that read them all, or failed", () => {
+  expect(runStatus(exampleRun("read-gmail", exampleGmailResult))).toBe("incomplete");
+  expect(runStatus(exampleRun("read-gmail", { accounts: exampleGmailResult.accounts.slice(0, 1) }))).toBe("ok");
+  expect(runStatus(exampleFailedRun("read-gmail", "boom", {}))).toBe("failed");
 });
 
 it("colours a run by how it ended: green done, applied or unchanged, amber held or stopped short, red failed, none otherwise", () => {

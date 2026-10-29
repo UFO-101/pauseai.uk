@@ -12,6 +12,7 @@ import { addAsk, deleteAsk, editAsk } from "@/lib/server/asks";
 import { importControlAiLetter } from "@/lib/server/controlai-import";
 import { isPoliticianAddress, unblock } from "@/lib/server/email";
 import { disconnectGmail } from "@/lib/server/gmail-accounts";
+import { readGmail } from "@/lib/server/gmail-reading";
 import { eraseSupporter } from "@/lib/server/erasure";
 import { importLuma } from "@/lib/server/luma-import";
 import { importMembers } from "@/lib/server/members-import";
@@ -114,6 +115,11 @@ export async function importLumaNow(): Promise<void> {
 export async function importMembersNow(): Promise<void> {
   const { email } = await requireStaff();
   await run("import-members", importMembers(email));
+}
+
+export async function readGmailNow(): Promise<void> {
+  const { email } = await requireStaff();
+  await run("read-gmail", readGmail(email));
 }
 
 export async function decideSync(form: FormData): Promise<void> {

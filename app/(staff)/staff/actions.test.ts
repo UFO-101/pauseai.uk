@@ -24,6 +24,7 @@ import {
   syncEmailsNow,
   importLumaNow,
   importMembersNow,
+  readGmailNow,
   endStaffSessionsNow,
   setAskStatus,
   removeStaffAccountNow,
@@ -74,6 +75,7 @@ describeWithDatabase("staff Server Actions", () => {
       () => importGoToParliamentNow(),
       () => importLumaNow(),
       () => importMembersNow(),
+      () => readGmailNow(),
       () => removeStaffAccountNow(form({ email: "x@pauseai.uk" })),
       () => saveStaffAccountNow(form({ email: "jo@pauseai.uk", "permission:admin": "on" })),
       () => eraseSupporterNow(form({ id: "1", reference: "r", confirm: "on" })),
@@ -197,6 +199,12 @@ describeWithDatabase("staff Server Actions", () => {
     expect(await runs()).toEqual([{ job: "import-members", status: "ok", startedBy: "jo@pauseai.uk" }]);
     expect(await query("SELECT count(*)::int AS n FROM members")).toEqual([{ n: 8 }]);
     expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data/members");
+  });
+
+  it("readGmailNow reads the connected Gmail as the staff member", async () => {
+    await readGmailNow();
+    expect(await runs()).toEqual([{ job: "read-gmail", status: "unchanged", startedBy: "jo@pauseai.uk" }]);
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data/gmail");
   });
 
   it("checkNow checks the MPs against Parliament's", async () => {

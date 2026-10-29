@@ -41,6 +41,7 @@ import {
   exampleFailedRun,
   exampleGoToParliamentResult,
   exampleLumaResult,
+  exampleGmailResult,
   exampleMembersResult,
   exampleRun,
   exampleSyncedMp,
@@ -293,6 +294,21 @@ const RUNS: Record<ImportJob, Variant> = {
     render: () => (
       <StaffPage as="div">
         <Run run={exampleRun("import-members", exampleMembersResult)} />
+      </StaffPage>
+    ),
+  },
+  "read-gmail": {
+    label: "A read of Gmail, one account unread",
+    render: () => (
+      <StaffPage as="div">
+        <Run run={exampleRun("read-gmail", exampleGmailResult)} open />
+        <Run
+          run={exampleRun(
+            "read-gmail",
+            { accounts: [{ ...exampleGmailResult.accounts[0], restarted: true }] },
+            { id: 2, startedBy: "jo@pauseai.uk" },
+          )}
+        />
       </StaffPage>
     ),
   },
@@ -1756,6 +1772,7 @@ export const staff: Group = {
                     { at: "2026-10-21T11:17:00Z" },
                   ),
                   exampleRun("import-members", exampleMembersResult, { at: "2026-10-21T11:47:00Z" }),
+                  exampleRun("read-gmail", exampleGmailResult, { at: "2026-10-21T11:20:00Z" }),
                   exampleRun(
                     "sync-politicians",
                     { changes: { added: [], removed: [exampleSyncedMp(2)], changed: [] }, records: [] },

@@ -4,14 +4,18 @@ import { gunzipSync } from "node:zlib";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
+import { NIGHTLY } from "@/lib/import-runs";
 import { addTestPolitician, connectTestGmail, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
 import { readBounce, readGmail } from "./gmail-reading";
+import { listRuns } from "./import-runs";
 import { letterReply } from "./outside-services/blobs";
 
 const API = "https://gmail.googleapis.com/gmail/v1/users/me";
 const JO = "jo@pauseai.uk";
 const REQUEST = new Request("https://pauseai.uk/api/cron/read-gmail", { method: "POST" });
+/** What the hourly job's read of every account found. */
+const read = async () => (await readGmail(NIGHTLY, REQUEST)).accounts;
 const fixture = (name: string) => readFileSync(join(process.cwd(), "tests/fixtures/gmail", name), "latin1");
 
 describe("readBounce", () => {
@@ -171,7 +175,7 @@ describeWithDatabase("reading Gmail", () => {
         },
       },
     });
-    expect(await readGmail(REQUEST)).toEqual([{ account: JO, replies: 2, autoReplies: 0, bounces: 0 }]);
+    expect(await read()).toEqual([{ account: JO, replies: 2, autoReplies: 0, bounces: 0 }]);
     expect(await replies()).toEqual([
       {
         letterId: letter,
@@ -199,7 +203,7 @@ describeWithDatabase("reading Gmail", () => {
     expect(fetched).toEqual(["r1:metadata", "r1:raw", "a1:metadata", "a1:raw"]);
 
     // Read again, nothing is kept twice.
-    expect(await readGmail(REQUEST)).toEqual([{ account: JO, replies: 0, autoReplies: 0, bounces: 0 }]);
+    expect(await read()).toEqual([{ account: JO, replies: 0, autoReplies: 0, bounces: 0 }]);
     expect(await replies()).toHaveLength(2);
   });
 
@@ -220,7 +224,7 @@ describeWithDatabase("reading Gmail", () => {
         x3: { headers: { From: "nobody@example.org", "Message-ID": "<x3@example.org>" }, threadId: "elsewhere" },
       },
     });
-    expect(await readGmail(REQUEST)).toMatchObject([{ replies: 2 }]);
+    expect(await read()).toMatchObject([{ replies: 2 }]);
     expect((await replies()).map((r) => [r.id, r.letterId])).toEqual([
       ["old", two],
       ["x1", one],
@@ -244,8 +248,8 @@ describeWithDatabase("reading Gmail", () => {
         },
       },
     });
-    expect(await readGmail(REQUEST)).toMatchObject([{ replies: 0, autoReplies: 1 }]);
-    expect(await readGmail(REQUEST)).toMatchObject([{ autoReplies: 0 }]);
+    expect(await read()).toMatchObject([{ replies: 0, autoReplies: 1 }]);
+    expect(await read()).toMatchObject([{ autoReplies: 0 }]);
     expect(await events()).toEqual([
       { letterId: letter, status: "auto_reply", details: { from: "polly@example.org", gmailMessageId: "ooo" } },
     ]);
@@ -275,7 +279,7 @@ describeWithDatabase("reading Gmail", () => {
         },
       },
     });
-    expect(await readGmail(REQUEST)).toMatchObject([{ bounces: 3 }]);
+    expect(await read()).toMatchObject([{ bounces: 3 }]);
     expect(
       await query("SELECT address, message_id, kind, reason, gmail_message_id FROM email_problems ORDER BY id"),
     ).toEqual([
@@ -295,7 +299,7 @@ describeWithDatabase("reading Gmail", () => {
     ]);
     expect(await query("SELECT status FROM letters WHERE id = $1", [letter])).toEqual([{ status: "bounced" }]);
     // The search finds them again tomorrow; they're recorded once.
-    expect(await readGmail(REQUEST)).toMatchObject([{ bounces: 0 }]);
+    expect(await read()).toMatchObject([{ bounces: 0 }]);
     expect(await query("SELECT 1 FROM email_problems")).toHaveLength(3);
   });
 
@@ -305,7 +309,7 @@ describeWithDatabase("reading Gmail", () => {
       history: ["b1"],
       messages: { b1: { headers: { From: "postmaster@example.net" }, raw: "Subject: hm\r\n\r\nNothing." } },
     });
-    expect(await readGmail(REQUEST)).toMatchObject([{ bounces: 0 }]);
+    expect(await read()).toMatchObject([{ bounces: 0 }]);
   });
 
   it("searches the last few days when the mailbox's history has gone, and starts again from now", async () => {
@@ -316,9 +320,7 @@ describeWithDatabase("reading Gmail", () => {
       search: { "newer_than:3d": ["r1"] },
       messages: { r1: { headers: { From: "polly@example.org", "In-Reply-To": "<letter-1@pauseai.uk>" }, raw: "x" } },
     });
-    expect(await readGmail(REQUEST)).toEqual([
-      { account: JO, replies: 1, autoReplies: 0, bounces: 0, restarted: true },
-    ]);
+    expect(await read()).toEqual([{ account: JO, replies: 1, autoReplies: 0, bounces: 0, restarted: true }]);
     expect(await query("SELECT gmail_history_id FROM staff_accounts")).toEqual([{ gmail_history_id: "1000" }]);
   });
 
@@ -334,7 +336,7 @@ describeWithDatabase("reading Gmail", () => {
           : HttpResponse.json({ historyId: "9" }),
       ),
     );
-    expect(await readGmail(REQUEST)).toEqual([
+    expect(await read()).toEqual([
       {
         account: "al@pauseai.uk",
         replies: 0,
@@ -348,6 +350,22 @@ describeWithDatabase("reading Gmail", () => {
     expect(await query("SELECT email, gmail_history_id AS h FROM staff_accounts ORDER BY email")).toEqual([
       { email: "al@pauseai.uk", h: "7" },
       { email: JO, h: "9" },
+    ]);
+  });
+
+  it("keeps each run in the import log, unchanged when it found nothing, and who started it", async () => {
+    await connectTestGmail(JO);
+    await sentLetter();
+    mailbox({});
+    await readGmail(JO);
+    mailbox({
+      history: ["r1"],
+      messages: { r1: { headers: { From: "polly@example.org", "In-Reply-To": "<letter-1@pauseai.uk>" }, raw: "x" } },
+    });
+    await readGmail(NIGHTLY, REQUEST);
+    expect(await listRuns("read-gmail")).toMatchObject([
+      { status: "ok", startedBy: NIGHTLY, result: { accounts: [{ account: JO, replies: 1 }] } },
+      { status: "unchanged", startedBy: JO, result: { accounts: [{ account: JO, replies: 0 }] } },
     ]);
   });
 });

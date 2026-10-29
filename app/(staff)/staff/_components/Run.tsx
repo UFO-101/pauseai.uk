@@ -6,6 +6,7 @@ import {
   type LumaImport,
   type MembersImport,
   type EmailSync,
+  type GmailReading,
   type GoToParliamentImport,
   type MpCheck,
   type PoliticianSync,
@@ -282,6 +283,26 @@ function MembersRun({ run, open }: { run: MembersImport; open?: boolean }) {
   );
 }
 
+/** A read of Gmail: the totals, then each account's, with whether it couldn't be read. */
+function GmailRun({ run, open }: { run: GmailReading; open?: boolean }) {
+  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} />;
+  const words = staffCopy.gmailReading;
+  const { accounts } = run.result;
+  return (
+    <RunBox run={run} summary={words.result(accounts)} lines={accounts.length} open={open}>
+      <ul>
+        {accounts.map((a) => (
+          <li key={a.account}>
+            {words.account(a)}
+            {a.restarted && ` ${words.restarted}`}
+            {a.error && <Muted> {words.failed(a.error)}</Muted>}
+          </li>
+        ))}
+      </ul>
+    </RunBox>
+  );
+}
+
 /** One run from the import log, as its job's page shows it; `open` starts its detail unfolded, however long. */
 export default function Run({ run, decide, open }: { run: AnyImportRun; decide?: Decide; open?: boolean }) {
   switch (run.job) {
@@ -301,5 +322,7 @@ export default function Run({ run, decide, open }: { run: AnyImportRun; decide?:
       return <LumaRun run={run} open={open} />;
     case "import-members":
       return <MembersRun run={run} open={open} />;
+    case "read-gmail":
+      return <GmailRun run={run} open={open} />;
   }
 }

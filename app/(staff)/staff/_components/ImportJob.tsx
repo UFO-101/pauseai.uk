@@ -40,6 +40,7 @@ const TAGS: Record<ImportJob, string[]> = {
   "check-mps": [words.web, words[JOB_SCHEDULES["check-mps"]], words.checkOnly],
   "import-controlai": [words.web, words[JOB_SCHEDULES["import-controlai"]]],
   "import-members": [words.airtable, words[JOB_SCHEDULES["import-members"]]],
+  "read-gmail": [words.gmail, words[JOB_SCHEDULES["read-gmail"]]],
 };
 
 /** Each job's description, around a link to where it reads from, and its button and what to say before its first run. */
@@ -101,6 +102,12 @@ const ABOUT: Record<
     href: JOIN_FORM,
     button: staffCopy.members.importNow,
     none: staffCopy.members.never,
+  },
+  "read-gmail": {
+    intro: staffCopy.gmailReading.intro,
+    href: "/staff/me",
+    button: staffCopy.gmailReading.readNow,
+    none: staffCopy.gmailReading.never,
   },
 };
 
