@@ -77,7 +77,9 @@ export async function letterThread(mailingId: number, letterId: number): Promise
   >(
     `SELECT m.title AS "mailingTitle", m.subject, json_build_object('name', n.name, 'email', n.email) AS "to",
        l.sent_at AS "sentAt", m.body, p.merge_values AS "mergeValues",
-       m.sent_from AS "sentFrom", m.from_name AS "fromName",
+       m.sent_from AS "sentFrom",
+       -- With no name of its own, it went in the Gmail's, as that was when it last connected.
+       coalesce(nullif(m.from_name, ''), (SELECT a.gmail_name FROM staff_accounts a WHERE a.email = m.sent_from)) AS "fromName",
        (SELECT s.gmail_thread_id FROM email_sends s WHERE s.letter_id = l.id AND s.outcome = 'sent'
         ORDER BY s.id DESC LIMIT 1) AS "gmailThreadId"
      FROM letters_from_pauseai p JOIN letters l USING (id) JOIN mailings m ON m.id = p.mailing_id

@@ -99,6 +99,16 @@ describeWithDatabase("letter threads", () => {
     expect(await letterThread(mailing, id + 1)).toBeUndefined();
   });
 
+  it("names a letter from a mailing with no From name by the Gmail's own name", async () => {
+    const { mailing, letter: id } = await letter();
+    await query("UPDATE mailings SET from_name = '' WHERE id = $1", [mailing]);
+    expect(await letterThread(mailing, id)).toMatchObject({ fromName: null });
+    await query(
+      "INSERT INTO staff_accounts (email, added_by, gmail_name) VALUES ('jo@pauseai.uk', 'test', 'Jo Gmail')",
+    );
+    expect(await letterThread(mailing, id)).toMatchObject({ fromName: "Jo Gmail" });
+  });
+
   it("gives an imported letter no text, and a message with no text, or gone, none either", async () => {
     const { mailing, letter: id } = await letter(true);
     await keep(id, "gone.eml.gz", null, "2026-11-02T12:00:00Z");
