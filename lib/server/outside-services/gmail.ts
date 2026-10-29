@@ -119,6 +119,18 @@ export async function gmailProfile(accessToken: string): Promise<{ emailAddress:
 }
 
 /**
+ * The name the account's own address sends as, its primary "Send mail as"
+ * address's; empty when it has none, and Gmail uses the Google account's.
+ */
+export async function gmailSendName(accessToken: string): Promise<string> {
+  const { sendAs } = await api<{ sendAs: { isPrimary?: boolean; displayName?: string }[] }>(
+    accessToken,
+    "/settings/sendAs",
+  );
+  return sendAs.find((address) => address.isPrimary)?.displayName ?? "";
+}
+
+/**
  * Sends an email as the account: Gmail sends it from the account's own
  * address, and keeps it in Sent. Returns Gmail's ID for it and its thread.
  * With fixtures, it's written to the outbox too (tests/fixtures/outbox.ts).

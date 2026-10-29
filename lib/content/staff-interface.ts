@@ -871,7 +871,6 @@ export const staffCopy = {
     connectOne: "Connect a Gmail on your account page",
     // In the preview, who it's from: the name comes from the Gmail account.
     from: "From",
-    fromGmail: (address: string) => `⁂ The name of the Gmail account <${address}>`,
     // The test copy's sender's name.
     testFromName: "PauseAI UK mailing test",
     day: "Day",

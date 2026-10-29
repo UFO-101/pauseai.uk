@@ -1557,6 +1557,7 @@ CREATE TABLE public.staff_accounts (
     gmail_token bytea,
     gmail_connected_at timestamp with time zone,
     gmail_history_id text,
+    gmail_name text,
     CONSTRAINT staff_accounts_email_check CHECK ((email = lower(email))),
     CONSTRAINT staff_accounts_email_pauseai CHECK ((email ~ '^[^@[:space:]]+@pauseai\.uk$'::text)),
     CONSTRAINT staff_accounts_gmail_check CHECK ((((gmail_token IS NULL) = (gmail_connected_at IS NULL)) AND ((gmail_token IS NOT NULL) OR (gmail_history_id IS NULL)))),

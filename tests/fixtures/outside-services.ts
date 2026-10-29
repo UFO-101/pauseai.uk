@@ -269,6 +269,14 @@ function googleResponse(hostname: string, pathname: string, init?: RequestInit):
   if (hostname !== "gmail.googleapis.com") return undefined;
   const account = new Headers(init!.headers).get("authorization")!.replace(/^Bearer fixture-access:/, "");
   if (pathname.endsWith("/profile")) return json({ emailAddress: account, historyId: "1000" });
+  // The account's name: its address's words, capitalised, as a person would set it.
+  if (pathname.endsWith("/settings/sendAs")) {
+    const name = account
+      .split("@")[0]
+      .split(/[.\-_]/)
+      .map((word) => word[0].toUpperCase() + word.slice(1));
+    return json({ sendAs: [{ sendAsEmail: account, displayName: name.join(" "), isPrimary: true }] });
+  }
   // The same email gets the same IDs every run, as Postmark's MessageID.
   if (pathname.endsWith("/messages/send")) {
     const id = fixtureUuid(String(init!.body)).replace(/-/g, "").slice(0, 16);

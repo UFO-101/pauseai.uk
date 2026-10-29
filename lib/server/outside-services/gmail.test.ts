@@ -14,6 +14,7 @@ import {
   gmailHistory,
   gmailMessageHeaders,
   gmailProfile,
+  gmailSendName,
   gmailRawMessage,
   revokeGmail,
   searchGmail,
@@ -162,6 +163,26 @@ describe("the Gmail API", () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+
+  it("gives the name the account's own address sends as, or none when it has none", async () => {
+    server.use(
+      http.get(`${API}/settings/sendAs`, () =>
+        HttpResponse.json({
+          sendAs: [
+            { sendAsEmail: "alias@pauseai.uk", displayName: "An alias" },
+            { sendAsEmail: "jo@pauseai.uk", displayName: "Jo Staff", isPrimary: true },
+          ],
+        }),
+      ),
+    );
+    expect(await gmailSendName("tok")).toBe("Jo Staff");
+    server.use(
+      http.get(`${API}/settings/sendAs`, () =>
+        HttpResponse.json({ sendAs: [{ sendAsEmail: "jo@pauseai.uk", isPrimary: true }] }),
+      ),
+    );
+    expect(await gmailSendName("tok")).toBe("");
   });
 
   it("says what Gmail refused", async () => {

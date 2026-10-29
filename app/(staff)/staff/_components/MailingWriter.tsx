@@ -564,6 +564,9 @@ function Preview({
   /** Sends the test copy of a recipient's email, saving the draft first if it isn't yet. */
   sendTest: (recipient: number) => ReturnType<MailingWriterActions["sendTest"]>;
 }) {
+  // The name the Gmail sends as, if it has one of its own, as its From line will show it.
+  const name = data.senders.find((sender) => sender.email === sentFrom)?.name;
+  const fromLine = name ? `${name} <${sentFrom}>` : sentFrom;
   const findLabel = useId();
   const [chosen, setChosen] = useState(data.recipients[0]?.id);
   // The answers pressed, since someone was last chosen; else theirs.
@@ -628,7 +631,7 @@ function Preview({
         <div className={styles.email}>
           <dl className={styles.headers}>
             <dt>{copy.from}</dt>
-            <dd>{sentFrom ? copy.fromGmail(sentFrom) : <Muted>{copy.noSender}</Muted>}</dd>
+            <dd>{sentFrom ? fromLine : <Muted>{copy.noSender}</Muted>}</dd>
             <dt>{copy.to}</dt>
             <dd>{`${recipient.name} <${recipient.email}>`}</dd>
             <dt>{copy.subject}</dt>

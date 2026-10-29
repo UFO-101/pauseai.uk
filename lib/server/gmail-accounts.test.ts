@@ -54,6 +54,8 @@ describeWithDatabase("connected Gmail accounts", () => {
     );
     expect(decryptToken(row.token)).toBe("fixture-refresh:jo@pauseai.uk");
     expect(row.historyId).toBe("1000");
+    // With the name it sends as, which the fixture Google makes from its address.
+    expect((await gmailAccounts()).map((one) => one.name)).toEqual(["Jo"]);
     expect(await audit()).toEqual([{ actor: "Jo@pauseai.uk", action: "connect gmail", details: { email: JO } }]);
     expect(await gmailAccess(JO)).toBe("fixture-access:jo@pauseai.uk");
   });
@@ -84,8 +86,8 @@ describeWithDatabase("connected Gmail accounts", () => {
     await sendFrom(JO, "2 hours", "failed");
     await sendFrom(JO, "25 hours");
     expect(await gmailAccounts()).toEqual([
-      { email: "al@pauseai.uk", connectedAt: expect.any(Date), sentToday: 0, remaining: GMAIL_DAILY_LIMIT },
-      { email: JO, connectedAt: expect.any(Date), sentToday: 2, remaining: GMAIL_DAILY_LIMIT - 2 },
+      { email: "al@pauseai.uk", name: "", connectedAt: expect.any(Date), sentToday: 0, remaining: GMAIL_DAILY_LIMIT },
+      { email: JO, name: "", connectedAt: expect.any(Date), sentToday: 2, remaining: GMAIL_DAILY_LIMIT - 2 },
     ]);
     expect(await gmailAccount("JO@pauseai.uk")).toMatchObject({ email: JO });
     expect(await gmailAccount("samuel.whitlock@pauseai.uk")).toBeUndefined();

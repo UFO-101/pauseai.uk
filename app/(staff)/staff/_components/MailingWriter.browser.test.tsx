@@ -440,12 +440,22 @@ describe("MailingWriter", () => {
     ).toEqual(["al@pauseai.uk", "samuel.whitlock@pauseai.uk"]);
     await expect.element(field(copy.fromLegend)).toHaveValue("al@pauseai.uk");
     await expect.element(from.getByRole("link", { name: copy.connectOne })).toHaveAttribute("href", "/staff/me#gmail");
+    // The preview's From: the name the Gmail sends as, or with none, its address alone.
+    const preview = region(copy.sections.preview);
+    await expect.element(preview.getByText("Al Example <al@pauseai.uk>")).toBeVisible();
     await field(copy.fromLegend).selectOptions("samuel.whitlock@pauseai.uk");
     await expect.element(from.getByText(staffCopy.gmail.sentToday(120, "1,800"))).toBeVisible();
+    await expect.element(preview.getByText("samuel.whitlock@pauseai.uk", { exact: true })).toBeVisible();
   });
 
   it("starts from the policy team's Gmail when it's connected", async () => {
-    const policy = { email: DEFAULT_SENDER, connectedAt: "2026-10-03T09:00:00Z", sentToday: 0, remaining: 1800 };
+    const policy = {
+      email: DEFAULT_SENDER,
+      name: "PauseAI Policy Team",
+      connectedAt: "2026-10-03T09:00:00Z",
+      sentToday: 0,
+      remaining: 1800,
+    };
     await renderWriter({ data: { ...exampleWriterData, senders: [...exampleWriterData.senders, policy] } });
     await expect.element(field(copy.fromLegend)).toHaveValue(DEFAULT_SENDER);
   });
