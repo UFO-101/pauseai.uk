@@ -1275,27 +1275,27 @@ export const staffCopy = {
     // The Answered filter: whether the MP replied.
     answered: { yes: "Answered", no: "Not answered" },
     // The titles of a letter's own page, and of a supporter's letters' page.
-    oneTitle: (from: string, to: string) => `⁂ Letter from ${from} to ${to}`,
+    oneTitle: (from: string, to: string) => `Letter from ${from} to ${to}`,
     fromTitle: (name: string) => `Letters from ${name}`,
     // Who PauseAI's letters are from, in a letter's title.
-    fromPauseai: "⁂ PauseAI UK",
+    fromPauseai: "PauseAI UK",
     // A letter's own page: its facts beside the list's, and the way to read it as it was sent.
     detail: {
-      subject: "⁂ Subject",
-      sent: "⁂ Sent",
-      mailing: "⁂ Mailing",
-      personalised: "⁂ Personalised",
-      historyTitle: "⁂ What happened to it",
-      noHistory: "⁂ Nothing recorded yet.",
+      subject: "Subject",
+      sent: "Sent",
+      mailing: "Mailing",
+      personalised: "Personalised",
+      historyTitle: "History",
+      noHistory: "Nothing recorded yet.",
       // What a change of status recorded, each field's name before its value: Postmark's, a bounce's, a reply's.
       fields: {
-        messageId: "⁂ Message ID",
-        type: "⁂ Type",
-        description: "⁂ Description",
-        reason: "⁂ Reason",
-        email: "⁂ Address",
-        from: "⁂ From",
-        subject: "⁂ Subject",
+        messageId: "Message ID",
+        type: "Type",
+        description: "Description",
+        reason: "Reason",
+        email: "Address",
+        from: "From",
+        subject: "Subject",
       } as Record<string, string>,
       // A supporter's letter, Bcc'd to policy@: its copy there.
       googleGroup: "Find it in Google Groups",
