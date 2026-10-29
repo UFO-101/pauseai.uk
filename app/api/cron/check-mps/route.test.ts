@@ -12,9 +12,9 @@ describeWithDatabase("POST /api/cron/check-mps", () => {
   useTestDatabase();
 
   it("checks the MPs against Parliament's, and says how many problems it found", async () => {
-    // No MPs copied yet, so both of Parliament's are missing.
+    // No MPs copied yet, so each of Parliament's is missing.
     const res = await call("Bearer s3cret");
-    expect(await res.json()).toEqual({ problems: 2 });
+    expect(await res.json()).toEqual({ problems: 3 });
   });
 
   it("refuses anyone without the secret", async () => {

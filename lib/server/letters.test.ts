@@ -194,7 +194,7 @@ describeWithDatabase("pauseaiLetters", () => {
 describeWithDatabase("getLetter", () => {
   useTestDatabase();
 
-  it("gives a supporter's letter, with its subject and the newest send's Postmark ID, only to staff with supporters", async () => {
+  it("gives a supporter's letter, with its subject and the newest send's Postmark ID", async () => {
     const mp = await addTestMp();
     const id = await addTestLetter({ politicianId: mp, senderName: "Jane Smith" });
     await query(
@@ -204,17 +204,16 @@ describeWithDatabase("getLetter", () => {
          ('2026-10-03T09:00:00Z', 'letter', $1, 'test-mp@example.org', 'failed', NULL)`,
       [id],
     );
-    const letter = await getLetter(id, ["supporters"]);
+    const letter = await getLetter(id);
     expect(letter).toMatchObject({ kind: "supporter", id, senderName: "Jane Smith", postmarkId: "pm-new" });
     expect(typeof (letter as { subject: string }).subject).toBe("string");
-    expect(await getLetter(id, [])).toBeUndefined();
-    expect(await getLetter(id + 100, ["supporters"])).toBeUndefined();
+    expect(await getLetter(id + 100)).toBeUndefined();
     // One never sent through Postmark has no ID.
     const unsent = await addTestLetter({ politicianId: mp });
-    expect(await getLetter(unsent, ["supporters"])).toMatchObject({ postmarkId: null });
+    expect(await getLetter(unsent)).toMatchObject({ postmarkId: null });
   });
 
-  it("gives PauseAI's letter to any staff, with its mailing and the MP's address", async () => {
+  it("gives PauseAI's letter, with its mailing and the MP's address", async () => {
     const mp = await addTestMp("mp@example.org");
     const [{ id }] = await query<{ id: number }>(
       "INSERT INTO letters (kind, notable_person_id, status, created_at, sent_at) VALUES ('pauseai', $1, 'sent', $2, $2) RETURNING id::int AS id",
@@ -225,7 +224,7 @@ describeWithDatabase("getLetter", () => {
        SELECT $1, id, true FROM mailings WHERE airtable_field = 'CSRB Iqbal Amendment'`,
       [id],
     );
-    expect(await getLetter(id, [])).toEqual({
+    expect(await getLetter(id)).toEqual({
       kind: "pauseai",
       id,
       status: "sent",

@@ -44,7 +44,7 @@ function nearWords(text: string, near: SupportersPage["near"]): string {
  * Activities, subscriptions, nations, MPs and events can each be chosen
  * more than once.
  */
-export function supporterFilters(
+function supporterFilters(
   search: Pick<SupportersSearch, "near">,
   { events, mps }: SupporterChoices = { events: [], mps: [] },
   near?: SupportersPage["near"],

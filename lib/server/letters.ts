@@ -152,12 +152,8 @@ export type PauseaiLetterDetails = {
 
 export type LetterDetails = SupporterLetterDetails | PauseaiLetterDetails;
 
-/**
- * Letter `id`, of either kind, for a staff member with `permissions`; or
- * undefined if there's none, or it's a supporter's and they can't see
- * supporters. Postmark's ID is the newest send's of the letter.
- */
-export async function getLetter(id: number, permissions: readonly Permission[]): Promise<LetterDetails | undefined> {
+/** Letter `id`, of either kind, or undefined if there's none. Postmark's ID is the newest send's of the letter. */
+export async function getLetter(id: number): Promise<LetterDetails | undefined> {
   const [pauseai] = await query<PauseaiLetterDetails>(
     `SELECT 'pauseai' AS kind, l.id::int AS id, l.status, l.created_at AS "createdAt", l.sent_at AS "sentAt",
        n.name AS "mpName", n.id::int AS "politicianId", n.email AS "mpEmail", m.id::int AS "mailingId",
@@ -170,7 +166,6 @@ export async function getLetter(id: number, permissions: readonly Permission[]):
     [id],
   );
   if (pauseai) return pauseai;
-  if (!permissions.includes("supporters")) return undefined;
   const [letter] = await recentLetters({ letterId: id });
   if (!letter) return undefined;
   const [{ subject, postmarkId }] = await query<{ subject: string; postmarkId: string | null }>(

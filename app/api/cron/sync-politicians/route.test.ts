@@ -21,7 +21,7 @@ describeWithDatabase("POST /api/cron/sync-politicians", () => {
     const res = await call("Bearer s3cret");
     expect(await res.json()).toEqual({
       status: "applied",
-      added: 6,
+      added: 7,
       removed: 0,
       changed: 0,
       renamed: 0,

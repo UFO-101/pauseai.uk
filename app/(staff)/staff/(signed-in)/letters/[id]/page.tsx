@@ -7,19 +7,18 @@ import LetterDetails, { letterTitle } from "../../../_components/LetterDetails";
 
 type Params = { params: Promise<{ id: string }> };
 
-/** The letter with the ID in the URL, PauseAI's or, for staff who can see supporters, a supporter's; or a 404. */
+/** The letter with the ID in the URL, a supporter's or PauseAI's; or a 404. */
 async function letterOf(params: Params["params"]) {
-  const { permissions } = await requireStaff();
-  return found(await getLetter(found(letterId((await params).id)), permissions));
+  return found(await getLetter(found(letterId((await params).id))));
 }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
-  await requireStaff();
+  await requireStaff("supporters");
   return { title: letterTitle(await letterOf(params)) };
 }
 
 /** One letter: who it's from and to, how it stands, what happened to it, and where to read it. */
 export default async function LetterPage({ params }: Params) {
-  await requireStaff();
+  await requireStaff("supporters");
   return <LetterDetails letter={await letterOf(params)} />;
 }

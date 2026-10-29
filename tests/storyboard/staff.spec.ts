@@ -551,7 +551,7 @@ async function postBounce(request: APIRequestContext, messageId?: string) {
   expect(await bounce.json()).toEqual({ recorded: true });
 }
 
-/** Writes to `mp` as `sender`, then, logged in, reads the letter's Postmark MessageID from the letters list. */
+/** Writes to `mp` as `sender`, then, logged in, reads the letter's Postmark MessageID from its link to the policy@ group. */
 async function sentLetterId(page: Page, database: string, sender: string, mp = TEST_MPS[0]): Promise<string> {
   await fakeTurnstile(page);
   await lookUpTestMp(page, BASE, mp);
@@ -562,7 +562,11 @@ async function sentLetterId(page: Page, database: string, sender: string, mp = T
   await page.goto(`${BASE}/staff/letters`);
   const row = page.getByRole("row").filter({ hasText: sender });
   await expect(row).toContainText(staffCopy.letters.status.sent);
-  return (await row.locator("code").first().textContent())!.match(/"messageId":"([\w-]+)"/)![1];
+  await row.getByRole("link").first().click();
+  const group = page.getByRole("link", { name: staffCopy.letters.detail.googleGroup });
+  const id = (await group.getAttribute("href"))!.match(/\/msgid\/policy\/([\w-]+)@mtasv\.net$/)![1];
+  await page.goto(`${BASE}/staff/letters`);
+  return id;
 }
 
 test("letters are listed, sent and bounced, and can be filtered by status and campaign, and reset", async ({
@@ -580,8 +584,7 @@ test("letters are listed, sent and bounced, and can be filtered by status and ca
   const sams = page.getByRole("row").filter({ hasText: sam });
   await expect(janes.locator("td").nth(5)).toHaveText(staffCopy.letters.status.sent);
   await expect(sams.locator("td").nth(5)).toHaveText(staffCopy.letters.status.bounced);
-  await expect(sams).toContainText("HardBounce");
-  await frame(page, "the letters list: one sent, one bounced, with Postmark's reason in its history");
+  await frame(page, "the letters list: one sent, one bounced");
 
   await addFilter(page, staffCopy.letters.columns.status, staffCopy.letters.status.bounced);
   await expect(page).toHaveURL(/\/staff\/letters\?.*status=bounced/);

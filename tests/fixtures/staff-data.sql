@@ -12,7 +12,8 @@
 -- doubling them. The rest are made up, with "seed" in their IDs. The
 -- letters go to the test MPs (lib/test-mps.json), which must be in the
 -- database already, and most recent ones then to Airtable's two. Supporters and their links are written at the end as
--- the matcher (lib/server/supporters.ts) would make them: one per email.
+-- the matcher (lib/server/supporters.ts) would make them: one per email,
+-- then one per UK mobile number.
 
 -- ---------------------------------------------------------------- staff
 
@@ -648,6 +649,13 @@ WITH emails AS (
 )
 INSERT INTO supporter_links (supporter_id, form_entry_id, matched_by, matched_value, linked_at)
 SELECT k.id, f.id, 'email', k.email, f.created_at FROM keyed k JOIN form_entries f ON lower(trim(f.email)) = k.email;
+
+-- Then those who gave the same UK mobile number are one, as the matcher
+-- merges them; and Jane Fixture was once two, the other's ID long gone.
+SELECT count(*) FROM merge_supporters_by_phone();
+INSERT INTO supporter_merges (from_id, into_id, merged_at)
+SELECT (SELECT max(id) + 1000 FROM supporters), k.supporter_id, now() - interval '20 days'
+FROM supporter_links k WHERE k.luma_user_id = 'usr-fixture-1';
 
 -- Each supporter's first seen, as refreshSupporterFacts() (lib/server/supporter-facts.ts) sets it after linking.
 UPDATE supporters s SET first_seen_at = f.first_seen_at FROM supporter_first_seen f WHERE f.supporter_id = s.id;

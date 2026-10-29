@@ -261,12 +261,17 @@ test("a letter writer is a supporter too, linked from the letters page", async (
   await expect(page.getByText("ZZ9 9ZZ", { exact: false })).toBeVisible();
   await frame(page, "the letter writer's page: the letter, and the postcode they gave");
 
-  // The letter's status leads to their letters, and back.
+  // The letter's status leads to its page, its copy in the policy@ group, and back to her.
   await page.getByRole("link", { name: staffCopy.letters.status.sent }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.letters.fromTitle("Jane Smith"));
-  await expect(page.getByRole("row").filter({ hasText: sender })).toBeVisible();
-  await frame(page, "their letters");
-  await page.getByRole("navigation", { name: "Jane Smith" }).getByRole("link").click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    staffCopy.letters.oneTitle("Jane Smith", "Testy McTestface MP"),
+  );
+  await expect(page.getByRole("link", { name: staffCopy.letters.detail.googleGroup })).toHaveAttribute(
+    "href",
+    /^https:\/\/groups\.google\.com\/a\/pauseai\.uk\/d\/msgid\/policy\/[\w-]+@mtasv\.net$/,
+  );
+  await frame(page, "her letter's page, with its copy in the policy@ group");
+  await page.getByRole("link", { name: "Jane Smith" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Jane Smith");
 });
 

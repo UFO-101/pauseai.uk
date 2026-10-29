@@ -1354,6 +1354,24 @@ describe("PoliticianDetails", () => {
     await render(
       <PoliticianDetails
         {...none}
+        pauseaiLetters={[
+          {
+            id: 11,
+            mailingId: 3,
+            mailing: "Example Mailing",
+            status: "sent",
+            personalised: false,
+            at: "2026-06-01T08:00:00Z",
+          },
+          {
+            id: 12,
+            mailingId: 3,
+            mailing: "Example Mailing",
+            status: "made-up",
+            personalised: false,
+            at: "2026-05-01T08:00:00Z",
+          },
+        ]}
         politician={MP}
         unblock={vi.fn()}
         letters={{
@@ -1382,8 +1400,10 @@ describe("PoliticianDetails", () => {
       `15 Oct 2026, 09:00${copy["unsigned-letter-replied"]} · ${pm.title}`,
       `13 Oct 2026, 08:00${copy.unsignedLetter} · ${pm.title} · ${staffCopy.letters.status.sent}`,
       `1 Jul 2026, 08:00${copy.unsignedLetter} · old-campaign · queued`,
+      `1 Jun 2026, 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.letters.status.sent}`,
+      `1 May 2026, 08:00${copy["pauseai-letter"]} Example Mailing · made-up`,
     ]);
-    expect(list.element().querySelector('a[href^="/staff/"]')).toBeNull();
+    expect(list.element().querySelector('a[href^="/staff/letters"]')).toBeNull();
   });
 
   it("gives each ask staff record, and each they've answered, a row: the answer first, the ask linked, who asked and when, who set the answer, and the form where staff record it", async () => {
