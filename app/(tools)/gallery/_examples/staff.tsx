@@ -630,14 +630,6 @@ export const staff: Group = {
           ),
         },
         {
-          label: "Logged in on three devices: the faint link under Log out",
-          render: () => (
-            <StaffPage as="div">
-              <StaffNav email="jo@pauseai.uk" permissions={[]} sessions={3} current="home" />
-            </StaffPage>
-          ),
-        },
-        {
           label: "For an admin, on each page",
           render: () => (
             <StaffPage as="div">

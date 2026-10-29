@@ -179,14 +179,6 @@ describe("StaffNav", () => {
     expect(document.querySelector("summary")!.textContent).toBe(staffCopy.me.title);
   });
 
-  it("with more than one session, links faintly to them under Log out, there and in the phone's menu", async () => {
-    const { rerender } = await render(<StaffNav email="jo@pauseai.uk" permissions={[]} sessions={3} current="home" />);
-    const links = document.querySelectorAll('a[href="/staff/me#sessions"]');
-    expect([...links].map((a) => a.textContent)).toEqual([staffCopy.nav.sessions(3), staffCopy.nav.sessions(3)]);
-    await rerender(<StaffNav email="jo@pauseai.uk" permissions={[]} sessions={1} current="home" />);
-    expect(document.querySelector('a[href="/staff/me#sessions"]')).toBeNull();
-  });
-
   it("shows the Supporters section, Letters in it, to someone with supporters", async () => {
     await render(<StaffNav email="jo@pauseai.uk" permissions={["supporters"]} current="letters" />);
     const nav = document.querySelector("nav")!;

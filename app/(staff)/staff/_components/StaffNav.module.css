@@ -83,6 +83,7 @@ button.page {
 
 button.page:hover {
   color: var(--text);
+  text-decoration: underline;
 }
 
 .group a,
@@ -120,18 +121,6 @@ button.page:hover {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-
-/* Under Log out: how many sessions are open, faint, as few need it. */
-.sessions {
-  justify-self: start;
-  color: var(--text-secondary);
-  font-size: var(--text-xs);
-  text-decoration: none;
-}
-
-.sessions:hover {
-  text-decoration: underline;
 }
 
 /* Wider screens: the sidebar, with the groups spaced down it and the foot
@@ -235,8 +224,7 @@ button.page:hover {
    showing a short rule instead of its words. Each page's name is still read out, and shows beside its icon on
    hover or focus. */
 @media (min-width: 721px) {
-  :global(:root[data-staff-nav="folded"]) .name,
-  :global(:root[data-staff-nav="folded"]) .sessions {
+  :global(:root[data-staff-nav="folded"]) .name {
     display: none;
   }
 

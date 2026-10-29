@@ -55,7 +55,7 @@ export const staffCopy = {
       politicians: "Politicians",
       admin: "Admin",
       // Over your address, which leads to your own page.
-      profile: "Profile",
+      profile: "Your account",
     } as Record<string, string>,
     supporters: "Supporters",
     politicians: "Politicians",
@@ -67,8 +67,6 @@ export const staffCopy = {
     supporterEmails: "Blocked emails",
     mpEmails: "Blocked emails",
     logout: "Log out",
-    // Under Log out, faintly, only with more than one session open: how many, linked to the page of them.
-    sessions: (n: number) => `${n} sessions`,
   },
   // One of PauseAI's letters, and the replies in its thread.
   letterThread: {

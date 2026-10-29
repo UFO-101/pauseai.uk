@@ -10,8 +10,6 @@ import StaffPage from "../_components/ui/StaffPage";
  * for the navigation.
  */
 export default async function SignedInLayout({ children }: { children: React.ReactNode }) {
-  const { email, permissions, sessions } = await requireStaff();
-  return (
-    <StaffPage nav={<StaffNav email={email} permissions={permissions} sessions={sessions} />}>{children}</StaffPage>
-  );
+  const { email, permissions } = await requireStaff();
+  return <StaffPage nav={<StaffNav email={email} permissions={permissions} />}>{children}</StaffPage>;
 }

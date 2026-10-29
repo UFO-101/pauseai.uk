@@ -28,8 +28,6 @@ type Props = {
   email?: string;
   /** Their permissions, which decide the pages they see. */
   permissions?: Permission[];
-  /** How many sessions they have open: with more than one, a faint link under Log out to them, on their own page. */
-  sessions?: number;
   /** The page to mark, as the component gallery shows it; otherwise the one the URL is (staffPageAt). */
   current?: StaffPage;
 };
@@ -49,7 +47,7 @@ type Props = {
  * stays as they change, marking the page the URL is; the phone's dropdown
  * closes when it does.
  */
-export default function StaffNav({ email, permissions = [], sessions = 1, current: shown }: Props) {
+export default function StaffNav({ email, permissions = [], current: shown }: Props) {
   const path = usePathname();
   const current = shown ?? staffPageAt(path);
   // The pause symbol and the name: the way home, except at home.
@@ -116,11 +114,6 @@ export default function StaffNav({ email, permissions = [], sessions = 1, curren
       </ul>
     </section>
   );
-  const others = sessions > 1 && (
-    <StaffLink href={`${ME_PATH}#sessions`} className={styles.sessions}>
-      {staffCopy.nav.sessions(sessions)}
-    </StaffLink>
-  );
   return (
     <nav className={styles.nav} aria-label={staffCopy.nav.title}>
       {title}
@@ -138,7 +131,6 @@ export default function StaffNav({ email, permissions = [], sessions = 1, curren
               <span className={styles.label}>{staffCopy.nav.logout}</span>
             </button>
           </form>
-          {others}
         </div>
       </div>
       {/* A phone: a dropdown at the right of the bar, the current page with an arrow. */}
@@ -153,7 +145,6 @@ export default function StaffNav({ email, permissions = [], sessions = 1, curren
               {staffCopy.nav.logout}
             </button>
           </form>
-          {others}
         </div>
       </details>
     </nav>

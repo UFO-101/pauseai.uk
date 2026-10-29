@@ -204,11 +204,11 @@ async function otherBrowser(browser: Browser, database: string, email: string): 
 test("Logged in on two browsers: log out of both", async ({ page, browser, flowDatabase }) => {
   const other = await otherBrowser(browser, flowDatabase, staffEmail());
   await logIn(page, flowDatabase);
-  const link = page.getByRole("link", { name: staffCopy.nav.sessions(2) }).filter({ visible: true });
-  // On a phone, the link is in the bar's menu.
+  // Your address in the sidebar leads to your own page (on a phone, inside the bar's menu).
+  const link = page.locator('nav a[href="/staff/me"]').filter({ visible: true });
   if ((await link.count()) === 0) await page.locator("summary").click();
   await expect(link).toBeVisible();
-  await frame(page, "the home: a faint link under Log out, logged in on two devices");
+  await frame(page, "the home: your address under Your account leads to where you're logged in");
 
   await link.click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.me.title);
