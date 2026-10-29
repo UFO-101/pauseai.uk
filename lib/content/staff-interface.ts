@@ -132,7 +132,7 @@ export const staffCopy = {
         heldSync: (changes: number) => `MP import would change ${changes} MPs`,
         // Why it's held, and what to do.
         heldSyncDetail:
-          "That's a lot of MPs, so please check it, and approve or decline it. Fix any problems in Airtable.",
+          "That's a lot of MPs, so please check it, and apply or discard it. Fix any problems in Airtable.",
         decide: "Review import",
         blockedMp: (name: string) => `${name}'s email is bouncing`,
         blockedMpDetail: "Find a working email for this MP if it has changed, or unblock if working now.",
@@ -802,7 +802,7 @@ export const staffCopy = {
     willGet: (n: number) => `${n} ${n === 1 ? "politician" : "politicians"} will be emailed.`,
     // Who's left out: each part only when there are some.
     leftOut: (found: number, noAddress: number, blocked: number) =>
-      `Of the ${found} people the filter found, ${[
+      `Of the ${found} ${found === 1 ? "person" : "people"} the filter found, ${[
         noAddress && `${noAddress} ${noAddress === 1 ? "has" : "have"} no email address`,
         blocked && `${blocked} ${blocked === 1 ? "has an address that's blocked" : "have addresses that are blocked"}`,
       ]
@@ -901,7 +901,7 @@ export const staffCopy = {
     comingLine: (by: string, when: string, n: number) => `${by} · ${when} · to ${n} ${n === 1 ? "person" : "people"}`,
     // On the politicians list, beside Download.
     mailThese: (n: number) => `Mail these ${n}…`,
-    useThese: (n: number) => `Use these ${n} for the draft`,
+    useThese: (n: number) => (n === 1 ? "Use this one for the draft" : `Use these ${n} for the draft`),
     // A mailing's own page.
     states: {
       draft: "Draft",
@@ -970,14 +970,14 @@ export const staffCopy = {
     // Under the link, in red, while what's in it isn't a whole one.
     badLink: "Give a full link beginning https://",
     // Over an ask's slug, which doesn't change.
-    slugLabel: "URL slug",
+    slugLabel: "URL slug: ",
     kindFixed: "⁂ Its kind can't change, as politicians have answered it.",
     fixed: "⁂ The site's code uses this ask, so it can't be changed here.",
     // Beside the form: the ask as it will show on a politician's page.
     previewTitle: "What the ask will look like on a politician's page",
     save: "Save ask",
     delete: "Delete ask",
-    notDeletable: "⁂ It can't be deleted while answers, campaigns or mailings refer to it.",
+    notDeletable: "Asks can't be deleted while answers, campaigns or mailings refer to them.",
     // After saving or deleting, or failing to.
     notices: {
       added: "Ask added.",
@@ -1213,7 +1213,8 @@ export const staffCopy = {
     // After the counts, how many pages of contacts the run read (runs kept before this was recorded don't say).
     contactPages: (pages: number) => `${pages} pages of contacts read.`,
     // After that, the postcodes and towns looked up at postcodes.io for where supporters are (runs kept before this was recorded don't say).
-    places: (p: { postcodes: number; towns: number }) => `${p.postcodes} postcodes, ${p.towns} towns looked up.`,
+    places: (p: { postcodes: number; towns: number }) =>
+      `${p.postcodes} ${p.postcodes === 1 ? "postcode" : "postcodes"}, ${p.towns} ${p.towns === 1 ? "town" : "towns"} looked up.`,
     // After that, when postcodes.io failed partway: the next run carries on.
     placesFailed: "Postcodes.io failed: the next run carries on.",
     stoppedBy: {
@@ -1521,19 +1522,20 @@ export const staffCopy = {
     } as Record<string, string>,
     // A held MP import decided, linked to the import's page.
     run: (id: string) => `Import run ${id}`,
-    // After each number an import, a sync or an erasure logged: what it counted.
+    // After each number an import, a sync, an erasure or the end of sessions logged: what it counted, for one and for more.
     counts: {
-      added: "added",
-      removed: "removed",
-      changed: "changed",
-      matched: "matched",
-      alreadySet: "already signed",
-      problems: "problems",
-      lumaUsers: "Luma people",
-      formEntries: "form entries",
-      letters: "letters",
-      members: "member records",
-    } as Record<string, string>,
+      added: () => "added",
+      removed: () => "removed",
+      changed: () => "changed",
+      matched: () => "matched",
+      alreadySet: () => "already signed",
+      problems: (n: number) => (n === 1 ? "problem" : "problems"),
+      lumaUsers: (n: number) => (n === 1 ? "Luma person" : "Luma people"),
+      formEntries: (n: number) => (n === 1 ? "form entry" : "form entries"),
+      letters: (n: number) => (n === 1 ? "letter" : "letters"),
+      members: (n: number) => (n === 1 ? "member record" : "member records"),
+      sessions: (n: number) => (n === 1 ? "session" : "sessions"),
+    } as Record<string, (n: number) => string>,
   },
 };
 

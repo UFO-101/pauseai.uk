@@ -61,7 +61,7 @@ function Field({ name, value, airtableTable }: { name: string; value: unknown; a
   if (typeof value === "number") {
     return (
       <>
-        {value} {copy.counts[name] ?? name}
+        {value} {copy.counts[name]?.(value) ?? name}
       </>
     );
   }

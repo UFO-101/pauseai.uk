@@ -22,20 +22,23 @@ export type Decide = (formData: FormData) => void | Promise<void>;
 
 /**
  * Politicians a sync added, lost or changed, each by where they sit and
- * their name. Runs from before every body was read have only MPs, without
+ * their name, in the order a person reads them. Runs from before every body was read have only MPs, without
  * a house.
  */
 function Politicians({ heading, politicians }: { heading: string; politicians: Partial<SyncedPolitician>[] }) {
   if (politicians.length === 0) return null;
+  const where = (p: Partial<SyncedPolitician>) => `${p.constituency ?? staffCopy.houses[p.house!]}: ${p.name}`;
+  // In the order a person reads them, a number in a name as a number: Gone 2 before Gone 10.
+  const sorted = [...politicians].sort((a, b) => where(a).localeCompare(where(b), "en-GB", { numeric: true }));
   return (
     <>
       <h4>
         {heading} ({politicians.length})
       </h4>
       <ul>
-        {politicians.map((p) => (
+        {sorted.map((p) => (
           <li key={p.airtableId}>
-            {p.constituency ?? staffCopy.houses[p.house!]}: {p.name}
+            {where(p)}
             {p.email ? "" : ` (${staffCopy.politicians.noEmail})`}
           </li>
         ))}
@@ -96,7 +99,7 @@ function SyncRun({ run, decide, open }: { run: PoliticianSync; decide?: Decide; 
         <>
           {staffCopy.syncs.added} {added.length}, {staffCopy.syncs.removed} {removed.length}, {staffCopy.syncs.changed}{" "}
           {changed.length}
-          {run.result.statuses && <> {staffCopy.syncs.statuses(run.result.statuses)}</>}
+          {run.result.statuses && <>. {staffCopy.syncs.statuses(run.result.statuses)}</>}
         </>
       }
       actions={

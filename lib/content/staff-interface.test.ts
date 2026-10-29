@@ -21,6 +21,29 @@ describe("staff interface copy", () => {
     for (const n of ["12", "3", "4", "5", "6"]) expect(meetings).toContain(n);
   });
 
+  it("words a count of one, and of more, each its own way", () => {
+    const counts = staffCopy.changes.counts;
+    expect(Object.keys(counts).map((key) => [counts[key](1), counts[key](2)])).toEqual([
+      ["added", "added"],
+      ["removed", "removed"],
+      ["changed", "changed"],
+      ["matched", "matched"],
+      ["already signed", "already signed"],
+      ["problem", "problems"],
+      ["Luma person", "Luma people"],
+      ["form entry", "form entries"],
+      ["letter", "letters"],
+      ["member record", "member records"],
+      ["session", "sessions"],
+    ]);
+    expect(staffCopy.luma.places({ postcodes: 1, towns: 1 })).toBe("1 postcode, 1 town looked up.");
+    expect(staffCopy.luma.places({ postcodes: 2, towns: 6 })).toBe("2 postcodes, 6 towns looked up.");
+    expect(staffCopy.mailingPages.leftOut(1, 1, 0)).toContain("Of the 1 person the filter found");
+    expect(staffCopy.mailingPages.leftOut(3, 1, 0)).toContain("Of the 3 people the filter found");
+    expect(staffCopy.mailingPages.useThese(1)).toBe("Use this one for the draft");
+    expect(staffCopy.mailingPages.useThese(4)).toBe("Use these 4 for the draft");
+  });
+
   it("names the ask being edited", () => {
     expect(staffCopy.asks.editTitle("Winter reception")).toContain("Winter reception");
   });

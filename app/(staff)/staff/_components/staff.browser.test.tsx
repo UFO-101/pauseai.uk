@@ -2478,7 +2478,7 @@ describe("ChangesTable", () => {
     const signed = staffCopy.politician.statusSet(staffCopy.statuses.signed);
     const cleared = staffCopy.politician.statusCleared;
     const odd = staffCopy.politician.statusSet("odd");
-    const count = (n: number, key: string) => `${n} ${copy.counts[key]}`;
+    const count = (n: number, key: string) => `${n} ${copy.counts[key](n)}`;
     expect(details).toEqual([
       `Polly Placeholder · ${signed.before}${pm.title}${signed.after}, 1 Oct 2026 · ${labels.note} By email`,
       `${copy.gone("99")} · ${cleared.before}controlai-letter${cleared.after}`,
