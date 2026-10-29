@@ -75,6 +75,9 @@ reach us:
   opt-out too. Anything less clear, such as "not interested", is shown
   to staff on the supporter's page with a button to record it as an
   opt-out.
+- **Global's CRM**, for members, if the chapter contacts API gives
+  `do_not_sms` and `do_not_phone` (`plans/supporters-email.md`): the
+  first is a stop of messages, the second of calls.
 - **Anywhere else**: an email, a word at an event, a call. Staff record
   it on the supporter's page, with a note of how it was given.
 - **A page on pauseai.uk**, linked from each message, where someone can
@@ -130,7 +133,11 @@ less, starting with the weekly and event messages.
    came by, staff recording one by hand, and the page on pauseai.uk.
 4. Mark a number that turns out not to be a mobile, or not to be on
    WhatsApp, and skip it in future.
-5. Store each reply in a new `message_replies` table, with the message
+5. A new source for `volunteering`. Global's new join form won't ask
+   for intent, so a new member's number, with no intent, is unsure.
+   Global's `volunteer_updates` list could say who wants to volunteer,
+   or our own join form could ask.
+6. Store each reply in a new `message_replies` table, with the message
    it answers, and show it on the supporter's page with a reply box.
    Staff answers are stored there too. Anyone with the `supporters`
    permission can reply, and each reply records who sent it.
@@ -286,3 +293,6 @@ WhatsApp messages to politicians, and a calling tool.
    gives each person for our business. Do we store that ID against the
    number when we send, so a later stop can be matched?
 6. Which text provider, and can it take over the giffgaff number?
+7. Once the join form stops asking intent, where do we learn who wants
+   to volunteer: Global's `volunteer_updates` list, our own join form,
+   or something else?
