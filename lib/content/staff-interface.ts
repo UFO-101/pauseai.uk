@@ -71,21 +71,18 @@ export const staffCopy = {
   },
   // Your own page: your sessions and your Gmail.
   me: {
-    title: "⁂ You",
-    intro: "⁂ Your Gmail, and where you're logged in.",
+    title: "⁂ Your account",
     sessionsTitle: "⁂ Where you're logged in",
   },
   // Connecting a staff member's Gmail, on their own page and in a mailing's Sent from.
   gmail: {
-    title: "⁂ Your Gmail",
+    title: "Let anyone send mails from your GMail",
     // What connecting it means, said before it goes to Google.
     explain: [
-      "⁂ Connecting your Gmail lets the site send mailings to politicians from your address, as if you'd written each one. They're kept in your Sent mail, and replies come back to you.",
-      "⁂ Once it's connected, any staff member can send a mailing from it.",
-      "⁂ The site reads only the replies to those letters, and bounces: it looks at the headers of new messages to find them, and opens nothing else. It never deletes or changes anything.",
+      "⁂ Mailings to politicians go from your address, kept in your Sent mail, and replies come back to you.",
+      "⁂ The site reads only those replies and bounces, and never deletes or changes anything.",
     ],
-    limit: (limit: string) =>
-      `⁂ It sends at most ${limit} emails a day from one account, so your own email still goes.`,
+    limit: (limit: string) => `⁂ At most ${limit} a day, so your own email still goes.`,
     connect: "⁂ Connect Gmail",
     disconnect: "⁂ Disconnect Gmail",
     connected: (when: string) => `⁂ Connected ${when}.`,
