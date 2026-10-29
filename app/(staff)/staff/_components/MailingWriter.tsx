@@ -21,10 +21,11 @@ import {
 import { answerLabels } from "@/lib/mailing-fields";
 import { scheduleProblems } from "@/lib/mailing-schedule";
 import { filtersPath } from "@/lib/staff-search";
-import { fromLondon, londonDayHour, londonWhen } from "@/lib/staff-time";
+import { earliestHour, fromLondon, londonDayHour, londonWhen } from "@/lib/staff-time";
 import type { ChannelResult } from "@/lib/server/mailing-channels";
 import type { MailingAttachmentSummary, SaveResult, ScheduleResult, WrittenMailing } from "@/lib/server/mailing-drafts";
 import type { PreviewRecipient, WriterData } from "@/lib/server/mailing-pages";
+import { CHECK_EVERY, DueTimeFields } from "./DueTime";
 import { DeleteDraft } from "./MailingButtons";
 import MailingEditor from "./MailingEditor";
 import MailingFiles from "./MailingFiles";
@@ -114,20 +115,6 @@ function Help({ id, label, children }: { id: string; label: string; children: Re
     </>
   );
 }
-
-/** How close to the hour is too close to send on it. */
-const TOO_SOON = 5 * 60_000;
-
-/**
- * The first whole hour it can go at, as an ISO string: one at least
- * TOO_SOON away. London's hours start when UTC's do.
- */
-function earliestHour(): string {
-  return new Date(Math.ceil((Date.now() + TOO_SOON) / 3_600_000) * 3_600_000).toISOString();
-}
-
-/** How often the page checks the time it goes hasn't become too soon. */
-const CHECK_EVERY = 30_000;
 
 /**
  * A new mailing, or a draft, on one page, in six numbered sections: who
@@ -450,42 +437,16 @@ export default function MailingWriter({
 
         <Card span={6} title={<Numbered n={5}>{copy.sections.when}</Numbered>} id="when-title">
           <div className={styles.when}>
-            <Field label={copy.day} className={styles.day}>
-              <TextInput
-                type="date"
-                // Always a day, so Firefox shows no button to clear it.
-                required
-                min={earliest.day}
-                value={when.day}
-                onChange={(event) => {
-                  const day = event.target.value;
-                  setDayPicked(day);
-                  if (when.hour === null) return;
-                  // On the first day it can go, an hour too soon moves on to the first it can go at.
-                  const hour = day === earliest.day && when.hour < earliest.hour ? earliest.hour : when.hour;
-                  change({ dueAt: day ? fromLondon(day, hour) : null });
-                }}
-              />
-            </Field>
-            <Field label={copy.hour} className={styles.hour}>
-              <Select
-                value={when.hour ?? ""}
-                disabled={!when.day}
-                onChange={(event) => change({ dueAt: fromLondon(when.day, Number(event.target.value)) })}
-              >
-                {when.hour === null && (
-                  <option value="" disabled>
-                    {copy.choose}
-                  </option>
-                )}
-                {Array.from({ length: 24 }, (_, hour) => (
-                  // On the first day it can go, the hours too soon can't be chosen.
-                  <option key={hour} value={hour} disabled={when.day === earliest.day && hour < earliest.hour}>
-                    {`${String(hour).padStart(2, "0")}:00`}
-                  </option>
-                ))}
-              </Select>
-            </Field>
+            <DueTimeFields
+              day={when.day}
+              hour={when.hour}
+              dayClass={styles.day}
+              hourClass={styles.hour}
+              onChange={(day, hour) => {
+                setDayPicked(day);
+                if (hour !== null) change({ dueAt: day ? fromLondon(day, hour) : null });
+              }}
+            />
           </div>
         </Card>
 

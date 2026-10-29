@@ -110,6 +110,8 @@ import {
   JobActionsExample,
   MailingEditorExample,
   MailingButtonsExample,
+  ChangeTimeFormExample,
+  DueTimeFieldsExample,
   MailingFilesExample,
   MailingForExample,
   MailingsOverviewExample,
@@ -1463,6 +1465,34 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <MailingCounts mailing={exampleMailings[0]} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "DueTimeFields",
+      file: "app/(staff)/staff/_components/DueTime.tsx",
+      variants: [
+        {
+          label: "Today, no hour yet: the hours too soon greyed out",
+          render: () => (
+            <StaffPage as="div">
+              <DueTimeFieldsExample />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "ChangeTimeForm",
+      file: "app/(staff)/staff/_components/DueTime.tsx",
+      variants: [
+        {
+          label: "A time become too soon, moved on to the first it can go",
+          render: () => (
+            <StaffPage as="div">
+              <ChangeTimeFormExample />
             </StaffPage>
           ),
         },

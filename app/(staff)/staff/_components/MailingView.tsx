@@ -1,9 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { buttonClass } from "@/components/ui/Button";
-import { Select, TextInput } from "@/components/ui/Controls";
-import { Field } from "@/components/ui/Field";
-import { SubmitButton } from "@/components/ui/SubmitButton";
 import Tag, { type TagTone } from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -12,7 +9,8 @@ import type { Ask } from "@/lib/server/asks";
 import type { MailingState, WrittenMailing } from "@/lib/server/mailing-drafts";
 import type { Mailing, MailingRecipient } from "@/lib/server/mailings";
 import { filtersPath, pageParam } from "@/lib/staff-search";
-import { londonDayHour, londonWhen, staffDate, staffTime } from "@/lib/staff-time";
+import { londonWhen, staffDate, staffTime } from "@/lib/staff-time";
+import { ChangeTimeForm } from "./DueTime";
 import { StopMailing } from "./MailingButtons";
 import MailingFiles from "./MailingFiles";
 import { MailingLetter } from "./MailingLetter";
@@ -99,30 +97,10 @@ function recipientColumns(mailing: Mailing): ListColumn<MailingRecipient>[] {
 
 /** Change the time: a button with a small form of the day and hour, in London, hung from it. */
 function ChangeTime({ mailing, action }: { mailing: WrittenMailing; action: FormAction }) {
-  const { day, hour } = londonDayHour(mailing.dueAt!);
   return (
-    <>
-      <Menu id="change-time" trigger={buttonClass({ variant: "ghost", fit: true })} label={copy.changeTime}>
-        <form action={action} className={styles.changeTime}>
-          <input type="hidden" name="id" value={mailing.id} />
-          <Field label={copy.day}>
-            <TextInput type="date" name="day" defaultValue={day} required />
-          </Field>
-          <Field label={copy.hour}>
-            <Select name="hour" defaultValue={hour}>
-              {Array.from({ length: 24 }, (_, h) => (
-                <option key={h} value={h}>
-                  {`${String(h).padStart(2, "0")}:00`}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <SubmitButton variant="primary" size="small" fit>
-            {copy.saveTime}
-          </SubmitButton>
-        </form>
-      </Menu>
-    </>
+    <Menu id="change-time" trigger={buttonClass({ variant: "ghost", fit: true })} label={copy.changeTime}>
+      <ChangeTimeForm id={mailing.id} dueAt={mailing.dueAt!} action={action} className={styles.changeTime} />
+    </Menu>
   );
 }
 

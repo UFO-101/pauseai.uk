@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, onTestFinished, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -209,6 +209,8 @@ describe("MailingView", () => {
   });
 
   it("scheduled: when it sends, Change the time in London's hours, and Stop", async () => {
+    vi.useFakeTimers({ now: new Date("2026-10-29T12:00:00Z"), toFake: ["Date"] });
+    onTestFinished(() => void vi.useRealTimers());
     const forms: FormData[] = [];
     const action = async (form: FormData) => void forms.push(form);
     await view({ written: { ...written, state: "scheduled" }, stop: action, reschedule: action });
@@ -228,6 +230,44 @@ describe("MailingView", () => {
           ["hour", "10"],
         ],
         [["id", "12"]],
+      ]);
+  });
+
+  it("Change the time never offers a time too soon: it starts at the first it can go, and moves on as time passes", async () => {
+    vi.useFakeTimers({ now: new Date("2026-12-01T08:58:00Z"), toFake: ["Date", "setInterval", "clearInterval"] });
+    onTestFinished(() => void vi.useRealTimers());
+    const forms: FormData[] = [];
+    const action = async (form: FormData) => void forms.push(form);
+    await view({ written: { ...written, state: "scheduled" }, reschedule: action });
+    await page.getByRole("button", { name: copy.changeTime }).click();
+    const day = page.getByLabelText(copy.day);
+    const hour = page.getByRole("combobox");
+    const option = (h: number) => page.getByRole("option", { name: `${String(h).padStart(2, "0")}:00` });
+    // It goes at 09:00, five minutes from now in London: too soon, so 10:00, and the hours before it can't be.
+    await expect.element(day).toHaveAttribute("min", "2026-12-01");
+    await expect.element(hour).toHaveValue("10");
+    await expect.element(option(9)).toBeDisabled();
+    await expect.element(option(10)).not.toBeDisabled();
+    // Another day, any hour; back to today, one too soon moves on; a day cleared keeps the one before.
+    await day.fill("2026-12-02");
+    await hour.selectOptions("7");
+    await expect.element(option(7)).not.toBeDisabled();
+    await day.fill("2026-12-01");
+    await expect.element(hour).toHaveValue("10");
+    await day.fill("");
+    await expect.element(day).toHaveValue("2026-12-01");
+    // An hour on, 10:00 is too soon too.
+    vi.advanceTimersByTime(58 * 60_000);
+    await expect.element(hour).toHaveValue("11");
+    await page.getByRole("button", { name: copy.saveTime }).click();
+    await expect
+      .poll(() => forms.map((form) => [...form.entries()]))
+      .toEqual([
+        [
+          ["id", "12"],
+          ["day", "2026-12-01"],
+          ["hour", "11"],
+        ],
       ]);
   });
 

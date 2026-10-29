@@ -54,3 +54,19 @@ export function londonWhen(at: string): string {
   });
   return `${day} at ${String(hour).padStart(2, "0")}:00`;
 }
+
+/** How close to an hour is too close for a mailing to go on it. */
+const TOO_SOON = 5 * 60_000;
+
+/**
+ * The first whole hour a mailing can go at, as an ISO string: one at least
+ * TOO_SOON away. London's hours start when UTC's do.
+ */
+export function earliestHour(): string {
+  return new Date(Math.ceil((Date.now() + TOO_SOON) / 3_600_000) * 3_600_000).toISOString();
+}
+
+/** `hour` on `day`, unless that's the first day a mailing can go and the hour is sooner than the first it can go at, when it's that. */
+export function hourNotTooSoon(day: string, hour: number, earliest: { day: string; hour: number }): number {
+  return day === earliest.day && hour < earliest.hour ? earliest.hour : hour;
+}
