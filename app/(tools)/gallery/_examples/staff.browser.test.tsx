@@ -4,6 +4,8 @@ import { page } from "vitest/browser";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import {
+  ChangeTimeFormExample,
+  DueTimeFieldsExample,
   HeldSyncExample,
   MailingWriterExample,
   PoliticianDetailsExample,
@@ -16,6 +18,16 @@ const log = () => page.getByRole("list", { name: "Event log" }).getByRole("listi
 const subject = () => page.getByLabelText(new RegExp(`^${staffCopy.mailingPages.subject}`));
 
 describe("the staff examples", () => {
+  it("picks a mailing's hour, and logs Change the time's save", async () => {
+    const { unmount } = await render(<DueTimeFieldsExample />);
+    await page.getByRole("combobox").selectOptions("15");
+    await expect.element(page.getByRole("combobox")).toHaveValue("15");
+    await unmount();
+    await render(<ChangeTimeFormExample />);
+    await page.getByRole("button", { name: staffCopy.mailingPages.saveTime }).click();
+    await expect.element(page.getByText(/^rescheduleMailingNow\(\{"id":"5"/)).toBeVisible();
+  });
+
   it("logs a held sync's apply and discard", async () => {
     await render(<HeldSyncExample />);
     await page.getByRole("button", { name: staffCopy.syncs.apply }).click();
