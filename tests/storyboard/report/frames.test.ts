@@ -129,8 +129,8 @@ describe("sortRuns", () => {
   const at = (section: string, line: number, flow = "f", viewport = "desktop") => ({ section, line, flow, viewport });
 
   it("puts the sections in SECTION_ORDER, unknown ones after, alphabetically", async () => {
-    const sorted = sortRuns([at("zz-new", 1), at("staff", 1), at("aa-new", 1), at("public-pages", 1)]);
-    expect(sorted.map((r) => r.section)).toEqual(["public-pages", "staff", "aa-new", "zz-new"]);
+    const sorted = sortRuns([at("zz-new", 1), at("mailings", 1), at("aa-new", 1), at("public-pages", 1)]);
+    expect(sorted.map((r) => r.section)).toEqual(["public-pages", "mailings", "aa-new", "zz-new"]);
   });
 
   it("within a section keeps the spec file's order, then the flow's name, then the viewport", async () => {

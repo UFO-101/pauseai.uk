@@ -40,7 +40,10 @@ export function renderStoryboardPage(storyboard: Storyboard): string {
 <div class="layout">
   <aside id="sidebar">
     <div class="tools">
-      <input type="search" id="filter" placeholder="Filter flows and frames  /" aria-label="Filter flows and frames" autocomplete="off">
+      <span class="filter-box">
+        <input type="search" id="filter" placeholder="Filter flows and frames  /" aria-label="Filter flows and frames" autocomplete="off">
+        <button type="button" id="filter-clear" aria-label="Clear the filter" hidden>×</button>
+      </span>
       <label><input type="checkbox" id="changed-only"> Changed only</label>
     </div>
     <nav id="section-list" aria-label="Sections and flows"></nav>
@@ -73,7 +76,12 @@ h1, h2, h3, h4, p { margin: 0; }
 .bar p { color: var(--muted); flex: 1; }
 #newer { padding: 4px 10px; border-radius: 4px; background: var(--changed); color: #fff; font-weight: 600; text-decoration: none; }
 .controls { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; }
-#filter { width: 100%; font: inherit; padding: 6px 10px; border: 1px solid #bbb; border-radius: 6px; background: #fff; }
+/* The filter, with a × to clear it once there's something in it; the browser's own is hidden, as only some browsers draw it. */
+.filter-box { position: relative; display: block; }
+#filter { width: 100%; font: inherit; padding: 6px 30px 6px 10px; border: 1px solid #bbb; border-radius: 6px; background: #fff; }
+#filter::-webkit-search-cancel-button { display: none; }
+#filter-clear { position: absolute; top: 50%; right: 4px; transform: translateY(-50%); width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--muted); font: inherit; font-size: 18px; line-height: 1; cursor: pointer; }
+#filter-clear:hover { background: #eee; color: #111; }
 #filter:focus { outline: 2px solid #111; outline-offset: -1px; border-color: #111; }
 .segmented button { font: inherit; padding: 4px 10px; border: 1px solid #999; background: #fff; cursor: pointer; }
 .segmented button:first-child { border-radius: 4px 0 0 4px; }
@@ -415,8 +423,16 @@ for (const button of document.querySelectorAll(".bar [data-viewport]")) {
 document.getElementById("changed-only").addEventListener("change", (e) => { state.changedOnly = e.target.checked; render(); });
 // Filtering as you type, a moment after the last key; / to start, Escape to clear.
 const filter = document.getElementById("filter");
+const clearFilter = document.getElementById("filter-clear");
+clearFilter.hidden = !filter.value;
+clearFilter.addEventListener("click", () => {
+  filter.value = "";
+  filter.dispatchEvent(new Event("input"));
+  filter.focus();
+});
 let typing = null;
 filter.addEventListener("input", () => {
+  clearFilter.hidden = !filter.value;
   clearTimeout(typing);
   typing = setTimeout(() => {
     state.query = filter.value;
