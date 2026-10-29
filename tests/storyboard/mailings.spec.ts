@@ -231,7 +231,8 @@ test("Send a mailing from a connected Gmail: schedule it, and the hourly job sen
   });
   expect(await sent.json()).toMatchObject({ started: [Number(id)], sent: 1, left: 0 });
   const letter = newestEmail((one) => one.To === '"Morag Example" <morag.example.msp@parliament.example>')!;
-  expect(letter.From).toBe(staffEmail());
+  // With no From name of its own, the mailing goes in the name the Gmail sends as: the fake Google's, from its address.
+  expect(letter.From).toMatch(new RegExp(`^"Mail \\w+" <${staffEmail()}>$`));
   await emailFrame(page, letter, "the letter as Morag got it, from your Gmail");
 
   await page.reload();
