@@ -96,6 +96,8 @@ export const staffCopy = {
     limit: (limit: string) => `At most ${limit} a day, leaving room for the account's other email.`,
     connect: "Connect Gmail",
     disconnect: "Disconnect Gmail",
+    // Over when it was connected: the name and address its mail goes out under, as its From line shows them.
+    sendsAs: (from: string) => `Sends as ${from}.`,
     connected: (when: string) => `Connected ${when}.`,
     notConnected: "Your Gmail isn't connected.",
     sentToday: (sent: number, limit: string) => `${sent} of today's ${limit} emails sent.`,

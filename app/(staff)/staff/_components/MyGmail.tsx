@@ -9,8 +9,8 @@ const copy = staffCopy.gmail;
 
 /**
  * Your Gmail, on your own page, under its heading: how connecting ended,
- * if Google has just sent you back; then, connected, since when and
- * today's sends, with Disconnect; or what connecting means, and the button.
+ * if Google has just sent you back; then, connected, the name and address
+ * it sends as, since when, and today's sends, with Disconnect; or what connecting means, and the button.
  */
 export default function MyGmail({
   me,
@@ -33,6 +33,8 @@ export default function MyGmail({
         {account ? (
           <>
             <p>
+              {copy.sendsAs(account.name ? `${account.name} <${account.email}>` : account.email)}
+              <br />
               {copy.connected(staffDate(account.connectedAt))} <SentToday sent={account.sentToday} />
             </p>
             <form action={disconnect}>

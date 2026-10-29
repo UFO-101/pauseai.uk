@@ -42,14 +42,23 @@ describe("GmailConnect, SentToday and GmailOutcome", () => {
 });
 
 describe("MyGmail", () => {
-  it("connected: since when, today's sends, and Disconnect", async () => {
+  it("connected: the name it sends as, since when, today's sends, and Disconnect", async () => {
     const disconnect = vi.fn();
-    await render(<MyGmail me="jo@pauseai.uk" account={exampleGmailAccount} outcome="" disconnect={disconnect} />);
+    const { rerender } = await render(
+      <MyGmail me="jo@pauseai.uk" account={exampleGmailAccount} outcome="" disconnect={disconnect} />,
+    );
     await expect
       .element(page.getByText(gmail.connected("1 Oct 2026"), { exact: false }))
-      .toHaveTextContent(`${gmail.connected("1 Oct 2026")} ${gmail.sentToday(120, "1,800")}`);
+      .toHaveTextContent(
+        `${gmail.sendsAs("Jo Seed <jo@pauseai.uk>")}${gmail.connected("1 Oct 2026")} ${gmail.sentToday(120, "1,800")}`,
+      );
     await page.getByRole("button", { name: gmail.disconnect }).click();
     await expect.poll(() => disconnect.mock.calls.length).toBe(1);
+    // With no name of its own, its address alone.
+    await rerender(
+      <MyGmail me="jo@pauseai.uk" account={{ ...exampleGmailAccount, name: "" }} outcome="" disconnect={disconnect} />,
+    );
+    await expect.element(page.getByText(gmail.sendsAs("jo@pauseai.uk"), { exact: false })).toBeVisible();
   });
 
   it("not connected: what connecting means, and the button, coming back here", async () => {
