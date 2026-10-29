@@ -715,6 +715,19 @@ export const staffCopy = {
     bold: "Bold",
     italic: "Italic",
     bulletList: "Bullet point",
+    // The toolbar's link and quote buttons: what each says on hover, and on the button.
+    link: "⁂ Link (Ctrl+K)",
+    linkLabel: "⁂ Link",
+    quote: "⁂ Quote",
+    quoteLabel: "⁂ “ Quote",
+    // The bar under the toolbar where a link's address is typed.
+    linkBar: {
+      address: "⁂ Link address",
+      save: "⁂ Save link",
+      remove: "⁂ Remove link",
+      cancel: "⁂ Cancel",
+      invalid: "⁂ That isn't a web or email address.",
+    },
     // The toolbar over the letter, for screen readers.
     formatting: "Formatting",
     // Over the merge fields beside the letter, to click or drag in.
@@ -1246,14 +1259,14 @@ export const staffCopy = {
   // The hourly read of the connected Gmail accounts for replies to our
   // letters and bounces (lib/server/gmail-reading.ts), on the import page.
   gmailReading: {
-    title: "⁂ Replies and bounces from Gmail",
+    title: "Replies and bounces from Gmail",
     intro: {
-      before: "⁂ Reads the replies to our letters, and their bounces, in each ",
-      link: "⁂ connected Gmail account",
-      after: "⁂ .",
+      before: "Reads the replies to our letters, and their bounces, in each ",
+      link: "connected Gmail account",
+      after: ".",
     },
-    readNow: "⁂ Read Gmail now",
-    never: "⁂ Not read yet.",
+    readNow: "Read Gmail now",
+    never: "Not read yet.",
     // The run's totals, over every account, then a line for each.
     result: (accounts: { replies: number; autoReplies: number; bounces: number }[]) =>
       `⁂ ${accounts.length} accounts read: ${accounts.reduce((n, a) => n + a.replies, 0)} replies, ${accounts.reduce((n, a) => n + a.autoReplies, 0)} automatic replies, ${accounts.reduce((n, a) => n + a.bounces, 0)} bounces.`,

@@ -12,7 +12,13 @@ import Tag, { type TagTone } from "@/components/ui/Tag";
 import { ErrorText, Muted } from "@/components/ui/Text";
 import Densities from "../_components/Densities";
 import type { Group } from "../_components/types";
-import { CheckboxExample, LinkButtonExample, SegmentedExample, StatusMessageUndoExample } from "./forms.client";
+import {
+  CheckboxExample,
+  LinkBarExample,
+  LinkButtonExample,
+  SegmentedExample,
+  StatusMessageUndoExample,
+} from "./forms.client";
 
 // Every tone, so a new one is a type error until it's here.
 const TONES: Record<TagTone, string> = { red: "Red", amber: "Amber", green: "Green", blue: "Blue" };
@@ -227,6 +233,16 @@ export const forms: Group = {
       file: "components/ui/Controls.tsx",
       variants: [
         { label: "Three options, one picked", render: () => <Densities>{() => <SegmentedExample />}</Densities> },
+      ],
+    },
+    {
+      name: "LinkBar",
+      file: "components/ui/LinkBar.tsx",
+      variants: [
+        {
+          label: "Under a letter editor's toolbar, on a link",
+          render: () => <Densities>{() => <LinkBarExample />}</Densities>,
+        },
       ],
     },
     {

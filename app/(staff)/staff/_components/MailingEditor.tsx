@@ -2,7 +2,8 @@
 
 import { EditorContent, Node, useEditor, useEditorState, type Editor, type JSONContent } from "@tiptap/react";
 import { useId, useMemo, useRef, useState } from "react";
-import { letterExtensions } from "@/lib/letter-extensions";
+import LinkBar from "@/components/ui/LinkBar";
+import { isLinkKey, letterExtensions } from "@/lib/letter-extensions";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { NOT_CONDITION } from "@/lib/mailing-doc";
 import { partFor, type MailingChoice } from "@/lib/mailing-fields";
@@ -57,7 +58,7 @@ const MergeField = Node.create<{ labels: Record<string, string> }>({
   },
 });
 
-// A part only some recipients get: paragraphs or a list in a box, with who
+// A part only some recipients get: paragraphs, lists or quotes in a box, with who
 // it's for on the box. Enter on an empty last line takes it out of the box,
 // as ProseMirror does for any such box. So does Backspace at the box's start:
 // left to ProseMirror, it would join the box to one just before it, and its
@@ -65,7 +66,7 @@ const MergeField = Node.create<{ labels: Record<string, string> }>({
 const OnlyFor = Node.create<{ labels: Record<string, string> }>({
   name: "onlyFor",
   group: "block",
-  content: "(paragraph | bulletList)+",
+  content: "(paragraph | bulletList | blockquote)+",
   defining: true,
   addOptions: () => ({ labels: {} }),
   addKeyboardShortcuts() {
@@ -105,14 +106,19 @@ const OnlyFor = Node.create<{ labels: Record<string, string> }>({
   },
 });
 
-/** Bold, italic and bullets, and in a part for only some, the button that makes it for everyone. */
-function Toolbar({ editor }: { editor: Editor }) {
+/**
+ * Bold, italic, links, bullets and quotes, and in a part for only some, the
+ * button that makes it for everyone. Link opens the link bar under it.
+ */
+function Toolbar({ editor, onLink }: { editor: Editor; onLink: () => void }) {
   const active = useEditorState({
     editor,
     selector: ({ editor }) => ({
       bold: editor.isActive("bold"),
       italic: editor.isActive("italic"),
+      link: editor.isActive("link"),
       bulletList: editor.isActive("bulletList"),
+      blockquote: editor.isActive("blockquote"),
       onlyFor: editor.isActive("onlyFor"),
     }),
   });
@@ -129,11 +135,18 @@ function Toolbar({ editor }: { editor: Editor }) {
       pressed: active.italic,
       run: () => editor.chain().focus().toggleItalic().run(),
     },
+    { title: copy.link, label: copy.linkLabel, pressed: active.link, run: onLink },
     {
       title: copy.bulletList,
       label: "• List",
       pressed: active.bulletList,
       run: () => editor.chain().focus().toggleBulletList().run(),
+    },
+    {
+      title: copy.quote,
+      label: copy.quoteLabel,
+      pressed: active.blockquote,
+      run: () => editor.chain().focus().toggleBlockquote().run(),
     },
   ];
   return (
@@ -339,7 +352,7 @@ function Sidebar({
 }
 
 /**
- * A mailing's letter: bold, italic and bullets as in a supporter's letter,
+ * A mailing's letter: bold, italic, links, bullets and quotes as in a supporter's letter,
  * merge fields as chips, and parts in a box that only some recipients get,
  * with the fields and who a part can be for beside it. Typing { offers the
  * fields every recipient has at the cursor.
@@ -348,6 +361,7 @@ export default function MailingEditor({ initial, onChange, fields, conditions, r
   const frame = useRef<HTMLDivElement>(null);
   // Where the { was typed, and where to show the menu of fields.
   const [picker, setPicker] = useState<{ from: number; to: number; top: number; left: number }>();
+  const [linking, setLinking] = useState(false);
   const extensions = useMemo(
     () => [
       ...letterExtensions,
@@ -363,6 +377,11 @@ export default function MailingEditor({ initial, onChange, fields, conditions, r
     immediatelyRender: false,
     editorProps: {
       attributes: { role: "textbox", "aria-multiline": "true", "aria-labelledby": labelledBy, class: styles.editor },
+      handleKeyDown: (_, event) => {
+        if (!isLinkKey(event)) return false;
+        setLinking(true);
+        return true;
+      },
       handleTextInput: (view, from, to, text) => {
         if (text !== "{" || !fields.some(usable)) return false;
         const at = view.coordsAtPos(from);
@@ -384,7 +403,8 @@ export default function MailingEditor({ initial, onChange, fields, conditions, r
   return (
     <div className={styles.layout}>
       <div className={styles.editorFrame} ref={frame}>
-        {editor && <Toolbar editor={editor} />}
+        {editor && <Toolbar editor={editor} onLink={() => setLinking(true)} />}
+        {editor && linking && <LinkBar editor={editor} words={copy.linkBar} onClose={() => setLinking(false)} />}
         <EditorContent editor={editor} />
         {picker && (
           <div

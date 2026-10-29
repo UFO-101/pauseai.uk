@@ -2,9 +2,12 @@
 
 // The forms group's examples that need state or callbacks: client
 // components with no props, so the server-rendered gallery can place them.
+import { EditorContent, useEditor } from "@tiptap/react";
 import { Checkbox, Segmented } from "@/components/ui/Controls";
 import { Label } from "@/components/ui/Field";
+import LinkBar from "@/components/ui/LinkBar";
 import LinkButton from "@/components/ui/LinkButton";
+import { letterExtensions } from "@/lib/letter-extensions";
 import StatusMessage from "@/components/ui/StatusMessage";
 import { Controlled, Logged } from "../_components/wiring";
 
@@ -60,5 +63,35 @@ export function LinkButtonExample() {
 export function StatusMessageUndoExample() {
   return (
     <Logged>{(log) => <StatusMessage onUndo={log("onUndo")}>An example of what just happened.</StatusMessage>}</Logged>
+  );
+}
+
+/** A letter editor's link bar, open on a link: as the editors show it under their toolbar. */
+export function LinkBarExample() {
+  const editor = useEditor({
+    extensions: letterExtensions,
+    content: '<p>Join us at <a href="https://pauseai.uk/join">pauseai.uk/join</a>.</p>',
+    immediatelyRender: false,
+    // The cursor in the link, so the bar shows its address.
+    onCreate: ({ editor }) => void editor.commands.setTextSelection(15),
+  });
+  if (!editor) return null;
+  return (
+    <div style={{ border: "1px solid var(--border-strong)", borderRadius: "var(--radius-md)" }}>
+      <LinkBar
+        editor={editor}
+        words={{
+          address: "Example address",
+          save: "Save",
+          remove: "Remove",
+          cancel: "Cancel",
+          invalid: "Not an address",
+        }}
+        onClose={() => {}}
+      />
+      <div style={{ padding: "var(--space-3)" }}>
+        <EditorContent editor={editor} />
+      </div>
+    </div>
   );
 }

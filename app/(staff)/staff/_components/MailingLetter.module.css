@@ -19,6 +19,18 @@
   margin: 0;
 }
 
+/* A quote, as the email shows it (lib/letter-format.ts): set in, with a rule down its left. */
+.letter blockquote {
+  margin: 0 0 var(--space-3);
+  padding-left: var(--space-3);
+  border-left: 3px solid var(--border-strong);
+  color: var(--text-secondary);
+}
+
+.letter blockquote > :last-child {
+  margin-bottom: 0;
+}
+
 .letter > :last-child {
   margin-bottom: 0;
 }

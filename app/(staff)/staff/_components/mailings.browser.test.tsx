@@ -32,6 +32,34 @@ describe("MailingLetter", () => {
     expect(page.getByRole("listitem").all()).toHaveLength(1);
   });
 
+  it("shows links, a linked field, and quotes", async () => {
+    const link = { type: "link" as const, attrs: { href: "https://pauseai.uk/join" } };
+    await render(
+      <MailingLetter
+        doc={{
+          type: "doc",
+          content: [
+            {
+              type: "blockquote",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [
+                    { type: "text", text: "Join", marks: [link] },
+                    { type: "field", attrs: { field: "name" }, marks: [link] },
+                  ],
+                },
+              ],
+            },
+          ],
+        }}
+      />,
+    );
+    await expect.element(page.getByRole("link", { name: "Join" })).toHaveAttribute("href", "https://pauseai.uk/join");
+    await expect.element(page.getByRole("link", { name: "name" })).toHaveAttribute("href", "https://pauseai.uk/join");
+    expect(document.querySelector("blockquote p")!.textContent).toBe("Joinname");
+  });
+
   it("names a part's condition by its ID with no labels", async () => {
     await render(<MailingLetter doc={exampleMailingLetter} />);
     await expect

@@ -1,4 +1,13 @@
-import { checkInline, isObject, paragraph, type Block, type Inline, type LetterDoc, type Mark } from "./letter-format";
+import {
+  checkInline,
+  checkMarks,
+  isObject,
+  paragraph,
+  type Block,
+  type Inline,
+  type LetterDoc,
+  type Mark,
+} from "./letter-format";
 
 // A mailing's letter: a letter's formatting (lib/letter-format.ts), with
 // merge fields, filled in with each recipient's values, and parts only
@@ -13,7 +22,8 @@ export type MailingInline = Inline | FieldNode;
 export type MailingParagraph = { type: "paragraph"; content?: MailingInline[] };
 export type MailingListItem = { type: "listItem"; content: MailingBlock[] };
 export type MailingBulletList = { type: "bulletList"; content: MailingListItem[] };
-export type MailingBlock = MailingParagraph | MailingBulletList;
+export type MailingBlockquote = { type: "blockquote"; content: MailingBlock[] };
+export type MailingBlock = MailingParagraph | MailingBulletList | MailingBlockquote;
 /**
  * A part only those who meet `condition` get, or with NOT_CONDITION before
  * it, only those who don't. Only at the top level: a part isn't in a part.
@@ -57,11 +67,8 @@ const nonEmptyString = (value: unknown): value is string => typeof value === "st
 function checkMailingInline(node: unknown): MailingInline | undefined {
   if (!isObject(node) || node.type !== "field") return checkInline(node);
   if (!isObject(node.attrs) || !nonEmptyString(node.attrs.field)) return undefined;
-  const marks = Array.isArray(node.marks) ? node.marks : [];
-  const kept = marks
-    .filter((mark): mark is Mark => isObject(mark) && (mark.type === "bold" || mark.type === "italic"))
-    .map((mark) => ({ type: mark.type }));
-  if (kept.length !== marks.length) return undefined;
+  const kept = checkMarks(node.marks);
+  if (!kept) return undefined;
   const field = { type: "field" as const, attrs: { field: node.attrs.field } };
   return kept.length > 0 ? { ...field, marks: kept } : field;
 }
@@ -82,6 +89,12 @@ function checkMailingBlock(node: unknown, depth: number): MailingBlock | undefin
     });
     return items.every(Boolean) && items.length > 0
       ? { type: "bulletList", content: items as MailingListItem[] }
+      : undefined;
+  }
+  if (node.type === "blockquote" && depth < 5) {
+    const blocks = content.map((block) => checkMailingBlock(block, depth + 1));
+    return blocks.every(Boolean) && blocks.length > 0
+      ? { type: "blockquote", content: blocks as MailingBlock[] }
       : undefined;
   }
   return undefined;
@@ -106,7 +119,7 @@ export function checkMailingDoc(value: unknown): MailingDoc | undefined {
 
 function inlinesOf(block: MailingBlock | OnlyForNode): MailingInline[] {
   if (block.type === "paragraph") return block.content ?? [];
-  if (block.type === "onlyFor") return block.content.flatMap(inlinesOf);
+  if (block.type === "onlyFor" || block.type === "blockquote") return block.content.flatMap(inlinesOf);
   return block.content.flatMap((item) => item.content.flatMap(inlinesOf));
 }
 
@@ -133,6 +146,9 @@ function fillBlock(block: MailingBlock, values: Record<string, string>): Block {
     // A field with no value leaves no empty text node, which a letter can't have.
     const content = (block.content ?? []).map((node) => fillInline(node, values));
     return paragraph(content.filter((node) => node.type !== "text" || node.text !== ""));
+  }
+  if (block.type === "blockquote") {
+    return { type: "blockquote", content: block.content.map((inner) => fillBlock(inner, values)) };
   }
   return {
     type: "bulletList",

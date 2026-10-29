@@ -210,6 +210,21 @@ export const copy = {
     none: "Find your MP first.",
   },
   // The page between the form and sending: the letter exactly as it will go.
+  // The letter editor's toolbar buttons that aren't bold, italic or bullets: what each says on hover, and on the button.
+  editor: {
+    link: "⁂ Link (Ctrl+K)",
+    linkLabel: "⁂ Link",
+    quote: "⁂ Quote",
+    quoteLabel: "⁂ “ Quote",
+    // The bar under the toolbar where a link's address is typed.
+    linkBar: {
+      address: "⁂ Link address",
+      save: "⁂ Save link",
+      remove: "⁂ Remove link",
+      cancel: "⁂ Cancel",
+      invalid: "⁂ That isn't a web or email address.",
+    },
+  },
   preview: {
     title: "Check your letter",
     to: "To",
