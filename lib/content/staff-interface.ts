@@ -160,7 +160,7 @@ export const staffCopy = {
         unsubscribes: (n: number) => (n === 1 ? "unsubscribe from Luma emails" : "unsubscribes from Luma emails"),
       } as Record<string, (n: number) => string>,
       // A count of nothing, instead of a 0.
-      none: "None",
+      none: "No",
       // Beside the letters' number: those to the test MPs, left out of it.
       testLetters: (n: number) => `+${n} test`,
       // Under the number: against the window before.
