@@ -321,7 +321,8 @@ test("PauseAI's emails: copied once, with one held back for a mailing nobody has
   flowDatabase,
 }) => {
   await syncPoliticians(request, BASE);
-  await logIn(page, flowDatabase);
+  // With supporters, as only they open a letter's page.
+  await logIn(page, flowDatabase, ["supporters"]);
   // The nightly sync copied them; the button finds nothing new.
   await page.goto(`${BASE}/staff/import-data/emails`);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(jobTitles["sync-emails"]);
