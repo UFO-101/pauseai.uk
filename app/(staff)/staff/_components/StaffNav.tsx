@@ -121,15 +121,19 @@ export default function StaffNav({ email, permissions = [], sessions = 1, curren
           {/* Your address with an @, as a page under its own heading; on one line, cut short if it's long, the whole address on hover. */}
           <section className={styles.group}>
             <h2>{staffCopy.nav.sections.profile}</h2>
-            <StaffLink
-              href={ME_PATH}
-              className={`${styles.page} ${styles.address}`}
-              title={email}
-              aria-current={current === "me" ? "page" : undefined}
-            >
-              <NavIcon id="me" />
-              <span className={styles.label}>{email}</span>
-            </StaffLink>
+            <ul>
+              <li>
+                <StaffLink
+                  href={ME_PATH}
+                  className={`${styles.page} ${styles.address}`}
+                  title={email}
+                  aria-current={current === "me" ? "page" : undefined}
+                >
+                  <NavIcon id="me" />
+                  <span className={styles.label}>{email}</span>
+                </StaffLink>
+              </li>
+            </ul>
           </section>
           <form method="post" action="/staff/api/logout">
             <button type="submit" className={styles.page}>
