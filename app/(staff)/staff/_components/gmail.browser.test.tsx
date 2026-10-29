@@ -5,6 +5,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import AskForm from "./AskForm";
 import BounceReason from "./BounceReason";
 import { GmailConnect, GmailOutcome, SentToday } from "./GmailConnect";
+import AccountTitle from "./AccountTitle";
 import LetterThread from "./LetterThread";
 import { exampleEditableAsk, exampleGmailAccount, exampleImportedThread, exampleThread } from "./LetterThread.examples";
 import { DeleteTwice } from "./MailingButtons";
@@ -55,6 +56,14 @@ describe("MyGmail", () => {
     await expect
       .element(page.getByRole("link", { name: gmail.connect }))
       .toHaveAttribute("href", "/staff/api/gmail/connect?back=%2Fstaff%2Fme");
+  });
+});
+
+describe("AccountTitle", () => {
+  it("titles your own page, with your address under it", async () => {
+    await render(<AccountTitle email="jo@pauseai.uk" />);
+    await expect.element(page.getByRole("heading", { level: 1, name: staffCopy.me.title })).toBeVisible();
+    await expect.element(page.getByText("jo@pauseai.uk")).toBeVisible();
   });
 });
 

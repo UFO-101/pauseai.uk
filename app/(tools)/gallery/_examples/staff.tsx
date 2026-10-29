@@ -103,6 +103,7 @@ import {
 import AsksTable from "@/app/(staff)/staff/_components/AsksTable";
 import BounceReason from "@/app/(staff)/staff/_components/BounceReason";
 import { GmailConnect, GmailOutcome, SentToday } from "@/app/(staff)/staff/_components/GmailConnect";
+import AccountTitle from "@/app/(staff)/staff/_components/AccountTitle";
 import LetterThread from "@/app/(staff)/staff/_components/LetterThread";
 import { exampleImportedThread, exampleThread } from "@/app/(staff)/staff/_components/LetterThread.examples";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -992,6 +993,20 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <StaffHome permissions={[]} dashboard={exampleDashboard} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "AccountTitle",
+      file: "app/(staff)/staff/_components/AccountTitle.tsx",
+      variants: [
+        {
+          label: "Your own page's title, and your address",
+          render: () => (
+            <StaffPage as="div">
+              <AccountTitle email="jo@pauseai.uk" />
             </StaffPage>
           ),
         },
