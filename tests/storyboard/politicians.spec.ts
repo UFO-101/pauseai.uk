@@ -3,6 +3,7 @@ import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { runSql } from "@/scripts/fresh-database.mjs";
 import { addFilter, addStaffAccount, changeFilter, logInAsStaff, syncPoliticians } from "../steps";
 import { BASE, expect, frame, test } from "./fixtures";
+import { chooseDay } from "./staff-steps";
 
 // The politicians from Airtable: every body, their answers to the asks, and
 // PauseAI's emails to them, as the nightly sync copies them from the fixture
@@ -309,7 +310,7 @@ test("Add an ask, change it, then delete it", async ({ page, flowDatabase }) => 
   await page.getByRole("link", { name: asks.add }).click();
   await page.getByRole("radio", { name: asks.kinds.event }).click();
   await page.getByLabel(asks.byKind.event.title).fill("Winter reception");
-  await page.getByLabel(asks.byKind.event.date).fill("2026-12-09");
+  await chooseDay(page, asks.byKind.event.date, "2026-12-09");
   await frame(page, "a new ask: its title, kind and date, and PauseAI asking");
   await page.getByRole("button", { name: asks.save }).click();
   await expect(page.getByText(asks.notices.added)).toBeVisible();

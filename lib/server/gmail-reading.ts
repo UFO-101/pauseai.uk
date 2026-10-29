@@ -74,11 +74,18 @@ async function letterAnswered(account: string, message: GmailMessageHeaders): Pr
   return row?.letterId;
 }
 
-/** Whether a message is one we sent as a letter, which the mailbox has in Sent. */
-async function isOurLetter(message: GmailMessageHeaders): Promise<boolean> {
+/**
+ * Whether a message is one we sent as a letter, which the mailbox has in
+ * Sent: by its Message-ID, or in the mailbox it went from, by Gmail's own
+ * ID for it, as Gmail can send an email with a Message-ID of its own.
+ */
+async function isOurLetter(account: string, message: GmailMessageHeaders): Promise<boolean> {
   const [id] = messageIds(message.headers.get("message-id"));
-  if (!id) return false;
-  const [row] = await query("SELECT 1 FROM email_sends WHERE rfc_message_id = $1", [id]);
+  const [row] = await query(
+    `SELECT 1 FROM email_sends
+     WHERE rfc_message_id = $1 OR (backend = 'gmail' AND sender = $2 AND message_id = $3)`,
+    [id ?? null, account, message.id],
+  );
   return !!row;
 }
 
@@ -193,9 +200,13 @@ async function recordBounce(
   const [seen] = await query("SELECT 1 FROM email_problems WHERE gmail_message_id = $1", [message.id]);
   if (seen) return 0;
   const bounce = readBounce((await gmailRawMessage(token, message.id)).toString("latin1"));
+  // The email it names, or else ours in the same Gmail thread, where Gmail puts its own bounces.
   const [sent] = await query<{ messageId: string }>(
-    `SELECT message_id AS "messageId" FROM email_sends WHERE rfc_message_id = $1 AND outcome = 'sent'`,
-    [bounce.messageId ?? null],
+    `SELECT message_id AS "messageId" FROM email_sends
+     WHERE outcome = 'sent'
+       AND (rfc_message_id = $1 OR (backend = 'gmail' AND sender = $2 AND gmail_thread_id = $3))
+     ORDER BY rfc_message_id = $1 DESC NULLS LAST, at DESC LIMIT 1`,
+    [bounce.messageId ?? null, account, message.threadId],
   );
   for (const failed of bounce.addresses) {
     await handleDeliveryProblem(
@@ -226,7 +237,7 @@ async function readMessage(account: string, token: string, id: string, read: Gma
     account,
     id,
   ]);
-  if (kept || (await isOurLetter(message))) return;
+  if (kept || (await isOurLetter(account, message))) return;
   const letterId = await letterAnswered(account, message);
   if (!letterId) return;
   if (isMachineReply((name) => message.headers.get(name), message.headers.get("subject") ?? "")) {

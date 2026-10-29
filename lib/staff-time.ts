@@ -1,3 +1,5 @@
+import { now } from "./now";
+
 /** The day something happened, for a heading over that day's runs: "3 Nov 2026", in UTC. */
 export function staffDate(at: string): string {
   return new Date(at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
@@ -84,10 +86,12 @@ const TOO_SOON = 5 * 60_000;
 
 /**
  * The first whole hour a mailing can go at, as an ISO string: one at least
- * TOO_SOON away. London's hours start when UTC's do.
+ * TOO_SOON away. London's hours start when UTC's do. By the site's clock
+ * (lib/now.ts), so in a fixture build a page rendered ahead of time offers
+ * the hours the browser does.
  */
 export function earliestHour(): string {
-  return new Date(Math.ceil((Date.now() + TOO_SOON) / 3_600_000) * 3_600_000).toISOString();
+  return new Date(Math.ceil((now().getTime() + TOO_SOON) / 3_600_000) * 3_600_000).toISOString();
 }
 
 /** `hour` on `day`, unless that's the first day a mailing can go and the hour is sooner than the first it can go at, when it's that. */

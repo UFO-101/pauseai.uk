@@ -181,9 +181,13 @@ token is kept encrypted (`GMAIL_TOKEN_KEY`), and deleted on disconnecting.
   before it goes: a politician out of office, or whose address has been
   blocked since, is skipped, and the letter says why. An account at its
   limit, or no longer connected, waits.
-- **Message-IDs.** Every letter of a mailing goes with a Message-ID of ours
-  (`email_sends.rfc_message_id`), whichever backend sends it, so a reply
-  is matched by the IDs it names. `send()` takes a backend: Postmark, or a
+- **Message-IDs.** Every letter of a mailing goes with a Message-ID of ours,
+  whichever backend sends it, so a reply is matched by the IDs it names.
+  Gmail sends it with one of its own instead (`…@mail.gmail.com`), so
+  after sending, the site asks Gmail which it went with and keeps that
+  (`email_sends.rfc_message_id`). The letter's own copy in Sent is known
+  by Gmail's ID for it too, and a bounce naming no letter we know is
+  matched by the Gmail thread it's in. `send()` takes a backend: Postmark, or a
   connected Gmail.
 - **Reading** (`lib/server/gmail-reading.ts`): the hourly `read-gmail` job
   lists each mailbox's new messages since the last `historyId`, and

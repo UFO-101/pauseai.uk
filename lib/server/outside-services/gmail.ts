@@ -1,6 +1,6 @@
 import "server-only";
 import { saveToOutbox } from "@/tests/fixtures/outbox";
-import { toMime, type MimeEmail } from "../mime";
+import { messageIds, toMime, type MimeEmail } from "../mime";
 import { outsideFetch } from "./outside-fetch";
 
 // The only file that talks to Google: the OAuth consent that connects a
@@ -225,6 +225,20 @@ export async function gmailMessageHeaders(
     internalDate: message.internalDate,
     headers: new Map((message.payload?.headers ?? []).map((h) => [h.name.toLowerCase(), h.value])),
   };
+}
+
+/**
+ * The Message-ID a message went with, as Gmail has it, as Gmail can send
+ * an email with one of its own in place of ours; undefined if Gmail can't
+ * say, as the email has gone all the same.
+ */
+export async function gmailMessageId(accessToken: string, id: string): Promise<string | undefined> {
+  try {
+    const message = await gmailMessageHeaders(accessToken, id, ["Message-ID"]);
+    return messageIds(message.headers.get("message-id"))[0];
+  } catch {
+    return undefined;
+  }
 }
 
 /** A whole message, as it arrived. */

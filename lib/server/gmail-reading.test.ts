@@ -303,6 +303,26 @@ describeWithDatabase("reading Gmail", () => {
     expect(await query("SELECT 1 FROM email_problems")).toHaveLength(3);
   });
 
+  it("knows our letter in Sent by Gmail's ID when Gmail sent it with a Message-ID of its own, and finds its bounce by its thread", async () => {
+    await connectTestGmail(JO);
+    const letter = await sentLetter(1, "gone@example.org");
+    mailbox({
+      history: ["g-letter-1", "b1"],
+      messages: {
+        "g-letter-1": { threadId: "t1", headers: { From: JO, "Message-ID": "<CAGt2Eo1@mail.gmail.com>" }, raw: "x" },
+        b1: {
+          threadId: "t1",
+          headers: { From: "mailer-daemon@googlemail.com", "In-Reply-To": "<CAGt2Eo1@mail.gmail.com>" },
+          raw: "Subject: x\r\nX-Failed-Recipients: gone@example.org\r\nIn-Reply-To: <CAGt2Eo1@mail.gmail.com>\r\n\r\n?",
+        },
+      },
+    });
+    expect(await read()).toEqual([{ account: JO, replies: 0, autoReplies: 0, bounces: 1 }]);
+    expect(await replies()).toEqual([]);
+    expect(await query("SELECT message_id FROM email_problems")).toEqual([{ message_id: "g-letter-1" }]);
+    expect(await query("SELECT status FROM letters WHERE id = $1", [letter])).toEqual([{ status: "bounced" }]);
+  });
+
   it("says why when a bounce gives nothing to go on", async () => {
     await connectTestGmail(JO);
     mailbox({

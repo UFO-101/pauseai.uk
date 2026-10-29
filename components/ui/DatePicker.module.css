@@ -107,8 +107,17 @@
   background: var(--surface-2);
 }
 
+/* Collapsed, so the lines where months start (below) join up. */
 .grid {
-  border-spacing: 2px;
+  border-collapse: collapse;
+}
+
+.grid td[data-month-top] {
+  border-top: 2px solid var(--text-secondary);
+}
+
+.grid td[data-month-left] {
+  border-left: 2px solid var(--text-secondary);
 }
 
 .grid th {
@@ -133,11 +142,6 @@
   font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
   cursor: pointer;
-}
-
-/* Every other month, so where one ends shows. */
-.day[data-shade] {
-  background: var(--surface-2);
 }
 
 .day:hover {

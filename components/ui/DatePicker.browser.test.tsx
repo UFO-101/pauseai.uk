@@ -52,6 +52,28 @@ describe("DatePicker", () => {
     expect(hidden().value).toBe("2026-11-03");
   });
 
+  it("draws a stepped line where each month starts: over its first week, and down the left of its 1st", async () => {
+    await render(<Controlled initial="2026-10-30" />);
+    await page.getByRole("button", { name: "When" }).click();
+    const cell = (d: string) => day(d).element().closest("td")!;
+    // 1 November is a Sunday: the line runs over it, down its left, and over the next Monday to Saturday.
+    expect(cell("2026-11-01").hasAttribute("data-month-left")).toBe(true);
+    expect(["2026-11-01", "2026-11-02", "2026-11-07"].map((d) => cell(d).hasAttribute("data-month-top"))).toEqual([
+      true,
+      true,
+      true,
+    ]);
+    expect(cell("2026-11-08").hasAttribute("data-month-top")).toBe(false);
+    expect(cell("2026-10-31").hasAttribute("data-month-left")).toBe(false);
+    expect(getComputedStyle(cell("2026-11-01")).borderLeftStyle).toBe("solid");
+    // A 1st on a Monday starts its row, so there's no step, only the line over it.
+    await userEvent.keyboard("{Escape}");
+    await render(<DatePicker aria-label="June" defaultValue="2026-06-03" />);
+    await page.getByRole("button", { name: "June" }).click();
+    expect(cell("2026-06-01").hasAttribute("data-month-left")).toBe(false);
+    expect(cell("2026-06-01").hasAttribute("data-month-top")).toBe(true);
+  });
+
   it("moves a few weeks at a time, keeping the weeks either side in view", async () => {
     await render(<Controlled initial="2026-10-30" />);
     await page.getByRole("button", { name: "When" }).click();

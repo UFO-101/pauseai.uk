@@ -69,7 +69,6 @@ export function DueTimeFields({
         <Select
           name={named ? "hour" : undefined}
           value={hour ?? ""}
-          disabled={!day}
           onChange={(event) => onChange(day, Number(event.target.value))}
         >
           {hour === null && (
@@ -77,10 +76,10 @@ export function DueTimeFields({
               {copy.choose}
             </option>
           )}
-          {sendingHours(day || earliest.day, hour).map((h) => (
+          {sendingHours(day, hour).map((h) => (
             // On the first day it can go, the hours too soon can't be chosen.
             <option key={h} value={h} disabled={day === earliest.day && h < earliest.hour}>
-              {hourLabel(day || earliest.day, h)}
+              {hourLabel(day, h)}
             </option>
           ))}
         </Select>
@@ -118,13 +117,7 @@ export function ChangeTimeForm({
   return (
     <form action={action} className={className}>
       <input type="hidden" name="id" value={id} />
-      <DueTimeFields
-        day={when.day}
-        hour={when.hour}
-        named
-        // A day cleared keeps the one before: the form always has one.
-        onChange={(day, hour) => setPicked(day ? { day, hour: hour! } : when)}
-      />
+      <DueTimeFields day={when.day} hour={when.hour} named onChange={(day, hour) => setPicked({ day, hour: hour! })} />
       <SubmitButton variant="primary" size="small" fit>
         {copy.saveTime}
       </SubmitButton>

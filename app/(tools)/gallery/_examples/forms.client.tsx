@@ -3,6 +3,7 @@
 // The forms group's examples that need state or callbacks: client
 // components with no props, so the server-rendered gallery can place them.
 import { EditorContent, useEditor } from "@tiptap/react";
+import { useState } from "react";
 import { Checkbox, Segmented } from "@/components/ui/Controls";
 import { Label } from "@/components/ui/Field";
 import LinkBar from "@/components/ui/LinkBar";
@@ -68,14 +69,18 @@ export function StatusMessageUndoExample() {
 
 /** A letter editor's link bar, open on a link: as the editors show it under their toolbar. */
 export function LinkBarExample() {
+  // Shown once the cursor is in the link, so the bar starts with its address.
+  const [ready, setReady] = useState(false);
   const editor = useEditor({
     extensions: letterExtensions,
     content: '<p>Join us at <a href="https://pauseai.uk/join">pauseai.uk/join</a>.</p>',
     immediatelyRender: false,
-    // The cursor in the link, so the bar shows its address.
-    onCreate: ({ editor }) => void editor.commands.setTextSelection(15),
+    onCreate: ({ editor }) => {
+      editor.commands.setTextSelection(15);
+      setReady(true);
+    },
   });
-  if (!editor) return null;
+  if (!editor || !ready) return null;
   return (
     <div style={{ border: "1px solid var(--border-strong)", borderRadius: "var(--radius-md)" }}>
       <LinkBar

@@ -71,7 +71,7 @@ import { emptyPoliticiansSearch, examplePoliticiansPage } from "./PoliticianTabl
 import MailingsTable, { mailingColumns } from "./MailingsTable";
 import { exampleMailings } from "./MailingsTable.examples";
 import ImportCard, { ImportCards } from "./ImportCard";
-import ImportIcon, { ImportIcons } from "./ImportIcon";
+import ImportIcon from "./ImportIcon";
 import DevLogin from "./DevLogin";
 import KeepSignedIn from "./KeepSignedIn";
 import RemoveAccountForm from "./RemoveAccountForm";
@@ -1003,25 +1003,27 @@ describe("SortHeading", () => {
 });
 
 describe("ImportIcon", () => {
-  it("draws each source, and a check, named for screen readers and on hover", async () => {
+  it("shows each source's mark, named for screen readers and on hover", async () => {
+    const sources = ["airtable", "luma", "gmail", "web"] as const;
     await render(
       <>
-        {(["airtable", "luma", "gmail", "web", "checkOnly"] as const).map((source) => (
+        {sources.map((source) => (
           <ImportIcon key={source} source={source} />
         ))}
       </>,
     );
-    for (const source of ["airtable", "luma", "gmail", "web", "checkOnly"] as const) {
+    for (const source of sources) {
       const icon = page.getByRole("img", { name: staffCopy.import[source] });
       await expect.element(icon).toBeVisible();
-      expect(icon.element().parentElement!.title).toBe(staffCopy.import[source]);
+      expect(icon.element().getAttribute("title")).toBe(staffCopy.import[source]);
     }
-    const [brand, line] = [
-      page.getByRole("img", { name: staffCopy.import.gmail }),
-      page.getByRole("img", { name: staffCopy.import.web }),
-    ];
-    expect(brand.element().getAttribute("fill")).toBe("currentColor");
-    expect(line.element().getAttribute("stroke")).toBe("currentColor");
+    // Luma's is its own picture; Gmail's in its colours.
+    expect(page.getByRole("img", { name: staffCopy.import.luma }).element().querySelector("img")!.src).toContain(
+      "luma.png",
+    );
+    expect(
+      page.getByRole("img", { name: staffCopy.import.gmail }).element().querySelector("path")!.getAttribute("fill"),
+    ).toBe("var(--brand-gmail-blue)");
   });
 });
 
@@ -1032,18 +1034,19 @@ describe("ImportCard", () => {
         <ImportCard
           title="An import"
           href="/staff/import-data/luma"
-          icons={<ImportIcons sources={["luma"]} />}
+          icon={<ImportIcon source="luma" />}
+          tags={<span>Check only</span>}
           intro={<a href="https://luma.com">Luma</a>}
         >
           <p>Not imported yet.</p>
         </ImportCard>
-        <ImportCard title="Another" href="/x" icons={null} intro="More.">
+        <ImportCard title="Another" href="/x" icon={null} intro="More.">
           <p>Never.</p>
         </ImportCard>
       </ImportCards>,
     );
     await expect.element(page.getByRole("img", { name: staffCopy.import.luma })).toBeVisible();
-    const heading = page.getByRole("heading", { level: 3, name: "An import" });
+    const heading = page.getByRole("heading", { level: 3, name: "An import Check only" });
     await expect.element(heading).toBeVisible();
     await expect
       .element(heading.getByRole("link", { name: "An import" }))
@@ -1828,6 +1831,9 @@ describe("ImportOverview", () => {
     // The members come from the join form; Gmail's card leads to where it's connected.
     expect(link(1)).toBe("https://pauseai.info/join");
     expect(link(2)).toBe("/staff/me");
+    // The MP check says it changes nothing, after its name.
+    expect(cards[5].querySelector("h3")!.textContent).toBe(`${jobTitles["check-mps"]}${staffCopy.import.checkOnly}`);
+    expect(cards[4].querySelector("h3")!.textContent).toBe(jobTitles["sync-emails"]);
   });
 
   it("shows an applied run, and one that changed nothing, in green, and one discarded plainly", async () => {

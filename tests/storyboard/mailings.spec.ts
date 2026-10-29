@@ -151,10 +151,17 @@ test("Reschedule a mailing, then unschedule it", async ({ page, request, flowDat
   await frame(page, "scheduled: when it sends, and to whom");
 
   await page.getByRole("button", { name: copy.changeTime }).click();
+  await page.getByRole("button", { name: copy.day }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await frame(page, "the day's calendar: the weeks running on into November, the days gone greyed", { window: true });
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: /^Monday 2 November 2026/ })
+    .click();
   await page.getByLabel(copy.hour, { exact: false }).selectOption("14");
-  await frame(page, "a new time, in London's hours", { window: true });
+  await frame(page, "a new day and time, in London's hours, each saying when it sends", { window: true });
   await page.getByRole("button", { name: copy.saveTime }).click();
-  await expect(page.getByText(copy.sends("Friday 30 October at 14:18"))).toBeVisible();
+  await expect(page.getByText(copy.sends("Monday 2 November at 14:18"))).toBeVisible();
 
   await page.getByRole("button", { name: copy.unschedule }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Edinburgh reminder");

@@ -12,16 +12,8 @@ import {
   today,
   weeksFrom,
 } from "@/lib/calendar-days";
+import { DATE_PICKER_WORDS } from "@/lib/content/date-picker";
 import styles from "./DatePicker.module.css";
-
-const WORDS = {
-  choose: "Choose a day",
-  calendar: "Choose a day",
-  earlier: "Earlier weeks",
-  later: "Later weeks",
-  clear: "No day",
-  today: "today",
-};
 
 /** How many weeks the calendar shows, and how far its arrows move it: less than it shows, so the weeks either side stay in view. */
 const WEEKS = 6;
@@ -133,7 +125,7 @@ export default function DatePicker({
         style={{ anchorName: `--${id}` } as React.CSSProperties}
       >
         <span id={`${id}-day`} className={chosen ? undefined : styles.none}>
-          {chosen ? shortDay(chosen) : WORDS.choose}
+          {chosen ? shortDay(chosen) : DATE_PICKER_WORDS.choose}
         </span>
         <svg className={styles.icon} viewBox="0 0 24 24" aria-hidden="true">
           <path d="M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zM3 10h18M8 3v4M16 3v4" />
@@ -144,7 +136,7 @@ export default function DatePicker({
         id={id}
         popover="auto"
         role="dialog"
-        aria-label={WORDS.calendar}
+        aria-label={DATE_PICKER_WORDS.calendar}
         className={styles.calendar}
         style={{ positionAnchor: `--${id}` } as React.CSSProperties}
         onToggle={(event) => {
@@ -162,68 +154,75 @@ export default function DatePicker({
           <button
             type="button"
             className={styles.step}
-            aria-label={WORDS.earlier}
+            aria-label={DATE_PICKER_WORDS.earlier}
             onClick={() => setStart(addDays(first, -STEP * 7))}
           >
             ‹
           </button>
           <span className={styles.months} aria-live="polite">
-            {monthsBetween(first, last)}
+            {open && monthsBetween(first, last)}
           </span>
           <button
             type="button"
             className={styles.step}
-            aria-label={WORDS.later}
+            aria-label={DATE_PICKER_WORDS.later}
             onClick={() => setStart(addDays(first, STEP * 7))}
           >
             ›
           </button>
         </div>
-        <table role="grid" className={styles.grid} aria-label={monthsBetween(first, last)} onKeyDown={onKeyDown}>
-          <thead>
-            <tr>
-              {WEEKDAYS.map((weekday) => (
-                <th key={weekday} scope="col">
-                  {weekday}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {weeks.map((week) => (
-              <tr key={week[0]}>
-                {week.map((d) => (
-                  <td key={d} aria-selected={d === chosen}>
-                    <button
-                      ref={(element) => {
-                        if (element) days.current.set(d, element);
-                        else days.current.delete(d);
-                      }}
-                      type="button"
-                      className={styles.day}
-                      // Every other month shaded, so where one ends shows.
-                      data-shade={Number(d.slice(5, 7)) % 2 === 0 || undefined}
-                      data-today={d === now || undefined}
-                      aria-pressed={d === chosen}
-                      aria-label={d === now ? `${longDay(d)}, ${WORDS.today}` : longDay(d)}
-                      tabIndex={d === focused ? 0 : -1}
-                      // Not disabled, which can't take the focus the arrow keys move over it.
-                      aria-disabled={tooSoon(d) || undefined}
-                      onFocus={() => setFocused(d)}
-                      onClick={() => !tooSoon(d) && choose(d)}
-                    >
-                      {d.endsWith("-01") && <span className={styles.month}>{shortMonth(d)}</span>}
-                      {Number(d.slice(8))}
-                    </button>
-                  </td>
+        {/* Only while open: its days depend on today, which a page rendered ahead of time can't know. */}
+        {open && (
+          <table role="grid" className={styles.grid} aria-label={monthsBetween(first, last)} onKeyDown={onKeyDown}>
+            <thead>
+              <tr>
+                {WEEKDAYS.map((weekday) => (
+                  <th key={weekday} scope="col">
+                    {weekday}
+                  </th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {weeks.map((week) => (
+                <tr key={week[0]}>
+                  {week.map((d) => (
+                    <td
+                      key={d}
+                      aria-selected={d === chosen}
+                      // A line where each month starts, stepped as on a wall calendar: over its first seven days, and down the left of its 1st.
+                      data-month-top={Number(d.slice(8)) <= 7 || undefined}
+                      data-month-left={(d.endsWith("-01") && d !== mondayOf(d)) || undefined}
+                    >
+                      <button
+                        ref={(element) => {
+                          if (element) days.current.set(d, element);
+                          else days.current.delete(d);
+                        }}
+                        type="button"
+                        className={styles.day}
+                        data-today={d === now || undefined}
+                        aria-pressed={d === chosen}
+                        aria-label={d === now ? `${longDay(d)}, ${DATE_PICKER_WORDS.today}` : longDay(d)}
+                        tabIndex={d === focused ? 0 : -1}
+                        // Not disabled, which can't take the focus the arrow keys move over it.
+                        aria-disabled={tooSoon(d) || undefined}
+                        onFocus={() => setFocused(d)}
+                        onClick={() => !tooSoon(d) && choose(d)}
+                      >
+                        {d.endsWith("-01") && <span className={styles.month}>{shortMonth(d)}</span>}
+                        {Number(d.slice(8))}
+                      </button>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
         {clearable && chosen && (
           <button type="button" className={styles.clear} onClick={() => choose("")}>
-            {WORDS.clear}
+            {DATE_PICKER_WORDS.clear}
           </button>
         )}
       </div>

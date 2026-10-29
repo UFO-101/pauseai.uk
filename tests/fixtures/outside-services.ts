@@ -251,6 +251,9 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
   return undefined;
 }
 
+/** The Message-ID of each email the fixture Gmail sent, by its ID, for the life of the process. */
+const SENT_GMAIL = ((globalThis as { fixtureSentGmail?: Map<string, string> }).fixtureSentGmail ??= new Map());
+
 // Google's OAuth and Gmail, for any account. A token names its account
 // (lib/server/outside-services/gmail.ts makes the code "fixture:<account>"),
 // so the profile says whose it is. A mailbox has no messages: the tests
@@ -280,7 +283,20 @@ function googleResponse(hostname: string, pathname: string, init?: RequestInit):
   // The same email gets the same IDs every run, as Postmark's MessageID.
   if (pathname.endsWith("/messages/send")) {
     const id = fixtureUuid(String(init!.body)).replace(/-/g, "").slice(0, 16);
+    const raw = Buffer.from((JSON.parse(String(init!.body)) as { raw: string }).raw, "base64url").toString();
+    SENT_GMAIL.set(id, /^Message-ID: *(.+)$/im.exec(raw)?.[1].trim() ?? "");
     return json({ id, threadId: id, labelIds: ["SENT"] });
+  }
+  // An email it sent, by its headers: the Message-ID it was sent with, kept as it was.
+  const sent = /\/messages\/(\w+)$/.exec(pathname)?.[1];
+  if (sent && SENT_GMAIL.has(sent)) {
+    return json({
+      id: sent,
+      threadId: sent,
+      labelIds: ["SENT"],
+      internalDate: "0",
+      payload: { headers: [{ name: "Message-ID", value: SENT_GMAIL.get(sent) }] },
+    });
   }
   if (pathname.endsWith("/history")) return json({ historyId: "1000" });
   if (pathname.endsWith("/messages")) return json({ resultSizeEstimate: 0 });

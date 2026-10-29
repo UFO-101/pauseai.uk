@@ -16,7 +16,7 @@ import { staffTime } from "@/lib/staff-time";
 import Breadcrumb from "./Breadcrumb";
 import styles from "./ImportJob.module.css";
 import ImportCard, { ImportCards } from "./ImportCard";
-import { ImportIcons, type ImportSource } from "./ImportIcon";
+import ImportIcon, { type ImportSource } from "./ImportIcon";
 import JobActions from "./JobActions";
 import type { Decide } from "./Run";
 import RunList from "./RunList";
@@ -31,18 +31,23 @@ const words = staffCopy.import;
 /** PauseAI's join form, where the members come from. */
 const JOIN_FORM = "https://pauseai.info/join";
 
-/** Each job's icons: where it reads from, and whether it only checks. */
-const SOURCES: Record<ImportJob, ImportSource[]> = {
-  "import-luma": ["luma"],
-  "sync-politicians": ["airtable"],
-  "sync-emails": ["airtable"],
-  "import-web-form-letters": ["airtable"],
-  "import-go-to-parliament": ["airtable"],
-  "check-mps": ["web", "checkOnly"],
-  "import-controlai": ["web"],
-  "import-members": ["airtable"],
-  "read-gmail": ["gmail"],
+/** Where each job reads from, as its icon. */
+const SOURCES: Record<ImportJob, ImportSource> = {
+  "import-luma": "luma",
+  "sync-politicians": "airtable",
+  "sync-emails": "airtable",
+  "import-web-form-letters": "airtable",
+  "import-go-to-parliament": "airtable",
+  "check-mps": "web",
+  "import-controlai": "web",
+  "import-members": "airtable",
+  "read-gmail": "gmail",
 };
+
+/** The check that changes nothing, said so in a lozenge after its name. */
+function CheckOnly({ job }: { job: ImportJob }) {
+  return job === "check-mps" ? <Tag>{words.checkOnly}</Tag> : null;
+}
 
 /** Each job's description, around a link to where it reads from, and its button and what to say before its first run. */
 const ABOUT: Record<
@@ -174,7 +179,8 @@ export function ImportOverview({
                   key={job}
                   title={jobTitles[job]}
                   href={importPath(job)}
-                  icons={<ImportIcons sources={SOURCES[job]} />}
+                  icon={<ImportIcon source={SOURCES[job]} />}
+                  tags={<CheckOnly job={job} />}
                   intro={<Intro job={job} airtableTable={airtableTable} />}
                 >
                   <NewestRun job={job} run={newest[i]} />
@@ -188,7 +194,7 @@ export function ImportOverview({
   );
 }
 
-/** One job's page: the way back, its icons, name and how often it runs, what it does, its button, then every run it has made, newest first, the newest tinted by how it ended. */
+/** One job's page: the way back, its icon, name, how often it runs and whether it only checks, what it does, its button, then every run it has made, newest first, the newest tinted by how it ended. */
 export function ImportJobPage({
   job,
   runs,
@@ -208,10 +214,11 @@ export function ImportJobPage({
     <>
       <Breadcrumb href="/staff/import-data">{words.pageTitle}</Breadcrumb>
       <div className={styles.head}>
-        <ImportIcons sources={SOURCES[job]} />
+        <ImportIcon source={SOURCES[job]} />
         <h1 className={styles.heading}>
           {jobTitles[job]}
           <Tag>{words[JOB_SCHEDULES[job]]}</Tag>
+          <CheckOnly job={job} />
         </h1>
       </div>
       <p>
