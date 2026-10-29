@@ -3855,14 +3855,15 @@ describe("LetterFilters", () => {
     void filter;
     await render(<LetterFilters search={search} />);
     await expect.element(page.getByRole("searchbox", { name: copy.search })).toHaveValue("jane");
+    // In the columns' order.
     expect(chips()).toEqual([
-      `${copy.columns.campaign}: ${campaignBySlug("support-sobel-bill")!.title}`,
       `${copy.columns.status}: ${copy.status.sent}`,
+      `${copy.columns.campaign}: ${campaignBySlug("support-sobel-bill")!.title}`,
     ]);
     const add = await menu(staffCopy.filters.add);
     expect(add[0]).toEqual([
-      copy.consent.yes,
-      "/staff/letters?status=sent&q=jane&campaign=support-sobel-bill&consent=yes",
+      copy.answered.yes,
+      "/staff/letters?status=sent&q=jane&answered=yes&campaign=support-sobel-bill",
     ]);
   });
 });
