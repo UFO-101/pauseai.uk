@@ -10,9 +10,9 @@
   line-height: 1.5;
 }
 
-/* In a table, whole on a staff page, whose density says so (styles/tokens.css). */
+/* In a table, whole where the density says so: on a staff page (styles/tokens.css). */
 td .tag {
-  white-space: var(--table-tag-white-space, normal);
+  white-space: var(--table-tag-white-space);
 }
 
 /* After a heading's words, it sits on their middle, at its own size and weight. */
