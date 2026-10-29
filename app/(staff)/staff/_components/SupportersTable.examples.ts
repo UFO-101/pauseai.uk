@@ -35,6 +35,16 @@ export const exampleSupporterDetails: SupporterDetails = {
     },
   },
   mp: { id: 1, name: "Polly Placeholder", constituency: "Manchester Central", party: "Labour (Co-op)" },
+  letters: [
+    {
+      id: 12,
+      sentAt: "2026-10-05T09:00:00Z",
+      mpName: "Polly Placeholder",
+      politicianId: 1,
+      campaign: "regulate-letter-pm",
+      status: "sent",
+    },
+  ],
   identities: [
     { source: "luma", email: "jane@example.com", name: "Jane", seenAt: "2026-03-01T10:00:00Z" },
     { source: "email-your-mp", email: "jane.e@example.org", name: "Jane Example", seenAt: "2026-10-05T09:00:00Z" },
@@ -140,6 +150,7 @@ export const exampleSupporterDetails: SupporterDetails = {
 /** A member who joined through our site wanting to volunteer, opted out of the updates on joining, then re-joined asking for them; never a contact of the Luma calendar. */
 export const exampleMemberDetails: SupporterDetails = {
   mp: null,
+  letters: [],
   summary: {
     ...exampleSupporter,
     id: 8,

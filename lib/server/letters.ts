@@ -80,7 +80,7 @@ async function letterRows({
     `SELECT l.id::int AS id, s.campaign, l.status, f.name AS "senderName", f.email AS "senderEmail",
        f.contact_consent AS "contactConsent", n.name AS "mpName", n.id::int AS "politicianId", p.is_test AS "isTest", s.airtable_id IS NOT NULL AS imported, l.created_at AS "createdAt", l.sent_at AS "sentAt", l.replied_at AS "repliedAt",
        (SELECT k.supporter_id::int FROM supporter_links k WHERE k.form_entry_id = s.entry_id) AS "supporterId",
-       coalesce((SELECT json_agg(json_build_object('at', e.at, 'status', e.status, 'details', e.details) ORDER BY e.at, e.id)
+       coalesce((SELECT json_agg(json_build_object('at', e.at, 'status', e.status, 'details', e.details) ORDER BY e.at DESC, e.id DESC)
                  FROM letter_events e WHERE e.letter_id = l.id), '[]') AS events,
        count(*) OVER ()::int AS total
      FROM letters_from_supporters s JOIN letters l ON l.id = s.id JOIN form_entries f ON f.id = s.entry_id
@@ -129,6 +129,63 @@ export async function pauseaiLetters(politicianId: number): Promise<PauseaiLette
      WHERE l.notable_person_id = $1 ORDER BY l.created_at DESC, l.id DESC`,
     [politicianId],
   );
+}
+
+/** A supporter's letter, for its own page: what the list has, its subject, and Postmark's ID for the email sent. */
+export type SupporterLetterDetails = LetterSummary & { kind: "supporter"; subject: string; postmarkId: string | null };
+
+/** One of PauseAI's letters, for its own page: to whom, at which address now, in which mailing, and what happened. */
+export type PauseaiLetterDetails = {
+  kind: "pauseai";
+  id: number;
+  status: string;
+  createdAt: string;
+  sentAt: string | null;
+  mpName: string;
+  politicianId: number;
+  mpEmail: string | null;
+  mailingId: number;
+  mailing: string;
+  personalised: boolean;
+  events: LetterEvent[];
+};
+
+export type LetterDetails = SupporterLetterDetails | PauseaiLetterDetails;
+
+/**
+ * PauseAI's letter `id`, for its page under mailing `mailingId`, or
+ * undefined if that mailing has no such letter.
+ */
+export async function getPauseaiLetter(mailingId: number, id: number): Promise<PauseaiLetterDetails | undefined> {
+  const [letter] = await query<PauseaiLetterDetails>(
+    `SELECT 'pauseai' AS kind, l.id::int AS id, l.status, l.created_at AS "createdAt", l.sent_at AS "sentAt",
+       n.name AS "mpName", n.id::int AS "politicianId", n.email AS "mpEmail", m.id::int AS "mailingId",
+       m.title AS mailing, p.personalised,
+       coalesce((SELECT json_agg(json_build_object('at', e.at, 'status', e.status, 'details', e.details) ORDER BY e.at DESC, e.id DESC)
+                 FROM letter_events e WHERE e.letter_id = l.id), '[]') AS events
+     FROM letters_from_pauseai p JOIN letters l USING (id) JOIN mailings m ON m.id = p.mailing_id
+       JOIN notable_people n ON n.id = l.notable_person_id
+     WHERE l.id = $1 AND p.mailing_id = $2`,
+    [id, mailingId],
+  );
+  return letter;
+}
+
+/**
+ * A supporter's letter `id`, for its page, or undefined if there's none:
+ * PauseAI's letters have theirs under their mailing. Postmark's ID is the
+ * newest send's of the letter.
+ */
+export async function getSupporterLetter(id: number): Promise<SupporterLetterDetails | undefined> {
+  const [letter] = await recentLetters({ letterId: id });
+  if (!letter) return undefined;
+  const [{ subject, postmarkId }] = await query<{ subject: string; postmarkId: string | null }>(
+    `SELECT s.subject, (SELECT e.message_id FROM email_sends e WHERE e.letter_id = s.id AND e.purpose = 'letter'
+       AND e.outcome = 'sent' ORDER BY e.at DESC, e.id DESC LIMIT 1) AS "postmarkId"
+     FROM letters_from_supporters s WHERE s.id = $1`,
+    [id],
+  );
+  return { ...letter, kind: "supporter", subject, postmarkId };
 }
 
 /** A letter on an MP's page for staff without `supporters`: what happened to it, and nothing of who wrote it. */

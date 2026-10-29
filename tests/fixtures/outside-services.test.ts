@@ -65,10 +65,10 @@ describe("fixtureResponse", () => {
     );
   });
 
-  it("lists two MPs, each with an office email", async () => {
+  it("lists three MPs, each with an office email", async () => {
     expect(
       (await fixtureResponse("https://members-api.parliament.uk/api/Members/Search?House=1")!.json()).items,
-    ).toHaveLength(2);
+    ).toHaveLength(3);
     const contact = await fixtureResponse("https://members-api.parliament.uk/api/Members/90001/Contact")!.json();
     expect(contact.value[0].email).toBe("mp90001.office@parliament.uk ");
   });

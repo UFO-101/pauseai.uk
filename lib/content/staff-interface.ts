@@ -156,6 +156,8 @@ export const staffCopy = {
       // The Event filter's choices: an event and its day.
       event: "Event",
       eventChoice: (name: string, day: string) => `${name}, ${day}`,
+      // The MP filter's choices: an MP and their constituency.
+      mpChoice: (name: string, constituency: string) => `${name}, ${constituency}`,
       // The Campaign filter, and its second half: whether they wrote in it.
       campaign: "Campaign",
       wrote: { "": "Wrote", no: "Didn't write" } as Record<string, string>,
@@ -407,6 +409,7 @@ export const staffCopy = {
         to: "To",
         campaign: "Campaign",
         letter: "Status",
+        sent: "Sent",
       },
       // A registration that went through, where the status says nothing more.
       registered: "Registered",
@@ -643,7 +646,7 @@ export const staffCopy = {
     noRecipients: "Nobody yet.",
     recipientColumns: {
       name: "Politician",
-      status: "Outcome",
+      status: "Status",
       sentAt: "Sent",
       replied: "Replied",
       how: "Written",
@@ -925,7 +928,7 @@ export const staffCopy = {
     save: "Save",
     // The fields of the box at the top.
     status: "Status",
-    country: "Country",
+    country: "Nation",
     notes: "Notes",
     // Over how to write to them: their address and salutation.
     writing: "Writing to them",
@@ -1270,11 +1273,36 @@ export const staffCopy = {
     // Over the list: how many there are.
     total: (total: number) => `${total} ${total === 1 ? "letter" : "letters"}`,
     search: "Sender or MP",
-    // The Answered filter: whether the MP replied.
-    answered: { yes: "Answered", no: "Not answered" },
+    // The Replied filter: whether the MP replied.
+    answered: { yes: "Replied", no: "Not replied" },
     // The titles of a letter's own page, and of a supporter's letters' page.
-    oneTitle: (mp: string) => `Letter to ${mp}`,
+    oneTitle: (from: string, to: string) => `Letter from ${from} to ${to}`,
     fromTitle: (name: string) => `Letters from ${name}`,
+    // Who PauseAI's letters are from, in a letter's title.
+    fromPauseai: "PauseAI UK",
+    // A letter's own page: its facts beside the list's, and the way to read it as it was sent.
+    detail: {
+      subject: "Subject",
+      sent: "Sent",
+      mailing: "Mailing",
+      personalised: "Personalised",
+      historyTitle: "History",
+      noHistory: "Nothing recorded yet.",
+      // What a change of status recorded, each field's name before its value: Postmark's, a bounce's, a reply's.
+      fields: {
+        messageId: "Message ID",
+        type: "Type",
+        description: "Description",
+        reason: "Reason",
+        email: "Address",
+        from: "From",
+        subject: "Subject",
+      } as Record<string, string>,
+      // A supporter's letter, Bcc'd to policy@: its copy there.
+      googleGroup: "Find it in Google Groups",
+      // PauseAI's letter, sent from Gmail: a search for it.
+      gmail: "Find it in Gmail",
+    },
     none: "No letters.",
     status: {
       sending: "Sending",
@@ -1291,12 +1319,13 @@ export const staffCopy = {
     } as Record<string, string>,
     columns: {
       created: "Created",
+      sent: "Sent",
       from: "From",
       consent: "Consent",
       to: "To",
       campaign: "Campaign",
       status: "Status",
-      replied: "Answered",
+      replied: "Replied",
       history: "History",
     },
     consent: { yes: "Yes", no: "No" },
@@ -1324,6 +1353,8 @@ export const staffCopy = {
     narrow: "Search these",
     // A place filter's distance, for a screen reader.
     within: "Within",
+    // A list's page title, in the browser's tab, with its search and filters that are on, shortened.
+    pageTitle: (title: string, filters: string) => `${title}: ${filters}`,
   },
   // Under a list of more than one page.
   paging: {

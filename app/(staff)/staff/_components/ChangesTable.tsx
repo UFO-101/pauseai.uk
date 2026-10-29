@@ -2,8 +2,8 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { pagePath } from "@/lib/staff-search";
 import { staffClock, staffDate } from "@/lib/staff-time";
 import type { ChangesPage, LoggedChange } from "@/lib/server/audit";
-import IconButton from "@/components/ui/IconButton";
 import AuditDetail from "./AuditDetail";
+import { LoggedJson } from "./Logged";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
 import styles from "./ChangesTable.module.css";
 
@@ -32,16 +32,7 @@ export function changeColumns(airtableTable: string): ListColumn<LoggedChange>[]
         </th>
       ),
       text: (c) => JSON.stringify(c.details),
-      cell: (c) => (
-        <>
-          <IconButton look="outline" size={28} aria-label={copy.json} popoverTarget={`json-${c.id}`}>
-            {"{}"}
-          </IconButton>
-          <pre id={`json-${c.id}`} popover="auto" className={styles.json}>
-            {JSON.stringify(c.details, null, 2)}
-          </pre>
-        </>
-      ),
+      cell: (c) => <LoggedJson id={`json-${c.id}`} details={c.details} />,
     },
   ];
 }

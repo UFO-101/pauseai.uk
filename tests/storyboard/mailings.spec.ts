@@ -68,7 +68,7 @@ test("a new mailing from the politicians list: written, saved as a draft, previe
 }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
-  await page.goto(`${BASE}/staff/politicians?country=scotland`);
+  await page.goto(`${BASE}/staff/politicians?nation=scotland`);
   await expect(page.getByRole("link", { name: copy.mailThese(1) })).toBeVisible();
   await frame(page, "the politicians in Scotland, with Mail these beside Download");
 
@@ -185,4 +185,10 @@ test("a mailing sending, and one sent: its counts, and its recipients that bounc
   await page.getByRole("link", { name: copy.tab(copy.tabs.bounced, 1) }).click();
   await expect(page.getByRole("row")).toHaveCount(2);
   await frame(page, "only the one that bounced");
+
+  // Its outcome leads to the letter's own page, under the mailing, back to which it goes.
+  await page.getByRole("table").getByRole("link", { name: staffCopy.letters.status.bounced }).click();
+  await expect(page).toHaveURL(new RegExp(`/staff/mailings/${sent}/letters/\\d+$`));
+  await expect(page.getByRole("navigation").getByRole("link", { name: "Edinburgh follow-up" })).toBeVisible();
+  await frame(page, "the letter that bounced: to whom, how it stands, and what happened to it");
 });

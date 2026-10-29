@@ -107,8 +107,13 @@ describe("MailingWriter", () => {
     const here = location.href;
     const { actions } = await renderWriter();
     await write("Come along.");
-    await expect.poll(() => actions.start.mock.calls.length, WAIT).toBe(1);
-    expect(JSON.stringify(actions.start.mock.calls[0][1])).toContain("Come along.");
+    // Made once; typing slower than the save's wait makes it partway through, the rest coming in the next save.
+    const newest = () =>
+      JSON.stringify(
+        [...actions.start.mock.calls.map((call) => call[1]), ...actions.save.mock.calls.map((call) => call[2])].at(-1),
+      );
+    await expect.poll(newest, WAIT).toContain("Come along.");
+    expect(actions.start).toHaveBeenCalledTimes(1);
     // The address is the draft's, so a reload opens it; the tests' page goes back to its own.
     await expect.poll(() => location.pathname, WAIT).toBe("/staff/mailings/21");
     history.replaceState(null, "", here);

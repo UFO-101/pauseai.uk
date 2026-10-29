@@ -26,10 +26,11 @@ import StaffAccountsTable from "@/app/(staff)/staff/_components/StaffAccountsTab
 import UnblockForm from "@/app/(staff)/staff/_components/UnblockForm";
 import { exampleFailedRun, exampleHeldSync, exampleRun } from "@/app/(staff)/staff/_components/RunList.examples";
 import type { JSONContent } from "@tiptap/react";
-import { useId } from "react";
+import { useId, useState } from "react";
 import MailingEditor from "@/app/(staff)/staff/_components/MailingEditor";
 import ButtonRow from "@/components/ui/ButtonRow";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { ChangeTimeForm, DueTimeFields } from "@/app/(staff)/staff/_components/DueTime";
 import { DeleteDraft, StopMailing } from "@/app/(staff)/staff/_components/MailingButtons";
 import MailingFiles from "@/app/(staff)/staff/_components/MailingFiles";
 import MailingFor from "@/app/(staff)/staff/_components/MailingFor";
@@ -436,6 +437,21 @@ export function MailingButtonsExample({ id }: { id: number }) {
           <StopMailing id={id} label={staffCopy.mailingPages.unschedule} action={log("stopMailingNow")} />
         </ButtonRow>
       )}
+    </Logged>
+  );
+}
+
+/** A mailing's day and hour, today with no hour chosen: the hours too soon can't be. */
+export function DueTimeFieldsExample() {
+  const [when, setWhen] = useState<{ day: string; hour: number | null }>({ day: "2026-10-16", hour: null });
+  return <DueTimeFields day={when.day} hour={when.hour} onChange={(day, hour) => setWhen({ day, hour })} />;
+}
+
+/** Change the time's form, for a mailing whose time has become too soon: it starts at the first hour it can go. */
+export function ChangeTimeFormExample() {
+  return (
+    <Logged>
+      {(log) => <ChangeTimeForm id={5} dueAt="2026-10-16T09:00:00Z" action={log("rescheduleMailingNow")} />}
     </Logged>
   );
 }

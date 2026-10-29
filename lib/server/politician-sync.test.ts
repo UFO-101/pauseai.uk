@@ -67,7 +67,7 @@ describeWithDatabase("syncPoliticians", () => {
   it("fills an empty table from Airtable, every body, with Airtable's statuses and the test MPs, and records the sync", async () => {
     const result = await syncPoliticians(NIGHTLY);
     expect(result).toMatchObject({ status: "applied", renamed: [], statuses: { added: 5, changed: 0, removed: 0 } });
-    expect(result.changes.added).toHaveLength(6);
+    expect(result.changes.added).toHaveLength(7);
     expect((await people()).filter((p) => !p.isTest)).toEqual([
       {
         airtableId: "recGone",
@@ -82,6 +82,14 @@ describeWithDatabase("syncPoliticians", () => {
         name: "Lord Seedling of Example",
         status: "in_office",
         house: "lords",
+        removed: false,
+        isTest: false,
+      },
+      {
+        airtableId: "recMo",
+        name: "Mo Example",
+        status: "in_office",
+        house: "commons",
         removed: false,
         isTest: false,
       },
@@ -166,14 +174,14 @@ describeWithDatabase("syncPoliticians", () => {
     expect(sync.result.records).toBeUndefined();
     // The run's summary, one entry per politician added, by their row, and one per status set.
     const log = await query<{ actor: string; action: string }>("SELECT actor, action FROM audit_log ORDER BY id");
-    expect(log.filter((e) => e.action === "add politician")).toHaveLength(6);
+    expect(log.filter((e) => e.action === "add politician")).toHaveLength(7);
     expect(log.filter((e) => e.action === "set status" && e.actor === "airtable")).toHaveLength(5);
     expect(log.at(-1)).toEqual({ actor: "sync", action: "apply politician sync" });
     expect(
       await query(
         "SELECT count(*)::int AS n FROM audit_log a JOIN notable_people p ON p.id = (a.details->>'id')::bigint WHERE a.action = 'add politician'",
       ),
-    ).toEqual([{ n: 6 }]);
+    ).toEqual([{ n: 7 }]);
   });
 
   it("does nothing when nothing has changed, except keep the test MPs' inbox up to date, and records that", async () => {
@@ -252,14 +260,14 @@ describeWithDatabase("syncPoliticians", () => {
     airtableHas([...many(3), ...many(21, 4), ...fixture.records]);
     const held = await syncPoliticians(NIGHTLY);
     expect(held.status).toBe("held");
-    expect(held.changes.added).toHaveLength(27);
+    expect(held.changes.added).toHaveLength(28);
     // Nothing applied, but the statuses of those already here are set.
     expect((await people()).filter((p) => !p.isTest)).toHaveLength(3);
     const [run] = await recentSyncs();
-    expect(run.result.records).toHaveLength(30);
+    expect(run.result.records).toHaveLength(31);
 
     expect(await decideHeldSync(run.id, "apply", JO)).toBe(true);
-    expect((await people()).filter((p) => !p.isTest)).toHaveLength(30);
+    expect((await people()).filter((p) => !p.isTest)).toHaveLength(31);
     expect((await statuses()).filter((s) => s.by === "airtable")).toHaveLength(5);
     expect((await recentSyncs())[0]).toMatchObject({ status: "applied", decidedBy: JO });
     expect(await query("SELECT actor, action FROM audit_log ORDER BY id DESC LIMIT 1")).toEqual([
@@ -360,6 +368,7 @@ describeWithDatabase("syncPoliticians", () => {
         constituency: "Hackney North and Stoke Newington",
         email: "mp90001.office@parliament.uk",
       },
+      { name: "Mo Example", constituency: "Manchester Central", email: "mp90003.office@parliament.uk" },
     ]);
   });
 

@@ -438,8 +438,9 @@ function run(startedBy: string, budgetMs: number): Promise<LumaImportResult> {
     const contacts = await importContacts(budget, db);
     result.contacts = contacts.changed;
     result.contactPages = contacts.pages;
-    // Anyone new, from any source, gets their supporter; letters written since the last run too.
-    const links = await linkSupporters(db);
+    // Anyone new, from any source, gets their supporter; letters written since the last run too. A number given
+    // since a supporter was linked merges them with whoever else gave it.
+    const links = await linkSupporters(db, true);
     // A record already linked may have changed, so everyone's facts, not only the newly linked.
     await refreshSupporterFacts(db);
     result.supportersAdded = links.supportersAdded;

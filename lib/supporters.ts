@@ -1,5 +1,6 @@
 // Supporters, as the staff pages show them: the shapes the server
 // (lib/server/supporters.ts) gives the components.
+import { permanentRedirect } from "next/navigation";
 import { staffCopy } from "./content/staff-interface";
 import type { ContactPermission, ContactState } from "./contact-permissions";
 import type { SortColumns, SortDirection } from "./staff-sort";
@@ -101,8 +102,20 @@ export type SupporterContact = {
 /** A supporter's MP: the one in office for the constituency of the postcode that places them. */
 export type SupporterMp = { id: number; name: string; constituency: string; party: string };
 
+/** A letter a supporter wrote: which, when, to whom, in which campaign, and how it stands. */
+export type SupporterLetter = {
+  id: number;
+  sentAt: string | null;
+  mpName: string;
+  politicianId: number;
+  campaign: string;
+  status: string;
+};
+
 export type SupporterDetails = {
   summary: SupporterSummary;
+  /** Their letters, newest first. */
+  letters: SupporterLetter[];
   /** Their MP, when a postcode places them and its constituency has one in office; else null. */
   mp: SupporterMp | null;
   identities: SupporterIdentity[];
@@ -126,7 +139,7 @@ export type SupporterSort = keyof typeof SUPPORTER_SORTS;
 export const NEAR_MILES = [5, 10, 25, 50] as const;
 
 /** The filters that repeat, which can leave out as well as find. */
-export type NegatableSupporterFilter = "activity" | "contact" | "event" | "country";
+export type NegatableSupporterFilter = "activity" | "contact" | "event" | "country" | "mp";
 
 /** Who the list shows, as the server finds them. A filter that repeats finds those with any of its values. */
 export type SupporterWho = {
@@ -143,6 +156,8 @@ export type SupporterWho = {
   wrote?: boolean;
   /** In any of these nations (supporter_place). */
   country?: string[];
+  /** In the constituency of any of these MPs, by politician ID, by the postcode that places them. */
+  mp?: number[];
   /** Within `miles` of what was typed: a postcode, the first half of one, or a town. */
   near?: { text: string; miles: number };
   /** Those with none of these, each a filter above that repeats. */
@@ -171,4 +186,14 @@ export function registrationStatus(status: string | null): string {
 /** A supporter's page's name: theirs, or the stand-in for one with none. */
 export function supporterTitle(summary: Pick<SupporterSummary, "name">): string {
   return summary.name ?? staffCopy.supporters.noName;
+}
+
+/**
+ * The supporter the URL's ID found, or a redirect to their own page when
+ * that ID was merged into theirs (supporter_merges): a phone match makes
+ * two supporters one, and an old link goes on to the one kept.
+ */
+export function canonicalSupporter(given: number, supporter: SupporterDetails): SupporterDetails {
+  if (supporter.summary.id !== given) permanentRedirect(`/staff/supporters/${supporter.summary.id}`);
+  return supporter;
 }

@@ -86,8 +86,16 @@ test("with no permissions, no page shows a supporter's name or email, nor sends 
   const testyId = politicianId(flowDatabase, testy.name);
   const letterId = runSql(flowDatabase, "SELECT id FROM letters")[0];
   const supporterId = runSql(flowDatabase, "SELECT id FROM supporters ORDER BY id")[0];
+  // One of PauseAI's letters, which the politicians sync copied, at its page under its mailing.
+  const [pauseaiLetter] = runSql(
+    flowDatabase,
+    "SELECT '/staff/mailings/' || mailing_id || '/letters/' || id FROM letters_from_pauseai ORDER BY id LIMIT 1",
+  );
   const routes = [
-    ...ROUTES.filter((route) => route.startsWith("/staff") && !route.startsWith("/staff/login")),
+    ...ROUTES.filter(
+      (route) => route.startsWith("/staff") && !route.startsWith("/staff/login") && !route.includes("/letters/1"),
+    ),
+    pauseaiLetter,
     ...IMPORT_JOBS.map(importPath),
     `/staff/politicians/${testyId}`,
     `/staff/letters/${letterId}`,
@@ -155,7 +163,9 @@ test("without supporters, Letters and Supporters' blocked emails are closed, and
   addStaffAccount(flowDatabase, staffEmail(), ["supporters"]);
   await page.reload();
   await blocked.getByRole("link", { name: `${staffCopy.emails.letterTo} ${bouncy.name}` }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.letters.oneTitle(bouncy.name));
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    staffCopy.letters.oneTitle("Jane Smith", bouncy.name),
+  );
   await frame(page, "with supporters, the letter it names opens");
 });
 

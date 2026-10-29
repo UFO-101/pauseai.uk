@@ -12,7 +12,8 @@
 -- doubling them. The rest are made up, with "seed" in their IDs. The
 -- letters go to the test MPs (lib/test-mps.json), which must be in the
 -- database already, and most recent ones then to Airtable's two. Supporters and their links are written at the end as
--- the matcher (lib/server/supporters.ts) would make them: one per email.
+-- the matcher (lib/server/supporters.ts) would make them: one per email,
+-- then one per UK mobile number.
 
 -- ---------------------------------------------------------------- staff
 
@@ -35,7 +36,7 @@ INSERT INTO staff_login_links (token_hash, email, browser_hash, created_at, expi
 -- ---------------------------------------------------------- politicians
 
 -- Airtable's politicians, as the sync copies them (airtable-politicians.json,
--- by the same IDs): two MPs, one an important target with notes; an MSP, a
+-- by the same IDs): three MPs, one an important target with notes; an MSP, a
 -- personal connection; one who retired and one who left office. Then a peer
 -- the signatory import added, whom the sync takes to be Airtable's; a peer
 -- who died; and an MP whose record is gone from Airtable, kept. Then made-up
@@ -47,6 +48,7 @@ INSERT INTO seed_politicians VALUES
   ('recPlaceholder', 'commons', 'Polly Placeholder', 'Ms Placeholder', 'Cities of London and Westminster', 'Labour (Co-op)', 'england', 'polly.placeholder.mp@parliament.uk', 'in_office', E'Met at the example fair.\nRecommended', true, false, NULL, '60 days', '9 days'),
   ('recMorag', 'scottish-parliament', 'Morag Example', 'Ms Example', 'Exampleshire North', 'Example Party', 'scotland', 'morag.example.msp@parliament.example', 'in_office', '', false, true, NULL, '40 days', '40 days'),
   ('recRetired', 'commons', 'Rita Retired', 'Ms Retired', 'Old Seat', 'Independent', 'wales', NULL, 'retired', '', false, false, NULL, '40 days', '40 days'),
+  ('recMo', 'commons', 'Mo Example', 'Mx Example', 'Manchester Central', 'Labour', 'england', 'mp90003.office@parliament.uk', 'in_office', '', false, false, NULL, '60 days', '60 days'),
   ('recGone', 'commons', 'Gordon Gone', 'Mr Gone', 'Former Seat', 'Independent', 'england', 'gordon.gone.mp@parliament.uk', 'left_office', '', false, false, NULL, '60 days', '20 days'),
   (NULL, 'lords', 'Lord Seedling of Example', 'Lord Seedling', NULL, 'Crossbench', NULL, NULL, 'in_office', '', false, false, NULL, '30 days', '12 days'),
   ('recDeparted', 'lords', 'Lord Departed of Example', 'Lord Departed', NULL, 'Crossbench', NULL, NULL, 'died', '', false, false, NULL, '40 days', '25 days'),
@@ -83,7 +85,7 @@ SELECT i, 'recMade' || i AS airtable_id,
   -- every 20, which would give peers the same names.
   CASE WHEN i % 10 IN (6, 7) THEN (ARRAY['Ashford','Bramley','Colton','Dunmore','Eastwick','Farley','Glenholm','Harwood','Inverby','Kelso','Langley','Morden','Northam','Oxley','Penrith','Rydal','Stanmore','Tarleton','Westby','Yarrow'])[1 + (i / 10 * 2 + i % 10 - 6 + i / 20) % 20] END AS seat,
   CASE WHEN i % 10 < 6 THEN 'commons' WHEN i % 10 < 8 THEN 'lords' WHEN i % 10 = 8 THEN 'scottish-parliament' WHEN i % 20 = 9 THEN 'senedd' ELSE 'ni-assembly' END AS house
-FROM generate_series(1, 228) i;
+FROM generate_series(1, 227) i;
 WITH people AS (
   INSERT INTO notable_people (kind, airtable_id, name, salutation, email, status, notes, important_target, personal_connection, created_at, updated_at)
   SELECT 'politician', airtable_id,
@@ -292,14 +294,9 @@ INSERT INTO postcode_places (postcode, latitude, longitude, place, country) VALU
   ('ZZ99ZN', NULL, NULL, NULL, NULL),
   ('ZZ99ZS', NULL, NULL, NULL, NULL),
   ('ZZ99ZZ', NULL, NULL, NULL, NULL);
--- And each one's constituency, where a fixture MP has it: Jane's in
--- Manchester is the first made-up MP's, there being no fixture MP there.
+-- And each one's constituency, where a fixture MP has it.
 UPDATE postcode_places SET constituency_checked = true,
-  constituency = CASE postcode WHEN 'EC1A1BB' THEN 'Cities of London and Westminster' END;
-UPDATE postcode_places SET constituency = (
-  SELECT p.constituency FROM politicians p JOIN notable_people n ON n.id = p.id
-  WHERE n.airtable_id LIKE 'recMade%' AND p.house = 'commons' AND n.status = 'in_office' ORDER BY p.id LIMIT 1
-) WHERE postcode = 'M11AE';
+  constituency = CASE postcode WHEN 'EC1A1BB' THEN 'Cities of London and Westminster' WHEN 'M11AE' THEN 'Manchester Central' END;
 INSERT INTO named_places (name, latitude, longitude, place, country) VALUES
   ('manchester', 53.4794, -2.2453, 'Manchester', 'england'),
   ('london', 51.5072, -0.1276, 'London', 'england'),
@@ -480,7 +477,7 @@ SELECT m.title, m.title, 'politicians', 'email', m.filter::jsonb, b.body, 'jo@pa
   'edinburgh-conference-2026', now() + coalesce(m.due, interval '0') - interval '2 days', now() - interval '1 hour'
 FROM seed_letter b, (VALUES
   ('Meet us in Westminster', '{"list": "politicians", "params": {"house": "commons"}}', NULL, NULL, NULL::interval, 'draft'),
-  ('Edinburgh reminder', '{"list": "politicians", "params": {"country": "scotland"}}', 'jo@pauseai.uk', 'Jo Seed', interval '3 days', 'scheduled'),
+  ('Edinburgh reminder', '{"list": "politicians", "params": {"nation": "scotland"}}', 'jo@pauseai.uk', 'Jo Seed', interval '3 days', 'scheduled'),
   ('Edinburgh follow-up', '{"list": "politicians", "params": {}}', 'jo@pauseai.uk', 'Jo Seed', interval '-7 days', 'sent')
 ) m (title, filter, sent_from, from_name, due, state);
 INSERT INTO mailing_attachments (mailing_id, filename, content_type, content)
@@ -510,6 +507,19 @@ FROM seed_written w;
 INSERT INTO letters_from_pauseai (id, mailing_id, merge_values)
 SELECT w.id, w.mailing_id, json_build_object('values', json_build_object('salutation', w.salutation, 'name', w.name), 'meets', '[]'::json)
 FROM seed_written w;
+-- What happened to each: scheduled; then, in the mailing sent, sent with
+-- the message's ID, and for the first a bounce, for the second a reply.
+INSERT INTO letter_events (letter_id, at, status, details)
+SELECT id, due_at - interval '2 days', 'scheduled', '{}' FROM seed_written;
+INSERT INTO letter_events (letter_id, at, status, details)
+SELECT id, due_at, 'sent', jsonb_build_object('messageId', 'seed-mailing-' || id) FROM seed_written WHERE state = 'sent';
+INSERT INTO letter_events (letter_id, at, status, details)
+SELECT w.id, w.due_at + interval '1 minute', 'bounced',
+  jsonb_build_object('type', 'HardBounce', 'reason', 'The address does not exist', 'email', n.email)
+FROM seed_written w JOIN notable_people n ON n.id = w.person WHERE w.state = 'sent' AND w.n = 1;
+INSERT INTO letter_events (letter_id, at, status, details)
+SELECT id, due_at + interval '1 day', 'replied', jsonb_build_object('from', name, 'subject', 'Re: Edinburgh follow-up')
+FROM seed_written WHERE state = 'sent' AND n = 2;
 
 -- A mailing to supporters, by email, to those following the calendar:
 -- one delivered, one that failed, one skipped as they'd unsubscribed since.
@@ -648,6 +658,13 @@ WITH emails AS (
 )
 INSERT INTO supporter_links (supporter_id, form_entry_id, matched_by, matched_value, linked_at)
 SELECT k.id, f.id, 'email', k.email, f.created_at FROM keyed k JOIN form_entries f ON lower(trim(f.email)) = k.email;
+
+-- Then those who gave the same UK mobile number are one, as the matcher
+-- merges them; and Jane Fixture was once two, the other's ID long gone.
+SELECT count(*) FROM merge_supporters_by_phone();
+INSERT INTO supporter_merges (from_id, into_id, merged_at)
+SELECT (SELECT max(id) + 1000 FROM supporters), k.supporter_id, now() - interval '20 days'
+FROM supporter_links k WHERE k.luma_user_id = 'usr-fixture-1';
 
 -- Each supporter's first seen, as refreshSupporterFacts() (lib/server/supporter-facts.ts) sets it after linking.
 UPDATE supporters s SET first_seen_at = f.first_seen_at FROM supporter_first_seen f WHERE f.supporter_id = s.id;

@@ -329,7 +329,13 @@ the audit log. A table that isn't a whole list, inside a card, is a
 `ListTable`, or a plain `Table`: striped, with no count or downloads.
 
 Columns go in the same order in every list: who it is, then how it
-stands, then counts, then when.
+stands, then counts, then when. The times that date a status, such as a
+letter's sent and replied, can sit beside it instead, read with it. Where a row has a page of its own, the
+first column leads to it, so there's one place to click to open it: a
+supporter's or politician's name. A row with no name, such as a letter,
+starts with what leads to it instead, its status, before who it's from
+and to. A log, read by time, newest first, starts with when instead: the
+audit log, an import's runs, a history.
 
 **Filters** (`ui/FilterBar`). Every list's filters are the same bar
 above it, and a list's own filters component only says what its filters
@@ -348,7 +354,9 @@ are:
 - "+ Filter" lists every other filter, a row each, its choices opening
   under it, one at a time; a choice applies at once. A filter has the
   name of the column it filters, and they come in the columns' order. Not
-  every column gets one, only those someone will filter by.
+  every column gets one, only those someone will filter by. A filter with
+  no column of its own goes beside the column it's about: Near and MP by
+  Place, Event by Luma events.
 - A filter that makes sense more than once (`repeat`: a party, a nation,
   an event) can be chosen again, a chip each, and finds what has any of
   them; different filters must all match. An ask's answer doesn't repeat.
@@ -397,6 +405,16 @@ what they'd want to check against. A browser too old to anchor one shows
 it in the middle as a fallback; that's the only place it goes there. A
 choice that needs confirming is confirmed in place, as Delete draft is
 pressed twice.
+
+**JSON from the database is shown in words** (`Logged.tsx`). A column of
+details stored as JSON, as the audit log's and a letter's history are,
+is never shown raw. Each field gets its label in bold from the copy, then
+its value in words: a status by its name, a date as a date, someone
+linked to their page. The fields go between middle dots (`DotParts`). A
+field with no label in the copy shows its key as stored, so nothing
+logged is hidden. Beside it, a {} button (`LoggedJson`) opens the JSON
+exactly as stored, in a bubble by the button. That's the fallback, for
+checking exactly what was recorded or a field the words don't cover yet.
 
 **The sidebar** (`StaffNav`). Each page has its icon (`NavIcon`) beside
 its name. Fold, at its foot, folds it to a rail of the icons on wider

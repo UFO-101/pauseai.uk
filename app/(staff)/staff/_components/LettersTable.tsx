@@ -2,11 +2,11 @@ import Link from "next/link";
 import CampaignName from "./CampaignName";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { campaignBySlug } from "@/lib/email-your-mp";
+import type { DownloadColumn } from "@/lib/staff-list";
 import { staffTime } from "@/lib/staff-time";
 import type { LetterSummary } from "@/lib/server/letters";
 import { filtersPath, pageParam, type LettersSearch } from "@/lib/staff-search";
 import ListFrame, { ListTable, type ListColumn } from "./ui/ListFrame";
-import styles from "./LettersTable.module.css";
 import { Muted } from "@/components/ui/Text";
 import Tag from "@/components/ui/Tag";
 
@@ -17,18 +17,20 @@ const copy = staffCopy.letters;
 const statusOf = (status: string) => copy.status[status] ?? status;
 
 /**
- * The letters list's columns: when, the sender (leading to their
- * supporter) and their email, whether they agreed to hear from us, the MP
- * (leading to their page), the campaign (leading to its page on the site),
- * its status, when the MP replied, and each change of status and reply.
+ * The letters list's columns, as every list's go (docs/style-guide.md):
+ * first its status, leading to the letter's page, as a letter has no
+ * name; who it was from (leading to their supporter) and their email, and
+ * to (leading to the MP's page), and the campaign (leading to its page on
+ * the site); whether the sender agreed to hear from us; then when it was
+ * sent and when the MP replied.
  */
 export const letterColumns: ListColumn<LetterSummary>[] = [
   {
-    key: "created",
-    label: copy.columns.created,
+    key: "status",
+    label: copy.columns.status,
     short: true,
-    text: (l) => l.createdAt,
-    cell: (l) => staffTime(l.createdAt),
+    text: (l) => statusOf(l.status),
+    cell: (l) => <Link href={`/staff/letters/${l.id}`}>{statusOf(l.status)}</Link>,
   },
   {
     key: "from",
@@ -45,13 +47,6 @@ export const letterColumns: ListColumn<LetterSummary>[] = [
         <Muted>{l.senderEmail}</Muted>
       </>
     ),
-  },
-  {
-    key: "consent",
-    label: copy.columns.consent,
-    short: true,
-    text: (l) => l.contactConsent,
-    cell: (l) => (l.contactConsent ? copy.consent.yes : copy.consent.no),
   },
   {
     key: "to",
@@ -75,11 +70,18 @@ export const letterColumns: ListColumn<LetterSummary>[] = [
     ),
   },
   {
-    key: "status",
-    label: copy.columns.status,
+    key: "consent",
+    label: copy.columns.consent,
     short: true,
-    text: (l) => statusOf(l.status),
-    cell: (l) => statusOf(l.status),
+    text: (l) => l.contactConsent,
+    cell: (l) => (l.contactConsent ? copy.consent.yes : copy.consent.no),
+  },
+  {
+    key: "sent",
+    label: copy.columns.sent,
+    short: true,
+    text: (l) => l.sentAt,
+    cell: (l) => (l.sentAt ? staffTime(l.sentAt) : <Muted>–</Muted>),
   },
   {
     key: "replied",
@@ -88,20 +90,16 @@ export const letterColumns: ListColumn<LetterSummary>[] = [
     text: (l) => l.repliedAt,
     cell: (l) => l.repliedAt && staffTime(l.repliedAt),
   },
+];
+
+/** The list's columns for a download, with when each was written and each change of status, which its page shows. */
+export const letterDownloadColumns: DownloadColumn<LetterSummary>[] = [
+  ...letterColumns,
+  { key: "created", label: copy.columns.created, text: (l) => l.createdAt },
   {
     key: "history",
     label: copy.columns.history,
     text: (l) => l.events.map((event) => `${event.at} ${statusOf(event.status)}`).join("; "),
-    cell: (l) => (
-      <ul className={styles.events}>
-        {l.events.map((event, i) => (
-          <li key={i}>
-            {staffTime(event.at)}: {statusOf(event.status)}
-            {Object.keys(event.details).length > 0 && <code> {JSON.stringify(event.details)}</code>}
-          </li>
-        ))}
-      </ul>
-    ),
   },
 ];
 

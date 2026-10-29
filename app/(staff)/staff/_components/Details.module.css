@@ -234,6 +234,39 @@
   padding-right: var(--space-4);
 }
 
+/* A letter's history, in a narrow card: each change's time over what it
+   recorded, and its {} button at the right. */
+.history.events {
+  display: block;
+}
+
+.events li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  column-gap: var(--space-3);
+  padding-block: var(--space-2);
+}
+
+.events li + li {
+  border-top: 1px solid var(--border);
+}
+
+.events li > *,
+.events li + li > * {
+  padding-block: 0;
+  border-top: 0;
+}
+
+.events li > :nth-child(3) {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+}
+
+/* What a change recorded: an ID has no spaces, so it breaks anywhere rather than past the card. */
+.events li > :nth-child(2) {
+  overflow-wrap: anywhere;
+}
+
 /* A card with nothing in it yet. */
 .none {
   margin: 0;

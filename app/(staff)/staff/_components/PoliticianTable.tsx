@@ -56,15 +56,19 @@ const marks = (p: Politician) => {
  * column is left out only when the filters fix it for every row there
  * could be. That's a house (and for peers, the constituency they don't
  * have), one party found (one left out doesn't fix it), or one status,
- * those in office unless another or any is chosen. A download has the same
+ * those in office unless another or any is chosen. Their nation, after
+ * the constituency, is added when the Nation filter leaves some out or
+ * finds more than one, so the rows differ by it. A download has the same
  * columns.
  */
 export function politicianColumns(asks: Ask[], search: Params = {}): ListColumn<Politician>[] {
   const house = firstOf(search.house);
   const [parties] = anyAndNone(valuesOf(search.party), (values) => values);
+  const [nations, notNations] = anyAndNone(valuesOf(search.nation), (values) => values);
   const show = {
     house: !Object.hasOwn(staffCopy.houses, house),
     constituency: house !== "lords",
+    nation: Boolean(notNations) || (nations?.length ?? 0) > 1,
     party: parties?.length !== 1,
     status: firstOf(search.status ?? "any") === "any",
   };
@@ -108,6 +112,13 @@ export function politicianColumns(asks: Ask[], search: Params = {}): ListColumn<
       heading: heading("constituency", staffCopy.fields.constituency),
       text: (p) => p.constituency,
       cell: (p) => p.constituency,
+    },
+    show.nation && {
+      key: "country",
+      label: staffCopy.politician.country,
+      short: true,
+      text: (p) => p.country && staffCopy.countries[p.country],
+      cell: (p) => p.country && staffCopy.countries[p.country],
     },
     show.party && {
       key: "party",

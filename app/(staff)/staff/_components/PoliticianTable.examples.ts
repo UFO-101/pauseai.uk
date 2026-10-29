@@ -108,7 +108,7 @@ export const emptyPoliticiansSearch: PoliticiansSearch = {
   status: "",
   party: [],
   flag: [],
-  country: [],
+  nation: [],
   email: [],
   ask: "",
   answer: "",

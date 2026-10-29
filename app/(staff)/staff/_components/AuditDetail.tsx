@@ -7,22 +7,9 @@ import type { FieldChange } from "@/lib/field-changes";
 import { importPath } from "@/lib/import-runs";
 import type { LoggedChange, Named } from "@/lib/server/audit";
 import CampaignName from "./CampaignName";
+import { DotParts } from "./Logged";
 
 const copy = staffCopy.changes;
-
-/** Parts of a line, between middle dots. */
-function Parts({ children }: { children: ReactNode[] }) {
-  return (
-    <>
-      {children.map((part, i) => (
-        <Fragment key={i}>
-          {i > 0 && <Muted> · </Muted>}
-          {part}
-        </Fragment>
-      ))}
-    </>
-  );
-}
 
 /** A field's name, in bold before its value; one with no name in the copy, as logged, with a capital. */
 function label(key: string): string {
@@ -49,13 +36,13 @@ function Value({ name, value }: { name: string; value: unknown }) {
 /** What an edit changed: each field, before and after. */
 export function FieldChanges({ changed }: { changed: Record<string, FieldChange> }) {
   return (
-    <Parts>
+    <DotParts>
       {Object.entries(changed).map(([name, [before, after]]) => (
         <Fragment key={name}>
           <strong>{label(name)}</strong> <Value name={name} value={before} /> → <Value name={name} value={after} />
         </Fragment>
       ))}
-    </Parts>
+    </DotParts>
   );
 }
 
@@ -172,11 +159,11 @@ export default function AuditDetail({ change, airtableTable }: { change: LoggedC
   }
   const rest = Object.entries(details).filter(([key, value]) => !used.has(key) && value !== null && value !== "");
   return (
-    <Parts>
+    <DotParts>
       {[
         ...lead,
         ...rest.map(([key, value]) => <Field key={key} name={key} value={value} airtableTable={airtableTable} />),
       ]}
-    </Parts>
+    </DotParts>
   );
 }

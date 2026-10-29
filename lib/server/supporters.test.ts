@@ -1,11 +1,20 @@
 import { expect, it } from "vitest";
 import { query, transaction } from "@/lib/server/db";
-import { addTestLetter, addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { migrate } from "@/scripts/db-migrate.mjs";
+import {
+  addTestLetter,
+  addTestMp,
+  addTestPolitician,
+  describeWithDatabase,
+  MAKES_DATABASES,
+  useDatabaseUpTo,
+  useTestDatabase,
+} from "@/tests/database";
 import type { SupporterFilter } from "@/lib/supporters";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import { refreshSupportersList } from "./supporter-facts";
-import { eventChoices, getSupporter, linkSupporters, listSupporters } from "./supporters";
+import { getSupporter, linkSupporters, listSupporters, supporterChoices } from "./supporters";
 
 /** A Luma user, with a registration for `event` if given. */
 async function lumaUser(id: string, email: string, name: string, event?: string, more: Record<string, unknown> = {}) {
@@ -101,6 +110,76 @@ describeWithDatabase("linkSupporters", () => {
     expect(await transaction((db) => linkSupporters(db))).toEqual({ supportersAdded: 0, linked: 2 });
     expect((await links()).map((r) => r.supporter_id)).toEqual([supporter_id, supporter_id, supporter_id]);
     expect((await links()).find((r) => r.letter_id === second)).toBeDefined();
+  });
+
+  it("merges supporters who gave the same UK mobile number into the older, whose ID still finds them", async () => {
+    await lumaUser("usr-1", "jane@example.com", "Jane", "evt-1", { phone: "07700 900001" });
+    await lumaUser("usr-2", "home@example.com", "Home", "evt-1", { phone: "0161 496 0000" });
+    await linkSupporters();
+    const [jane, home] = await Promise.all(["jane@example.com", "home@example.com"].map(supporterWith));
+    // A second address for Jane, with her number written another way, and a member with that address and a
+    // second number of hers, which a third address gave too: a chain, all Jane. A landline shared is two people.
+    await lumaUser("usr-3", "jane.work@example.com", "Jane W", "evt-1", { phone: "+44 7700 900001" });
+    await member("recWork", "jane.work@example.com", "2026-09-01T00:00:00Z", { phone: "07700 900002" });
+    await lumaUser("usr-4", "jane.other@example.com", "Jane O", "evt-1", { phone: "07700900002" });
+    await lumaUser("usr-5", "flatmate@example.com", "Flatmate", "evt-1", { phone: "0161 496 0000" });
+    // The list as the hourly refresh left it, before they're linked.
+    await refreshSupportersList();
+    expect(await transaction((db) => linkSupporters(db))).toEqual({ supportersAdded: 1, linked: 4 });
+    expect(await supporterWith("jane.work@example.com")).toBe(jane);
+    expect(await supporterWith("jane.other@example.com")).toBe(jane);
+    expect(await supporterWith("flatmate@example.com")).not.toBe(home);
+    expect(await query("SELECT count(*)::int AS n FROM supporters")).toEqual([{ n: 3 }]);
+    const merges = await query<{ from_id: number; into_id: number }>(
+      "SELECT from_id::int AS from_id, into_id::int AS into_id FROM supporter_merges ORDER BY from_id",
+    );
+    expect(merges.map((m) => m.into_id)).toEqual([jane, jane]);
+    // The list has them as one, now; a merged ID's page is Jane's, with every address.
+    const listed = await listSupporters({ sort: "name", dir: "asc", page: 1 });
+    expect(listed.supporters.map((s) => s.name)).toEqual(["Flatmate", "Home", "Jane"]);
+    const page = (await getSupporter(merges[0].from_id))!;
+    expect(page.summary.id).toBe(jane);
+    expect(page.summary.emails.toSorted()).toEqual([
+      "jane.other@example.com",
+      "jane.work@example.com",
+      "jane@example.com",
+    ]);
+    expect(await linkSupporters()).toEqual({ supportersAdded: 0, linked: 0 });
+  });
+
+  it("moves a merged supporter's messages to the older, and keeps only that one was sent where both had one", async () => {
+    await lumaUser("usr-1", "jane@example.com", "Jane", "evt-1", { phone: "07700 900001" });
+    await linkSupporters();
+    await lumaUser("usr-2", "jo@example.com", "Jo", "evt-1");
+    await linkSupporters();
+    const [jane, other] = await Promise.all(["jane@example.com", "jo@example.com"].map(supporterWith));
+    const [both, one] = await query<{ id: number }>(
+      `INSERT INTO mailings (title, audience, channel, topic, filter, body, created_by, sent_from, from_name, due_at, state)
+       SELECT title, 'supporters', 'email', 'luma-calendar', '{}', '{}', 'jo@pauseai.uk', 'jo@pauseai.uk', 'PauseAI UK',
+         now(), 'sent' FROM unnest(ARRAY['Both', 'One']) title RETURNING id::int AS id`,
+    );
+    await query(
+      `INSERT INTO messages_to_supporters (mailing_id, supporter_id, address, status, merge_values) VALUES
+       ($1, $3, 'jane@example.com', 'sent', '{}'), ($1, $4, 'jo@example.com', 'sent', '{}'),
+       ($2, $4, 'jo@example.com', 'sent', '{}')`,
+      [both.id, one.id, jane, other],
+    );
+    // Jo gives Jane's number: only a pass over everyone's numbers finds it, as Jo was linked before.
+    await query("UPDATE luma_guests SET phone = '07700900001' WHERE user_id = 'usr-2'");
+    expect(await linkSupporters()).toEqual({ supportersAdded: 0, linked: 0 });
+    expect(await supporterWith("jo@example.com")).toBe(other);
+    await linkSupporters(undefined, true);
+    expect(await supporterWith("jo@example.com")).toBe(jane);
+    expect(
+      await query(
+        `SELECT m.title, s.supporter_id::int AS supporter, s.address FROM messages_to_supporters s
+         JOIN mailings m ON m.id = s.mailing_id ORDER BY s.id`,
+      ),
+    ).toEqual([
+      { title: "Both", supporter: jane, address: "jane@example.com" },
+      { title: "Both", supporter: null, address: null },
+      { title: "One", supporter: jane, address: "jo@example.com" },
+    ]);
   });
 
   it("gives the views each supporter's name, emails, contact details, activity and opt-outs in their history", async () => {
@@ -351,6 +430,10 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     expect(await names({ search: "jane pat" })).toEqual([]);
     expect(await names({ search: "pat@" })).toEqual(["Pat"]);
     expect(await names({ search: "0900001" })).toEqual(["Jane"]);
+    // Her number is stored +447700900001: as it's written in the UK, it finds her too, whole or its start.
+    expect(await names({ search: "07700 900001" })).toEqual(["Jane"]);
+    expect(await names({ search: "07700" })).toEqual(["Jane"]);
+    expect(await names({ search: "07701" })).toEqual([]);
     expect(await names({ activity: ["letter"] })).toEqual(["Pat"]);
     expect(await names({ activity: ["registered"] })).toEqual(["Sam", "Jane", "Old"]);
     expect(await names({ activity: ["lumaContact"] })).toEqual(["Jane"]);
@@ -441,7 +524,9 @@ describeWithDatabase("listSupporters and getSupporter", () => {
     expect(await names({ event: ["evt-1"] })).toEqual(["Sam", "Jane", "Old"]);
     expect(await names({ event: ["evt-none", "evt-1"] })).toEqual(["Sam", "Jane", "Old"]);
     expect(await names({ event: ["evt-none"] })).toEqual([]);
-    expect(await eventChoices()).toEqual([{ id: "evt-1", name: "evt-1", startAt: new Date("2026-10-01T18:00:00Z") }]);
+    expect((await supporterChoices()).events).toEqual([
+      { id: "evt-1", name: "evt-1", startAt: new Date("2026-10-01T18:00:00Z") },
+    ]);
     const [{ campaign }] = await query<{ campaign: string }>("SELECT campaign FROM letters_from_supporters LIMIT 1");
     expect(await names({ campaign, wrote: true })).toEqual(["Pat"]);
     expect(await names({ campaign, wrote: false })).toEqual(["Sam", "Jane", "Old"]);
@@ -540,6 +625,14 @@ describeWithDatabase("listSupporters and getSupporter", () => {
       constituency: "Manchester Central",
       party: "Labour (Co-op)",
     });
+    // The MP filter finds her by her MP, and leaves her out; the test MP the letter went to is no choice.
+    await query("REFRESH MATERIALIZED VIEW supporters_list");
+    expect((await supporterChoices()).mps).toEqual([
+      { id: mp, name: "Mo Manchester", constituency: "Manchester Central" },
+    ]);
+    expect(await names({ mp: [mp] })).toEqual(["Jane"]);
+    expect(await names({ mp: [mp + 1] })).toEqual([]);
+    expect(await names({ not: { mp: [mp] } })).toEqual(["Sam", "Pat", "Old"]);
     // One out of office isn't their MP.
     await query("UPDATE notable_people SET status = 'retired' WHERE id = $1", [mp]);
     expect((await getSupporter(id))!.mp).toBeNull();
@@ -677,5 +770,38 @@ describeWithDatabase("members as supporters", () => {
       send: "no",
       reason: "removed",
     });
+  });
+});
+
+describeWithDatabase("migration 0058_supporters_merged_by_phone", MAKES_DATABASES, () => {
+  const db = useDatabaseUpTo("0057");
+
+  it("merges the supporters who already share a UK mobile number into the older, and lists them as one", async () => {
+    await lumaUser("usr-1", "jane@example.com", "Jane", "evt-1", { phone: "07700 900001" });
+    await lumaUser("usr-2", "jane.work@example.com", "Jane W", "evt-1", { phone: "+447700900001" });
+    await lumaUser("usr-3", "sam@example.com", "Sam", "evt-1", { phone: "07700 900002" });
+    await query("INSERT INTO supporters (first_seen_at) VALUES (NULL), (NULL), (NULL)");
+    await query(
+      `INSERT INTO supporter_links (supporter_id, luma_user_id, matched_by, matched_value) VALUES
+         (1, 'usr-1', 'email', 'jane@example.com'), (2, 'usr-2', 'email', 'jane.work@example.com'),
+         (3, 'usr-3', 'email', 'sam@example.com')`,
+    );
+    await query("REFRESH MATERIALIZED VIEW supporters_list");
+
+    expect(migrate(db.url, { appliedUpTo: "0057" })).toContain("0058_supporters_merged_by_phone");
+
+    expect(await query("SELECT supporter_id::int AS id, luma_user_id FROM supporter_links ORDER BY 2")).toEqual([
+      { id: 1, luma_user_id: "usr-1" },
+      { id: 1, luma_user_id: "usr-2" },
+      { id: 3, luma_user_id: "usr-3" },
+    ]);
+    expect(await query("SELECT from_id::int AS from_id, into_id::int AS into_id FROM supporter_merges")).toEqual([
+      { from_id: 2, into_id: 1 },
+    ]);
+    expect(await query("SELECT id::int AS id, first_seen_at FROM supporters ORDER BY id")).toEqual([
+      { id: 1, first_seen_at: new Date("2026-09-20T10:00:00Z") },
+      { id: 3, first_seen_at: null },
+    ]);
+    expect(await query("SELECT id::int AS id FROM supporters_listed ORDER BY id")).toEqual([{ id: 1 }, { id: 3 }]);
   });
 });

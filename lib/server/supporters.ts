@@ -8,6 +8,7 @@ import type {
   SupporterMp,
   SupporterFilter,
   SupporterIdentity,
+  SupporterLetter,
   SupporterRow,
   SupporterSummary,
 } from "@/lib/supporters";
@@ -16,16 +17,19 @@ import type { Channel } from "@/lib/contact-permissions";
 import { query, transaction, type Queryable } from "./db";
 import { permissionsFor } from "./contact-permissions";
 import { optedOutOfLuma } from "./opt-outs";
-import { refreshSupporterFacts } from "./supporter-facts";
+import { refreshSupporterFacts, refreshSupportersList } from "./supporter-facts";
 import { SUPPORTER_SOURCES } from "./supporter-sources";
-import { contains, everyWord } from "./search";
+import { contains, everyWord, phoneSearch } from "./search";
 import { placeFor, type FoundPlace } from "./outside-services/postcodes";
 
 // Supporters: one per person, tied to each record about them in a source
 // (supporter_links). Linking is by email, trimmed and lowercased and
 // nothing more: jane+luma@ and jane@ are two people. It only adds links,
 // so running it again does nothing, and a Luma user who changes their
-// email stays linked by user ID.
+// email stays linked by user ID. Then two supporters who gave the same UK
+// mobile number are one, merged into the older
+// (merge_supporters_by_phone(), migration 0058); the other's ID still
+// finds them.
 
 export type LinkResult = { supportersAdded: number; linked: number };
 
@@ -43,11 +47,15 @@ const CANDIDATE_COLUMNS = SUPPORTER_SOURCES.map((s) => `c.${s.column}`).join(", 
 /**
  * Links every unlinked source record to a supporter: to the supporter an
  * existing link matched on the same email, or else to a new one, made for
- * each new email; then brings what's worked out about each supporter it
- * linked up to date. Set-based, in one transaction (`db`'s, or its own).
+ * each new email; then merges those who share a UK mobile number, by the
+ * numbers of the supporters it linked, or with `everyone`, by everyone's,
+ * which catches a number given since a record was linked, as the hourly
+ * imports do; then brings what's worked out about each supporter it linked
+ * or merged into up to date. Set-based, in one transaction (`db`'s, or its
+ * own).
  */
-export async function linkSupporters(db?: Queryable): Promise<LinkResult> {
-  if (!db) return transaction(linkSupporters);
+export async function linkSupporters(db?: Queryable, everyone = false): Promise<LinkResult> {
+  if (!db) return transaction((own) => linkSupporters(own, everyone));
   await query(`CREATE TEMP TABLE candidates ON COMMIT DROP AS ${CANDIDATES}`, [], db);
   // The email already belongs to a supporter.
   const existing = await query<{ id: number }>(
@@ -67,8 +75,8 @@ export async function linkSupporters(db?: Queryable): Promise<LinkResult> {
     [],
     db,
   );
-  const added = await query(
-    "INSERT INTO supporters (id) OVERRIDING SYSTEM VALUE SELECT id FROM new_supporters RETURNING id",
+  const added = await query<{ id: number }>(
+    "INSERT INTO supporters (id) OVERRIDING SYSTEM VALUE SELECT id FROM new_supporters RETURNING id::int AS id",
     [],
     db,
   );
@@ -80,9 +88,23 @@ export async function linkSupporters(db?: Queryable): Promise<LinkResult> {
     db,
   );
   await query("DROP TABLE candidates, new_supporters", [], db);
-  const linkedTo = [...new Set([...existing, ...fresh].map((link) => link.id))];
+  const linked = [...new Set([...existing, ...fresh].map((link) => link.id))];
+  const merged = await query<{ id: number }>(
+    "SELECT DISTINCT id::int AS id FROM merge_supporters_by_phone($1::bigint[]) id",
+    [everyone ? null : linked],
+    db,
+  );
+  const linkedTo = [...new Set([...linked, ...merged.map((row) => row.id)])];
   if (linkedTo.length > 0) await refreshSupporterFacts(db, linkedTo);
-  return { supportersAdded: added.length, linked: existing.length + fresh.length };
+  if (merged.length === 0) return { supportersAdded: added.length, linked: existing.length + fresh.length };
+  // Those merged went, so the list loses them now, and only the new supporters still here were added.
+  await refreshSupportersList(db);
+  const [{ kept }] = await query<{ kept: number }>(
+    "SELECT count(*)::int AS kept FROM supporters WHERE id = ANY($1::bigint[])",
+    [added.map((row) => row.id)],
+    db,
+  );
+  return { supportersAdded: kept, linked: existing.length + fresh.length };
 }
 
 /**
@@ -175,6 +197,12 @@ function anyOf(filter: Pick<SupporterFilter, NegatableSupporterFilter>, add: (va
     );
   }
   if (filter.country) conditions.push(`s.country = ANY(${add(filter.country)})`);
+  if (filter.mp) {
+    conditions.push(
+      `s.basis = 'postcode' AND upper(replace(s.given, ' ', '')) IN (SELECT pp.postcode FROM postcode_places pp
+         JOIN (${MP_CHOICES}) p ON p.constituency = pp.constituency WHERE p.id = ANY(${add(filter.mp)}))`,
+    );
+  }
   return conditions.map((condition) => `(${condition})`);
 }
 
@@ -197,14 +225,17 @@ export async function listSupporters(
     return `$${values.length}`;
   };
   if (filter.search) {
+    const words = everyWord(
+      filter.search,
+      add,
+      (like) =>
+        `${contains("s.name", like)} OR EXISTS (SELECT 1 FROM unnest(s.phones) n WHERE n ILIKE ${like})
+         OR EXISTS (SELECT 1 FROM unnest(s.emails) e WHERE e ILIKE ${like})`,
+    );
+    // A number typed as people write them, 07700 900001, is found among the numbers as they're stored, +447700900001.
+    const phone = phoneSearch(filter.search);
     where.push(
-      everyWord(
-        filter.search,
-        add,
-        (like) =>
-          `${contains("s.name", like)} OR EXISTS (SELECT 1 FROM unnest(s.phones) n WHERE n ILIKE ${like})
-           OR EXISTS (SELECT 1 FROM unnest(s.emails) e WHERE e ILIKE ${like})`,
-      ),
+      phone ? `(${words} OR EXISTS (SELECT 1 FROM unnest(s.phones) n WHERE n LIKE ${add(`%${phone}%`)}))` : words,
     );
   }
   where.push(...anyOf(filter, add));
@@ -285,20 +316,45 @@ export async function listSupporters(
 /** A Luma event to filter supporters by: its ID, name and when it starts. */
 export type EventChoice = { id: string; name: string; startAt: string };
 
-/** Our Luma events, newest first, for the Event filter: those we manage, whose guests we know. */
-export async function eventChoices(): Promise<EventChoice[]> {
-  return query<EventChoice>(
-    `SELECT id, name, start_at AS "startAt" FROM luma_events
-     WHERE access = 'manage' AND removed_at IS NULL ORDER BY start_at DESC, id`,
-  );
+/** An MP to filter supporters by: their politician ID, name and constituency. */
+export type MpChoice = { id: number; name: string; constituency: string };
+
+/** What the Event and MP filters offer. */
+export type SupporterChoices = { events: EventChoice[]; mps: MpChoice[] };
+
+/** The MPs a supporter's postcode can find, as getSupporter() gives theirs: each in office, but the test ones. */
+export const MP_CHOICES = `SELECT n.id::int AS id, n.name, p.constituency FROM politicians p
+  JOIN notable_people n ON n.id = p.id AND n.status = 'in_office'
+  WHERE p.house = 'commons' AND NOT p.is_test`;
+
+/**
+ * The Event filter's choices, newest first: our Luma events that we
+ * manage, whose guests we know; and the MP filter's, by name.
+ */
+export async function supporterChoices(): Promise<SupporterChoices> {
+  const [events, mps] = await Promise.all([
+    query<EventChoice>(
+      `SELECT id, name, start_at AS "startAt" FROM luma_events
+       WHERE access = 'manage' AND removed_at IS NULL ORDER BY start_at DESC, id`,
+    ),
+    query<MpChoice>(`SELECT * FROM (${MP_CHOICES}) p ORDER BY p.name, p.constituency`),
+  ]);
+  return { events, mps };
 }
 
-/** Everything the staff page shows about one supporter, or undefined if there's no such one. */
-export async function getSupporter(id: number): Promise<SupporterDetails | undefined> {
+/**
+ * Everything the staff page shows about one supporter, or undefined if
+ * there's no such one. An ID merged into another supporter finds them.
+ */
+export async function getSupporter(given: number): Promise<SupporterDetails | undefined> {
+  const [{ id }] = await query<{ id: number }>(
+    "SELECT coalesce((SELECT into_id FROM supporter_merges WHERE from_id = $1), $1)::int AS id",
+    [given],
+  );
   const [summary] = await query<SupporterSummary>(`SELECT ${SUMMARY_COLUMNS} FROM ${LIVE_SUMMARY}`, [id]);
   if (!summary) return undefined;
   const postcode = summary.place?.basis === "postcode" ? summary.place.given : null;
-  const [identities, contacts, activity, permissions, [mp]] = await Promise.all([
+  const [identities, contacts, activity, permissions, [mp], letters] = await Promise.all([
     query<SupporterIdentity>(
       `SELECT source, email, name, seen_at AS "seenAt" FROM supporter_identity WHERE supporter_id = $1 ORDER BY seen_at NULLS LAST, email`,
       [id],
@@ -317,13 +373,19 @@ export async function getSupporter(id: number): Promise<SupporterDetails | undef
     // Their MP, in office for their postcode's constituency.
     postcode
       ? query<SupporterMp>(
-          `SELECT n.id::int AS id, n.name, p.constituency, p.party FROM postcode_places pp
-           JOIN politicians p ON p.constituency = pp.constituency AND p.house = 'commons' AND NOT p.is_test
-           JOIN notable_people n ON n.id = p.id AND n.status = 'in_office'
+          `SELECT m.id, m.name, m.constituency, p.party FROM postcode_places pp
+           JOIN (${MP_CHOICES}) m ON m.constituency = pp.constituency JOIN politicians p ON p.id = m.id
            WHERE pp.postcode = upper(replace($1, ' ', '')) LIMIT 1`,
           [postcode],
         )
       : [],
+    query<SupporterLetter>(
+      `SELECT l.id::int AS id, l.sent_at AS "sentAt", n.name AS "mpName", n.id::int AS "politicianId", s.campaign, l.status
+       FROM supporter_links k JOIN letters_from_supporters s ON s.entry_id = k.form_entry_id
+         JOIN letters l ON l.id = s.id JOIN notable_people n ON n.id = l.notable_person_id
+       WHERE k.supporter_id = $1 ORDER BY l.created_at DESC, l.id DESC`,
+      [id],
+    ),
   ]);
-  return { summary, mp: mp ?? null, identities, contacts, activity, permissions };
+  return { summary, letters, mp: mp ?? null, identities, contacts, activity, permissions };
 }

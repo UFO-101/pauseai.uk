@@ -7,7 +7,12 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { staffDate, staffTime } from "@/lib/staff-time";
 import { UK_MAP_HEIGHT, UK_MAP_WIDTH, ukMapPoint, ukOutline } from "@/lib/uk-map";
 import { registrationStatus } from "@/lib/supporters";
-import type { SupporterActivity, SupporterDetails as Details, SupporterSource } from "@/lib/supporters";
+import type {
+  SupporterActivity,
+  SupporterDetails as Details,
+  SupporterLetter,
+  SupporterSource,
+} from "@/lib/supporters";
 import PermissionTiles from "./PermissionTiles";
 import Grid, { Card, spanClass } from "./ui/Grid";
 import { ListTable, type ListColumn } from "./ui/ListFrame";
@@ -237,31 +242,34 @@ const eventColumns: ListColumn<SupporterActivity>[] = [
   },
 ];
 
-/** Their letters, newest first: when, to whom, in which campaign, and how it stands, linked to their letters. */
-function letterColumns(letters: string): ListColumn<SupporterActivity>[] {
-  return [
-    { key: "at", label: copy.detail.columns.date, short: true, cell: (a) => staffDate(a.at) },
-    {
-      key: "to",
-      label: copy.detail.columns.to,
-      cell: (a) => (a.href ? <Link href={a.href}>{a.detail}</Link> : a.detail),
+/** Their letters, newest first: how each stands, leading to the letter's page, when it was sent, to whom, and in which campaign. */
+const letterColumns: ListColumn<SupporterLetter>[] = [
+  {
+    key: "letter",
+    label: copy.detail.columns.letter,
+    short: true,
+    cell: (l) => <Link href={`/staff/letters/${l.id}`}>{staffCopy.letters.status[l.status] ?? l.status}</Link>,
+  },
+  {
+    key: "sent",
+    label: copy.detail.columns.sent,
+    short: true,
+    cell: (l) => (l.sentAt ? staffDate(l.sentAt) : <Muted>–</Muted>),
+  },
+  {
+    key: "to",
+    label: copy.detail.columns.to,
+    cell: (l) => <Link href={`/staff/politicians/${l.politicianId}`}>{l.mpName}</Link>,
+  },
+  {
+    key: "campaign",
+    label: copy.detail.columns.campaign,
+    cell: (l) => {
+      const campaign = campaignBySlug(l.campaign);
+      return campaign ? <Link href={campaignPath(campaign)}>{campaign.title}</Link> : l.campaign;
     },
-    {
-      key: "campaign",
-      label: copy.detail.columns.campaign,
-      cell: (a) => {
-        const campaign = campaignBySlug(a.title ?? "");
-        return campaign ? <Link href={campaignPath(campaign)}>{campaign.title}</Link> : a.title;
-      },
-    },
-    {
-      key: "letter",
-      label: copy.detail.columns.letter,
-      short: true,
-      cell: (a) => a.status && <Link href={letters}>{staffCopy.letters.status[a.status] ?? a.status}</Link>,
-    },
-  ];
-}
+  },
+];
 
 /**
  * A supporter's page: the band of what we've worked out about them, with
@@ -271,11 +279,10 @@ function letterColumns(letters: string): ListColumn<SupporterActivity>[] {
  * everything we hold, `erase` (the button to erase them) at its end.
  */
 export default function SupporterDetails({ supporter, erase }: { supporter: Details; erase?: ReactNode }) {
-  const { summary, activity, permissions } = supporter;
+  const { summary, activity, permissions, letters } = supporter;
   const usable = new Set(permissions.filter((p) => p.channel === "phone" && p.send !== "no").map((p) => p.address));
   const holding = held(supporter, usable);
   const events = activity.filter((a) => a.kind === "luma-registered");
-  const letters = activity.filter((a) => a.kind === "letter");
   const lettersPage = `/staff/letters/supporter/${summary.id}`;
   return (
     <>
@@ -297,7 +304,7 @@ export default function SupporterDetails({ supporter, erase }: { supporter: Deta
           <section aria-labelledby="letters">
             <h2 id="letters">{copy.detail.lettersTitle}</h2>
             {letters.length ? (
-              <ListTable columns={letterColumns(lettersPage)} rows={letters} rowKey={(a) => `${a.at}${a.detail}`} />
+              <ListTable columns={letterColumns} rows={letters} rowKey={(l) => l.id} />
             ) : (
               <p className={styles.none}>{copy.detail.noLetters}</p>
             )}

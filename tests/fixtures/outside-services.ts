@@ -33,8 +33,13 @@ function json(body: unknown): Response {
   return new Response(JSON.stringify(body), { headers: { "Content-Type": "application/json" } });
 }
 
-// postcodes.io knows one postcode. Its MP is in airtable-politicians.json.
-const POSTCODES: Record<string, string> = { SW1A1AA: "Cities of London and Westminster" };
+// The constituencies postcodes.io gives, by name and official code, of the
+// postcodes whose MPs are in airtable-politicians.json: Westminster's, and
+// Jane Fixture's in Manchester.
+const POSTCODES: Record<string, { name: string; code: string }> = {
+  SW1A1AA: { name: "Cities of London and Westminster", code: "E14001172" },
+  M11AE: { name: "Manchester Central", code: "E14001352" },
+};
 // And one outcode, the first half of a postcode, in Manchester.
 const OUTCODES: Record<string, { latitude: number; longitude: number; admin_district: string[] }> = {
   M1: { latitude: 53.4794, longitude: -2.2353, admin_district: ["Manchester"] },
@@ -149,8 +154,8 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
         const key = query.replace(/\s+/g, "").toUpperCase();
         const place = PLACES[key];
         const constituency = POSTCODES[key] && {
-          parliamentary_constituency: POSTCODES[key],
-          codes: { parliamentary_constituency: "E14001172" },
+          parliamentary_constituency: POSTCODES[key].name,
+          codes: { parliamentary_constituency: POSTCODES[key].code },
         };
         return { query, result: place ? { postcode: query, ...place, ...constituency } : null };
       }),
@@ -168,8 +173,8 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
           status: 200,
           result: {
             postcode,
-            parliamentary_constituency: constituency,
-            codes: { parliamentary_constituency: "E14001172" },
+            parliamentary_constituency: constituency.name,
+            codes: { parliamentary_constituency: constituency.code },
             latitude: 51.501009,
             longitude: -0.141588,
             admin_district: "Westminster",

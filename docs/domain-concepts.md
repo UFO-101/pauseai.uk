@@ -173,6 +173,12 @@ name, email, phone or place of its own: those come from the linked
 records, newest first. `linkSupporters()` (`lib/server/supporters.ts`)
 only adds links, runs at the end of each Luma and members import and when
 a form entry is kept, and is set-based, so running it again does nothing.
+Then supporters who gave the same UK mobile number (`+447…` as
+`phone_number()` writes it) are one person, whatever their emails:
+`merge_supporters_by_phone()` moves the newer one's links and messages to
+the older and deletes it, and `supporter_merges` keeps its ID, so its old
+page, `/staff/supporters/<id>`, redirects to the one it went into. Landlines and
+numbers abroad aren't matched, as households and offices share them.
 
 Each source (`lib/server/supporter-sources.ts`) gives three views in one
 shape, made in the migrations: `supporter_source_<name>` (`source_id`,

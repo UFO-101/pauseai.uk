@@ -152,12 +152,36 @@ test("the supporters not at an event, by Except: the guest who declined it, and 
   );
 });
 
+test("an MP's constituents, by the MP filter, the page's title saying so", async ({ page, request, flowDatabase }) => {
+  await importLuma(request, BASE);
+  await syncPoliticians(request, BASE);
+  await logInWithSupporters(page, flowDatabase);
+  await page.goto(`${BASE}/staff/supporters`);
+  await expect(page.getByText(copy.total(6))).toBeVisible();
+  const mp = staffCopy.politician.roles.commons;
+  const mo = copy.filters.mpChoice("Mo Example", "Manchester Central");
+  await page.getByRole("button", { name: staffCopy.filters.add }).click();
+  await page.locator("[popover]:popover-open summary", { hasText: new RegExp(`^${mp}$`) }).click();
+  // The MPs show once something's typed in the box.
+  await page.locator("[popover]:popover-open").getByRole("searchbox", { name: staffCopy.filters.narrow }).fill("manc");
+  await expect(page.locator("[popover]:popover-open").getByRole("link", { name: mo, exact: true })).toBeVisible();
+  await frame(page, 'the MP filter, narrowed to those with "manc"');
+  await page.locator("[popover]:popover-open").getByRole("link", { name: mo, exact: true }).click();
+  await expect(page).toHaveURL(/\/staff\/supporters\?mp=\d+$/);
+  // Jane's postcode is the one in Manchester Central.
+  await expect(page.getByText(copy.total(1))).toBeVisible();
+  await expect(page.getByRole("link", { name: "Jane Fixture" })).toBeVisible();
+  await expect(page).toHaveTitle(`${staffCopy.filters.pageTitle(copy.title, `${mp} ${mo}`)} - ${staffCopy.metaTitle}`);
+  await frame(page, "Mo Example's constituents: Jane, and the page's title names the filter");
+});
+
 test("a supporter's page: who they are, what they gave, their history, and an opt-out from Luma's webhook", async ({
   page,
   request,
   flowDatabase,
 }) => {
   await importLuma(request, BASE);
+  await syncPoliticians(request, BASE);
   // Jane unsubscribed from the calendar's emails, Luma told us, and someone redelivered it.
   expect(
     await postLumaWebhook(request, BASE, "calendar.person.unsubscribed", "jane.fixture@example.com", "msg_1"),
@@ -176,10 +200,15 @@ test("a supporter's page: who they are, what they gave, their history, and an op
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Jane Fixture");
   await expect(page.getByText(copy.detail.firstVia(copy.sources.luma))).toBeVisible();
   await expect(page.getByText("+447700900001", { exact: false }).first()).toBeVisible();
+  // Her postcode is in Manchester Central, whose MP the politicians sync brought.
+  await expect(page.getByRole("link", { name: "Mo Example" })).toBeVisible();
   const reasons = copy.detail.permissions.reasons;
   // Her email and her Luma number in one row, the reason they share once.
   await expect(page.getByText(reasons["luma-calendar"].unsubscribed("16 Oct 2026"), { exact: false })).toHaveCount(1);
-  await frame(page, "Jane's page: opted out of the calendar's emails, with her phone, postcode and registrations");
+  await frame(
+    page,
+    "Jane's page: her MP, opted out of the calendar's emails, with her phone, postcode and registrations",
+  );
   await openHistory(page);
   const history = page.getByRole("list", { name: copy.detail.activityTitle });
   await expect(history.getByText(copy.detail.kinds["opted-out"], { exact: false }).first()).toBeVisible();
@@ -208,6 +237,33 @@ test("a supporter's page: who they are, what they gave, their history, and an op
   await frame(page, "the audit log: the download of supporters, and no viewing");
 });
 
+test("a supporter merged into another by their mobile number: the old ID's page goes on to the one kept", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await importLuma(request, BASE);
+  // A newer guest gives Jane's mobile, written as people write it; the next pass over everyone's numbers makes them one.
+  const [jane] = runSql(
+    flowDatabase,
+    "SELECT supporter_id FROM supporter_links WHERE matched_value = 'jane.fixture@example.com' LIMIT 1",
+  );
+  const [guest, other, email] = runSql(
+    flowDatabase,
+    `SELECT g.user_id, k.supporter_id, k.matched_value FROM luma_guests g JOIN supporter_links k ON k.luma_user_id = g.user_id
+     WHERE k.supporter_id > ${jane} ORDER BY k.supporter_id DESC LIMIT 1`,
+  )[0].split("\t");
+  runSql(flowDatabase, `UPDATE luma_guests SET phone = '07700 900001' WHERE user_id = '${guest}'`);
+  runSql(flowDatabase, "SELECT count(*) FROM merge_supporters_by_phone(); REFRESH MATERIALIZED VIEW supporters_list");
+  await logInWithSupporters(page, flowDatabase);
+  await page.goto(`${BASE}/staff/supporters/${other}`);
+  await expect(page).toHaveURL(`${BASE}/staff/supporters/${jane}`);
+  // Both addresses; the name the newest of them gave.
+  await expect(page.getByText("jane.fixture@example.com").first()).toBeVisible();
+  await expect(page.getByText(email).first()).toBeVisible();
+  await frame(page, "the old ID's page gone on to the one kept, Jane's ID, with both addresses and the newer name");
+});
+
 test("a letter writer is a supporter too, linked from the letters page", async ({
   page,
   request,
@@ -232,12 +288,17 @@ test("a letter writer is a supporter too, linked from the letters page", async (
   await expect(page.getByText("ZZ9 9ZZ", { exact: false })).toBeVisible();
   await frame(page, "the letter writer's page: the letter, and the postcode they gave");
 
-  // The letter's status leads to their letters, and back.
+  // The letter's status leads to its page, its copy in the policy@ group, and back to her.
   await page.getByRole("link", { name: staffCopy.letters.status.sent }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.letters.fromTitle("Jane Smith"));
-  await expect(page.getByRole("row").filter({ hasText: sender })).toBeVisible();
-  await frame(page, "their letters");
-  await page.getByRole("navigation", { name: "Jane Smith" }).getByRole("link").click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    staffCopy.letters.oneTitle("Jane Smith", "Testy McTestface MP"),
+  );
+  await expect(page.getByRole("link", { name: staffCopy.letters.detail.googleGroup })).toHaveAttribute(
+    "href",
+    /^https:\/\/groups\.google\.com\/a\/pauseai\.uk\/d\/msgid\/policy\/[\w-]+@mtasv\.net$/,
+  );
+  await frame(page, "her letter's page, with its copy in the policy@ group");
+  await page.getByRole("link", { name: "Jane Smith" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Jane Smith");
 });
 

@@ -316,6 +316,10 @@ test("staff log in, set a status that shows on /campaigns, and log out", async (
   await page.goto(`${BASE}/staff/audit-log`);
   await expect(page.getByRole("cell", { name: "set status" }).first()).toBeVisible();
   await frame(page, "the audit log");
+  await page.getByRole("button", { name: staffCopy.changes.json }).first().click();
+  await expect(page.locator("pre:popover-open")).toBeVisible();
+  await frame(page, "an entry's {}: what it logged, as JSON, in a bubble by the button", { window: true });
+  await page.keyboard.press("Escape");
 
   // The import page: a card per job; each opens the job's own page.
   await page.goto(`${BASE}/staff/import-data`);
@@ -551,7 +555,7 @@ async function postBounce(request: APIRequestContext, messageId?: string) {
   expect(await bounce.json()).toEqual({ recorded: true });
 }
 
-/** Writes to `mp` as `sender`, then, logged in, reads the letter's Postmark MessageID from the letters list. */
+/** Writes to `mp` as `sender`, then, logged in, reads the letter's Postmark MessageID from its link to the policy@ group. */
 async function sentLetterId(page: Page, database: string, sender: string, mp = TEST_MPS[0]): Promise<string> {
   await fakeTurnstile(page);
   await lookUpTestMp(page, BASE, mp);
@@ -562,7 +566,11 @@ async function sentLetterId(page: Page, database: string, sender: string, mp = T
   await page.goto(`${BASE}/staff/letters`);
   const row = page.getByRole("row").filter({ hasText: sender });
   await expect(row).toContainText(staffCopy.letters.status.sent);
-  return (await row.locator("code").first().textContent())!.match(/"messageId":"([\w-]+)"/)![1];
+  await row.getByRole("link", { name: staffCopy.letters.status.sent, exact: true }).click();
+  const group = page.getByRole("link", { name: staffCopy.letters.detail.googleGroup });
+  const id = (await group.getAttribute("href"))!.match(/\/msgid\/policy\/([\w-]+)@mtasv\.net$/)![1];
+  await page.goto(`${BASE}/staff/letters`);
+  return id;
 }
 
 test("letters are listed, sent and bounced, and can be filtered by status and campaign, and reset", async ({
@@ -578,10 +586,9 @@ test("letters are listed, sent and bounced, and can be filtered by status and ca
   await page.reload();
   const janes = page.getByRole("row").filter({ hasText: jane });
   const sams = page.getByRole("row").filter({ hasText: sam });
-  await expect(janes.locator("td").nth(5)).toHaveText(staffCopy.letters.status.sent);
-  await expect(sams.locator("td").nth(5)).toHaveText(staffCopy.letters.status.bounced);
-  await expect(sams).toContainText("HardBounce");
-  await frame(page, "the letters list: one sent, one bounced, with Postmark's reason in its history");
+  await expect(janes.getByRole("link", { name: staffCopy.letters.status.sent, exact: true })).toBeVisible();
+  await expect(sams.getByRole("link", { name: staffCopy.letters.status.bounced, exact: true })).toBeVisible();
+  await frame(page, "the letters list: one sent, one bounced");
 
   await addFilter(page, staffCopy.letters.columns.status, staffCopy.letters.status.bounced);
   await expect(page).toHaveURL(/\/staff\/letters\?.*status=bounced/);
@@ -629,11 +636,18 @@ test("a letter that bounces: staff are emailed, and the address is blocked", asy
   await expect(blocked).toContainText(staffCopy.emails.kinds.hard);
   await frame(page, "the address, blocked, with the letter that found it out");
 
-  // The letter, by whom it was to, leads to its own page: its row from the letters list.
+  // The letter, by whom it was to, leads to its own page.
   await blocked.getByRole("link", { name: `${staffCopy.emails.letterTo} ${bouncy.name}` }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.letters.oneTitle(bouncy.name));
-  await expect(page.getByRole("row").filter({ hasText: sender })).toContainText(staffCopy.letters.status.bounced);
-  await frame(page, "the letter's page");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    staffCopy.letters.oneTitle("Jane Smith", bouncy.name),
+  );
+  await expect(page.getByText(sender)).toBeVisible();
+  await expect(page.getByText(staffCopy.letters.status.bounced).first()).toBeVisible();
+  await frame(page, "the letter's page: from and to whom, bounced, and what happened to it");
+  await page.getByRole("list", { name: staffCopy.letters.detail.historyTitle }).getByRole("button").first().click();
+  await expect(page.locator("pre:popover-open")).toContainText('"reason"');
+  await frame(page, "the bounce's {}: what Postmark said, as JSON, in a bubble by the button", { window: true });
+  await page.keyboard.press("Escape");
   await page.getByRole("link", { name: staffCopy.nav.letters }).first().click();
   await expect(page).toHaveURL(`${BASE}/staff/letters`);
 });

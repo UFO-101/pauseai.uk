@@ -1,5 +1,15 @@
-import { describe, expect, it } from "vitest";
-import { fromLondon, londonDayHour, londonWhen, staffClock, staffDate, staffDay, staffTime } from "./staff-time";
+import { describe, expect, it, vi } from "vitest";
+import {
+  earliestHour,
+  fromLondon,
+  hourNotTooSoon,
+  londonDayHour,
+  londonWhen,
+  staffClock,
+  staffDate,
+  staffDay,
+  staffTime,
+} from "./staff-time";
 
 it("names the day, in UTC", () => {
   expect(staffDate("2026-11-03T10:34:56Z")).toBe("3 Nov 2026");
@@ -35,5 +45,27 @@ describe("London's time, for when a mailing goes", () => {
   it("says when, in London", () => {
     expect(londonWhen("2026-10-30T09:00:00Z")).toBe("Friday 30 October at 09:00");
     expect(londonWhen("2026-07-02T08:00:00Z")).toBe("Thursday 2 July at 09:00");
+  });
+});
+
+describe("the first hour a mailing can go", () => {
+  it("is the next whole hour at least five minutes away", () => {
+    vi.useFakeTimers({ now: new Date("2026-07-01T10:30:00Z"), toFake: ["Date"] });
+    try {
+      expect(earliestHour()).toBe("2026-07-01T11:00:00.000Z");
+      vi.setSystemTime(new Date("2026-07-01T10:56:00Z"));
+      expect(earliestHour()).toBe("2026-07-01T12:00:00.000Z");
+      vi.setSystemTime(new Date("2026-07-01T10:55:00Z"));
+      expect(earliestHour()).toBe("2026-07-01T11:00:00.000Z");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("moves an hour too soon on that day to it, and keeps any other", () => {
+    const earliest = { day: "2026-07-01", hour: 12 };
+    expect(hourNotTooSoon("2026-07-01", 9, earliest)).toBe(12);
+    expect(hourNotTooSoon("2026-07-01", 14, earliest)).toBe(14);
+    expect(hourNotTooSoon("2026-07-02", 9, earliest)).toBe(9);
   });
 });

@@ -124,9 +124,11 @@ describeWithDatabase("the database", () => {
         expect(await query("SELECT action FROM audit_log")).toEqual([]);
         // The flow's pool is closed once its connections have gone idle, and remade on the next query.
         requestCookies.set(FLOW_DATABASE_COOKIE, flow);
-        await Promise.all([query("SELECT pg_sleep(0.05)"), query("SELECT pg_sleep(0.1)")]);
         const connections = () => runSql("postgres", `SELECT count(*) FROM pg_stat_activity WHERE datname = '${flow}'`);
-        expect(Number(connections()[0])).toBeGreaterThanOrEqual(1);
+        // Counted while a query runs, so the count can't miss them however slowly psql starts.
+        const running = query("SELECT pg_sleep(1)");
+        await vi.waitFor(() => expect(Number(connections()[0])).toBeGreaterThanOrEqual(1), { timeout: 5000 });
+        await running;
         await vi.waitFor(() => expect(connections()).toEqual(["0"]), { timeout: 5000, interval: 200 });
         expect(await currentDatabase()).toBe(flow);
       } finally {

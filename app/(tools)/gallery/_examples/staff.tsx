@@ -12,11 +12,17 @@ import { exampleProblems } from "@/app/(staff)/staff/_components/EmailBlocksTabl
 import EmailProblemsTable from "@/app/(staff)/staff/_components/EmailProblemsTable";
 import { exampleChanges } from "@/app/(staff)/staff/_components/ChangesTable.examples";
 import AuditDetail, { FieldChanges } from "@/app/(staff)/staff/_components/AuditDetail";
+import { DotParts, LoggedJson } from "@/app/(staff)/staff/_components/Logged";
 import CampaignName from "@/app/(staff)/staff/_components/CampaignName";
 import LetterFilters from "@/app/(staff)/staff/_components/LetterFilters";
 import LetterLink from "@/app/(staff)/staff/_components/LetterLink";
 import LettersTable, { LettersList } from "@/app/(staff)/staff/_components/LettersTable";
-import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
+import {
+  exampleLetter,
+  examplePauseaiLetterDetails,
+  exampleSupporterLetterDetails,
+} from "@/app/(staff)/staff/_components/LettersTable.examples";
+import LetterDetails from "@/app/(staff)/staff/_components/LetterDetails";
 import DevLogin from "@/app/(staff)/staff/_components/DevLogin";
 import LoginCard from "@/app/(staff)/staff/_components/LoginCard";
 import LoginForm from "@/app/(staff)/staff/_components/LoginForm";
@@ -105,6 +111,8 @@ import {
   JobActionsExample,
   MailingEditorExample,
   MailingButtonsExample,
+  ChangeTimeFormExample,
+  DueTimeFieldsExample,
   MailingFilesExample,
   MailingForExample,
   MailingsOverviewExample,
@@ -155,7 +163,7 @@ const EMPTY_POLITICIAN_FILTERS = {
   status: "",
   party: [] as string[],
   flag: [] as string[],
-  country: [] as string[],
+  nation: [] as string[],
   email: [] as string[],
   ask: "",
   answer: "",
@@ -180,7 +188,7 @@ const EXAMPLE_FILTERS = [
 // A filter that repeats, so it can leave out as well as find.
 const EXAMPLE_NATIONS = [
   {
-    name: "country",
+    name: "nation",
     label: "Nation",
     repeat: true,
     options: [
@@ -653,11 +661,15 @@ export const staff: Group = {
                   contact: "email:luma-calendar:unsubscribed",
                   campaign: "support-sobel-bill",
                   wrote: "no",
+                  mp: "!7",
                   near: "LS1",
                   within: "25",
                   sort: "name",
                 })}
-                events={exampleEventChoices}
+                choices={{
+                  events: exampleEventChoices,
+                  mps: [{ id: 7, name: "Alex Sobel", constituency: "Leeds Central and Headingley" }],
+                }}
                 near={{ latitude: 53.8, longitude: -1.55, place: "Leeds", country: "england" }}
               />
             </StaffPage>
@@ -667,7 +679,11 @@ export const staff: Group = {
           label: "Near somewhere postcodes.io doesn't know",
           render: () => (
             <StaffPage as="div">
-              <SupporterFilters search={supportersSearch({ near: "Atlantis" })} events={[]} near={null} />
+              <SupporterFilters
+                search={supportersSearch({ near: "Atlantis" })}
+                choices={{ events: [], mps: [] }}
+                near={null}
+              />
             </StaffPage>
           ),
         },
@@ -849,6 +865,7 @@ export const staff: Group = {
               <SupporterDetails
                 supporter={{
                   mp: null,
+                  letters: [],
                   summary: {
                     ...exampleSupporter,
                     name: null,
@@ -1455,6 +1472,34 @@ export const staff: Group = {
       ],
     },
     {
+      name: "DueTimeFields",
+      file: "app/(staff)/staff/_components/DueTime.tsx",
+      variants: [
+        {
+          label: "Today, no hour yet: the hours too soon greyed out",
+          render: () => (
+            <StaffPage as="div">
+              <DueTimeFieldsExample />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "ChangeTimeForm",
+      file: "app/(staff)/staff/_components/DueTime.tsx",
+      variants: [
+        {
+          label: "A time become too soon, moved on to the first it can go",
+          render: () => (
+            <StaffPage as="div">
+              <ChangeTimeFormExample />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
       name: "DeleteDraft",
       file: "app/(staff)/staff/_components/MailingButtons.tsx",
       variants: [
@@ -1778,7 +1823,7 @@ export const staff: Group = {
                   status: "in_office",
                   party: ["Labour", "Green"],
                   flag: ["important"],
-                  country: ["wales"],
+                  nation: ["wales"],
                   email: ["blocked"],
                   ask: "edinburgh-conference-2026",
                   answer: "declined",
@@ -1907,7 +1952,7 @@ export const staff: Group = {
             <StaffPage as="div">
               <FilterBar
                 path="#"
-                values={{ country: ["scotland", "!wales"] }}
+                values={{ nation: ["scotland", "!wales"] }}
                 search={{ name: "q", label: "Name" }}
                 filters={EXAMPLE_NATIONS}
               />
@@ -2116,6 +2161,29 @@ export const staff: Group = {
       ],
     },
     {
+      name: "LetterDetails",
+      file: "app/(staff)/staff/_components/LetterDetails.tsx",
+      variants: [
+        {
+          label: "A supporter's letter that bounced, with its copy in the policy@ group",
+          render: () => (
+            <StaffPage as="div">
+              <LetterDetails letter={exampleSupporterLetterDetails} />
+            </StaffPage>
+          ),
+        },
+        {
+          label:
+            "PauseAI's letter, personalised, copied from Airtable, found by a Gmail search, nothing recorded since",
+          render: () => (
+            <StaffPage as="div">
+              <LetterDetails letter={examplePauseaiLetterDetails} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
       name: "AuditDetail",
       file: "app/(staff)/staff/_components/AuditDetail.tsx",
       variants: [
@@ -2138,6 +2206,34 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <FieldChanges changed={{ party: ["Labour", "Independent"], email: [null, "polly@example.org"] }} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "DotParts",
+      file: "app/(staff)/staff/_components/Logged.tsx",
+      variants: [
+        {
+          label: "Parts of a line, between middle dots",
+          render: () => (
+            <StaffPage as="div">
+              <DotParts>{["Bounced", "Type HardBounce", "Address jo.mp@parliament.uk"]}</DotParts>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "LoggedJson",
+      file: "app/(staff)/staff/_components/Logged.tsx",
+      variants: [
+        {
+          label: "The {} button, which opens what was logged as JSON",
+          render: () => (
+            <StaffPage as="div">
+              <LoggedJson id="gallery-logged-json" details={{ type: "HardBounce", description: "No such address" }} />
             </StaffPage>
           ),
         },

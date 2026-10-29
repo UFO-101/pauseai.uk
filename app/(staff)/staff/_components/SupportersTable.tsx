@@ -63,6 +63,11 @@ function contactsFound(states: ContactState[], channel: Channel, s: SupporterRow
   return [...new Set(found.map((p) => p.address))];
 }
 
+/** The nation a supporter's place is in, in words, or null where we don't know it. */
+function nationOf(s: SupporterRow): string | null {
+  return s.place?.country ? staffCopy.countries[s.place.country] : null;
+}
+
 /** Addresses or numbers in a cell, a line each. */
 function Addresses({ addresses }: { addresses: string[] }) {
   return addresses.map((address) => <div key={address}>{address}</div>);
@@ -74,13 +79,16 @@ function Addresses({ addresses }: { addresses: string[] }) {
  * answer it finds; where they are); what they are to us and what we'd
  * email them about, as lozenges;
  * how many events and letters; and when we first saw them and last saw
- * them do something. The Event filter, finding those at events, adds how
+ * them do something. The Nation filter, leaving some out or finding more
+ * than one, adds the nation they're in, after where they are. The Event
+ * filter, finding those at events, adds how
  * each registration for them stands, named when there's more than one
  * event; the Campaign filter, finding those who wrote, when they first
  * wrote in it. A download has the same columns.
  */
 export function supporterColumns(search: SupportersSearch): ListColumn<SupporterRow>[] {
   const [events] = anyAndNone(valuesOf(search.event), (values) => values);
+  const [nations, notNations] = anyAndNone(valuesOf(search.nation), (values) => values);
   const states = contactStates(search);
   const named = (events?.length ?? 0) > 1;
   const wrote = Boolean(campaignBySlug(search.campaign)) && search.wrote !== "no";
@@ -122,6 +130,13 @@ export function supporterColumns(search: SupportersSearch): ListColumn<Supporter
       short: true,
       text: (s) => s.place?.name ?? null,
       cell: (s) => s.place && <Place place={s.place} />,
+    },
+    (Boolean(notNations) || (nations?.length ?? 0) > 1) && {
+      key: "nation",
+      label: staffCopy.politician.country,
+      short: true,
+      text: (s) => nationOf(s),
+      cell: (s) => nationOf(s),
     },
     {
       key: "badges",

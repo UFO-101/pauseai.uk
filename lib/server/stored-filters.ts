@@ -17,6 +17,7 @@ import {
 import { NEAR_MILES, SUPPORTER_BADGES } from "@/lib/supporters";
 import { query } from "./db";
 import { HOUSES, PERSON_STATUSES } from "./politicians";
+import { MP_CHOICES } from "./supporters";
 
 // A mailing's stored filter (StoredFilter, lib/staff-search.ts), read back
 // strictly: a value the site no longer knows, such as a deleted event or a
@@ -55,7 +56,7 @@ async function politicianValues(params: Params): Promise<Known> {
     status: [...PERSON_STATUSES, "any"],
     party: parties.map((row) => row.party),
     flag: POLITICIAN_FLAGS,
-    country: COUNTRIES,
+    nation: COUNTRIES,
     email: EMAIL_STATES,
     ask: asks.map((one) => one.slug),
     answer: [...answers, "none"],
@@ -64,7 +65,10 @@ async function politicianValues(params: Params): Promise<Known> {
 
 async function supporterValues(params: Params): Promise<Known> {
   const plain = (name: string) => valuesOf(params[name]).map((value) => notValue(value).value);
-  const found = await query<{ id: string }>("SELECT id FROM luma_events WHERE id = ANY($1)", [plain("event")]);
+  const [found, mps] = await Promise.all([
+    query<{ id: string }>("SELECT id FROM luma_events WHERE id = ANY($1)", [plain("event")]),
+    query<{ id: string }>(`SELECT p.id::text AS id FROM (${MP_CHOICES}) p WHERE p.id::text = ANY($1)`, [plain("mp")]),
+  ]);
   return {
     q: "any",
     activity: SUPPORTER_BADGES,
@@ -72,7 +76,8 @@ async function supporterValues(params: Params): Promise<Known> {
     event: found.map((row) => row.id),
     campaign: valuesOf(params.campaign).filter((slug) => campaignBySlug(slug)),
     wrote: ["no"],
-    country: Object.keys(staffCopy.countries),
+    nation: Object.keys(staffCopy.countries),
+    mp: mps.map((row) => row.id),
     near: "any",
     within: NEAR_MILES.map(String),
   };
