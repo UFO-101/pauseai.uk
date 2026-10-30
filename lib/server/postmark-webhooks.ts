@@ -199,6 +199,17 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
     (to): to is string => !!to && !copied.includes(to.toLowerCase()),
   );
 
+  // The letter's own Message-ID, so the forward joins the letter's thread for anyone
+  // who has the letter: the sender on Cc, the shared inbox on Bcc.
+  const [sentLetter] = await query<{ messageId: string }>(
+    `SELECT message_id AS "messageId" FROM email_sends
+     WHERE letter_id = $1 AND purpose = 'letter' AND message_id IS NOT NULL ORDER BY at DESC LIMIT 1`,
+    [letter.id],
+  );
+  const threading = sentLetter
+    ? ["In-Reply-To", "References"].map((Name) => ({ Name, Value: `<${sentLetter.messageId}@mtasv.net>` }))
+    : undefined;
+
   const original = [
     `From: ${email.FromFull?.Name ?? ""} <${from}>`,
     `Date: ${email.Date ?? ""}`,
@@ -210,8 +221,13 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
         From: `PauseAI UK <noreply@${notifyDomain()}>`,
         To: to,
         ReplyTo: from,
-        Subject: copy.forwardedReply.subject(email.Subject ?? ""),
-        TextBody: `${copy.forwardedReply.note(letter.mpName, letter.senderName)}\n\n${original}\n\n${email.TextBody ?? ""}`,
+        Subject: email.Subject ?? "",
+        TextBody: `${
+          to === letter.senderEmail
+            ? copy.forwardedReply.toSender(letter.mpName)
+            : copy.forwardedReply.toInbox(letter.mpName, letter.senderName)
+        }\n\n${original}\n\n${email.TextBody ?? ""}`,
+        Headers: threading,
         Attachments: email.Attachments?.map(({ Name, Content, ContentType }) => ({ Name, Content, ContentType })),
         Tag: "forwarded-reply",
       },
