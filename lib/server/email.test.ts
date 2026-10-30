@@ -90,6 +90,29 @@ describeWithDatabase("send", () => {
     expect(await sends()).toMatchObject([{ outcome: "refused" }]);
   });
 
+  it("blocks only the addresses Postmark names, and says it failed when they don't include the To", async () => {
+    const refusal = (names: string) =>
+      server.use(
+        http.post(POSTMARK, () =>
+          HttpResponse.json(
+            {
+              ErrorCode: 406,
+              Message: `You tried to send to a recipient that has been marked as inactive. Found inactive addresses: ${names}. Inactive recipients are ones that have generated a hard bounce.`,
+            },
+            { status: 422 },
+          ),
+        ),
+      );
+    refusal("Copy@Example.org, other@example.org");
+    expect(await send(EMAIL, "letter")).toEqual({ sent: false, reason: "failed" });
+    expect(await isBlocked("copy@example.org")).toBe(true);
+    expect(await isBlocked("other@example.org")).toBe(true);
+    expect(await isBlocked("jo@example.org")).toBe(false);
+    refusal("jo@example.org");
+    expect(await send(EMAIL, "letter")).toEqual({ sent: false, reason: "blocked" });
+    expect(await sends()).toMatchObject([{ outcome: "failed" }, { outcome: "refused" }]);
+  });
+
   it("says it failed, and logs it, when Postmark fails for any other reason", async () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     server.use(http.post(POSTMARK, () => HttpResponse.json({ ErrorCode: 300, Message: "Invalid" }, { status: 422 })));

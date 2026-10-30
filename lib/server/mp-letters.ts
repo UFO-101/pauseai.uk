@@ -6,7 +6,7 @@ import { campaignBySlug, looksLikeEmail } from "@/lib/email-your-mp";
 import { checkDoc, isBlank, toHtml, toText, type LetterDoc } from "@/lib/letter-format";
 import { query, transaction, type Queryable } from "./db";
 import { findMp } from "./find-mp";
-import { send } from "./email";
+import { isBlocked, send } from "./email";
 import { headerName, lettersDomain } from "./outside-services/postmark";
 import { randomId } from "./random-id";
 import { checkNotSpam } from "./outside-services/turnstile";
@@ -226,26 +226,27 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
     if (id === undefined) return fail(409, copy.errors.alreadySent);
 
     const address = letterAddress(mailbox);
-    const result = await send(
-      {
-        From: `"${headerName(form.name)} via PauseAI" <${address}>`,
-        To: recipient(mp, to),
-        // The sender has a copy, and a reply-all reaches them. There's no
-        // Reply-To: MPs' offices answer one address, so it's the From, the
-        // letter's own, whose replies are recorded and forwarded to the
-        // sender and the policy team.
-        Cc: `"${headerName(form.name)}" <${form.email}>`,
-        Bcc: bcc(),
-        Subject: form.subject,
-        TextBody: body,
-        HtmlBody: html,
-        Attachments: await attachments(campaign.slug),
-        Metadata: { letter: String(id), campaign: campaign.slug },
-        Tag: campaign.slug,
-      },
-      "letter",
-      id,
-    );
+    const email = {
+      From: `"${headerName(form.name)} via PauseAI" <${address}>`,
+      To: recipient(mp, to),
+      Bcc: bcc(),
+      Subject: form.subject,
+      TextBody: body,
+      HtmlBody: html,
+      Attachments: await attachments(campaign.slug),
+      Metadata: { letter: String(id), campaign: campaign.slug },
+      Tag: campaign.slug,
+    };
+    // The sender has a copy, and a reply-all reaches them, unless their
+    // address is blocked. There's no Reply-To: MPs' offices answer one
+    // address, so it's the From, the letter's own, whose replies are
+    // recorded and forwarded to the sender and the policy team.
+    const cc = (await isBlocked(form.email)) ? undefined : `"${headerName(form.name)}" <${form.email}>`;
+    let result = await send({ ...email, Cc: cc }, "letter", id);
+    // Postmark refused the sender's address, which is blocked now: the letter goes without their copy.
+    if (!result.sent && result.reason === "failed" && cc && (await isBlocked(form.email))) {
+      result = await send(email, "letter", id);
+    }
     if (result.sent) {
       await query("UPDATE letters SET status = 'sent', sent_at = now() WHERE id = $1", [id]);
       await logEvent(id, "sent", { messageId: result.id });

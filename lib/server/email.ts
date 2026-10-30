@@ -57,6 +57,15 @@ export function bareAddress(to: string): string {
   return (/<([^>]*)>\s*$/.exec(to)?.[1] ?? to).trim().toLowerCase();
 }
 
+/** The addresses Postmark's refusal names as inactive ("Found inactive addresses: a@x.org, b@y.org."), bare. */
+export function inactiveAddresses(message: string): string[] {
+  const list = /Found inactive addresses: (.*?)\.(?:\s|$)/.exec(message)?.[1] ?? "";
+  return list
+    .split(",")
+    .map((each) => bareAddress(each))
+    .filter(Boolean);
+}
+
 export async function isBlocked(address: string): Promise<boolean> {
   const [row] = await query("SELECT 1 FROM email_blocks WHERE address = $1", [bareAddress(address)]);
   return !!row;
@@ -102,9 +111,19 @@ export async function send(
     }
   } catch (error) {
     if (error instanceof PostmarkError && error.inactive) {
-      await recordProblem({ address, messageId: null, kind: "hard", reason: error.message, canReset: true });
-      await log("refused");
-      return { sent: false, reason: "blocked" };
+      // Postmark names the suppressed addresses, which may be a Cc rather
+      // than the To; failing that, it's the To.
+      const named = inactiveAddresses(error.message);
+      const inactive = named.length ? named : [address];
+      for (const each of inactive) {
+        await recordProblem({ address: each, messageId: null, kind: "hard", reason: error.message, canReset: true });
+      }
+      if (inactive.includes(address)) {
+        await log("refused");
+        return { sent: false, reason: "blocked" };
+      }
+      await log("failed");
+      return { sent: false, reason: "failed" };
     }
     console.error(
       `Couldn't send an email (${purpose}${error instanceof GmailError ? `, by Gmail as ${from}` : ""}):`,
