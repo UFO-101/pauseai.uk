@@ -102,7 +102,7 @@ export const exampleSending: MailingSummary = {
   replied: 4,
 };
 
-/** The Edinburgh invitation, with its recipients: one personalised who replied, one that bounced, one left out. */
+/** The Edinburgh invitation, with its recipients: one personalised who replied twice, one that bounced, one left out. */
 export const exampleMailing: Mailing = {
   ...exampleMailings[2],
   tab: "all",
@@ -120,6 +120,7 @@ export const exampleMailing: Mailing = {
       status: "sent",
       sentAt: "2026-10-01T09:00:00Z",
       repliedAt: "2026-10-03T14:00:00Z",
+      replies: 2,
       personalised: true,
       answer: "going",
       skipReason: null,
@@ -133,6 +134,7 @@ export const exampleMailing: Mailing = {
       status: "bounced",
       sentAt: "2026-10-01T09:00:00Z",
       repliedAt: null,
+      replies: 0,
       personalised: false,
       answer: null,
       skipReason: null,
@@ -146,6 +148,7 @@ export const exampleMailing: Mailing = {
       status: "not_sent",
       sentAt: null,
       repliedAt: null,
+      replies: 0,
       personalised: false,
       answer: null,
       skipReason: null,

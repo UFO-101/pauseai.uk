@@ -104,6 +104,7 @@ describe("the lists' counts", () => {
       (n: number) => writing.summary(n, null, null),
       (n: number) => writing.scheduledLine(n, "Jo"),
       writing.toCount,
+      writing.letterAndReplies,
       (n: number) => writing.leftOut(n + 2, n, n),
     ]) {
       expect(say(1)).not.toBe(say(2).replaceAll("2", "1"));

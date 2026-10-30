@@ -955,10 +955,10 @@ export const staffCopy = {
     started: "Started",
     by: (who: string) => `by ${who}`,
     // Over a mailing's recipients filtered by one of its counts, back to them all.
-    showEveryone: "⁂ Show everyone",
-    // Each recipient's link to their letter's page, with their reply when there is one.
-    letterAndReply: "⁂ Letter and reply →",
-    theLetter: "⁂ The letter →",
+    showEveryone: "Show everyone",
+    // Each recipient's link to their letter's page, with their replies when there are some.
+    letterAndReplies: (n: number) => (n === 1 ? "Letter and reply →" : "Letter and replies →"),
+    theLetter: "Letter →",
     // In a mailing's email, who it's to: each recipient, as it's a letter to many.
     toEach: "Each recipient, by name and address",
     emailTitle: "The email",

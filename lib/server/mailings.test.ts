@@ -81,6 +81,7 @@ describeWithDatabase("mailings", () => {
         status: "sent",
         sentAt: new Date("2026-10-01"),
         repliedAt: new Date("2026-10-04"),
+        replies: 0,
         personalised: true,
         answer: null,
         skipReason: null,

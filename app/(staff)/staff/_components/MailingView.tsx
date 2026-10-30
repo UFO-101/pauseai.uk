@@ -90,7 +90,7 @@ function recipientColumns(mailing: Mailing): ListColumn<MailingRecipient>[] {
           <Muted>{staffDate(r.repliedAt ?? r.sentAt ?? mailing.updatedAt)}</Muted>
           {!r.skipReason && (
             <Link href={`/staff/mailings/${mailing.id}/letters/${r.letterId}`}>
-              {r.repliedAt ? copy.letterAndReply : copy.theLetter}
+              {r.repliedAt ? copy.letterAndReplies(Math.max(r.replies, 1)) : copy.theLetter}
             </Link>
           )}
         </span>

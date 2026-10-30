@@ -261,7 +261,7 @@ describe("MailingView", () => {
     await expect.element(recipient("Polly")).toMatchTextContent(`✓ ${staffCopy.statuses.going}`);
     await expect.element(recipient("Polly")).toMatchTextContent(staffCopy.mailings.columns.answered);
     await expect
-      .element(recipient("Polly").getByRole("link", { name: copy.letterAndReply }))
+      .element(recipient("Polly").getByRole("link", { name: copy.letterAndReplies(2) }))
       .toHaveAttribute("href", "/staff/mailings/4/letters/11");
     await expect.element(recipient("Morag")).toMatchTextContent(staffCopy.letters.status.bounced);
     await expect.element(recipient("Morag").getByRole("link", { name: copy.theLetter })).toBeInTheDocument();
@@ -284,7 +284,7 @@ describe("MailingView", () => {
         askTitle: null,
         tab: "replied",
         recipients: [
-          { ...mailing.recipients[0], answer: null },
+          { ...mailing.recipients[0], answer: null, replies: 0 },
           { ...mailing.recipients[1], status: "spam_complaint" },
           { ...mailing.recipients[2], status: "queued", skipReason: null, sentAt: null },
         ],
@@ -302,6 +302,8 @@ describe("MailingView", () => {
     // Answered doesn't apply.
     await expect.element(page.getByText(`– ${copy.counts.answered}`)).toBeVisible();
     await expect.element(recipient("Polly")).toMatchTextContent(copy.tabs.replied);
+    // Replied, as Airtable recorded it, with no reply kept: still one.
+    await expect.element(recipient("Polly").getByRole("link", { name: copy.letterAndReplies(1) })).toBeVisible();
     await expect.element(recipient("Morag")).toMatchTextContent(staffCopy.letters.status.spam_complaint);
     // A status nobody knows any more, as it's stored, dated when the mailing last changed.
     await expect.element(recipient("Dora")).toMatchTextContent("queued");

@@ -53,6 +53,8 @@ export type MailingRecipient = {
   status: string;
   sentAt: string | null;
   repliedAt: string | null;
+  /** How many replies of theirs we keep; none for one recorded only as replied, as Airtable did. */
+  replies: number;
   personalised: boolean;
   /** Their answer to the mailing's ask, if any. */
   answer: string | null;
@@ -165,7 +167,8 @@ export async function getMailing(id: number, page = 1, tab: RecipientTab = "all"
   const [recipients, [{ total }]] = await Promise.all([
     query<MailingRecipient>(
       `SELECT l.id::int AS "letterId", n.id::int AS "politicianId", n.name, seat.constituency, seat.party, l.status, l.sent_at AS "sentAt",
-         l.replied_at AS "repliedAt", p.personalised, p.skip_reason AS "skipReason",
+         l.replied_at AS "repliedAt",
+         (SELECT count(*)::int FROM letter_replies r WHERE r.letter_id = l.id AND NOT r.from_us) AS replies, p.personalised, p.skip_reason AS "skipReason",
          (SELECT s.status FROM ask_statuses s WHERE s.notable_person_id = n.id AND s.ask = $4) AS answer
        ${from} ORDER BY n.name, l.id LIMIT $2 OFFSET $3`,
       [id, RECIPIENTS_PAGE_SIZE, (page - 1) * RECIPIENTS_PAGE_SIZE, mailing.ask],
