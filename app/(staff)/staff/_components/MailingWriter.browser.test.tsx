@@ -507,6 +507,9 @@ describe("MailingWriter", () => {
     await name.clear();
     await expect.element(name).toHaveValue("");
     await expect.element(preview().getByText("samuel.whitlock@pauseai.uk", { exact: true })).toBeVisible();
+    // Focused first, so leaving it is a blur of this field, whatever clearing it did to the focus.
+    await name.click();
+    await expect.element(name).toHaveFocus();
     await userEvent.tab();
     await field(copy.fromLegend).selectOptions("al@pauseai.uk");
     await expect.element(name).toHaveValue("Al Example");

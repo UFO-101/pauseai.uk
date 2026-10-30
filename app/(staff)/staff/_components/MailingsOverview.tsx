@@ -5,6 +5,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import type { MailingGroup } from "@/lib/mailing-groups";
 import { mailingWhen } from "@/lib/mailing-groups";
 import type { MailingSummary } from "@/lib/server/mailings";
+import { named } from "@/lib/named-address";
 import { londonWhenShort, staffDate } from "@/lib/staff-time";
 import Counts from "./ui/Counts";
 import Grid, { spanClass } from "./ui/Grid";
@@ -63,9 +64,13 @@ function Standing({ mailing, href }: { mailing: MailingSummary; href: string }) 
   return <Counts counts={mailingCounts(mailing)} href={href} label={copy.countsLabel(mailing.title)} small />;
 }
 
-/** One mailing, a row: when; its title, leading to it, over who it's from and its ask; how it stands. */
+/** One mailing, a row: when; its title, leading to it, over who it's from, name and address, and its ask; how it stands. */
 function Row({ mailing, year }: { mailing: MailingSummary; year: string }) {
   const href = `/staff/mailings/${mailing.id}`;
+  // Its name, as a mail app shows it, before its address; with no name of its own, the address alone.
+  const from = mailing.imported
+    ? staffCopy.mailings.imported
+    : named(mailing.fromName === mailing.sentFrom ? null : mailing.fromName, mailing.sentFrom);
   return (
     <li className={styles.row}>
       <span className={styles.when}>
@@ -76,10 +81,10 @@ function Row({ mailing, year }: { mailing: MailingSummary; year: string }) {
           {mailing.title || copy.untitled}
         </Link>
         <Muted>
-          {mailing.imported ? staffCopy.mailings.imported : mailing.fromName}
+          {from}
           {mailing.ask && (
             <>
-              {mailing.imported || mailing.fromName ? " · " : ""}
+              {from ? " · " : ""}
               {staffCopy.mailings.columns.ask}{" "}
               <Link href={`/staff/politicians?ask=${mailing.ask}`}>{mailing.askTitle}</Link>
             </>

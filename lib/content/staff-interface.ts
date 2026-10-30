@@ -944,7 +944,7 @@ export const staffCopy = {
       answered: "Answered",
     },
     // The list of mailings: when a draft was last saved, and how many a draft or one scheduled goes to.
-    savedAt: (when: string) => `⁂ Saved ${when}`,
+    savedAt: (when: string) => `Saved ${when}`,
     toCount: (n: number) => `to ${n} ${n === 1 ? "person" : "people"}`,
     // A mailing's box of counts in the list, which opens the mailing, for screen readers.
     countsLabel: (title: string) => `⁂ How “${title}” went`,

@@ -177,14 +177,17 @@ describe("MailingsOverview", () => {
       .toHaveAttribute("href", "/staff/mailings/4");
     await expect.element(row("AI safety conference")).toMatchTextContent("20 Oct");
     await expect.element(row("AI safety conference")).not.toMatchTextContent("20 Oct 2026");
-    await expect.element(row("Ben Lake").first()).toMatchTextContent(`–${copy.counts.answered}`);
+    await expect.element(row("Ben Lake").first()).toMatchTextContent(`– ${copy.counts.answered}`);
     // Last year's, with its year.
     await expect.element(row("Ben Lake").last()).toMatchTextContent("9 Jul 2025");
     // Who it's from, or Airtable, and its ask, leading to who answered it.
     await expect
       .element(row("Nov 26"))
       .toMatchTextContent(`${staffCopy.mailings.imported} · ${staffCopy.mailings.columns.ask}`);
-    await expect.element(row("AI safety conference")).toMatchTextContent("Jo Example · ");
+    await expect.element(row("AI safety conference")).toMatchTextContent("Jo Example <jo@pauseai.uk> · ");
+    // With no name of its own, its address alone.
+    await expect.element(row("Edinburgh: one week to go")).toMatchTextContent("jo@pauseai.uk");
+    await expect.element(row("Edinburgh: one week to go")).not.toMatchTextContent("<jo@pauseai.uk>");
     await expect
       .element(row("Edinburgh: one week to go").getByRole("link", { name: "Edinburgh conference" }))
       .not.toBeInTheDocument();
@@ -297,7 +300,7 @@ describe("MailingView", () => {
       .element(page.getByRole("link", { name: `2 ${copy.counts.replied}` }))
       .toHaveAttribute("aria-current", "true");
     // Answered doesn't apply.
-    await expect.element(page.getByText(`–${copy.counts.answered}`)).toBeVisible();
+    await expect.element(page.getByText(`– ${copy.counts.answered}`)).toBeVisible();
     await expect.element(recipient("Polly")).toMatchTextContent(copy.tabs.replied);
     await expect.element(recipient("Morag")).toMatchTextContent(staffCopy.letters.status.spam_complaint);
     // A status nobody knows any more, as it's stored, dated when the mailing last changed.

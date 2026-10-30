@@ -10,6 +10,7 @@ const mailing: MailingSummary = {
   state: "sent",
   createdBy: null,
   fromName: null,
+  sentFrom: null,
   dueAt: null,
   updatedAt: "2026-10-28T10:00:00Z",
   to: 0,
@@ -35,6 +36,7 @@ export const exampleMailings: MailingSummary[] = [
     askTitle: "Edinburgh conference",
     createdBy: "jo@pauseai.uk",
     fromName: "Jo Example",
+    sentFrom: "jo@pauseai.uk",
     dueAt: "2026-10-20T08:00:00Z",
     to: 12,
     sentAt: "2026-10-20T08:00:00Z",
@@ -62,7 +64,7 @@ export const exampleMailings: MailingSummary[] = [
   },
 ];
 
-/** A draft to the Commons, and one scheduled for Thursday, written by Jo. */
+/** A draft to the Commons, and one scheduled for Thursday, written by Jo, from Jo's Gmail with no name of its own. */
 export const exampleDraft: MailingSummary = {
   ...mailing,
   id: 5,
@@ -77,7 +79,9 @@ export const exampleScheduled: MailingSummary = {
   title: "Edinburgh: one week to go",
   state: "scheduled",
   createdBy: "jo@pauseai.uk",
-  fromName: "Jo Example",
+  // With no name of its own, the list's name is its address.
+  fromName: "jo@pauseai.uk",
+  sentFrom: "jo@pauseai.uk",
   dueAt: "2026-10-30T09:00:00Z",
   to: 72,
 };

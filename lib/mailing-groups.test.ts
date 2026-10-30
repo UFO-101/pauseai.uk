@@ -12,6 +12,7 @@ const base: MailingSummary = {
   state: "sent",
   createdBy: null,
   fromName: null,
+  sentFrom: null,
   dueAt: null,
   updatedAt: "2026-01-01T00:00:00Z",
   to: 1,
