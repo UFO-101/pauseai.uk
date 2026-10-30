@@ -14,8 +14,8 @@ function letters(layer: MapLayer) {
 }
 
 /**
- * The constituency picked on the map, or found by postcode: its name, its
- * MP, every count, the layer's own first, and the letters to write.
+ * The constituency picked on the map, or found by postcode: its region and
+ * name, its MP, every count, the layer's own first, and the letters to write.
  * With none picked, how to pick one.
  */
 export default function ConstituencyCard({
@@ -24,20 +24,21 @@ export default function ConstituencyCard({
   yours,
   onClose,
 }: {
-  /** The constituency, by name, and its row; null for none picked. */
-  picked: { name: string; row: ConstituencyRow } | null;
+  /** The constituency, by name and region, and its row; null for none picked. */
+  picked: { name: string; region: string; row: ConstituencyRow } | null;
   layer: MapLayer;
   /** Whether it's the one their postcode found. */
   yours: boolean;
   onClose: () => void;
 }) {
   if (!picked) return <p className={styles.prompt}>{copy.card.prompt}</p>;
-  const { name, row } = picked;
+  const { name, region, row } = picked;
   const [first, second] = letters(layer);
   return (
     <article className={styles.card} aria-live="polite">
       <header className={styles.header}>
         {yours && <Tag>{copy.card.yours}</Tag>}
+        <p className={styles.region}>{region}</p>
         <h2 className={styles.name}>{name}</h2>
         <p className={styles.mp}>{row.mp ? copy.card.mp(row.mp.name, row.mp.party) : copy.card.noMp}</p>
       </header>

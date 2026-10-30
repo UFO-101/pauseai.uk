@@ -46,6 +46,7 @@ describe("ConstituencyMap", () => {
     click(EDINBURGH);
     const card = screen.getByRole("article");
     await expect.element(card.getByRole("heading")).toHaveTextContent("Edinburgh East and Musselburgh");
+    await expect.element(card.getByText("Scotland")).toBeVisible();
     await expect.element(card.getByText(copy.card.mp("Edie Burgh MP", "SNP"))).toBeVisible();
     await expect.element(card.getByText(copy.card.yours)).not.toBeInTheDocument();
     expect([...card.element().querySelectorAll("li")].map((li) => li.textContent)).toEqual([
@@ -61,6 +62,7 @@ describe("ConstituencyMap", () => {
 
     click("W07000090");
     await expect.element(card.getByText(copy.card.noMp)).toBeVisible();
+    await expect.element(card.getByText("Wales")).toBeVisible();
     await card.getByRole("button", { name: copy.card.close }).click();
     await expect.element(screen.getByText(copy.card.prompt)).toBeVisible();
   });

@@ -15,6 +15,14 @@
   gap: var(--space-1);
 }
 
+/* Where the constituency is, small, over its name. */
+.region {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
 .name {
   margin: 0;
   font-size: clamp(22px, 2.4vw, 28px);

@@ -87,6 +87,22 @@ export const REGION_BORDERS: string = CELLS.flatMap((cell) =>
   }),
 ).join("");
 
+/** Each region's name, by its official code: England's nine, and the other three nations. */
+export const REGION_NAMES: Record<string, string> = {
+  S92000003: "Scotland",
+  N92000002: "Northern Ireland",
+  W92000004: "Wales",
+  E12000001: "North East",
+  E12000002: "North West",
+  E12000003: "Yorkshire and the Humber",
+  E12000004: "East Midlands",
+  E12000005: "West Midlands",
+  E12000006: "East of England",
+  E12000007: "London",
+  E12000008: "South East",
+  E12000009: "South West",
+};
+
 /** A region's name in the sea round the map, a line or two, and the line from it to the region. */
 export type RegionLabel = {
   region: string;
@@ -108,41 +124,44 @@ const GAP = 4;
 /**
  * The regions' names, each placed by hand in the sea beside its region, in
  * the map's units: west of the map for the regions on the west, east for
- * those on the east, and below for two with no room beside them.
+ * those on the east, and below for two with no room beside them. A long
+ * name is broken into lines; the rest are one.
  */
-const PLACES: { region: string; lines: string[]; x: number; y: number; align: RegionLabel["align"] }[] = [
-  { region: "S92000003", lines: ["Scotland"], x: 94, y: 161, align: "end" },
+const PLACES: { region: string; lines?: string[]; x: number; y: number; align: RegionLabel["align"] }[] = [
+  { region: "S92000003", x: 94, y: 161, align: "end" },
   { region: "N92000002", lines: ["Northern", "Ireland"], x: 48, y: 314, align: "middle" },
-  { region: "E12000001", lines: ["North East"], x: 306, y: 228, align: "start" },
-  { region: "E12000002", lines: ["North West"], x: 114, y: 379, align: "end" },
+  { region: "E12000001", x: 306, y: 228, align: "start" },
+  { region: "E12000002", x: 114, y: 379, align: "end" },
   { region: "E12000003", lines: ["Yorkshire and", "the Humber"], x: 406, y: 331, align: "start" },
-  { region: "E12000004", lines: ["East Midlands"], x: 398, y: 381, align: "start" },
-  { region: "W92000004", lines: ["Wales"], x: 76, y: 446, align: "end" },
-  { region: "E12000005", lines: ["West Midlands"], x: 108, y: 501, align: "end" },
+  { region: "E12000004", x: 398, y: 381, align: "start" },
+  { region: "W92000004", x: 76, y: 446, align: "end" },
+  { region: "E12000005", x: 108, y: 501, align: "end" },
   { region: "E12000006", lines: ["East of", "England"], x: 501, y: 491, align: "start" },
-  { region: "E12000007", lines: ["London"], x: 476, y: 579, align: "start" },
-  { region: "E12000009", lines: ["South West"], x: 116, y: 611, align: "end" },
-  { region: "E12000008", lines: ["South East"], x: 466, y: 708, align: "middle" },
+  { region: "E12000007", x: 476, y: 579, align: "start" },
+  { region: "E12000009", x: 116, y: 611, align: "end" },
+  { region: "E12000008", x: 466, y: 708, align: "middle" },
 ];
 
 /** Every region's name, its lines centred on its place, and its leader. */
-export const REGION_LABELS: readonly RegionLabel[] = PLACES.map(({ region, lines, x, y, align }) => {
-  const first = y - (LINE * (lines.length - 1)) / 2;
-  // The leader leaves the end of a name beside its region, or the top of
-  // one below it, and goes to the region's nearest hexagon.
-  const from =
-    align === "middle" ? { x, y: first - LABEL_SIZE / 2 - GAP } : { x: align === "end" ? x + GAP : x - GAP, y };
-  const to = CELLS.filter((c) => c.region === region).reduce((best, c) =>
-    Math.hypot(c.x - from.x, c.y - from.y) < Math.hypot(best.x - from.x, best.y - from.y) ? c : best,
-  );
-  return {
-    region,
-    lines: lines.map((text, i) => ({ text, y: first + LINE * i })),
-    x,
-    align,
-    leader: { x1: from.x, y1: from.y, x2: to.x, y2: to.y },
-  };
-});
+export const REGION_LABELS: readonly RegionLabel[] = PLACES.map(
+  ({ region, lines = [REGION_NAMES[region]], x, y, align }) => {
+    const first = y - (LINE * (lines.length - 1)) / 2;
+    // The leader leaves the end of a name beside its region, or the top of
+    // one below it, and goes to the region's nearest hexagon.
+    const from =
+      align === "middle" ? { x, y: first - LABEL_SIZE / 2 - GAP } : { x: align === "end" ? x + GAP : x - GAP, y };
+    const to = CELLS.filter((c) => c.region === region).reduce((best, c) =>
+      Math.hypot(c.x - from.x, c.y - from.y) < Math.hypot(best.x - from.x, best.y - from.y) ? c : best,
+    );
+    return {
+      region,
+      lines: lines.map((text, i) => ({ text, y: first + LINE * i })),
+      x,
+      align,
+      leader: { x1: from.x, y1: from.y, x2: to.x, y2: to.y },
+    };
+  },
+);
 
 /**
  * Roughly how wide a name's line is: the display face's heavy letters

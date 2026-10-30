@@ -5,6 +5,7 @@ import {
   MAP_STEPS,
   REGION_BORDERS,
   REGION_LABELS,
+  REGION_NAMES,
   hexPath,
   reach,
   rowsByCode,
@@ -27,14 +28,16 @@ describe("the constituency map's hexagons", () => {
 
   it("put Scotland north of London, and Northern Ireland west of Wales", () => {
     const middle = (name: string) => {
-      const cells = CELLS.filter((c) => c.region === REGION_LABELS.find((l) => l.lines[0].text === name)!.region);
+      const cells = CELLS.filter(
+        (c) => c.region === Object.keys(REGION_NAMES).find((code) => REGION_NAMES[code] === name),
+      );
       return {
         x: cells.reduce((sum, c) => sum + c.x, 0) / cells.length,
         y: cells.reduce((sum, c) => sum + c.y, 0) / cells.length,
       };
     };
     expect(middle("Scotland").y).toBeLessThan(middle("London").y);
-    expect(middle("Northern").x).toBeLessThan(middle("Wales").x);
+    expect(middle("Northern Ireland").x).toBeLessThan(middle("Wales").x);
   });
 
   it("draw a hexagon as six corners round its centre, inset or outset", () => {
@@ -75,6 +78,9 @@ describe("the map's regions", () => {
         expect(y).toBeGreaterThan(MAP_BOX.y);
         expect(y).toBeLessThan(MAP_BOX.y + MAP_BOX.height);
       }
+    }
+    for (const { region, lines } of REGION_LABELS) {
+      expect(lines.map((l) => l.text).join(" ")).toBe(REGION_NAMES[region]);
     }
     const northernIreland = REGION_LABELS.find((l) => l.region === "N92000002")!;
     expect(northernIreland.lines.map((l) => l.text)).toEqual(["Northern", "Ireland"]);

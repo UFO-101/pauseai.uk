@@ -11,10 +11,10 @@ import {
 } from "@/app/(site)/campaigns/constituencies/_components/ConstituencyMap.examples";
 import HexMap from "@/app/(site)/campaigns/constituencies/_components/HexMap";
 import PostcodeFinder from "@/app/(site)/campaigns/constituencies/_components/PostcodeFinder";
-import { CELLS, rowsByCode, type MapLayer } from "@/lib/constituency-map";
+import { CELLS, REGION_NAMES, rowsByCode, type MapLayer } from "@/lib/constituency-map";
 
 const ROWS = rowsByCode(exampleRows);
-const nameOf = (code: string) => CELLS.find((cell) => cell.code === code)!.name;
+const cellOf = (code: string) => CELLS.find((cell) => cell.code === code)!;
 
 /** The hexagons on a layer, Westminster picked and Edinburgh hovered; clicking picks another. */
 export function HexMapExample({ layer = "supporters" }: { layer?: MapLayer }) {
@@ -41,7 +41,9 @@ export function ConstituencyCardExample({ code, yours = false }: { code: string 
   return (
     <div style={{ maxWidth: 420 }}>
       <ConstituencyCard
-        picked={code ? { name: nameOf(code), row: ROWS.get(code)! } : null}
+        picked={
+          code ? { name: cellOf(code).name, region: REGION_NAMES[cellOf(code).region], row: ROWS.get(code)! } : null
+        }
         layer="supporters"
         yours={yours}
         onClose={() => {}}

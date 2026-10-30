@@ -2,7 +2,15 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Segmented } from "@/components/ui/Controls";
-import { CELLS, MAP_LAYERS, reach, rowsByCode, type ConstituencyRow, type MapLayer } from "@/lib/constituency-map";
+import {
+  CELLS,
+  MAP_LAYERS,
+  REGION_NAMES,
+  reach,
+  rowsByCode,
+  type ConstituencyRow,
+  type MapLayer,
+} from "@/lib/constituency-map";
 import { constituencyMapCopy as copy } from "@/lib/content/constituency-map";
 import ConstituencyCard from "./ConstituencyCard";
 import HexMap from "./HexMap";
@@ -10,7 +18,7 @@ import MapKey from "./MapKey";
 import PostcodeFinder from "./PostcodeFinder";
 import styles from "./ConstituencyMap.module.css";
 
-const NAMES = new Map(CELLS.map((cell) => [cell.code, cell.name]));
+const BY_CODE = new Map(CELLS.map((cell) => [cell.code, cell]));
 
 /**
  * The map and what goes with it: the switch between supporters and each
@@ -68,7 +76,15 @@ export default function ConstituencyMap({ rows }: { rows: ConstituencyRow[] }) {
         />
         <div ref={cardRef}>
           <ConstituencyCard
-            picked={picked === null ? null : { name: NAMES.get(picked)!, row: byCode.get(picked)! }}
+            picked={
+              picked === null
+                ? null
+                : {
+                    name: BY_CODE.get(picked)!.name,
+                    region: REGION_NAMES[BY_CODE.get(picked)!.region],
+                    row: byCode.get(picked)!,
+                  }
+            }
             layer={layer}
             yours={picked === yours}
             onClose={() => setPicked(null)}
