@@ -112,7 +112,7 @@ function ChangeTime({ mailing, action }: { mailing: WrittenMailing; action: Form
 /**
  * Where a mailing stands, under its band: when one scheduled sends, with
  * Change the time and Unschedule; how far one sending has got, with Stop
- * sending; once sent, how many of those it reached have answered its ask.
+ * sending; once sent, how many of everyone it went to have answered its ask.
  * Nothing for one with no ask.
  */
 function Standing({
@@ -160,12 +160,12 @@ function Standing({
     );
   }
   if (!mailing.ask) return null;
-  const reached = mailing.sent - mailing.bounced;
+  // Out of everyone it went to: someone whose letter bounced may have answered some other way.
   return (
     <Grid>
       <Card span={6} as="div">
-        <Progress value={mailing.answered} max={reached} tone="green" label={copy.counts.answered} big>
-          {copy.answeredBar(mailing.answered, reached)}
+        <Progress value={mailing.answered} max={mailing.to} tone="green" label={copy.counts.answered} big>
+          {copy.answeredBar(mailing.answered, mailing.to)}
         </Progress>
       </Card>
     </Grid>

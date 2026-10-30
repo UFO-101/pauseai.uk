@@ -718,3 +718,28 @@ INSERT INTO message_events (message_id, at, kind)
 SELECT id, sent_at, 'sent' FROM messages WHERE status <> 'skipped'
 UNION ALL
 SELECT id, sent_at + interval '1 minute', CASE status WHEN 'delivered' THEN 'delivered' ELSE 'failed' END FROM messages WHERE status <> 'skipped';
+
+-- A mailing to politicians sending, a third of the way: one of its three
+-- letters sent, two to go. It goes from Jo's Gmail, which isn't connected
+-- here, so the hourly job leaves it as it is. Last, so no ID above moves.
+INSERT INTO mailings (title, subject, audience, channel, filter, body, created_by, sent_from, from_name, due_at, state, ask, created_at, opened_at)
+SELECT 'Edinburgh: last call', 'Edinburgh: last call', 'politicians', 'email', '{"list": "politicians", "params": {}}'::jsonb, b.body,
+  'jo@pauseai.uk', 'jo@pauseai.uk', 'Jo Seed', now() - interval '2 hours', 'sending', 'edinburgh-conference-2026',
+  now() - interval '1 day', now() - interval '3 hours'
+FROM seed_letter b;
+CREATE TEMP TABLE seed_sending ON COMMIT DROP AS
+SELECT nextval(pg_get_serial_sequence('letters', 'id')) AS id, m.id AS mailing_id, m.due_at, n.id AS person,
+  n.salutation, n.name, row_number() OVER (ORDER BY n.name) AS n
+FROM mailings m JOIN notable_people n ON n.airtable_id IN ('recDummy', 'recPlaceholder', 'recMorag')
+WHERE m.title = 'Edinburgh: last call';
+INSERT INTO letters (id, kind, notable_person_id, status, created_at, sent_at) OVERRIDING SYSTEM VALUE
+SELECT s.id, 'pauseai', s.person, CASE WHEN s.n = 1 THEN 'sent' ELSE 'scheduled' END, s.due_at - interval '1 day',
+  CASE WHEN s.n = 1 THEN s.due_at END
+FROM seed_sending s;
+INSERT INTO letters_from_pauseai (id, mailing_id, merge_values)
+SELECT s.id, s.mailing_id, json_build_object('values', json_build_object('salutation', s.salutation, 'name', s.name), 'meets', '[]'::json)
+FROM seed_sending s;
+INSERT INTO letter_events (letter_id, at, status, details)
+SELECT id, due_at - interval '1 day', 'scheduled', '{}' FROM seed_sending;
+INSERT INTO letter_events (letter_id, at, status, details)
+SELECT id, due_at, 'sent', jsonb_build_object('from', 'jo@pauseai.uk') FROM seed_sending WHERE n = 1;

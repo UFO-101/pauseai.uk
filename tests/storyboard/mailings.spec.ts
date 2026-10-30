@@ -291,7 +291,8 @@ test("Send a mailing from a connected Gmail: schedule it, and the hourly job sen
   const sent = await request.post(`${BASE}/api/cron/send-mailings`, {
     headers: { Authorization: "Bearer fixture-cron-secret" },
   });
-  expect(await sent.json()).toMatchObject({ started: [Number(id)], sent: 1, left: 0 });
+  // The fixture's mailing a third sent waits, from Jo's Gmail, which isn't connected here: its two letters are left.
+  expect(await sent.json()).toMatchObject({ started: [Number(id)], sent: 1, left: 2 });
   const letter = newestEmail((one) => one.To === '"Morag Example" <morag.example.msp@parliament.example>')!;
   expect(letter.From).toBe(`"Sam Example, PauseAI UK" <${staffEmail()}>`);
   await emailFrame(page, letter, "the letter as Morag got it, from your Gmail");

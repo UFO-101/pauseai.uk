@@ -241,7 +241,7 @@ describe("MailingView", () => {
     await expect.element(page.getByRole("heading", { level: 1 })).toMatchTextContent(mailing.title);
     // With an ask, the bar says it's sent, not a tag.
     expect(page.getByText(copy.states.sent, { exact: true }).all()).toHaveLength(1);
-    await expect.element(page.getByText(copy.answeredBar(3, 10))).toBeVisible();
+    await expect.element(page.getByText(copy.answeredBar(3, 12))).toBeVisible();
     await expect.element(page.getByRole("progressbar", { name: copy.counts.answered })).toHaveAttribute("value", "3");
     // The band: when, by whom, from where, the ask, and who it was for.
     await expect.element(page.getByText("20 Oct 2026, 08:00")).toBeVisible();
@@ -447,7 +447,7 @@ describe("MailingView, for a mailing imported from Airtable", () => {
 
   it("with an ask, its bar", async () => {
     await imported();
-    await expect.element(page.getByText(copy.answeredBar(1, 1))).toBeVisible();
+    await expect.element(page.getByText(copy.answeredBar(1, 4))).toBeVisible();
   });
 
   it("pages its recipients, a hundred at a time, saying how many there are", async () => {
@@ -549,6 +549,6 @@ describe("MailingFor", () => {
         actions={actions}
       />,
     );
-    await expect.element(page.getByText(copy.answeredBar(1, 1))).toBeVisible();
+    await expect.element(page.getByText(copy.answeredBar(1, 4))).toBeVisible();
   });
 });

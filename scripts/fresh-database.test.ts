@@ -250,7 +250,13 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
         // Mailings written here in every state but those a stop makes, to supporters too.
         expect(
           runSql(name, "SELECT DISTINCT audience || ' ' || state FROM mailings WHERE body IS NOT NULL ORDER BY 1"),
-        ).toEqual(["politicians draft", "politicians scheduled", "politicians sent", "supporters sent"]);
+        ).toEqual([
+          "politicians draft",
+          "politicians scheduled",
+          "politicians sending",
+          "politicians sent",
+          "supporters sent",
+        ]);
         // Opt-outs told by every source, and every answer to whether we'd email someone.
         expect(runSql(name, "SELECT DISTINCT list || ' ' || source FROM opt_outs ORDER BY 1")).toEqual([
           "luma-calendar luma-contacts",
