@@ -2897,7 +2897,7 @@ describe("FindInGmail", () => {
     expect(write).toHaveBeenCalledWith(find.search);
     await expect.element(page.getByRole("button", { name: copy.copied })).toBeVisible();
     // Bold, what to do, "paste" stressed; under it, lighter, where.
-    await expect.element(page.getByRole("status")).toHaveTextContent(copy.where("policy@pauseai.uk"));
+    await expect.poll(() => page.getByRole("status").element().textContent).toContain(copy.where("policy@pauseai.uk"));
     expect(page.getByRole("status").element().querySelector("strong")!.textContent).toBe(
       `${copy.next.before}${copy.next.stressed}${copy.next.after}`,
     );
@@ -2909,7 +2909,7 @@ describe("FindInGmail", () => {
     const write = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
     const { rerender } = await render(<FindInGmail find={{ ...find, mailbox: null }} />);
     await page.getByRole("button", { name: copy.copy }).click();
-    await expect.element(page.getByRole("status")).toHaveTextContent(copy.whereUnknown);
+    await expect.poll(() => page.getByRole("status").element().textContent).toContain(copy.whereUnknown);
     write.mockRestore();
     await rerender(<FindInGmail find={null} />);
     expect(page.getByRole("button").all()).toHaveLength(0);
