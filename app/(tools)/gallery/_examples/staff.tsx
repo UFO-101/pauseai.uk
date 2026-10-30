@@ -2546,7 +2546,13 @@ export const staff: Group = {
           label: "Copies its text, then says so, with a note in a bubble",
           render: () => (
             <StaffPage as="div">
-              <CopyButton text="rfc822msgid:4f1c@pauseai.uk" label="Copy" copied="Copied!" note="Paste it in" />
+              <CopyButton
+                text="rfc822msgid:4f1c@pauseai.uk"
+                label="Copy"
+                copied="Copied!"
+                note="Paste it in"
+                close="Close"
+              />
             </StaffPage>
           ),
         },

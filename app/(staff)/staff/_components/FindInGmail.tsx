@@ -22,6 +22,7 @@ export default function FindInGmail({ find }: { find: GmailFind | null }) {
       text={find.search}
       label={copy.copy}
       copied={copy.copied}
+      close={copy.close}
       note={
         <>
           <strong className={styles.line}>

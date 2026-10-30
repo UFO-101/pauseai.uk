@@ -1,56 +1,46 @@
-/* The button, and the bubble that hangs from its bottom right. */
+/* The button and its note, each in its parent's own layout: in a row
+   that wraps, such as a heading's with the button at its right, the note
+   takes a row of its own under them, the whole width. */
 .copy {
-  position: relative;
-  display: inline-block;
+  display: contents;
 }
 
-/* Copied, with its tick, in green, popping in where the label was. */
+/* Copied, with its tick, popping in where the label was. */
 .done {
   display: inline-flex;
   gap: var(--space-1);
   align-items: center;
-  color: var(--status-green);
   animation: pop 0.2s ease-out;
 }
 
-/* What to do with what it copied, over the page, a card's border and
-   shadow; there only while it has something to say, as the live region
-   stays for screen readers. */
-.bubble {
-  position: absolute;
-  top: calc(100% + var(--space-2));
-  right: 0;
-  z-index: 10;
-  width: max-content;
-  max-width: min(20rem, calc(100vw - 2 * var(--space-4)));
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border-strong);
+/* The live region the note goes in, there from the start for screen
+   readers, taking no room while it's empty; the whole width, on a row of
+   its own. */
+.status {
+  display: block;
+  flex-basis: 100%;
+  width: 100%;
+}
+
+.status:empty {
+  display: none;
+}
+
+/* What to do with what it copied, a strip under the button: opening
+   a moment after Copied! pops in, so the eye goes there first and then
+   down to it, lit in the accent colour, fading to plain; room at its
+   right for the × at its top right. */
+.note {
+  position: relative;
+  display: block;
+  padding: var(--space-2) calc(var(--space-3) + 22px) var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
-  background: var(--surface);
-  box-shadow: 0 6px 24px rgb(var(--text-rgb) / 0.15);
-  color: var(--text);
+  background: var(--surface-2);
   font-size: var(--text-sm);
   text-align: left;
-  animation: drop 0.2s ease-out;
-}
-
-/* Its pointer, up to the button: a square turned on its corner, its top
-   two sides the bubble's border. */
-.bubble::before {
-  position: absolute;
-  top: calc(-1 * var(--space-1) - 1px);
-  right: var(--space-4);
-  width: var(--space-2);
-  height: var(--space-2);
-  border-top: 1px solid var(--border-strong);
-  border-left: 1px solid var(--border-strong);
-  background: var(--surface);
-  content: "";
-  transform: rotate(45deg);
-}
-
-.bubble:empty {
-  display: none;
+  animation:
+    open 0.3s 0.2s ease-out backwards,
+    lit 8s 0.4s ease-out backwards;
 }
 
 @keyframes pop {
@@ -60,17 +50,35 @@
   }
 }
 
-/* The bubble comes down from the button. */
-@keyframes drop {
+/* Its ×, in its top right corner. */
+.close {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+}
+
+/* The note opens down from the button. */
+@keyframes open {
   from {
     opacity: 0;
     transform: translateY(calc(-1 * var(--space-1)));
   }
 }
 
+/* And starts in the accent colour, fading to its own. */
+@keyframes lit {
+  from {
+    background: var(--accent-light);
+  }
+}
+
+/* With motion turned off, nothing moves; the note still fades from lit. */
 @media (prefers-reduced-motion: reduce) {
-  .done,
-  .bubble {
+  .done {
     animation: none;
+  }
+
+  .note {
+    animation: lit 8s 0.4s ease-out backwards;
   }
 }

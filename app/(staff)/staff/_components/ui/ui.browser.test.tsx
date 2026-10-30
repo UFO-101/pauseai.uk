@@ -732,7 +732,7 @@ describe("CopyButton", () => {
 
   it("copies its text and says so a few seconds, with its note in a bubble, then is as it was", async () => {
     const write = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
-    await render(<CopyButton text="rfc822msgid:a@b" label="Copy" copied="Copied!" note="Paste it" />);
+    await render(<CopyButton text="rfc822msgid:a@b" label="Copy" copied="Copied!" close="Close" note="Paste it" />);
     expect(getComputedStyle(bubble()).display).toBe("none");
     await page.getByRole("button", { name: "Copy" }).click();
     expect(write).toHaveBeenCalledWith("rfc822msgid:a@b");
@@ -746,12 +746,12 @@ describe("CopyButton", () => {
 
   it("with no note, no bubble; and as it was when the clipboard refuses", async () => {
     const write = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
-    const { rerender } = await render(<CopyButton text="x" label="Copy" copied="Copied!" />);
+    const { rerender } = await render(<CopyButton text="x" label="Copy" copied="Copied!" close="Close" />);
     await page.getByRole("button", { name: "Copy" }).click();
     await expect.element(page.getByRole("button", { name: "Copied!" })).toBeVisible();
     expect(getComputedStyle(bubble()).display).toBe("none");
     write.mockRejectedValue(new Error("denied"));
-    await rerender(<CopyButton key="again" text="x" label="Copy" copied="Copied!" />);
+    await rerender(<CopyButton key="again" text="x" label="Copy" copied="Copied!" close="Close" />);
     await page.getByRole("button", { name: "Copy" }).click();
     expect(write).toHaveBeenCalledTimes(2);
     expect(page.getByRole("button", { name: "Copied!" }).all()).toHaveLength(0);
