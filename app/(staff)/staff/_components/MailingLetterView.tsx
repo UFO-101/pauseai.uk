@@ -1,4 +1,4 @@
-import Link from "next/link";
+import StaffLink from "./ui/StaffLink";
 import type { ReactNode } from "react";
 import Tag from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
@@ -53,7 +53,7 @@ export default function MailingLetterView({
         <StatusTag letter={letter} answered={Boolean(ask && politician.statuses[ask.slug])} />
       </div>
       <p className={styles.about}>
-        <Link href={`/staff/politicians/${letter.politicianId}`}>{letter.mpName}</Link>
+        <StaffLink href={`/staff/politicians/${letter.politicianId}`}>{letter.mpName}</StaffLink>
         <Muted>{about.filter(Boolean).map((part) => ` · ${part}`)}</Muted>
       </p>
       <Grid>

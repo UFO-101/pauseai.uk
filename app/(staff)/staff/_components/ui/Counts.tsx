@@ -1,4 +1,4 @@
-import Link from "next/link";
+import StaffLink from "./StaffLink";
 import styles from "./Counts.module.css";
 
 /**
@@ -44,14 +44,14 @@ export default function Counts({
       </>
     );
     return count.href && !href ? (
-      <Link
+      <StaffLink
         key={count.key}
         href={count.href}
         className={styles.count}
         aria-current={count.current ? "true" : undefined}
       >
         {inner}
-      </Link>
+      </StaffLink>
     ) : (
       <span key={count.key} className={styles.count}>
         {inner}
@@ -60,9 +60,9 @@ export default function Counts({
   });
   const className = small ? `${styles.counts} ${styles.small}` : styles.counts;
   return href ? (
-    <Link href={href} className={className} aria-label={label}>
+    <StaffLink href={href} className={className} aria-label={label}>
       {cells}
-    </Link>
+    </StaffLink>
   ) : (
     <div className={className}>{cells}</div>
   );

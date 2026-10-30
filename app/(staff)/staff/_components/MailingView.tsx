@@ -1,4 +1,4 @@
-import Link from "next/link";
+import StaffLink from "./ui/StaffLink";
 import type { ReactNode } from "react";
 import { buttonClass } from "@/components/ui/Button";
 import Tag, { type TagTone } from "@/components/ui/Tag";
@@ -70,7 +70,7 @@ function recipientColumns(mailing: Mailing): ListColumn<MailingRecipient>[] {
       label: staffCopy.mailings.recipientColumns.name,
       cell: (r) => (
         <span className={styles.who}>
-          <Link href={`/staff/politicians/${r.politicianId}`}>{r.name}</Link>
+          <StaffLink href={`/staff/politicians/${r.politicianId}`}>{r.name}</StaffLink>
           <Muted>
             {[r.constituency, r.party, mailing.imported && r.personalised && staffCopy.mailings.personalised]
               .filter(Boolean)
@@ -89,9 +89,9 @@ function recipientColumns(mailing: Mailing): ListColumn<MailingRecipient>[] {
           <Outcome mailing={mailing} recipient={r} />
           <Muted>{staffDate(r.repliedAt ?? r.sentAt ?? mailing.updatedAt)}</Muted>
           {!r.skipReason && (
-            <Link href={`/staff/mailings/${mailing.id}/letters/${r.letterId}`}>
+            <StaffLink href={`/staff/mailings/${mailing.id}/letters/${r.letterId}`}>
               {r.repliedAt ? copy.letterAndReplies(Math.max(r.replies, 1)) : copy.theLetter}
-            </Link>
+            </StaffLink>
           )}
         </span>
       ),
@@ -251,7 +251,7 @@ export default function MailingView({
           {written ? written.sentFrom : staffCopy.mailings.imported}
         </BandFact>
         <BandFact label={staffCopy.mailings.fields.ask}>
-          {mailing.ask && <Link href={`/staff/politicians?ask=${mailing.ask}`}>{mailing.askTitle}</Link>}
+          {mailing.ask && <StaffLink href={`/staff/politicians?ask=${mailing.ask}`}>{mailing.askTitle}</StaffLink>}
         </BandFact>
         <BandFact label={copy.whoLabel} detail={who && staffCopy.mailings.recipientsCount(mailing.to)}>
           {who ?? staffCopy.mailings.recipientsCount(mailing.to)}
@@ -290,7 +290,7 @@ export default function MailingView({
         <Card span={3} as="div">
           <div className={styles.recipientsHead}>
             <h2>{mailing.tab === "all" ? staffCopy.mailings.recipientsTitle : copy.tabs[mailing.tab]}</h2>
-            {mailing.tab !== "all" && <Link href={path}>{copy.showEveryone}</Link>}
+            {mailing.tab !== "all" && <StaffLink href={path}>{copy.showEveryone}</StaffLink>}
           </div>
           <ListFrame
             count={staffCopy.mailings.recipientsCount(mailing.recipientsTotal)}

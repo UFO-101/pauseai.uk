@@ -1,4 +1,4 @@
-import Link from "next/link";
+import StaffLink from "./ui/StaffLink";
 import Tag from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -61,11 +61,11 @@ function Standing({ mailing, href }: { mailing: MailingSummary; href: string }) 
   }
   if (mailing.state === "sending") {
     return (
-      <Link href={href} className={styles.bar}>
+      <StaffLink href={href} className={styles.bar}>
         <Progress value={mailing.sent + mailing.skipped} max={mailing.to} tone="blue" label={copy.sentLabel}>
           {copy.sendingBar(mailing.sent, mailing.to)}
         </Progress>
-      </Link>
+      </StaffLink>
     );
   }
   return <Counts counts={mailingCounts(mailing)} href={href} label={copy.countsLabel(mailing.title)} small />;
@@ -84,16 +84,16 @@ function Row({ mailing, year }: { mailing: MailingSummary; year: string }) {
         <When mailing={mailing} year={year} />
       </span>
       <span className={styles.what}>
-        <Link href={href} className={styles.title}>
+        <StaffLink href={href} className={styles.title}>
           {mailing.title || copy.untitled}
-        </Link>
+        </StaffLink>
         <Muted>
           {from}
           {mailing.ask && (
             <>
               {from ? " · " : ""}
               {staffCopy.mailings.columns.ask}{" "}
-              <Link href={`/staff/politicians?ask=${mailing.ask}`}>{mailing.askTitle}</Link>
+              <StaffLink href={`/staff/politicians?ask=${mailing.ask}`}>{mailing.askTitle}</StaffLink>
             </>
           )}
         </Muted>

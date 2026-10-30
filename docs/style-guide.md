@@ -347,8 +347,8 @@ meaning: orange for what you can press, the status colours for state.
 **The band** (`ui/Band`). A record whose page is about it alone (a
 supporter, a mailing) starts with a tinted band: its title and a tag, its
 facts (`BandFact`), each with a quiet line under it, and at their right
-its numbers in one white box (`ui/Counts`), each leading to what it
-counts. The same white box, small, is a row's in a list of such records
+its numbers in one white box (`ui/Counts`), each a link (`StaffLink`,
+below) to what it counts. The same white box, small, is a row's in a list of such records
 (the mailings), the whole box leading to the record.
 
 **Progress** (`ui/Progress`). How far something has got is a sentence
