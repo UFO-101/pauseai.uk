@@ -872,6 +872,8 @@ export const staffCopy = {
     // The first entry of a list while nothing in it is chosen.
     choose: "Choose…",
     fromLegend: "Whose Gmail to send it from",
+    fromNameLabel: "⁂ The name it's from",
+    fromNameHint: "⁂ Left empty, it's from the name the Gmail has. The names it has gone out in before are offered.",
     // A sender, in Sent from's list: their address, and how many more it can send today.
     // Your own address, before your Gmail's connected.
     senderNotConnected: (address: string) => `${address} (not connected)`,

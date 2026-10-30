@@ -35,6 +35,7 @@ import { SentToday } from "./GmailConnect";
 import { DeleteDraft } from "./MailingButtons";
 import MailingEditor from "./MailingEditor";
 import MailingFiles from "./MailingFiles";
+import { named } from "./LetterThread";
 import { MailingLetter } from "./MailingLetter";
 import Grid, { Card } from "./ui/Grid";
 import NotIcon from "./ui/NotIcon";
@@ -55,6 +56,8 @@ type Changes = {
   body: MailingDoc;
   ask: string | null;
   sentFrom: string | null;
+  /** The name it's from; empty or null, the Gmail's own. */
+  fromName: string | null;
   dueAt: string | null;
 };
 
@@ -150,6 +153,7 @@ export default function MailingWriter({
   const letterLabel = useId();
   const askHelp = `ask-help-${useId().replace(/\W/g, "")}`;
   const askId = useId();
+  const namesId = useId();
   const id = useRef(draft?.id ?? null);
   const version = useRef(draft?.version ?? 0);
   const [savedId, setSavedId] = useState(draft?.id ?? null);
@@ -167,6 +171,7 @@ export default function MailingWriter({
     sentFrom: draft
       ? draft.sentFrom
       : ((data.senders.find((one) => one.email === DEFAULT_SENDER) ?? data.senders[0])?.email ?? null),
+    fromName: draft?.fromName ?? null,
     dueAt: draft?.dueAt ?? null,
   }));
   const latest = useRef(values);
@@ -331,7 +336,7 @@ export default function MailingWriter({
   // The connected accounts, and the one chosen if it isn't one any more.
   const senderChoices = [
     ...data.senders.map((one) => ({ ...one, connected: true })),
-    ...(values.sentFrom && !sender ? [{ email: values.sentFrom, remaining: 0, connected: false }] : []),
+    ...(values.sentFrom && !sender ? [{ email: values.sentFrom, name: "", remaining: 0, connected: false }] : []),
   ];
   // Where Connect Gmail and the Asks page come back to, as the page shows them: this draft, or this new mailing.
   const writerPath = savedId ? `/staff/mailings/${savedId}` : newPath;
@@ -460,6 +465,7 @@ export default function MailingWriter({
             body={body}
             subject={values.subject}
             sentFrom={values.sentFrom}
+            fromName={values.fromName}
             written={written}
             sendTest={async (recipient, to) => actions.sendTest(await draftId(), recipient, to)}
           />
@@ -479,12 +485,28 @@ export default function MailingWriter({
                     )}
                     {senderChoices.map((sender) => (
                       <option key={sender.email} value={sender.email}>
-                        {sender.connected ? sender.email : copy.senderNotConnected(sender.email)}
+                        {sender.connected ? named(sender.name, sender.email) : copy.senderNotConnected(sender.email)}
                       </option>
                     ))}
                   </Select>
                 </Field>
                 {sender && <SentToday sent={sender.sentToday} />}
+                {/* Empty, it's from the Gmail's own name; the names it has gone in before are offered. */}
+                <Field label={copy.fromNameLabel} className={styles.sender}>
+                  <TextInput
+                    value={values.fromName ?? ""}
+                    placeholder={sender?.name}
+                    list={namesId}
+                    aria-describedby={`${namesId}-hint`}
+                    onChange={(event) => change({ fromName: event.target.value })}
+                  />
+                </Field>
+                <Hint id={`${namesId}-hint`}>{copy.fromNameHint}</Hint>
+                <datalist id={namesId}>
+                  {sender?.names.map((name) => (
+                    <option key={name} value={name} />
+                  ))}
+                </datalist>
               </>
             ) : (
               <p>{copy.noSenders}</p>
@@ -565,6 +587,7 @@ function Preview({
   body,
   subject,
   sentFrom,
+  fromName,
   written,
   sendTest,
 }: {
@@ -572,6 +595,7 @@ function Preview({
   body: MailingDoc;
   subject: string;
   sentFrom: string | null;
+  fromName: string | null;
   /** Whether the letter has anything in it but its greeting, so there's something to test. */
   written: boolean;
   /** Sends the test copy of a recipient's email, saving the draft first if it isn't yet. */
@@ -580,9 +604,8 @@ function Preview({
   // Where the test copy goes: you, unless you give another address.
   const [testTo, setTestTo] = useState(data.me);
   const testToId = useId();
-  // The name the Gmail sends as, if it has one of its own, as its From line will show it.
-  const name = data.senders.find((sender) => sender.email === sentFrom)?.name;
-  const fromLine = name ? `${name} <${sentFrom}>` : sentFrom;
+  // As its From line will show it: in the name chosen, or the Gmail's own, if it has one.
+  const fromLine = named(fromName || data.senders.find((sender) => sender.email === sentFrom)?.name, sentFrom!);
   const findLabel = useId();
   const [chosen, setChosen] = useState(data.recipients[0]?.id);
   // The answers pressed, since someone was last chosen; else theirs.

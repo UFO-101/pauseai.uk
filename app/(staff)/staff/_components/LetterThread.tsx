@@ -9,7 +9,7 @@ import styles from "./LetterThread.module.css";
 const copy = staffCopy.letterThread;
 
 /** Someone as an email names them: their name and address, or their address alone. */
-const named = (name: string | null, address: string | null) =>
+export const named = (name: string | null | undefined, address: string | null) =>
   [name, name && address ? `<${address}>` : address].filter(Boolean).join(" ");
 
 /** One message of the thread as an email shows it: who it's from and to, when, and its subject, over its text. */

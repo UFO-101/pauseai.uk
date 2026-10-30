@@ -21,9 +21,20 @@ import {
 
 export { GMAIL_DAILY_LIMIT };
 
-/** A connected account, with how many it has sent in the last day and how many more it can. */
-/** A connected Gmail: its address, and the name it sends as, empty when it has none of its own. */
-export type GmailAccount = { email: string; name: string; connectedAt: string; sentToday: number; remaining: number };
+/**
+ * A connected Gmail: its address; the name it sends as, empty when it has
+ * none of its own; the names a mailing could be from, its own then those
+ * its mailings went in, latest first; and how many it has sent in the last
+ * day and how many more it can.
+ */
+export type GmailAccount = {
+  email: string;
+  name: string;
+  names: string[];
+  connectedAt: string;
+  sentToday: number;
+  remaining: number;
+};
 
 /** Why connecting didn't: the person consented as another Google account than their own. */
 export type ConnectResult = { connected: true } | { connected: false; reason: "other-account" };
@@ -31,13 +42,23 @@ export type ConnectResult = { connected: true } | { connected: false; reason: "o
 const SENT_TODAY = `(SELECT count(*)::int FROM email_sends s
   WHERE s.sender = a.email AND s.outcome = 'sent' AND s.at > now() - interval '1 day')`;
 
+// The From names of the account's mailings, scheduled or sent, latest first. A draft's may be half typed.
+const NAMES_USED = `(SELECT coalesce(array_agg(used.name ORDER BY used.last DESC), '{}') FROM
+  (SELECT m.from_name AS name, max(m.updated_at) AS last FROM mailings m
+   WHERE m.sent_from = a.email AND m.state <> 'draft' AND m.from_name <> '' GROUP BY m.from_name) used)`;
+
 /** Every connected account, by address. */
 export async function gmailAccounts(): Promise<GmailAccount[]> {
-  const rows = await query<{ email: string; name: string; connectedAt: string; sentToday: number }>(
-    `SELECT a.email, coalesce(a.gmail_name, '') AS name, a.gmail_connected_at AS "connectedAt", ${SENT_TODAY} AS "sentToday"
+  const rows = await query<{ email: string; name: string; used: string[]; connectedAt: string; sentToday: number }>(
+    `SELECT a.email, coalesce(a.gmail_name, '') AS name, ${NAMES_USED} AS used,
+       a.gmail_connected_at AS "connectedAt", ${SENT_TODAY} AS "sentToday"
      FROM staff_accounts a WHERE a.gmail_token IS NOT NULL ORDER BY a.email`,
   );
-  return rows.map((row) => ({ ...row, remaining: Math.max(0, GMAIL_DAILY_LIMIT - row.sentToday) }));
+  return rows.map(({ used, ...row }) => ({
+    ...row,
+    names: [...new Set([row.name, ...used])].filter(Boolean),
+    remaining: Math.max(0, GMAIL_DAILY_LIMIT - row.sentToday),
+  }));
 }
 
 /** One account's Gmail, if it's connected. */

@@ -460,7 +460,7 @@ describe("MailingWriter", () => {
         .getByRole("option")
         .all()
         .map((option) => option.element().textContent),
-    ).toEqual(["al@pauseai.uk", "samuel.whitlock@pauseai.uk"]);
+    ).toEqual(["Al Example <al@pauseai.uk>", "samuel.whitlock@pauseai.uk"]);
     await expect.element(field(copy.fromLegend)).toHaveValue("al@pauseai.uk");
     await expect.element(from.getByRole("link", { name: copy.connectOne })).toHaveAttribute("href", "/staff/me#gmail");
     // The preview's From: the name the Gmail sends as, or with none, its address alone.
@@ -471,10 +471,37 @@ describe("MailingWriter", () => {
     await expect.element(preview.getByText("samuel.whitlock@pauseai.uk", { exact: true })).toBeVisible();
   });
 
+  it("is from the Gmail's own name until another's given, offering the names it has gone in", async () => {
+    const { actions } = await renderWriter({
+      draft: { ...exampleWrittenMailing, sentFrom: "al@pauseai.uk", fromName: null },
+    });
+    const name = field(copy.fromNameLabel);
+    await expect.element(name).toHaveValue("");
+    await expect.element(name).toHaveAttribute("placeholder", "Al Example");
+    await expect.element(name).toHaveAccessibleDescription(copy.fromNameHint);
+    const list = document.getElementById(name.element().getAttribute("list")!)!;
+    expect([...list.querySelectorAll("option")].map((option) => option.value)).toEqual([
+      "Al Example",
+      "Al Example, PauseAI UK",
+    ]);
+    await name.fill("Al for PauseAI UK");
+    await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(1);
+    expect(actions.save.mock.calls[0][2]).toEqual({ fromName: "Al for PauseAI UK" });
+    await expect.element(preview().getByText("Al for PauseAI UK <al@pauseai.uk>")).toBeVisible();
+    // Another Gmail keeps the name given; one with no name of its own offers none.
+    await field(copy.fromLegend).selectOptions("samuel.whitlock@pauseai.uk");
+    await expect.element(preview().getByText("Al for PauseAI UK <samuel.whitlock@pauseai.uk>")).toBeVisible();
+    expect(list.querySelectorAll("option")).toHaveLength(0);
+    await name.clear();
+    await expect.element(name).toHaveAttribute("placeholder", "");
+    await expect.element(preview().getByText("samuel.whitlock@pauseai.uk", { exact: true })).toBeVisible();
+  });
+
   it("starts from the policy team's Gmail when it's connected", async () => {
     const policy = {
       email: DEFAULT_SENDER,
       name: "PauseAI Policy Team",
+      names: ["PauseAI Policy Team"],
       connectedAt: "2026-10-03T09:00:00Z",
       sentToday: 0,
       remaining: 1800,

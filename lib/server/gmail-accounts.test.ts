@@ -86,13 +86,36 @@ describeWithDatabase("connected Gmail accounts", () => {
     await sendFrom(JO, "2 hours", "failed");
     await sendFrom(JO, "25 hours");
     expect(await gmailAccounts()).toEqual([
-      { email: "al@pauseai.uk", name: "", connectedAt: expect.any(Date), sentToday: 0, remaining: GMAIL_DAILY_LIMIT },
-      { email: JO, name: "", connectedAt: expect.any(Date), sentToday: 2, remaining: GMAIL_DAILY_LIMIT - 2 },
+      {
+        email: "al@pauseai.uk",
+        name: "",
+        names: [],
+        connectedAt: expect.any(Date),
+        sentToday: 0,
+        remaining: GMAIL_DAILY_LIMIT,
+      },
+      { email: JO, name: "", names: [], connectedAt: expect.any(Date), sentToday: 2, remaining: GMAIL_DAILY_LIMIT - 2 },
     ]);
     expect(await gmailAccount("JO@pauseai.uk")).toMatchObject({ email: JO });
     expect(await gmailAccount("samuel.whitlock@pauseai.uk")).toBeUndefined();
     expect(await sentToday(JO)).toBe(2);
     expect(await sentToday("samuel.whitlock@pauseai.uk")).toBe(0);
+  });
+
+  it("offers its own name, then the names its scheduled and sent mailings went in, latest first, once each", async () => {
+    await connectTestGmail(JO);
+    await query("UPDATE staff_accounts SET gmail_name = 'Jo' WHERE email = $1", [JO]);
+    await query(
+      `INSERT INTO mailings (title, audience, channel, filter, body, created_by, sent_from, from_name, due_at, state, updated_at)
+       SELECT 'A mailing', 'politicians', 'email', '{"list": "politicians", "params": {}}', '{}', $1, sender, name, now(), state,
+         now() - ago::interval
+       FROM (VALUES ($1, 'Jo, PauseAI UK', 'sent', '3 days'), ($1, 'Jo for PauseAI', 'scheduled', '1 day'),
+                    ($1, 'Jo, PauseAI UK', 'sent', '2 hours'), ($1, 'Jo', 'sent', '1 hour'), ($1, '', 'sent', '1 hour'),
+                    ($1, 'Jo Bl', 'draft', '1 minute'), ('al@pauseai.uk', 'Al', 'sent', '1 hour'))
+         v (sender, name, state, ago)`,
+      [JO],
+    );
+    expect(await gmailAccount(JO)).toMatchObject({ names: ["Jo", "Jo, PauseAI UK", "Jo for PauseAI"] });
   });
 
   it("has none left past the limit", async () => {
