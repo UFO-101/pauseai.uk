@@ -105,7 +105,15 @@ describe("deliveryProblem", () => {
 describeWithDatabase("forwardReply", () => {
   useTestDatabase();
 
-  type Sent = { From: string; To: string; ReplyTo: string; Subject: string; TextBody: string; Attachments?: unknown[] };
+  type Sent = {
+    From: string;
+    To: string;
+    ReplyTo: string;
+    Subject: string;
+    TextBody: string;
+    Attachments?: unknown[];
+    Headers?: { Name: string; Value: string }[];
+  };
   function postmark() {
     const sent: Sent[] = [];
     server.use(
@@ -149,9 +157,12 @@ describeWithDatabase("forwardReply", () => {
     expect(sent[0]).toMatchObject({
       From: "PauseAI UK <noreply@notify.pauseai.uk>",
       ReplyTo: "test-mp@example.org",
-      Subject: copy.forwardedReply.subject("Re: S"),
+      Subject: "Re: S",
     });
-    expect(sent[0].TextBody).toContain(copy.forwardedReply.note("Testy McTestface MP", "Jane Smith"));
+    expect(sent[0].TextBody).toContain(copy.forwardedReply.toInbox("Testy McTestface MP", "Jane Smith"));
+    expect(sent[1].TextBody).toContain(copy.forwardedReply.toSender("Testy McTestface MP"));
+    expect(sent[1].TextBody).not.toContain(copy.forwardedReply.toInbox("Testy McTestface MP", "Jane Smith"));
+    expect(sent[0].Headers).toBeUndefined();
     expect(sent[0].TextBody).toContain("From: Testy McTestface MP <test-mp@example.org>");
     expect(sent[0].TextBody).toContain("Thanks for your letter.");
     expect(sent[0].Attachments).toEqual([{ Name: "a.pdf", Content: "QQ==", ContentType: "application/pdf" }]);
@@ -162,6 +173,23 @@ describeWithDatabase("forwardReply", () => {
       },
     ]);
     expect(await repliedAt()).not.toBeNull();
+  });
+
+  it("puts the forward in the letter's thread, by the Message-ID Postmark gave the letter", async () => {
+    const mailbox = await sentLetter();
+    const [{ id }] = await query<{ id: number }>("SELECT id::int AS id FROM letters");
+    await query(
+      `INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id)
+       VALUES ('letter', $1, 'test-mp@example.org', 'sent', 'letter-1'), ('letter', $1, 'test-mp@example.org', 'failed', NULL)`,
+      [id],
+    );
+    const sent = postmark();
+    await forwardReply(reply(mailbox));
+    const threading = [
+      { Name: "In-Reply-To", Value: "<letter-1@mtasv.net>" },
+      { Name: "References", Value: "<letter-1@mtasv.net>" },
+    ];
+    expect(sent.map((e) => e.Headers)).toEqual([threading, threading]);
   });
 
   it("records each reply once, however often Postmark sends it, and keeps the first reply's time", async () => {
@@ -237,7 +265,7 @@ describeWithDatabase("forwardReply", () => {
     const mailbox = await sentLetter();
     const sent = postmark();
     expect(await forwardReply({ OriginalRecipient: `${mailbox}@letters.pauseai.uk` })).toEqual(["Jane@Example.com"]);
-    expect(sent[0].Subject).toBe(copy.forwardedReply.subject(""));
+    expect(sent[0].Subject).toBe("");
     expect(await events()).toEqual([{ status: "replied", details: { from: "", name: "", messageId: null } }]);
   });
 
