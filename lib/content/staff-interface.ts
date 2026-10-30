@@ -952,8 +952,8 @@ export const staffCopy = {
     sendingBar: (n: number, of: number) => `Sending: ${n} of ${of} sent`,
     answeredBar: (n: number, of: number) => `Sent: ✓ ${n} of ${of} answered the ask`,
     // The band at the top of a mailing's page: when it started sending, and who sent it.
-    started: "⁂ Started",
-    by: (who: string) => `⁂ by ${who}`,
+    started: "Started",
+    by: (who: string) => `by ${who}`,
     // Over a mailing's recipients filtered by one of its counts, back to them all.
     showEveryone: "⁂ Show everyone",
     // Each recipient's link to their letter's page, with their reply when there is one.
