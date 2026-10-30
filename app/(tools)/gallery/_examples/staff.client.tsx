@@ -23,8 +23,7 @@ import {
 } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
 import { exampleLetter, examplePauseaiLetterDetails } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import Run from "@/app/(staff)/staff/_components/Run";
-import AskRow, { OtherAsks } from "@/app/(staff)/staff/_components/AskRow";
-import detailsStyles from "@/app/(staff)/staff/_components/Details.module.css";
+import AskRow, { AskRows, OtherAsks } from "@/app/(staff)/staff/_components/AskRow";
 import EraseForm from "@/app/(staff)/staff/_components/EraseForm";
 import DeletePolitician from "@/app/(staff)/staff/_components/DeletePolitician";
 import RemoveAccountForm from "@/app/(staff)/staff/_components/RemoveAccountForm";
@@ -117,11 +116,11 @@ export function AskRowExample({ others = false }: { others?: boolean }) {
   return (
     <Logged>
       {(log) => (
-        <div className={detailsStyles.asks}>
+        <AskRows>
           <AskRow politician={politician} ask={exampleAsks[0]!} setStatus={log("setStatus")} />
           <AskRow politician={politician} ask={exampleAsks[4]!} setStatus={log("setStatus")} />
           {others && <OtherAsks politician={politician} asks={exampleAsks.slice(3)} setStatus={log("setStatus")} />}
-        </div>
+        </AskRows>
       )}
     </Logged>
   );

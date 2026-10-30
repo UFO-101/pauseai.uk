@@ -6,11 +6,10 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import type { Ask } from "@/lib/server/asks";
 import type { PauseaiLetterDetails } from "@/lib/server/letters";
 import type { Politician } from "@/lib/server/politicians";
-import AskRow from "./AskRow";
+import AskRow, { AskRows } from "./AskRow";
 import Breadcrumb from "./Breadcrumb";
 import { LetterHistory, letterTitle } from "./LetterDetails";
 import Grid, { Card, Column, spanClass } from "./ui/Grid";
-import details from "./Details.module.css";
 import styles from "./MailingLetterView.module.css";
 
 type SetStatus = (form: FormData) => void | Promise<void>;
@@ -62,9 +61,9 @@ export default function MailingLetterView({
         <Column span={3}>
           {ask && (
             <Card look="aside" title={staffCopy.mailings.fields.ask} id="ask-title">
-              <div className={details.asks}>
+              <AskRows>
                 <AskRow politician={politician} ask={ask} setStatus={setStatus} />
-              </div>
+              </AskRows>
             </Card>
           )}
           <Card look="log" title={staffCopy.letters.detail.historyTitle} id="letter-history">

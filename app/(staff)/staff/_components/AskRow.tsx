@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { buttonClass } from "@/components/ui/Button";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Select, TextInput } from "@/components/ui/Controls";
@@ -60,6 +60,11 @@ function AnswerForm({ politician, ask, setStatus }: { politician: Politician; as
       )}
     </FilterForm>
   );
+}
+
+/** Ask rows, each its words in one column and its answer in the next, lined up from row to row: a politician's asks, or a letter's. */
+export function AskRows({ children }: { children: ReactNode }) {
+  return <div className={styles.asks}>{children}</div>;
 }
 
 /** Answers that are a yes, ticked in green, and a no, crossed. */

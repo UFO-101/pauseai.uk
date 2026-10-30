@@ -2123,6 +2123,11 @@ export const staff: Group = {
       ],
     },
     {
+      name: "AskRows",
+      file: "app/(staff)/staff/_components/AskRow.tsx",
+      variants: [{ label: "Rows of asks, their answers lined up in a column", render: () => <AskRowExample /> }],
+    },
+    {
       name: "OtherAsks",
       file: "app/(staff)/staff/_components/AskRow.tsx",
       variants: [{ label: "Under the rows, the button for another ask", render: () => <AskRowExample others /> }],

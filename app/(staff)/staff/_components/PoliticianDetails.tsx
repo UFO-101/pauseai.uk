@@ -4,7 +4,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { answeredByHand, trackedAsks } from "@/lib/email-your-mp";
 import type { Ask } from "@/lib/server/asks";
 import { AskTitle } from "./AskLine";
-import AskRow, { OtherAsks } from "./AskRow";
+import AskRow, { AskRows, OtherAsks } from "./AskRow";
 import CampaignName from "./CampaignName";
 import { FieldChanges } from "./AuditDetail";
 import type { FieldChange } from "@/lib/field-changes";
@@ -399,12 +399,12 @@ export default function PoliticianDetails({
           </p>
         </Card>
         <Card span={3} look="aside" title={copy.statusesTitle} id="asks-title">
-          <div className={styles.asks}>
+          <AskRows>
             {rows.map((ask) => (
               <AskRow key={ask.slug} politician={politician} ask={ask} setStatus={setStatus} />
             ))}
             <OtherAsks politician={politician} asks={others} setStatus={setStatus} />
-          </div>
+          </AskRows>
         </Card>
         <Card span={6} look="log" title={copy.historyTitle} id="history-title">
           {entries.length === 0 ? (
