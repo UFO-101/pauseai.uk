@@ -919,7 +919,7 @@ export const staffCopy = {
     mailThese: (n: number) => `Mail these ${n}…`,
     // Choosing who a mailing is for on the politicians list: at the top, for a new mailing or for a draft named by its title,
     // and under that what to do.
-    choosingNew: "⁂ New mailing: who's it for?",
+    choosingNew: "New mailing: who's it for?",
     choosingDraft: (title: string) => `⁂ Choosing who “${title}” goes to`,
     choosingHow: "⁂ Filter the list to the people you want, then press the button at the foot.",
     // Beside it, back to the mailings, or to the draft, choosing no one.

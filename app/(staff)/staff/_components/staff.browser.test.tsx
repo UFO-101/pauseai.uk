@@ -66,7 +66,7 @@ import Alert from "./Alert";
 import Breadcrumb from "./Breadcrumb";
 import EraseLink from "./EraseLink";
 import DeletePolitician from "./DeletePolitician";
-import PoliticiansList, { ChoosingStrip, HouseTabs } from "./PoliticiansList";
+import PoliticiansList, { ChoosingHead, HouseTabs } from "./PoliticiansList";
 import { emptyPoliticiansSearch, examplePoliticiansPage } from "./PoliticianTable.examples";
 import MailingsTable, { mailingColumns } from "./MailingsTable";
 import { exampleMailings } from "./MailingsTable.examples";
@@ -819,16 +819,25 @@ describe("HouseTabs", () => {
   });
 });
 
-describe("ChoosingStrip", () => {
+describe("ChoosingHead", () => {
   const copy = staffCopy.mailingPages;
 
-  it("is nothing unless the list is choosing who a mailing is for", async () => {
-    const { container } = await render(<ChoosingStrip search={emptyPoliticiansSearch} />);
-    expect(container.textContent).toBe("");
+  it("is just the title unless the list is choosing who a mailing is for", async () => {
+    const { container } = await render(
+      <ChoosingHead search={emptyPoliticiansSearch}>
+        <h1>Politicians</h1>
+      </ChoosingHead>,
+    );
+    expect(container.innerHTML).toBe("<h1>Politicians</h1>");
   });
 
   it("says what to do for a new mailing, with Cancel back to the mailings", async () => {
-    await render(<ChoosingStrip search={{ ...emptyPoliticiansSearch, mailing: NEW_MAILING }} />);
+    await render(
+      <ChoosingHead search={{ ...emptyPoliticiansSearch, mailing: NEW_MAILING }}>
+        <h1>Politicians</h1>
+      </ChoosingHead>,
+    );
+    await expect.element(page.getByRole("heading", { level: 1, name: "Politicians" })).toBeVisible();
     await expect.element(page.getByText(copy.choosingNew)).toBeVisible();
     await expect.element(page.getByText(copy.choosingHow)).toBeVisible();
     await expect.element(page.getByRole("link", { name: copy.cancelNew })).toHaveAttribute("href", "/staff/mailings");
@@ -836,13 +845,19 @@ describe("ChoosingStrip", () => {
 
   it("names the draft, or says it's untitled, with the way back to it", async () => {
     const { rerender } = await render(
-      <ChoosingStrip search={{ ...emptyPoliticiansSearch, mailing: "12" }} title="Lords only" />,
+      <ChoosingHead search={{ ...emptyPoliticiansSearch, mailing: "12" }} title="Lords only">
+        <h1>Politicians</h1>
+      </ChoosingHead>,
     );
     await expect.element(page.getByText(copy.choosingDraft("Lords only"))).toBeVisible();
     await expect
       .element(page.getByRole("link", { name: copy.backToDraft }))
       .toHaveAttribute("href", "/staff/mailings/12");
-    await rerender(<ChoosingStrip search={{ ...emptyPoliticiansSearch, mailing: "12" }} />);
+    await rerender(
+      <ChoosingHead search={{ ...emptyPoliticiansSearch, mailing: "12" }}>
+        <h1>Politicians</h1>
+      </ChoosingHead>,
+    );
     await expect.element(page.getByText(copy.choosingDraft(copy.untitled))).toBeVisible();
   });
 });

@@ -1,3 +1,21 @@
+/* While the list is choosing who a mailing is for: the strip and the
+   page's title, held at the top of the window on the page's background, so
+   the list scrolls under them. It holds its title's margins, so nothing
+   shows through between them; the title a step closer, to take less of
+   the window. */
+.head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flow-root;
+  padding-top: var(--space-3);
+  background: var(--bg);
+}
+
+.head h1 {
+  margin-block: var(--space-4);
+}
+
 /* The bar while the list is choosing who a mailing is for: dark, so it
    stands apart from the page, held at the foot of the window as the list
    scrolls, the count at the left and the button at the right. */

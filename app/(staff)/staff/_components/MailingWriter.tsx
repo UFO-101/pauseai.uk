@@ -3,7 +3,7 @@
 import type { JSONContent } from "@tiptap/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import { Select, TextInput } from "@/components/ui/Controls";
 import { Field, Hint, Label } from "@/components/ui/Field";
 import { Muted } from "@/components/ui/Text";
@@ -368,14 +368,17 @@ export default function MailingWriter({
         <Card span={6} title={<Numbered n={1}>{copy.sections.who}</Numbered>} id="who-title">
           <div className={styles.who}>
             {who}
-            <a
+            <ButtonLink
+              variant="primary"
+              size="small"
+              fit
               href={filtersPath("/staff/politicians", {
                 ...data.filter.params,
                 mailing: savedId ? String(savedId) : NEW_MAILING,
               })}
             >
               {copy.changeWho}
-            </a>
+            </ButtonLink>
           </div>
           {data.unknown.length > 0 && <Strip tone="amber">{copy.unknownFilter(data.unknown.join(", "))}</Strip>}
           <p className={styles.count}>{copy.willGet(data.recipients.length)}</p>

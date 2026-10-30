@@ -63,7 +63,7 @@ import NavFold from "@/app/(staff)/staff/_components/ui/NavFold";
 import FormPending from "@/app/(staff)/staff/_components/ui/FormPending";
 import StaffLink from "@/app/(staff)/staff/_components/ui/StaffLink";
 import NavIcon from "@/app/(staff)/staff/_components/NavIcon";
-import { ChoosingStrip, HouseTabs } from "@/app/(staff)/staff/_components/PoliticiansList";
+import { ChoosingHead, HouseTabs } from "@/app/(staff)/staff/_components/PoliticiansList";
 import ErasedNotice from "@/app/(staff)/staff/_components/ErasedNotice";
 import ImportCard, { ImportCards } from "@/app/(staff)/staff/_components/ImportCard";
 import ImportIcon from "@/app/(staff)/staff/_components/ImportIcon";
@@ -1360,14 +1360,16 @@ export const staff: Group = {
       ],
     },
     {
-      name: "ChoosingStrip",
+      name: "ChoosingHead",
       file: "app/(staff)/staff/_components/PoliticiansList.tsx",
       variants: [
         {
-          label: "Choosing who a new mailing is for, with Cancel",
+          label: "Choosing who a new mailing is for: what to do, with Cancel, over the title",
           render: () => (
             <StaffPage as="div">
-              <ChoosingStrip search={{ ...EMPTY_POLITICIAN_FILTERS, mailing: NEW_MAILING }} />
+              <ChoosingHead search={{ ...EMPTY_POLITICIAN_FILTERS, mailing: NEW_MAILING }}>
+                <h1>Politicians</h1>
+              </ChoosingHead>
             </StaffPage>
           ),
         },
@@ -1375,7 +1377,9 @@ export const staff: Group = {
           label: "Choosing who a draft goes to, named, with the way back to it",
           render: () => (
             <StaffPage as="div">
-              <ChoosingStrip search={{ ...EMPTY_POLITICIAN_FILTERS, mailing: "12" }} title="Edinburgh thank-you" />
+              <ChoosingHead search={{ ...EMPTY_POLITICIAN_FILTERS, mailing: "12" }} title="Edinburgh thank-you">
+                <h1>Politicians</h1>
+              </ChoosingHead>
             </StaffPage>
           ),
         },

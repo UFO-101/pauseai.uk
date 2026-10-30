@@ -254,19 +254,61 @@ or removed doesn't bring a width, a box or an alert of its own. A
 component's look is its own; where it sits and how wide it is are the
 page's.
 
-**New things start at the top right** (`ui/PageTitle`). A page where
-people make new things of its kind (Mailings, Asks) has one button for
-it, at the right of the page's title. It's the first thing seen, and it
-stays in the same place however long the list under it grows. It's the
-page's one primary button. Its words are the title of the page it starts,
-"New mailing" or "New ask", so the button and the page it leads to say
-the same thing. It has no "+": "New" already says it, and "+" is kept for
-"+ Filter", which adds to what's shown rather than making something.
+**Where buttons that add go.** Where a button sits says what it adds
+to, so there are four places, one for each kind of adding:
 
-Two kinds of button aren't this. Those that act on what a list's filters
-found ("Mail these", Download) sit over the table, in the list frame's
-count row. A form that adds in place, such as the add row under Staff
-accounts' table, stays where its fields are.
+- **A new thing of the page's kind: at the top right** (`ui/PageTitle`).
+  A page where people make new things of its kind (Mailings, Asks) has
+  one button for it, at the right of the page's title. It's the first
+  thing seen, and it stays in the same place however long the list under
+  it grows. It's the page's one primary button. Its words are the title
+  of the page it starts, "New mailing" or "New ask", so the button and
+  the page it leads to say the same thing. It has no "+": "New" already
+  says it.
+- **More to what a list shows: in the filter bar.** "+ Filter" ends the
+  row of chips, and what it adds is a chip among them (`ui/FilterBar`).
+- **A part of the thing being written: in the section it belongs to.**
+  "Add files" is in the attachments' box, where the files then show. The
+  letter's "+ Only for those who…" is beside the letter, with the fields,
+  the other things put into it.
+- **A row of a short table kept in place: under its last row.** Staff
+  accounts' add row is a form in the table: type the address, press
+  Add, and the row is there, with no page to go to.
+
+"+" marks a small control that adds to something already on the screen,
+a filter or a part of the letter, never a button that makes a new thing.
+
+Buttons that act on what a list's filters found ("Mail these",
+Download) aren't adding. They sit over the table, in the list frame's
+count row.
+
+**Choosing something for another part of the pages.** Sometimes one
+part needs a set of things chosen with another part's full tools: who a
+mailing goes to is chosen with the politicians list's tabs, search and
+filters. It doesn't get a lighter copy of those tools. The person is sent
+to the list itself, in a choosing mode, and comes back with what they
+chose. The mode is in the address (`mailing=new`, or a draft's ID, on the
+politicians list), so the tabs, filters and pages all keep it. The page
+is as it always is, but for two bars:
+
+- **At the top, held there as the page scrolls** (`ChoosingHead`): a
+  plain strip saying what's being chosen and what for ("New mailing:
+  who's it for?", or naming the draft), a line on how, and at its right
+  the way back without choosing (Cancel, or Back to the mailing). The
+  page's title sits under it, held there too.
+- **At the foot of the window, held there**: a dark bar with how many
+  are chosen ("5 politicians, for the mailing") and, at its right, the
+  one orange button that takes them back ("Write to these 5", "Use these
+  5 for the draft").
+
+The page's own button for the same thing ("Mail these") goes while it's
+choosing, so there's one way on. The person chooses with tools they
+already know. The top always says what they're doing and how to stop,
+and the foot always shows the result and the way on, however far they've
+scrolled. A new choosing mode, such as supporters for a message, uses
+these two bars, not a design of its own. Both live with the politicians
+list now (`_components/PoliticiansList.tsx`); a second user moves them to
+`ui/`.
 
 **The grid** (`ui/Grid`). Six columns when it's at least 1,000px wide;
 below that, two. Everything boxed is an item of a grid and says how much
