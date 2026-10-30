@@ -307,7 +307,8 @@ test("Add an ask, change it, then delete it", async ({ page, flowDatabase }) => 
   await logIn(page, flowDatabase);
   const asks = staffCopy.asks;
   await page.goto(`${BASE}/staff/asks`);
-  await page.getByRole("link", { name: asks.add }).click();
+  await frame(page, "the asks, with New ask at the top right");
+  await page.getByRole("link", { name: asks.newTitle }).click();
   await page.getByRole("radio", { name: asks.kinds.event }).click();
   await page.getByLabel(asks.byKind.event.title).fill("Winter reception");
   await chooseDay(page, asks.byKind.event.date, "2026-12-09");

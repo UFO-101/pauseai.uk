@@ -254,6 +254,20 @@ or removed doesn't bring a width, a box or an alert of its own. A
 component's look is its own; where it sits and how wide it is are the
 page's.
 
+**New things start at the top right** (`ui/PageTitle`). A page where
+people make new things of its kind (Mailings, Asks) has one button for
+it, at the right of the page's title. It's the first thing seen, and it
+stays in the same place however long the list under it grows. It's the
+page's one primary button. Its words are the title of the page it starts,
+"New mailing" or "New ask", so the button and the page it leads to say
+the same thing. It has no "+": "New" already says it, and "+" is kept for
+"+ Filter", which adds to what's shown rather than making something.
+
+Two kinds of button aren't this. Those that act on what a list's filters
+found ("Mail these", Download) sit over the table, in the list frame's
+count row. A form that adds in place, such as the add row under Staff
+accounts' table, stays where its fields are.
+
 **The grid** (`ui/Grid`). Six columns when it's at least 1,000px wide;
 below that, two. Everything boxed is an item of a grid and says how much
 of the row it takes: a sixth, a third, a half, two-thirds or all (`span`

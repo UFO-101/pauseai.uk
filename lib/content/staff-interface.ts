@@ -780,6 +780,7 @@ export const staffCopy = {
       skipped: "skipped",
       answered: "answered the ask",
     },
+    // A new mailing's page's title, and the mailings page's button that starts one.
     newTitle: "New mailing",
     // A draft with no subject yet, in the list and as its page's title.
     untitled: "Untitled draft",
@@ -907,8 +908,6 @@ export const staffCopy = {
       "cannot-send": "Sending isn't built yet.",
     } as Record<string, string>,
     // The list of mailings.
-    // At the top right of the list of mailings: to the politicians list, to choose who a new one is for.
-    newMailing: "⁂ New mailing",
     drafts: "Drafts",
     comingUp: "Coming up",
     sent: "Sent",
@@ -971,9 +970,8 @@ export const staffCopy = {
   asks: {
     title: "Asks",
     intro: "What we ask notable people to do, either by writing to them or by meeting them.",
-    add: "Add an ask",
     edit: "Edit",
-    // The form, adding an ask or editing one.
+    // The form, adding an ask or editing one; the new one's title is the asks page's button to it, too.
     newTitle: "New ask",
     editTitle: (title: string) => `Edit the ask “${title}”`,
     fields: {

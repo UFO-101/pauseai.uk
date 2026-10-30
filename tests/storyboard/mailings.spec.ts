@@ -72,7 +72,7 @@ test("Write a new mailing, save it, preview it and send yourself a test", async 
   await page.goto(`${BASE}/staff/mailings`);
   await frame(page, "the mailings, with New mailing at the top right");
 
-  await page.getByRole("link", { name: copy.newMailing }).click();
+  await page.getByRole("link", { name: copy.newTitle }).click();
   await expect(page.getByText(copy.choosingNew)).toBeVisible();
   await page.getByRole("link", { name: staffCopy.houses["scottish-parliament"] }).click();
   await expect(page).toHaveURL(/house=scottish-parliament/);

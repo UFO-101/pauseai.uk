@@ -2038,7 +2038,6 @@ describe("AsksTable", () => {
     await expect
       .element(page.getByRole("link", { name: copy.count(staffCopy.statuses.passed_on, 1) }))
       .toHaveAttribute("href", "/staff/politicians?ask=edinburgh-conference-2026&answer=passed_on");
-    await expect.element(page.getByRole("link", { name: copy.add })).toHaveAttribute("href", "/staff/asks/new");
     expect(page.getByRole("status").query()).toBeNull();
   });
 

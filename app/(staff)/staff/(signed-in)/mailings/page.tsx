@@ -18,7 +18,7 @@ export default async function MailingsPage() {
       <PageTitle
         action={
           <ButtonLink variant="primary" fit href={`/staff/politicians?mailing=${NEW_MAILING}`}>
-            {staffCopy.mailingPages.newMailing}
+            {staffCopy.mailingPages.newTitle}
           </ButtonLink>
         }
       >
