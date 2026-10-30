@@ -31,9 +31,9 @@ a politician (part 3).
 
 | Route | From | Copied | Reply-To | Who the office's reply reaches |
 | --- | --- | --- | --- | --- |
-| The site's form, since 14 October 2026 | "Jane Smith via PauseAI" <jane.smith.482913@letters.pauseai.uk>, the letter's own address | policy@ on Bcc | The sender, policy@ and the letter's address | Unknown: nothing has come back (below) |
+| The site's form, since 14 October 2026 | "Jane Smith via PauseAI" <jane.smith.482913@letters.pauseai.uk>, the letter's own address | The sender on Cc, policy@ on Bcc | None since 30 October 2026; before, the sender, policy@ and the letter's address | Unknown: nothing has come back (below) |
 | pauseai.info's old form, sent by Airtable through SendGrid, until 22 October 2026 | "Jane Smith via PauseAI" <policy@pauseai.uk> | The sender on Cc | Unknown | policy@ alone, so the sender sees it only if someone forwards it |
-| A volunteer's own email | The volunteer | policy@ on Cc | None | The volunteer, and policy@ if the office replies to all or the volunteer forwards it |
+| A volunteer's own email | The volunteer | policy@ on Cc, often because Joseph asked them to; the old email tool also put policy@ on Cc by default, so it stays in when the office replies to all (to check against the old form's row) | None | The volunteer, and policy@ if the office replies to all or the volunteer forwards it |
 | PauseAI's mailings | A staff member's connected Gmail | None | None | That Gmail, read hourly |
 
 ### How the site handles them now
@@ -49,9 +49,11 @@ letter. The letter's page shows the thread (`lib/server/letter-threads.ts`).
 **Supporters' letters** (`lib/server/mp-letters.ts`) go by Postmark from
 the letter's own address:
 
-- To the MP, Bcc `POLICY_INBOX`, which holds the only copy of the text.
-- Reply-To the sender, `"PauseAI Policy Team" <POLICY_INBOX>` and the
-  letter's address, so a reply-all reaches all three.
+- To the MP, Cc the sender, Bcc `POLICY_INBOX`, which holds the only
+  copy of the text. No Reply-To, so a reply goes to the letter's address,
+  and a reply-all reaches the sender too.
+- Postmark's automatic-reply bounces, sent to its Return-Path, add an
+  `auto_reply` event to the letter (`recordAutoResponder`).
 - A reply that reaches the letter's address comes in through Postmark's
   inbound webhook (`forwardReply` in `lib/server/postmark-webhooks.ts`).
   That adds a `replied` or `auto_reply` event, keeping who and when but
@@ -87,6 +89,20 @@ own emails get replies too.
 So either the site's letters are being filtered, or offices answer the
 first Reply-To, the constituent's own address, where we can't see it
 (question 1).
+
+**A first test, deployed 30 October 2026:** the three Reply-To addresses
+became one Cc to the constituent. If the long Reply-To list was what got
+the letters filtered, automatic replies should start arriving within
+minutes of a letter, as the old form's did. If none have come after a few
+dozen letters, it's something else: the domain, Postmark, the content.
+
+**Forwarded replies are awkward.** A reply to the letter's address can't
+be passed on as it is: re-sending it from our server breaks its SPF and
+DKIM, so it goes out as our own email quoting the MP's. The constituent
+gets mail from PauseAI, not their MP, and to answer the MP they have to
+pick the MP's address out of the quote. A Reply-To of the MP's address on
+the forward would help, but it's still worse for the constituent and the
+office than mail straight from one to the other.
 
 **MP offices reply through a shared casework system,** not from Outlook.
 Every office's reply seen went through SendGrid on Parliament's behalf:
@@ -126,7 +142,10 @@ source (github.com/mysociety/writetothem: `perllib/FYR/Queue.pm`,
 - Near-identical messages are held for a moderator.
 
 MPs are told replies go straight to the constituent, so offices' systems
-presumably answer the Reply-To. Ours differs: three addresses in
+presumably answer the Reply-To. WriteToThem also has twenty years of
+sending reputation and allow-listing, holds repeated copies of one text,
+and doesn't try to see replies at all, so the per-message address only
+ever gets bounces and the automatic replies that ignore Reply-To. Ours differs: three addresses in
 Reply-To, the constituent first; Postmark's fixed Return-Path; HTML with
 PDFs; one text for everyone; and a domain two weeks old.
 
@@ -331,33 +350,62 @@ privacy policy and erasure need changing before anything is built:
      constituent copies or forwards them to policy@.
    - Send from policy@, as the old form did, with the constituent on Cc.
      Offices answer policy@, so we see every reply, and forward it.
+   - Send from a Gmail account of our own, such as letters@pauseai.uk,
+     through the Gmail API, at a plus address per letter
+     (letters+jane.smith@pauseai.uk), which reaches the same mailbox.
+     Mail from Google's servers on our own domain may fare better than
+     Postmark's. Replies are read hourly as mailings' are, and forwarded
+     to the constituent. Joseph's preferred stopgap. To check: whether
+     Gmail sends with a plus address as the From, or needs it set up as
+     a "Send mail as" alias; and volume, as some days could need over
+     2,000 letters, Workspace's daily limit per account
+     (https://support.google.com/a/answer/166852). The queue already
+     sends from a cron, so letters can spread over days, or over more
+     accounts.
    - Have the constituent send it from their own email, prefilled, with
      policy@ on Cc, as volunteers already do. This is the one route seen
      getting replies, at the cost of people dropping out before sending.
-3. **Should policy@ be on Cc rather than Bcc,** so the office sees we're
+     Prefilled by a `mailto:` link, or even sent through their account by
+     OAuth with the big providers.
+   - A message box: the MP's reply stays with us, and the constituent
+     gets an email saying they have a message from their MP, with a link
+     to read it and reply on the site. People are used to services that
+     work like this, but it puts PauseAI between them and their MP.
+3. **Ask people who know.** An MP's office could say what happened to
+   our letters. DearMP's team, who send letters to MPs too, may know what
+   gets through Parliament's filter.
+4. **Make the letter's address less random:** the sender's name, with
+   digits only when it's taken. Guessable addresses mean anyone could
+   use one to reach a constituent through us, so forwarding to the
+   constituent would then be limited to mail from their MP's domain.
+5. **Change the content, however it's sent:** plain text with no HTML,
+   links to the campaign's PDFs rather than attachments, and the
+   constituent asked to change the text, so offices don't get one text
+   many times over (part 1).
+6. **Should policy@ be on Cc rather than Bcc,** so the office sees we're
    copied and a reply-all includes us? It's a choice about what the MP
    sees, not a technical one.
 
 ### Accounts
 
-4. **Is policy@ already connected as a staff account, and who signs in as
+7. **Is policy@ already connected as a staff account, and who signs in as
    it?** Connecting requires the logged-in staff member's own address
    (`lib/server/gmail-accounts.ts`), so policy@ needs a staff account of
    its own.
-5. **When did Joseph join the group, and was he always on "every
+8. **When did Joseph join the group, and was he always on "every
    email"?** Does the `list:` search find its mail as expected? Check in
    his Gmail before building.
-6. **Who else sent Airtable's emails?** They went mostly from Joseph's
+9. **Who else sent Airtable's emails?** They went mostly from Joseph's
    Gmail, some from others'. Those people would need to connect their
    Gmail too, for their letters to be joined.
-7. **Should any other staff account have "Keep all its conversations with
+10. **Should any other staff account have "Keep all its conversations with
    politicians" turned on?**
 
 ### What counts
 
-8. **Which addresses count as an MP's:** only `notable_people.email`, or
+11. **Which addresses count as an MP's:** only `notable_people.email`, or
    any `@parliament.uk`? And which other politicians: peers, MSPs, MSs,
    councillors? Should an address we don't know yet be suggested as one of
    theirs?
-9. **A thread the MP started, or one between a volunteer and the MP's
+12. **A thread the MP started, or one between a volunteer and the MP's
    caseworker with no MP address:** keep it or not?
