@@ -106,17 +106,20 @@ export async function layoutSettled(page: Page, selector: string): Promise<void>
  * Leaves any field and goes back to the top, and stays there, so the next
  * frame is of the whole page. Typing, or ticking a box, scrolls it into
  * view, and where that leaves the window differs by a few pixels between
- * runs; an editor may scroll its caret back into view a frame later.
+ * runs; an editor may scroll its caret back into view a frame later. After
+ * Back, the browser puts the window where it was as the page loads, which
+ * can be after it was sent to the top: so it waits for the load, and the
+ * top has to hold for a few frames.
  */
 export async function wholePage(page: Page): Promise<void> {
+  await page.waitForLoadState("load");
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
   await expect
     .poll(() =>
       page.evaluate(async () => {
         window.scrollTo({ top: 0, behavior: "instant" });
-        const frame = () => new Promise((done) => requestAnimationFrame(done));
-        await frame();
-        await frame();
+        const tick = () => new Promise((done) => requestAnimationFrame(() => setTimeout(done, 50)));
+        for (let i = 0; i < 4 && window.scrollY === 0; i++) await tick();
         return window.scrollY;
       }),
     )
