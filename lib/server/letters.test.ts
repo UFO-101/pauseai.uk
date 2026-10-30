@@ -1,5 +1,5 @@
 import { expect, it, vi } from "vitest";
-import { addTestLetter, addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { addTestLetter, addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { sentNearSearch } from "@/lib/letter-links";
 import { query } from "./db";
 import {
@@ -236,7 +236,10 @@ describeWithDatabase("a letter for its page", () => {
     // One never sent has nothing to find; nor has one to an MP with no address.
     const unsent = await addTestLetter({ politicianId: mp });
     expect(await getSupporterLetter(unsent)).toMatchObject({ gmail: null });
-    const noAddress = await addTestLetter({ politicianId: await addTestMp(null), sentAt: "2026-10-01T12:00:00Z" });
+    const noAddress = await addTestLetter({
+      politicianId: await addTestPolitician({ email: null }),
+      sentAt: "2026-10-01T12:00:00Z",
+    });
     expect(await getSupporterLetter(noAddress)).toMatchObject({ gmail: null });
     vi.unstubAllEnvs();
   });
@@ -298,7 +301,7 @@ describeWithDatabase("a letter for its page", () => {
     const reply = (id: number, rfc: string | null, at: string) =>
       query(
         `INSERT INTO letter_replies (letter_id, account, gmail_message_id, gmail_thread_id, rfc_message_id, from_address, at, from_us, blob_key, size)
-         VALUES ($1, 'jo@pauseai.uk', $3, 'thread-2', $2, 'mp@example.org', $4, false, 'k', 0)`,
+         VALUES ($1, 'jo@pauseai.uk', $3, 'thread-2', $2, 'mp@example.org', $4, false, $3, 0)`,
         [id, rfc, `g-${at}`, at],
       );
     const at = "2026-10-01T09:00:00Z";
@@ -331,6 +334,8 @@ describeWithDatabase("a letter for its page", () => {
     });
     // Never sent, or to an MP with no address and nothing else to go by: nothing to find.
     expect((await getPauseaiLetter(mailing, await letter(null)))!.gmail).toBeNull();
-    expect((await getPauseaiLetter(mailing, await letter(at, await addTestMp(null))))!.gmail).toBeNull();
+    expect(
+      (await getPauseaiLetter(mailing, await letter(at, await addTestPolitician({ email: null }))))!.gmail,
+    ).toBeNull();
   });
 });

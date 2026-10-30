@@ -22,7 +22,12 @@ export default function FindInGmail({ find }: { find: GmailFind | null }) {
     <Menu
       id="find-in-gmail"
       trigger={buttonClass({ variant: "ghost", size: "small", fit: true, className: styles.trigger })}
-      label={copy.button}
+      label={
+        <>
+          {copy.button}
+          <span aria-hidden="true">▾</span>
+        </>
+      }
     >
       <div className={styles.box}>
         <p>{mailbox ? copy.mailbox(mailbox) : copy.unknownMailbox}</p>

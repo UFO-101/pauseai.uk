@@ -2780,7 +2780,7 @@ describe("LettersTable", () => {
 describe("LetterDetails", () => {
   const copy = staffCopy.letters;
 
-  it("shows a supporter's letter: from and to whom, its facts, its copy in the policy@ group, and its history", async () => {
+  it("shows a supporter's letter: from and to whom, its facts, Find it in Gmail, and its history", async () => {
     const letter = exampleSupporterLetterDetails;
     await render(<LetterDetails letter={letter} />);
     await expect

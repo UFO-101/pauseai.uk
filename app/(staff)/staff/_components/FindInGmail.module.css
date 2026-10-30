@@ -1,6 +1,6 @@
-/* Find it in Gmail: a ▾ for its box. */
-.trigger::after {
-  content: "▾" / "";
+/* Find it in Gmail, and the ▾ for its box. */
+.trigger {
+  gap: var(--space-1);
 }
 
 /* Its box: a line each for the mailbox, the link and the search, and the button to copy it. */
