@@ -4,9 +4,9 @@
   display: inline-block;
 }
 
-/* What to do with what it copied, over the page, a card's border and shadow; there only
-   while it has something to say, as the live region stays for screen
-   readers. */
+/* What to do with what it copied, over the page, a card's border and
+   shadow; there only while it has something to say, as the live region
+   stays for screen readers. */
 .bubble {
   position: absolute;
   top: calc(100% + var(--space-2));
@@ -22,6 +22,21 @@
   color: var(--text);
   font-size: var(--text-sm);
   text-align: left;
+}
+
+/* Its pointer, up to the button: a square turned on its corner, its top
+   two sides the bubble's border. */
+.bubble::before {
+  position: absolute;
+  top: calc(-1 * var(--space-1) - 1px);
+  right: var(--space-4);
+  width: var(--space-2);
+  height: var(--space-2);
+  border-top: 1px solid var(--border-strong);
+  border-left: 1px solid var(--border-strong);
+  background: var(--surface);
+  content: "";
+  transform: rotate(45deg);
 }
 
 .bubble:empty {
