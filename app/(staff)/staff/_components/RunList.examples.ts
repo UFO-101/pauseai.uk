@@ -2,6 +2,7 @@ import {
   type AnyImportRun,
   type ControlAiImportResult,
   type EmailSyncResult,
+  type GmailRead,
   type GmailReadResult,
   type GoToParliamentImportResult,
   type ImportJob,
@@ -165,12 +166,28 @@ export const exampleMembersResult: MembersImportResult = {
   linked: 3,
 };
 
-/** What a read of Gmail found: one account read, and one that couldn't be. */
+/** What a read of Gmail found: one account read, and one that couldn't be this time. */
 export const exampleGmailResult: GmailReadResult = {
   accounts: [
     { account: "mailings@pauseai.uk", replies: 2, autoReplies: 5, bounces: 1 },
-    { account: "jo@pauseai.uk", replies: 0, autoReplies: 0, bounces: 0, error: "Error: invalid_grant" },
+    {
+      account: "jo@pauseai.uk",
+      replies: 0,
+      autoReplies: 0,
+      bounces: 0,
+      error: "Error: Gmail answered 500 for /history",
+    },
   ],
+};
+
+/** An account in a read of Gmail that Google refused, so it was disconnected. */
+export const exampleDisconnectedGmail: GmailRead = {
+  account: "al@pauseai.uk",
+  replies: 0,
+  autoReplies: 0,
+  bounces: 0,
+  error: "Error: Google refused the token request: 400 invalid_grant",
+  disconnected: true,
 };
 
 /** What a read of ControlAI's letter found, with every name placed. */

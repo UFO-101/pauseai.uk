@@ -13,6 +13,7 @@ import {
   gmailProfile,
   gmailRawMessage,
   gmailSendName,
+  GmailError,
   searchGmail,
   type GmailMessageHeaders,
 } from "./outside-services/gmail";
@@ -269,7 +270,8 @@ async function readAccount(account: string, historyId: string, request: Request 
 /**
  * Reads every connected account, keeping the run. One that fails is logged
  * and said so, and the next is read all the same; it's read again from
- * where it got to next time. `request` is the job's call, for links in
+ * where it got to next time, unless Google refused its access, which
+ * disconnects it (gmailAccess). `request` is the job's call, for links in
  * alerts; a staff member's run has none.
  */
 export function readGmail(startedBy: string, request?: Request): Promise<GmailReadResult> {
@@ -280,7 +282,15 @@ export function readGmail(startedBy: string, request?: Request): Promise<GmailRe
         accounts.push(await readAccount(email, historyId, request));
       } catch (error) {
         console.error(`Couldn't read ${email}'s Gmail:`, error);
-        accounts.push({ account: email, replies: 0, autoReplies: 0, bounces: 0, error: String(error) });
+        const disconnected = error instanceof GmailError && error.revoked;
+        accounts.push({
+          account: email,
+          replies: 0,
+          autoReplies: 0,
+          bounces: 0,
+          error: String(error),
+          ...(disconnected && { disconnected }),
+        });
       }
     }
     const found = accounts.some((a) => a.replies + a.autoReplies + a.bounces > 0 || a.restarted || a.error);

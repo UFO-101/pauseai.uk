@@ -4,6 +4,7 @@ import {
   exampleAppliedSync,
   exampleEmailsResult,
   exampleFailedRun,
+  exampleDisconnectedGmail,
   exampleGmailResult,
   exampleHeldSync,
   exampleLumaResult,
@@ -48,6 +49,11 @@ it("says an Emails sync that held emails back is incomplete, but not one that he
 
 it("says a Gmail read that couldn't read an account is incomplete, but not one that read them all, or failed", () => {
   expect(runStatus(exampleRun("read-gmail", exampleGmailResult))).toBe("incomplete");
+  // One it had to disconnect isn't read again, so the read failed, whatever else it read.
+  const disconnected = { accounts: [...exampleGmailResult.accounts, exampleDisconnectedGmail] };
+  expect(runStatus(exampleRun("read-gmail", disconnected))).toBe("failed");
+  expect(runTone(exampleRun("read-gmail", disconnected))).toBe("red");
+  expect(runTone(exampleRun("read-gmail", exampleGmailResult))).toBe("amber");
   expect(runStatus(exampleRun("read-gmail", { accounts: exampleGmailResult.accounts.slice(0, 1) }))).toBe("ok");
   expect(runStatus(exampleFailedRun("read-gmail", "boom", {}))).toBe("failed");
 });
