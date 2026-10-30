@@ -161,7 +161,7 @@ test("Connect your Gmail on your account page, then disconnect it", async ({ pag
   // Its spinner shows once it has taken a moment.
   await expect(connect.locator("[aria-hidden]")).toBeVisible();
   await frame(page, "Connect Gmail pressed: greyed, with a spinner where its words were, while Google's page comes");
-  await page.goto(await google.asked);
+  await page.goto(await google.asked());
   await expect(page.getByText(staffCopy.gmail.outcomes.connected)).toBeVisible();
   await expect(page.getByRole("button", { name: staffCopy.gmail.disconnect })).toBeVisible();
   await frame(page, "back from Google: connected, with today's sends, and Disconnect");

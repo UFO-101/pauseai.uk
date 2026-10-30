@@ -145,7 +145,7 @@ test("Change who a draft goes to, then delete it", async ({ page, request, flowD
   await frame(page, "Change who pressed: the draft saved, the button greyed with a spinner while the list comes", {
     window: true,
   });
-  await page.goto(await list.asked);
+  await page.goto(await list.asked());
   await expect(page).toHaveURL(/mailing=\d+/);
   await expect(page.getByText(copy.choosingDraft("Lords only"))).toBeVisible();
   await page.getByRole("link", { name: staffCopy.houses.lords }).click();
