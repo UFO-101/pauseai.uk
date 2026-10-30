@@ -127,7 +127,8 @@ const NETWORK_IMPORTS = [
  * everything above, but for what the file is allowed. `service` may name
  * its own API; `fetch` may call fetch() (code that runs in the browser
  * fetches the site's own API); `outsideFetch` may import it; `sendEmail`
- * may use Postmark's binding to send.
+ * may use Postmark's binding to send. `staff` adds the staff pages' rule for
+ * links that look like buttons.
  */
 function siteCodeRules({
   service,
@@ -136,6 +137,7 @@ function siteCodeRules({
   fetch = false,
   outsideFetch = false,
   sendEmail = false,
+  staff = false,
 }) {
   return {
     "no-restricted-syntax": [
@@ -145,6 +147,7 @@ function siteCodeRules({
       ...SERVICES.filter((other) => other !== service).map(hostRule),
       ...(fetch ? [] : [OUTSIDE_FETCH_RULE]),
       ...EXTERNAL_LINK_RULES,
+      ...(staff ? STAFF_BUTTON_LINK_RULES : []),
     ],
     "no-restricted-imports": [
       "error",
@@ -216,6 +219,25 @@ const EXTERNAL_LINK_RULES = [
   },
 ];
 
+// The staff pages' links show they're waiting for the next page: a link is
+// ui/StaffLink, which runs its navigation as a transition and shows the line
+// along the top, never next/link alone; and one that looks like a button is
+// a StaffLink with buttonClass, not a plain <a> (docs/style-guide.md,
+// "Buttons that wait"). StaffLink itself, and tests, are exempt below.
+const STAFF_LINK_IMPORT = {
+  name: "next/link",
+  message:
+    'In the staff pages, link with ui/StaffLink, which shows the line along the top while the next page comes (docs/style-guide.md, "Buttons that wait").',
+};
+const STAFF_BUTTON_LINK_RULES = [
+  {
+    selector:
+      "JSXOpeningElement[name.name=/^(a|Link)$/]:has(JSXAttribute[name.name='className'] CallExpression[callee.name='buttonClass'])",
+    message:
+      'A link that looks like a button is a StaffLink with buttonClass, so it shows it\'s waiting for the next page (docs/style-guide.md, "Buttons that wait").',
+  },
+];
+
 // Which folders may import which (docs/code-structure.md). lib/ is logic
 // and data, so it imports neither components nor routes; the site's
 // content in lib/content/ is written partly in JSX, so it may use
@@ -256,6 +278,14 @@ const LAYERS = [
   { files: ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}"], patterns: ROUTE_IMPORTS },
   { files: ["app/**/page.tsx"], patterns: ROUTE_IMPORTS, paths: [PAGE_REDIRECT] },
   { files: ["lib/**/*.{ts,tsx}"], ignores: ["lib/content/**"], patterns: [...ROUTE_IMPORTS, COMPONENT_IMPORTS] },
+  // The staff pages', after the two above, whose lists they'd replace, so they keep them.
+  {
+    files: ["app/(staff)/**/*.{ts,tsx}"],
+    ignores: ["app/(staff)/staff/_components/ui/StaffLink.tsx"],
+    patterns: ROUTE_IMPORTS,
+    paths: [STAFF_LINK_IMPORT],
+  },
+  { files: ["app/(staff)/**/page.tsx"], patterns: ROUTE_IMPORTS, paths: [PAGE_REDIRECT, STAFF_LINK_IMPORT] },
 ].map(({ files, ignores = [], patterns, paths = [] }) => ({
   files,
   ignores: ["**/*.test.{ts,tsx}", "app/(tools)/gallery/**", ...ignores],
@@ -297,6 +327,7 @@ const eslintConfig = defineConfig([
   // earlier one's, so each file allowed one of these things comes after.
   ...[
     { files: ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}", "proxy.ts"], fetch: true },
+    { files: ["app/(staff)/**/*.tsx"], fetch: true, staff: true },
     { files: ["lib/server/**/*.ts", "app/**/route.ts", "app/**/actions.ts"] },
     { files: [`${OUTSIDE}/*.ts`], outsideFetch: true },
     ...SERVICES.map((service) => ({ files: service.files, service, outsideFetch: true })),

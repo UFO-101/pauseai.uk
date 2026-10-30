@@ -1,4 +1,4 @@
-import Link from "next/link";
+import StaffLink from "./ui/StaffLink";
 import { Fragment, type ReactNode } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { gmailThreadUrl } from "@/lib/gmail-connect";
@@ -81,7 +81,7 @@ function Sender({ letter }: { letter: Details }) {
       <>
         <Fact label={copy.columns.from}>{copy.fromPauseai}</Fact>
         <Fact label={copy.detail.mailing}>
-          <Link href={`/staff/mailings/${letter.mailingId}`}>{letter.mailing}</Link>
+          <StaffLink href={`/staff/mailings/${letter.mailingId}`}>{letter.mailing}</StaffLink>
         </Fact>
         <Fact label={copy.detail.personalised}>{letter.personalised && copy.consent.yes}</Fact>
       </>
@@ -93,7 +93,7 @@ function Sender({ letter }: { letter: Details }) {
         {letter.supporterId === null ? (
           letter.senderName
         ) : (
-          <Link href={`/staff/supporters/${letter.supporterId}`}>{letter.senderName}</Link>
+          <StaffLink href={`/staff/supporters/${letter.supporterId}`}>{letter.senderName}</StaffLink>
         )}{" "}
         <Muted>{letter.senderEmail}</Muted>
       </Fact>
@@ -120,7 +120,7 @@ function postmarkWords(type: string): string {
 function EventValue({ name, value }: { name: string; value: unknown }) {
   if (name === "type" && typeof value === "string") return <>{postmarkWords(value)}</>;
   if (name === "email" && typeof value === "string")
-    return <Link href={`/staff/politicians/blocked-emails?q=${encodeURIComponent(value)}`}>{value}</Link>;
+    return <StaffLink href={`/staff/politicians/blocked-emails?q=${encodeURIComponent(value)}`}>{value}</StaffLink>;
   return <>{typeof value === "string" ? value : JSON.stringify(value)}</>;
 }
 
@@ -198,7 +198,7 @@ export default function LetterDetails({ letter, children }: { letter: Details; c
           <dl className={styles.facts}>
             <Sender letter={letter} />
             <Fact label={copy.columns.to}>
-              <Link href={`/staff/politicians/${letter.politicianId}`}>{letter.mpName}</Link>
+              <StaffLink href={`/staff/politicians/${letter.politicianId}`}>{letter.mpName}</StaffLink>
             </Fact>
             <Fact label={copy.columns.status}>{statusOf(letter.status)}</Fact>
             <Fact label={copy.columns.created}>{staffTime(letter.createdAt)}</Fact>

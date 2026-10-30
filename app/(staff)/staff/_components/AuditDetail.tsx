@@ -1,4 +1,4 @@
-import Link from "next/link";
+import StaffLink from "./ui/StaffLink";
 import { Fragment, type ReactNode } from "react";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -49,7 +49,7 @@ export function FieldChanges({ changed }: { changed: Record<string, FieldChange>
 /** Someone the entry is about: their name linked to their page while they're here; otherwise the name it gave, or their ID. */
 function Who({ named, href, name, id }: { named: Named | null; href: string; name: string; id: unknown }) {
   const shown = named?.name || name || copy.gone(String(named?.id ?? id));
-  return named ? <Link href={`${href}/${named.id}`}>{shown}</Link> : <>{shown}</>;
+  return named ? <StaffLink href={`${href}/${named.id}`}>{shown}</StaffLink> : <>{shown}</>;
 }
 
 /**
@@ -126,7 +126,7 @@ export default function AuditDetail({ change, airtableTable }: { change: LoggedC
     case "apply held MP sync":
     case "discard held MP sync":
       take("id");
-      lead.push(<Link href={importPath("sync-politicians")}>{copy.run(String(details.id))}</Link>);
+      lead.push(<StaffLink href={importPath("sync-politicians")}>{copy.run(String(details.id))}</StaffLink>);
       break;
     case "add staff account":
     case "set staff permissions":

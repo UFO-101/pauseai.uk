@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { buttonClass } from "@/components/ui/Button";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -66,9 +65,9 @@ export function ChoosingHead({
       <div className={styles.held}>
         <Strip
           action={
-            <Link href={isNew ? "/staff/mailings" : `/staff/mailings/${search.mailing}`}>
+            <StaffLink href={isNew ? "/staff/mailings" : `/staff/mailings/${search.mailing}`}>
               {isNew ? mailingCopy.cancelNew : mailingCopy.backToDraft}
-            </Link>
+            </StaffLink>
           }
         >
           <span>{isNew ? mailingCopy.choosingNew : mailingCopy.choosingDraft(title ?? mailingCopy.untitled)}</span>
@@ -181,17 +180,19 @@ export default function PoliticiansList({
       )}
       {list.otherHouses > 0 && (
         <p>
-          <Link href={filtersPath(PATH, filters, { house: "" })}>{copy.otherHouses(list.otherHouses)}</Link>
+          <StaffLink href={filtersPath(PATH, filters, { house: "" })}>{copy.otherHouses(list.otherHouses)}</StaffLink>
         </p>
       )}
       {list.outOfOffice > 0 && (
         <p>
-          <Link href={filtersPath(PATH, filters, { status: "any" })}>{copy.outOfOffice(list.outOfOffice)}</Link>
+          <StaffLink href={filtersPath(PATH, filters, { status: "any" })}>
+            {copy.outOfOffice(list.outOfOffice)}
+          </StaffLink>
         </p>
       )}
       {list.tests > 0 && (
         <p>
-          <Link href={filtersPath(PATH, filters, { flag: "test" })}>{copy.tests(list.tests)}</Link>
+          <StaffLink href={filtersPath(PATH, filters, { flag: "test" })}>{copy.tests(list.tests)}</StaffLink>
         </p>
       )}
       {search.mailing && <ChoosingBar search={search} total={list.total} changeWho={changeWho} />}

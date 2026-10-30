@@ -1,4 +1,4 @@
-import Link from "next/link";
+import StaffLink from "./ui/StaffLink";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { POLITICIAN_SORTS, type PoliticianSort } from "@/lib/politician-sort";
 import type { Ask } from "@/lib/server/asks";
@@ -93,7 +93,7 @@ export function politicianColumns(asks: Ask[], search: Params = {}): ListColumn<
       text: (p) => p.name,
       cell: (p) => (
         <>
-          <Link href={`/staff/politicians/${p.id}`}>{p.name}</Link>{" "}
+          <StaffLink href={`/staff/politicians/${p.id}`}>{p.name}</StaffLink>{" "}
           {p.emailBlocked && <Tag tone="amber">{staffCopy.politicians.emailBlocked}</Tag>}
         </>
       ),

@@ -1,5 +1,5 @@
 import type React from "react";
-import Link from "next/link";
+import StaffLink from "./ui/StaffLink";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { CHANNELS, waysKey, type Channel, type ContactPermission, type Topic } from "@/lib/contact-permissions";
 import { staffDate } from "@/lib/staff-time";
@@ -130,7 +130,7 @@ function Blocked({ permission }: { permission: ContactPermission }) {
       <Address channel="email" address={permission.address} link={false} />
       <span className={styles.reason}>
         {because && `${because(staffDate(permission.at!))} `}
-        <Link href="/staff/supporters/blocked-emails">{copy.seeBlocked}</Link>
+        <StaffLink href="/staff/supporters/blocked-emails">{copy.seeBlocked}</StaffLink>
       </span>
     </li>
   );

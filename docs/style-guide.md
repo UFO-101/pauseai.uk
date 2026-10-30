@@ -595,7 +595,10 @@ such as one that opens a menu, doesn't wait at all.
 - **Links in the staff pages**, including the ones that look like
   buttons, show the thin line along the top of the page instead
   (`StaffLink`, and `data-pending` on anything else that waits for a
-  page, such as Log out in the navigation). Nothing spins.
+  page, such as Log out in the navigation). Nothing spins. ESLint
+  refuses `next/link` in the staff pages, and a plain `<a>` with
+  `buttonClass` there (`STAFF_LINK_IMPORT` and `STAFF_BUTTON_LINK_RULES`
+  in `eslint.config.mjs`).
 
 A button with a look of its own (the donate page's) puts its words in
 `ButtonInside` and greys itself while `aria-busy`.

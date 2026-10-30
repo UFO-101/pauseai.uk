@@ -1,4 +1,4 @@
-import Link from "next/link";
+import StaffLink from "./ui/StaffLink";
 import type { ReactNode } from "react";
 import styles from "./ImportCard.module.css";
 import Grid, { Card } from "./ui/Grid";
@@ -33,9 +33,9 @@ export default function ImportCard({ title, href, icon, tags, intro, children }:
       <div className={styles.head}>
         {icon}
         <h3 className={styles.title}>
-          <Link href={href} className={styles.open}>
+          <StaffLink href={href} className={styles.open}>
             {title}
-          </Link>
+          </StaffLink>
           {tags}
         </h3>
       </div>

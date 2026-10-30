@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
+import StaffLink from "./ui/StaffLink";
 import { Muted } from "@/components/ui/Text";
 import Tag from "@/components/ui/Tag";
 import { displayPostcode } from "@/lib/email-your-mp";
@@ -92,7 +92,7 @@ function Subject({ item, letters }: { item: SupporterActivity; letters: string }
     const status = copy.detail.statuses[item.detail ?? ""];
     return (
       <>
-        {item.href ? <Link href={item.href}>{item.title}</Link> : item.title}
+        {item.href ? <StaffLink href={item.href}>{item.title}</StaffLink> : item.title}
         {status && <Muted> · {status}</Muted>}
       </>
     );
@@ -102,7 +102,7 @@ function Subject({ item, letters }: { item: SupporterActivity; letters: string }
     // status, linked to the page of the supporter's letters.
     return (
       <>
-        {item.href ? <Link href={item.href}>{item.detail}</Link> : item.detail}
+        {item.href ? <StaffLink href={item.href}>{item.detail}</StaffLink> : item.detail}
         <Muted>
           {item.title && (
             <>
@@ -113,7 +113,7 @@ function Subject({ item, letters }: { item: SupporterActivity; letters: string }
           {item.status && (
             <>
               {" · "}
-              <Link href={letters}>{staffCopy.letters.status[item.status] ?? item.status}</Link>
+              <StaffLink href={letters}>{staffCopy.letters.status[item.status] ?? item.status}</StaffLink>
             </>
           )}
         </Muted>
@@ -208,7 +208,7 @@ function SupporterBand({ supporter, events, letters }: { supporter: Details; eve
       )}
       {mp && (
         <BandFact label={copy.detail.theirMp} detail={[mp.constituency, mp.party].filter(Boolean).join(" · ")}>
-          <Link href={`/staff/politicians/${mp.id}`}>{mp.name}</Link>
+          <StaffLink href={`/staff/politicians/${mp.id}`}>{mp.name}</StaffLink>
         </BandFact>
       )}
       <Active first={summary.firstSeenAt} last={summary.lastActiveAt} source={first?.source} />
@@ -222,7 +222,7 @@ const eventColumns: ListColumn<SupporterActivity>[] = [
   {
     key: "event",
     label: copy.detail.columns.event,
-    cell: (a) => (a.href ? <Link href={a.href}>{a.title}</Link> : a.title),
+    cell: (a) => (a.href ? <StaffLink href={a.href}>{a.title}</StaffLink> : a.title),
   },
   {
     key: "status",
@@ -238,7 +238,9 @@ const letterColumns: ListColumn<SupporterLetter>[] = [
     key: "letter",
     label: copy.detail.columns.letter,
     short: true,
-    cell: (l) => <Link href={`/staff/letters/${l.id}`}>{staffCopy.letters.status[l.status] ?? l.status}</Link>,
+    cell: (l) => (
+      <StaffLink href={`/staff/letters/${l.id}`}>{staffCopy.letters.status[l.status] ?? l.status}</StaffLink>
+    ),
   },
   {
     key: "sent",
@@ -249,7 +251,7 @@ const letterColumns: ListColumn<SupporterLetter>[] = [
   {
     key: "to",
     label: copy.detail.columns.to,
-    cell: (l) => <Link href={`/staff/politicians/${l.politicianId}`}>{l.mpName}</Link>,
+    cell: (l) => <StaffLink href={`/staff/politicians/${l.politicianId}`}>{l.mpName}</StaffLink>,
   },
   {
     key: "campaign",

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import StaffLink from "./ui/StaffLink";
 import CampaignName from "./CampaignName";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { campaignBySlug } from "@/lib/email-your-mp";
@@ -30,7 +30,7 @@ export const letterColumns: ListColumn<LetterSummary>[] = [
     label: copy.columns.status,
     short: true,
     text: (l) => statusOf(l.status),
-    cell: (l) => <Link href={`/staff/letters/${l.id}`}>{statusOf(l.status)}</Link>,
+    cell: (l) => <StaffLink href={`/staff/letters/${l.id}`}>{statusOf(l.status)}</StaffLink>,
   },
   {
     key: "from",
@@ -41,7 +41,7 @@ export const letterColumns: ListColumn<LetterSummary>[] = [
         {l.supporterId === null ? (
           l.senderName
         ) : (
-          <Link href={`/staff/supporters/${l.supporterId}`}>{l.senderName}</Link>
+          <StaffLink href={`/staff/supporters/${l.supporterId}`}>{l.senderName}</StaffLink>
         )}
         <br />
         <Muted>{l.senderEmail}</Muted>
@@ -54,7 +54,7 @@ export const letterColumns: ListColumn<LetterSummary>[] = [
     text: (l) => l.mpName,
     cell: (l) => (
       <>
-        <Link href={`/staff/politicians/${l.politicianId}`}>{l.mpName}</Link>{" "}
+        <StaffLink href={`/staff/politicians/${l.politicianId}`}>{l.mpName}</StaffLink>{" "}
         {l.isTest && <Tag>{staffCopy.politicians.flags.test}</Tag>}
       </>
     ),

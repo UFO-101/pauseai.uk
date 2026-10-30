@@ -1,4 +1,4 @@
-import Link from "next/link";
+import StaffLink from "./ui/StaffLink";
 import type { ReactNode } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { answeredByHand, trackedAsks } from "@/lib/email-your-mp";
@@ -55,7 +55,7 @@ function Sender({ letter }: { letter: LetterSummary }) {
       {letter.supporterId === null ? (
         letter.senderName
       ) : (
-        <Link href={`/staff/supporters/${letter.supporterId}`}>{letter.senderName}</Link>
+        <StaffLink href={`/staff/supporters/${letter.supporterId}`}>{letter.senderName}</StaffLink>
       )}
       <Muted>
         {" · "}
@@ -108,7 +108,9 @@ function letterEntries({ senders, letters }: PoliticianLetters): Entry[] {
         {copy.history.letter} <Sender letter={letter} />
         <Muted>
           {" · "}
-          <Link href={`/staff/letters/${letter.id}`}>{staffCopy.letters.status[letter.status] ?? letter.status}</Link>
+          <StaffLink href={`/staff/letters/${letter.id}`}>
+            {staffCopy.letters.status[letter.status] ?? letter.status}
+          </StaffLink>
         </Muted>
       </>,
       <>
@@ -128,13 +130,14 @@ function pauseaiEntries(letters: PauseaiLetter[]): Entry[] {
     at: letter.at,
     what: (
       <>
-        {copy.history["pauseai-letter"]} <Link href={`/staff/mailings/${letter.mailingId}`}>{letter.mailing}</Link>
+        {copy.history["pauseai-letter"]}{" "}
+        <StaffLink href={`/staff/mailings/${letter.mailingId}`}>{letter.mailing}</StaffLink>
         <Muted>
           {letter.personalised && ` · ${copy.personalised}`}
           {" · "}
-          <Link href={`/staff/mailings/${letter.mailingId}/letters/${letter.id}`}>
+          <StaffLink href={`/staff/mailings/${letter.mailingId}/letters/${letter.id}`}>
             {staffCopy.letters.status[letter.status] ?? letter.status}
-          </Link>
+          </StaffLink>
         </Muted>
       </>
     ),
@@ -160,11 +163,11 @@ function Detail({ change, asks }: { change: PoliticianChange; asks: Ask[] }) {
       // The answer, where the copy puts it, leads to everyone who gave it to the ask.
       const answer =
         details.ask && details.status ? (
-          <Link
+          <StaffLink
             href={`/staff/politicians?ask=${encodeURIComponent(text("ask"))}&answer=${encodeURIComponent(text("status"))}`}
           >
             {label}
-          </Link>
+          </StaffLink>
         ) : (
           label
         );
@@ -203,9 +206,9 @@ function Detail({ change, asks }: { change: PoliticianChange; asks: Ask[] }) {
       // An unblock has a note, and a block the kind of problem.
       return (
         <>
-          <Link href={`/staff/politicians/blocked-emails?q=${encodeURIComponent(text("address"))}`}>
+          <StaffLink href={`/staff/politicians/blocked-emails?q=${encodeURIComponent(text("address"))}`}>
             {text("address")}
-          </Link>
+          </StaffLink>
           <Muted> · {kind || text("note")}</Muted>
         </>
       );
@@ -315,7 +318,7 @@ export default function PoliticianDetails({
                       {copy.blocked.wrong.airtable}
                     </a>
                     {copy.blocked.wrong.middle}
-                    <Link href={importPath("sync-politicians")}>{copy.blocked.wrong.link}</Link>
+                    <StaffLink href={importPath("sync-politicians")}>{copy.blocked.wrong.link}</StaffLink>
                     {copy.blocked.wrong.after}
                   </p>
                 </div>

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { importPath } from "@/lib/import-runs";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
@@ -154,9 +153,9 @@ function Tile({
   return (
     <li className={spanClass(bar || line ? 2 : 1)}>
       {linked ? (
-        <Link href={href} className={styles.tile}>
+        <StaffLink href={href} className={styles.tile}>
           {inside}
-        </Link>
+        </StaffLink>
       ) : (
         <div className={styles.tile}>{inside}</div>
       )}
@@ -218,9 +217,9 @@ export default function StaffDashboard({
                 {copy.window(days)}
               </strong>
             ) : (
-              <Link key={days} href={days === DASHBOARD_WINDOWS[0] ? "/staff" : `/staff?days=${days}`}>
+              <StaffLink key={days} href={days === DASHBOARD_WINDOWS[0] ? "/staff" : `/staff?days=${days}`}>
                 {copy.window(days)}
-              </Link>
+              </StaffLink>
             ),
           )}
         </span>
