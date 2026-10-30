@@ -10,21 +10,27 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe("the hourly Luma import function", () => {
-  it("runs hourly from 06:17 to 23:17 UTC, and asks the site to import with the secret", async () => {
+  it("runs hourly from 06:17 to 23:17 UTC, and starts the background import with the secret", async () => {
     expect(config.schedule).toBe("17 6-23 * * *");
     let auth: string | null = null;
     server.use(
-      http.post("https://pauseai.uk/api/cron/import-luma", ({ request }) => {
+      http.post("https://pauseai.uk/.netlify/functions/import-luma-background", ({ request }) => {
         auth = request.headers.get("authorization");
-        return HttpResponse.json({ events: 1 });
+        return new HttpResponse(null, { status: 202 });
       }),
     );
-    expect(await (await importLuma()).json()).toEqual({ events: 1 });
+    const res = await importLuma();
+    expect(res.status).toBe(200);
     expect(auth).toBe("Bearer s3cret");
   });
 
-  it("fails loudly if the site does", async () => {
-    server.use(http.post("https://pauseai.uk/api/cron/import-luma", () => new HttpResponse("nope", { status: 500 })));
-    await expect(importLuma()).rejects.toThrow("returned 500: nope");
+  it("fails loudly if the background import doesn't start", async () => {
+    server.use(
+      http.post(
+        "https://pauseai.uk/.netlify/functions/import-luma-background",
+        () => new HttpResponse(null, { status: 404 }),
+      ),
+    );
+    await expect(importLuma()).rejects.toThrow("import-luma-background returned 404");
   });
 });
