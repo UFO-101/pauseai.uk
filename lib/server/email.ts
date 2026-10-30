@@ -58,7 +58,7 @@ export function bareAddress(to: string): string {
 }
 
 /** The addresses Postmark's refusal names as inactive ("Found inactive addresses: a@x.org, b@y.org."), bare. */
-export function inactiveAddresses(message: string): string[] {
+function inactiveAddresses(message: string): string[] {
   const list = /Found inactive addresses: (.*?)\.(?:\s|$)/.exec(message)?.[1] ?? "";
   return list
     .split(",")
