@@ -17,9 +17,17 @@ export function constituencyName(code: string): string | undefined {
   return Object.hasOwn(NAMES, code) ? NAMES[code] : undefined;
 }
 
+/** The official code of the constituency with this official name, if it's one. */
+export function constituencyCode(name: string): string | undefined {
+  return Object.hasOwn(CODES, name) ? CODES[name] : undefined;
+}
+
 /** Whether this is a constituency's official name, exactly. */
 export function isOfficialName(name: string): boolean {
   return OFFICIAL.has(name);
 }
 
 const OFFICIAL = new Set(Object.values(NAMES));
+const CODES: Readonly<Record<string, string>> = Object.fromEntries(
+  Object.entries(NAMES).map(([code, name]) => [name, code]),
+);

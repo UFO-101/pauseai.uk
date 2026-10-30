@@ -1,0 +1,27 @@
+.details {
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-4);
+}
+
+.summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.details[open] .summary {
+  margin-bottom: var(--space-4);
+}
+
+.caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

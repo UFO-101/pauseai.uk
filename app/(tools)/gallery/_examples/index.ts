@@ -11,6 +11,7 @@ import { home } from "./home";
 import { blogDonateEvents } from "./blog-donate-events";
 import { campaignsPage } from "./campaigns-page";
 import { campaignsLetter } from "./campaigns-letter";
+import { constituencyMap } from "./constituency-map";
 import { pages } from "./pages";
 import { marchSignup } from "./march-signup";
 import { trackRecord } from "./track-record";
@@ -30,6 +31,7 @@ export const GROUPS: Group[] = [
   blogDonateEvents,
   campaignsPage,
   campaignsLetter,
+  constituencyMap,
   pages,
   marchSignup,
   trackRecord,

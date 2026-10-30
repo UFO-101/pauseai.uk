@@ -20,6 +20,7 @@ export const PARTS = ["Public site", "Staff pages", "Tools and checks"] as const
 export const SECTIONS: { id: string; name: string; part: (typeof PARTS)[number] }[] = [
   { id: "public-pages", name: "Every public page", part: "Public site" },
   { id: "campaigns", name: "Write to your MP", part: "Public site" },
+  { id: "constituency-map", name: "Constituency map", part: "Public site" },
   { id: "march-signup", name: "March sign-up", part: "Public site" },
   { id: "home-events", name: "Events on the home page", part: "Public site" },
   { id: "consent", name: "Cookie consent", part: "Public site" },
