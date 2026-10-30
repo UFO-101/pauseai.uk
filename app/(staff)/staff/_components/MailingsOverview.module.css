@@ -10,7 +10,7 @@
 }
 
 /* A row: when, the mailing, and how it stands, in columns that line up
-   from row to row; on a phone, how it stands goes under the rest. */
+   from row to row; on a phone, when over the title and how it stands under it. */
 .row {
   display: grid;
   grid-template-columns: 9rem minmax(0, 1fr) 24rem;
@@ -69,8 +69,11 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  /* The date over the title, a dateline, not a line of its own under it. */
   .when {
-    order: 1;
+    order: -1;
+    margin-bottom: calc(-1 * var(--space-1));
+    font-size: var(--text-xs);
   }
 
   .standing {
