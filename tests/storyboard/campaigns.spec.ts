@@ -136,11 +136,14 @@ test(
     const copied = newestEmailTo(sender)!;
     expect(copied.TextBody).toContain(MP_REPLY);
     expect(copied.TextBody).toContain("Date: Fri, 16 Oct 2026 13:00:00 +0100");
-    expect(copied.ReplyTo).toBe("test-mp@example.org");
+    expect(copied.TextBody).toContain(copy.forwardedReply.toSender("Testy McTestface MP"));
+    expect(copied.Subject).toBe(`Re: ${letter.Subject}`);
+    // Answering it reaches the MP and the letter's address, so a follow-up is kept with the letter.
+    expect(copied.ReplyTo).toBe(`test-mp@example.org, ${address}`);
     await emailFrame(page, copied, "the MP's reply, forwarded to the sender");
     // Our copy is of this flow's reply: the subject carries the letter's, and the body the MP's words.
     const ours = newestEmail(
-      (email) => email.To === "replies@example.org" && email.Subject.endsWith(`Re: ${letter.Subject}`),
+      (email) => email.To === "replies@example.org" && email.Subject === `Re: ${letter.Subject}`,
     )!;
     expect(ours.TextBody).toContain(MP_REPLY);
   },
