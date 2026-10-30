@@ -4,6 +4,15 @@
   display: inline-block;
 }
 
+/* Copied, with its tick, in green, popping in where the label was. */
+.done {
+  display: inline-flex;
+  gap: var(--space-1);
+  align-items: center;
+  color: var(--status-green);
+  animation: pop 0.2s ease-out;
+}
+
 /* What to do with what it copied, over the page, a card's border and
    shadow; there only while it has something to say, as the live region
    stays for screen readers. */
@@ -22,6 +31,7 @@
   color: var(--text);
   font-size: var(--text-sm);
   text-align: left;
+  animation: drop 0.2s ease-out;
 }
 
 /* Its pointer, up to the button: a square turned on its corner, its top
@@ -41,4 +51,26 @@
 
 .bubble:empty {
   display: none;
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+/* The bubble comes down from the button. */
+@keyframes drop {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-1 * var(--space-1)));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .done,
+  .bubble {
+    animation: none;
+  }
 }

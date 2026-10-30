@@ -9,7 +9,8 @@ const SAYS_COPIED = 4000;
 
 /**
  * A small button that copies `text` to the clipboard, then for a few
- * seconds says `copied` in place of its label, with `note`, what to do
+ * seconds says `copied` in place of its label, with a tick, in green,
+ * popping in so the eye lands on it, with `note`, what to do
  * with it, in a bubble under it, which a screen reader hears too. If the
  * browser refuses the clipboard, it stays as it was.
  */
@@ -37,7 +38,26 @@ export default function CopyButton({
   return (
     <span className={styles.copy}>
       <Button variant="ghost" size="small" fit type="button" onClick={copy}>
-        {done ? copied : label}
+        {done ? (
+          <span className={styles.done}>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            {copied}
+          </span>
+        ) : (
+          label
+        )}
       </Button>
       <span role="status" className={styles.bubble}>
         {done && note}
