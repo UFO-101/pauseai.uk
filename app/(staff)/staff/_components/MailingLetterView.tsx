@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 import Tag from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
@@ -22,7 +23,7 @@ function StatusTag({ letter, answered }: { letter: PauseaiLetterDetails; answere
 
 /**
  * One of a mailing's letters: its title and how it stands, under it the
- * politician's seat and party; then `children`, the letter and its replies
+ * politician, leading to their page, with their seat and party; then `children`, the letter and its replies
  * (LetterThread), beside the mailing's ask, as a politician's page shows it
  * and as wide as there,
  * to set their answer from what they said; and what happened to it. The
@@ -52,7 +53,8 @@ export default function MailingLetterView({
         <StatusTag letter={letter} answered={Boolean(ask && politician.statuses[ask.slug])} />
       </div>
       <p className={styles.about}>
-        <Muted>{about.filter(Boolean).join(" · ")}</Muted>
+        <Link href={`/staff/politicians/${letter.politicianId}`}>{letter.mpName}</Link>
+        <Muted>{about.filter(Boolean).map((part) => ` · ${part}`)}</Muted>
       </p>
       <Grid>
         <div className={spanClass(3)}>{children}</div>

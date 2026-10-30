@@ -481,6 +481,9 @@ describe("MailingLetterView", () => {
       .element(page.getByRole("link", { name: letter.mailing }))
       .toHaveAttribute("href", `/staff/mailings/${letter.mailingId}`);
     await expect.element(page.getByText(staffCopy.mailings.personalised, { exact: false })).toBeVisible();
+    await expect
+      .element(page.getByRole("link", { name: letter.mpName }))
+      .toHaveAttribute("href", `/staff/politicians/${letter.politicianId}`);
   });
 
   it("not answered, with no ask: its status, red when it bounced; one nobody knows any more as stored", async () => {
