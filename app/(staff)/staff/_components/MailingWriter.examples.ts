@@ -97,7 +97,6 @@ export const exampleWriterData: WriterData = {
     {
       email: "al@pauseai.uk",
       name: "Al Example",
-      names: ["Al Example", "Al Example, PauseAI UK"],
       connectedAt: "2026-10-01T09:00:00Z",
       sentToday: 0,
       remaining: 1800,
@@ -105,7 +104,6 @@ export const exampleWriterData: WriterData = {
     {
       email: "samuel.whitlock@pauseai.uk",
       name: "",
-      names: [],
       connectedAt: "2026-10-02T09:00:00Z",
       sentToday: 120,
       remaining: 1680,

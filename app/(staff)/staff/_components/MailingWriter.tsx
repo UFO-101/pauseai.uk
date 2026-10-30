@@ -153,7 +153,6 @@ export default function MailingWriter({
   const letterLabel = useId();
   const askHelp = `ask-help-${useId().replace(/\W/g, "")}`;
   const askId = useId();
-  const namesId = useId();
   const id = useRef(draft?.id ?? null);
   const version = useRef(draft?.version ?? 0);
   const [savedId, setSavedId] = useState(draft?.id ?? null);
@@ -171,7 +170,7 @@ export default function MailingWriter({
     sentFrom: draft
       ? draft.sentFrom
       : ((data.senders.find((one) => one.email === DEFAULT_SENDER) ?? data.senders[0])?.email ?? null),
-    fromName: draft?.fromName ?? null,
+    fromName: draft?.fromName || null,
     dueAt: draft?.dueAt ?? null,
   }));
   const latest = useRef(values);
@@ -333,9 +332,11 @@ export default function MailingWriter({
     connected: Boolean(sender),
   }).filter((problem) => problem !== "cannot-send");
   const title = values.subject.trim() || copy.newTitle;
-  // The connected accounts, and the one chosen if it isn't one any more.
+  // The connected accounts, the policy team's first, and the one chosen if it isn't one any more.
   const senderChoices = [
-    ...data.senders.map((one) => ({ ...one, connected: true })),
+    ...data.senders
+      .toSorted((a, b) => Number(b.email === DEFAULT_SENDER) - Number(a.email === DEFAULT_SENDER))
+      .map((one) => ({ ...one, connected: true })),
     ...(values.sentFrom && !sender ? [{ email: values.sentFrom, name: "", remaining: 0, connected: false }] : []),
   ];
   // Where Connect Gmail and the Asks page come back to, as the page shows them: this draft, or this new mailing.
@@ -472,48 +473,50 @@ export default function MailingWriter({
         </Card>
 
         <Card span={6} title={<Numbered n={4}>{copy.sections.from}</Numbered>} id="from-title">
-          {/* The choice of connected Gmails and what the chosen one has sent today, or that there's none; then where to connect one. */}
+          {/* The choice of connected Gmails, beside the name the mailing goes in, then what the chosen one has
+              sent today, or that there's none; then, while yours isn't connected, where to connect it. */}
           <div className={styles.from}>
             {senderChoices.length > 0 ? (
               <>
-                <Field label={copy.fromLegend} className={styles.sender}>
-                  <Select value={values.sentFrom ?? ""} onChange={(event) => change({ sentFrom: event.target.value })}>
-                    {!values.sentFrom && (
-                      <option value="" disabled>
-                        {copy.choose}
-                      </option>
-                    )}
-                    {senderChoices.map((sender) => (
-                      <option key={sender.email} value={sender.email}>
-                        {sender.connected ? named(sender.name, sender.email) : copy.senderNotConnected(sender.email)}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
+                <div className={styles.fromFields}>
+                  <Field label={copy.fromLegend} className={styles.sender}>
+                    <Select
+                      value={values.sentFrom ?? ""}
+                      onChange={(event) => change({ sentFrom: event.target.value })}
+                    >
+                      {!values.sentFrom && (
+                        <option value="" disabled>
+                          {copy.choose}
+                        </option>
+                      )}
+                      {senderChoices.map((sender) => (
+                        <option key={sender.email} value={sender.email}>
+                          {sender.connected ? sender.email : copy.senderNotConnected(sender.email)}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  {/* Until it's edited, the Gmail's own name, following the account chosen. Left empty, it's that name too. */}
+                  <Field label={copy.fromNameLabel} className={styles.sender}>
+                    <TextInput
+                      value={values.fromName ?? sender?.name ?? ""}
+                      onChange={(event) => change({ fromName: event.target.value })}
+                      onBlur={() => values.fromName === "" && change({ fromName: null })}
+                    />
+                  </Field>
+                </div>
                 {sender && <SentToday sent={sender.sentToday} />}
-                {/* Empty, it's from the Gmail's own name; the names it has gone in before are offered. */}
-                <Field label={copy.fromNameLabel} className={styles.sender}>
-                  <TextInput
-                    value={values.fromName ?? ""}
-                    placeholder={sender?.name}
-                    list={namesId}
-                    onChange={(event) => change({ fromName: event.target.value })}
-                  />
-                </Field>
-                <datalist id={namesId}>
-                  {sender?.names.map((name) => (
-                    <option key={name} value={name} />
-                  ))}
-                </datalist>
               </>
             ) : (
               <p>{copy.noSenders}</p>
             )}
             {values.sentFrom && !sender && <Hint>{copy.notConnected}</Hint>}
             {/* Connecting is done on the account's own page, logged in as it. */}
-            <p>
-              <Link href="/staff/me#gmail">{copy.connectOne}</Link>
-            </p>
+            {!data.senders.some((one) => one.email === data.me) && (
+              <p>
+                <Link href="/staff/me#gmail">{copy.connectOne}</Link>
+              </p>
+            )}
           </div>
         </Card>
 

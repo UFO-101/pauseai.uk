@@ -55,7 +55,6 @@ export const exampleImportedThread: LetterThread = {
 export const exampleGmailAccount: GmailAccount = {
   email: "jo@pauseai.uk",
   name: "Jo Seed",
-  names: ["Jo Seed", "Jo Seed, PauseAI UK"],
   connectedAt: "2026-10-01T09:00:00Z",
   sentToday: 120,
   remaining: 1680,

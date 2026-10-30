@@ -88,6 +88,8 @@ export const staffCopy = {
   // Connecting a staff member's Gmail, on their own page and in a mailing's Sent from.
   gmail: {
     title: "Let staff send mailings from your Gmail",
+    // The heading once it's connected.
+    connectedTitle: "Staff can send mailings from your Gmail",
     // What connecting it means, said before it goes to Google: a line, then a bullet each.
     intro: "Usually this is a shared account rather than a person's own: log in here as it, then connect it.",
     explain: [
@@ -97,8 +99,6 @@ export const staffCopy = {
     limit: (limit: string) => `At most ${limit} a day, leaving room for the account's other email.`,
     connect: "Connect Gmail",
     disconnect: "Disconnect Gmail",
-    // Over when it was connected: the name and address its mail goes out under, as its From line shows them.
-    sendsAs: (from: string) => `Sends as ${from}.`,
     connected: (when: string) => `Connected ${when}.`,
     notConnected: "Your Gmail isn't connected.",
     sentToday: (sent: number, limit: string) => `${sent} of today's ${limit} emails sent.`,
@@ -871,16 +871,16 @@ export const staffCopy = {
     testFailed: "It couldn't be sent. Try again in a minute.",
     // The first entry of a list while nothing in it is chosen.
     choose: "Choose…",
-    fromLegend: "Whose Gmail to send it from",
-    fromNameLabel: "Customise the name (optional)",
+    fromLegend: "Gmail account",
+    fromNameLabel: "Name",
     // A sender, in Sent from's list: their address, and how many more it can send today.
     // Your own address, before your Gmail's connected.
     senderNotConnected: (address: string) => `${address} (not connected)`,
     notConnected: "This Gmail isn't connected. Only its owner can connect it, from their own page.",
     // With no Gmail connected, in place of the choice of one.
     noSenders: "No Gmail is connected yet, so nothing can be sent.",
-    // Under the choice of Gmail, to the account page, where one is connected.
-    connectOne: "Connect a Gmail on your account page",
+    // Under the choice of Gmail while yours isn't connected, to your account page, where it's connected.
+    connectOne: "Add your Gmail",
     // In the preview, who it's from: the name comes from the Gmail account.
     from: "From",
     // The test copy's sender's name.
