@@ -69,12 +69,25 @@ export const staffCopy = {
     mpEmails: "Blocked emails",
     logout: "Log out",
   },
+  // A letter in Gmail, from a button by its page's heading: the mailbox it's
+  // in, a link that opens it there for someone signed in to that account,
+  // and a search to paste into it, which works for a delegate too.
+  findInGmail: {
+    button: "Find it in Gmail",
+    mailbox: (mailbox: string) => `⁂ It's in ${mailbox}'s mailbox.`,
+    unknownMailbox: "⁂ We don't know which mailbox it was sent from.",
+    open: "Open in Gmail",
+    openNote: (mailbox: string) =>
+      `⁂ This only works if you're signed in to ${mailbox} itself. If you open it as a delegate, use the search.`,
+    copy: "⁂ Copy the search",
+    copied: "⁂ Copied",
+    copyNote: "⁂ Paste it into the search box in Gmail, in that mailbox.",
+  },
   // One of PauseAI's letters, and the replies in its thread.
   letterThread: {
     title: "Letter and replies",
     // An imported letter, whose text Airtable didn't keep.
     noText: "This letter was sent before the site sent mailings, so its text isn't here.",
-    openInGmail: "Open in Gmail",
     noReplies: "No replies yet.",
     unreadable: "This message couldn't be read.",
     // Over each message, as an email shows them.
@@ -1462,10 +1475,6 @@ export const staffCopy = {
         account: "Gmail",
         status: "Code",
       } as Record<string, string>,
-      // A supporter's letter, Bcc'd to policy@: its copy there.
-      googleGroup: "Find it in Google Groups",
-      // PauseAI's letter, sent from Gmail: a search for it.
-      gmail: "Find it in Gmail",
     },
     none: "No letters.",
     status: {

@@ -15,6 +15,7 @@ import Counts from "./Counts";
 import DownloadMenu from "./DownloadMenu";
 import Grid, { Card, Column } from "./Grid";
 import Progress from "./Progress";
+import CopyButton from "./CopyButton";
 
 import { renderToString } from "react-dom/server";
 import { NAV_FOLD_KEY } from "@/lib/staff-nav";
@@ -722,6 +723,27 @@ describe("DownloadMenu", () => {
     await rerender(<DownloadMenu download={(format) => `/x?format=${format}`} formats={["vcf"]} />);
     await expect.element(page.getByRole("link", { name: staffCopy.lists.formats.vcf })).toBeInTheDocument();
     await expect.element(page.getByRole("link", { name: staffCopy.lists.formats.csv })).not.toBeInTheDocument();
+  });
+});
+
+describe("CopyButton", () => {
+  it("copies its text and says so a moment, then is as it was", async () => {
+    const write = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+    await render(<CopyButton text="rfc822msgid:a@b" label="Copy" copied="Copied" />);
+    await page.getByRole("button", { name: "Copy" }).click();
+    expect(write).toHaveBeenCalledWith("rfc822msgid:a@b");
+    await expect.element(page.getByRole("button", { name: "Copied" })).toBeVisible();
+    await expect.element(page.getByRole("button", { name: "Copy" }), { timeout: 3000 }).toBeVisible();
+    write.mockRestore();
+  });
+
+  it("stays as it was when the clipboard refuses", async () => {
+    const write = vi.spyOn(navigator.clipboard, "writeText").mockRejectedValue(new Error("denied"));
+    await render(<CopyButton text="x" label="Copy" copied="Copied" />);
+    await page.getByRole("button", { name: "Copy" }).click();
+    expect(write).toHaveBeenCalled();
+    expect(page.getByRole("button", { name: "Copied" }).all()).toHaveLength(0);
+    write.mockRestore();
   });
 });
 

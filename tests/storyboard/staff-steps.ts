@@ -135,8 +135,8 @@ export async function sentLetterId(
   const row = page.getByRole("row").filter({ hasText: sender });
   await expect(row).toContainText(staffCopy.letters.status.sent);
   await row.getByRole("link", { name: staffCopy.letters.status.sent, exact: true }).click();
-  const group = page.getByRole("link", { name: staffCopy.letters.detail.googleGroup });
-  const id = (await group.getAttribute("href"))!.match(/\/msgid\/policy\/([\w-]+)@mtasv\.net$/)![1];
+  const search = await page.locator("code", { hasText: /^rfc822msgid:/ }).textContent();
+  const id = search!.match(/^rfc822msgid:([\w-]+)@mtasv\.net$/)![1];
   await page.goto(`${BASE}/staff/letters`);
   return id;
 }

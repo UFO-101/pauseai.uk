@@ -1,5 +1,6 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { addTestLetter, addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { sentNearSearch } from "@/lib/letter-links";
 import { query } from "./db";
 import {
   getPauseaiLetter,
@@ -205,7 +206,8 @@ describeWithDatabase("pauseaiLetters", () => {
 describeWithDatabase("a letter for its page", () => {
   useTestDatabase();
 
-  it("gives a supporter's letter, with its subject and the newest send's Postmark ID", async () => {
+  it("gives a supporter's letter, with its subject, found in the policy inbox by the newest send's Postmark ID", async () => {
+    vi.stubEnv("POLICY_INBOX", "policy@pauseai.uk");
     const mp = await addTestMp();
     const id = await addTestLetter({ politicianId: mp, senderName: "Jane Smith" });
     await query(
@@ -216,12 +218,27 @@ describeWithDatabase("a letter for its page", () => {
       [id],
     );
     const letter = await getSupporterLetter(id);
-    expect(letter).toMatchObject({ kind: "supporter", id, senderName: "Jane Smith", postmarkId: "pm-new" });
+    expect(letter).toMatchObject({
+      kind: "supporter",
+      id,
+      senderName: "Jane Smith",
+      gmail: { mailbox: "policy@pauseai.uk", search: "rfc822msgid:pm-new@mtasv.net", threadId: null },
+    });
     expect(typeof (letter as { subject: string }).subject).toBe("string");
     expect(await getSupporterLetter(id + 100)).toBeUndefined();
-    // One never sent through Postmark has no ID.
+    // One copied from Airtable, which Postmark didn't send, by its MP's address and when it went; with no
+    // policy inbox, in a mailbox we don't know.
+    vi.stubEnv("POLICY_INBOX", "");
+    const imported = await addTestLetter({ politicianId: mp, sentAt: "2026-10-01T12:00:00Z" });
+    expect(await getSupporterLetter(imported)).toMatchObject({
+      gmail: { mailbox: null, search: sentNearSearch("test-mp@example.org", "2026-10-01T12:00:00Z"), threadId: null },
+    });
+    // One never sent has nothing to find; nor has one to an MP with no address.
     const unsent = await addTestLetter({ politicianId: mp });
-    expect(await getSupporterLetter(unsent)).toMatchObject({ postmarkId: null });
+    expect(await getSupporterLetter(unsent)).toMatchObject({ gmail: null });
+    const noAddress = await addTestLetter({ politicianId: await addTestMp(null), sentAt: "2026-10-01T12:00:00Z" });
+    expect(await getSupporterLetter(noAddress)).toMatchObject({ gmail: null });
+    vi.unstubAllEnvs();
   });
 
   it("gives PauseAI's letter in its mailing, with the mailing and the MP's address; not in another, nor as a supporter's", async () => {
@@ -254,9 +271,66 @@ describeWithDatabase("a letter for its page", () => {
       mailing: "CSRB Iqbal Amendment",
       mailingAsk: null,
       personalised: true,
-      sentFrom: null,
-      gmailThreadId: null,
+      gmail: { mailbox: null, search: sentNearSearch("mp@example.org", "2026-10-01T09:00:00Z"), threadId: null },
       events: [],
     });
+  });
+
+  it("finds PauseAI's letter in Gmail by its Message-ID, a reply's, or its MP's address and time; an unsent one not at all", async () => {
+    const mp = await addTestMp("mp@example.org");
+    const [{ mailing }] = await query<{ mailing: number }>(
+      "UPDATE mailings SET sent_from = 'policy@pauseai.uk' WHERE airtable_field = 'CSRB Iqbal Amendment' RETURNING id::int AS mailing",
+    );
+    const letter = async (sentAt: string | null, to = mp) => {
+      const [{ id }] = await query<{ id: number }>(
+        "INSERT INTO letters (kind, notable_person_id, status, sent_at) VALUES ('pauseai', $1, 'sent', $2) RETURNING id::int AS id",
+        [to, sentAt],
+      );
+      await query("INSERT INTO letters_from_pauseai (id, mailing_id) VALUES ($1, $2)", [id, mailing]);
+      return id;
+    };
+    const send = (id: number, rfc: string | null) =>
+      query(
+        `INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id, backend, sender, rfc_message_id, gmail_thread_id)
+         VALUES ('mailing', $1, 'mp@example.org', 'sent', 'g-1', 'gmail', 'policy@pauseai.uk', $2, 'thread-1')`,
+        [id, rfc],
+      );
+    const reply = (id: number, rfc: string | null, at: string) =>
+      query(
+        `INSERT INTO letter_replies (letter_id, account, gmail_message_id, gmail_thread_id, rfc_message_id, from_address, at, from_us, blob_key, size)
+         VALUES ($1, 'jo@pauseai.uk', $3, 'thread-2', $2, 'mp@example.org', $4, false, 'k', 0)`,
+        [id, rfc, `g-${at}`, at],
+      );
+    const at = "2026-10-01T09:00:00Z";
+
+    // Sent from Gmail: by the Message-ID it went with, at its thread, in the mailbox it went from.
+    const sent = await letter(at);
+    await send(sent, "abc@pauseai.uk");
+    expect((await getPauseaiLetter(mailing, sent))!.gmail).toEqual({
+      mailbox: "policy@pauseai.uk",
+      search: "rfc822msgid:abc@pauseai.uk",
+      threadId: "thread-1",
+    });
+    // Its Message-ID not kept: by its MP's address and when it went, still at its thread.
+    const noId = await letter(at);
+    await send(noId, null);
+    expect((await getPauseaiLetter(mailing, noId))!.gmail).toEqual({
+      mailbox: "policy@pauseai.uk",
+      search: sentNearSearch("mp@example.org", at),
+      threadId: "thread-1",
+    });
+    // Not sent from here, but replied to: by the first reply with a Message-ID, in the mailbox that read it.
+    const replied = await letter(at);
+    await reply(replied, null, "2026-10-02T09:00:00Z");
+    await reply(replied, "reply-2@parliament.uk", "2026-10-04T09:00:00Z");
+    await reply(replied, "reply-1@parliament.uk", "2026-10-03T09:00:00Z");
+    expect((await getPauseaiLetter(mailing, replied))!.gmail).toEqual({
+      mailbox: "jo@pauseai.uk",
+      search: "rfc822msgid:reply-1@parliament.uk",
+      threadId: "thread-2",
+    });
+    // Never sent, or to an MP with no address and nothing else to go by: nothing to find.
+    expect((await getPauseaiLetter(mailing, await letter(null)))!.gmail).toBeNull();
+    expect((await getPauseaiLetter(mailing, await letter(at, await addTestMp(null))))!.gmail).toBeNull();
   });
 });

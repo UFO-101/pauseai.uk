@@ -209,7 +209,12 @@ token is kept encrypted (`GMAIL_TOKEN_KEY`), and deleted on disconnecting.
   from its page under Import data.
 - **Threads.** Each PauseAI letter has a page with its whole thread
   (`/staff/mailings/<id>/letters/<letter>`), from the politician's history
-  and the mailing's recipients, with Open in Gmail for whoever sent it.
+  and the mailing's recipients, with Find it in Gmail
+  (`lib/letter-links.ts`): a link to the thread in the mailbox it went
+  from, which works only for someone signed in to that account itself, and
+  a search for it by its Message-ID to copy, which works pasted into any
+  mailbox, a delegate's too. A supporter's letter's page has the same, for
+  its copy in `POLICY_INBOX`.
 
 ## Form entries
 

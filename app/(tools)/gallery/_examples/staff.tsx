@@ -22,7 +22,9 @@ import {
   examplePauseaiLetterDetails,
   exampleSupporterLetterDetails,
 } from "@/app/(staff)/staff/_components/LettersTable.examples";
-import LetterDetails, { GmailLink, LetterHistory } from "@/app/(staff)/staff/_components/LetterDetails";
+import LetterDetails, { LetterHistory } from "@/app/(staff)/staff/_components/LetterDetails";
+import FindInGmail from "@/app/(staff)/staff/_components/FindInGmail";
+import CopyButton from "@/app/(staff)/staff/_components/ui/CopyButton";
 import DevLogin from "@/app/(staff)/staff/_components/DevLogin";
 import LoginCard from "@/app/(staff)/staff/_components/LoginCard";
 import LoginForm from "@/app/(staff)/staff/_components/LoginForm";
@@ -2537,6 +2539,20 @@ export const staff: Group = {
       ],
     },
     {
+      name: "CopyButton",
+      file: "app/(staff)/staff/_components/ui/CopyButton.tsx",
+      variants: [
+        {
+          label: "Copies its text, saying so a moment",
+          render: () => (
+            <StaffPage as="div">
+              <CopyButton text="rfc822msgid:4f1c@pauseai.uk" label="Copy" copied="Copied" />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
       name: "Menu",
       file: "app/(staff)/staff/_components/ui/Menu.tsx",
       variants: [
@@ -2675,7 +2691,7 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/LetterDetails.tsx",
       variants: [
         {
-          label: "A supporter's letter that bounced, with its copy in the policy@ group",
+          label: "A supporter's letter that bounced, with Find it in Gmail for its copy in the policy inbox",
           render: () => (
             <StaffPage as="div">
               <LetterDetails letter={exampleSupporterLetterDetails} />
@@ -2721,25 +2737,28 @@ export const staff: Group = {
       ],
     },
     {
-      name: "GmailLink",
-      file: "app/(staff)/staff/_components/LetterDetails.tsx",
+      name: "FindInGmail",
+      file: "app/(staff)/staff/_components/FindInGmail.tsx",
       variants: [
         {
-          label: "PauseAI's letter, found by a Gmail search",
+          label: "A letter sent from policy@, by its Message-ID: the box opens it there, or copies the search",
           render: () => (
             <StaffPage as="div">
-              <GmailLink letter={examplePauseaiLetterDetails} me="jo@pauseai.uk" />
+              <FindInGmail
+                find={{
+                  mailbox: "policy@pauseai.uk",
+                  search: "rfc822msgid:4f1c@pauseai.uk",
+                  threadId: "thread-seed-2",
+                }}
+              />
             </StaffPage>
           ),
         },
         {
-          label: "Sent from Jo's Gmail, seen by Jo: Open in Gmail, to its thread",
+          label: "One copied from Airtable, from a mailbox we don't know: only the search",
           render: () => (
             <StaffPage as="div">
-              <GmailLink
-                letter={{ ...examplePauseaiLetterDetails, sentFrom: "jo@pauseai.uk", gmailThreadId: "thread-seed-2" }}
-                me="jo@pauseai.uk"
-              />
+              <FindInGmail find={examplePauseaiLetterDetails.gmail} />
             </StaffPage>
           ),
         },

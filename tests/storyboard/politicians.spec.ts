@@ -385,7 +385,8 @@ test("Sync PauseAI's emails: one held back with no mailing", async ({ page, requ
   await expect(page.getByText(staffCopy.runs.status.incomplete).first()).toBeVisible();
   expect(runSql(flowDatabase, "SELECT count(*) FROM letters_from_pauseai")).toEqual(["5"]);
 
-  // Each is in its MP's history, leading to its own page under its mailing, and from there to a Gmail search for it.
+  // Each is in its MP's history, leading to its own page under its mailing, and from there to a Gmail search for it,
+  // in a mailbox Airtable didn't say.
   await page.goto(`${BASE}/staff/politicians`);
   await page.getByRole("link", { name: "Polly Placeholder" }).click();
   const history = page.getByRole("list", { name: staffCopy.politician.historyTitle });
@@ -394,11 +395,11 @@ test("Sync PauseAI's emails: one held back with no mailing", async ({ page, requ
     staffCopy.letters.oneTitle(staffCopy.letters.fromPauseai, "Polly Placeholder"),
   );
   await expect(page).toHaveURL(/\/staff\/mailings\/\d+\/letters\/\d+$/);
-  await expect(page.getByRole("link", { name: staffCopy.letters.detail.gmail })).toHaveAttribute(
-    "href",
-    /^https:\/\/mail\.google\.com\/mail\/#search\/to%3Apolly/,
-  );
-  await frame(page, "one of PauseAI's emails to Polly: its mailing, and a Gmail search for it");
+  await frame(page, "one of PauseAI's emails to Polly: its mailing, and Find it in Gmail");
+  await page.getByRole("button", { name: staffCopy.findInGmail.button }).click();
+  await expect(page.getByText(staffCopy.findInGmail.unknownMailbox)).toBeVisible();
+  await expect(page.getByText(/^to:polly\S+ after:\d+ before:\d+$/)).toBeVisible();
+  await frame(page, "Find it in Gmail: a search by Polly's address and when it went, in a mailbox we don't know");
 });
 
 test("Import pauseai.info's letters and Go to Parliament's meetings", async ({ page, request, flowDatabase }) => {

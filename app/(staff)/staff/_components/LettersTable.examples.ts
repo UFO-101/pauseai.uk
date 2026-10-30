@@ -27,15 +27,19 @@ export const exampleLetter: LetterSummary = {
   ],
 };
 
-/** A supporter's letter, for its page: its subject, and Postmark's ID for the email, as the policy@ group has it. */
+/** A supporter's letter, for its page: its subject, and its copy in the policy inbox, by Postmark's ID for the email. */
 export const exampleSupporterLetterDetails: SupporterLetterDetails = {
   ...exampleLetter,
   kind: "supporter",
   subject: "Please back a pause on frontier AI",
-  postmarkId: "0a1b2c3d-1111-2222-3333-444455556666",
+  gmail: {
+    mailbox: "policy@pauseai.uk",
+    search: "rfc822msgid:0a1b2c3d-1111-2222-3333-444455556666@mtasv.net",
+    threadId: null,
+  },
 };
 
-/** One of PauseAI's letters, copied from Airtable, for its page. */
+/** One of PauseAI's letters, copied from Airtable, for its page: found in Gmail by its MP's address and when it went, in a mailbox we don't know. */
 export const examplePauseaiLetterDetails: PauseaiLetterDetails = {
   kind: "pauseai",
   id: 21,
@@ -49,7 +53,10 @@ export const examplePauseaiLetterDetails: PauseaiLetterDetails = {
   mailingAsk: null,
   mailing: "Edinburgh Conference Nov 26 Invitation",
   personalised: true,
-  sentFrom: null,
-  gmailThreadId: null,
+  gmail: {
+    mailbox: null,
+    search: "to:polly.placeholder.mp@parliament.uk after:1759319700 before:1759320300",
+    threadId: null,
+  },
   events: [],
 };
