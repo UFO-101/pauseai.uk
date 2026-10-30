@@ -3,7 +3,7 @@
 import type { JSONContent } from "@tiptap/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { Button, ButtonLink } from "@/components/ui/Button";
+import { Button, ButtonAnchor } from "@/components/ui/Button";
 import { Select, TextInput } from "@/components/ui/Controls";
 import { Field, Hint, Label } from "@/components/ui/Field";
 import { Muted } from "@/components/ui/Text";
@@ -259,6 +259,10 @@ export default function MailingWriter({
     return id.current === null ? newPath : `/staff/mailings/${id.current}`;
   }
 
+  /** The politicians list, choosing who this mailing goes to: the draft `saved`, or a new mailing if it's not saved. */
+  const whoPath = (saved: number | null) =>
+    filtersPath("/staff/politicians", { ...data.filter.params, mailing: saved ? String(saved) : NEW_MAILING });
+
   /** The draft's ID, making it now if it isn't saved yet, as attaching a file is worth keeping. */
   async function draftId(): Promise<number> {
     clearTimeout(timer.current);
@@ -368,17 +372,21 @@ export default function MailingWriter({
         <Card span={6} title={<Numbered n={1}>{copy.sections.who}</Numbered>} id="who-title">
           <div className={styles.who}>
             {who}
-            <ButtonLink
+            <ButtonAnchor
               variant="primary"
               size="small"
               fit
-              href={filtersPath("/staff/politicians", {
-                ...data.filter.params,
-                mailing: savedId ? String(savedId) : NEW_MAILING,
-              })}
+              href={whoPath(savedId)}
+              onClick={async (event) => {
+                // What's typed is saved first, so going to the list loses none of it; a new
+                // mailing worth keeping becomes a draft, which the list then chooses for.
+                event.preventDefault();
+                await saveNow();
+                leavePage(whoPath(id.current));
+              }}
             >
               {copy.changeWho}
-            </ButtonLink>
+            </ButtonAnchor>
           </div>
           {data.unknown.length > 0 && <Strip tone="amber">{copy.unknownFilter(data.unknown.join(", "))}</Strip>}
           <p className={styles.count}>{copy.willGet(data.recipients.length)}</p>

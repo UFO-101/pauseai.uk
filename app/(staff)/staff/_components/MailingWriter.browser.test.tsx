@@ -542,6 +542,33 @@ describe("MailingWriter", () => {
     await expect.element(region(copy.sections.send).getByText(copy.problems["not-connected"])).toBeVisible();
   });
 
+  it("saves a draft's change before Change who goes to the list", async () => {
+    const { actions } = await renderWriter({ draft: exampleWrittenMailing });
+    await field(copy.subject).fill("Changed at once");
+    await page.getByRole("link", { name: copy.changeWho }).click();
+    await expect.poll(() => leavePage.mock.calls.length, WAIT).toBe(1);
+    expect(actions.save).toHaveBeenCalledTimes(1);
+    expect(actions.save.mock.calls[0][2]).toEqual({ subject: "Changed at once" });
+    expect(leavePage.mock.calls[0][0]).toMatch(/[?&]mailing=12$/);
+  });
+
+  it("makes a new mailing a draft before Change who, so the list chooses for it", async () => {
+    const { actions } = await renderWriter();
+    await field(copy.subject).fill("Kept");
+    await page.getByRole("link", { name: copy.changeWho }).click();
+    await expect.poll(() => leavePage.mock.calls.length, WAIT).toBe(1);
+    expect(actions.start).toHaveBeenCalledTimes(1);
+    expect(leavePage.mock.calls[0][0]).toMatch(/[?&]mailing=21$/);
+  });
+
+  it("keeps a new mailing with nothing worth keeping new, through Change who", async () => {
+    const { actions } = await renderWriter();
+    await page.getByRole("link", { name: copy.changeWho }).click();
+    await expect.poll(() => leavePage.mock.calls.length, WAIT).toBe(1);
+    expect(actions.start).not.toHaveBeenCalled();
+    expect(leavePage.mock.calls[0][0]).toMatch(/[?&]mailing=new$/);
+  });
+
   it("adds an ask from a new mailing with nothing worth keeping, coming back to the new mailing", async () => {
     const { actions } = await renderWriter();
     await page.getByRole("link", { name: copy.newAsk.link }).click();
