@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { listAsks } from "@/lib/server/asks";
+import { mailingTitle } from "@/lib/server/mailings";
 import { listParties, politiciansPage, politiciansSearch, type PoliticiansSearch } from "@/lib/server/politicians";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { changeMailingWho } from "../../mailing-actions";
 import PoliticianFilters, { politicianWords } from "../../_components/PoliticianFilters";
-import PoliticiansList, { HouseTabs } from "../../_components/PoliticiansList";
+import PoliticiansList, { ChoosingStrip, HouseTabs } from "../../_components/PoliticiansList";
 import { filteredTitle } from "../../_components/ui/FilterBar";
 
 type Props = { searchParams: Promise<Partial<PoliticiansSearch>> };
@@ -21,9 +22,16 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 export default async function PoliticiansPage({ searchParams }: Props) {
   await requireStaff();
   const { filter, ...search } = politiciansSearch(await searchParams);
-  const [list, asks, parties] = await Promise.all([politiciansPage(filter), listAsks(), listParties()]);
+  const [list, asks, parties, title] = await Promise.all([
+    politiciansPage(filter),
+    listAsks(),
+    listParties(),
+    // The draft's title, while the list is choosing who a draft goes to.
+    /^\d+$/.test(search.mailing) ? mailingTitle(Number(search.mailing)) : undefined,
+  ]);
   return (
     <>
+      <ChoosingStrip search={search} title={title} />
       <h1>{staffCopy.politicians.title}</h1>
       <HouseTabs search={search} />
       <PoliticianFilters search={search} asks={asks} parties={parties} />

@@ -1,0 +1,21 @@
+/* The bar while the list is choosing who a mailing is for: dark, so it
+   stands apart from the page, held at the foot of the window as the list
+   scrolls, the count at the left and the button at the right. */
+.bar {
+  position: sticky;
+  bottom: var(--space-4);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--charcoal);
+  color: var(--on-dark);
+  box-shadow: 0 var(--space-2) var(--space-6) var(--shadow-strong);
+}
+
+.count {
+  font-weight: 600;
+}

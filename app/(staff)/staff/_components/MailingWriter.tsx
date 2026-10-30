@@ -26,7 +26,7 @@ import { looksLikeEmail } from "@/lib/email-your-mp";
 import { named } from "@/lib/named-address";
 import { leavePage } from "@/lib/leave-page";
 import { scheduleProblems } from "@/lib/mailing-schedule";
-import { filtersPath } from "@/lib/staff-search";
+import { filtersPath, NEW_MAILING } from "@/lib/staff-search";
 import { earliestHour, fromLondon, londonDayHour, londonWhen } from "@/lib/staff-time";
 import type { ChannelResult } from "@/lib/server/mailing-channels";
 import type { MailingAttachmentSummary, SaveResult, ScheduleResult, WrittenMailing } from "@/lib/server/mailing-drafts";
@@ -371,7 +371,7 @@ export default function MailingWriter({
             <a
               href={filtersPath("/staff/politicians", {
                 ...data.filter.params,
-                mailing: savedId ? String(savedId) : "",
+                mailing: savedId ? String(savedId) : NEW_MAILING,
               })}
             >
               {copy.changeWho}

@@ -62,6 +62,12 @@ export function lettersSearch({
   return { status, q, answered, campaign, consent, page, filter: { ...filter, page: pageNumber(page) } };
 }
 
+/**
+ * The politicians list's `mailing` parameter for a mailing not yet written:
+ * the list is choosing who a new one is for. Any other value is a draft's ID.
+ */
+export const NEW_MAILING = "new";
+
 /** A mailing's ID from its page's URL: a whole number, or undefined. */
 export function mailingId(id: string): number | undefined {
   return politicianId(id);

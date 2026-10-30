@@ -2,7 +2,7 @@
 // frame they're in, which sets the compact density, on fake
 // politicians, letters, runs and changes. Their links go to /staff pages,
 // which send anyone without a session to the login page.
-import { Button } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import ChangesTable from "@/app/(staff)/staff/_components/ChangesTable";
 import EmailBlockFilters from "@/app/(staff)/staff/_components/EmailBlockFilters";
 import FilterBar from "@/app/(staff)/staff/_components/ui/FilterBar";
@@ -63,7 +63,7 @@ import NavFold from "@/app/(staff)/staff/_components/ui/NavFold";
 import FormPending from "@/app/(staff)/staff/_components/ui/FormPending";
 import StaffLink from "@/app/(staff)/staff/_components/ui/StaffLink";
 import NavIcon from "@/app/(staff)/staff/_components/NavIcon";
-import { HouseTabs } from "@/app/(staff)/staff/_components/PoliticiansList";
+import { ChoosingStrip, HouseTabs } from "@/app/(staff)/staff/_components/PoliticiansList";
 import ErasedNotice from "@/app/(staff)/staff/_components/ErasedNotice";
 import ImportCard, { ImportCards } from "@/app/(staff)/staff/_components/ImportCard";
 import ImportIcon from "@/app/(staff)/staff/_components/ImportIcon";
@@ -89,9 +89,10 @@ import {
   exampleSupporterRows,
   exampleSupporterDetails,
 } from "@/app/(staff)/staff/_components/SupportersTable.examples";
-import { supportersSearch } from "@/lib/staff-search";
+import { NEW_MAILING, supportersSearch } from "@/lib/staff-search";
 import StaffPage from "@/app/(staff)/staff/_components/ui/StaffPage";
 import Grid, { Card } from "@/app/(staff)/staff/_components/ui/Grid";
+import PageTitle from "@/app/(staff)/staff/_components/ui/PageTitle";
 import Strip from "@/app/(staff)/staff/_components/ui/Strip";
 import Tabs from "@/app/(staff)/staff/_components/ui/Tabs";
 import Tag from "@/components/ui/Tag";
@@ -559,6 +560,28 @@ export const staff: Group = {
                   { key: "senedd", label: "Senedd", href: "#" },
                 ]}
               />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "PageTitle",
+      file: "app/(staff)/staff/_components/ui/PageTitle.tsx",
+      variants: [
+        {
+          label: "The title, with the page's main button at the right",
+          render: () => (
+            <StaffPage as="div">
+              <PageTitle
+                action={
+                  <ButtonLink variant="primary" fit href="#">
+                    New mailing
+                  </ButtonLink>
+                }
+              >
+                Mailings
+              </PageTitle>
             </StaffPage>
           ),
         },
@@ -1337,9 +1360,43 @@ export const staff: Group = {
       ],
     },
     {
+      name: "ChoosingStrip",
+      file: "app/(staff)/staff/_components/PoliticiansList.tsx",
+      variants: [
+        {
+          label: "Choosing who a new mailing is for, with Cancel",
+          render: () => (
+            <StaffPage as="div">
+              <ChoosingStrip search={{ ...EMPTY_POLITICIAN_FILTERS, mailing: NEW_MAILING }} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Choosing who a draft goes to, named, with the way back to it",
+          render: () => (
+            <StaffPage as="div">
+              <ChoosingStrip search={{ ...EMPTY_POLITICIAN_FILTERS, mailing: "12" }} title="Edinburgh thank-you" />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
       name: "PoliticiansList",
       file: "app/(staff)/staff/_components/PoliticiansList.tsx",
       variants: [
+        {
+          label: "Choosing who a new mailing is for: the bar at the foot writes to these",
+          render: () => (
+            <StaffPage as="div">
+              <PoliticiansListExample
+                list={examplePoliticiansPage}
+                search={{ ...EMPTY_POLITICIAN_FILTERS, house: "commons", mailing: NEW_MAILING }}
+                asks={exampleAsks}
+              />
+            </StaffPage>
+          ),
+        },
         {
           label: "After a draft's Change who: the button makes the draft go to these",
           render: () => (

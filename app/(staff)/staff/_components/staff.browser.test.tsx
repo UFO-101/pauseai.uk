@@ -66,7 +66,7 @@ import Alert from "./Alert";
 import Breadcrumb from "./Breadcrumb";
 import EraseLink from "./EraseLink";
 import DeletePolitician from "./DeletePolitician";
-import PoliticiansList, { HouseTabs } from "./PoliticiansList";
+import PoliticiansList, { ChoosingStrip, HouseTabs } from "./PoliticiansList";
 import { emptyPoliticiansSearch, examplePoliticiansPage } from "./PoliticianTable.examples";
 import MailingsTable, { mailingColumns } from "./MailingsTable";
 import { exampleMailings } from "./MailingsTable.examples";
@@ -94,7 +94,7 @@ import {
 } from "./SupportersTable.examples";
 import PermissionTiles from "./PermissionTiles";
 import { CHANNELS, topicsOf, type Reason, type Topic } from "@/lib/contact-permissions";
-import { lettersSearch, supportersSearch } from "@/lib/staff-search";
+import { lettersSearch, NEW_MAILING, supportersSearch } from "@/lib/staff-search";
 import Table from "@/components/ui/Table";
 
 const [pm, bill] = campaigns;
@@ -819,6 +819,33 @@ describe("HouseTabs", () => {
   });
 });
 
+describe("ChoosingStrip", () => {
+  const copy = staffCopy.mailingPages;
+
+  it("is nothing unless the list is choosing who a mailing is for", async () => {
+    const { container } = await render(<ChoosingStrip search={emptyPoliticiansSearch} />);
+    expect(container.textContent).toBe("");
+  });
+
+  it("says what to do for a new mailing, with Cancel back to the mailings", async () => {
+    await render(<ChoosingStrip search={{ ...emptyPoliticiansSearch, mailing: NEW_MAILING }} />);
+    await expect.element(page.getByText(copy.choosingNew)).toBeVisible();
+    await expect.element(page.getByRole("link", { name: copy.cancelNew })).toHaveAttribute("href", "/staff/mailings");
+  });
+
+  it("names the draft, or says it's untitled, with the way back to it", async () => {
+    const { rerender } = await render(
+      <ChoosingStrip search={{ ...emptyPoliticiansSearch, mailing: "12" }} title="Lords only" />,
+    );
+    await expect.element(page.getByText(copy.choosingDraft("Lords only"))).toBeVisible();
+    await expect
+      .element(page.getByRole("link", { name: copy.backToDraft }))
+      .toHaveAttribute("href", "/staff/mailings/12");
+    await rerender(<ChoosingStrip search={{ ...emptyPoliticiansSearch, mailing: "12" }} />);
+    await expect.element(page.getByText(copy.choosingDraft(copy.untitled))).toBeVisible();
+  });
+});
+
 describe("PoliticiansList", () => {
   const copy = staffCopy.politicians;
   const search = { ...emptyPoliticiansSearch, q: "pol", page: "2" };
@@ -840,8 +867,37 @@ describe("PoliticiansList", () => {
         changeWho={changeWho}
       />,
     );
+    await expect.element(page.getByText(staffCopy.mailingPages.choosingCount(150), { exact: true })).toBeVisible();
+    expect(page.getByRole("link", { name: staffCopy.mailingPages.mailThese(150) }).all()).toHaveLength(0);
     await page.getByRole("button", { name: staffCopy.mailingPages.useThese(150) }).click();
     await expect.poll(() => changeWho.mock.calls.length).toBe(1);
+  });
+
+  it("choosing who a new mailing is for, the bar at the foot writes to who the filters find", async () => {
+    const { rerender } = await render(
+      <PoliticiansList
+        list={{ ...examplePoliticiansPage, total: 150 }}
+        search={{ ...search, mailing: NEW_MAILING }}
+        asks={exampleAsks}
+        changeWho={vi.fn()}
+      />,
+    );
+    const bar = page.getByRole("region", { name: staffCopy.mailingPages.choosingCount(150) });
+    await expect
+      .element(bar.getByRole("link", { name: staffCopy.mailingPages.writeToThese(150) }))
+      .toHaveAttribute("href", "/staff/mailings/new?q=pol");
+    expect(page.getByRole("link", { name: staffCopy.mailingPages.mailThese(150) }).all()).toHaveLength(0);
+    await rerender(
+      <PoliticiansList
+        list={{ ...examplePoliticiansPage, total: 1 }}
+        search={{ ...search, mailing: NEW_MAILING }}
+        asks={exampleAsks}
+        changeWho={vi.fn()}
+      />,
+    );
+    await expect
+      .element(page.getByRole("region", { name: staffCopy.mailingPages.choosingCount(1) }))
+      .toHaveTextContent(staffCopy.mailingPages.writeToThese(1));
   });
 
   it("is the count, the table and the pages, and links to those the search finds elsewhere", async () => {

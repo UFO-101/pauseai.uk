@@ -3,13 +3,16 @@ import { Button, ButtonLink } from "@/components/ui/Button";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { Ask } from "@/lib/server/asks";
 import type { PoliticiansPage, PoliticiansSearch } from "@/lib/server/politicians";
-import { filtersPath, pageParam, storedFilter, valuesOf } from "@/lib/staff-search";
+import { filtersPath, NEW_MAILING, pageParam, storedFilter, valuesOf } from "@/lib/staff-search";
 import PoliticianTable, { politicianColumns } from "./PoliticianTable";
+import styles from "./PoliticiansList.module.css";
 import ListFrame from "./ui/ListFrame";
+import Strip from "./ui/Strip";
 import Tabs from "./ui/Tabs";
 
 const PATH = "/staff/politicians";
 const copy = staffCopy.politicians;
+const mailingCopy = staffCopy.mailingPages;
 
 /** The houses, as tabs over the list, each keeping the other filters and the sort, from the first page. */
 export function HouseTabs({ search }: { search: PoliticiansSearch }) {
@@ -35,16 +38,37 @@ export function HouseTabs({ search }: { search: PoliticiansSearch }) {
 export type ChangeWho = (form: FormData) => Promise<void>;
 
 /**
- * What to do with everyone the list's filters find: start a mailing to
- * them; or, after a draft's Change who (`search.mailing`), make that
- * draft go to them instead, by `changeWho`.
+ * At the top of the list while it's choosing who a mailing is for
+ * (`search.mailing`): what to do, for a new mailing or for the draft
+ * titled `title`, and the way back, choosing no one.
  */
-function MailThese({ search, total, changeWho }: { search: PoliticiansSearch; total: number; changeWho: ChangeWho }) {
+export function ChoosingStrip({ search, title }: { search: PoliticiansSearch; title?: string }) {
+  if (!search.mailing) return null;
+  const isNew = search.mailing === NEW_MAILING;
+  return (
+    <Strip
+      action={
+        <Link href={isNew ? "/staff/mailings" : `/staff/mailings/${search.mailing}`}>
+          {isNew ? mailingCopy.cancelNew : mailingCopy.backToDraft}
+        </Link>
+      }
+    >
+      <span>{isNew ? mailingCopy.choosingNew : mailingCopy.choosingDraft(title ?? mailingCopy.untitled)}</span>
+    </Strip>
+  );
+}
+
+/**
+ * What to do with everyone the list's filters find while choosing who a
+ * mailing is for: a new one's written to them; a draft, after its Change
+ * who, goes to them instead, by `changeWho`.
+ */
+function TakeThese({ search, total, changeWho }: { search: PoliticiansSearch; total: number; changeWho: ChangeWho }) {
   const who = storedFilter("politicians", search).params;
-  if (!search.mailing) {
+  if (search.mailing === NEW_MAILING) {
     return (
-      <ButtonLink variant="primary" size="small" fit href={filtersPath("/staff/mailings/new", who)}>
-        {staffCopy.mailingPages.mailThese(total)}
+      <ButtonLink variant="primary" fit href={filtersPath("/staff/mailings/new", who)}>
+        {mailingCopy.writeToThese(total)}
       </ButtonLink>
     );
   }
@@ -54,10 +78,24 @@ function MailThese({ search, total, changeWho }: { search: PoliticiansSearch; to
       {Object.entries(who).flatMap(([name, value]) =>
         valuesOf(value).map((one) => <input key={`${name}=${one}`} type="hidden" name={name} value={one} />),
       )}
-      <Button variant="primary" type="submit" size="small" fit>
-        {staffCopy.mailingPages.useThese(total)}
+      <Button variant="primary" type="submit" fit>
+        {mailingCopy.useThese(total)}
       </Button>
     </form>
+  );
+}
+
+/**
+ * The bar at the foot of the window while the list is choosing who a
+ * mailing is for: how many the filters find, and the button that takes
+ * them. It stays in sight as the list scrolls, so the way on is always there.
+ */
+function ChoosingBar({ search, total, changeWho }: { search: PoliticiansSearch; total: number; changeWho: ChangeWho }) {
+  return (
+    <div className={styles.bar} role="region" aria-label={mailingCopy.choosingCount(total)}>
+      <span className={styles.count}>{mailingCopy.choosingCount(total)}</span>
+      <TakeThese search={search} total={total} changeWho={changeWho} />
+    </div>
   );
 }
 
@@ -66,7 +104,8 @@ function MailThese({ search, total, changeWho }: { search: PoliticiansSearch; to
  * the table and the way through its pages; or, when a search finds no one,
  * the nearest names. Under it, how
  * many the search finds in other houses, out of office or among the test
- * politicians, linked to them.
+ * politicians, linked to them. While it's choosing who a mailing is for,
+ * the bar at the foot takes the place of Mail these.
  * A new filter or sort starts from the first page.
  */
 export default function PoliticiansList({
@@ -97,7 +136,18 @@ export default function PoliticiansList({
           pageSize={list.pageSize}
           href={(n) => filtersPath(PATH, search, pageParam(n))}
           download={(format) => filtersPath(`${PATH}/download`, filters, { format })}
-          actions={<MailThese search={search} total={list.total} changeWho={changeWho} />}
+          actions={
+            search.mailing ? undefined : (
+              <ButtonLink
+                variant="primary"
+                size="small"
+                fit
+                href={filtersPath("/staff/mailings/new", storedFilter("politicians", search).params)}
+              >
+                {mailingCopy.mailThese(list.total)}
+              </ButtonLink>
+            )
+          }
           formats={["csv", "json", "vcf"]}
           columns={politicianColumns(asks, filters)}
           rows={list.politicians}
@@ -120,6 +170,7 @@ export default function PoliticiansList({
           <Link href={filtersPath(PATH, filters, { flag: "test" })}>{copy.tests(list.tests)}</Link>
         </p>
       )}
+      {search.mailing && <ChoosingBar search={search} total={list.total} changeWho={changeWho} />}
     </>
   );
 }

@@ -907,12 +907,8 @@ export const staffCopy = {
       "cannot-send": "Sending isn't built yet.",
     } as Record<string, string>,
     // The list of mailings.
-    // Under the drafts: how to start a mailing, around a link to the politicians list.
-    howToStart: {
-      before: "To start a new mailing, first choose who it's for on the ",
-      link: "politicians list",
-      after: ", then press “Mail these”.",
-    },
+    // At the top right of the list of mailings: to the politicians list, to choose who a new one is for.
+    newMailing: "⁂ New mailing",
     drafts: "Drafts",
     comingUp: "Coming up",
     sent: "Sent",
@@ -922,6 +918,17 @@ export const staffCopy = {
     comingLine: (by: string, when: string, n: number) => `${by} · ${when} · to ${n} ${n === 1 ? "person" : "people"}`,
     // On the politicians list, beside Download.
     mailThese: (n: number) => `Mail these ${n}…`,
+    // Choosing who a mailing is for on the politicians list: at the top, what to do, for a new mailing or for a draft named by its title.
+    choosingNew:
+      "⁂ New mailing: who's it for? Filter the list to the people you want, then press the button at the foot.",
+    choosingDraft: (title: string) =>
+      `⁂ Choosing who “${title}” goes to. Filter the list to the people you want, then press the button at the foot.`,
+    // Beside it, back to the mailings, or to the draft, choosing no one.
+    cancelNew: "⁂ Cancel",
+    backToDraft: "⁂ Back to the mailing",
+    // In the bar at the foot of the list: how many, and the button that takes them.
+    choosingCount: (n: number) => `⁂ ${n} ${n === 1 ? "politician" : "politicians"}, for the mailing`,
+    writeToThese: (n: number) => (n === 1 ? "⁂ Write to this one" : `⁂ Write to these ${n}`),
     useThese: (n: number) => (n === 1 ? "Use this one for the draft" : `Use these ${n} for the draft`),
     // A mailing's own page.
     states: {
