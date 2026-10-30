@@ -69,13 +69,13 @@ export function londonClock(at: string): string {
   });
 }
 
-/** When a mailing due at `at` goes, in London: "Thursday 30 October at 09:18". */
-export function londonWhen(at: string): string {
+/** When a mailing due at `at` goes, in London: "Thursday 30 October at 09:18", or `short`, "Thu 30 Oct at 09:18". */
+export function londonWhen(at: string, length: "long" | "short" = "long"): string {
   const sends = sendsAt(at);
   const day = new Date(sends).toLocaleDateString("en-GB", {
-    weekday: "long",
+    weekday: length,
     day: "numeric",
-    month: "long",
+    month: length,
     timeZone: "Europe/London",
   });
   return `${day} at ${londonClock(sends)}`;

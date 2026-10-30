@@ -328,7 +328,7 @@ describe("MailingView", () => {
     const forms: FormData[] = [];
     const action = async (form: FormData) => void forms.push(form);
     await view({ written: { ...written, state: "scheduled" }, stop: action, reschedule: action });
-    await expect.element(page.getByText(copy.sends("Tuesday 1 December at 09:18"))).toBeVisible();
+    await expect.element(page.getByText(copy.sends("Tue 1 Dec at 09:18"))).toBeVisible();
     expect(page.getByText(copy.states.scheduled, { exact: true }).all()).toHaveLength(2);
     await expect.element(page.getByRole("link", { name: `11 ${copy.counts.sent}` })).not.toBeInTheDocument();
     await page.getByRole("button", { name: copy.changeTime }).click();

@@ -132,7 +132,7 @@ function Standing({
         <Card span={6} as="div">
           <div className={styles.standing}>
             <div className={styles.due}>
-              <strong>{copy.sends(londonWhen(written.dueAt!))}</strong>
+              <strong>{copy.sends(londonWhen(written.dueAt!, "short"))}</strong>
               <span>{copy.scheduledLine(mailing.to, written.fromName || written.sentFrom!)}</span>
             </div>
             <div className={styles.actions}>
@@ -181,7 +181,7 @@ function When({ mailing, written }: { mailing: Mailing; written?: WrittenMailing
   if (written?.state === "scheduled") {
     return (
       <BandFact label={copy.states.scheduled} detail={by}>
-        {londonWhen(written.dueAt!)}
+        {londonWhen(written.dueAt!, "short")}
       </BandFact>
     );
   }
