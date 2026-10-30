@@ -819,7 +819,6 @@ export const staffCopy = {
       ]
         .filter(Boolean)
         .join(" and ")}, so they're left out.`,
-    seeWho: "See who",
     leftOutReasons: {
       "no-address": "no email address",
       blocked: "address blocked",
@@ -920,10 +919,10 @@ export const staffCopy = {
     // Choosing who a mailing is for on the politicians list: at the top, for a new mailing or for a draft named by its title,
     // and under that what to do.
     choosingNew: "New mailing: who's it for?",
-    choosingDraft: (title: string) => `Choosing who “${title}” goes to`,
+    choosingDraft: (title: string) => `Changing who “${title}” goes to`,
     // What to do, for a new mailing and for a draft, each naming its bar's button. Not on a phone, where the title is enough.
     choosingHowNew: "Filter the list to the people you want, then press “Write to these” at the bottom of the page.",
-    choosingHowDraft: "Change the filter, then press “Use these” at the bottom of the page.",
+    choosingHowDraft: "Update the filter, then press “Use these” at the bottom of the page.",
     // Beside it, back to the mailings, or to the draft, choosing no one.
     cancelNew: "Cancel",
     backToDraft: "Cancel changing who",

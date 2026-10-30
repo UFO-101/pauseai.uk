@@ -228,7 +228,8 @@ describe("MailingWriter", () => {
     await expect.element(page.getByText("Who it's to")).toBeVisible();
     await expect.element(page.getByText(copy.willGet(2))).toBeVisible();
     await expect.element(page.getByText(copy.unknownFilter("party=Gone"))).toBeVisible();
-    await page.getByText(copy.seeWho).click();
+    // The left out, opened by their summary's arrow.
+    await page.getByText(/the filter found/).click();
     await expect
       .element(page.getByRole("link", { name: "Ned Noaddress" }))
       .toHaveAttribute("href", "/staff/politicians/9");

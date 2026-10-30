@@ -393,8 +393,7 @@ export default function MailingWriter({
           {data.leftOut.length > 0 && (
             <details className={styles.leftOut}>
               <summary>
-                {copy.leftOut(data.recipients.length + data.leftOut.length, noAddress, data.leftOut.length - noAddress)}{" "}
-                <span className={styles.seeWho}>{copy.seeWho}</span>
+                {copy.leftOut(data.recipients.length + data.leftOut.length, noAddress, data.leftOut.length - noAddress)}
               </summary>
               <ul>
                 {data.leftOut.map((one) => (
