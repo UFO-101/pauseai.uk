@@ -94,6 +94,12 @@ describe("deliveryProblem", () => {
     expect(deliveryProblem({ RecordType: "Bounce", MessageID: "msg-1" })).toBeUndefined();
     expect(deliveryProblem({})).toBeUndefined();
   });
+
+  it("is nothing for an automatic reply, which Postmark reports as a bounce", () => {
+    expect(
+      deliveryProblem({ RecordType: "Bounce", Type: "AutoResponder", Email: "a@example.org", MessageID: "msg-1" }),
+    ).toBeUndefined();
+  });
 });
 
 describeWithDatabase("forwardReply", () => {

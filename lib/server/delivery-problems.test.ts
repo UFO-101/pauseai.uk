@@ -103,6 +103,16 @@ describeWithDatabase("handleDeliveryProblem", () => {
     ]);
   });
 
+  it("blocks the sender's own address when their copy bounces, but leaves the letter alone and tells nobody", async () => {
+    await sentEmail();
+    const sent = postmark();
+    await handleDeliveryProblem({ ...BOUNCE, address: "Jane@Example.com" }, REQUEST);
+    expect(await letter()).toBe("sent");
+    expect(await events()).toEqual([]);
+    expect(await query("SELECT address FROM email_blocks")).toEqual([{ address: "jane@example.com" }]);
+    expect(sent).toEqual([]);
+  });
+
   it("marks a spam complaint, and tells staff", async () => {
     await sentEmail();
     const sent = postmark();

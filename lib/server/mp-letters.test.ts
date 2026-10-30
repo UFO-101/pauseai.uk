@@ -39,6 +39,7 @@ const FORM: LetterForm = {
 type Sent = {
   From: string;
   To: string;
+  Cc?: string;
   Bcc?: string;
   ReplyTo?: string;
   Subject: string;
@@ -159,11 +160,12 @@ describeWithDatabase("submitLetter", () => {
     expect(letter.reply_hash).toMatch(/^jane\.smith\.\d{6}$/);
     const address = `${letter.reply_hash}@letters.pauseai.uk`;
     expect(sent).toHaveLength(1);
+    expect(sent[0].ReplyTo).toBeUndefined();
     expect(sent[0]).toMatchObject({
       From: `"Jane Smith via PauseAI" <${address}>`,
       To: '"Testy McTestface MP" <test-mp@example.org>',
       Bcc: "replies@pauseai.uk",
-      ReplyTo: `"Jane Smith" <jane@example.com>, "PauseAI Policy Team" <replies@pauseai.uk>, "PauseAI Letters" <${address}>`,
+      Cc: '"Jane Smith" <jane@example.com>',
       Subject: "Subject",
       TextBody: "Dear Mr McTestface,\n\nPlease do sign.\n\nThanks,\n\nJane Smith\n\n1 High Street\nTestville\nZZ9 9ZZ",
       HtmlBody:
@@ -209,15 +211,11 @@ describeWithDatabase("submitLetter", () => {
     ).toEqual(["sending", "sent"]);
   });
 
-  it("leaves the shared inbox out of Reply-To and Bcc when there isn't one", async () => {
+  it("sends no Bcc when there's no shared inbox", async () => {
     vi.stubEnv("POLICY_INBOX", "");
     const sent = postmark();
     await submitLetter(FORM);
-    const [{ reply_hash }] = await query<{ reply_hash: string }>("SELECT reply_hash FROM letters_from_supporters");
     expect(sent[0].Bcc).toBeUndefined();
-    expect(sent[0].ReplyTo).toBe(
-      `"Jane Smith" <jane@example.com>, "PauseAI Letters" <${reply_hash}@letters.pauseai.uk>`,
-    );
   });
 
   it("sends a campaign without attachments without any", async () => {
@@ -328,6 +326,37 @@ describeWithDatabase("submitLetter", () => {
 
     postmark();
     expect(await submitLetter(FORM)).toEqual({ ok: true });
+  });
+
+  it("leaves the sender off the Cc when their address is blocked", async () => {
+    const sent = postmark();
+    await recordProblem({ address: "jane@example.com", messageId: null, kind: "hard", reason: "", canReset: true });
+    expect(await submitLetter(FORM)).toEqual({ ok: true });
+    expect(sent).toHaveLength(1);
+    expect(sent[0].Cc).toBeUndefined();
+  });
+
+  it("sends the letter again without the Cc when Postmark refuses the sender's address", async () => {
+    let tries = 0;
+    const sent = postmark(() =>
+      ++tries === 1
+        ? HttpResponse.json(
+            { ErrorCode: 406, Message: "Found inactive addresses: jane@example.com. Inactive recipients are…" },
+            { status: 422 },
+          )
+        : HttpResponse.json({ ErrorCode: 0, MessageID: "msg-2" }),
+    );
+    expect(await submitLetter(FORM)).toEqual({ ok: true });
+    expect(sent.map((email) => email.Cc)).toEqual(['"Jane Smith" <jane@example.com>', undefined]);
+    expect(await query("SELECT status FROM letters")).toEqual([{ status: "sent" }]);
+  });
+
+  it("doesn't send again when it failed for another reason, with the sender's address blocked or not", async () => {
+    const sent = postmark(() => HttpResponse.json({ ErrorCode: 300, Message: "Invalid" }, { status: 422 }));
+    expect(await submitLetter(FORM)).toMatchObject({ status: 500 });
+    await recordProblem({ address: "jane@example.com", messageId: null, kind: "hard", reason: "", canReset: true });
+    expect(await submitLetter(FORM)).toMatchObject({ status: 500 });
+    expect(sent).toHaveLength(2);
   });
 
   it("keeps a letter to an MP whose address is blocked as not sent, and says why", async () => {

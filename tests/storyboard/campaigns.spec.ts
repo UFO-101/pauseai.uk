@@ -104,16 +104,13 @@ test(
     await expect(page.getByRole("status")).toHaveText(copy.sent.body("Testy McTestface MP"));
     expect(await adsEvents(page)).toBe(0);
 
-    const letter = newestEmail(
-      (email) => email.To.includes("test-mp@example.org") && !!email.ReplyTo?.includes(sender),
-    )!;
+    const letter = newestEmail((email) => email.To.includes("test-mp@example.org") && !!email.Cc?.includes(sender))!;
     // The letter's own address, whatever its shape (lib/server/mp-letters.test.ts checks that), so main gets this far too.
     const address = letter.From.match(/<([^>]+@letters\.pauseai\.uk)>/)![1];
     expect(letter.From).toBe(`"Jane Smith via PauseAI" <${address}>`);
     expect(letter.Bcc).toBe("replies@example.org");
-    expect(letter.ReplyTo).toBe(
-      `"Jane Smith" <${sender}>, "PauseAI Policy Team" <replies@example.org>, "PauseAI Letters" <${address}>`,
-    );
+    expect(letter.Cc).toBe(`"Jane Smith" <${sender}>`);
+    expect(letter.ReplyTo).toBeUndefined();
     expect(letter.TextBody).toMatch(/Jane Smith\n\n1 High Street, Testville\nZZ9 9ZZ$/);
     expect(letter.Attachments!.map((a) => a.Name)).toEqual(campaigns[0].attachments.map((a) => a.file));
     await emailFrame(page, letter, "the letter the MP gets");
@@ -301,7 +298,7 @@ test("Format the letter and paste into it: the preview is what the MP gets", asy
   await frame(page, "the preview, formatted as written");
   await sendLetter(page);
 
-  const sent = newestEmail((email) => email.To.includes("test-mp@example.org") && !!email.ReplyTo?.includes(sender))!;
+  const sent = newestEmail((email) => email.To.includes("test-mp@example.org") && !!email.Cc?.includes(sender))!;
   expect(sent.HtmlBody).toContain("<strong>Please reply.</strong>");
   expect(sent.HtmlBody).toMatch(/<ul>\s*<li><p>First reason<\/p><\/li>\s*<li><p>Second reason<\/p><\/li>\s*<\/ul>/);
   expect(sent.HtmlBody).toContain('See <a href="https://example.com/">this report</a> and red words.');

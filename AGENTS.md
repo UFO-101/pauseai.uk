@@ -103,6 +103,10 @@ People write the words visitors and recipients read: page text, letters, emails,
 
 `tests/checks/placeholder-copy.test.ts` fails while ⁂ appears anywhere in the repo outside this file. So placeholders can't be merged by accident.
 
+## The repo is public
+
+Anyone can read this repo and its history, so nothing private goes in it: not in code, tests, fixtures, docs, plans or commit messages. That means no supporter's, volunteer's or constituent's name, email, phone number, postcode or address, no text of their letters or emails, and no secrets or tokens. When an example needs a person, make one up (Jane Smith, jane.smith@example.com). Real data you look at while working, from the database, Gmail, Postmark or Airtable, stays in `tmp/`, which is gitignored, or the scratchpad. Public figures in their public role, such as an MP and their office address, are fine.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 ## This is NOT the Next.js you know

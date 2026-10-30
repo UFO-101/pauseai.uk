@@ -50,7 +50,7 @@ test("A letter bounces: staff are emailed, the address is blocked", async ({
 }, testInfo) => {
   const sender = `jane+${testInfo.testId}@example.com`;
   const messageId = await sentLetterId(page, flowDatabase, sender, bouncy);
-  const sent = newestEmail((email) => email.ReplyTo?.includes(sender) ?? false);
+  const sent = newestEmail((email) => email.Cc?.includes(sender) ?? false);
   expect(sent?.To).toBe(`"Bouncy McTestface MP" <${BOUNCY_ADDRESS}>`);
   await postBounce(request, messageId);
 

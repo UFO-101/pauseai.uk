@@ -35,9 +35,16 @@ async function markLetter(letterId: number | null, problem: DeliveryProblem): Pr
 /**
  * A letter's bounce or complaint: the letter says so, and for a hard bounce
  * or complaint, staff are told, as the MP can't be written to until someone
- * fixes their address.
+ * fixes their address. One from the sender, who's on Cc, says nothing of the
+ * letter.
  */
 const letterProblem: Hook = async ({ letterId }, problem, request) => {
+  const [fromSender] = await query(
+    `SELECT 1 FROM letters_from_supporters s JOIN form_entries f ON f.id = s.entry_id
+     WHERE s.id = $1 AND lower(trim(f.email)) = lower(trim($2))`,
+    [letterId, problem.address],
+  );
+  if (fromSender) return;
   const mpName = await markLetter(letterId, problem);
   if (!mpName) return;
   const inbox = process.env.POLICY_INBOX;
