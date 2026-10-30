@@ -4,9 +4,13 @@ import type { MailingSummary } from "@/lib/server/mailings";
 /** A heading of the mailings page, and its mailings in order. */
 export type MailingGroup = { key: string; heading: string; mailings: MailingSummary[] };
 
-/** When a mailing went, for its group: its first letter sent, or else when it was due, or last changed. */
+/**
+ * When a mailing went, for its group, as an ISO string: its first letter
+ * sent, or else when it was due, or last changed. The database gives these
+ * as Dates, so each is read as one.
+ */
 export function mailingWhen(mailing: MailingSummary): string {
-  return mailing.sentAt ?? mailing.dueAt ?? mailing.updatedAt;
+  return new Date(mailing.sentAt ?? mailing.dueAt ?? mailing.updatedAt).toISOString();
 }
 
 /**

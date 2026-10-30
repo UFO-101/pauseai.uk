@@ -160,14 +160,14 @@ describe("MailingsOverview", () => {
         .getByRole("heading", { level: 2 })
         .all()
         .map((h) => h.element().textContent),
-    ).toEqual([copy.comingUp, "October 2026", "July 2025"]);
+    ).toEqual([copy.comingUp, "October 2026", "2025"]);
     // A draft: when it was saved, Draft and how many it's to; one untitled, said so.
-    await expect.element(row("Meet us in Westminster").first()).toHaveTextContent(copy.savedAt("28 Oct 2026"));
-    await expect.element(row("Meet us in Westminster").first()).toHaveTextContent(copy.toCount(412));
+    await expect.element(row("Meet us in Westminster").first()).toMatchTextContent(copy.savedAt("28 Oct 2026"));
+    await expect.element(row("Meet us in Westminster").first()).toMatchTextContent(copy.toCount(412));
     await expect.element(page.getByRole("link", { name: copy.untitled })).toHaveAttribute("href", "/staff/mailings/7");
     // Scheduled: when it goes, and how many it's to.
-    await expect.element(row("Edinburgh: one week to go")).toHaveTextContent("Friday 30 October at 09:18");
-    await expect.element(row("Edinburgh: one week to go")).toHaveTextContent(copy.states.scheduled);
+    await expect.element(row("Edinburgh: one week to go")).toMatchTextContent("Friday 30 October at 09:18");
+    await expect.element(row("Edinburgh: one week to go")).toMatchTextContent(copy.states.scheduled);
     // Sending: its bar, leading to it.
     await expect.element(page.getByRole("progressbar", { name: copy.sentLabel })).toHaveAttribute("value", "214");
     await expect.element(page.getByText(copy.sendingBar(212, 650))).toBeVisible();
@@ -175,16 +175,16 @@ describe("MailingsOverview", () => {
     await expect
       .element(page.getByRole("link", { name: copy.countsLabel("Invitation: AI safety conference, Edinburgh") }))
       .toHaveAttribute("href", "/staff/mailings/4");
-    await expect.element(row("AI safety conference")).toHaveTextContent("20 Oct");
-    await expect.element(row("AI safety conference")).not.toHaveTextContent("20 Oct 2026");
-    await expect.element(row("Ben Lake").first()).toHaveTextContent(`–${copy.counts.answered}`);
+    await expect.element(row("AI safety conference")).toMatchTextContent("20 Oct");
+    await expect.element(row("AI safety conference")).not.toMatchTextContent("20 Oct 2026");
+    await expect.element(row("Ben Lake").first()).toMatchTextContent(`–${copy.counts.answered}`);
     // Last year's, with its year.
-    await expect.element(row("Ben Lake").last()).toHaveTextContent("9 Jul 2025");
+    await expect.element(row("Ben Lake").last()).toMatchTextContent("9 Jul 2025");
     // Who it's from, or Airtable, and its ask, leading to who answered it.
     await expect
       .element(row("Nov 26"))
-      .toHaveTextContent(`${staffCopy.mailings.imported} · ${staffCopy.mailings.columns.ask}`);
-    await expect.element(row("AI safety conference")).toHaveTextContent("Jo Example · ");
+      .toMatchTextContent(`${staffCopy.mailings.imported} · ${staffCopy.mailings.columns.ask}`);
+    await expect.element(row("AI safety conference")).toMatchTextContent("Jo Example · ");
     await expect
       .element(row("Edinburgh: one week to go").getByRole("link", { name: "Edinburgh conference" }))
       .not.toBeInTheDocument();
@@ -200,8 +200,8 @@ describe("MailingsOverview", () => {
     await render(
       <MailingsOverview groups={mailingGroups({ drafts: [], comingUp: [], sent: [lone] }, new Date(now))} now={now} />,
     );
-    await expect.element(row("Ben Lake")).toHaveTextContent(`${staffCopy.mailings.columns.ask} Frontier AI letter`);
-    await expect.element(row("Ben Lake")).not.toHaveTextContent(" · ");
+    await expect.element(row("Ben Lake")).toMatchTextContent(`${staffCopy.mailings.columns.ask} Frontier AI letter`);
+    await expect.element(row("Ben Lake")).not.toMatchTextContent(" · ");
   });
 
   it("says when there are none", async () => {
@@ -235,9 +235,9 @@ describe("MailingView", () => {
 
   it("once sent: its band, how many answered, the email, and its recipients", async () => {
     await view({});
-    await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent(mailing.title);
+    await expect.element(page.getByRole("heading", { level: 1 })).toMatchTextContent(mailing.title);
     // With an ask, the bar says it's sent, not a tag.
-    await expect.element(page.getByText(copy.states.sent, { exact: true })).not.toBeInTheDocument();
+    expect(page.getByText(copy.states.sent, { exact: true }).all()).toHaveLength(1);
     await expect.element(page.getByText(copy.answeredBar(3, 10))).toBeVisible();
     await expect.element(page.getByRole("progressbar", { name: copy.counts.answered })).toHaveAttribute("value", "3");
     // The band: when, by whom, from where, the ask, and who it was for.
@@ -254,16 +254,16 @@ describe("MailingView", () => {
       .element(page.getByRole("link", { name: `11 ${copy.counts.sent}` }))
       .toHaveAttribute("href", "/staff/mailings/4");
     // Each recipient: their seat and party, their answer, how it went and their letter.
-    await expect.element(recipient("Polly")).toHaveTextContent("Cities of London and Westminster · Labour (Co-op)");
-    await expect.element(recipient("Polly")).toHaveTextContent(`✓ ${staffCopy.statuses.going}`);
-    await expect.element(recipient("Polly")).toHaveTextContent(staffCopy.mailings.columns.answered);
+    await expect.element(recipient("Polly")).toMatchTextContent("Cities of London and Westminster · Labour (Co-op)");
+    await expect.element(recipient("Polly")).toMatchTextContent(`✓ ${staffCopy.statuses.going}`);
+    await expect.element(recipient("Polly")).toMatchTextContent(staffCopy.mailings.columns.answered);
     await expect
       .element(recipient("Polly").getByRole("link", { name: copy.letterAndReply }))
       .toHaveAttribute("href", "/staff/mailings/4/letters/11");
-    await expect.element(recipient("Morag")).toHaveTextContent(staffCopy.letters.status.bounced);
+    await expect.element(recipient("Morag")).toMatchTextContent(staffCopy.letters.status.bounced);
     await expect.element(recipient("Morag").getByRole("link", { name: copy.theLetter })).toBeInTheDocument();
     // One skipped says why, with no letter to go to.
-    await expect.element(recipient("Dora")).toHaveTextContent(copy.skipReasons["left-office"]);
+    await expect.element(recipient("Dora")).toMatchTextContent(copy.skipReasons["left-office"]);
     await expect.element(recipient("Dora").getByRole("link", { name: copy.theLetter })).not.toBeInTheDocument();
     // The email as a mail app shows one: from, to and the subject, then the letter and its files.
     await expect.element(page.getByText("Jo Example <jo@pauseai.uk>")).toBeVisible();
@@ -288,7 +288,7 @@ describe("MailingView", () => {
       },
     });
     await expect.element(page.getByRole("progressbar")).not.toBeInTheDocument();
-    await expect.element(page.getByText(copy.states.sent, { exact: true })).toBeVisible();
+    expect(page.getByText(copy.states.sent, { exact: true }).all()).toHaveLength(2);
     await expect.element(page.getByRole("heading", { name: copy.tabs.replied })).toBeVisible();
     await expect
       .element(page.getByRole("link", { name: copy.showEveryone }))
@@ -298,11 +298,11 @@ describe("MailingView", () => {
       .toHaveAttribute("aria-current", "true");
     // Answered doesn't apply.
     await expect.element(page.getByText(`–${copy.counts.answered}`)).toBeVisible();
-    await expect.element(recipient("Polly")).toHaveTextContent(copy.tabs.replied);
-    await expect.element(recipient("Morag")).toHaveTextContent(staffCopy.letters.status.spam_complaint);
+    await expect.element(recipient("Polly")).toMatchTextContent(copy.tabs.replied);
+    await expect.element(recipient("Morag")).toMatchTextContent(staffCopy.letters.status.spam_complaint);
     // A status nobody knows any more, as it's stored, dated when the mailing last changed.
-    await expect.element(recipient("Dora")).toHaveTextContent("queued");
-    await expect.element(recipient("Dora")).toHaveTextContent("28 Oct 2026");
+    await expect.element(recipient("Dora")).toMatchTextContent("queued");
+    await expect.element(recipient("Dora")).toMatchTextContent("28 Oct 2026");
   });
 
   it("stopped, said so; sent at no time when nothing's gone", async () => {
@@ -324,10 +324,10 @@ describe("MailingView", () => {
     const action = async (form: FormData) => void forms.push(form);
     await view({ written: { ...written, state: "scheduled" }, stop: action, reschedule: action });
     await expect.element(page.getByText(copy.sends("Tuesday 1 December at 09:18"))).toBeVisible();
-    await expect.element(page.getByText(copy.states.scheduled, { exact: true })).toBeVisible();
+    expect(page.getByText(copy.states.scheduled, { exact: true }).all()).toHaveLength(2);
     await expect.element(page.getByRole("link", { name: `11 ${copy.counts.sent}` })).not.toBeInTheDocument();
     await page.getByRole("button", { name: copy.changeTime }).click();
-    await expect.element(page.getByRole("button", { name: copy.day })).toHaveTextContent("Tue 1 Dec 2026");
+    await expect.element(page.getByRole("button", { name: copy.day })).toMatchTextContent("Tue 1 Dec 2026");
     await page.getByRole("combobox").selectOptions("10");
     await page.getByRole("button", { name: copy.saveTime }).click();
     await page.getByRole("button", { name: copy.unschedule }).click();
@@ -373,7 +373,7 @@ describe("MailingView", () => {
     // Each hour says when a mailing due then goes, and those overnight, when nothing is sent, aren't offered.
     expect(page.getByRole("option").all()[0].element().textContent).toBe("06:18");
     // It goes at 09:00, five minutes from now in London: too soon, so 10:00, and the hours before it can't be.
-    await expect.element(day).toHaveTextContent("Tue 1 Dec 2026");
+    await expect.element(day).toMatchTextContent("Tue 1 Dec 2026");
     await expect.element(hour).toHaveValue("10");
     await expect.element(option(9)).toBeDisabled();
     await expect.element(option(10)).not.toBeDisabled();
@@ -431,12 +431,12 @@ describe("MailingView, for a mailing imported from Airtable", () => {
 
   it("is when it went, its counts, each recipient's outcome and how it was written, and that it has no text", async () => {
     await imported({ ask: null });
-    await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent(exampleMailing.title);
+    await expect.element(page.getByRole("heading", { level: 1 })).toMatchTextContent(exampleMailing.title);
     await expect.element(page.getByText(mailings.imported).first()).toBeVisible();
     await expect.element(page.getByText("1 Oct 2026, 09:00")).toBeVisible();
     await expect.element(page.getByText(mailings.recipientsCount(4))).toBeVisible();
     await expect.element(page.getByText(mailings.noText)).toBeVisible();
-    await expect.element(page.getByRole("row").filter({ hasText: "Polly" })).toHaveTextContent(mailings.personalised);
+    await expect.element(page.getByRole("row").filter({ hasText: "Polly" })).toMatchTextContent(mailings.personalised);
     await expect
       .element(page.getByRole("link", { name: "Morag Example" }))
       .toHaveAttribute("href", "/staff/politicians/8");

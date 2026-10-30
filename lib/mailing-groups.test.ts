@@ -28,10 +28,14 @@ const ids = (mailings: MailingSummary[]) => mailings.map((m) => m.id);
 describe("mailingWhen", () => {
   it("is when its first letter went, or else when it was due, or last changed", () => {
     expect(mailingWhen(one(1, { sentAt: "2026-10-01T09:00:00Z", dueAt: "2026-09-01T09:00:00Z" }))).toBe(
-      "2026-10-01T09:00:00Z",
+      "2026-10-01T09:00:00.000Z",
     );
-    expect(mailingWhen(one(1, { dueAt: "2026-09-01T09:00:00Z" }))).toBe("2026-09-01T09:00:00Z");
-    expect(mailingWhen(one(1, {}))).toBe(base.updatedAt);
+    expect(mailingWhen(one(1, { dueAt: "2026-09-01T09:00:00Z" }))).toBe("2026-09-01T09:00:00.000Z");
+    expect(mailingWhen(one(1, {}))).toBe("2026-01-01T00:00:00.000Z");
+    // As the database gives it.
+    expect(mailingWhen(one(1, { sentAt: new Date("2026-10-01T09:00:00Z") as unknown as string }))).toBe(
+      "2026-10-01T09:00:00.000Z",
+    );
   });
 });
 
