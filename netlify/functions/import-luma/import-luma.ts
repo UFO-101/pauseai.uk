@@ -1,16 +1,18 @@
 // Netlify scheduled function (a folder, so its test can sit beside it
-// without becoming a function too): hourly, asks the site to copy the Luma
-// calendar's events, guests and contacts (app/api/cron/import-luma).
+// without becoming a function too): hourly, starts the background function
+// that asks the site to copy the Luma calendar's events, guests and contacts
+// (import-luma-background). A run takes up to about 25 seconds, and Netlify
+// invokes a scheduled function again when it hasn't answered after about 15,
+// so this one answers as soon as the background function has started.
 // Scheduled functions run only on published production deploys. URL is set
 // by Netlify; CRON_SECRET by us.
 export default async function importLuma(): Promise<Response> {
-  const res = await fetch(`${process.env.URL}/api/cron/import-luma`, {
+  const background = await fetch(`${process.env.URL}/.netlify/functions/import-luma-background`, {
     method: "POST",
     headers: { Authorization: `Bearer ${process.env.CRON_SECRET}` },
   });
-  const body = await res.text();
-  if (!res.ok) throw new Error(`/api/cron/import-luma returned ${res.status}: ${body}`);
-  return new Response(body);
+  if (background.status !== 202) throw new Error(`import-luma-background returned ${background.status}`);
+  return new Response("Started");
 }
 
 // Every hour from 06:17 to 23:17 UTC, off the hour, away from everyone

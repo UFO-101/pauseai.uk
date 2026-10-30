@@ -5,7 +5,7 @@ import { NIGHTLY } from "@/lib/import-runs";
 
 /**
  * The hourly copy of the Luma calendar's events, guests and contacts,
- * called by netlify/functions/import-luma.
+ * called by netlify/functions/import-luma-background.
  */
 export async function POST(request: Request) {
   if (!isCronRequest(request)) return NextResponse.json({ error: "Not allowed" }, { status: 401 });
