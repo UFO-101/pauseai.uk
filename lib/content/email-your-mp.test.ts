@@ -22,5 +22,6 @@ describe("Email your MP campaigns", () => {
     expect(copy.sent.body("Jane MP")).toContain("Jane MP");
     expect(copy.forwardedReply.toSender("Jane MP")).toContain("Jane MP");
     expect(copy.forwardedReply.toInbox("Jane MP", "Jane Smith")).toContain("Jane MP");
+    expect(copy.forwardedReply.followUp("Jane Smith", "Jane MP")).toContain("Jane Smith");
   });
 });

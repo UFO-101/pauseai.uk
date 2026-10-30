@@ -174,8 +174,10 @@ function letterMailboxes(email: InboundEmail): string[] {
 
 /**
  * Records a reply to a letter, and forwards it to the shared inbox and to the
- * sender, unless they already have it (their address is in its To or Cc).
- * Only when it came and who from is kept, not its text. Returns who it went to.
+ * sender, unless they already have it (their address is in its To or Cc). The
+ * sender's own follow-up, sent to the MP and the letter's address from our
+ * forward's Reply-To, goes to the shared inbox only. Only when it came and
+ * who from is kept, not its text. Returns who it went to.
  */
 export async function forwardReply(email: InboundEmail): Promise<string[]> {
   const from = email.FromFull?.Email ?? "";
@@ -184,8 +186,15 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
   const mailboxes = letterMailboxes(email);
   if (!mailboxes.length || ours) return [];
 
-  const [letter] = await query<{ id: number; senderName: string; senderEmail: string; mpName: string }>(
-    `SELECT l.id::int AS id, f.name AS "senderName", f.email AS "senderEmail", p.name AS "mpName"
+  const [letter] = await query<{
+    id: number;
+    senderName: string;
+    senderEmail: string;
+    mpName: string;
+    mailbox: string;
+  }>(
+    `SELECT l.id::int AS id, f.name AS "senderName", f.email AS "senderEmail", p.name AS "mpName",
+       s.reply_hash AS mailbox
      FROM letters_from_supporters s JOIN letters l ON l.id = s.id JOIN form_entries f ON f.id = s.entry_id
        JOIN notable_people p ON p.id = l.notable_person_id
      WHERE s.reply_hash = ANY($1) ORDER BY array_position($1, s.reply_hash) LIMIT 1`,
@@ -194,8 +203,9 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
   if (!letter) return [];
   await recordReply(letter, email);
 
+  const fromSender = from.toLowerCase() === letter.senderEmail.toLowerCase();
   const copied = [...(email.ToFull ?? []), ...(email.CcFull ?? [])].map((a) => a.Email?.toLowerCase());
-  const recipients = [process.env.POLICY_INBOX, letter.senderEmail].filter(
+  const recipients = [process.env.POLICY_INBOX, fromSender ? undefined : letter.senderEmail].filter(
     (to): to is string => !!to && !copied.includes(to.toLowerCase()),
   );
 
@@ -220,12 +230,15 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
       {
         From: `PauseAI UK <noreply@${notifyDomain()}>`,
         To: to,
-        ReplyTo: from,
+        // Answering it reaches whoever wrote, and the letter's address, so it's kept with the letter.
+        ReplyTo: [from, `${letter.mailbox}@${lettersDomain()}`].filter(Boolean).join(", "),
         Subject: email.Subject ?? "",
         TextBody: `${
-          to === letter.senderEmail
-            ? copy.forwardedReply.toSender(letter.mpName)
-            : copy.forwardedReply.toInbox(letter.mpName, letter.senderName)
+          fromSender
+            ? copy.forwardedReply.followUp(letter.senderName, letter.mpName)
+            : to === letter.senderEmail
+              ? copy.forwardedReply.toSender(letter.mpName)
+              : copy.forwardedReply.toInbox(letter.mpName, letter.senderName)
         }\n\n${original}\n\n${email.TextBody ?? ""}`,
         Headers: threading,
         Attachments: email.Attachments?.map(({ Name, Content, ContentType }) => ({ Name, Content, ContentType })),
