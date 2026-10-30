@@ -10,6 +10,7 @@ import AskRow from "./AskRow";
 import Breadcrumb from "./Breadcrumb";
 import { LetterHistory, letterTitle } from "./LetterDetails";
 import Grid, { Card, Column, spanClass } from "./ui/Grid";
+import details from "./Details.module.css";
 import styles from "./MailingLetterView.module.css";
 
 type SetStatus = (form: FormData) => void | Promise<void>;
@@ -24,8 +25,8 @@ function StatusTag({ letter, answered }: { letter: PauseaiLetterDetails; answere
 /**
  * One of a mailing's letters: its title and how it stands, under it the
  * politician, leading to their page, with their seat and party; then `children`, the letter and its replies
- * (LetterThread), beside the mailing's ask, as a politician's page shows it
- * and as wide as there,
+ * (LetterThread), beside the mailing's ask, in the box a politician's page
+ * shows it in, as wide as there,
  * to set their answer from what they said; and what happened to it. The
  * thread already says who it's from and to and when, so nothing repeats it.
  */
@@ -61,7 +62,9 @@ export default function MailingLetterView({
         <Column span={3}>
           {ask && (
             <Card look="aside" title={staffCopy.mailings.fields.ask} id="ask-title">
-              <AskRow politician={politician} ask={ask} setStatus={setStatus} />
+              <div className={details.asks}>
+                <AskRow politician={politician} ask={ask} setStatus={setStatus} />
+              </div>
             </Card>
           )}
           <Card look="log" title={staffCopy.letters.detail.historyTitle} id="letter-history">
