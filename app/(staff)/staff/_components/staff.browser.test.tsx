@@ -830,6 +830,7 @@ describe("ChoosingStrip", () => {
   it("says what to do for a new mailing, with Cancel back to the mailings", async () => {
     await render(<ChoosingStrip search={{ ...emptyPoliticiansSearch, mailing: NEW_MAILING }} />);
     await expect.element(page.getByText(copy.choosingNew)).toBeVisible();
+    await expect.element(page.getByText(copy.choosingHow)).toBeVisible();
     await expect.element(page.getByRole("link", { name: copy.cancelNew })).toHaveAttribute("href", "/staff/mailings");
   });
 

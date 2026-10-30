@@ -54,6 +54,7 @@ export function ChoosingStrip({ search, title }: { search: PoliticiansSearch; ti
       }
     >
       <span>{isNew ? mailingCopy.choosingNew : mailingCopy.choosingDraft(title ?? mailingCopy.untitled)}</span>
+      <span>{mailingCopy.choosingHow}</span>
     </Strip>
   );
 }
