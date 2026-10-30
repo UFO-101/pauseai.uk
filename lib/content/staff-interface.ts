@@ -768,13 +768,13 @@ export const staffCopy = {
     whoLabel: "Who it's for",
     // A search, as a pill of who a mailing is to.
     searchPill: (typed: string) => `Search "${typed}"`,
-    // A mailing's coloured counts.
+    // A mailing's counts.
     counts: {
       sent: "sent",
       replied: "replied",
       bounced: "bounced",
       skipped: "skipped",
-      answered: "answered the ask",
+      answered: "answers",
     },
     // A new mailing's page's title, and the mailings page's button that starts one.
     newTitle: "New mailing",

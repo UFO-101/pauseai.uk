@@ -706,7 +706,7 @@ export const staff: Group = {
                   { key: "replied", n: 9, label: "replied", href: "#replied" },
                   { key: "bounced", n: 3, label: "bounced", tone: "red", href: "#bounced", current: true },
                   { key: "skipped", n: 0, label: "skipped", href: "#skipped" },
-                  { key: "answered", n: null, label: "answered the ask" },
+                  { key: "answered", n: null, label: "answers" },
                 ]}
               />
             </StaffPage>
@@ -725,7 +725,7 @@ export const staff: Group = {
                   { key: "replied", n: 11, label: "replied" },
                   { key: "bounced", n: 2, label: "bounced", tone: "red" },
                   { key: "skipped", n: 0, label: "skipped" },
-                  { key: "answered", n: 14, label: "answered the ask", tone: "green" },
+                  { key: "answered", n: 14, label: "answers", tone: "green" },
                 ]}
               />
             </StaffPage>
