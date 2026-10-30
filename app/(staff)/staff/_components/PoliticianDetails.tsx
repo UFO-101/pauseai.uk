@@ -59,7 +59,7 @@ function Sender({ letter }: { letter: LetterSummary }) {
       )}
       <Muted>
         {" · "}
-        <CampaignName slug={letter.campaign} title={letter.campaignTitle} />
+        <CampaignName slug={letter.campaign} title={letter.campaignTitle} url={letter.campaignUrl} />
       </Muted>
     </>
   );
@@ -70,7 +70,7 @@ function Unsigned({ letter, status }: { letter: UnsignedLetter; status: boolean 
   return (
     <Muted>
       {" · "}
-      <CampaignName slug={letter.campaign} title={letter.campaignTitle} />
+      <CampaignName slug={letter.campaign} title={letter.campaignTitle} url={letter.campaignUrl} />
       {status && <> · {staffCopy.letters.status[letter.status] ?? letter.status}</>}
     </Muted>
   );

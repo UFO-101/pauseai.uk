@@ -415,7 +415,11 @@ test("Import pauseai.info's letters and Go to Parliament's meetings", async ({ p
   // On the letters page, marked as from the old form; the sender a supporter from it.
   await page.goto(`${BASE}/staff/letters`);
   await expect(page.getByText(staffCopy.letters.imported)).toHaveCount(3);
-  await frame(page, "the letters page: the old form's letters marked");
+  await expect(page.getByRole("link", { name: "DeepMind letter, from pauseai.info" }).first()).toHaveAttribute(
+    "href",
+    "https://pauseai.uk/campaigns/dear-sir-demis-2025",
+  );
+  await frame(page, "the letters page: the old form's letters marked, their campaigns linked to their letters");
   await page.getByRole("link", { name: "Dee Deepmind" }).first().click();
   await expect(page.getByText(staffCopy.supporters.sources["web-form"]).first()).toBeVisible();
   await frame(page, "a supporter who wrote through the old form");

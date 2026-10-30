@@ -65,7 +65,8 @@ export const letterColumns: ListColumn<LetterSummary>[] = [
     text: (l) => campaignBySlug(l.campaign)?.title ?? l.campaignTitle,
     cell: (l) => (
       <>
-        <CampaignName slug={l.campaign} title={l.campaignTitle} /> {l.imported && <Tag>{copy.imported}</Tag>}
+        <CampaignName slug={l.campaign} title={l.campaignTitle} url={l.campaignUrl} />{" "}
+        {l.imported && <Tag>{copy.imported}</Tag>}
       </>
     ),
   },

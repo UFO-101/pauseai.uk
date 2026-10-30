@@ -105,7 +105,7 @@ function Subject({ item, letters }: { item: SupporterActivity; letters: string }
           {item.title && (
             <>
               {` ${copy.detail.about} `}
-              <CampaignName slug={item.title} title={item.campaignTitle} />
+              <CampaignName slug={item.title} title={item.campaignTitle} url={item.campaignUrl} />
             </>
           )}
           {item.status && (
@@ -264,7 +264,7 @@ const letterColumns: ListColumn<SupporterLetter>[] = [
   {
     key: "campaign",
     label: copy.detail.columns.campaign,
-    cell: (l) => <CampaignName slug={l.campaign} title={l.campaignTitle} />,
+    cell: (l) => <CampaignName slug={l.campaign} title={l.campaignTitle} url={l.campaignUrl} />,
   },
 ];
 

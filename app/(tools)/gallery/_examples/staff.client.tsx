@@ -150,6 +150,7 @@ export function PoliticianDetailsExample({
                       id: letter.id,
                       campaign: letter.campaign,
                       campaignTitle: letter.campaignTitle,
+                      campaignUrl: letter.campaignUrl,
                       status: letter.status,
                       createdAt: letter.createdAt,
                       repliedAt: letter.repliedAt,
