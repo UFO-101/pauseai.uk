@@ -9,7 +9,7 @@ const counted = (n: number, one: string, many: string) => `${n.toLocaleString("e
 
 export const constituencyMapCopy = {
   draftNotice: "This is a draft for testing, has not been copy edited.",
-  title: "Fill the map",
+  title: "The Road to 650",
   description: "Where PauseAI supporters are, and which MPs have heard from them, constituency by constituency.",
   lede: "Help us make sure every MP is briefed by their own constituents about the risk of runaway AI.",
 
