@@ -1,0 +1,29 @@
+/* The button, and the bubble that hangs from its bottom right. */
+.copy {
+  position: relative;
+  display: inline-block;
+}
+
+/* What to do with what it copied, over the page, a card's border and shadow; there only
+   while it has something to say, as the live region stays for screen
+   readers. */
+.bubble {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 10;
+  width: max-content;
+  max-width: min(20rem, calc(100vw - 2 * var(--space-4)));
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: 0 6px 24px rgb(var(--text-rgb) / 0.15);
+  color: var(--text);
+  font-size: var(--text-sm);
+  text-align: left;
+}
+
+.bubble:empty {
+  display: none;
+}

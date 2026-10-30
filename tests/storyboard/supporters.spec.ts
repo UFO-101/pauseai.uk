@@ -273,12 +273,12 @@ test("A letter writer's page, from the letters list", async ({ page, request, fl
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     staffCopy.letters.oneTitle("Jane Smith", "Testy McTestface MP"),
   );
-  await frame(page, "her letter's page, with Find it in Gmail for its copy in the policy inbox");
-  await page.getByRole("button", { name: staffCopy.findInGmail.button }).click();
-  await expect(page.getByText(staffCopy.findInGmail.openNote("replies@example.org"))).toBeVisible();
-  await expect(page.getByRole("button", { name: staffCopy.findInGmail.copy })).toBeVisible();
-  await frame(page, "Find it in Gmail: the policy inbox, and the search for it by Postmark's Message-ID to copy");
-  await page.keyboard.press("Escape");
+  await frame(page, "her letter's page, with Copy Gmail search for its copy in the policy inbox");
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.getByRole("button", { name: staffCopy.findInGmail.copy }).click();
+  await expect(page.getByRole("status")).toHaveText(staffCopy.findInGmail.where("replies@example.org"));
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/^rfc822msgid:[\w-]+@mtasv\.net$/);
+  await frame(page, "copied: paste it in Gmail search where you can see the policy inbox's mail");
   await page.getByRole("link", { name: "Jane Smith" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Jane Smith");
 });

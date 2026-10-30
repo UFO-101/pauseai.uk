@@ -222,7 +222,7 @@ describeWithDatabase("a letter for its page", () => {
       kind: "supporter",
       id,
       senderName: "Jane Smith",
-      gmail: { mailbox: "policy@pauseai.uk", search: "rfc822msgid:pm-new@mtasv.net", threadId: null },
+      gmail: { mailbox: "policy@pauseai.uk", search: "rfc822msgid:pm-new@mtasv.net" },
     });
     expect(typeof (letter as { subject: string }).subject).toBe("string");
     expect(await getSupporterLetter(id + 100)).toBeUndefined();
@@ -231,7 +231,7 @@ describeWithDatabase("a letter for its page", () => {
     vi.stubEnv("POLICY_INBOX", "");
     const imported = await addTestLetter({ politicianId: mp, sentAt: "2026-10-01T12:00:00Z" });
     expect(await getSupporterLetter(imported)).toMatchObject({
-      gmail: { mailbox: null, search: sentNearSearch("test-mp@example.org", "2026-10-01T12:00:00Z"), threadId: null },
+      gmail: { mailbox: null, search: sentNearSearch("test-mp@example.org", "2026-10-01T12:00:00Z") },
     });
     // One never sent has nothing to find; nor has one to an MP with no address.
     const unsent = await addTestLetter({ politicianId: mp });
@@ -274,7 +274,7 @@ describeWithDatabase("a letter for its page", () => {
       mailing: "CSRB Iqbal Amendment",
       mailingAsk: null,
       personalised: true,
-      gmail: { mailbox: null, search: sentNearSearch("mp@example.org", "2026-10-01T09:00:00Z"), threadId: null },
+      gmail: { mailbox: null, search: sentNearSearch("mp@example.org", "2026-10-01T09:00:00Z") },
       events: [],
     });
   });
@@ -306,21 +306,19 @@ describeWithDatabase("a letter for its page", () => {
       );
     const at = "2026-10-01T09:00:00Z";
 
-    // Sent from Gmail: by the Message-ID it went with, at its thread, in the mailbox it went from.
+    // Sent from Gmail: by the Message-ID it went with, in the mailbox it went from.
     const sent = await letter(at);
     await send(sent, "abc@pauseai.uk");
     expect((await getPauseaiLetter(mailing, sent))!.gmail).toEqual({
       mailbox: "policy@pauseai.uk",
       search: "rfc822msgid:abc@pauseai.uk",
-      threadId: "thread-1",
     });
-    // Its Message-ID not kept: by its MP's address and when it went, still at its thread.
+    // Its Message-ID not kept: by its MP's address and when it went.
     const noId = await letter(at);
     await send(noId, null);
     expect((await getPauseaiLetter(mailing, noId))!.gmail).toEqual({
       mailbox: "policy@pauseai.uk",
       search: sentNearSearch("mp@example.org", at),
-      threadId: "thread-1",
     });
     // Not sent from here, but replied to: by the first reply with a Message-ID, in the mailbox that read it.
     const replied = await letter(at);
@@ -330,7 +328,6 @@ describeWithDatabase("a letter for its page", () => {
     expect((await getPauseaiLetter(mailing, replied))!.gmail).toEqual({
       mailbox: "jo@pauseai.uk",
       search: "rfc822msgid:reply-1@parliament.uk",
-      threadId: "thread-2",
     });
     // Never sent, or to an MP with no address and nothing else to go by: nothing to find.
     expect((await getPauseaiLetter(mailing, await letter(null)))!.gmail).toBeNull();

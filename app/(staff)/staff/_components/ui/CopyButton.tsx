@@ -2,16 +2,28 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import styles from "./CopyButton.module.css";
 
-/** How long the button says it copied, in milliseconds. */
-const SAYS_COPIED = 1500;
+/** How long it says it copied, in milliseconds. */
+const SAYS_COPIED = 4000;
 
 /**
- * A small button that copies `text` to the clipboard and says `copied` for
- * a moment, as a screen reader hears it too. If the browser refuses the
- * clipboard it stays as it was.
+ * A small button that copies `text` to the clipboard, then for a few
+ * seconds says `copied` in place of its label, with `note`, what to do
+ * with it, in a bubble under it, which a screen reader hears too. If the
+ * browser refuses the clipboard, it stays as it was.
  */
-export default function CopyButton({ text, label, copied }: { text: string; label: string; copied: string }) {
+export default function CopyButton({
+  text,
+  label,
+  copied,
+  note,
+}: {
+  text: string;
+  label: string;
+  copied: string;
+  note?: string;
+}) {
   const [done, setDone] = useState(false);
   async function copy() {
     try {
@@ -23,8 +35,13 @@ export default function CopyButton({ text, label, copied }: { text: string; labe
     setTimeout(() => setDone(false), SAYS_COPIED);
   }
   return (
-    <Button variant="ghost" size="small" fit type="button" onClick={copy}>
-      <span aria-live="polite">{done ? copied : label}</span>
-    </Button>
+    <span className={styles.copy}>
+      <Button variant="ghost" size="small" fit type="button" onClick={copy}>
+        {done ? copied : label}
+      </Button>
+      <span role="status" className={styles.bubble}>
+        {done && note}
+      </span>
+    </span>
   );
 }

@@ -35,7 +35,6 @@ export const exampleSupporterLetterDetails: SupporterLetterDetails = {
   gmail: {
     mailbox: "policy@pauseai.uk",
     search: "rfc822msgid:0a1b2c3d-1111-2222-3333-444455556666@mtasv.net",
-    threadId: null,
   },
 };
 
@@ -56,7 +55,6 @@ export const examplePauseaiLetterDetails: PauseaiLetterDetails = {
   gmail: {
     mailbox: null,
     search: "to:polly.placeholder.mp@parliament.uk after:1759319700 before:1759320300",
-    threadId: null,
   },
   events: [],
 };

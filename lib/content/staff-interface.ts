@@ -69,20 +69,13 @@ export const staffCopy = {
     mpEmails: "Blocked emails",
     logout: "Log out",
   },
-  // A letter in Gmail, from a button by its page's heading: either 1) a
-  // link that opens it in the mailbox it's in, for someone signed in to
-  // that account, or 2) a search to paste into it, which works for a
-  // delegate too.
+  // A letter in Gmail, by its page's heading: a button that copies a
+  // search for it, then says where to paste it.
   findInGmail: {
-    button: "Find it in Gmail",
-    either: "⁂ Either:",
-    unknownMailbox: "⁂ We don't know which mailbox it was sent from.",
-    open: "Open in Gmail",
-    openNote: (mailbox: string) =>
-      `⁂ This only works if you're signed in to ${mailbox} itself. If you open it as a delegate, use the search.`,
-    copy: "⁂ Copy the search",
-    copied: "⁂ Copied",
-    copyNote: "⁂ Paste it into the search box in Gmail, in that mailbox.",
+    copy: "Copy Gmail search",
+    copied: "Copied!",
+    where: (mailbox: string) => `Paste in Gmail search where you can see mail from ${mailbox}`,
+    whereUnknown: "⁂ Paste in Gmail search where you can see mail from the address it was sent from",
   },
   // One of PauseAI's letters, and the replies in its thread.
   letterThread: {

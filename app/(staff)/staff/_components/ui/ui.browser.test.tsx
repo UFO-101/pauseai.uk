@@ -727,22 +727,31 @@ describe("DownloadMenu", () => {
 });
 
 describe("CopyButton", () => {
-  it("copies its text and says so a moment, then is as it was", async () => {
+  it("copies its text and says so a few seconds, with its note in a bubble, then is as it was", async () => {
     const write = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
-    await render(<CopyButton text="rfc822msgid:a@b" label="Copy" copied="Copied" />);
+    await render(<CopyButton text="rfc822msgid:a@b" label="Copy" copied="Copied!" note="Paste it" />);
+    const bubble = page.getByRole("status");
+    expect(getComputedStyle(bubble.element()).display).toBe("none");
     await page.getByRole("button", { name: "Copy" }).click();
     expect(write).toHaveBeenCalledWith("rfc822msgid:a@b");
-    await expect.element(page.getByRole("button", { name: "Copied" })).toBeVisible();
-    await expect.element(page.getByRole("button", { name: "Copy" }), { timeout: 3000 }).toBeVisible();
+    await expect.element(page.getByRole("button", { name: "Copied!" })).toBeVisible();
+    await expect.element(bubble).toHaveTextContent("Paste it");
+    expect(getComputedStyle(bubble.element()).display).toBe("block");
+    await expect.element(page.getByRole("button", { name: "Copy" }), { timeout: 6000 }).toBeVisible();
+    await expect.element(bubble).toHaveTextContent("");
     write.mockRestore();
   });
 
-  it("stays as it was when the clipboard refuses", async () => {
-    const write = vi.spyOn(navigator.clipboard, "writeText").mockRejectedValue(new Error("denied"));
-    await render(<CopyButton text="x" label="Copy" copied="Copied" />);
+  it("with no note, no bubble; and as it was when the clipboard refuses", async () => {
+    const write = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+    const { rerender } = await render(<CopyButton text="x" label="Copy" copied="Copied!" />);
     await page.getByRole("button", { name: "Copy" }).click();
-    expect(write).toHaveBeenCalled();
-    expect(page.getByRole("button", { name: "Copied" }).all()).toHaveLength(0);
+    await expect.element(page.getByRole("button", { name: "Copied!" })).toBeVisible();
+    expect(getComputedStyle(page.getByRole("status").element()).display).toBe("none");
+    write.mockRejectedValue(new Error("denied"));
+    await rerender(<CopyButton key="again" text="x" label="Copy" copied="Copied!" />);
+    await page.getByRole("button", { name: "Copy" }).click();
+    expect(page.getByRole("button", { name: "Copied!" }).all()).toHaveLength(0);
     write.mockRestore();
   });
 });

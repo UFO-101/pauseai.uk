@@ -2543,10 +2543,10 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/ui/CopyButton.tsx",
       variants: [
         {
-          label: "Copies its text, saying so a moment",
+          label: "Copies its text, then says so, with a note in a bubble",
           render: () => (
             <StaffPage as="div">
-              <CopyButton text="rfc822msgid:4f1c@pauseai.uk" label="Copy" copied="Copied" />
+              <CopyButton text="rfc822msgid:4f1c@pauseai.uk" label="Copy" copied="Copied!" note="Paste it in" />
             </StaffPage>
           ),
         },
@@ -2741,21 +2741,15 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/FindInGmail.tsx",
       variants: [
         {
-          label: "A letter sent from policy@, by its Message-ID: the box opens it there, or copies the search",
+          label: "A letter sent from policy@: copies the search for it, then says to paste it where policy@'s mail is",
           render: () => (
             <StaffPage as="div">
-              <FindInGmail
-                find={{
-                  mailbox: "policy@pauseai.uk",
-                  search: "rfc822msgid:4f1c@pauseai.uk",
-                  threadId: "thread-seed-2",
-                }}
-              />
+              <FindInGmail find={{ mailbox: "policy@pauseai.uk", search: "rfc822msgid:4f1c@pauseai.uk" }} />
             </StaffPage>
           ),
         },
         {
-          label: "One copied from Airtable, from a mailbox we don't know: only the search",
+          label: "One copied from Airtable, from a mailbox we don't know",
           render: () => (
             <StaffPage as="div">
               <FindInGmail find={examplePauseaiLetterDetails.gmail} />

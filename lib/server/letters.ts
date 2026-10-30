@@ -161,11 +161,16 @@ export type PauseaiLetterDetails = {
 
 export type LetterDetails = SupporterLetterDetails | PauseaiLetterDetails;
 
-/** An email in a Gmail mailbox: its Message-ID, if kept, and its thread. */
-type InGmail = { id: string | null; thread: string | null };
-
-/** What a PauseAI letter's way into Gmail is made of: the mailbox it went from, its send there, and its first reply. */
-type PauseaiInGmail = { sentFrom: string | null; sent: InGmail | null; reply: (InGmail & { account: string }) | null };
+/**
+ * What a PauseAI letter's way into Gmail is made of: the mailbox it went
+ * from, the Message-ID it went with, if kept, and its first reply's, with
+ * the mailbox that read it.
+ */
+type PauseaiInGmail = {
+  sentFrom: string | null;
+  sentId: string | null;
+  reply: { id: string; account: string } | null;
+};
 
 /**
  * Where to find PauseAI's letter in Gmail: by the Message-ID it went with,
@@ -175,12 +180,12 @@ type PauseaiInGmail = { sentFrom: string | null; sent: InGmail | null; reply: (I
  */
 function pauseaiGmail(
   { sentAt, mpEmail }: Pick<PauseaiLetterDetails, "sentAt" | "mpEmail">,
-  { sentFrom, sent, reply }: PauseaiInGmail,
+  { sentFrom, sentId, reply }: PauseaiInGmail,
 ): GmailFind | null {
-  if (sent?.id) return { mailbox: sentFrom, search: messageIdSearch(sent.id), threadId: sent.thread };
-  if (reply) return { mailbox: reply.account, search: messageIdSearch(reply.id!), threadId: reply.thread };
+  if (sentId) return { mailbox: sentFrom, search: messageIdSearch(sentId) };
+  if (reply) return { mailbox: reply.account, search: messageIdSearch(reply.id) };
   if (!sentAt || !mpEmail) return null;
-  return { mailbox: sentFrom, search: sentNearSearch(mpEmail, sentAt), threadId: sent?.thread ?? null };
+  return { mailbox: sentFrom, search: sentNearSearch(mpEmail, sentAt) };
 }
 
 /**
@@ -194,9 +199,9 @@ export async function getPauseaiLetter(mailingId: number, id: number): Promise<P
        m.title AS mailing, m.ask AS "mailingAsk", p.personalised,
        json_build_object(
          'sentFrom', m.sent_from,
-         'sent', (SELECT json_build_object('id', s.rfc_message_id, 'thread', s.gmail_thread_id) FROM email_sends s
-                  WHERE s.letter_id = l.id AND s.outcome = 'sent' ORDER BY s.id DESC LIMIT 1),
-         'reply', (SELECT json_build_object('id', r.rfc_message_id, 'thread', r.gmail_thread_id, 'account', r.account)
+         'sentId', (SELECT s.rfc_message_id FROM email_sends s
+                    WHERE s.letter_id = l.id AND s.outcome = 'sent' ORDER BY s.id DESC LIMIT 1),
+         'reply', (SELECT json_build_object('id', r.rfc_message_id, 'account', r.account)
                    FROM letter_replies r WHERE r.letter_id = l.id AND r.rfc_message_id IS NOT NULL
                    ORDER BY r.at, r.id LIMIT 1)
        ) AS "inGmail",
@@ -236,7 +241,7 @@ export async function getSupporterLetter(id: number): Promise<SupporterLetterDet
   const search = postmarkId
     ? postmarkSearch(postmarkId)
     : letter.sentAt && mpEmail && sentNearSearch(mpEmail, letter.sentAt);
-  const gmail = search ? { mailbox: process.env.POLICY_INBOX || null, search, threadId: null } : null;
+  const gmail = search ? { mailbox: process.env.POLICY_INBOX || null, search } : null;
   return { ...letter, kind: "supporter", subject, gmail };
 }
 

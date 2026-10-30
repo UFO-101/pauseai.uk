@@ -2795,7 +2795,7 @@ describe("LetterDetails", () => {
       .toHaveAttribute("href", "/staff/politicians/3");
     await expect.element(page.getByText(letter.subject)).toBeVisible();
     // Its copy in the policy inbox, in the corner.
-    await expect.element(page.getByRole("button", { name: staffCopy.findInGmail.button })).toBeVisible();
+    await expect.element(page.getByRole("button", { name: staffCopy.findInGmail.copy })).toBeVisible();
     // Each change in words, and a {} for those that recorded anything, opening it as recorded.
     const history = page.getByRole("list", { name: copy.detail.historyTitle });
     // Newest first.
@@ -2850,7 +2850,7 @@ describe("LetterDetails", () => {
       .element(history.getByRole("link", { name: "jo@example.org" }))
       .toHaveAttribute("href", "/staff/politicians/blocked-emails?q=jo%40example.org");
     expect(page.getByRole("link", { name: exampleSupporterLetterDetails.senderName }).all()).toHaveLength(0);
-    expect(page.getByRole("button", { name: staffCopy.findInGmail.button }).all()).toHaveLength(0);
+    expect(page.getByRole("button", { name: staffCopy.findInGmail.copy }).all()).toHaveLength(0);
     await expect.element(page.getByText(copy.imported)).toBeVisible();
     await expect.element(page.getByText("odd", { exact: true })).toBeVisible();
     await expect.element(page.getByText("13 Oct 2026, 09:00")).toBeVisible();
@@ -2879,7 +2879,7 @@ describe("LetterDetails", () => {
     await expect.element(page.getByText(copy.detail.personalised)).toBeVisible();
     await expect.element(page.getByText(copy.detail.noHistory)).toBeVisible();
     // Find it in Gmail goes with its thread, not in the card.
-    expect(page.getByRole("button", { name: staffCopy.findInGmail.button }).all()).toHaveLength(0);
+    expect(page.getByRole("button", { name: staffCopy.findInGmail.copy }).all()).toHaveLength(0);
     await rerender(<LetterDetails letter={{ ...letter, personalised: false }} />);
     expect(page.getByText(copy.detail.personalised).all()).toHaveLength(0);
   });
@@ -2887,34 +2887,25 @@ describe("LetterDetails", () => {
 
 describe("FindInGmail", () => {
   const copy = staffCopy.findInGmail;
-  const find = { mailbox: "policy@pauseai.uk", search: "rfc822msgid:abc@pauseai.uk", threadId: "18c2" };
+  const find = { mailbox: "policy@pauseai.uk", search: "rfc822msgid:abc@pauseai.uk" };
 
-  it("opens a box with a link to the thread in its mailbox, naming it, and the search to copy", async () => {
+  it("copies the search, not shown, then says where to paste it", async () => {
     const write = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
     await render(<FindInGmail find={find} />);
-    await page.getByRole("button", { name: copy.button }).click();
-    await expect
-      .element(page.getByRole("link", { name: copy.open }))
-      .toHaveAttribute("href", "https://mail.google.com/mail/?authuser=policy%40pauseai.uk#all/18c2");
-    await expect.element(page.getByText(copy.openNote("policy@pauseai.uk"))).toBeVisible();
-    // Two ways, numbered: open it, or copy the search.
-    await expect.element(page.getByText(copy.either)).toBeVisible();
-    expect(page.getByRole("listitem").all()).toHaveLength(2);
-    // The search is copied, not shown.
     expect(document.body.textContent).not.toContain(find.search);
     await page.getByRole("button", { name: copy.copy }).click();
     expect(write).toHaveBeenCalledWith(find.search);
     await expect.element(page.getByRole("button", { name: copy.copied })).toBeVisible();
+    await expect.element(page.getByRole("status")).toHaveTextContent(copy.where("policy@pauseai.uk"));
     write.mockRestore();
   });
 
-  it("says when the mailbox isn't known, with only the search; and is nothing with nothing to find", async () => {
+  it("says to paste it where the mail it was sent from is, when that isn't known; and is nothing with nothing to find", async () => {
+    const write = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
     const { rerender } = await render(<FindInGmail find={{ ...find, mailbox: null }} />);
-    await page.getByRole("button", { name: copy.button }).click();
-    await expect.element(page.getByText(copy.unknownMailbox)).toBeVisible();
-    expect(page.getByText(copy.either).all()).toHaveLength(0);
-    expect(page.getByRole("link").all()).toHaveLength(0);
-    await expect.element(page.getByRole("button", { name: copy.copy })).toBeVisible();
+    await page.getByRole("button", { name: copy.copy }).click();
+    await expect.element(page.getByRole("status")).toHaveTextContent(copy.whereUnknown);
+    write.mockRestore();
     await rerender(<FindInGmail find={null} />);
     expect(page.getByRole("button").all()).toHaveLength(0);
   });
