@@ -533,10 +533,12 @@ describe("MailingWriter", () => {
   });
 
   it("says only its owner can connect someone else's Gmail, chosen before it was disconnected", async () => {
-    await renderWriter({ draft: { ...exampleWrittenMailing, sentFrom: "kim@pauseai.uk" } });
+    await renderWriter({ draft: { ...exampleWrittenMailing, sentFrom: "kim@pauseai.uk", fromName: null } });
     const from = region(copy.sections.from);
     await expect.element(from.getByText(copy.notConnected)).toBeVisible();
     await expect.element(field(copy.fromLegend)).toHaveValue("kim@pauseai.uk");
+    // With no Gmail to take its name from, the name's empty.
+    await expect.element(field(copy.fromNameLabel)).toHaveValue("");
     await expect.element(region(copy.sections.send).getByText(copy.problems["not-connected"])).toBeVisible();
   });
 
