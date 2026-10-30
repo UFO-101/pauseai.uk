@@ -225,6 +225,17 @@ test("Send a mailing from a connected Gmail: schedule it, and the hourly job sen
   await from.scrollIntoViewIfNeeded();
   await frame(page, "Sent from your connected Gmail, with how many it has sent of today's 1,800", { window: true });
 
+  // A name of its own, in place of the Gmail's, shown in the preview's From line.
+  await page.getByLabel(copy.fromNameLabel, { exact: false }).fill("Sam Example, PauseAI UK");
+  await expect
+    .poll(() => runSql(flowDatabase, "SELECT from_name FROM mailings WHERE title = 'See you in Edinburgh'"))
+    .toEqual(["Sam Example, PauseAI UK"]);
+  await expect(page.getByRole("status").first()).toHaveText(copy.savePill.saved);
+  const preview = page.getByRole("region", { name: copy.sections.preview });
+  await expect(preview.getByText(`Sam Example, PauseAI UK <${staffEmail()}>`)).toBeVisible();
+  await from.scrollIntoViewIfNeeded();
+  await frame(page, "Sent from a name of its own, in place of the Gmail's", { window: true });
+
   await page.getByLabel(copy.hour, { exact: false }).selectOption("14");
   await page.getByRole("button", { name: copy.schedule(1) }).click();
   await expect(page.getByText(copy.sends("Friday 16 October at 14:18"))).toBeVisible();
@@ -238,8 +249,7 @@ test("Send a mailing from a connected Gmail: schedule it, and the hourly job sen
   });
   expect(await sent.json()).toMatchObject({ started: [Number(id)], sent: 1, left: 0 });
   const letter = newestEmail((one) => one.To === '"Morag Example" <morag.example.msp@parliament.example>')!;
-  // With no From name of its own, the mailing goes in the name the Gmail sends as: the fake Google's, from its address.
-  expect(letter.From).toMatch(new RegExp(`^"Mail \\w+" <${staffEmail()}>$`));
+  expect(letter.From).toBe(`"Sam Example, PauseAI UK" <${staffEmail()}>`);
   await emailFrame(page, letter, "the letter as Morag got it, from your Gmail");
 
   await page.reload();

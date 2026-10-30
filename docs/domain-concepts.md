@@ -165,6 +165,13 @@ pauseai.info's as well as pauseai.uk's, can grant access, and the site
 takes only the logged-in staff member's own address. The refresh
 token is kept encrypted (`GMAIL_TOKEN_KEY`), and deleted on disconnecting.
 
+- **From name.** A mailing goes in a name of its own, or with none, the
+  name the Gmail sends as (its primary "Send mail as" address's). Sent
+  from offers the Gmail's name and the names its scheduled and sent
+  mailings went in. It always goes from the account's own address: Gmail
+  sends as its other "Send mail as" addresses too, but the API can't tell
+  a Google Group's from an alias's, and replies to a Group's don't reach
+  the mailbox the site reads.
 - **Scheduling** needs the Gmail it's from connected, and no more
   recipients than one account sends in a day: the site sends at most
   1,800 a day from an account, counting every mailing, under Gmail's 2,000,
