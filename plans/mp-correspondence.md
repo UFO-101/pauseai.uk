@@ -73,9 +73,11 @@ mail (15 to 29 October, the only part he has).
   Parliament's mail filter, accepted every one, about half after a first
   `451` (greylisting a sender it doesn't know). Accepted isn't delivered:
   what Mimecast does with them next can't be seen.
-- Postmark has had 3 inbound messages ever, all tests, and no
-  auto-responder bounces. The MX for letters.pauseai.uk is Postmark's, so
-  replies to a letter's address would have arrived.
+- Postmark had no inbound messages but 3 tests on 14 October, and no
+  auto-responder bounces. Replies to a letter's address were being lost,
+  though (below), so this shows nothing about replies to the From. It
+  does mean no automatic reply came back by the Return-Path, which
+  inbound doesn't affect.
 - Production's two `replied` events, from every source, are both tests.
 - No reply or automatic reply to a site letter reached policy@, directly
   or forwarded.
@@ -86,8 +88,21 @@ automatic replies within minutes (2 of 24 on 15 October) and casework
 replies within weeks, all to policy@ alone, not the sender. Volunteers'
 own emails get replies too.
 
+**Replies to a letter's address were thrown away from 15 to 30 October
+2026.** Postmark's account started on the free developer plan, which
+handles inbound mail: the 14 October tests arrived. On 15 October it moved
+to Basic, which doesn't. Postmark's server still accepted mail for any
+address at letters.pauseai.uk, so nothing bounced, but with no inbound
+stream it dropped every message: none appeared in its activity, and the
+webhook was never called. Every real letter went after the change. The
+account moved to Pro on 30 October, and a test reply then arrived and was
+forwarded to policy@ and the sender. Anything an office sent to a letter's
+own address before that is gone; mail to the constituent or to policy@
+wasn't affected.
+
 So either the site's letters are being filtered, or offices answer the
-first Reply-To, the constituent's own address, where we can't see it
+first Reply-To, the constituent's own address, where we can't see it, or
+they answered the letter's address and the replies were lost
 (question 1).
 
 **A first test, deployed 30 October 2026:** the three Reply-To addresses
@@ -340,8 +355,9 @@ privacy policy and erasure need changing before anything is built:
 ### Sending
 
 1. **Where do replies to the site's letters go?** Either Mimecast is
-   filtering the letters, or offices answer the first Reply-To, the
-   constituent. Ask a few of the 34 senders whether they've had a reply
+   filtering the letters, offices answer the first Reply-To, the
+   constituent, or they answered the letter's address while Postmark was
+   dropping inbound mail. Ask a few of the 34 senders whether they've had a reply
    or an acknowledgement, and from which address, and ask a friendly
    office to look in its junk and Mimecast's held mail for anything from
    `@letters.pauseai.uk`.
