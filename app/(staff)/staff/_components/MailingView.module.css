@@ -90,11 +90,13 @@
   font-weight: 600;
 }
 
-/* When one scheduled sends: large, in blue, as it's going out; who from under it. */
+/* When one scheduled sends: large, in blue, as it's going out; how many and who from on its right, wrapping under it when narrow. */
 .due {
-  display: grid;
+  display: flex;
   flex: 1 1 20rem;
-  gap: var(--space-1);
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  align-items: baseline;
   color: var(--text-secondary);
 }
 
