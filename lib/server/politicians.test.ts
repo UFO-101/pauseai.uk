@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { addTestLetter, addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { NEW_MAILING } from "@/lib/staff-search";
 import { query, transaction } from "./db";
 import {
   addPolitician,
@@ -136,6 +137,7 @@ describe("politiciansSearch", () => {
     expect(politiciansSearch({})).toEqual({ ...blank, filter: none });
     // A draft's ID is a number.
     expect(politiciansSearch({ mailing: "12x" }).mailing).toBe("");
+    expect(politiciansSearch({ mailing: NEW_MAILING }).mailing).toBe(NEW_MAILING);
     const unknown = {
       house: "hogwarts",
       status: "sitting",

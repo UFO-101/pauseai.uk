@@ -3,7 +3,7 @@
 import type { JSONContent } from "@tiptap/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button, ButtonAnchor } from "@/components/ui/Button";
 import { Select, TextInput } from "@/components/ui/Controls";
 import { Field, Hint, Label } from "@/components/ui/Field";
 import { Muted } from "@/components/ui/Text";
@@ -26,7 +26,7 @@ import { looksLikeEmail } from "@/lib/email-your-mp";
 import { named } from "@/lib/named-address";
 import { leavePage } from "@/lib/leave-page";
 import { scheduleProblems } from "@/lib/mailing-schedule";
-import { filtersPath } from "@/lib/staff-search";
+import { filtersPath, NEW_MAILING } from "@/lib/staff-search";
 import { earliestHour, fromLondon, londonDayHour, londonWhen } from "@/lib/staff-time";
 import type { ChannelResult } from "@/lib/server/mailing-channels";
 import type { MailingAttachmentSummary, SaveResult, ScheduleResult, WrittenMailing } from "@/lib/server/mailing-drafts";
@@ -259,6 +259,10 @@ export default function MailingWriter({
     return id.current === null ? newPath : `/staff/mailings/${id.current}`;
   }
 
+  /** The politicians list, choosing who this mailing goes to: the draft `saved`, or a new mailing if it's not saved. */
+  const whoPath = (saved: number | null) =>
+    filtersPath("/staff/politicians", { ...data.filter.params, mailing: saved ? String(saved) : NEW_MAILING });
+
   /** The draft's ID, making it now if it isn't saved yet, as attaching a file is worth keeping. */
   async function draftId(): Promise<number> {
     clearTimeout(timer.current);
@@ -368,22 +372,28 @@ export default function MailingWriter({
         <Card span={6} title={<Numbered n={1}>{copy.sections.who}</Numbered>} id="who-title">
           <div className={styles.who}>
             {who}
-            <a
-              href={filtersPath("/staff/politicians", {
-                ...data.filter.params,
-                mailing: savedId ? String(savedId) : "",
-              })}
+            <ButtonAnchor
+              variant="primary"
+              size="small"
+              fit
+              href={whoPath(savedId)}
+              onClick={async (event) => {
+                // What's typed is saved first, so going to the list loses none of it; a new
+                // mailing worth keeping becomes a draft, which the list then chooses for.
+                event.preventDefault();
+                await saveNow();
+                leavePage(whoPath(id.current));
+              }}
             >
               {copy.changeWho}
-            </a>
+            </ButtonAnchor>
           </div>
           {data.unknown.length > 0 && <Strip tone="amber">{copy.unknownFilter(data.unknown.join(", "))}</Strip>}
           <p className={styles.count}>{copy.willGet(data.recipients.length)}</p>
           {data.leftOut.length > 0 && (
             <details className={styles.leftOut}>
               <summary>
-                {copy.leftOut(data.recipients.length + data.leftOut.length, noAddress, data.leftOut.length - noAddress)}{" "}
-                <span className={styles.seeWho}>{copy.seeWho}</span>
+                {copy.leftOut(data.recipients.length + data.leftOut.length, noAddress, data.leftOut.length - noAddress)}
               </summary>
               <ul>
                 {data.leftOut.map((one) => (

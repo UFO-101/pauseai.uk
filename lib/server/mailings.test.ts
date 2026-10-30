@@ -2,8 +2,9 @@ import { expect, it } from "vitest";
 import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { NEW_MAILING } from "@/lib/staff-search";
 import { createDraft, saveDraft } from "./mailing-drafts";
-import { getMailing, listMailings, mailingsOverview, mailingTitle } from "./mailings";
+import { choosingTitle, getMailing, listMailings, mailingsOverview, mailingTitle } from "./mailings";
 
 /** A PauseAI letter of the mailing titled `title`, to `politicianId`. */
 async function addLetter(
@@ -93,6 +94,9 @@ describeWithDatabase("mailings", () => {
     // A draft with no subject yet says so.
     const draft = await createDraft("jo@pauseai.uk", { list: "politicians", params: {} }, {});
     expect(await mailingTitle(draft.id)).toBe(staffCopy.mailingPages.untitled);
+    // The draft the politicians list is choosing for, by its parameter; a new mailing has none.
+    expect(await choosingTitle(String(id))).toBe(EDINBURGH);
+    expect(await choosingTitle(NEW_MAILING)).toBeUndefined();
   });
 
   it("lists a tab of the recipients: those who replied, bounced or were skipped, with their answer to its ask", async () => {

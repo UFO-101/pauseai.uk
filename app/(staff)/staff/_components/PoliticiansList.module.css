@@ -1,0 +1,59 @@
+/* While the list is choosing who a mailing is for: the strip, held at the
+   top of the window on the page's background, a little clear of the
+   window's edge and of the list scrolling under it. */
+.held {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding-block: var(--space-3);
+  background: var(--bg);
+}
+
+/* What to do: not on a phone, where the strip is held at the top and the
+   title says enough. */
+@media (max-width: 720px) {
+  .how {
+    display: none;
+  }
+}
+
+/* The bar while the list is choosing who a mailing is for: dark, so it
+   stands apart from the page, always at the foot of the window, however
+   short the list, across the page's column (beside the sidebar, open or
+   folded), the count at the left and the button at the right. */
+.bar {
+  position: fixed;
+  right: var(--space-5);
+  bottom: var(--space-4);
+  left: var(--space-5);
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--charcoal);
+  color: var(--on-dark);
+  box-shadow: 0 var(--space-2) var(--space-6) var(--shadow-strong);
+}
+
+@media (min-width: 721px) {
+  .bar {
+    left: calc(14rem + var(--space-5));
+  }
+
+  :global(:root[data-staff-nav="folded"]) .bar {
+    left: calc(4rem + var(--space-5));
+  }
+}
+
+/* Room at the page's foot, so the bar never covers the list's last rows. */
+:has(> .bar) {
+  padding-bottom: calc(var(--space-9) * 2);
+}
+
+.count {
+  font-weight: 600;
+}

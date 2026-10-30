@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { AskTitle } from "./AskLine";
-import Actions from "@/components/ui/Actions";
 import { ButtonLink } from "@/components/ui/Button";
 import styles from "./AsksTable.module.css";
 import { ASK_STATUSES, FIXED_ASKS } from "@/lib/asks";
@@ -84,7 +83,7 @@ const editColumn: ListColumn<AskWithCounts> = {
     ),
 };
 
-/** Every ask, newest first, in the list frame: how many, their downloads, a row each with Edit; under them, Add an ask; over them, `notice`, how the last save or delete went. */
+/** Every ask, newest first, in the list frame: how many, their downloads, a row each with Edit; over them, `notice`, how the last save or delete went. */
 export default function AsksTable({ asks, notice = "" }: { asks: AskWithCounts[]; notice?: string }) {
   return (
     <>
@@ -108,13 +107,6 @@ export default function AsksTable({ asks, notice = "" }: { asks: AskWithCounts[]
         empty={copy.none}
         align="middle"
       />
-      <div className={styles.add}>
-        <Actions>
-          <ButtonLink href="/staff/asks/new" variant="primary" fit>
-            {copy.add}
-          </ButtonLink>
-        </Actions>
-      </div>
     </>
   );
 }

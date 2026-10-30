@@ -1,0 +1,9 @@
+/* The title and the page's button, at either end of a row, level with the
+   title's middle; the title keeps its own margins, as on any staff page. */
+.title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  column-gap: var(--space-4);
+}

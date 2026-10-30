@@ -780,6 +780,7 @@ export const staffCopy = {
       skipped: "skipped",
       answered: "answered the ask",
     },
+    // A new mailing's page's title, and the mailings page's button that starts one.
     newTitle: "New mailing",
     // A draft with no subject yet, in the list and as its page's title.
     untitled: "Untitled draft",
@@ -818,7 +819,6 @@ export const staffCopy = {
       ]
         .filter(Boolean)
         .join(" and ")}, so they're left out.`,
-    seeWho: "See who",
     leftOutReasons: {
       "no-address": "no email address",
       blocked: "address blocked",
@@ -907,12 +907,6 @@ export const staffCopy = {
       "cannot-send": "Sending isn't built yet.",
     } as Record<string, string>,
     // The list of mailings.
-    // Under the drafts: how to start a mailing, around a link to the politicians list.
-    howToStart: {
-      before: "To start a new mailing, first choose who it's for on the ",
-      link: "politicians list",
-      after: ", then press “Mail these”.",
-    },
     drafts: "Drafts",
     comingUp: "Coming up",
     sent: "Sent",
@@ -922,6 +916,19 @@ export const staffCopy = {
     comingLine: (by: string, when: string, n: number) => `${by} · ${when} · to ${n} ${n === 1 ? "person" : "people"}`,
     // On the politicians list, beside Download.
     mailThese: (n: number) => `Mail these ${n}…`,
+    // Choosing who a mailing is for on the politicians list: at the top, for a new mailing or for a draft named by its title,
+    // and under that what to do.
+    choosingNew: "New mailing: who's it for?",
+    choosingDraft: (title: string) => `Changing who “${title}” goes to`,
+    // What to do, for a new mailing and for a draft, each naming its bar's button. Not on a phone, where the title is enough.
+    choosingHowNew: "Filter the list to the people you want, then press “Write to these” at the bottom of the page.",
+    choosingHowDraft: "Update the filter, then press “Use these” at the bottom of the page.",
+    // Beside it, back to the mailings, or to the draft, choosing no one.
+    cancelNew: "Cancel",
+    backToDraft: "Cancel changing who",
+    // In the bar at the foot of the list: how many, and the button that takes them.
+    choosingCount: (n: number) => `${n} ${n === 1 ? "politician" : "politicians"}, for the mailing`,
+    writeToThese: (n: number) => (n === 1 ? "Write to this one" : `Write to these ${n}`),
     useThese: (n: number) => (n === 1 ? "Use this one for the draft" : `Use these ${n} for the draft`),
     // A mailing's own page.
     states: {
@@ -964,9 +971,8 @@ export const staffCopy = {
   asks: {
     title: "Asks",
     intro: "What we ask notable people to do, either by writing to them or by meeting them.",
-    add: "Add an ask",
     edit: "Edit",
-    // The form, adding an ask or editing one.
+    // The form, adding an ask or editing one; the new one's title is the asks page's button to it, too.
     newTitle: "New ask",
     editTitle: (title: string) => `Edit the ask “${title}”`,
     fields: {

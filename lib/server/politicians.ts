@@ -2,7 +2,7 @@ import "server-only";
 import type { AskStatus } from "@/lib/asks";
 import type { Mp, MpStatuses } from "@/lib/email-your-mp";
 import { parseSort, type SortSpec } from "@/lib/staff-sort";
-import { anyAndNone, firstOf, notOf, pageNumber, valuesOf, type ParamValue } from "@/lib/staff-search";
+import { anyAndNone, firstOf, NEW_MAILING, notOf, pageNumber, valuesOf, type ParamValue } from "@/lib/staff-search";
 import { POLITICIAN_COLUMNS, POLITICIAN_SORTS, type PoliticianSort } from "@/lib/politician-sort";
 import {
   COUNTRIES,
@@ -199,7 +199,10 @@ export type PoliticiansSearch = {
   sort: string;
   dir: string;
   page: string;
-  /** A draft mailing's ID, after its Change who: the list's button changes who it's to. */
+  /**
+   * Who the list is choosing for: a draft mailing's ID, after its Change who,
+   * or NEW_MAILING, for a new one. The list's bar then takes who it finds.
+   */
   mailing: string;
 };
 
@@ -264,7 +267,7 @@ export function politiciansSearch(params: Partial<Record<keyof PoliticiansSearch
     sort,
     dir,
     page,
-    mailing: /^\d+$/.test(mailing) ? mailing : "",
+    mailing: /^\d+$/.test(mailing) || mailing === NEW_MAILING ? mailing : "",
     filter,
   };
 }

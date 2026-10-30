@@ -9,6 +9,7 @@ import Menu from "./Menu";
 import ListFrame, { ListTable, type ListColumn } from "./ListFrame";
 import NavFold from "./NavFold";
 import FormPending from "./FormPending";
+import PageTitle from "./PageTitle";
 
 import { renderToString } from "react-dom/server";
 import { NAV_FOLD_KEY } from "@/lib/staff-nav";
@@ -71,6 +72,14 @@ describe("StaffPage", () => {
     const height = (name: string) => page.getByRole("textbox", { name }).element().getBoundingClientRect().height;
     expect(height("Outside")).toBe(48);
     expect(height("Inside")).toBe(36);
+  });
+});
+
+describe("PageTitle", () => {
+  it("is the page's heading, with its button beside it", async () => {
+    await render(<PageTitle action={<button type="button">New mailing</button>}>Mailings</PageTitle>);
+    await expect.element(page.getByRole("heading", { level: 1, name: "Mailings" })).toBeVisible();
+    await expect.element(page.getByRole("button", { name: "New mailing" })).toBeVisible();
   });
 });
 

@@ -162,9 +162,6 @@ describe("MailingsOverview", () => {
     await expect.element(page.getByRole("button", { name: copy.unschedule })).toBeVisible();
     await expect.element(page.getByRole("button", { name: copy.stopSending })).toBeVisible();
     await expect.element(page.getByText("Jo Example")).toBeVisible();
-    await expect
-      .element(page.getByRole("link", { name: copy.howToStart.link }))
-      .toHaveAttribute("href", "/staff/politicians");
   });
 
   it("says when there are no drafts and nothing coming up", async () => {
