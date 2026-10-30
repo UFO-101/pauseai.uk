@@ -88,8 +88,9 @@ the letter's own address:
   with its From, Sent, To and Cc lines.
 - **A forwarded reply is our own email quoting the MP's.** Re-sending the
   office's message from our server would break its SPF and DKIM. So the
-  constituent gets mail from PauseAI, not their MP, and to answer they
-  have to pick the MP's address out of the quote.
+  constituent gets mail from PauseAI, not their MP. Its Reply-To is the
+  MP's address, so answering it reaches the office, and it names the
+  letter's Message-ID, so it sits in the letter's thread.
 - **People forward replies by hand.** Supporters forward their MP's reply
   to policy@, and policy@ forwards replies on to supporters.
 
@@ -123,8 +124,6 @@ emails with us on Cc.
      its junk or in Mimecast's held mail, and what would let it through?
    - DearMP's team, who send letters to MPs too: what gets through
      Parliament's filter?
-3. **Give forwarded replies a Reply-To of the MP's address**, so the
-   constituent can answer their MP straight from the forward.
 
 ## 2. Next: decide how letters are sent
 
