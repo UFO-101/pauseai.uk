@@ -227,7 +227,7 @@ export default function MailingView({
   const tabHref = (key: string) => filtersPath(path, { tab: key === "sent" ? "" : key });
   const counts = mailingCounts(mailing).map((count) => ({
     ...count,
-    href: count.n === null ? undefined : tabHref(count.key),
+    href: tabHref(count.key),
     current: count.key === mailing.tab,
   }));
   const state = written?.state;
