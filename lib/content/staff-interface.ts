@@ -1056,7 +1056,7 @@ export const staffCopy = {
     edit: "Edit",
     save: "Save",
     // Under the asks, the small button whose menu lists the other asks staff record, to add one to the card.
-    otherAsk: "⁂ + Another ask",
+    otherAsk: "Add another answer",
     // The fields of the box at the top.
     status: "Status",
     country: "Nation",
