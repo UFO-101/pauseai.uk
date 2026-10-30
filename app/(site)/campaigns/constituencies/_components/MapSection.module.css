@@ -12,6 +12,12 @@
   gap: var(--space-6);
 }
 
+/* The small print's own room above it, on top of the stack's gap, would
+   leave it adrift; the gap is enough. */
+.stack > :last-child {
+  margin-top: 0;
+}
+
 @media (max-width: 640px) {
   .band {
     padding-bottom: var(--space-7);
