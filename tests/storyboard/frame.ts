@@ -101,10 +101,19 @@ const SHOT = { animations: "disabled", scale: "css" } as const;
 const SLICE = 4000;
 
 /**
+ * The time a slice is given on top of the test's own. A slice takes a
+ * second or two, and longer while the machine is busy, so a page of dozens
+ * (the gallery's staff group, 35 on a desktop) would otherwise use up the
+ * test's minute on pictures alone.
+ */
+const SLICE_TIME = 5000;
+
+/**
  * The whole page. Chromium leaves some tiles of a very tall page unpainted
  * when it pictures it in one go (the gallery's pages group, 120,000px tall
  * on a phone, lost a different few 512px squares each run), so a page taller
- * than SLICE is pictured a slice at a time and the slices put together.
+ * than SLICE is pictured a slice at a time and the slices put together,
+ * the test given SLICE_TIME more for each.
  */
 async function wholePage(page: Page): Promise<Buffer> {
   const { width, height } = await page.evaluate(() => ({
@@ -112,6 +121,8 @@ async function wholePage(page: Page): Promise<Buffer> {
     height: document.documentElement.scrollHeight,
   }));
   if (height <= SLICE) return page.screenshot({ fullPage: true, ...SHOT });
+  const info = test.info();
+  info.setTimeout(info.timeout + Math.ceil(height / SLICE) * SLICE_TIME);
   const slices: { top: number; body: Buffer }[] = [];
   for (let top = 0; top < height; top += SLICE) {
     const clip = { x: 0, y: top, width, height: Math.min(SLICE, height - top) };
