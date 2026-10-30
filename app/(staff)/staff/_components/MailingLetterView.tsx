@@ -23,7 +23,8 @@ function StatusTag({ letter, answered }: { letter: PauseaiLetterDetails; answere
 /**
  * One of a mailing's letters: its title and how it stands, under it the
  * politician's seat and party; then `children`, the letter and its replies
- * (LetterThread), beside the mailing's ask, as a politician's page shows it,
+ * (LetterThread), beside the mailing's ask, as a politician's page shows it
+ * and as wide as there,
  * to set their answer from what they said; and what happened to it. The
  * thread already says who it's from and to and when, so nothing repeats it.
  */
@@ -54,10 +55,10 @@ export default function MailingLetterView({
         <Muted>{about.filter(Boolean).join(" · ")}</Muted>
       </p>
       <Grid>
-        <div className={spanClass(4)}>{children}</div>
-        <Column span={2}>
+        <div className={spanClass(3)}>{children}</div>
+        <Column span={3}>
           {ask && (
-            <Card look="aside" title={staffCopy.politician.statusesTitle} id="asks-title">
+            <Card look="aside" title={staffCopy.mailings.fields.ask} id="ask-title">
               <AskRow politician={politician} ask={ask} setStatus={setStatus} />
             </Card>
           )}
