@@ -35,6 +35,14 @@ export const exampleAsks: Ask[] = [
     url: "/pdfs/Frontier-AI-Open-Letter.pdf",
     askedBy: ["supporters", "pauseai"],
   },
+  {
+    slug: "example-letter-staff-added-oct-2026",
+    title: "Example Letter Staff Added",
+    kind: "letter",
+    date: "2026-10-29",
+    url: null,
+    askedBy: ["pauseai"],
+  },
 ];
 
 /** The asks with how many gave each answer: a letter signed, an event answered every way it allows, and one nobody has answered. */

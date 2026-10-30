@@ -29,13 +29,16 @@ describe("statusFrom", () => {
     expect(statusFrom(form({ ...base, status: "" }))!.status).toBeNull();
   });
 
-  it("refuses an unknown politician, ask or status, or no note", () => {
+  it("refuses an unknown politician or status, an ask an import fills, or no note", () => {
     expect(statusFrom(form({ ...base, note: " " }))).toBeUndefined();
     expect(statusFrom(form({ ...base, politicianId: "x" }))).toBeUndefined();
-    expect(statusFrom(form({ ...base, ask: "nope" }))).toBeUndefined();
     expect(statusFrom(form({ ...base, status: "maybe" }))).toBeUndefined();
     // ControlAI's letter is set from its PDF, never by hand.
     expect(statusFrom(form({ ...base, ask: "controlai-letter" }))).toBeUndefined();
+  });
+
+  it("takes an ask staff added, whether it exists being the database's to say", () => {
+    expect(statusFrom(form({ ...base, ask: "giant-pause-button-oct-2026" }))!.ask).toBe("giant-pause-button-oct-2026");
   });
 });
 

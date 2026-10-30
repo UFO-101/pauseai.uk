@@ -128,6 +128,7 @@ import {
   MailingWriterExample,
   ChangeWhoListExample,
   PoliticiansListExample,
+  AnswerFormExample,
   PoliticianDetailsExample,
   PoliticianTableEmptyExample,
   PoliticianTableExample,
@@ -1907,6 +1908,14 @@ export const staff: Group = {
             </StaffPage>
           ),
         },
+      ],
+    },
+    {
+      name: "AnswerForm",
+      file: "app/(staff)/staff/_components/AnswerForm.tsx",
+      variants: [
+        { label: "An event's answer, chosen from a list", render: () => <AnswerFormExample /> },
+        { label: "Another ask, chosen from a menu", render: () => <AnswerFormExample menu /> },
       ],
     },
     {

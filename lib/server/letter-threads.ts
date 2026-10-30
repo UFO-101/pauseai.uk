@@ -2,6 +2,7 @@ import "server-only";
 import { gunzipSync } from "node:zlib";
 import { checkMailingDoc, letterFor, type MailingRecipientValues } from "@/lib/mailing-doc";
 import type { LetterDoc } from "@/lib/letter-format";
+import { replyText } from "@/lib/reply-text";
 import { query } from "./db";
 import { firstOfType, parseMime, partText } from "./mime";
 import { letterReply } from "./outside-services/blobs";
@@ -21,7 +22,7 @@ export type ThreadMessage = {
   /** Our answer, rather than their reply. */
   fromUs: boolean;
   subject: string;
-  /** Its plain text, or its HTML's text; null if the kept message can't be read. */
+  /** Its plain text, or its HTML's text, without the mail it quotes; null if the kept message can't be read. */
   text: string | null;
 };
 
@@ -40,10 +41,9 @@ export type LetterThread = {
   messages: ThreadMessage[];
 };
 
-/** An HTML part's text: its tags gone, its breaks kept. */
-function htmlText(html: string): string {
+/** Some HTML's text: its tags gone, its breaks kept. */
+function tagsGone(html: string): string {
   return html
-    .replace(/<(style|script)[^>]*>[\s\S]*?<\/\1>/gi, "")
     .replace(/<br\s*\/?>|<\/(p|div|li|tr|h\d)>/gi, "\n")
     .replace(/<[^>]+>/g, "")
     .replace(/&nbsp;/g, " ")
@@ -51,20 +51,41 @@ function htmlText(html: string): string {
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
-    .replace(/&amp;/g, "&")
+    .replace(/&amp;/g, "&");
+}
+
+/** An HTML part's text, what's in a blockquote marked with "> " as plain text quotes it. */
+function htmlText(html: string): string {
+  let depth = 0;
+  return html
+    .replace(/<(style|script)[^>]*>[\s\S]*?<\/\1>/gi, "")
+    .split(/(<\/?blockquote\b[^>]*>)/i)
+    .map((part) => {
+      if (/^<blockquote/i.test(part)) {
+        depth++;
+        return "\n";
+      }
+      if (/^<\/blockquote/i.test(part)) {
+        depth--;
+        return "\n";
+      }
+      const text = tagsGone(part);
+      return depth > 0 ? text.replace(/^/gm, "> ") : text;
+    })
+    .join("")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
-/** A kept message's text: its plain text if it has one, else its HTML's; null if it's gone or has neither. */
+/** A kept message's text, without the mail it quotes: its plain text if it has one, else its HTML's; null if it's gone or has neither. */
 export async function messageText(blobKey: string): Promise<string | null> {
   const gzipped = await letterReply(blobKey);
   if (!gzipped) return null;
   const message = parseMime(gunzipSync(gzipped).toString("latin1"));
   const plain = firstOfType(message, "text/plain");
-  if (plain) return partText(plain).replace(/\r\n/g, "\n").trim();
+  if (plain) return replyText(partText(plain).replace(/\r\n/g, "\n").trim());
   const html = firstOfType(message, "text/html");
-  return html ? htmlText(partText(html)) : null;
+  return html ? replyText(htmlText(partText(html))) : null;
 }
 
 /** One of a mailing's letters and its thread; undefined if the mailing has no such letter. */

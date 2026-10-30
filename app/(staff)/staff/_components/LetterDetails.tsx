@@ -98,7 +98,8 @@ function Sender({ letter }: { letter: Details }) {
         <Muted>{letter.senderEmail}</Muted>
       </Fact>
       <Fact label={copy.columns.campaign}>
-        <CampaignName slug={letter.campaign} /> {letter.imported && <Tag>{copy.imported}</Tag>}
+        <CampaignName slug={letter.campaign} title={letter.campaignTitle} />{" "}
+        {letter.imported && <Tag>{copy.imported}</Tag>}
       </Fact>
       <Fact label={copy.detail.subject}>{letter.subject}</Fact>
       <Fact label={copy.columns.consent}>{letter.contactConsent ? copy.consent.yes : copy.consent.no}</Fact>
