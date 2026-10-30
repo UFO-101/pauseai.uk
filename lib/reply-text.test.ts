@@ -22,6 +22,46 @@ describe("replyText", () => {
     expect(replyText("Yes.\n> Dear Polly,")).toBe("Yes.");
   });
 
+  it("leaves out Gmail's quote of a mailing sent through a Google Group, its footer and all", () => {
+    const reply = [
+      "Thanks Francis, I would love to!",
+      "",
+      "I will get right to it!!!",
+      "",
+      "On Thu, Oct 29, 2026 at 2:18 PM PauseAI UK Policy <policy@pauseai.uk> wrote:",
+      "",
+      "> Dear Mx McTestface,",
+      ">",
+      "> I think the Millennium Dome looks exactly the same shape as a giant pause",
+      "> button would look. I have an architect who has done up plans to paint it",
+      "> orange and make the pillar things into two long black marks so from the air",
+      "> when people fly into London City it looks like a massive fuck-off pause",
+      "> button.",
+      ">",
+      "> Given the Government's policy is now entirely about stopping everyone",
+      "> being killed by out of control AI, could you please secure the funding",
+      "> needed for this importing",
+      ">",
+      "> With love,",
+      ">",
+      "> Francis",
+      ">",
+      "> --",
+      "> You received this message because you are subscribed to the Google Groups",
+      '> "Test" group.',
+      "> To unsubscribe from this group and stop receiving emails from it, send an",
+      "> email to test+unsubscribe@pauseai.uk.",
+      "> To view this discussion visit",
+      "> https://groups.google.com/a/pauseai.uk/d/msgid/test/CAGt2EoG-N-eUZkjpmDFdYPCGdRgX1-7rEEqVkpNTah5zD_Z8KA%40mail.gmail.com",
+      "> <https://groups.google.com/a/pauseai.uk/d/msgid/test/CAGt2EoG-N-eUZkjpmDFdYPCGdRgX1-7rEEqVkpNTah5zD_Z8KA%40mail.gmail.com?utm_medium=email&utm_source=footer>",
+      "> .",
+      "> For more options, visit https://groups.google.com/a/pauseai.uk/d/optout.",
+      ">",
+      "",
+    ].join("\n");
+    expect(replyText(reply)).toBe("Thanks Francis, I would love to!\n\nI will get right to it!!!");
+  });
+
   it("leaves out an unmarked quote from its header down: Outlook's, its underscores, or Original Message", () => {
     const outlook =
       "Noted.\n\nFrom: Jo <jo@pauseai.uk>\nSent: 29 October 2026 14:18\nTo: Polly\nSubject: AI\n\nDear Polly,";
