@@ -75,8 +75,8 @@ export const staffCopy = {
     copy: "Copy Gmail search",
     copied: "Copied!",
     // The × that closes the note, as a screen reader names it.
-    close: "⁂ Close",
-    // Then, in a bubble, what to do, in bold, "paste" stressed; under it, where.
+    close: "Close",
+    // Then, in the note under it, what to do, in bold, "paste" stressed; under that, where.
     next: { before: "Next, ", stressed: "paste", after: " into Gmail search." },
     where: (mailbox: string) => `You must be in an inbox that can see ${mailbox}'s mail.`,
     whereUnknown: "You must be in an inbox that can see mail from the address it was sent from.",
