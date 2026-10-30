@@ -6,7 +6,7 @@ import { campaignBySlug, campaignPath } from "@/lib/email-your-mp";
  * the title the campaigns table gives it, plain, or by its slug where
  * there's no `title` to hand, as in an old entry of the audit log.
  */
-export default function CampaignName({ slug, title }: { slug: string; title?: string }) {
+export default function CampaignName({ slug, title }: { slug: string; title?: string | null }) {
   const campaign = campaignBySlug(slug);
   return campaign ? <Link href={campaignPath(campaign)}>{campaign.title}</Link> : <>{title ?? slug}</>;
 }
