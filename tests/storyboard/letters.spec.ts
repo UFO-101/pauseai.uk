@@ -91,8 +91,10 @@ test("Unblock an MP's bounced address", async ({ page, request, flowDatabase }) 
   await expect(page.getByRole("heading", { name: bouncy.name })).toBeVisible();
   const unreachable = page.getByText(copy.lookup.unreachable);
   await expect(unreachable).toBeVisible();
-  // The MP's card is under the form: brought into view, so the frame shows it.
-  await page.getByRole("heading", { name: bouncy.name }).scrollIntoViewIfNeeded();
+  // The MP's card is under the form: brought to the middle of the window, wherever it was, so the frame shows it.
+  await page
+    .getByRole("heading", { name: bouncy.name })
+    .evaluate((heading) => heading.scrollIntoView({ block: "center" }));
   await frame(page, "the form says the MP can't be reached");
 
   await logIn(page, flowDatabase, ["admin"]);
