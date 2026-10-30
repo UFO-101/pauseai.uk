@@ -757,6 +757,7 @@ describeWithDatabase("members as supporters", () => {
       at: new Date("2024-03-23T00:00:00Z"),
       kind: "member-joined",
       title: "Volunteer",
+      campaignTitle: null,
       detail: "pauseai.uk",
       href: "https://airtable.com/appWPTGqZmUcs3NWu/tblL1icZBhTV1gQ9o/recJane",
       status: null,

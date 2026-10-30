@@ -105,7 +105,7 @@ function Subject({ item, letters }: { item: SupporterActivity; letters: string }
           {item.title && (
             <>
               {` ${copy.detail.about} `}
-              <CampaignName slug={item.title} title={item.campaignTitle ?? undefined} />
+              <CampaignName slug={item.title} title={item.campaignTitle} />
             </>
           )}
           {item.status && (

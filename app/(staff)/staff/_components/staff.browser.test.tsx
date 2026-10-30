@@ -2672,6 +2672,7 @@ describe("LettersTable", () => {
             ...letter,
             id: 2,
             campaign: "gone",
+            campaignTitle: "Gone, from pauseai.info",
             status: "odd",
             isTest: false,
             imported: true,
@@ -2690,7 +2691,7 @@ describe("LettersTable", () => {
         .getByText(staffCopy.letters.imported)
         .all()
         .map((tag) => tag.element().closest("td")!.textContent),
-    ).toEqual([`gone ${staffCopy.letters.imported}`]);
+    ).toEqual([`Gone, from pauseai.info ${staffCopy.letters.imported}`]);
     // The campaign leads to its page on the site, the MP to their page, the sender to their supporter.
     await expect
       .element(page.getByRole("link", { name: pm.title }).first())
@@ -2701,7 +2702,7 @@ describe("LettersTable", () => {
     await expect
       .element(page.getByRole("link", { name: letter.senderName }).first())
       .toHaveAttribute("href", "/staff/supporters/7");
-    await expect.element(page.getByRole("cell", { name: /^gone/ })).toBeInTheDocument();
+    await expect.element(page.getByRole("cell", { name: /^Gone, from pauseai.info/ })).toBeInTheDocument();
     await expect.element(page.getByRole("link", { name: "odd" })).toHaveAttribute("href", "/staff/letters/2");
     await expect
       .element(page.getByRole("cell", { name: staffCopy.letters.consent.yes, exact: true }))
@@ -3253,7 +3254,7 @@ describe("SupporterDetails", () => {
               mpName: "An MP",
               politicianId: 9,
               campaign: "gone-campaign",
-              campaignTitle: "Example campaign",
+              campaignTitle: "Gone campaign",
               status: "odd",
             },
           ],
@@ -3324,7 +3325,7 @@ describe("SupporterDetails", () => {
               at: "2026-01-03T00:00:00Z",
               kind: "letter",
               title: "gone-campaign",
-              campaignTitle: "Example campaign",
+              campaignTitle: "Gone campaign",
               detail: "An MP",
               href: null,
               status: "sent",
@@ -3360,7 +3361,7 @@ describe("SupporterDetails", () => {
     await expect.element(page.getByText("Thing", { exact: false }).first()).toBeVisible();
     await expect.element(page.getByText(copy.detail.statuses.waitlist, { exact: false }).first()).toBeVisible();
     await expect.element(page.getByText("other-list", { exact: false })).toBeVisible();
-    await expect.element(page.getByText("gone-campaign", { exact: false }).first()).toBeVisible();
+    await expect.element(page.getByText("Gone campaign", { exact: false }).first()).toBeVisible();
     // A letter's status, as stored when it's no status we know, leads to its page.
     await expect.element(page.getByRole("link", { name: "odd" })).toHaveAttribute("href", "/staff/letters/5");
   });
@@ -3805,10 +3806,10 @@ describe("each list's download values and contact cards", () => {
     );
   });
 
-  it("letters: the campaign by its title, or its slug once it's gone, and the history", () => {
+  it("letters: the campaign by its title, the campaigns table's once it's gone, and the history", () => {
     const row = values(letterDownloadColumns, exampleLetter);
     expect(row.campaign).toBe(campaignBySlug(exampleLetter.campaign)?.title);
-    expect(values(letterColumns, { ...exampleLetter, campaign: "gone" }).campaign).toBe("gone");
+    expect(values(letterColumns, { ...exampleLetter, campaign: "gone", campaignTitle: "Gone" }).campaign).toBe("Gone");
     expect(typeof row.history).toBe("string");
   });
 
