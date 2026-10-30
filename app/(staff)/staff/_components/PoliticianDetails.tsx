@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { answeredByHand, trackedAsks } from "@/lib/email-your-mp";
 import type { Ask } from "@/lib/server/asks";
-import { AskLead, AskTitle } from "./AskLine";
-import AnswerForm from "./AnswerForm";
+import { AskTitle } from "./AskLine";
+import AskRow, { OtherAsks } from "./AskRow";
 import CampaignName from "./CampaignName";
 import { FieldChanges } from "./AuditDetail";
 import type { FieldChange } from "@/lib/field-changes";
@@ -223,72 +223,6 @@ function asksOf(politician: Politician, asks: Ask[]): Ask[] {
   ];
 }
 
-/** Answers that are a yes, ticked in green, and a no, crossed. */
-const YES = ["signed", "going"];
-const NO = ["declined", "declined_surgery"];
-
-/**
- * One ask, a row of the asks card: who asked them to do what, and when,
- * leading into the ask's title; the note and who set the answer, or which
- * import; beside it, in a column of its own, their answer and its date, a
- * yes ticked in green and a no crossed, and for an ask staff record, Edit
- * under it, which opens the form to change it in a bubble below.
- */
-function AskRow({
-  politician,
-  ask,
-  setStatus,
-}: {
-  politician: Politician;
-  ask: Ask;
-  setStatus: (form: FormData) => void | Promise<void>;
-}) {
-  const status = politician.statuses[ask.slug];
-  const none = ask.kind === "letter" ? staffCopy.statuses.none : staffCopy.statuses.noAnswer;
-  const tracked = answeredByHand(ask.slug);
-  const editId = `edit-${ask.slug}`;
-  const tone = status && (YES.includes(status.status) ? styles.yes : NO.includes(status.status) ? styles.no : "");
-  return (
-    <div className={styles.ask} role="group" aria-label={ask.title}>
-      <div className={styles.asked}>
-        <AskLead ask={ask} />
-        {status && (
-          <span className={styles.askMeta}>
-            {status.note && `${status.note} · `}
-            {copy.fromImport[status.updatedBy] ?? copy.setBy(status.updatedBy, staffDate(status.updatedAt))}
-          </span>
-        )}
-      </div>
-      <div className={`${styles.answer} ${tone || ""}`}>
-        <span>{status ? staffCopy.statuses[status.status] : none}</span>
-        {status?.date && <span className={styles.askMeta}>{staffDate(status.date)}</span>}
-        {tracked && (
-          <button
-            type="button"
-            className={styles.edit}
-            popoverTarget={editId}
-            style={{ anchorName: `--${editId}` } as React.CSSProperties}
-          >
-            {copy.edit}
-          </button>
-        )}
-      </div>
-      {tracked && (
-        // Keyed on the answer, so a change made from it closes it and empties the note.
-        <div
-          key={status?.updatedAt ?? "none"}
-          id={editId}
-          popover="auto"
-          className={styles.editPopover}
-          style={{ positionAnchor: `--${editId}` } as React.CSSProperties}
-        >
-          <AnswerForm politician={politician} asks={[ask]} setStatus={setStatus} />
-        </div>
-      )}
-    </div>
-  );
-}
-
 /**
  * A politician's page, laid out like a supporter's: their name and tags,
  * and under it what they are;
@@ -469,12 +403,8 @@ export default function PoliticianDetails({
             {rows.map((ask) => (
               <AskRow key={ask.slug} politician={politician} ask={ask} setStatus={setStatus} />
             ))}
+            <OtherAsks politician={politician} asks={others} setStatus={setStatus} />
           </div>
-          {others.length > 0 && (
-            <div className={styles.otherAsk}>
-              <AnswerForm politician={politician} asks={others} menu setStatus={setStatus} />
-            </div>
-          )}
         </Card>
         <Card span={6} look="log" title={copy.historyTitle} id="history-title">
           {entries.length === 0 ? (

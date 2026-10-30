@@ -129,7 +129,7 @@ import {
   MailingWriterExample,
   ChangeWhoListExample,
   PoliticiansListExample,
-  AnswerFormExample,
+  AskRowExample,
   PoliticianDetailsExample,
   PoliticianTableEmptyExample,
   PoliticianTableExample,
@@ -1975,12 +1975,16 @@ export const staff: Group = {
       ],
     },
     {
-      name: "AnswerForm",
-      file: "app/(staff)/staff/_components/AnswerForm.tsx",
+      name: "AskRow",
+      file: "app/(staff)/staff/_components/AskRow.tsx",
       variants: [
-        { label: "An event's answer, chosen from a list", render: () => <AnswerFormExample /> },
-        { label: "Another ask, chosen from a menu", render: () => <AnswerFormExample menu /> },
+        { label: "An answer from Airtable, and an ask staff record with none yet", render: () => <AskRowExample /> },
       ],
+    },
+    {
+      name: "OtherAsks",
+      file: "app/(staff)/staff/_components/AskRow.tsx",
+      variants: [{ label: "Under the rows, the button for another ask", render: () => <AskRowExample others /> }],
     },
     {
       name: "PoliticianDetails",
