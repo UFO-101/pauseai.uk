@@ -543,3 +543,22 @@ npm run test:report       # open the last Playwright report
 - Run one section with `npm run test:storyboard -- staff`, one flow with
   `-g "login link"`, or point at another fixture build with `LOCAL_URL`.
 - Browser tests need Chromium: `npx playwright install chromium`.
+
+### Long runs in the background
+
+A run left in the background (`npm test`, the storyboard) that freezes or
+dies without a last line can look like one still working: a storyboard
+gate once sat for an hour and a half, printing nothing, before anyone
+noticed. So give each a limit, and check on it when it's due:
+
+```bash
+timeout 15m npm test                                  # usually about 5 minutes
+timeout 15m npm run test:storyboard                   # usually a few minutes
+timeout 25m npm run storyboard -- --no-open           # builds main too: usually about 10
+```
+
+`timeout` stops it at the limit and exits 124, so a run that ends that way
+froze rather than failed. Write each one's output to a file and its exit
+code after it, and when the time it usually takes has passed, look at the
+file: a run whose output hasn't moved in minutes is stuck, so stop it and
+find out why, rather than waiting for the limit.
