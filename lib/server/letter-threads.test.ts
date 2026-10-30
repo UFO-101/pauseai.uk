@@ -121,6 +121,22 @@ describeWithDatabase("letter threads", () => {
     expect(await messageText("pdf.eml.gz")).toBeNull();
   });
 
+  it("leaves out the mail a reply quotes, in plain text or in an HTML blockquote", async () => {
+    await saveLetterReply(
+      "plain.eml.gz",
+      gzipSync("Subject: Re\r\n\r\nYes.\r\n\r\nOn Mon, Jo wrote:\r\n> Will you?\r\n"),
+    );
+    expect(await messageText("plain.eml.gz")).toBe("Yes.");
+    await saveLetterReply(
+      "html.eml.gz",
+      gzipSync(
+        "Content-Type: text/html\r\n\r\n<div>No.</div><div>On Mon, Jo wrote:<br></div>" +
+          "<blockquote>Will you?<blockquote>Older</blockquote></blockquote>",
+      ),
+    );
+    expect(await messageText("html.eml.gz")).toBe("No.");
+  });
+
   it("lists the kept replies after an ID for the backup, and gives each one's file", async () => {
     const { letter: id } = await letter();
     await keep(id, "a.eml.gz", "hello", "2026-11-02T12:00:00Z");

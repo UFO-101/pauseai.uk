@@ -23,6 +23,7 @@ import {
 } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
 import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import Run from "@/app/(staff)/staff/_components/Run";
+import AnswerForm from "@/app/(staff)/staff/_components/AnswerForm";
 import EraseForm from "@/app/(staff)/staff/_components/EraseForm";
 import DeletePolitician from "@/app/(staff)/staff/_components/DeletePolitician";
 import RemoveAccountForm from "@/app/(staff)/staff/_components/RemoveAccountForm";
@@ -98,6 +99,22 @@ export function HeldSyncExample() {
  * A politician's page for a signer the policy team added, its saves logged;
  * or one of Airtable's MPs, not editable here, whose address may be blocked.
  */
+/** The form for a politician's answer to an ask staff record, for one ask or chosen from a menu of them. */
+export function AnswerFormExample({ menu = false }: { menu?: boolean }) {
+  return (
+    <Logged>
+      {(log) => (
+        <AnswerForm
+          politician={examplePolitician}
+          asks={menu ? exampleAsks.slice(3) : [exampleAsks[0]!]}
+          menu={menu}
+          setStatus={log("setStatus")}
+        />
+      )}
+    </Logged>
+  );
+}
+
 export function PoliticianDetailsExample({
   fromAirtable = false,
   blocked = false,
@@ -128,6 +145,7 @@ export function PoliticianDetailsExample({
                     {
                       id: letter.id,
                       campaign: letter.campaign,
+                      campaignTitle: "Example campaign",
                       status: letter.status,
                       createdAt: letter.createdAt,
                       repliedAt: letter.repliedAt,

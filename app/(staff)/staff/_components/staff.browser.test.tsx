@@ -1348,6 +1348,7 @@ describe("PoliticianDetails", () => {
               senderName: "Old Writer",
               supporterId: null,
               campaign: "old-campaign",
+              campaignTitle: "Old campaign, from pauseai.info",
               status: "queued",
               createdAt: "2026-07-01T08:00:00Z",
               repliedAt: null,
@@ -1432,7 +1433,7 @@ describe("PoliticianDetails", () => {
       "1 Aug 2026, 10:00strange  · x",
       `20 Jul 2026, 10:00${copy["edit politician"]} Polly Placeholder · ${staffCopy.fields.party} Labour → Labour (Co-op) · sync`,
       `15 Jul 2026, 10:00${copy["add politician"]} Polly Placeholder · import`,
-      `1 Jul 2026, 08:00${copy.letter} Old Writer · old-campaign · queued`,
+      `1 Jul 2026, 08:00${copy.letter} Old Writer · Old campaign, from pauseai.info · queued`,
       `1 Jun 2026, 08:00${copy["pauseai-letter"]} Example Mailing · made-up`,
     ]);
     // An answer leads to everyone who gave it, the ask to the letter as in the asks card, PauseAI's email to its
@@ -1459,7 +1460,7 @@ describe("PoliticianDetails", () => {
     const links = list.getByRole("link", { name: pm.title, exact: true }).all();
     expect(links.length).toBeGreaterThan(1);
     for (const link of links) await expect.element(link).toHaveAttribute("href", campaignPath(pm));
-    await expect.element(list.getByRole("link", { name: "old-campaign" })).not.toBeInTheDocument();
+    await expect.element(list.getByRole("link", { name: "Old campaign, from pauseai.info" })).not.toBeInTheDocument();
     await expect.element(list.getByRole("link", { name: "gone" })).not.toBeInTheDocument();
   });
 
@@ -1493,11 +1494,19 @@ describe("PoliticianDetails", () => {
             {
               id: 2,
               campaign: pm.slug,
+              campaignTitle: pm.title,
               status: "sent",
               createdAt: "2026-10-13T08:00:00Z",
               repliedAt: "2026-10-15T09:00:00Z",
             },
-            { id: 1, campaign: "old-campaign", status: "queued", createdAt: "2026-07-01T08:00:00Z", repliedAt: null },
+            {
+              id: 1,
+              campaign: "old-campaign",
+              campaignTitle: "Old campaign, from pauseai.info",
+              status: "queued",
+              createdAt: "2026-07-01T08:00:00Z",
+              repliedAt: null,
+            },
           ],
         }}
       />,
@@ -1512,7 +1521,7 @@ describe("PoliticianDetails", () => {
     ).toEqual([
       `15 Oct 2026, 09:00${copy["unsigned-letter-replied"]} · ${pm.title}`,
       `13 Oct 2026, 08:00${copy.unsignedLetter} · ${pm.title} · ${staffCopy.letters.status.sent}`,
-      `1 Jul 2026, 08:00${copy.unsignedLetter} · old-campaign · queued`,
+      `1 Jul 2026, 08:00${copy.unsignedLetter} · Old campaign, from pauseai.info · queued`,
       `1 Jun 2026, 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.letters.status.sent}`,
       `1 May 2026, 08:00${copy["pauseai-letter"]} Example Mailing · made-up`,
     ]);
@@ -1668,6 +1677,64 @@ describe("PoliticianDetails", () => {
     const going = page.getByRole("group", { name: "Example Event" }).last();
     expect(going.element().querySelector("[class*=answer]")!.className).toMatch(/yes/);
     expect(going.element().querySelector("select")!.value).toBe("going");
+  });
+
+  it("sets an answer to another ask staff record from a menu under the asks, and edits one they've answered", async () => {
+    const dome = { ...ask("frontier-ai-letter"), slug: "giant-pause-button-oct-2026", title: "Giant Pause Button" };
+    const fair = { ...dome, slug: "village-fair-nov-2026", title: "Village Fair", kind: "event" as const };
+    const { fn, sent } = action();
+    const { rerender } = await render(
+      <PoliticianDetails
+        {...none}
+        asks={[ask("controlai-letter"), dome, fair]}
+        politician={{ ...MP, statuses: {} }}
+        setStatus={fn}
+        unblock={vi.fn()}
+      />,
+    );
+    // Neither has a row yet, and ControlAI's letter, which its import fills, isn't in the menu.
+    expect(page.getByRole("group").all()).toHaveLength(0);
+    const menu = page.getByRole("combobox", { name: staffCopy.politician.otherAsk });
+    expect([...(menu.element() as HTMLSelectElement).options].map((o) => o.text)).toEqual([
+      staffCopy.politician.otherAsk,
+      "Giant Pause Button",
+      "Village Fair",
+    ]);
+    expect(page.getByRole("form").all()).toHaveLength(0);
+    await menu.selectOptions("Village Fair");
+    await expect
+      .element(page.getByRole("form", { name: `${staffCopy.politician.setStatus}: Village Fair` }))
+      .toBeVisible();
+    await menu.selectOptions("Giant Pause Button");
+    await page.getByLabelText(staffCopy.politician.note).fill("At the march");
+    await page.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
+    await vi.waitFor(() => expect(sent).toHaveLength(1));
+    expect(sent[0]).toEqual({
+      politicianId: "7",
+      ask: "giant-pause-button-oct-2026",
+      status: "signed",
+      note: "At the march",
+    });
+    // Signed, it's a row with Edit, and the menu has only the other.
+    await rerender(
+      <PoliticianDetails
+        {...none}
+        asks={[ask("controlai-letter"), dome, fair]}
+        politician={{ ...MP, statuses: { "giant-pause-button-oct-2026": MP.statuses["frontier-ai-letter"] } }}
+        setStatus={fn}
+        unblock={vi.fn()}
+      />,
+    );
+    await expect
+      .element(
+        page.getByRole("group", { name: "Giant Pause Button" }).getByText(staffCopy.politician.edit, { exact: true }),
+      )
+      .toBeVisible();
+    expect([...(menu.element() as HTMLSelectElement).options].map((o) => o.text)).toEqual([
+      staffCopy.politician.otherAsk,
+      "Village Fair",
+    ]);
+    expect(page.getByRole("form", { name: `${staffCopy.politician.setStatus}: Village Fair` }).query()).toBeNull();
   });
 
   it("says in one place that letters aren't being sent, why, what to check, and unblocks it with a note", async () => {
@@ -3182,6 +3249,7 @@ describe("SupporterDetails", () => {
               at: "2026-10-05T09:00:00Z",
               kind: "letter",
               title: "old-campaign",
+              campaignTitle: "Old campaign, from pauseai.info",
               detail: "Gone MP",
               href: null,
               status: "queued",
@@ -3193,7 +3261,7 @@ describe("SupporterDetails", () => {
     openHistory();
     const old = page.getByRole("list", { name: copy.detail.activityTitle });
     expect(old.element().textContent).toContain(
-      `${copy.detail.kinds.letter} Gone MP ${copy.detail.about} old-campaign · queued`,
+      `${copy.detail.kinds.letter} Gone MP ${copy.detail.about} Old campaign, from pauseai.info · queued`,
     );
     // Only the status links, to the supporter's letters.
     expect(
@@ -3266,6 +3334,7 @@ describe("SupporterDetails", () => {
               mpName: "An MP",
               politicianId: 9,
               campaign: "gone-campaign",
+              campaignTitle: "Example campaign",
               status: "odd",
             },
           ],
@@ -3286,6 +3355,7 @@ describe("SupporterDetails", () => {
               at: "2026-01-01T00:00:00Z",
               kind: "luma-registered",
               title: "Thing",
+              campaignTitle: null,
               detail: "waitlist",
               href: null,
               status: null,
@@ -3295,6 +3365,7 @@ describe("SupporterDetails", () => {
               at: "2026-01-01T00:00:00Z",
               kind: "luma-registered",
               title: "Other",
+              campaignTitle: null,
               detail: "session",
               href: null,
               status: null,
@@ -3304,6 +3375,7 @@ describe("SupporterDetails", () => {
               at: "2026-01-01T00:00:00Z",
               kind: "luma-registered",
               title: "Bare",
+              campaignTitle: null,
               detail: null,
               href: null,
               status: null,
@@ -3313,6 +3385,7 @@ describe("SupporterDetails", () => {
               at: "2026-01-02T00:00:00Z",
               kind: "opted-out",
               title: "other-list",
+              campaignTitle: null,
               detail: null,
               href: null,
               status: null,
@@ -3322,6 +3395,7 @@ describe("SupporterDetails", () => {
               at: "2026-01-02T00:00:00Z",
               kind: "resubscribed",
               title: null,
+              campaignTitle: null,
               detail: "x@example.com",
               href: null,
               status: null,
@@ -3331,6 +3405,7 @@ describe("SupporterDetails", () => {
               at: "2026-01-03T00:00:00Z",
               kind: "letter",
               title: "gone-campaign",
+              campaignTitle: "Example campaign",
               detail: "An MP",
               href: null,
               status: "sent",
@@ -3340,6 +3415,7 @@ describe("SupporterDetails", () => {
               at: "2026-01-03T00:00:00Z",
               kind: "letter",
               title: null,
+              campaignTitle: null,
               detail: "No campaign MP",
               href: null,
               status: null,
@@ -3349,6 +3425,7 @@ describe("SupporterDetails", () => {
               at: "2026-01-04T00:00:00Z",
               kind: "letter-replied",
               title: null,
+              campaignTitle: null,
               detail: null,
               href: null,
               status: null,
@@ -3494,6 +3571,7 @@ describe("SupporterDetails, a march sign-up", () => {
     at: "2026-10-20T10:00:00Z",
     kind: "form-entry" as const,
     title: "march-2026-11",
+    campaignTitle: null,
     detail: "nl",
     href: null,
     status: "skipped",

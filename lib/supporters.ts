@@ -76,7 +76,10 @@ export type SupporterActivity = {
     | "member-joined"
     | "opted-out"
     | "resubscribed";
+  /** The event's or form's name, or a letter's campaign's slug. */
   title: string | null;
+  /** A letter's campaign's title, as the campaigns table has it; null for every other kind. */
+  campaignTitle: string | null;
   /** Who or what it was with: the event's status, the MP's name, the site they joined on, or the address. */
   detail: string | null;
   href: string | null;
@@ -109,6 +112,8 @@ export type SupporterLetter = {
   mpName: string;
   politicianId: number;
   campaign: string;
+  /** The campaign's title, as the campaigns table has it. */
+  campaignTitle: string;
   status: string;
 };
 

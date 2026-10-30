@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { Muted } from "@/components/ui/Text";
 import Tag from "@/components/ui/Tag";
-import { campaignBySlug, campaignPath, displayPostcode } from "@/lib/email-your-mp";
+import { displayPostcode } from "@/lib/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { staffDate, staffTime } from "@/lib/staff-time";
 import { UK_MAP_HEIGHT, UK_MAP_WIDTH, ukMapPoint, ukOutline } from "@/lib/uk-map";
@@ -13,6 +13,7 @@ import type {
   SupporterLetter,
   SupporterSource,
 } from "@/lib/supporters";
+import CampaignName from "./CampaignName";
 import PermissionTiles from "./PermissionTiles";
 import Grid, { Card, spanClass } from "./ui/Grid";
 import { ListTable, type ListColumn } from "./ui/ListFrame";
@@ -97,7 +98,6 @@ function Subject({ item, letters }: { item: SupporterActivity; letters: string }
   if (item.kind === "letter" || item.kind === "letter-replied") {
     // The MP, linked to their page; the campaign, linked to its public page while it's still one; then a letter's
     // status, linked to the page of the supporter's letters.
-    const campaign = campaignBySlug(item.title ?? "");
     return (
       <>
         {item.href ? <Link href={item.href}>{item.detail}</Link> : item.detail}
@@ -105,7 +105,7 @@ function Subject({ item, letters }: { item: SupporterActivity; letters: string }
           {item.title && (
             <>
               {` ${copy.detail.about} `}
-              {campaign ? <Link href={campaignPath(campaign)}>{campaign.title}</Link> : item.title}
+              <CampaignName slug={item.title} title={item.campaignTitle ?? undefined} />
             </>
           )}
           {item.status && (
@@ -264,10 +264,7 @@ const letterColumns: ListColumn<SupporterLetter>[] = [
   {
     key: "campaign",
     label: copy.detail.columns.campaign,
-    cell: (l) => {
-      const campaign = campaignBySlug(l.campaign);
-      return campaign ? <Link href={campaignPath(campaign)}>{campaign.title}</Link> : l.campaign;
-    },
+    cell: (l) => <CampaignName slug={l.campaign} title={l.campaignTitle} />,
   },
 ];
 

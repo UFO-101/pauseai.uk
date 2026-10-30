@@ -8,6 +8,7 @@ import {
   campaignToMoveTo,
   chooseCampaign,
   trackedAsks,
+  answeredByHand,
   trackedCampaigns,
   draftLetter,
   isDone,
@@ -57,6 +58,12 @@ describe("campaigns", () => {
   it("leaves campaigns nobody has done out of the staff interface, which records their asks", () => {
     expect(trackedCampaigns).toEqual([letterToPm]);
     expect(trackedAsks).toEqual(["frontier-ai-letter"]);
+  });
+
+  it("has staff answer by hand a tracked campaign's ask or one they added, not one an import fills", () => {
+    expect(answeredByHand("frontier-ai-letter")).toBe(true);
+    expect(answeredByHand("giant-pause-button-oct-2026")).toBe(true);
+    expect(answeredByHand("controlai-letter")).toBe(false);
   });
 
   it("finds the campaign that makes an ask", () => {
