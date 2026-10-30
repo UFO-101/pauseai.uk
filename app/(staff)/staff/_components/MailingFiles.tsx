@@ -92,7 +92,9 @@ function Thumbnail({ file, href }: { file: MailingAttachmentSummary; href: strin
  * (AttachmentChips): a thumbnail, made in the browser, then a paperclip and
  * the name over its kind and size, opening the file. With `onAdd`, after
  * them, a card's size of dotted box to drop files on or pick them from, and
- * with `onRemove`, a × on each card's corner.
+ * with `onRemove`, a × on each card's corner. Its button is pending while
+ * files are added, and a × disabled and marked data-pending, for the line
+ * along the top (StaffPage), while its file's removed.
  */
 export default function MailingFiles({
   files,
@@ -104,14 +106,32 @@ export default function MailingFiles({
   files: MailingAttachmentSummary[];
   /** Where the files can be opened: each at this, then its ID. A string, as a server page hands it in. */
   base: string;
-  onAdd?: (files: File[]) => void;
-  onRemove?: (id: number) => void;
+  onAdd?: (files: File[]) => void | Promise<void>;
+  onRemove?: (id: number) => void | Promise<void>;
   /** What's wrong with the last file added, if anything. */
   problem?: string;
 }) {
   const picker = useRef<HTMLInputElement>(null);
   const hint = useId();
   const [over, setOver] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [removing, setRemoving] = useState<number>();
+  async function add(chosen: File[]) {
+    setAdding(true);
+    try {
+      await onAdd!(chosen);
+    } finally {
+      setAdding(false);
+    }
+  }
+  async function remove(id: number) {
+    setRemoving(id);
+    try {
+      await onRemove!(id);
+    } finally {
+      setRemoving(undefined);
+    }
+  }
   return (
     <div className={styles.files}>
       {(files.length > 0 || onAdd) && (
@@ -133,7 +153,9 @@ export default function MailingFiles({
                   type="button"
                   className={styles.remove}
                   aria-label={copy.removeFile(file.filename)}
-                  onClick={() => onRemove(file.id)}
+                  disabled={removing === file.id}
+                  data-pending={removing === file.id || undefined}
+                  onClick={() => void remove(file.id)}
                 >
                   ×
                 </button>
@@ -152,11 +174,18 @@ export default function MailingFiles({
               onDrop={(event) => {
                 event.preventDefault();
                 setOver(false);
-                onAdd([...event.dataTransfer.files]);
+                void add([...event.dataTransfer.files]);
               }}
             >
               <span id={hint}>{copy.dropFiles}</span>
-              <Button variant="ghost" size="small" fit aria-describedby={hint} onClick={() => picker.current!.click()}>
+              <Button
+                variant="ghost"
+                size="small"
+                fit
+                aria-describedby={hint}
+                pending={adding}
+                onClick={() => picker.current!.click()}
+              >
                 {copy.addFiles}
               </Button>
               <input
@@ -167,7 +196,7 @@ export default function MailingFiles({
                 onChange={(event) => {
                   const chosen = [...event.target.files!];
                   event.target.value = "";
-                  onAdd(chosen);
+                  void add(chosen);
                 }}
               />
             </li>

@@ -1,7 +1,6 @@
 "use client";
 
 import { type FormEvent, useOptimistic, useState, useTransition } from "react";
-import { Button } from "@/components/ui/Button";
 import { Checkbox, TextInput } from "@/components/ui/Controls";
 import { FieldError } from "@/components/ui/Field";
 import Table from "@/components/ui/Table";
@@ -107,9 +106,9 @@ function AddRow({ accounts, add }: { accounts: StaffAccount[]; add: Action }) {
             placeholder={copy.addTitle}
             aria-invalid={problem !== undefined}
           />
-          <Button type="submit" variant="ghost" size="small" fit>
+          <SubmitButton variant="ghost" size="small" fit>
             {copy.add}
-          </Button>
+          </SubmitButton>
           {problem && (
             <FieldError announce="alert">{problem === "exists" ? copy.alreadyThere : copy.notPauseai}</FieldError>
           )}

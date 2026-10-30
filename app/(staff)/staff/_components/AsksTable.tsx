@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AskTitle } from "./AskLine";
-import { ButtonLink } from "@/components/ui/Button";
+import { buttonClass } from "@/components/ui/Button";
 import styles from "./AsksTable.module.css";
 import { ASK_STATUSES, FIXED_ASKS } from "@/lib/asks";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -9,6 +9,7 @@ import { staffDate } from "@/lib/staff-time";
 import Strip from "./ui/Strip";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
 import { Muted } from "@/components/ui/Text";
+import StaffLink from "./ui/StaffLink";
 
 const copy = staffCopy.asks;
 
@@ -77,9 +78,9 @@ const editColumn: ListColumn<AskWithCounts> = {
   end: true,
   cell: (a) =>
     !FIXED_ASKS.includes(a.slug) && (
-      <ButtonLink href={`/staff/asks/${a.slug}`} variant="ghost" size="small" fit>
+      <StaffLink className={buttonClass({ variant: "ghost", size: "small", fit: true })} href={`/staff/asks/${a.slug}`}>
         {copy.edit}
-      </ButtonLink>
+      </StaffLink>
     ),
 };
 

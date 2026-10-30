@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useRef, type ReactNode } from "react";
+import { useFormLeaving } from "@/components/ui/useLeaving";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { Permission } from "@/lib/staff-permissions";
 import { sectionsFor, staffPageOf, type StaffPageId } from "@/lib/staff-sections";
@@ -125,12 +127,10 @@ export default function StaffNav({ email, permissions = [], current: shown }: Pr
         {groups}
         <div className={styles.foot}>
           {profile}
-          <form method="post" action="/staff/api/logout">
-            <button type="submit" className={styles.page}>
-              <NavIcon id="logout" />
-              <span className={styles.label}>{staffCopy.nav.logout}</span>
-            </button>
-          </form>
+          <LogOut className={styles.page}>
+            <NavIcon id="logout" />
+            <span className={styles.label}>{staffCopy.nav.logout}</span>
+          </LogOut>
         </div>
       </div>
       {/* A phone: a dropdown at the right of the bar, the current page with an arrow. */}
@@ -140,13 +140,26 @@ export default function StaffNav({ email, permissions = [], current: shown }: Pr
           {home}
           {groups}
           {profile}
-          <form method="post" action="/staff/api/logout">
-            <button type="submit" className={styles.linkButton}>
-              {staffCopy.nav.logout}
-            </button>
-          </form>
+          <LogOut className={styles.linkButton}>{staffCopy.nav.logout}</LogOut>
         </div>
       </details>
     </nav>
+  );
+}
+
+/**
+ * Log out, posting to the logout route: marked data-pending from its press
+ * until the login page comes, as a link in the navigation is, for the line
+ * along the top (StaffPage) if it takes a while.
+ */
+function LogOut({ className, children }: { className: string; children: ReactNode }) {
+  const button = useRef<HTMLButtonElement>(null);
+  const leaving = useFormLeaving(button);
+  return (
+    <form method="post" action="/staff/api/logout">
+      <button ref={button} type="submit" className={className} data-pending={leaving || undefined}>
+        {children}
+      </button>
+    </form>
   );
 }

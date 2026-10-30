@@ -158,6 +158,15 @@ describe("StaffNav", () => {
     expect(form.getAttribute("action")).toBe("/staff/api/logout");
     // The wider screen's sidebar has its own.
     expect(document.querySelectorAll('form[action="/staff/api/logout"]')).toHaveLength(2);
+    // Pressed, it's marked for the line along the top till the login page comes; sent into a frame here, so this page stays.
+    const frame = document.createElement("iframe");
+    frame.name = "elsewhere";
+    document.body.append(frame);
+    form.target = "elsewhere";
+    const logOut = menu.getByRole("button", { name: staffCopy.nav.logout });
+    await logOut.click();
+    await expect.element(logOut).toHaveAttribute("data-pending", "true");
+    frame.remove();
   });
 
   it("shows the admin section with only Import to someone without the permission, and at home the title isn't a link", async () => {

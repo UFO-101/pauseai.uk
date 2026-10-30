@@ -24,8 +24,9 @@ import Grid, { spanClass } from "./ui/Grid";
 import Strip from "./ui/Strip";
 import Sparkline from "./Sparkline";
 import styles from "./StaffDashboard.module.css";
-import { ButtonLink } from "@/components/ui/Button";
+import { buttonClass } from "@/components/ui/Button";
 import { Muted } from "@/components/ui/Text";
+import StaffLink from "./ui/StaffLink";
 
 const copy = staffCopy.home.dashboard;
 
@@ -58,9 +59,9 @@ function Action({ action }: { action: DashboardAction }) {
       <Strip
         tone={action.kind === "held-sync" ? "amber" : "red"}
         action={
-          <ButtonLink href={href} variant="primary" size="small" fit>
+          <StaffLink className={buttonClass({ variant: "primary", size: "small", fit: true })} href={href}>
             {button}
-          </ButtonLink>
+          </StaffLink>
         }
       >
         <span>{title}</span>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Button, ButtonLink } from "@/components/ui/Button";
+import { buttonClass } from "@/components/ui/Button";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { Ask } from "@/lib/server/asks";
 import type { PoliticiansPage, PoliticiansSearch } from "@/lib/server/politicians";
@@ -10,6 +11,7 @@ import styles from "./PoliticiansList.module.css";
 import ListFrame from "./ui/ListFrame";
 import Strip from "./ui/Strip";
 import Tabs from "./ui/Tabs";
+import StaffLink from "./ui/StaffLink";
 
 const PATH = "/staff/politicians";
 const copy = staffCopy.politicians;
@@ -87,9 +89,12 @@ function TakeThese({ search, total, changeWho }: { search: PoliticiansSearch; to
   const who = storedFilter("politicians", search).params;
   if (search.mailing === NEW_MAILING) {
     return (
-      <ButtonLink variant="primary" fit href={filtersPath("/staff/mailings/new", who)}>
+      <StaffLink
+        className={buttonClass({ variant: "primary", fit: true })}
+        href={filtersPath("/staff/mailings/new", who)}
+      >
         {mailingCopy.writeToThese(total)}
-      </ButtonLink>
+      </StaffLink>
     );
   }
   return (
@@ -98,9 +103,9 @@ function TakeThese({ search, total, changeWho }: { search: PoliticiansSearch; to
       {Object.entries(who).flatMap(([name, value]) =>
         valuesOf(value).map((one) => <input key={`${name}=${one}`} type="hidden" name={name} value={one} />),
       )}
-      <Button variant="primary" type="submit" fit>
+      <SubmitButton variant="primary" fit>
         {mailingCopy.useThese(total)}
-      </Button>
+      </SubmitButton>
     </form>
   );
 }
@@ -158,14 +163,13 @@ export default function PoliticiansList({
           download={(format) => filtersPath(`${PATH}/download`, filters, { format })}
           actions={
             search.mailing ? undefined : (
-              <ButtonLink
-                variant="primary"
-                size="small"
-                fit
+              <StaffLink
+                className={buttonClass({ variant: "primary", size: "small", fit: true })}
+
                 href={filtersPath("/staff/mailings/new", storedFilter("politicians", search).params)}
               >
                 {mailingCopy.mailThese(list.total)}
-              </ButtonLink>
+              </StaffLink>
             )
           }
           formats={["csv", "json", "vcf"]}

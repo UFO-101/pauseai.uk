@@ -143,13 +143,14 @@ describe("GalleryStudio", () => {
     expect(((await zipped)[0] as { folder: string }[]).map((g) => g.folder)).toEqual(["x"]);
   });
 
-  it("explains a failed download, and says Preparing… meanwhile", async () => {
+  it("explains a failed download, pending meanwhile", async () => {
     let fail: (e: Error) => void = () => {};
     const zipping = nextCall(downloads.zip, () => new Promise((_, j) => (fail = j)));
     const { container } = await render(<GalleryStudio />);
     await ready(container);
-    await page.getByRole("button", { name: "Download slides" }).click();
-    await expect.element(page.getByRole("button", { name: "Preparing…" })).toBeDisabled();
+    const download = page.getByRole("button", { name: "Download slides" });
+    await download.click();
+    await expect.element(download).toHaveAttribute("aria-busy", "true");
     await zipping;
     fail(new Error("no"));
     await expect.element(page.getByText("Could not create the export. Try again, or with fewer slides.")).toBeVisible();

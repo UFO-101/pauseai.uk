@@ -100,7 +100,7 @@ export default function LetterPreview({ campaignSlug, turnstileSiteKey }: Props)
     } catch {
       setError(copy.preview.networkError);
     } finally {
-      // Still "sending" while the next page loads.
+      // Still pending while the next page loads.
       if (!sent) {
         setSending(false);
         setTurnstileToken("");
@@ -149,9 +149,10 @@ export default function LetterPreview({ campaignSlug, turnstileSiteKey }: Props)
           variant="primary"
           type="button"
           onClick={send}
-          disabled={sending || (Boolean(turnstileSiteKey) && !turnstileToken)}
+          disabled={Boolean(turnstileSiteKey) && !turnstileToken}
+          pending={sending}
         >
-          {sending ? copy.preview.sending : copy.preview.send}
+          {copy.preview.send}
         </Button>
       </div>
     </div>

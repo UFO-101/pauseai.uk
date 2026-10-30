@@ -125,6 +125,10 @@
  */
 .btn[aria-busy="true"] {
   position: relative;
+}
+
+.btn[aria-busy="true"],
+.btn[aria-busy="true"]:hover {
   cursor: pointer;
 }
 

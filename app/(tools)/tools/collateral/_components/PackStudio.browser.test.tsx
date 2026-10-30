@@ -101,14 +101,15 @@ describe("PackStudio", () => {
     expect(names.some((n) => n.endsWith("-print.pdf"))).toBe(names.some((n) => /^a\d/.test(n)));
   });
 
-  it("explains a failed download, and says Preparing… meanwhile", async () => {
+  it("explains a failed download, pending meanwhile", async () => {
     let fail: (e: Error) => void = () => {};
     // Failed only once the zip is asked for, or the rejection goes unhandled meanwhile.
     const zipping = nextCall(downloads.zip, () => new Promise((_, j) => (fail = j)));
     const { container } = await render(<PackStudio events={[]} />);
     await ready(container);
-    await page.getByRole("button", { name: /Download \d+ formats/ }).click();
-    await expect.element(page.getByRole("button", { name: "Preparing…" })).toBeDisabled();
+    const download = page.getByRole("button", { name: /Download \d+ formats/ });
+    await download.click();
+    await expect.element(download).toHaveAttribute("aria-busy", "true");
     await zipping;
     fail(new Error("no"));
     await expect.element(page.getByText("Could not create the pack. Try with fewer formats.")).toBeVisible();

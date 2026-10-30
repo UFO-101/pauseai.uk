@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/Button";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { GmailAccount } from "@/lib/server/gmail-accounts";
 import { staffDate } from "@/lib/staff-time";
@@ -37,9 +37,9 @@ export default function MyGmail({
               {copy.connected(staffDate(account.connectedAt))} <SentToday sent={account.sentToday} />
             </p>
             <form action={disconnect}>
-              <Button type="submit" variant="ghost" size="small" fit>
+              <SubmitButton variant="ghost" size="small" fit>
                 {copy.disconnect}
-              </Button>
+              </SubmitButton>
             </form>
           </>
         ) : (

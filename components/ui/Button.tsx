@@ -26,8 +26,10 @@ export function buttonClass({ variant, size, fit, className }: Look & { classNam
 /**
  * What a button holds: while pending, a spinner over its label
  * (Button.module.css), which keeps its room and still names the button.
+ * Exported for a button with a look of its own (DonateForm's), which then
+ * styles its own pending state.
  */
-function Inside({ pending, children }: { pending?: boolean; children: ReactNode }) {
+export function ButtonInside({ pending, children }: { pending?: boolean; children: ReactNode }) {
   if (!pending) return children;
   return (
     <>
@@ -60,7 +62,7 @@ export function Button({
       disabled={disabled || pending}
       aria-busy={pending || undefined}
     >
-      <Inside pending={pending}>{children}</Inside>
+      <ButtonInside pending={pending}>{children}</ButtonInside>
     </button>
   );
 }
@@ -88,7 +90,7 @@ export function ButtonAnchor({
       aria-busy={pending || undefined}
       onClick={pending ? (event) => event.preventDefault() : onClick}
     >
-      <Inside pending={pending}>{children}</Inside>
+      <ButtonInside pending={pending}>{children}</ButtonInside>
     </a>
   );
 }

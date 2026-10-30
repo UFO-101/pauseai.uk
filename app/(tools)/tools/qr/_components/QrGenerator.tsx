@@ -296,8 +296,15 @@ export default function QrGenerator() {
 
         <ControlsSection>
           <div className={styles.actions}>
-            <Button type="button" variant="primary" size="large" onClick={onDownloadPng} disabled={!preview || busy}>
-              {busy ? "Preparing…" : "Download PNG"}
+            <Button
+              type="button"
+              variant="primary"
+              size="large"
+              onClick={onDownloadPng}
+              disabled={!preview}
+              pending={busy}
+            >
+              Download PNG
             </Button>
             <Button type="button" variant="ghost" size="large" onClick={onDownloadSvg} disabled={!preview}>
               Download SVG

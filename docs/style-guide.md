@@ -544,9 +544,40 @@ buttons after what they act on is `Actions`; centred under a section,
   to its own page; a count, to the list it counts; back to the list; a
   section of the page. Anything that does something, or opens a form to
   do it, is a button, even when it goes to another page: Edit and Add an
-  ask are `ButtonLink`s, not links. `LinkButton` is the one exception, a
+  ask look like buttons, not links (`ButtonLink`; in the staff pages a
+  `StaffLink` with `buttonClass`, below). `LinkButton` is the one exception, a
   button that reads as a link for a small step in a line of text that's
   easily undone (Remove, Undo).
+
+### Buttons that wait
+
+A button whose work waits on a server, another site or a big file made
+in the browser shows it's working from the moment it's pressed until
+its work is done or the next page comes. It greys at once, as a disabled
+button does, and can't be pressed again. If its work takes more than a
+moment (0.3s), a spinner takes the place of its words, which keep their
+room, so the button stays the same size. The cursor stays as it was. A
+quick one only greys for a moment, and a button whose work is instant,
+such as one that opens a menu, doesn't wait at all.
+
+- **A form's submit button** is `SubmitButton`. It's pending while a
+  Server Action runs, and for a form that posts to a URL (logging in or
+  out), until the next page comes.
+- **A button that does its work itself** (`onClick`) gives `Button` its
+  `pending`, from its press until the work's done: Send test, Schedule,
+  a download.
+- **A button that leaves the page**, to another site (Google, Stripe) or
+  through a full page load after saving (Change who), is pending from
+  `useLeaving`. It stays pending until the next page comes, and is
+  itself again if the browser's Back brings the page back. A link that
+  does this is a `ButtonAnchor` with `pending`.
+- **Links in the staff pages**, including the ones that look like
+  buttons, show the thin line along the top of the page instead
+  (`StaffLink`, and `data-pending` on anything else that waits for a
+  page, such as Log out in the navigation). Nothing spins.
+
+A button with a look of its own (the donate page's) puts its words in
+`ButtonInside` and greys itself while `aria-busy`.
 
 ### Deleting, pressed twice
 

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { ButtonInside } from "@/components/ui/Button";
+import { useLeaving } from "@/components/ui/useLeaving";
 import { navigate } from "@/lib/navigate";
 import styles from "./DonateForm.module.css";
 
@@ -29,6 +31,8 @@ export const DEFAULT_AMOUNT = 5;
 export default function DonateForm() {
   const [frequency, setFrequency] = useState<Frequency>("monthly");
   const [selectedAmount, setSelectedAmount] = useState<number>(DEFAULT_AMOUNT);
+  // From the button's press until Stripe's page comes.
+  const [leaving, leave] = useLeaving();
   const isMonthly = frequency === "monthly";
   const ctaLabel = isMonthly ? `Donate £${selectedAmount} a month` : "Donate one-off →";
 
@@ -50,6 +54,7 @@ export default function DonateForm() {
   // who clicks through to donate. Page views on /donate are fine.
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    leave();
     // Every selectable amount is a key of MONTHLY_URLS, so there is always a link.
     navigate(isMonthly ? MONTHLY_URLS[selectedAmount] : ONE_OFF_URL);
   }
@@ -100,8 +105,10 @@ export default function DonateForm() {
         </fieldset>
       )}
 
-      <button type="submit" className={styles.submit}>
-        <span>{ctaLabel}</span>
+      <button type="submit" className={styles.submit} disabled={leaving} aria-busy={leaving || undefined}>
+        <ButtonInside pending={leaving}>
+          <span>{ctaLabel}</span>
+        </ButtonInside>
       </button>
 
       <p className={styles.footnote}>

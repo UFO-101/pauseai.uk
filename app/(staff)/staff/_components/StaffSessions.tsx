@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/Button";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import Table from "@/components/ui/Table";
 import Tag from "@/components/ui/Tag";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -42,9 +42,9 @@ export default function StaffSessions({ sessions }: { sessions: StaffSession[] }
               <td>
                 <form method="post" action="/staff/api/logout">
                   <input type="hidden" name="session" value={session.id} />
-                  <Button variant="ghost" size="small" type="submit" fit>
+                  <SubmitButton variant="ghost" size="small" fit>
                     {staffCopy.nav.logout}
-                  </Button>
+                  </SubmitButton>
                 </form>
               </td>
             </tr>
@@ -53,9 +53,9 @@ export default function StaffSessions({ sessions }: { sessions: StaffSession[] }
       </Table>
       <form method="post" action="/staff/api/logout" className={styles.actions}>
         <input type="hidden" name="everywhere" value="1" />
-        <Button variant="ghost" size="small" type="submit" fit>
+        <SubmitButton variant="ghost" size="small" fit>
           {copy.logOutEverywhere}
-        </Button>
+        </SubmitButton>
       </form>
     </>
   );

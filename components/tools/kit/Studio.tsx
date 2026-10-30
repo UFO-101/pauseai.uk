@@ -87,14 +87,19 @@ export function PreviewActions({ children }: { children: ReactNode }) {
   return <div className={styles.actions}>{children}</div>;
 }
 
-/** A Download button in the preview's actions. On phones it fills the row beside the ⋯ menu. */
+/**
+ * A Download button in the preview's actions, `pending` while its file is
+ * made. On phones it fills the row beside the ⋯ menu.
+ */
 export function DownloadButton({
   onClick,
   disabled,
+  pending,
   children,
 }: {
   onClick: () => void;
   disabled: boolean;
+  pending?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -106,6 +111,7 @@ export function DownloadButton({
       className={styles.download}
       onClick={onClick}
       disabled={disabled}
+      pending={pending}
     >
       {children}
     </Button>

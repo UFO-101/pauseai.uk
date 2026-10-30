@@ -212,6 +212,17 @@ describe("AskForm", () => {
     ]);
   });
 
+  it("shows Save pending while it saves", async () => {
+    let finish = () => {};
+    const save = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)));
+    await render(<AskForm ask={exampleEditableAsk} back="/staff/asks" notice="" save={save} remove={vi.fn()} />);
+    const button = page.getByRole("button", { name: copy.save });
+    await button.click();
+    await expect.element(button).toHaveAttribute("aria-busy", "true");
+    finish();
+    await expect.element(button).not.toHaveAttribute("aria-busy");
+  });
+
   it("one staff added: its slug, which doesn't change, and Delete, pressed twice", async () => {
     const remove = vi.fn();
     await render(<AskForm ask={exampleEditableAsk} back="/staff/asks" notice="saved" save={vi.fn()} remove={remove} />);

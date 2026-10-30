@@ -1,7 +1,7 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import { addStaffAccount, askForLoginLink, logInAsStaff, loginLinkFor, newestEmailTo } from "../steps";
 import { BASE, emailFrame, expect, flowStorageState, frame, test } from "./fixtures";
-import { STAFF_PAGES, holdNextDocument, staffEmail, logIn } from "./staff-steps";
+import { STAFF_PAGES, stayOnPage, staffEmail, logIn } from "./staff-steps";
 
 // Logging in to the staff pages, and your own account: the dev login, a
 // login link, a first login and an admin's accounts, being logged out, your
@@ -154,14 +154,14 @@ test("Connect your Gmail on your account page, then disconnect it", async ({ pag
   await expect(page.getByRole("link", { name: staffCopy.gmail.connect })).toBeVisible();
   await frame(page, "your page: your Gmail not connected, what connecting means, then where you're logged in");
 
-  // The way to Google held, so the button can be seen waiting for it.
-  const google = await holdNextDocument(page, /\/staff\/api\/gmail\/connect/);
+  // Google's page kept from coming, so the button can be seen waiting for it.
+  const google = await stayOnPage(page, /\/staff\/api\/gmail\/connect/);
   const connect = page.getByRole("link", { name: staffCopy.gmail.connect });
   await connect.click();
   // Its spinner shows once it has taken a moment.
   await expect(connect.locator("[aria-hidden]")).toBeVisible();
   await frame(page, "Connect Gmail pressed: greyed, with a spinner where its words were, while Google's page comes");
-  await google.release();
+  await page.goto(await google.asked);
   await expect(page.getByText(staffCopy.gmail.outcomes.connected)).toBeVisible();
   await expect(page.getByRole("button", { name: staffCopy.gmail.disconnect })).toBeVisible();
   await frame(page, "back from Google: connected, with today's sends, and Disconnect");

@@ -550,8 +550,8 @@ export default function GalleryStudio() {
           </div>
         )}
         <PreviewActions>
-          <DownloadButton onClick={onDownloadForPlatforms} disabled={!ready || platforms.size === 0}>
-            {busy ? "Preparing…" : "Download slides"}
+          <DownloadButton onClick={onDownloadForPlatforms} disabled={!ready || platforms.size === 0} pending={busy}>
+            Download slides
           </DownloadButton>
           <ProjectMenu
             noun="project"

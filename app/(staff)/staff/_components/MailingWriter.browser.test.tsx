@@ -445,14 +445,19 @@ describe("MailingWriter", () => {
     const data = { ...exampleWriterData, fields: [] };
     const { actions } = await renderWriter({ data, draft: ready });
     await expect.element(page.getByText(copy.cantSend)).not.toBeInTheDocument();
-    await page.getByRole("button", { name: copy.schedule(2) }).click();
+    const schedule = page.getByRole("button", { name: copy.schedule(2) });
+    // Refused, it's pressed again.
+    actions.schedule.mockResolvedValueOnce({ scheduled: false, reason: "conflict" });
+    await schedule.click();
+    await expect.poll(() => actions.schedule.mock.calls.length, WAIT).toBe(1);
+    await expect.element(schedule).toBeEnabled();
+    expect(navigation.refreshes).toBe(0);
+    await schedule.click();
     await expect.poll(() => navigation.refreshes, WAIT).toBe(1);
     expect(window.scrollY).toBe(0);
-    expect(actions.schedule).toHaveBeenCalledWith(12, 3);
-    actions.schedule.mockResolvedValueOnce({ scheduled: false, reason: "conflict" });
-    await page.getByRole("button", { name: copy.schedule(2) }).click();
-    await expect.poll(() => actions.schedule.mock.calls.length).toBe(2);
-    expect(navigation.refreshes).toBe(1);
+    expect(actions.schedule).toHaveBeenLastCalledWith(12, 3);
+    // Pending still, till the scheduled mailing's page comes.
+    await expect.element(schedule).toHaveAttribute("aria-busy", "true");
   });
 
   it("is sent from a connected Gmail, the first to start with, saying what each has left today; and the way to connect yours", async () => {
@@ -597,8 +602,11 @@ describe("MailingWriter", () => {
 
   it("adds an ask on the asks page, saving first, and coming back to the draft", async () => {
     await renderWriter({ draft: exampleWrittenMailing });
-    await page.getByRole("link", { name: copy.newAsk.link }).click();
+    const link = page.getByRole("link", { name: copy.newAsk.link });
+    await link.click();
     await expect.poll(() => leavePage.mock.calls.length, WAIT).toBe(1);
+    // Marked for the line along the top, till the asks page comes.
+    await expect.element(link).toHaveAttribute("data-pending", "true");
     expect(leavePage.mock.calls[0][0]).toMatch(/\/staff\/asks\/new\?back=%2Fstaff%2Fmailings%2F12$/);
   });
 

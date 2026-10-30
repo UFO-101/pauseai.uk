@@ -27,8 +27,12 @@ describe("DonateForm", () => {
   it("sends a monthly donor to the Stripe link for their amount", async () => {
     await render(<DonateForm />);
     await page.getByRole("button", { name: "£25", exact: true }).click();
-    await page.getByRole("button", { name: "Donate £25 a month" }).click();
+    const donate = page.getByRole("button", { name: "Donate £25 a month" });
+    await donate.click();
     expect(navigate).toHaveBeenCalledWith(MONTHLY_URLS[25]);
+    // Pending till Stripe's page comes, so it isn't pressed twice.
+    await expect.element(donate).toBeDisabled();
+    await expect.element(donate).toHaveAttribute("aria-busy", "true");
   });
 
   it("switches to a one-off gift, and back to the default monthly amount", async () => {
