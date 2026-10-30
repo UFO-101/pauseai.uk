@@ -497,11 +497,9 @@ export default function MailingWriter({
                     value={values.fromName ?? ""}
                     placeholder={sender?.name}
                     list={namesId}
-                    aria-describedby={`${namesId}-hint`}
                     onChange={(event) => change({ fromName: event.target.value })}
                   />
                 </Field>
-                <Hint id={`${namesId}-hint`}>{copy.fromNameHint}</Hint>
                 <datalist id={namesId}>
                   {sender?.names.map((name) => (
                     <option key={name} value={name} />

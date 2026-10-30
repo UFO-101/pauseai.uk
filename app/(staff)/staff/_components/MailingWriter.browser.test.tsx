@@ -480,7 +480,6 @@ describe("MailingWriter", () => {
     const name = field(copy.fromNameLabel);
     await expect.element(name).toHaveValue("");
     await expect.element(name).toHaveAttribute("placeholder", "Al Example");
-    await expect.element(name).toHaveAccessibleDescription(copy.fromNameHint);
     const list = document.getElementById(name.element().getAttribute("list")!)!;
     expect([...list.querySelectorAll("option")].map((option) => option.value)).toEqual([
       "Al Example",
