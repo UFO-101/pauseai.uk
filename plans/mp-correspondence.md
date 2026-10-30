@@ -29,12 +29,12 @@ a politician (part 3).
 
 ### The ways letters reach MPs
 
-| Route | From | Copied | Who the office's reply reaches |
-| --- | --- | --- | --- |
-| The site's form, since 14 October 2026 | `"Jane Smith via PauseAI" <jane.smith.482913@letters.pauseai.uk>`, the letter's own address | policy@ on Bcc; Reply-To the sender, policy@ and the letter's address | Unknown: nothing has come back (below) |
-| pauseai.info's old form, sent by Airtable through SendGrid, until 22 October 2026 | `"Jane Smith via PauseAI" <policy@pauseai.uk>` | The sender on Cc | policy@ alone, so the sender sees it only if someone forwards it |
-| A volunteer's own email | The volunteer | policy@ on Cc | The volunteer, and policy@ if the office replies to all or the volunteer forwards it |
-| PauseAI's mailings | A staff member's connected Gmail | None | That Gmail, read hourly |
+| Route | From | Copied | Reply-To | Who the office's reply reaches |
+| --- | --- | --- | --- | --- |
+| The site's form, since 14 October 2026 | "Jane Smith via PauseAI" <jane.smith.482913@letters.pauseai.uk>, the letter's own address | policy@ on Bcc | The sender, policy@ and the letter's address | Unknown: nothing has come back (below) |
+| pauseai.info's old form, sent by Airtable through SendGrid, until 22 October 2026 | "Jane Smith via PauseAI" <policy@pauseai.uk> | The sender on Cc | Unknown | policy@ alone, so the sender sees it only if someone forwards it |
+| A volunteer's own email | The volunteer | policy@ on Cc | None | The volunteer, and policy@ if the office replies to all or the volunteer forwards it |
+| PauseAI's mailings | A staff member's connected Gmail | None | None | That Gmail, read hourly |
 
 ### How the site handles them now
 
