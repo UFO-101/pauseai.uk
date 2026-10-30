@@ -1264,7 +1264,7 @@ export const staffCopy = {
     failed: (error: string) => `Couldn't be read: ${error}`,
     // In place of that, when Google refused the account's access, so the site disconnected it.
     disconnected:
-      "⁂ Google refused our access, so this account has been disconnected. Its owner can connect it again from their page.",
+      "Google refused our access, so this account has been disconnected. Its owner can connect it again from their account page.",
   },
   // The hourly copy of PauseAI's UK members (lib/server/members-import.ts),
   // on the import page.
