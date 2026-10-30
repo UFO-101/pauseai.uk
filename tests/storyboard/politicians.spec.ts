@@ -42,6 +42,29 @@ test("A politician's page: markers, notes, answers and emails", async ({ page, r
   await frame(page, "Polly's page: important, with notes, her answers from Airtable and PauseAI's invitation");
 });
 
+test("Answer an ask staff added, from the menu under a politician's asks", async ({ page, request, flowDatabase }) => {
+  runSql(
+    flowDatabase,
+    `INSERT INTO asks (slug, title, kind, date, asked_by)
+     VALUES ('giant-pause-button-oct-2026', 'Giant pause button', 'letter', '2026-10-29', '{pauseai}')`,
+  );
+  await syncPoliticians(request, BASE);
+  await logIn(page, flowDatabase);
+  await openPolitician(page, "Polly Placeholder");
+  const asks = page.getByRole("region", { name: copy.statusesTitle });
+  await expect(asks.getByRole("group", { name: "Giant pause button" })).toHaveCount(0);
+  await frame(page, "Polly's asks, with the menu of the others under them");
+  await asks.getByRole("combobox", { name: copy.otherAsk }).selectOption("Giant pause button");
+  const form = asks.getByRole("form", { name: `${copy.setStatus}: Giant pause button` });
+  await form.getByLabel(copy.note).fill("Said yes on the phone");
+  await frame(page, "the ask chosen, with its form and a note of how we know");
+  await form.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
+  const row = asks.getByRole("group", { name: "Giant pause button" });
+  await expect(row.locator("[class*=answer]")).toHaveText(new RegExp(`^${staffCopy.statuses.signed}`));
+  await expect(row.getByText(/Said yes on the phone/)).toBeVisible();
+  await frame(page, "signed: a row of its own, with Edit");
+});
+
 test("A peer, an MSP, and an MP who left office", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
