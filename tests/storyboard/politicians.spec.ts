@@ -298,7 +298,8 @@ test("Mailings: the list, one mailing's recipients, and back from a politician",
   await expect(page.getByRole("listitem").filter({ hasText: invitation })).toContainText(mailings.imported);
   await frame(page, "every mailing, by month, newest first, each copied from Airtable, with a box of its counts");
 
-  await page.getByRole("link", { name: invitation }).click();
+  // Its title, not its box of counts, whose name says the title too.
+  await page.getByRole("link", { name: invitation, exact: true }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(invitation);
   await expect(page.getByText(mailings.noText)).toBeVisible();
   await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toContainText(mailings.personalised);

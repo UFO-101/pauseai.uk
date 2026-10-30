@@ -1,8 +1,7 @@
-/* The thread: a step down from the cards over it, however short they are; its heading, then each message, a step apart. */
+/* The thread: its heading, then each message, a step apart; its top level with the asides beside it. */
 .thread {
   display: grid;
   gap: var(--space-4);
-  margin-top: var(--space-6);
 }
 
 .thread > p {

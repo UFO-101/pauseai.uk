@@ -2,6 +2,7 @@
 .counts {
   display: flex;
   flex: none;
+  max-width: 100%;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -10,8 +11,10 @@
   text-decoration: none;
 }
 
+/* Each as wide as its number or label, shrinking to fit a phone. */
 .count {
   display: grid;
+  flex: 1 1 auto;
   justify-items: center;
   min-width: 5rem;
   padding: var(--space-2) var(--space-4);
@@ -51,10 +54,19 @@
 
 /* In a list's row: smaller, and each as wide as the rest. */
 .small .count {
-  min-width: 4.75rem;
+  min-width: 4.25rem;
   padding: var(--space-1) var(--space-2);
 }
 
 .small .count strong {
   font-size: var(--text-lg);
+}
+
+/* A phone: tighter, so five fit across. */
+@media (max-width: 30rem) {
+  .count,
+  .small .count {
+    min-width: 0;
+    padding: var(--space-1) var(--space-2);
+  }
 }
