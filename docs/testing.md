@@ -562,3 +562,9 @@ froze rather than failed. Write each one's output to a file and its exit
 code after it, and when the time it usually takes has passed, look at the
 file: a run whose output hasn't moved in minutes is stuck, so stop it and
 find out why, rather than waiting for the limit.
+
+Stopping a storyboard run can leave its fixture server (`next-server`)
+running on port 3100. Locally the storyboard reuses whatever answers
+there, so the next run waits on it, printing nothing. A request to
+`localhost:3100` that hangs rather than being refused is the sign: stop
+that `next-server` before running again.
