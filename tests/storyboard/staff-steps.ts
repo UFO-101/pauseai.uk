@@ -59,6 +59,27 @@ export async function holdNextPage(page: Page, target: RegExp): Promise<{ releas
   };
 }
 
+/**
+ * Holds the next whole page loaded from a URL matching `target`, as a
+ * button that leaves the page asks for, so a flow can picture the button
+ * waiting; `release` lets it through.
+ */
+export async function holdNextDocument(page: Page, target: RegExp): Promise<{ release: () => Promise<void> }> {
+  let open = () => {};
+  const held = new Promise<void>((done) => (open = done));
+  const handler = async (route: Route) => {
+    if (route.request().resourceType() === "document") await held;
+    await route.continue();
+  };
+  await page.route(target, handler);
+  return {
+    release: async () => {
+      open();
+      await page.unroute(target, handler);
+    },
+  };
+}
+
 /** Whether the line along the top of the page, while something loads, is showing (StaffPage). */
 export const loadingLine = (page: Page) =>
   page.evaluate(() => {

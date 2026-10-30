@@ -138,6 +138,40 @@ describe("Button pending", () => {
   });
 });
 
+describe("ButtonAnchor pending", () => {
+  it("looks disabled and busy, with a spinner, and a click does nothing", async () => {
+    const clicks: string[] = [];
+    await render(
+      <ButtonAnchor variant="primary" href="#here" pending onClick={() => clicks.push("clicked")}>
+        Connect
+      </ButtonAnchor>,
+    );
+    const link = page.getByRole("link", { name: "Connect" });
+    await expect.element(link).toHaveAttribute("aria-disabled", "true");
+    await expect.element(link).toHaveAttribute("aria-busy", "true");
+    expect(link.element().querySelector("[aria-hidden]")).not.toBeNull();
+    await link.click();
+    expect(clicks).toEqual([]);
+    expect(location.hash).toBe("");
+  });
+
+  it("follows its link, without a spinner, otherwise", async () => {
+    const clicks: string[] = [];
+    await render(
+      <ButtonAnchor variant="primary" href="#here" onClick={() => clicks.push("clicked")}>
+        Connect
+      </ButtonAnchor>,
+    );
+    const link = page.getByRole("link", { name: "Connect" });
+    await expect.element(link).not.toHaveAttribute("aria-busy");
+    expect(link.element().querySelector("[aria-hidden]")).toBeNull();
+    await link.click();
+    expect(clicks).toEqual(["clicked"]);
+    expect(location.hash).toBe("#here");
+    location.hash = "";
+  });
+});
+
 describe("SubmitButton", () => {
   it("is pending while its form's action runs, then not", async () => {
     let finish = () => {};

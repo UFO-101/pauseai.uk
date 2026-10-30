@@ -96,7 +96,9 @@
 }
 
 .btn:disabled,
-.btn:disabled:hover {
+.btn:disabled:hover,
+.btn[aria-disabled="true"],
+.btn[aria-disabled="true"]:hover {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
@@ -104,28 +106,57 @@
 }
 
 /* Hovering a disabled button keeps its resting colours. */
-.btn.primary:disabled:hover {
+.btn.primary:disabled:hover,
+.btn.primary[aria-disabled="true"]:hover {
   background: var(--accent);
 }
 
-.btn.ghost:disabled:hover {
+.btn.ghost:disabled:hover,
+.btn.ghost[aria-disabled="true"]:hover {
   border-color: var(--border-strong);
   color: var(--text);
 }
 
+/*
+ * Pending: greyed and disabled at once. If its work takes more than a
+ * moment, a spinner takes the label's place, and the label, unseen, keeps
+ * its room, so the button stays the same size. A quick one never spins.
+ * The cursor stays as it was, as it's likely still over what was pressed.
+ */
 .btn[aria-busy="true"] {
-  cursor: progress;
+  position: relative;
+  cursor: pointer;
 }
 
-/* Shown while a button's work is pending. */
+.waiting {
+  display: contents;
+  animation: quiet 0s 0.3s both;
+}
+
 .spinner {
+  position: absolute;
+  inset: 0;
   width: 1em;
   height: 1em;
-  margin-right: 8px;
+  margin: auto;
   border: 2px solid currentColor;
   border-right-color: transparent;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation:
+    spin 0.8s linear infinite,
+    appear 0s 0.3s both;
+}
+
+@keyframes quiet {
+  to {
+    color: transparent;
+  }
+}
+
+@keyframes appear {
+  from {
+    visibility: hidden;
+  }
 }
 
 @keyframes spin {
@@ -136,7 +167,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .spinner {
-    animation-duration: 2.4s;
+    animation-duration: 2.4s, 0s;
   }
 }
 

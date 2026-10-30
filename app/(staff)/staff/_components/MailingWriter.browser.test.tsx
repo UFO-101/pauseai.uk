@@ -553,6 +553,23 @@ describe("MailingWriter", () => {
     expect(leavePage.mock.calls[0][0]).toMatch(/[?&]mailing=12$/);
   });
 
+  it("shows Change who pending from its click, while the draft's saved and the list comes", async () => {
+    const { actions } = await renderWriter({ draft: exampleWrittenMailing });
+    let finish = () => {};
+    actions.save.mockImplementation(async () => {
+      await new Promise<void>((resolve) => (finish = resolve));
+      return { saved: true, version: 2 };
+    });
+    await field(copy.subject).fill("Changed at once");
+    const link = page.getByRole("link", { name: copy.changeWho });
+    await link.click();
+    await expect.element(link).toHaveAttribute("aria-busy", "true");
+    finish();
+    await expect.poll(() => leavePage.mock.calls.length, WAIT).toBe(1);
+    // Still pending until the list's page replaces this one.
+    await expect.element(link).toHaveAttribute("aria-busy", "true");
+  });
+
   it("makes a new mailing a draft before Change who, so the list chooses for it", async () => {
     const { actions } = await renderWriter();
     await field(copy.subject).fill("Kept");
