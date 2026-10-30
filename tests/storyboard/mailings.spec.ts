@@ -74,9 +74,11 @@ test("Write a new mailing, save it, preview it and send yourself a test", async 
 
   await page.getByRole("link", { name: copy.newTitle }).click();
   await expect(page.getByText(copy.choosingNew)).toBeVisible();
+  // It opens at the top, as a page does, though the strip is held there.
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
   // Down the list, what's being done stays at the top, and the way on at the foot.
   await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
-  await frame(page, "every politician, scrolled down: the strip and the title held at the top, the bar at the foot", {
+  await frame(page, "every politician, scrolled down: the strip held at the top, the bar at the foot", {
     window: true,
   });
   await page.getByRole("link", { name: staffCopy.houses["scottish-parliament"] }).click();

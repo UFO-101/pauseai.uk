@@ -39,11 +39,14 @@ export function HouseTabs({ search }: { search: PoliticiansSearch }) {
 export type ChangeWho = (form: FormData) => Promise<void>;
 
 /**
- * The page's title (`children`), and over it, while the list is choosing
- * who a mailing is for (`search.mailing`), a strip saying what to do, for a
- * new mailing or for the draft titled `title`, with the way back, choosing
- * no one. While choosing, the two are held at the top of the window as the
- * list scrolls, so what's being done, and how to stop, stay in sight.
+ * The page (`children`), and over it, while the list is choosing who a
+ * mailing is for (`search.mailing`), a strip saying what to do, for a new
+ * mailing or for the draft titled `title`, with the way back, choosing no
+ * one. The strip is held at the top of the window as the page scrolls, so
+ * what's being done, and how to stop, stay in sight. It's held inside a
+ * plain box around the whole page, which is the page's first element: the
+ * router scrolls a new page's first element into view, and a held one, at
+ * the top, it scrolls the page past.
  */
 export function ChoosingHead({
   search,
@@ -57,17 +60,19 @@ export function ChoosingHead({
   if (!search.mailing) return children;
   const isNew = search.mailing === NEW_MAILING;
   return (
-    <div className={styles.head}>
-      <Strip
-        action={
-          <Link href={isNew ? "/staff/mailings" : `/staff/mailings/${search.mailing}`}>
-            {isNew ? mailingCopy.cancelNew : mailingCopy.backToDraft}
-          </Link>
-        }
-      >
-        <span>{isNew ? mailingCopy.choosingNew : mailingCopy.choosingDraft(title ?? mailingCopy.untitled)}</span>
-        <span className={styles.how}>{isNew ? mailingCopy.choosingHowNew : mailingCopy.choosingHowDraft}</span>
-      </Strip>
+    <div>
+      <div className={styles.held}>
+        <Strip
+          action={
+            <Link href={isNew ? "/staff/mailings" : `/staff/mailings/${search.mailing}`}>
+              {isNew ? mailingCopy.cancelNew : mailingCopy.backToDraft}
+            </Link>
+          }
+        >
+          <span>{isNew ? mailingCopy.choosingNew : mailingCopy.choosingDraft(title ?? mailingCopy.untitled)}</span>
+          <span className={styles.how}>{isNew ? mailingCopy.choosingHowNew : mailingCopy.choosingHowDraft}</span>
+        </Strip>
+      </div>
       {children}
     </div>
   );

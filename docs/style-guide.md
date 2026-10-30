@@ -294,8 +294,10 @@ is as it always is, but for two bars:
 - **At the top, held there as the page scrolls** (`ChoosingHead`): a
   plain strip saying what's being chosen and what for ("New mailing:
   who's it for?", or naming the draft), a line on how, and at its right
-  the way back without choosing (Cancel, or Back to the mailing). The
-  page's title sits under it, held there too.
+  the way back without choosing (Cancel, or Cancel changing who). It's
+  held alone, not the title under it, and inside a plain box around the
+  whole page: the router scrolls a new page's first element into view,
+  and a held one at the top would leave the page scrolled.
 - **At the foot of the window, held there**: a dark bar with how many
   are chosen ("5 politicians, for the mailing") and, at its right, the
   one orange button that takes them back ("Write to these 5", "Use these

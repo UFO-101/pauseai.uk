@@ -1,19 +1,12 @@
-/* While the list is choosing who a mailing is for: the strip and the
-   page's title, held at the top of the window on the page's background, so
-   the list scrolls under them. It holds its title's margins, so nothing
-   shows through between them; the title a step closer, to take less of
-   the window. */
-.head {
+/* While the list is choosing who a mailing is for: the strip, held at the
+   top of the window on the page's background, a little clear of the
+   window's edge and of the list scrolling under it. */
+.held {
   position: sticky;
   top: 0;
   z-index: 1;
-  display: flow-root;
-  padding-top: var(--space-3);
+  padding-block: var(--space-3);
   background: var(--bg);
-}
-
-.head h1 {
-  margin-block: var(--space-4);
 }
 
 /* What to do: not on a phone, where the strip is held at the top and the

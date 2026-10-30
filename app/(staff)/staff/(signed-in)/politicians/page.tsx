@@ -32,10 +32,10 @@ export default async function PoliticiansPage({ searchParams }: Props) {
     <>
       <ChoosingHead search={search} title={title}>
         <h1>{staffCopy.politicians.title}</h1>
+        <HouseTabs search={search} />
+        <PoliticianFilters search={search} asks={asks} parties={parties} />
+        <PoliticiansList list={list} search={search} asks={asks} changeWho={changeMailingWho} />
       </ChoosingHead>
-      <HouseTabs search={search} />
-      <PoliticianFilters search={search} asks={asks} parties={parties} />
-      <PoliticiansList list={list} search={search} asks={asks} changeWho={changeMailingWho} />
     </>
   );
 }
