@@ -394,9 +394,11 @@ describe("MailingWriter", () => {
       await expect.element(page.getByText(copy.summary(2, "jo@pauseai.uk", "Friday 3 July at 14:18"))).toBeVisible();
       // Back to today, an hour too soon moves on to the first it can go at; another keeps it.
       await hour.selectOptions("9");
-      await chooseDay(day, "2026-07-01");
       await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(2);
-      expect(actions.save.mock.calls[1][2]).toEqual({ dueAt: "2026-07-01T11:00:00.000Z" });
+      expect(actions.save.mock.calls[1][2]).toEqual({ dueAt: "2026-07-03T08:00:00.000Z" });
+      await chooseDay(day, "2026-07-01");
+      await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(3);
+      expect(actions.save.mock.calls[2][2]).toEqual({ dueAt: "2026-07-01T11:00:00.000Z" });
     } finally {
       vi.useRealTimers();
     }

@@ -22,7 +22,14 @@ describeWithDatabase("the mailing pages' data", () => {
     expect(data.unknown).toEqual(["party=Gone Party"]);
     // The connected accounts, with what each has left today.
     expect(data.senders).toEqual([
-      { email: "jo@pauseai.uk", name: "", connectedAt: expect.any(Date), sentToday: 0, remaining: GMAIL_DAILY_LIMIT },
+      {
+        email: "jo@pauseai.uk",
+        name: "",
+        names: [],
+        connectedAt: expect.any(Date),
+        sentToday: 0,
+        remaining: GMAIL_DAILY_LIMIT,
+      },
     ]);
     expect(data.sends).toBe(true);
     expect(data.me).toBe("jo@pauseai.uk");
