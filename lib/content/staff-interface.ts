@@ -70,12 +70,14 @@ export const staffCopy = {
     logout: "Log out",
   },
   // A letter in Gmail, by its page's heading: a button that copies a
-  // search for it, then says where to paste it.
+  // search for it, then says to paste it, and where.
   findInGmail: {
     copy: "Copy Gmail search",
     copied: "Copied!",
-    where: (mailbox: string) => `Paste in Gmail search where you can see mail from ${mailbox}`,
-    whereUnknown: "⁂ Paste in Gmail search where you can see mail from the address it was sent from",
+    // Then, in a bubble, what to do, in bold, "paste" stressed; under it, where.
+    next: { before: "Next, ", stressed: "paste", after: " into Gmail search." },
+    where: (mailbox: string) => `You must be in an inbox that can see ${mailbox}'s mail.`,
+    whereUnknown: "You must be in an inbox that can see mail from the address it was sent from.",
   },
   // One of PauseAI's letters, and the replies in its thread.
   letterThread: {

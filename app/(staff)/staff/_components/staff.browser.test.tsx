@@ -2896,7 +2896,12 @@ describe("FindInGmail", () => {
     await page.getByRole("button", { name: copy.copy }).click();
     expect(write).toHaveBeenCalledWith(find.search);
     await expect.element(page.getByRole("button", { name: copy.copied })).toBeVisible();
+    // Bold, what to do, "paste" stressed; under it, lighter, where.
     await expect.element(page.getByRole("status")).toHaveTextContent(copy.where("policy@pauseai.uk"));
+    expect(page.getByRole("status").element().querySelector("strong")!.textContent).toBe(
+      `${copy.next.before}${copy.next.stressed}${copy.next.after}`,
+    );
+    expect(page.getByRole("status").element().querySelector("em")!.textContent).toBe(copy.next.stressed);
     write.mockRestore();
   });
 

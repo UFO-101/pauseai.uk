@@ -398,7 +398,7 @@ test("Sync PauseAI's emails: one held back with no mailing", async ({ page, requ
   await frame(page, "one of PauseAI's emails to Polly: its mailing, and Copy Gmail search");
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.getByRole("button", { name: staffCopy.findInGmail.copy }).click();
-  await expect(page.getByRole("status")).toHaveText(staffCopy.findInGmail.whereUnknown);
+  await expect(page.getByRole("status")).toContainText(staffCopy.findInGmail.whereUnknown);
   expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/^to:polly\S+ after:\d+ before:\d+$/);
   await frame(page, "copied a search by Polly's address and when it went, from a mailbox we don't know");
 });

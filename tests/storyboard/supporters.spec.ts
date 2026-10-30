@@ -276,7 +276,7 @@ test("A letter writer's page, from the letters list", async ({ page, request, fl
   await frame(page, "her letter's page, with Copy Gmail search for its copy in the policy inbox");
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.getByRole("button", { name: staffCopy.findInGmail.copy }).click();
-  await expect(page.getByRole("status")).toHaveText(staffCopy.findInGmail.where("replies@example.org"));
+  await expect(page.getByRole("status")).toContainText(staffCopy.findInGmail.where("replies@example.org"));
   expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/^rfc822msgid:[\w-]+@mtasv\.net$/);
   await frame(page, "copied: paste it in Gmail search where you can see the policy inbox's mail");
   await page.getByRole("link", { name: "Jane Smith" }).click();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import styles from "./CopyButton.module.css";
 
@@ -22,7 +22,7 @@ export default function CopyButton({
   text: string;
   label: string;
   copied: string;
-  note?: string;
+  note?: ReactNode;
 }) {
   const [done, setDone] = useState(false);
   async function copy() {
