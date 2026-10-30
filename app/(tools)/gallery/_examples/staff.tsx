@@ -703,9 +703,9 @@ export const staff: Group = {
               <Counts
                 counts={[
                   { key: "sent", n: 84, label: "sent", href: "#sent" },
-                  { key: "replied", n: 9, label: "replied", href: "#replied" },
-                  { key: "bounced", n: 3, label: "bounced", tone: "red", href: "#bounced", current: true },
                   { key: "skipped", n: 0, label: "skipped", href: "#skipped" },
+                  { key: "bounced", n: 3, label: "bounced", tone: "red", href: "#bounced", current: true },
+                  { key: "replied", n: 9, label: "replied", href: "#replied" },
                   { key: "answered", n: null, label: "answers" },
                 ]}
               />
@@ -722,9 +722,9 @@ export const staff: Group = {
                 label="How the mailing went"
                 counts={[
                   { key: "sent", n: 129, label: "sent" },
-                  { key: "replied", n: 11, label: "replied" },
-                  { key: "bounced", n: 2, label: "bounced", tone: "red" },
                   { key: "skipped", n: 0, label: "skipped" },
+                  { key: "bounced", n: 2, label: "bounced", tone: "red" },
+                  { key: "replied", n: 11, label: "replied" },
                   { key: "answered", n: 14, label: "answers", tone: "green" },
                 ]}
               />

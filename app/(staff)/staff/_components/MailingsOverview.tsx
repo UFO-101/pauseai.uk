@@ -14,13 +14,16 @@ import styles from "./MailingsOverview.module.css";
 
 const copy = staffCopy.mailingPages;
 
-/** How a mailing sent went, as the counts box on its page has them, the whole box leading to it. */
+/**
+ * How a mailing sent went, in the order it happens: what went out, what
+ * didn't arrive, then what came back; the same in the list and on its page.
+ */
 export function mailingCounts(mailing: MailingSummary) {
   return [
     { key: "sent", n: mailing.sent, label: copy.counts.sent },
-    { key: "replied", n: mailing.replied, label: copy.counts.replied },
-    { key: "bounced", n: mailing.bounced, label: copy.counts.bounced, tone: "red" as const },
     { key: "skipped", n: mailing.skipped, label: copy.counts.skipped },
+    { key: "bounced", n: mailing.bounced, label: copy.counts.bounced, tone: "red" as const },
+    { key: "replied", n: mailing.replied, label: copy.counts.replied },
     { key: "answered", n: mailing.ask ? mailing.answered : null, label: copy.counts.answered, tone: "green" as const },
   ];
 }
