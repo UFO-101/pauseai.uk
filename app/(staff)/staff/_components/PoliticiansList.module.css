@@ -49,8 +49,10 @@
   }
 }
 
-/* Room at the page's foot, so the bar never covers the list's last rows. */
-:has(> .bar) {
+/* Room at the page's foot, so the bar never covers the list's last rows.
+   `.bar.bar` makes it outweigh the page's own padding (StaffPage's
+   .content) whichever stylesheet loads first. */
+:has(> .bar.bar) {
   padding-bottom: calc(var(--space-9) * 2);
 }
 
