@@ -394,9 +394,11 @@ describe("MailingWriter", () => {
       await expect.element(page.getByText(copy.summary(2, "jo@pauseai.uk", "Friday 3 July at 14:18"))).toBeVisible();
       // Back to today, an hour too soon moves on to the first it can go at; another keeps it.
       await hour.selectOptions("9");
-      await chooseDay(day, "2026-07-01");
       await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(2);
-      expect(actions.save.mock.calls[1][2]).toEqual({ dueAt: "2026-07-01T11:00:00.000Z" });
+      expect(actions.save.mock.calls[1][2]).toEqual({ dueAt: "2026-07-03T08:00:00.000Z" });
+      await chooseDay(day, "2026-07-01");
+      await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(3);
+      expect(actions.save.mock.calls[2][2]).toEqual({ dueAt: "2026-07-01T11:00:00.000Z" });
     } finally {
       vi.useRealTimers();
     }
@@ -452,7 +454,7 @@ describe("MailingWriter", () => {
     expect(navigation.refreshes).toBe(1);
   });
 
-  it("is sent from a connected Gmail, the first to start with, saying what each has left today; and the way to connect another", async () => {
+  it("is sent from a connected Gmail, the first to start with, saying what each has left today; and the way to connect yours", async () => {
     await renderWriter();
     const from = region(copy.sections.from);
     expect(
@@ -471,7 +473,40 @@ describe("MailingWriter", () => {
     await expect.element(preview.getByText("samuel.whitlock@pauseai.uk", { exact: true })).toBeVisible();
   });
 
-  it("starts from the policy team's Gmail when it's connected", async () => {
+  it("hides the way to connect yours once it's connected", async () => {
+    await renderWriter({ data: { ...exampleWriterData, me: "al@pauseai.uk" } });
+    await expect.element(field(copy.fromLegend)).toHaveValue("al@pauseai.uk");
+    expect(region(copy.sections.from).getByRole("link").query()).toBeNull();
+  });
+
+  it("is from the Gmail's own name, filled in to edit, until another's given", async () => {
+    const { actions } = await renderWriter({
+      draft: { ...exampleWrittenMailing, sentFrom: "al@pauseai.uk", fromName: "" },
+    });
+    const name = field(copy.fromNameLabel);
+    await expect.element(name).toHaveValue("Al Example");
+    // Until it's edited, it follows the Gmail chosen; one with no name of its own leaves it empty.
+    await field(copy.fromLegend).selectOptions("samuel.whitlock@pauseai.uk");
+    await expect.element(name).toHaveValue("");
+    await field(copy.fromLegend).selectOptions("al@pauseai.uk");
+    await name.fill("Al for PauseAI UK");
+    await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(1);
+    expect(actions.save.mock.calls[0][2]).toEqual({ sentFrom: "al@pauseai.uk", fromName: "Al for PauseAI UK" });
+    await expect.element(preview().getByText("Al for PauseAI UK <al@pauseai.uk>")).toBeVisible();
+    // Another Gmail keeps the name given.
+    await field(copy.fromLegend).selectOptions("samuel.whitlock@pauseai.uk");
+    await expect.element(name).toHaveValue("Al for PauseAI UK");
+    await expect.element(preview().getByText("Al for PauseAI UK <samuel.whitlock@pauseai.uk>")).toBeVisible();
+    // Emptied, it's the Gmail's own name again once you leave it.
+    await name.clear();
+    await expect.element(name).toHaveValue("");
+    await expect.element(preview().getByText("samuel.whitlock@pauseai.uk", { exact: true })).toBeVisible();
+    await userEvent.tab();
+    await field(copy.fromLegend).selectOptions("al@pauseai.uk");
+    await expect.element(name).toHaveValue("Al Example");
+  });
+
+  it("starts from the policy team's Gmail when it's connected, first in the list", async () => {
     const policy = {
       email: DEFAULT_SENDER,
       name: "PauseAI Policy Team",
@@ -481,6 +516,12 @@ describe("MailingWriter", () => {
     };
     await renderWriter({ data: { ...exampleWriterData, senders: [...exampleWriterData.senders, policy] } });
     await expect.element(field(copy.fromLegend)).toHaveValue(DEFAULT_SENDER);
+    expect(
+      region(copy.sections.from)
+        .getByRole("option")
+        .all()
+        .map((option) => option.element().textContent),
+    ).toEqual([DEFAULT_SENDER, "al@pauseai.uk", "samuel.whitlock@pauseai.uk"]);
   });
 
   it("with no Gmail connected, says so in place of the choice, and links to where one is connected", async () => {
@@ -492,10 +533,12 @@ describe("MailingWriter", () => {
   });
 
   it("says only its owner can connect someone else's Gmail, chosen before it was disconnected", async () => {
-    await renderWriter({ draft: { ...exampleWrittenMailing, sentFrom: "kim@pauseai.uk" } });
+    await renderWriter({ draft: { ...exampleWrittenMailing, sentFrom: "kim@pauseai.uk", fromName: null } });
     const from = region(copy.sections.from);
     await expect.element(from.getByText(copy.notConnected)).toBeVisible();
     await expect.element(field(copy.fromLegend)).toHaveValue("kim@pauseai.uk");
+    // With no Gmail to take its name from, the name's empty.
+    await expect.element(field(copy.fromNameLabel)).toHaveValue("");
     await expect.element(region(copy.sections.send).getByText(copy.problems["not-connected"])).toBeVisible();
   });
 

@@ -94,7 +94,13 @@ export const exampleWriterData: WriterData = {
     },
   ],
   senders: [
-    { email: "al@pauseai.uk", name: "Al Example", connectedAt: "2026-10-01T09:00:00Z", sentToday: 0, remaining: 1800 },
+    {
+      email: "al@pauseai.uk",
+      name: "Al Example",
+      connectedAt: "2026-10-01T09:00:00Z",
+      sentToday: 0,
+      remaining: 1800,
+    },
     {
       email: "samuel.whitlock@pauseai.uk",
       name: "",

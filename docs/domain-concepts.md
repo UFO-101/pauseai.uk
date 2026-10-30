@@ -157,14 +157,20 @@ A letter's ask is its campaign's or its mailing's, never its own.
 A mailing written on the site goes from a staff member's own Gmail, as if
 they'd written each letter, one at a time: no unsubscribe link, no consent
 check, as to public figures in their public role. Each staff member
-connects their own Gmail, on their page (`/staff/me`) or from a mailing's
-Sent from (`lib/server/gmail-accounts.ts`); once it's connected, any staff
+connects their own Gmail, on their page (`/staff/me`), which a mailing's
+Sent from links to while theirs isn't connected (`lib/server/gmail-accounts.ts`); once it's connected, any staff
 member can send a mailing from it. The Google Cloud project's consent
 screen is Internal, so only accounts in PauseAI's Google Workspace,
 pauseai.info's as well as pauseai.uk's, can grant access, and the site
 takes only the logged-in staff member's own address. The refresh
 token is kept encrypted (`GMAIL_TOKEN_KEY`), and deleted on disconnecting.
 
+- **From name.** A mailing goes in a name of its own, or with none, the
+  name the Gmail sends as (its primary "Send mail as" address's), which
+  Sent from fills in until it's edited. It always goes from the account's own address: Gmail
+  sends as its other "Send mail as" addresses too, but the API can't tell
+  a Google Group's from an alias's, and replies to a Group's don't reach
+  the mailbox the site reads.
 - **Scheduling** needs the Gmail it's from connected, and no more
   recipients than one account sends in a day: the site sends at most
   1,800 a day from an account, counting every mailing, under Gmail's 2,000,

@@ -67,6 +67,13 @@
   justify-items: start;
 }
 
+/* The Gmail and the name it goes in, side by side where they fit. */
+.fromFields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+}
+
 .from p {
   margin: 0;
 }

@@ -21,8 +21,11 @@ import {
 
 export { GMAIL_DAILY_LIMIT };
 
-/** A connected account, with how many it has sent in the last day and how many more it can. */
-/** A connected Gmail: its address, and the name it sends as, empty when it has none of its own. */
+/**
+ * A connected Gmail: its address; the name it sends as, empty when it has
+ * none of its own; and how many it has sent in the last day and how many
+ * more it can.
+ */
 export type GmailAccount = { email: string; name: string; connectedAt: string; sentToday: number; remaining: number };
 
 /** Why connecting didn't: the person consented as another Google account than their own. */

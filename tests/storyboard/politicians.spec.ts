@@ -321,6 +321,9 @@ test("Add an ask, change it, then delete it", async ({ page, flowDatabase }) => 
   await expect(page.getByText("winter-reception-dec-2026", { exact: true })).toBeVisible();
   await page.getByLabel(asks.byKind.event.url).fill("https://luma.com/winter");
   await page.getByRole("button", { name: asks.save }).click();
+  // Back on the list, saying so: the link alone can be there before the list is what's shown.
+  await expect(page.getByText(asks.notices.saved)).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(asks.title);
   await expect(page.getByRole("link", { name: "Winter reception" })).toHaveAttribute("href", "https://luma.com/winter");
   await frame(page, "changed: its title now links to the event's page");
   await page.getByRole("row").filter({ hasText: "Winter reception" }).getByRole("link", { name: asks.edit }).click();

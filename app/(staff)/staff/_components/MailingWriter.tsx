@@ -23,6 +23,7 @@ import { answerLabels } from "@/lib/mailing-fields";
 import Link from "next/link";
 import { DEFAULT_SENDER } from "@/lib/gmail-connect";
 import { looksLikeEmail } from "@/lib/email-your-mp";
+import { named } from "@/lib/named-address";
 import { leavePage } from "@/lib/leave-page";
 import { scheduleProblems } from "@/lib/mailing-schedule";
 import { filtersPath } from "@/lib/staff-search";
@@ -55,6 +56,8 @@ type Changes = {
   body: MailingDoc;
   ask: string | null;
   sentFrom: string | null;
+  /** The name it's from; empty or null, the Gmail's own. */
+  fromName: string | null;
   dueAt: string | null;
 };
 
@@ -167,6 +170,7 @@ export default function MailingWriter({
     sentFrom: draft
       ? draft.sentFrom
       : ((data.senders.find((one) => one.email === DEFAULT_SENDER) ?? data.senders[0])?.email ?? null),
+    fromName: draft?.fromName || null,
     dueAt: draft?.dueAt ?? null,
   }));
   const latest = useRef(values);
@@ -328,10 +332,12 @@ export default function MailingWriter({
     connected: Boolean(sender),
   }).filter((problem) => problem !== "cannot-send");
   const title = values.subject.trim() || copy.newTitle;
-  // The connected accounts, and the one chosen if it isn't one any more.
+  // The connected accounts, the policy team's first, and the one chosen if it isn't one any more.
   const senderChoices = [
-    ...data.senders.map((one) => ({ ...one, connected: true })),
-    ...(values.sentFrom && !sender ? [{ email: values.sentFrom, remaining: 0, connected: false }] : []),
+    ...data.senders
+      .toSorted((a, b) => Number(b.email === DEFAULT_SENDER) - Number(a.email === DEFAULT_SENDER))
+      .map((one) => ({ ...one, connected: true })),
+    ...(values.sentFrom && !sender ? [{ email: values.sentFrom, name: "", remaining: 0, connected: false }] : []),
   ];
   // Where Connect Gmail and the Asks page come back to, as the page shows them: this draft, or this new mailing.
   const writerPath = savedId ? `/staff/mailings/${savedId}` : newPath;
@@ -460,30 +466,45 @@ export default function MailingWriter({
             body={body}
             subject={values.subject}
             sentFrom={values.sentFrom}
+            fromName={values.fromName}
             written={written}
             sendTest={async (recipient, to) => actions.sendTest(await draftId(), recipient, to)}
           />
         </Card>
 
         <Card span={6} title={<Numbered n={4}>{copy.sections.from}</Numbered>} id="from-title">
-          {/* The choice of connected Gmails and what the chosen one has sent today, or that there's none; then where to connect one. */}
+          {/* The choice of connected Gmails, beside the name the mailing goes in, then what the chosen one has
+              sent today, or that there's none; then, while yours isn't connected, where to connect it. */}
           <div className={styles.from}>
             {senderChoices.length > 0 ? (
               <>
-                <Field label={copy.fromLegend} className={styles.sender}>
-                  <Select value={values.sentFrom ?? ""} onChange={(event) => change({ sentFrom: event.target.value })}>
-                    {!values.sentFrom && (
-                      <option value="" disabled>
-                        {copy.choose}
-                      </option>
-                    )}
-                    {senderChoices.map((sender) => (
-                      <option key={sender.email} value={sender.email}>
-                        {sender.connected ? sender.email : copy.senderNotConnected(sender.email)}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
+                <div className={styles.fromFields}>
+                  <Field label={copy.fromLegend} className={styles.sender}>
+                    <Select
+                      value={values.sentFrom ?? ""}
+                      onChange={(event) => change({ sentFrom: event.target.value })}
+                    >
+                      {!values.sentFrom && (
+                        <option value="" disabled>
+                          {copy.choose}
+                        </option>
+                      )}
+                      {senderChoices.map((sender) => (
+                        <option key={sender.email} value={sender.email}>
+                          {sender.connected ? sender.email : copy.senderNotConnected(sender.email)}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  {/* Until it's edited, the Gmail's own name, following the account chosen. Left empty, it's that name too. */}
+                  <Field label={copy.fromNameLabel} className={styles.sender}>
+                    <TextInput
+                      value={values.fromName ?? sender?.name ?? ""}
+                      onChange={(event) => change({ fromName: event.target.value })}
+                      onBlur={() => values.fromName === "" && change({ fromName: null })}
+                    />
+                  </Field>
+                </div>
                 {sender && <SentToday sent={sender.sentToday} />}
               </>
             ) : (
@@ -491,9 +512,11 @@ export default function MailingWriter({
             )}
             {values.sentFrom && !sender && <Hint>{copy.notConnected}</Hint>}
             {/* Connecting is done on the account's own page, logged in as it. */}
-            <p>
-              <Link href="/staff/me#gmail">{copy.connectOne}</Link>
-            </p>
+            {!data.senders.some((one) => one.email === data.me) && (
+              <p>
+                <Link href="/staff/me#gmail">{copy.connectOne}</Link>
+              </p>
+            )}
           </div>
         </Card>
 
@@ -565,6 +588,7 @@ function Preview({
   body,
   subject,
   sentFrom,
+  fromName,
   written,
   sendTest,
 }: {
@@ -572,6 +596,7 @@ function Preview({
   body: MailingDoc;
   subject: string;
   sentFrom: string | null;
+  fromName: string | null;
   /** Whether the letter has anything in it but its greeting, so there's something to test. */
   written: boolean;
   /** Sends the test copy of a recipient's email, saving the draft first if it isn't yet. */
@@ -580,9 +605,8 @@ function Preview({
   // Where the test copy goes: you, unless you give another address.
   const [testTo, setTestTo] = useState(data.me);
   const testToId = useId();
-  // The name the Gmail sends as, if it has one of its own, as its From line will show it.
-  const name = data.senders.find((sender) => sender.email === sentFrom)?.name;
-  const fromLine = name ? `${name} <${sentFrom}>` : sentFrom;
+  // As its From line will show it: in the name chosen, or the Gmail's own, if it has one.
+  const fromLine = named(fromName || data.senders.find((sender) => sender.email === sentFrom)?.name, sentFrom!);
   const findLabel = useId();
   const [chosen, setChosen] = useState(data.recipients[0]?.id);
   // The answers pressed, since someone was last chosen; else theirs.
