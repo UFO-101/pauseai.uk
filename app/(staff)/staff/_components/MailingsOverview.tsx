@@ -5,7 +5,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import type { MailingGroup } from "@/lib/mailing-groups";
 import { mailingWhen } from "@/lib/mailing-groups";
 import type { MailingSummary } from "@/lib/server/mailings";
-import { londonWhen, staffDate } from "@/lib/staff-time";
+import { londonWhenShort, staffDate } from "@/lib/staff-time";
 import Counts from "./ui/Counts";
 import Grid, { spanClass } from "./ui/Grid";
 import Progress from "./ui/Progress";
@@ -31,8 +31,8 @@ export function mailingCounts(mailing: MailingSummary) {
  */
 function When({ mailing, year }: { mailing: MailingSummary; year: string }) {
   if (mailing.state === "draft") return <Muted>{copy.savedAt(staffDate(mailing.updatedAt))}</Muted>;
-  if (mailing.state === "scheduled") return <strong className={styles.due}>{londonWhen(mailing.dueAt!)}</strong>;
-  if (mailing.state === "sending") return <>{londonWhen(mailing.dueAt!)}</>;
+  if (mailing.state === "scheduled") return <strong className={styles.due}>{londonWhenShort(mailing.dueAt!)}</strong>;
+  if (mailing.state === "sending") return <>{londonWhenShort(mailing.dueAt!)}</>;
   const day = staffDate(mailingWhen(mailing));
   return <>{day.endsWith(year) ? day.slice(0, -5) : day}</>;
 }

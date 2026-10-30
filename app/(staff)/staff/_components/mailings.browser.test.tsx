@@ -166,7 +166,7 @@ describe("MailingsOverview", () => {
     await expect.element(row("Meet us in Westminster").first()).toMatchTextContent(copy.toCount(412));
     await expect.element(page.getByRole("link", { name: copy.untitled })).toHaveAttribute("href", "/staff/mailings/7");
     // Scheduled: when it goes, and how many it's to.
-    await expect.element(row("Edinburgh: one week to go")).toMatchTextContent("Friday 30 October at 09:18");
+    await expect.element(row("Edinburgh: one week to go")).toMatchTextContent("Fri 30 Oct, 09:18");
     await expect.element(row("Edinburgh: one week to go")).toMatchTextContent(copy.states.scheduled);
     // Sending: its bar, leading to it.
     await expect.element(page.getByRole("progressbar", { name: copy.sentLabel })).toHaveAttribute("value", "214");

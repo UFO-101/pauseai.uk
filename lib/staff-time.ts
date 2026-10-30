@@ -81,6 +81,18 @@ export function londonWhen(at: string): string {
   return `${day} at ${londonClock(sends)}`;
 }
 
+/** The same, short, for a list's row: "Fri 30 Oct, 09:18". */
+export function londonWhenShort(at: string): string {
+  const sends = sendsAt(at);
+  const day = new Date(sends).toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    timeZone: "Europe/London",
+  });
+  return `${day}, ${londonClock(sends)}`;
+}
+
 /** How close to an hour is too close for a mailing to go on it. */
 const TOO_SOON = 5 * 60_000;
 

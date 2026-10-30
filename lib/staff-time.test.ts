@@ -6,6 +6,7 @@ import {
   londonDayHour,
   londonClock,
   londonWhen,
+  londonWhenShort,
   sendsAt,
   staffClock,
   staffDate,
@@ -47,6 +48,7 @@ describe("London's time, for when a mailing goes", () => {
   it("says when, in London", () => {
     expect(londonWhen("2026-10-30T09:00:00Z")).toBe("Friday 30 October at 09:18");
     expect(londonWhen("2026-07-02T08:00:00Z")).toBe("Thursday 2 July at 09:18");
+    expect(londonWhenShort("2026-10-30T09:00:00Z")).toBe("Fri 30 Oct, 09:18");
     // Overnight, when the sending doesn't run, at its first run of the morning.
     expect(londonWhen("2026-10-30T03:00:00Z")).toBe("Friday 30 October at 06:18");
     expect(londonWhen("2026-07-02T02:00:00Z")).toBe("Thursday 2 July at 07:18");
