@@ -62,11 +62,16 @@
   font-size: var(--text-lg);
 }
 
-/* A phone: tighter, so five fit across. */
+/* A phone: the box as wide as there's room, its counts sharing it evenly, so two are roomy and five fit. */
 @media (max-width: 30rem) {
+  .counts {
+    width: 100%;
+  }
+
   .count,
   .small .count {
+    flex: 1 1 0;
     min-width: 0;
-    padding: var(--space-1) var(--space-2);
+    padding: var(--space-2) var(--space-1);
   }
 }
