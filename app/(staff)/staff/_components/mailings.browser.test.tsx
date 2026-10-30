@@ -489,7 +489,7 @@ describe("MailingLetterView", () => {
     });
     await expect.element(page.getByText(staffCopy.letters.status.bounced, { exact: true })).toBeVisible();
     await expect
-      .element(page.getByRole("heading", { name: staffCopy.politician.statusesTitle }))
+      .element(page.getByRole("heading", { name: staffCopy.mailings.fields.ask, exact: true }))
       .not.toBeInTheDocument();
     await rerender(
       <MailingLetterView
