@@ -2889,16 +2889,19 @@ describe("FindInGmail", () => {
   const copy = staffCopy.findInGmail;
   const find = { mailbox: "policy@pauseai.uk", search: "rfc822msgid:abc@pauseai.uk", threadId: "18c2" };
 
-  it("opens a box naming the mailbox, with a link to the thread there and the search to copy", async () => {
+  it("opens a box with a link to the thread in its mailbox, naming it, and the search to copy", async () => {
     const write = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
     await render(<FindInGmail find={find} />);
     await page.getByRole("button", { name: copy.button }).click();
-    await expect.element(page.getByText(copy.mailbox("policy@pauseai.uk"))).toBeVisible();
     await expect
       .element(page.getByRole("link", { name: copy.open }))
       .toHaveAttribute("href", "https://mail.google.com/mail/?authuser=policy%40pauseai.uk#all/18c2");
     await expect.element(page.getByText(copy.openNote("policy@pauseai.uk"))).toBeVisible();
-    await expect.element(page.getByText(find.search, { exact: true })).toBeVisible();
+    // Two ways, numbered: open it, or copy the search.
+    await expect.element(page.getByText(copy.either)).toBeVisible();
+    expect(page.getByRole("listitem").all()).toHaveLength(2);
+    // The search is copied, not shown.
+    expect(document.body.textContent).not.toContain(find.search);
     await page.getByRole("button", { name: copy.copy }).click();
     expect(write).toHaveBeenCalledWith(find.search);
     await expect.element(page.getByRole("button", { name: copy.copied })).toBeVisible();
@@ -2909,6 +2912,7 @@ describe("FindInGmail", () => {
     const { rerender } = await render(<FindInGmail find={{ ...find, mailbox: null }} />);
     await page.getByRole("button", { name: copy.button }).click();
     await expect.element(page.getByText(copy.unknownMailbox)).toBeVisible();
+    expect(page.getByText(copy.either).all()).toHaveLength(0);
     expect(page.getByRole("link").all()).toHaveLength(0);
     await expect.element(page.getByRole("button", { name: copy.copy })).toBeVisible();
     await rerender(<FindInGmail find={null} />);

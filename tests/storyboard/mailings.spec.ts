@@ -309,12 +309,11 @@ test("Send a mailing from a connected Gmail: schedule it, and the hourly job sen
 
   // Find it in Gmail: your mailbox, its thread there, and the search for it by its Message-ID to copy.
   await page.getByRole("button", { name: staffCopy.findInGmail.button }).click();
-  await expect(page.getByText(staffCopy.findInGmail.mailbox(staffEmail()))).toBeVisible();
+  await expect(page.getByText(staffCopy.findInGmail.openNote(staffEmail()))).toBeVisible();
   await expect(page.getByRole("link", { name: staffCopy.findInGmail.open })).toHaveAttribute(
     "href",
     new RegExp(`^https://mail\\.google\\.com/mail/\\?authuser=${encodeURIComponent(staffEmail())}#all/\\S+$`),
   );
-  await expect(page.getByText(/^rfc822msgid:/)).toBeVisible();
   await frame(page, "Find it in Gmail: in your mailbox, a link to its thread there, and the search to copy");
   await page.keyboard.press("Escape");
 

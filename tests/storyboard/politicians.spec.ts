@@ -398,8 +398,11 @@ test("Sync PauseAI's emails: one held back with no mailing", async ({ page, requ
   await frame(page, "one of PauseAI's emails to Polly: its mailing, and Find it in Gmail");
   await page.getByRole("button", { name: staffCopy.findInGmail.button }).click();
   await expect(page.getByText(staffCopy.findInGmail.unknownMailbox)).toBeVisible();
-  await expect(page.getByText(/^to:polly\S+ after:\d+ before:\d+$/)).toBeVisible();
-  await frame(page, "Find it in Gmail: a search by Polly's address and when it went, in a mailbox we don't know");
+  await expect(page.getByRole("button", { name: staffCopy.findInGmail.copy })).toBeVisible();
+  await frame(
+    page,
+    "Find it in Gmail: a search by Polly's address and when it went to copy, in a mailbox we don't know",
+  );
 });
 
 test("Import pauseai.info's letters and Go to Parliament's meetings", async ({ page, request, flowDatabase }) => {

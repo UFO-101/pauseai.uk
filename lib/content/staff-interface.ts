@@ -69,12 +69,13 @@ export const staffCopy = {
     mpEmails: "Blocked emails",
     logout: "Log out",
   },
-  // A letter in Gmail, from a button by its page's heading: the mailbox it's
-  // in, a link that opens it there for someone signed in to that account,
-  // and a search to paste into it, which works for a delegate too.
+  // A letter in Gmail, from a button by its page's heading: either 1) a
+  // link that opens it in the mailbox it's in, for someone signed in to
+  // that account, or 2) a search to paste into it, which works for a
+  // delegate too.
   findInGmail: {
     button: "Find it in Gmail",
-    mailbox: (mailbox: string) => `⁂ It's in ${mailbox}'s mailbox.`,
+    either: "⁂ Either:",
     unknownMailbox: "⁂ We don't know which mailbox it was sent from.",
     open: "Open in Gmail",
     openNote: (mailbox: string) =>

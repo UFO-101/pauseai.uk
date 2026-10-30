@@ -275,9 +275,9 @@ test("A letter writer's page, from the letters list", async ({ page, request, fl
   );
   await frame(page, "her letter's page, with Find it in Gmail for its copy in the policy inbox");
   await page.getByRole("button", { name: staffCopy.findInGmail.button }).click();
-  await expect(page.getByText(staffCopy.findInGmail.mailbox("replies@example.org"))).toBeVisible();
-  await expect(page.getByText(/^rfc822msgid:[\w-]+@mtasv\.net$/)).toBeVisible();
-  await frame(page, "Find it in Gmail: the policy inbox, and the search for it by Postmark's Message-ID");
+  await expect(page.getByText(staffCopy.findInGmail.openNote("replies@example.org"))).toBeVisible();
+  await expect(page.getByRole("button", { name: staffCopy.findInGmail.copy })).toBeVisible();
+  await frame(page, "Find it in Gmail: the policy inbox, and the search for it by Postmark's Message-ID to copy");
   await page.keyboard.press("Escape");
   await page.getByRole("link", { name: "Jane Smith" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Jane Smith");

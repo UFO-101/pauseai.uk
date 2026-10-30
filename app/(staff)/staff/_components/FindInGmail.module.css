@@ -3,8 +3,8 @@
   gap: var(--space-1);
 }
 
-/* Its box: a line each for the mailbox, the link and the search, and the
-   button to copy it. As wide as it can be, so it flips to fit beside a
+/* Its box: the two ways, numbered, a link and the button that copies the
+   search; or, with the mailbox unknown, a line saying so and the button. As wide as it can be, so it flips to fit beside a
    button at the right rather than squeezing, and reading from the left
    wherever the button sits. */
 .box {
@@ -18,12 +18,11 @@
   margin: 0;
 }
 
-/* The search, whole, wrapping anywhere, as it's one long word. */
-.search {
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
-  overflow-wrap: anywhere;
+.ways {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: var(--space-5);
 }
 
 .copy {
