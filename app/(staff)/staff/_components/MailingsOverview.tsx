@@ -7,6 +7,7 @@ import { mailingWhen } from "@/lib/mailing-groups";
 import type { MailingSummary } from "@/lib/server/mailings";
 import { londonWhen, staffDate } from "@/lib/staff-time";
 import Counts from "./ui/Counts";
+import Grid, { spanClass } from "./ui/Grid";
 import Progress from "./ui/Progress";
 import styles from "./MailingsOverview.module.css";
 
@@ -96,7 +97,8 @@ function Row({ mailing, year }: { mailing: MailingSummary; year: string }) {
  * The list of mailings, in its groups (mailingGroups): what's coming up,
  * then the months and years of those sent, each mailing a row that shows
  * only what matters at its stage. Nothing on it changes a mailing: that's
- * done on the mailing's own page, on purpose.
+ * done on the mailing's own page, on purpose. It's as wide as the grid,
+ * not the window.
  */
 export default function MailingsOverview({ groups, now }: { groups: MailingGroup[]; now: string }) {
   if (groups.length === 0) {
@@ -107,18 +109,21 @@ export default function MailingsOverview({ groups, now }: { groups: MailingGroup
     );
   }
   const year = now.slice(0, 4);
+  // On the grid, all of its row, so the page is no wider than the grid's six columns.
   return (
-    <>
-      {groups.map((group) => (
-        <section key={group.key} aria-labelledby={`mailings-${group.key}`} className={styles.group}>
-          <h2 id={`mailings-${group.key}`}>{group.heading}</h2>
-          <ul className={styles.rows}>
-            {group.mailings.map((mailing) => (
-              <Row key={mailing.id} mailing={mailing} year={year} />
-            ))}
-          </ul>
-        </section>
-      ))}
-    </>
+    <Grid>
+      <div className={spanClass(6)}>
+        {groups.map((group) => (
+          <section key={group.key} aria-labelledby={`mailings-${group.key}`} className={styles.group}>
+            <h2 id={`mailings-${group.key}`}>{group.heading}</h2>
+            <ul className={styles.rows}>
+              {group.mailings.map((mailing) => (
+                <Row key={mailing.id} mailing={mailing} year={year} />
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
+    </Grid>
   );
 }
