@@ -24,7 +24,10 @@ export function mailingCounts(mailing: MailingSummary) {
     { key: "skipped", n: mailing.skipped, label: copy.counts.skipped },
     { key: "bounced", n: mailing.bounced, label: copy.counts.bounced, tone: "red" as const },
     { key: "replied", n: mailing.replied, label: copy.counts.replied },
-    { key: "answered", n: mailing.ask ? mailing.answered : null, label: copy.counts.answered, tone: "green" as const },
+    // Answers only when it has an ask.
+    ...(mailing.ask
+      ? [{ key: "answered", n: mailing.answered, label: copy.counts.answered, tone: "green" as const }]
+      : []),
   ];
 }
 

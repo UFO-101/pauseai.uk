@@ -177,7 +177,7 @@ describe("MailingsOverview", () => {
       .toHaveAttribute("href", "/staff/mailings/4");
     await expect.element(row("AI safety conference")).toMatchTextContent("20 Oct");
     await expect.element(row("AI safety conference")).not.toMatchTextContent("20 Oct 2026");
-    await expect.element(row("Ben Lake").first()).toMatchTextContent(`– ${copy.counts.answered}`);
+    await expect.element(row("Ben Lake").first()).not.toMatchTextContent(copy.counts.answered);
     // Last year's, with its year.
     await expect.element(row("Ben Lake").last()).toMatchTextContent("9 Jul 2025");
     // Who it's from, or Airtable, and its ask, leading to who answered it.
@@ -299,8 +299,8 @@ describe("MailingView", () => {
     await expect
       .element(page.getByRole("link", { name: `2 ${copy.counts.replied}` }))
       .toHaveAttribute("aria-current", "true");
-    // Answered doesn't apply.
-    await expect.element(page.getByText(`– ${copy.counts.answered}`)).toBeVisible();
+    // With no ask, no answers.
+    await expect.element(page.getByText(copy.counts.answered)).not.toBeInTheDocument();
     await expect.element(recipient("Polly")).toMatchTextContent(copy.tabs.replied);
     // Replied, as Airtable recorded it, with no reply kept: still one.
     await expect.element(recipient("Polly").getByRole("link", { name: copy.letterAndReplies(1) })).toBeVisible();
