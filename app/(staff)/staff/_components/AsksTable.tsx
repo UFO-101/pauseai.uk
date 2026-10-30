@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { AskTitle } from "./AskLine";
 import { buttonClass } from "@/components/ui/Button";
 import styles from "./AsksTable.module.css";
@@ -62,9 +61,9 @@ export const askColumns: ListColumn<AskWithCounts>[] = [
         answersOf(a).map((status, i) => (
           <span key={status}>
             {i > 0 && " · "}
-            <Link href={`/staff/politicians?ask=${a.slug}&answer=${status}`}>
+            <StaffLink href={`/staff/politicians?ask=${a.slug}&answer=${status}`}>
               {copy.count(staffCopy.statuses[status], a.counts[status]!)}
-            </Link>
+            </StaffLink>
           </span>
         ))
       ),

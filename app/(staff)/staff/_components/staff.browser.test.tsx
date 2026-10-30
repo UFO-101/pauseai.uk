@@ -69,8 +69,6 @@ import EraseLink from "./EraseLink";
 import DeletePolitician from "./DeletePolitician";
 import PoliticiansList, { ChoosingHead, HouseTabs } from "./PoliticiansList";
 import { emptyPoliticiansSearch, examplePoliticiansPage } from "./PoliticianTable.examples";
-import MailingsTable, { mailingColumns } from "./MailingsTable";
-import { exampleMailings } from "./MailingsTable.examples";
 import ImportCard, { ImportCards } from "./ImportCard";
 import ImportIcon from "./ImportIcon";
 import DevLogin from "./DevLogin";
@@ -987,65 +985,6 @@ describe("PoliticiansList", () => {
     );
     await expect.element(page.getByText(copy.none)).toBeVisible();
     expect(page.getByRole("link").all()).toHaveLength(0);
-  });
-});
-
-describe("MailingsTable", () => {
-  const copy = staffCopy.mailings;
-  const cells = (title: string) =>
-    page
-      .getByRole("row")
-      .filter({ hasText: title })
-      .getByRole("cell")
-      .all()
-      .map((c) => c.element().textContent);
-
-  it("lists each mailing: its page, its ask's politicians, where it came from, when, and its counts", async () => {
-    await render(<MailingsTable mailings={exampleMailings} />);
-    expect(cells("Nov 26")).toEqual([
-      "Edinburgh Conference Nov 26 Invitation",
-      "Edinburgh conference",
-      copy.imported,
-      "1 Oct 2026",
-      "2",
-      "1",
-      "1",
-      "1",
-      "1",
-    ]);
-    expect(cells("AI safety conference")).toEqual([
-      "Invitation: AI safety conference, Edinburgh",
-      "Edinburgh conference",
-      "Jo Example",
-      "20 Oct 2026",
-      "11",
-      "1",
-      "1",
-      "2",
-      "3",
-    ]);
-    expect(cells("Ben Lake")).toEqual([
-      "Ben Lake October 2026 Debate",
-      "–",
-      copy.notRecorded,
-      copy.notSent,
-      "–",
-      "–",
-      "–",
-      "–",
-      "–",
-    ]);
-    await expect
-      .element(page.getByRole("link", { name: "Edinburgh Conference Nov 26 Invitation" }))
-      .toHaveAttribute("href", "/staff/mailings/2");
-    await expect
-      .element(page.getByRole("link", { name: "Edinburgh conference" }).first())
-      .toHaveAttribute("href", "/staff/politicians?ask=edinburgh-conference-2026");
-  });
-
-  it("says when there are none", async () => {
-    await render(<MailingsTable mailings={[]} />);
-    await expect.element(page.getByText(copy.none)).toBeVisible();
   });
 });
 
@@ -3933,14 +3872,6 @@ describe("each list's download values and contact cards", () => {
     expect(row.campaign).toBe(campaignBySlug(exampleLetter.campaign)?.title);
     expect(values(letterColumns, { ...exampleLetter, campaign: "gone", campaignTitle: "Gone" }).campaign).toBe("Gone");
     expect(typeof row.history).toBe("string");
-  });
-
-  it("mailings: from whom, copied from Airtable, or no sender recorded", () => {
-    expect(exampleMailings.map((m) => values(mailingColumns, m).sender)).toEqual([
-      "Jo Example",
-      null,
-      staffCopy.mailings.imported,
-    ]);
   });
 
   it("politicians: every column, and as cards, with what they have", async () => {

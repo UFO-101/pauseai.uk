@@ -150,6 +150,8 @@ export type PauseaiLetterDetails = {
   mpEmail: string | null;
   mailingId: number;
   mailing: string;
+  /** The ask the mailing makes, if any, by its slug. */
+  mailingAsk: string | null;
   personalised: boolean;
   /** The Gmail it went from, and its thread there, if Gmail sent it. */
   sentFrom: string | null;
@@ -167,7 +169,7 @@ export async function getPauseaiLetter(mailingId: number, id: number): Promise<P
   const [letter] = await query<PauseaiLetterDetails>(
     `SELECT 'pauseai' AS kind, l.id::int AS id, l.status, l.created_at AS "createdAt", l.sent_at AS "sentAt",
        n.name AS "mpName", n.id::int AS "politicianId", n.email AS "mpEmail", m.id::int AS "mailingId",
-       m.title AS mailing, p.personalised, m.sent_from AS "sentFrom",
+       m.title AS mailing, m.ask AS "mailingAsk", p.personalised, m.sent_from AS "sentFrom",
        (SELECT s.gmail_thread_id FROM email_sends s WHERE s.letter_id = l.id AND s.outcome = 'sent'
         ORDER BY s.id DESC LIMIT 1) AS "gmailThreadId",
        coalesce((SELECT json_agg(json_build_object('at', e.at, 'status', e.status, 'details', e.details) ORDER BY e.at DESC, e.id DESC)

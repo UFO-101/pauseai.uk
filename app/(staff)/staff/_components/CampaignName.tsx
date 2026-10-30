@@ -1,4 +1,4 @@
-import Link from "next/link";
+import StaffLink from "./ui/StaffLink";
 import { campaignBySlug, campaignPath } from "@/lib/email-your-mp";
 
 /**
@@ -17,7 +17,7 @@ export default function CampaignName({
   url?: string | null;
 }) {
   const campaign = campaignBySlug(slug);
-  if (campaign) return <Link href={campaignPath(campaign)}>{campaign.title}</Link>;
+  if (campaign) return <StaffLink href={campaignPath(campaign)}>{campaign.title}</StaffLink>;
   const name = title ?? slug;
   return url ? (
     <a href={url} target="_blank" rel="noreferrer">

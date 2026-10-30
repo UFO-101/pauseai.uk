@@ -63,10 +63,20 @@ export default function Grid({
 export type CardLook = "record" | "aside" | "log";
 
 /**
- * A card in a `Grid`: the staff pages' one kind of box, its parts spaced
- * down it, looking like what it's for (`look`). A `title` heads it, and
- * names it for a screen reader. `className` is for what it does (a hover,
- * a stretched link), never its look.
+ * An item of a `Grid` that's a column of cards, one under another, each
+ * as tall as what's in it: the asides beside a record (a letter's ask and
+ * history). Its cards say no span.
+ */
+export function Column({ span, children }: { span: Span; children: ReactNode }) {
+  return <div className={`${styles.column} ${SPANS[span]}`}>{children}</div>;
+}
+
+/**
+ * A card in a `Grid`, or in a `Column`, with no span: the staff pages' one
+ * kind of box, its parts spaced down it, looking like what it's for
+ * (`look`). A `title` heads it, and names it for a screen reader.
+ * `className` is for what it does (a hover, a stretched link), never its
+ * look.
  */
 export function Card({
   span,
@@ -77,7 +87,7 @@ export function Card({
   className,
   children,
 }: {
-  span: Span;
+  span?: Span;
   look?: CardLook;
   as?: "section" | "div" | "li";
   title?: ReactNode;
@@ -88,7 +98,7 @@ export function Card({
 }) {
   return (
     <Tag
-      className={[styles.card, styles[look], SPANS[span], className].filter(Boolean).join(" ")}
+      className={[styles.card, styles[look], span && SPANS[span], className].filter(Boolean).join(" ")}
       aria-labelledby={title ? id : undefined}
     >
       {title && (

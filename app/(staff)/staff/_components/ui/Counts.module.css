@@ -1,0 +1,77 @@
+/* Numbers side by side in one white box, a rule between each. */
+.counts {
+  display: flex;
+  flex: none;
+  max-width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+/* Each as wide as its number or label, shrinking to fit a phone. */
+.count {
+  display: grid;
+  flex: 1 1 auto;
+  justify-items: center;
+  min-width: 5rem;
+  padding: var(--space-2) var(--space-4);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  text-align: center;
+  text-decoration: none;
+}
+
+.count + .count {
+  border-left: 1px solid var(--border);
+}
+
+/* The one a list under it is filtered to. */
+.count[aria-current] {
+  box-shadow: inset 0 -3px 0 var(--accent);
+}
+
+.count strong {
+  color: var(--text);
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: 1.75rem;
+  line-height: 1.1;
+}
+
+.count strong[data-zero] {
+  color: var(--muted);
+}
+
+.count strong[data-tone="red"] {
+  color: var(--status-red);
+}
+
+.count strong[data-tone="green"] {
+  color: var(--status-green);
+}
+
+/* In a list's row: smaller, and each as wide as the rest. */
+.small .count {
+  min-width: 4.25rem;
+  padding: var(--space-1) var(--space-2);
+}
+
+.small .count strong {
+  font-size: var(--text-lg);
+}
+
+/* A phone: the box as wide as there's room, its counts sharing it evenly, so two are roomy and five fit. */
+@media (max-width: 30rem) {
+  .counts {
+    width: 100%;
+  }
+
+  .count,
+  .small .count {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: var(--space-2) var(--space-1);
+  }
+}

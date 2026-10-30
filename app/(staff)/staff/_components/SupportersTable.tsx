@@ -1,4 +1,4 @@
-import Link from "next/link";
+import StaffLink from "./ui/StaffLink";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { contactState, type Channel, type ContactState } from "@/lib/contact-permissions";
@@ -109,7 +109,7 @@ export function supporterColumns(search: SupportersSearch): ListColumn<Supporter
       label: copy.columns.name,
       heading: heading("name", copy.columns.name),
       text: (s) => s.name,
-      cell: (s) => <Link href={`${PATH}/${s.id}`}>{s.name ?? copy.noName}</Link>,
+      cell: (s) => <StaffLink href={`${PATH}/${s.id}`}>{s.name ?? copy.noName}</StaffLink>,
     },
     states.some((state) => state.channel === "email") && {
       key: "email",

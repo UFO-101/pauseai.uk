@@ -1,47 +1,15 @@
-/* A mailing's page, once scheduled: its parts a gap apart, so the bar of
-   when it sends, or its counts, doesn't run into the recipients. */
+/* A mailing's page, once scheduled: its band, where it stands, then the
+   email beside its recipients, a gap apart. */
 .page {
   display: grid;
   gap: var(--space-4);
 }
 
-/* Its title with its state beside it. */
-.heading {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-2) var(--space-4);
-}
-
-.heading h1 {
-  margin: 0;
-}
-
-/* The bar's buttons, at their full height: a strip makes its buttons small
-   (Strip.module.css), but these are what the page is for. */
+/* Where it stands' buttons, at their full height. */
 .actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-  --button-padding: initial;
-  --button-font-size: initial;
-  --button-font-weight: initial;
-}
-
-.progress {
-  display: block;
-  width: 100%;
-  margin-top: var(--space-2);
-  accent-color: var(--status-green);
-}
-
-.skipped {
-  color: var(--status-amber);
-}
-
-.subheading {
-  margin: var(--space-3) 0 0;
-  font-size: var(--text-md);
 }
 
 /* Change the time's form, in the menu hung from its button. */
@@ -81,4 +49,60 @@
   display: grid;
   gap: var(--space-4);
   padding: var(--space-3) var(--space-4);
+}
+
+/* Where it stands: the bar, with Stop sending at its right. */
+.standing {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+  align-items: center;
+}
+
+.bar {
+  flex: 1 1 20rem;
+}
+
+/* Over the recipients: which they are, and the way back to them all. */
+.recipientsHead {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: baseline;
+}
+
+.recipientsHead h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+/* A recipient's cell: its lines, one under another. */
+.who {
+  display: grid;
+  gap: 2px;
+  justify-items: start;
+  font-size: var(--text-sm);
+}
+
+/* Their answer to the ask, in green. */
+.answer {
+  color: var(--status-green);
+  font-weight: 600;
+}
+
+/* When one scheduled sends: large, in blue, as it's going out; how many and who from on its right, wrapping under it when narrow. */
+.due {
+  display: flex;
+  flex: 1 1 20rem;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  align-items: baseline;
+  color: var(--text-secondary);
+}
+
+.due strong {
+  color: var(--status-blue);
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: 1.25rem;
+  line-height: 1.2;
 }

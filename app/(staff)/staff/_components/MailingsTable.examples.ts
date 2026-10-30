@@ -10,6 +10,7 @@ const mailing: MailingSummary = {
   state: "sent",
   createdBy: null,
   fromName: null,
+  sentFrom: null,
   dueAt: null,
   updatedAt: "2026-10-28T10:00:00Z",
   to: 0,
@@ -35,6 +36,7 @@ export const exampleMailings: MailingSummary[] = [
     askTitle: "Edinburgh conference",
     createdBy: "jo@pauseai.uk",
     fromName: "Jo Example",
+    sentFrom: "jo@pauseai.uk",
     dueAt: "2026-10-20T08:00:00Z",
     to: 12,
     sentAt: "2026-10-20T08:00:00Z",
@@ -62,7 +64,7 @@ export const exampleMailings: MailingSummary[] = [
   },
 ];
 
-/** A draft to the Commons, and one scheduled for Thursday, written by Jo. */
+/** A draft to the Commons, and one scheduled for Thursday, written by Jo, from Jo's Gmail with no name of its own. */
 export const exampleDraft: MailingSummary = {
   ...mailing,
   id: 5,
@@ -77,12 +79,30 @@ export const exampleScheduled: MailingSummary = {
   title: "Edinburgh: one week to go",
   state: "scheduled",
   createdBy: "jo@pauseai.uk",
-  fromName: "Jo Example",
+  // With no name of its own, the list's name is its address.
+  fromName: "jo@pauseai.uk",
+  sentFrom: "jo@pauseai.uk",
   dueAt: "2026-10-30T09:00:00Z",
   to: 72,
 };
 
-/** The Edinburgh invitation, with its recipients: one personalised who replied, one that bounced, one left out. */
+/** One sending to every MP, a third of the way. */
+export const exampleSending: MailingSummary = {
+  ...mailing,
+  id: 8,
+  title: "All MPs: the AI bill's second reading",
+  state: "sending",
+  createdBy: "jo@pauseai.uk",
+  fromName: "Jo Example",
+  dueAt: "2026-10-30T09:00:00Z",
+  to: 650,
+  sent: 212,
+  skipped: 2,
+  bounced: 3,
+  replied: 4,
+};
+
+/** The Edinburgh invitation, with its recipients: one personalised who replied twice, one that bounced, one left out. */
 export const exampleMailing: Mailing = {
   ...exampleMailings[2],
   tab: "all",
@@ -95,9 +115,12 @@ export const exampleMailing: Mailing = {
       letterId: 11,
       politicianId: 7,
       name: "Polly Placeholder",
+      constituency: "Cities of London and Westminster",
+      party: "Labour (Co-op)",
       status: "sent",
       sentAt: "2026-10-01T09:00:00Z",
       repliedAt: "2026-10-03T14:00:00Z",
+      replies: 2,
       personalised: true,
       answer: "going",
       skipReason: null,
@@ -106,9 +129,12 @@ export const exampleMailing: Mailing = {
       letterId: 12,
       politicianId: 8,
       name: "Morag Example",
+      constituency: "Edinburgh Central",
+      party: "SNP",
       status: "bounced",
       sentAt: "2026-10-01T09:00:00Z",
       repliedAt: null,
+      replies: 0,
       personalised: false,
       answer: null,
       skipReason: null,
@@ -117,9 +143,12 @@ export const exampleMailing: Mailing = {
       letterId: 13,
       politicianId: 9,
       name: "Dora Dummy",
+      constituency: null,
+      party: "Crossbench",
       status: "not_sent",
       sentAt: null,
       repliedAt: null,
+      replies: 0,
       personalised: false,
       answer: null,
       skipReason: null,

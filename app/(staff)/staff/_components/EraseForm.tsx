@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import StaffLink from "./ui/StaffLink";
 import Actions from "@/components/ui/Actions";
 import { useState } from "react";
 import { Checkbox, TextInput } from "@/components/ui/Controls";
@@ -47,7 +47,7 @@ export default function EraseForm({
           <SubmitButton variant="danger" size="small" fit disabled={!sure}>
             {copy.button}
           </SubmitButton>
-          <Link href={`/staff/supporters/${supporterId}`}>{copy.cancel}</Link>
+          <StaffLink href={`/staff/supporters/${supporterId}`}>{copy.cancel}</StaffLink>
         </Actions>
       </FormStack>
     </>

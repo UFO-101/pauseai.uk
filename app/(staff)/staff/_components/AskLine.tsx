@@ -1,4 +1,4 @@
-import Link from "next/link";
+import StaffLink from "./ui/StaffLink";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { Ask } from "@/lib/server/asks";
 import { staffDate } from "@/lib/staff-time";
@@ -8,7 +8,7 @@ import styles from "./Details.module.css";
 export function AskTitle({ ask }: { ask: Ask }) {
   if (!ask.url) return ask.title;
   return ask.url.startsWith("/") ? (
-    <Link href={ask.url}>{ask.title}</Link>
+    <StaffLink href={ask.url}>{ask.title}</StaffLink>
   ) : (
     <a href={ask.url} target="_blank" rel="noreferrer">
       {ask.title}

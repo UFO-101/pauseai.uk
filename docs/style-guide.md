@@ -280,7 +280,8 @@ a filter or a part of the letter, never a button that makes a new thing.
 
 Buttons that act on what a list's filters found ("Mail these",
 Download) aren't adding. They sit over the table, in the list frame's
-count row.
+count row. A page whose list isn't a table has Download (`ui/DownloadMenu`, the
+same button) beside its title's button instead.
 
 **Choosing something for another part of the pages.** Sometimes one
 part needs a set of things chosen with another part's full tools: who a
@@ -342,6 +343,26 @@ lists with their reasons (a popover, the login page's card, a field).
 Every card has the same edge, a `1px` `--border` and `--radius-lg`; only
 its fill changes, and only among those three, all warm. Colour stays for
 meaning: orange for what you can press, the status colours for state.
+
+**The band** (`ui/Band`). A record whose page is about it alone (a
+supporter, a mailing) starts with a tinted band: its title and a tag, its
+facts (`BandFact`), each with a quiet line under it, and at their right
+its numbers in one white box (`ui/Counts`), each a link (`StaffLink`,
+below) to what it counts. The same white box, small, is a row's in a list of such records
+(the mailings), the whole box leading to the record.
+
+**Progress** (`ui/Progress`). How far something has got is a sentence
+over a thin bar: blue while it's going out, green for answers. In its
+own card under a band, and thin in a list's row.
+
+**Status colours.** A status is grey but for three: blue for what's going
+out or about to (Scheduled, Sending), green for the answer a thing was
+for (Answered), and red for what needs fixing (Bounced). Sent, Replied,
+Skipped, Draft and Waiting are grey, so the three stand out.
+
+**A column of cards** (`ui/Grid`'s `Column`). Asides beside a record that
+aren't one card, such as a letter's ask over its history, stack in a
+`Column` taking the rest of the row, each card in it with no span.
 
 **No box under or beside a box** but a card or tile in the same grid. A
 card holds strips, rows and fields, never another card.
@@ -574,7 +595,10 @@ such as one that opens a menu, doesn't wait at all.
 - **Links in the staff pages**, including the ones that look like
   buttons, show the thin line along the top of the page instead
   (`StaffLink`, and `data-pending` on anything else that waits for a
-  page, such as Log out in the navigation). Nothing spins.
+  page, such as Log out in the navigation). Nothing spins. ESLint
+  refuses `next/link` in the staff pages, and a plain `<a>` with
+  `buttonClass` there (`STAFF_LINK_IMPORT` and `STAFF_BUTTON_LINK_RULES`
+  in `eslint.config.mjs`).
 
 A button with a look of its own (the donate page's) puts its words in
 `ButtonInside` and greys itself while `aria-busy`.

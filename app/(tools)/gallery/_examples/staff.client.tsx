@@ -21,10 +21,9 @@ import {
   examplePolitician,
   examplePoliticianHistory,
 } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
-import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
+import { exampleLetter, examplePauseaiLetterDetails } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import Run from "@/app/(staff)/staff/_components/Run";
-import AskRow, { OtherAsks } from "@/app/(staff)/staff/_components/AskRow";
-import detailsStyles from "@/app/(staff)/staff/_components/Details.module.css";
+import AskRow, { AskRows, OtherAsks } from "@/app/(staff)/staff/_components/AskRow";
 import EraseForm from "@/app/(staff)/staff/_components/EraseForm";
 import DeletePolitician from "@/app/(staff)/staff/_components/DeletePolitician";
 import RemoveAccountForm from "@/app/(staff)/staff/_components/RemoveAccountForm";
@@ -40,7 +39,11 @@ import { ChangeTimeForm, DueTimeFields } from "@/app/(staff)/staff/_components/D
 import { DeleteDraft, DeleteTwice, StopMailing } from "@/app/(staff)/staff/_components/MailingButtons";
 import AskForm from "@/app/(staff)/staff/_components/AskForm";
 import MyGmail from "@/app/(staff)/staff/_components/MyGmail";
-import { exampleEditableAsk, exampleGmailAccount } from "@/app/(staff)/staff/_components/LetterThread.examples";
+import {
+  exampleEditableAsk,
+  exampleGmailAccount,
+  exampleThread,
+} from "@/app/(staff)/staff/_components/LetterThread.examples";
 import MailingFiles from "@/app/(staff)/staff/_components/MailingFiles";
 import MailingFor from "@/app/(staff)/staff/_components/MailingFor";
 import { FilterPills } from "@/app/(staff)/staff/_components/MailingParts";
@@ -48,11 +51,15 @@ import MailingView from "@/app/(staff)/staff/_components/MailingView";
 import MailingWriter from "@/app/(staff)/staff/_components/MailingWriter";
 import { exampleWriterData, exampleWrittenMailing } from "@/app/(staff)/staff/_components/MailingWriter.examples";
 import MailingsOverview from "@/app/(staff)/staff/_components/MailingsOverview";
+import MailingLetterView from "@/app/(staff)/staff/_components/MailingLetterView";
+import LetterThread from "@/app/(staff)/staff/_components/LetterThread";
+import { mailingGroups } from "@/lib/mailing-groups";
 import {
   exampleDraft,
   exampleMailing,
   exampleMailings,
   exampleScheduled,
+  exampleSending,
 } from "@/app/(staff)/staff/_components/MailingsTable.examples";
 import PoliticiansList from "@/app/(staff)/staff/_components/PoliticiansList";
 import { Controlled, Logged } from "../_components/wiring";
@@ -109,11 +116,11 @@ export function AskRowExample({ others = false }: { others?: boolean }) {
   return (
     <Logged>
       {(log) => (
-        <div className={detailsStyles.asks}>
+        <AskRows>
           <AskRow politician={politician} ask={exampleAsks[0]!} setStatus={log("setStatus")} />
           <AskRow politician={politician} ask={exampleAsks[4]!} setStatus={log("setStatus")} />
           {others && <OtherAsks politician={politician} asks={exampleAsks.slice(3)} setStatus={log("setStatus")} />}
-        </div>
+        </AskRows>
       )}
     </Logged>
   );
@@ -444,18 +451,35 @@ export function MailingViewExample({ state }: { state: "scheduled" | "sending" |
   );
 }
 
-/** The list of mailings: two drafts, one coming up, and those sent; or none of the first two. */
+/** The list of mailings, in its groups as of 30 October 2026: one sending, one scheduled, two drafts, and those sent; or none. */
 export function MailingsOverviewExample({ empty = false }: { empty?: boolean }) {
+  const now = "2026-10-30T12:00:00Z";
+  const groups = empty
+    ? []
+    : mailingGroups(
+        {
+          drafts: [exampleDraft, { ...exampleDraft, id: 7, title: "" }],
+          comingUp: [exampleScheduled, exampleSending],
+          sent: [...exampleMailings, { ...exampleMailings[1], id: 9, sentAt: "2025-07-09T10:00:00Z" }],
+        },
+        new Date(now),
+      );
+  return <MailingsOverview groups={groups} now={now} />;
+}
+
+/** One of a mailing's letters, with a reply, to the politician whose answer to its ask is set from it. */
+export function MailingLetterViewExample() {
   return (
     <Logged>
       {(log) => (
-        <MailingsOverview
-          drafts={empty ? [] : [exampleDraft, { ...exampleDraft, id: 7, title: "" }]}
-          comingUp={empty ? [] : [exampleScheduled]}
-          sent={exampleMailings}
-          deleteDraft={log("deleteMailingDraft")}
-          stop={log("stopMailingNow")}
-        />
+        <MailingLetterView
+          letter={{ ...examplePauseaiLetterDetails, mailingAsk: exampleAsks[0]!.slug }}
+          politician={{ ...examplePolitician, airtableId: null }}
+          asks={exampleAsks}
+          setStatus={log("setStatus")}
+        >
+          <LetterThread thread={exampleThread} link={<a href="#">Open in Gmail</a>} />
+        </MailingLetterView>
       )}
     </Logged>
   );

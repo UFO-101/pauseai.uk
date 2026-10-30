@@ -1,4 +1,4 @@
-import Link from "next/link";
+import StaffLink from "./ui/StaffLink";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { EmailBlock } from "@/lib/server/email";
@@ -38,7 +38,7 @@ export function blockColumns(
         b.politicians.map((p, i) => (
           <span key={p.id}>
             {i > 0 && ", "}
-            <Link href={`/staff/politicians/${p.id}`}>{p.name}</Link>
+            <StaffLink href={`/staff/politicians/${p.id}`}>{p.name}</StaffLink>
           </span>
         )),
     },

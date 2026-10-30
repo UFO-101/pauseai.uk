@@ -21,7 +21,7 @@ import {
 } from "@/lib/mailing-doc";
 import { MAX_ATTACHMENT_BYTES } from "@/lib/mailing-attachments";
 import { answerLabels } from "@/lib/mailing-fields";
-import Link from "next/link";
+import StaffLink from "./ui/StaffLink";
 import { DEFAULT_SENDER } from "@/lib/gmail-connect";
 import { looksLikeEmail } from "@/lib/email-your-mp";
 import { named } from "@/lib/named-address";
@@ -534,7 +534,7 @@ export default function MailingWriter({
             {/* Connecting is done on the account's own page, logged in as it. */}
             {!data.senders.some((one) => one.email === data.me) && (
               <p>
-                <Link href="/staff/me#gmail">{copy.connectOne}</Link>
+                <StaffLink href="/staff/me#gmail">{copy.connectOne}</StaffLink>
               </p>
             )}
           </div>

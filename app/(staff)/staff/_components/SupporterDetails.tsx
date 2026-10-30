@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
+import StaffLink from "./ui/StaffLink";
 import { Muted } from "@/components/ui/Text";
 import Tag from "@/components/ui/Tag";
 import { displayPostcode } from "@/lib/email-your-mp";
@@ -15,6 +15,8 @@ import type {
 } from "@/lib/supporters";
 import CampaignName from "./CampaignName";
 import PermissionTiles from "./PermissionTiles";
+import Band, { BandFact } from "./ui/Band";
+import Counts from "./ui/Counts";
 import Grid, { Card, spanClass } from "./ui/Grid";
 import { ListTable, type ListColumn } from "./ui/ListFrame";
 import styles from "./Details.module.css";
@@ -90,7 +92,7 @@ function Subject({ item, letters }: { item: SupporterActivity; letters: string }
     const status = copy.detail.statuses[item.detail ?? ""];
     return (
       <>
-        {item.href ? <Link href={item.href}>{item.title}</Link> : item.title}
+        {item.href ? <StaffLink href={item.href}>{item.title}</StaffLink> : item.title}
         {status && <Muted> · {status}</Muted>}
       </>
     );
@@ -100,7 +102,7 @@ function Subject({ item, letters }: { item: SupporterActivity; letters: string }
     // status, linked to the page of the supporter's letters.
     return (
       <>
-        {item.href ? <Link href={item.href}>{item.detail}</Link> : item.detail}
+        {item.href ? <StaffLink href={item.href}>{item.detail}</StaffLink> : item.detail}
         <Muted>
           {item.title && (
             <>
@@ -111,7 +113,7 @@ function Subject({ item, letters }: { item: SupporterActivity; letters: string }
           {item.status && (
             <>
               {" · "}
-              <Link href={letters}>{staffCopy.letters.status[item.status] ?? item.status}</Link>
+              <StaffLink href={letters}>{staffCopy.letters.status[item.status] ?? item.status}</StaffLink>
             </>
           )}
         </Muted>
@@ -156,11 +158,9 @@ function Active({ first, last, source }: { first: string | null; last: string | 
   const days = [...new Set([first, last].filter((at): at is string => Boolean(at)).map(staffDate))];
   if (days.length === 0) return null;
   return (
-    <div>
-      <dt>{copy.detail.active}</dt>
-      <dd>{days.join(" – ")}</dd>
-      {source && <dd className={styles.origin}>{copy.detail.firstVia(copy.sources[source])}</dd>}
-    </div>
+    <BandFact label={copy.detail.active} detail={source && copy.detail.firstVia(copy.sources[source])}>
+      {days.join(" – ")}
+    </BandFact>
   );
 }
 
@@ -183,46 +183,36 @@ function PlaceMap({ latitude, longitude }: { latitude?: number | null; longitude
  * registered for and letters they wrote, linked to the tables, which say
  * what the list's lozenges would.
  */
-function Band({ supporter, events, letters }: { supporter: Details; events: number; letters: number }) {
+function SupporterBand({ supporter, events, letters }: { supporter: Details; events: number; letters: number }) {
   const { summary, mp, identities } = supporter;
   const { place } = summary;
   const first = identities[0];
   return (
-    <div className={styles.band}>
-      {place && <PlaceMap latitude={place.latitude} longitude={place.longitude} />}
-      <div className={styles.bandMain}>
-        <h1>{summary.name ?? copy.noName}</h1>
-        <div className={styles.bandRow}>
-          <dl className={styles.bandFacts}>
-            {place?.name && (
-              <div>
-                <dt>{copy.detail.place}</dt>
-                <dd>{[place.name, staffCopy.countries[place.country ?? ""]].filter(Boolean).join(", ")}</dd>
-                <dd className={styles.origin}>{copy.detail.placeFrom[place.basis](place.given)}</dd>
-              </div>
-            )}
-            {mp && (
-              <div>
-                <dt>{copy.detail.theirMp}</dt>
-                <dd>
-                  <Link href={`/staff/politicians/${mp.id}`}>{mp.name}</Link>
-                </dd>
-                <dd className={styles.origin}>{[mp.constituency, mp.party].filter(Boolean).join(" · ")}</dd>
-              </div>
-            )}
-            <Active first={summary.firstSeenAt} last={summary.lastActiveAt} source={first?.source} />
-          </dl>
-          <div className={styles.counts}>
-            <a href="#events">
-              <strong>{events}</strong> {copy.detail.eventsCounted(events)}
-            </a>
-            <a href="#letters">
-              <strong>{letters}</strong> {copy.detail.lettersCounted(letters)}
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
+    <Band
+      className={styles.band}
+      title={summary.name ?? copy.noName}
+      lead={place && <PlaceMap latitude={place.latitude} longitude={place.longitude} />}
+      aside={
+        <Counts
+          counts={[
+            { key: "events", n: events, label: copy.detail.eventsCounted(events), href: "#events" },
+            { key: "letters", n: letters, label: copy.detail.lettersCounted(letters), href: "#letters" },
+          ]}
+        />
+      }
+    >
+      {place?.name && (
+        <BandFact label={copy.detail.place} detail={copy.detail.placeFrom[place.basis](place.given)}>
+          {[place.name, staffCopy.countries[place.country ?? ""]].filter(Boolean).join(", ")}
+        </BandFact>
+      )}
+      {mp && (
+        <BandFact label={copy.detail.theirMp} detail={[mp.constituency, mp.party].filter(Boolean).join(" · ")}>
+          <StaffLink href={`/staff/politicians/${mp.id}`}>{mp.name}</StaffLink>
+        </BandFact>
+      )}
+      <Active first={summary.firstSeenAt} last={summary.lastActiveAt} source={first?.source} />
+    </Band>
   );
 }
 
@@ -232,7 +222,7 @@ const eventColumns: ListColumn<SupporterActivity>[] = [
   {
     key: "event",
     label: copy.detail.columns.event,
-    cell: (a) => (a.href ? <Link href={a.href}>{a.title}</Link> : a.title),
+    cell: (a) => (a.href ? <StaffLink href={a.href}>{a.title}</StaffLink> : a.title),
   },
   {
     key: "status",
@@ -248,7 +238,9 @@ const letterColumns: ListColumn<SupporterLetter>[] = [
     key: "letter",
     label: copy.detail.columns.letter,
     short: true,
-    cell: (l) => <Link href={`/staff/letters/${l.id}`}>{staffCopy.letters.status[l.status] ?? l.status}</Link>,
+    cell: (l) => (
+      <StaffLink href={`/staff/letters/${l.id}`}>{staffCopy.letters.status[l.status] ?? l.status}</StaffLink>
+    ),
   },
   {
     key: "sent",
@@ -259,7 +251,7 @@ const letterColumns: ListColumn<SupporterLetter>[] = [
   {
     key: "to",
     label: copy.detail.columns.to,
-    cell: (l) => <Link href={`/staff/politicians/${l.politicianId}`}>{l.mpName}</Link>,
+    cell: (l) => <StaffLink href={`/staff/politicians/${l.politicianId}`}>{l.mpName}</StaffLink>,
   },
   {
     key: "campaign",
@@ -283,7 +275,7 @@ export default function SupporterDetails({ supporter, erase }: { supporter: Deta
   const lettersPage = `/staff/letters/supporter/${summary.id}`;
   return (
     <>
-      <Band supporter={supporter} events={events.length} letters={letters.length} />
+      <SupporterBand supporter={supporter} events={events.length} letters={letters.length} />
 
       <Grid>
         <Card span={2} title={copy.detail.listsTitle} id="subscriptions">

@@ -1,0 +1,66 @@
+/* The band over a record's page: what leads it at its left, then the
+   title, and under it the facts, with what's aside at their right, all
+   wrapping on a narrow screen. The space under it is the page's. */
+.band {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5) var(--space-6);
+  align-items: center;
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-xl);
+  background: var(--surface-2);
+}
+
+.main {
+  display: grid;
+  flex: 1 1 30rem;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+/* The title, with its tag beside it. */
+.heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+}
+
+/* Its lines close, as a long title wraps on a phone. */
+.heading h1 {
+  margin: 0;
+  line-height: 1.15;
+}
+
+/* The facts, with what's aside level with their tops. */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-6);
+  align-items: flex-start;
+}
+
+.facts {
+  display: flex;
+  flex: 1 1 30rem;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-6);
+  margin: 0;
+}
+
+.facts dt {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.facts dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.facts dd.detail {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 400;
+}

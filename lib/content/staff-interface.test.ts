@@ -102,9 +102,9 @@ describe("the lists' counts", () => {
       writing.willGet,
       writing.schedule,
       (n: number) => writing.summary(n, null, null),
-      (n: number) => writing.draftLine("jo@pauseai.uk", n),
-      (n: number) => writing.comingLine("jo@pauseai.uk", "Friday at 09:00", n),
       (n: number) => writing.scheduledLine(n, "Jo"),
+      writing.toCount,
+      writing.letterAndReplies,
       (n: number) => writing.leftOut(n + 2, n, n),
     ]) {
       expect(say(1)).not.toBe(say(2).replaceAll("2", "1"));

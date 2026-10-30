@@ -703,13 +703,9 @@ export const staffCopy = {
     recipientColumns: {
       name: "Politician",
       status: "Status",
-      sentAt: "Sent",
-      replied: "Replied",
-      how: "Written",
     },
-    // How a recipient's letter was written.
+    // A recipient's letter that was personalised, which Airtable kept.
     personalised: "personalised",
-    asWritten: "as written",
   },
   // A mailing's editor: the letter, with merge fields and parts only some recipients get.
   mailingEditor: {
@@ -772,13 +768,13 @@ export const staffCopy = {
     whoLabel: "Who it's for",
     // A search, as a pill of who a mailing is to.
     searchPill: (typed: string) => `Search "${typed}"`,
-    // A mailing's coloured counts.
+    // A mailing's counts.
     counts: {
       sent: "sent",
       replied: "replied",
       bounced: "bounced",
       skipped: "skipped",
-      answered: "answered the ask",
+      answered: "answers",
     },
     // A new mailing's page's title, and the mailings page's button that starts one.
     newTitle: "New mailing",
@@ -906,14 +902,8 @@ export const staffCopy = {
       "time-passed": "You can't send it into the past!",
       "cannot-send": "Sending isn't built yet.",
     } as Record<string, string>,
-    // The list of mailings.
-    drafts: "Drafts",
+    // The list of mailings: the heading over those not sent yet.
     comingUp: "Coming up",
-    sent: "Sent",
-    noDrafts: "No drafts.",
-    noneComing: "Nothing scheduled.",
-    draftLine: (by: string, n: number) => `${by} · to ${n} ${n === 1 ? "person" : "people"}`,
-    comingLine: (by: string, when: string, n: number) => `${by} · ${when} · to ${n} ${n === 1 ? "person" : "people"}`,
     // On the politicians list, beside Download.
     mailThese: (n: number) => `Mail these ${n}…`,
     // Choosing who a mailing is for on the politicians list: at the top, for a new mailing or for a draft named by its title,
@@ -938,16 +928,12 @@ export const staffCopy = {
       sent: "Sent",
       cancelled: "Stopped",
     } as Record<string, string>,
-    sentLine: (when: string, from: string) => `Sent ${when}, from ${from}`,
-    // A mailing imported from Airtable, which kept when it went but not who from.
-    importedLine: (when: string) => `Sent ${when}, recorded in Airtable`,
     sends: (when: string) => `Sends on ${when}`,
     scheduledLine: (n: number, from: string) => `${n} ${n === 1 ? "email" : "emails"} from ${from}.`,
     changeTime: "Change the time",
     saveTime: "Change it",
     // Takes a scheduled mailing back to a draft, sending nothing.
     unschedule: "Unschedule",
-    sending: (n: number, of: number) => `${n} of ${of} sent`,
     stopSending: "Stop sending",
     sentLabel: "Sent",
     tabs: {
@@ -955,13 +941,27 @@ export const staffCopy = {
       replied: "Replied",
       bounced: "Bounced",
       skipped: "Skipped",
+      answered: "Answered",
     },
-    tab: (label: string, n: number) => `${label} ${n}`,
-    tabsLabel: "Which recipients",
+    // The list of mailings: when a draft was last saved, and how many a draft or one scheduled goes to.
+    savedAt: (when: string) => `Saved ${when}`,
+    toCount: (n: number) => `to ${n} ${n === 1 ? "person" : "people"}`,
+    // A mailing's box of counts in the list, which opens the mailing, for screen readers.
+    countsLabel: (title: string) => `How “${title}” went`,
+    // The bar of how far a mailing sending has got, and once it's sent, how many have answered its ask.
+    sendingBar: (n: number, of: number) => `Sending: ${n} of ${of} sent`,
+    answeredBar: (n: number, of: number) => `Sent: ✓ ${n} of ${of} answered the ask`,
+    // The band at the top of a mailing's page: when it started sending, and who sent it.
+    started: "Started",
+    by: (who: string) => `by ${who}`,
+    // Over a mailing's recipients filtered by one of its counts, back to them all.
+    showEveryone: "Show everyone",
+    // Each recipient's link to their letter's page, with their replies when there are some.
+    letterAndReplies: (n: number) => (n === 1 ? "Letter and reply →" : "Letter and replies →"),
+    theLetter: "Letter →",
     // In a mailing's email, who it's to: each recipient, as it's a letter to many.
     toEach: "Each recipient, by name and address",
     emailTitle: "The email",
-    whoTitle: (sent: boolean) => (sent ? "Who it was for" : "Who it's for"),
     skipReasons: {
       blocked: "Skipped: address blocked",
       "left-office": "Skipped: left office",

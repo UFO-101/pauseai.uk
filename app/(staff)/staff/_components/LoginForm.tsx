@@ -1,4 +1,4 @@
-import Link from "next/link";
+import StaffLink from "./ui/StaffLink";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { TextInput } from "@/components/ui/Controls";
 import { Field, FieldError } from "@/components/ui/Field";
@@ -30,7 +30,7 @@ export default function LoginForm({
       <>
         <p role="status">{staffCopy.login.sent}</p>
         <p>
-          <Link href={LOGIN_PATH}>{staffCopy.login.again}</Link>
+          <StaffLink href={LOGIN_PATH}>{staffCopy.login.again}</StaffLink>
         </p>
       </>
     );

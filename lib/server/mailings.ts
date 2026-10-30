@@ -1,5 +1,7 @@
 import "server-only";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { mailingGroups, type MailingGroup } from "@/lib/mailing-groups";
+import { now } from "@/lib/now";
 import { query } from "./db";
 import { checkStoredFilter } from "./stored-filters";
 import { politicianAudience } from "./mailing-recipients";
@@ -23,6 +25,8 @@ export type MailingSummary = {
   /** Who wrote it, and the name it's from, or with none the Gmail it goes from; neither for one imported. */
   createdBy: string | null;
   fromName: string | null;
+  /** The Gmail it goes, or went, from. */
+  sentFrom: string | null;
   /** When it goes, or went. */
   dueAt: string | null;
   updatedAt: string;
@@ -43,9 +47,14 @@ export type MailingRecipient = {
   letterId: number;
   politicianId: number;
   name: string;
+  /** Their seat and party, as the politicians list has them. */
+  constituency: string | null;
+  party: string | null;
   status: string;
   sentAt: string | null;
   repliedAt: string | null;
+  /** How many replies of theirs we keep; none for one recorded only as replied, as Airtable did. */
+  replies: number;
   personalised: boolean;
   /** Their answer to the mailing's ask, if any. */
   answer: string | null;
@@ -53,8 +62,8 @@ export type MailingRecipient = {
   skipReason: "blocked" | "left-office" | null;
 };
 
-/** Which of a mailing's recipients its page lists: everyone, those who replied, bounced or were skipped. */
-export const RECIPIENT_TABS = ["all", "replied", "bounced", "skipped"] as const;
+/** Which of a mailing's recipients its page lists: everyone, those who replied, bounced, were skipped or answered its ask. */
+export const RECIPIENT_TABS = ["all", "replied", "bounced", "skipped", "answered"] as const;
 export type RecipientTab = (typeof RECIPIENT_TABS)[number];
 
 const TAB_CONDITIONS: Record<RecipientTab, string> = {
@@ -62,6 +71,8 @@ const TAB_CONDITIONS: Record<RecipientTab, string> = {
   replied: "l.replied_at IS NOT NULL",
   bounced: "l.status IN ('bounced', 'spam_complaint')",
   skipped: "l.status IN ('not_sent', 'cancelled', 'skipped')",
+  answered: `EXISTS (SELECT 1 FROM ask_statuses s JOIN mailings asked ON asked.id = p.mailing_id
+    WHERE s.notable_person_id = n.id AND s.ask = asked.ask)`,
 };
 
 /** A mailing with a page of its recipients in a tab, of `recipientsTotal`, on `pages` pages of `pageSize`. */
@@ -78,7 +89,7 @@ const RECIPIENTS_PAGE_SIZE = 100;
 
 const SELECT_MAILINGS = `
   SELECT m.id::int AS id, m.title, m.ask, a.title AS "askTitle", (m.airtable_field IS NOT NULL OR m.airtable_sent_between IS NOT NULL) AS imported,
-    m.state, m.created_by AS "createdBy", coalesce(nullif(m.from_name, ''), m.sent_from) AS "fromName", m.due_at AS "dueAt",
+    m.state, m.created_by AS "createdBy", coalesce(nullif(m.from_name, ''), m.sent_from) AS "fromName", m.sent_from AS "sentFrom", m.due_at AS "dueAt",
     m.updated_at AS "updatedAt",
     min(l.sent_at) AS "sentAt",
     count(l.id)::int AS "to",
@@ -129,6 +140,12 @@ export async function mailingsOverview(): Promise<{
   };
 }
 
+/** The mailings page: its groups (mailingGroups), and now, which says which year needn't be written. */
+export async function mailingsPage(): Promise<{ groups: MailingGroup[]; now: string }> {
+  const at = now();
+  return { groups: mailingGroups(await mailingsOverview(), at), now: at.toISOString() };
+}
+
 /** A mailing's title, for its page's title, a draft's with none said so; or undefined for no such mailing. */
 export async function mailingTitle(id: number): Promise<string | undefined> {
   const [mailing] = await query<{ title: string }>("SELECT title FROM mailings WHERE id = $1", [id]);
@@ -145,11 +162,13 @@ export async function getMailing(id: number, page = 1, tab: RecipientTab = "all"
   const [mailing] = await query<MailingSummary>(`${SELECT_MAILINGS} WHERE m.id = $1 GROUP BY m.id, a.title`, [id]);
   if (!mailing) return undefined;
   const from = `FROM letters_from_pauseai p JOIN letters l USING (id) JOIN notable_people n ON n.id = l.notable_person_id
+    LEFT JOIN politicians seat ON seat.id = n.id
     WHERE p.mailing_id = $1 AND ${TAB_CONDITIONS[tab]}`;
   const [recipients, [{ total }]] = await Promise.all([
     query<MailingRecipient>(
-      `SELECT l.id::int AS "letterId", n.id::int AS "politicianId", n.name, l.status, l.sent_at AS "sentAt",
-         l.replied_at AS "repliedAt", p.personalised, p.skip_reason AS "skipReason",
+      `SELECT l.id::int AS "letterId", n.id::int AS "politicianId", n.name, seat.constituency, seat.party, l.status, l.sent_at AS "sentAt",
+         l.replied_at AS "repliedAt",
+         (SELECT count(*)::int FROM letter_replies r WHERE r.letter_id = l.id AND NOT r.from_us) AS replies, p.personalised, p.skip_reason AS "skipReason",
          (SELECT s.status FROM ask_statuses s WHERE s.notable_person_id = n.id AND s.ask = $4) AS answer
        ${from} ORDER BY n.name, l.id LIMIT $2 OFFSET $3`,
       [id, RECIPIENTS_PAGE_SIZE, (page - 1) * RECIPIENTS_PAGE_SIZE, mailing.ask],
