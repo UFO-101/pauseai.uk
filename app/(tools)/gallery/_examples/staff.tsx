@@ -41,6 +41,7 @@ import {
   exampleFailedRun,
   exampleGoToParliamentResult,
   exampleLumaResult,
+  exampleDisconnectedGmail,
   exampleGmailResult,
   exampleMembersResult,
   exampleRun,
@@ -301,10 +302,18 @@ const RUNS: Record<ImportJob, Variant> = {
     ),
   },
   "read-gmail": {
-    label: "A read of Gmail, one account unread",
+    label: "A read of Gmail, one account unread, and one that disconnected an account",
     render: () => (
       <StaffPage as="div">
         <Run run={exampleRun("read-gmail", exampleGmailResult)} open />
+        <Run
+          run={exampleRun(
+            "read-gmail",
+            { accounts: [exampleGmailResult.accounts[0], exampleDisconnectedGmail] },
+            { id: 3 },
+          )}
+          open
+        />
         <Run
           run={exampleRun(
             "read-gmail",

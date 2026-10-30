@@ -166,7 +166,10 @@ export type GmailRead = {
   bounces: number;
   /** The mailbox's history had gone, so it was searched instead. */
   restarted?: boolean;
+  /** Why it couldn't be read. Read again next time, from where it got to, unless it was disconnected. */
   error?: string;
+  /** Google refused its access, so it was disconnected, and isn't read again until it's connected again. */
+  disconnected?: boolean;
 };
 
 /** What a run of reading Gmail found, account by account. */
@@ -233,22 +236,28 @@ function lumaRunIncomplete(result: LumaImportResult): boolean {
 /**
  * How a run ended, as its line in the import log says it: its status, or
  * for a Luma import that left work for later, an Emails sync that held
- * some back, or a Gmail read that couldn't read an account, "incomplete", in place of "ok" or "unchanged".
+ * some back, or a Gmail read that couldn't read an account this time,
+ * "incomplete", in place of "ok" or "unchanged". A Gmail read that had to
+ * disconnect an account failed, as that account isn't read again until
+ * someone connects it.
  */
 export function runStatus(run: AnyImportRun): string {
   if (run.job === "import-luma" && run.status !== "failed" && lumaRunIncomplete(run.result)) return "incomplete";
   // Emails held back for a mailing nobody has added yet.
   if (run.job === "sync-emails" && run.status !== "failed" && run.result.unplaced.length > 0) return "incomplete";
-  // An account that couldn't be read, which the next run reads from where it got to.
-  if (run.job === "read-gmail" && run.status !== "failed" && run.result.accounts.some((a) => a.error))
-    return "incomplete";
+  if (run.job === "read-gmail" && run.status !== "failed") {
+    if (run.result.accounts.some((a) => a.disconnected)) return "failed";
+    // An account that couldn't be read, which the next run reads from where it got to.
+    if (run.result.accounts.some((a) => a.error)) return "incomplete";
+  }
   return run.status;
 }
 
 /** How a run ended, as a colour: green when it went well, changing something or nothing, amber held or stopped short, red failed; none when it was discarded, or never ran. */
 export function runTone(run: AnyImportRun | undefined): "green" | "amber" | "red" | undefined {
   if (!run) return undefined;
-  if (run.status === "failed") return "red";
-  if (run.status === "held" || runStatus(run) === "incomplete") return "amber";
+  const status = runStatus(run);
+  if (status === "failed") return "red";
+  if (status === "held" || status === "incomplete") return "amber";
   return run.status === "discarded" ? undefined : "green";
 }

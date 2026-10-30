@@ -283,7 +283,7 @@ function MembersRun({ run, open }: { run: MembersImport; open?: boolean }) {
   );
 }
 
-/** A read of Gmail: the totals, then each account's, with whether it couldn't be read. */
+/** A read of Gmail: the totals, then each account's, with whether it couldn't be read, or was disconnected. */
 function GmailRun({ run, open }: { run: GmailReading; open?: boolean }) {
   if (run.status === "failed") return <RunBox run={run} summary={null} open={open} />;
   const words = staffCopy.gmailReading;
@@ -295,7 +295,7 @@ function GmailRun({ run, open }: { run: GmailReading; open?: boolean }) {
           <li key={a.account}>
             {words.account(a)}
             {a.restarted && ` ${words.restarted}`}
-            {a.error && <Muted> {words.failed(a.error)}</Muted>}
+            {a.error && <Muted> {a.disconnected ? words.disconnected : words.failed(a.error)}</Muted>}
           </li>
         ))}
       </ul>

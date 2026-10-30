@@ -47,6 +47,7 @@ import {
   exampleGoToParliamentResult,
   exampleHeldSync,
   exampleLumaResult,
+  exampleDisconnectedGmail,
   exampleGmailResult,
   exampleMembersResult,
   exampleRun,
@@ -2567,7 +2568,18 @@ describe("RunList", () => {
     await expect
       .element(page.getByText(`${staffCopy.gmailReading.account(accounts[0])} ${staffCopy.gmailReading.restarted}`))
       .toBeVisible();
-    await expect.element(page.getByText(staffCopy.gmailReading.failed("Error: invalid_grant"))).toBeVisible();
+    await expect
+      .element(page.getByText(staffCopy.gmailReading.failed("Error: Gmail answered 500 for /history")))
+      .toBeVisible();
+  });
+
+  it("says a Gmail read that disconnected an account failed, and why, in place of its error", async () => {
+    const accounts = [exampleGmailResult.accounts[0], exampleDisconnectedGmail];
+    await render(<RunList runs={[ran("read-gmail", { accounts }, { id: 1 })]} none="None" />);
+    await expect.element(page.getByText(staffCopy.runs.status.failed, { exact: true })).toBeVisible();
+    await expect.element(page.getByText(staffCopy.gmailReading.result(accounts), { exact: false })).toBeVisible();
+    await expect.element(page.getByText(staffCopy.gmailReading.disconnected, { exact: false })).toBeVisible();
+    await expect.element(page.getByText(exampleDisconnectedGmail.error!, { exact: false })).not.toBeInTheDocument();
   });
 
   it("says how many pages of contacts a Luma run read", async () => {

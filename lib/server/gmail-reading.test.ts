@@ -373,6 +373,32 @@ describeWithDatabase("reading Gmail", () => {
     ]);
   });
 
+  it("says an account Google refused was disconnected, and reads the rest", async () => {
+    await connectTestGmail("al@pauseai.uk");
+    await connectTestGmail(JO, "8");
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    mailbox({});
+    server.use(
+      http.post("https://oauth2.googleapis.com/token", async ({ request }) =>
+        (await request.clone().text()).includes("al%40pauseai.uk")
+          ? HttpResponse.json({ error: "invalid_grant" }, { status: 400 })
+          : undefined,
+      ),
+    );
+    expect(await read()).toEqual([
+      {
+        account: "al@pauseai.uk",
+        replies: 0,
+        autoReplies: 0,
+        bounces: 0,
+        error: "Error: Google refused the token request: 400 invalid_grant",
+        disconnected: true,
+      },
+      { account: JO, replies: 0, autoReplies: 0, bounces: 0 },
+    ]);
+    expect(await query("SELECT email FROM staff_accounts WHERE gmail_token IS NOT NULL")).toEqual([{ email: JO }]);
+  });
+
   it("keeps each run in the import log, unchanged when it found nothing, and who started it", async () => {
     await connectTestGmail(JO);
     await sentLetter();
