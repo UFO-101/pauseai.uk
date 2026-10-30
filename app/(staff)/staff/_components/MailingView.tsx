@@ -20,7 +20,6 @@ import Counts from "./ui/Counts";
 import Grid, { Card } from "./ui/Grid";
 import Progress from "./ui/Progress";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
-import Strip from "./ui/Strip";
 import Menu from "./ui/Menu";
 import styles from "./MailingView.module.css";
 
@@ -110,8 +109,9 @@ function ChangeTime({ mailing, action }: { mailing: WrittenMailing; action: Form
 }
 
 /**
- * Where a mailing stands, under its band: when one scheduled sends, with
- * Change the time and Unschedule; how far one sending has got, with Stop
+ * Where a mailing stands, under its band, each in the same white card:
+ * when one scheduled sends, large and blue, as it's going out, with Change
+ * the time and Unschedule; how far one sending has got, with Stop
  * sending; once sent, how many of everyone it went to have answered its ask.
  * Nothing for one with no ask.
  */
@@ -128,17 +128,20 @@ function Standing({
 }) {
   if (written?.state === "scheduled") {
     return (
-      <Strip
-        action={
-          <div className={styles.actions}>
-            <ChangeTime mailing={written} action={reschedule} />
-            <StopMailing id={written.id} label={copy.unschedule} action={stop} full />
+      <Grid>
+        <Card span={6} as="div">
+          <div className={styles.standing}>
+            <div className={styles.due}>
+              <strong>{copy.sends(londonWhen(written.dueAt!))}</strong>
+              <span>{copy.scheduledLine(mailing.to, written.fromName || written.sentFrom!)}</span>
+            </div>
+            <div className={styles.actions}>
+              <ChangeTime mailing={written} action={reschedule} />
+              <StopMailing id={written.id} label={copy.unschedule} action={stop} full />
+            </div>
           </div>
-        }
-      >
-        <strong>{copy.sends(londonWhen(written.dueAt!))}</strong>
-        <span>{copy.scheduledLine(mailing.to, written.fromName || written.sentFrom!)}</span>
-      </Strip>
+        </Card>
+      </Grid>
     );
   }
   if (written?.state === "sending") {
