@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ComponentProps, Ref } from "react";
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ComponentProps, ReactNode, Ref } from "react";
 import styles from "./Button.module.css";
 
 export type ButtonVariant = "primary" | "ghost" | "light" | "danger";
@@ -24,9 +24,26 @@ export function buttonClass({ variant, size, fit, className }: Look & { classNam
 }
 
 /**
- * A `<button>`. While `pending` it is disabled and shows a spinner, for
- * buttons whose work takes a while. A form's submit button can use
- * SubmitButton, which sets `pending` itself.
+ * What a button holds: while pending, a spinner over its label
+ * (Button.module.css), which keeps its room and still names the button.
+ * Exported for a button with a look of its own (DonateForm's), which then
+ * styles its own pending state.
+ */
+export function ButtonInside({ pending, children }: { pending?: boolean; children: ReactNode }) {
+  if (!pending) return children;
+  return (
+    <>
+      <span className={styles.waiting}>{children}</span>
+      <span className={styles.spinner} aria-hidden="true" />
+    </>
+  );
+}
+
+/**
+ * A `<button>`. While `pending` it is disabled and, if its work takes more
+ * than a moment, shows a spinner, for buttons whose work waits on a server
+ * or takes a while. A form's submit button can use SubmitButton, which sets
+ * `pending` itself.
  */
 export function Button({
   variant,
@@ -45,21 +62,37 @@ export function Button({
       disabled={disabled || pending}
       aria-busy={pending || undefined}
     >
-      {pending && <span className={styles.spinner} aria-hidden="true" />}
-      {children}
+      <ButtonInside pending={pending}>{children}</ButtonInside>
     </button>
   );
 }
 
-/** A plain `<a>` styled as a button: external links, hash links, downloads. */
+/**
+ * A plain `<a>` styled as a button: external links, hash links, downloads.
+ * While `pending`, as a Button is, it looks disabled, shows the spinner,
+ * and a click on it does nothing, for one whose page takes a while to come.
+ */
 export function ButtonAnchor({
   variant,
   size,
   fit,
   className,
+  pending,
+  onClick,
+  children,
   ...rest
-}: Look & AnchorHTMLAttributes<HTMLAnchorElement>) {
-  return <a {...rest} className={buttonClass({ variant, size, fit, className })} />;
+}: Look & { pending?: boolean } & AnchorHTMLAttributes<HTMLAnchorElement>) {
+  return (
+    <a
+      {...rest}
+      className={buttonClass({ variant, size, fit, className })}
+      aria-disabled={pending || undefined}
+      aria-busy={pending || undefined}
+      onClick={pending ? (event) => event.preventDefault() : onClick}
+    >
+      <ButtonInside pending={pending}>{children}</ButtonInside>
+    </a>
+  );
 }
 
 /** A Next `<Link>` styled as a button, for pages on this site. */

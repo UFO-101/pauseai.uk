@@ -3,6 +3,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { runSql } from "@/scripts/fresh-database.mjs";
 import { addStaffAccount, logInAsStaff, newestEmail, syncPoliticians } from "../steps";
 import { BASE, emailFrame, expect, frame, test } from "./fixtures";
+import { stayOnPage } from "./staff-steps";
 
 // Mailings to politicians written on the site: started from New mailing,
 // who it's for chosen on the politicians list, written and saved as a
@@ -136,7 +137,15 @@ test("Change who a draft goes to, then delete it", async ({ page, request, flowD
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   await startDraft(page, "Lords only");
-  await page.getByRole("link", { name: copy.changeWho }).click();
+  // The list kept from coming, so the button can be seen waiting for it.
+  const list = await stayOnPage(page, /\/staff\/politicians/);
+  const changeWho = page.getByRole("link", { name: copy.changeWho });
+  await changeWho.click();
+  await expect(changeWho.locator("[aria-hidden]")).toBeVisible();
+  await frame(page, "Change who pressed: the draft saved, the button greyed with a spinner while the list comes", {
+    window: true,
+  });
+  await page.goto(await list.asked());
   await expect(page).toHaveURL(/mailing=\d+/);
   await expect(page.getByText(copy.choosingDraft("Lords only"))).toBeVisible();
   await page.getByRole("link", { name: staffCopy.houses.lords }).click();

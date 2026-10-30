@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useOptimistic, useState, type ReactNode } from "react";
 import Actions from "@/components/ui/Actions";
 import { Button } from "@/components/ui/Button";
 import { Checkbox, Segmented, TextInput } from "@/components/ui/Controls";
@@ -84,6 +84,8 @@ export default function AskForm({
   const [date, setDate] = useState(ask?.date ?? "");
   const [url, setUrl] = useState(ask?.url ?? "");
   const [askedBy, setAskedBy] = useState<Asker[]>(ask?.askedBy ?? ["pauseai"]);
+  // Save, pending while it saves: it's outside the form, so SubmitButton can't tell.
+  const [saving, setSaving] = useOptimistic(false);
   const fixed = Boolean(ask?.fixed);
   const words = copy.byKind[kind];
   // A link that isn't a whole one, which the server would refuse (askFrom).
@@ -99,7 +101,13 @@ export default function AskForm({
       <div className={styles.form}>
         <Grid>
           <Card span={3}>
-            <FormStack id="ask-form" action={save}>
+            <FormStack
+              id="ask-form"
+              action={async (form) => {
+                setSaving(true);
+                await save(form);
+              }}
+            >
               <input type="hidden" name="back" value={back} />
               {ask && <input type="hidden" name="slug" value={ask.slug} />}
               <Field label={copy.fields.kind}>
@@ -173,6 +181,7 @@ export default function AskForm({
                   variant="primary"
                   fit
                   disabled={!title.trim() || !date || badLink}
+                  pending={saving}
                 >
                   {copy.save}
                 </Button>

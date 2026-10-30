@@ -1,7 +1,8 @@
 "use client";
 
-import { buttonClass } from "@/components/ui/Button";
+import { ButtonAnchor } from "@/components/ui/Button";
 import { Muted } from "@/components/ui/Text";
+import { useLeaving } from "@/components/ui/useLeaving";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { connectPath, GMAIL_DAILY_LIMIT } from "@/lib/gmail-connect";
 import Strip from "./ui/Strip";
@@ -21,9 +22,11 @@ const OUTCOME_TONES: Record<string, "green" | "amber"> = {
  * What connecting a Gmail means, said before it goes to Google: which
  * account, then in bullets what it's for, what the site reads, and the
  * daily limit; then the button, which goes to Google and comes back to
- * `back`.
+ * `back`. It's pending from its click until Google's page comes, which can
+ * take a moment, and not when the browser's Back shows this page again.
  */
 export function GmailConnect({ back }: { back: string }) {
+  const [leaving, leave] = useLeaving();
   return (
     <div className={styles.connect}>
       <p>{copy.intro}</p>
@@ -33,9 +36,9 @@ export function GmailConnect({ back }: { back: string }) {
         ))}
         <li>{copy.limit(LIMIT)}</li>
       </ul>
-      <a className={buttonClass({ variant: "primary", size: "small", fit: true })} href={connectPath(back)}>
+      <ButtonAnchor variant="primary" size="small" fit href={connectPath(back)} pending={leaving} onClick={leave}>
         {copy.connect}
-      </a>
+      </ButtonAnchor>
     </div>
   );
 }

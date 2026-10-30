@@ -169,6 +169,17 @@
   box-shadow: 0 1px 2px rgb(var(--ink-rgb) / 0.08);
 }
 
+/* On its way to Stripe: greyed, with Button's spinner over the words (ButtonInside). */
+.submit[aria-busy="true"],
+.submit[aria-busy="true"]:hover {
+  position: relative;
+  opacity: 0.6;
+  transform: none;
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: none;
+}
+
 .footnote {
   margin-top: 10px;
   font-size: 14px;

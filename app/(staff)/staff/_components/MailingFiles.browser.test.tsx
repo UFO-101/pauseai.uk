@@ -47,4 +47,34 @@ describe("MailingFiles", () => {
     expect(click).toHaveBeenCalledTimes(1);
     click.mockRestore();
   });
+
+  it("shows Add files pending while the files chosen are added", async () => {
+    let finish = () => {};
+    const onAdd = vi.fn<(files: File[]) => Promise<void>>(() => new Promise((resolve) => (finish = resolve)));
+    const { container } = await render(<MailingFiles files={[]} base="/nowhere" onAdd={onAdd} />);
+    const picker = container.querySelector<HTMLInputElement>("input[type=file]")!;
+    const chosen = new DataTransfer();
+    chosen.items.add(new File(["x"], "a.txt"));
+    picker.files = chosen.files;
+    picker.dispatchEvent(new Event("change", { bubbles: true }));
+    const add = page.getByRole("button", { name: copy.addFiles });
+    await expect.element(add).toHaveAttribute("aria-busy", "true");
+    expect(onAdd.mock.calls[0][0].map((file) => file.name)).toEqual(["a.txt"]);
+    finish();
+    await expect.element(add).not.toHaveAttribute("aria-busy");
+  });
+
+  it("disables a file's × while it's removed, marked for the line along the top", async () => {
+    let finish = () => {};
+    const onRemove = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)));
+    await render(<MailingFiles files={[PDF]} base={PDF_BASE} onRemove={onRemove} />);
+    const remove = page.getByRole("button", { name: copy.removeFile(PDF.filename) });
+    await remove.click();
+    await expect.element(remove).toBeDisabled();
+    await expect.element(remove).toHaveAttribute("data-pending", "true");
+    expect(onRemove).toHaveBeenCalledWith(PDF.id);
+    finish();
+    await expect.element(remove).toBeEnabled();
+    await expect.element(remove).not.toHaveAttribute("data-pending");
+  });
 });

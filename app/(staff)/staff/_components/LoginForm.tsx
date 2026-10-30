@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/Button";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { TextInput } from "@/components/ui/Controls";
 import { Field, FieldError } from "@/components/ui/Field";
 import { FormStack } from "@/components/ui/Form";
@@ -47,9 +47,9 @@ export default function LoginForm({
         </Field>
         <KeepSignedIn />
         <div>
-          <Button variant="primary" size="small" fit type="submit">
+          <SubmitButton variant="primary" size="small" fit>
             {staffCopy.login.button}
-          </Button>
+          </SubmitButton>
         </div>
       </FormStack>
     </>

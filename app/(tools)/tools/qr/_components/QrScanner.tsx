@@ -329,8 +329,8 @@ export default function QrScanner({ onResult }: Props) {
         >
           Scan an existing code
         </Button>
-        <Button type="button" variant="ghost" size="small" onClick={() => fileRef.current!.click()} disabled={busy}>
-          {busy ? "Looking for the code…" : "Use a photo"}
+        <Button type="button" variant="ghost" size="small" onClick={() => fileRef.current!.click()} pending={busy}>
+          Use a photo
         </Button>
         <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPhoto} />
       </div>
@@ -390,7 +390,7 @@ export default function QrScanner({ onResult }: Props) {
         {modalMessage && <FieldError announce="status">{modalMessage}</FieldError>}
         <div className={`${styles.actions} ${styles.dialogActions}`}>
           {open && modalMessage && (
-            <Button type="button" variant="ghost" size="small" onClick={() => fileRef.current!.click()} disabled={busy}>
+            <Button type="button" variant="ghost" size="small" onClick={() => fileRef.current!.click()} pending={busy}>
               Use a photo instead
             </Button>
           )}

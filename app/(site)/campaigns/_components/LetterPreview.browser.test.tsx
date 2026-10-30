@@ -106,7 +106,8 @@ describe("LetterPreview", () => {
     expect(readDraft(letterToPm.slug)).toBeNull();
     expect(readSent(letterToPm.slug)).toEqual({ campaign: letterToPm.slug, mpName: MP.name });
     // Still sending while the next page loads, so it can't be sent twice.
-    await expect.element(page.getByRole("button", { name: copy.preview.sending })).toBeDisabled();
+    await expect.element(send()).toBeDisabled();
+    await expect.element(send()).toHaveAttribute("aria-busy", "true");
   });
 
   it("adds to an existing dataLayer", async () => {
@@ -135,13 +136,13 @@ describe("LetterPreview", () => {
     expect(w.dataLayer).toBeUndefined();
   });
 
-  it("says it's sending while it waits", async () => {
+  it("is pending while it waits", async () => {
     let finish!: (res: Response) => void;
     respond = () => new Promise((resolve) => (finish = resolve));
     saveDraft(DRAFT);
     await render(<LetterPreview campaignSlug={letterToPm.slug} />);
     await send().click();
-    await expect.element(page.getByRole("button", { name: copy.preview.sending })).toBeDisabled();
+    await expect.element(send()).toHaveAttribute("aria-busy", "true");
     finish(Response.json({ ok: false, message: copy.errors.failed }));
     await expect.element(send()).toBeEnabled();
   });

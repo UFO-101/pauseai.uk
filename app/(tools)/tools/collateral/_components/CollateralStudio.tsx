@@ -75,7 +75,8 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
   const [screenQr, setScreenQr] = useState(false);
   const [issues, setIssues] = useState<LintIssue[]>([]);
   const [restored, setRestored] = useState(false);
-  const [busy, setBusy] = useState(false);
+  // Which download is being made, if one is.
+  const [busy, setBusy] = useState<"png" | "pdf" | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   // Restores what the last Reset cleared. Only offered while the reset message is showing.
   const [undoReset, setUndoReset] = useState<(() => void) | null>(null);
@@ -198,7 +199,7 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
 
   // The download buttons are disabled until the logo and fonts have loaded.
   async function onDownloadPng() {
-    setBusy(true);
+    setBusy("png");
     setMessage(null);
     try {
       const canvas = document.createElement("canvas");
@@ -207,12 +208,12 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
     } catch {
       setMessage("Could not create the image. Try a smaller format.");
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
   async function onDownloadPdf(print: PrintFormat) {
-    setBusy(true);
+    setBusy("pdf");
     setMessage(null);
     try {
       const canvas = document.createElement("canvas");
@@ -221,7 +222,7 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
     } catch {
       setMessage("Could not create the PDF. Try again, or download the PNG instead.");
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
@@ -294,12 +295,12 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
         </PreviewMeta>
         <PreviewActions>
           <Checks issues={issues} />
-          <DownloadButton onClick={onDownloadPng} disabled={!ready}>
-            {busy ? "Preparing…" : "Download PNG"}
+          <DownloadButton onClick={onDownloadPng} disabled={!ready} pending={busy === "png"}>
+            Download PNG
           </DownloadButton>
           {format.kind === "print" && (
-            <DownloadButton onClick={() => onDownloadPdf(format)} disabled={!ready}>
-              {busy ? "Preparing…" : `Download print PDF (+${BLEED_MM} mm bleed)`}
+            <DownloadButton onClick={() => onDownloadPdf(format)} disabled={!ready} pending={busy === "pdf"}>
+              {`Download print PDF (+${BLEED_MM} mm bleed)`}
             </DownloadButton>
           )}
           <ProjectMenu

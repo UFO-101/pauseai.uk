@@ -353,8 +353,8 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
           <p className={styles.summary} data-testid="pack-summary">
             {summary}
           </p>
-          <DownloadButton onClick={onDownloadPack} disabled={!ready || formats.length === 0}>
-            {busy ? "Preparing…" : `Download ${formats.length} ${formats.length === 1 ? "format" : "formats"} (.zip)`}
+          <DownloadButton onClick={onDownloadPack} disabled={!ready || formats.length === 0} pending={busy}>
+            {`Download ${formats.length} ${formats.length === 1 ? "format" : "formats"} (.zip)`}
           </DownloadButton>
           <ProjectMenu
             noun="pack"

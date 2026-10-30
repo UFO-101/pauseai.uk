@@ -83,13 +83,13 @@ describe("CollateralStudio", () => {
     await expect.element(page.getByText("Could not create the image. Try a smaller format.")).toBeVisible();
   });
 
-  it("says Preparing… while a download is made", async () => {
+  it("shows the pressed download pending while it's made", async () => {
     let finish: () => void = () => {};
     downloads.png.mockReturnValueOnce(new Promise<void>((r) => (finish = r)));
     await render(<CollateralStudio events={[]} />);
     await ready();
     await page.getByRole("button", { name: "Download PNG" }).click();
-    await expect.element(page.getByRole("button", { name: "Preparing…" })).toBeDisabled();
+    await expect.element(page.getByRole("button", { name: "Download PNG" })).toHaveAttribute("aria-busy", "true");
     finish();
     await expect.element(page.getByRole("button", { name: "Download PNG" })).toBeEnabled();
   });

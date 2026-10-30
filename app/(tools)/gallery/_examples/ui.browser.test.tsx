@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
-import { LightboxExample, SubmitButtonExample } from "./ui.client";
+import { LightboxExample, PendingButtonAnchorExample, SubmitButtonExample } from "./ui.client";
 
 describe("the ui kit's examples", () => {
   it("opens the lightbox, steps through its photos, logs each call, and closes it", async () => {
@@ -30,5 +30,10 @@ describe("the ui kit's examples", () => {
     await button.click();
     await expect.element(button).toBeDisabled();
     await expect.element(button, { timeout: 3000 }).toBeEnabled();
+  });
+
+  it("shows a link pending", async () => {
+    await render(<PendingButtonAnchorExample />);
+    await expect.element(page.getByRole("link", { name: "Somewhere else" })).toHaveAttribute("aria-busy", "true");
   });
 });

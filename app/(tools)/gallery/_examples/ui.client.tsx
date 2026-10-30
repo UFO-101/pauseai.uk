@@ -3,7 +3,7 @@
 // The ui kit's examples that need state or callbacks: client components with
 // no props, so the server-rendered gallery can place them.
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button, ButtonAnchor } from "@/components/ui/Button";
 import Lightbox from "@/components/ui/Lightbox";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Logged } from "../_components/wiring";
@@ -58,5 +58,14 @@ export function SubmitButtonExample() {
     >
       <SubmitButton variant="primary">Import</SubmitButton>
     </form>
+  );
+}
+
+/** A ButtonAnchor pending, on its way to another site: drawn here, as a pending one has a click handler a server page can't pass. */
+export function PendingButtonAnchorExample() {
+  return (
+    <ButtonAnchor variant="primary" href="https://example.org/" pending fit>
+      Somewhere else
+    </ButtonAnchor>
   );
 }

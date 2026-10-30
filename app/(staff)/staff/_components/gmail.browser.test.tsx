@@ -25,6 +25,21 @@ describe("GmailConnect, SentToday and GmailOutcome", () => {
       .toHaveAttribute("href", "/staff/api/gmail/connect?back=%2Fstaff%2Fme");
   });
 
+  it("is pending from its click until the page shows again, as after the browser's Back", async () => {
+    // Kept on this page, as Google's would replace the test's.
+    const stay = (event: MouseEvent) => event.preventDefault();
+    document.addEventListener("click", stay);
+    await render(<GmailConnect back="/staff/me" />);
+    const link = page.getByRole("link", { name: gmail.connect });
+    await expect.element(link).not.toHaveAttribute("aria-busy");
+    await link.click();
+    await expect.element(link).toHaveAttribute("aria-busy", "true");
+    await expect.element(link).toHaveAttribute("aria-disabled", "true");
+    window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true }));
+    await expect.element(link).not.toHaveAttribute("aria-busy");
+    document.removeEventListener("click", stay);
+  });
+
   it("says how many of today's sends are gone", async () => {
     await render(<SentToday sent={12} />);
     await expect.element(page.getByText(gmail.sentToday(12, "1,800"))).toBeVisible();
@@ -195,6 +210,17 @@ describe("AskForm", () => {
       null,
       ["supporters"],
     ]);
+  });
+
+  it("shows Save pending while it saves", async () => {
+    let finish = () => {};
+    const save = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)));
+    await render(<AskForm ask={exampleEditableAsk} back="/staff/asks" notice="" save={save} remove={vi.fn()} />);
+    const button = page.getByRole("button", { name: copy.save });
+    await button.click();
+    await expect.element(button).toHaveAttribute("aria-busy", "true");
+    finish();
+    await expect.element(button).not.toHaveAttribute("aria-busy");
   });
 
   it("one staff added: its slug, which doesn't change, and Delete, pressed twice", async () => {

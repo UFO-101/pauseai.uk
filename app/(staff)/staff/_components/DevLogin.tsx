@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/Button";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { DevLoginChoice } from "@/lib/server/dev-login";
@@ -28,9 +28,9 @@ export default function DevLogin({ accounts, next }: { accounts: DevLoginChoice[
             <form method="post" action={DEV_LOGIN_PATH}>
               <input type="hidden" name="email" value={email} />
               {next && <input type="hidden" name={NEXT_PARAM} value={next} />}
-              <Button variant="ghost" size="small" type="submit">
+              <SubmitButton variant="ghost" size="small">
                 {email}
-              </Button>
+              </SubmitButton>
             </form>
             <Muted>{description}</Muted>
           </li>

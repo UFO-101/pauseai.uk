@@ -1,6 +1,13 @@
 // The site's ui kit (components/ui/).
 import Link from "next/link";
-import { Button, ButtonAnchor, ButtonLink, type ButtonSize, type ButtonVariant } from "@/components/ui/Button";
+import {
+  Button,
+  ButtonAnchor,
+  ButtonInside,
+  ButtonLink,
+  type ButtonSize,
+  type ButtonVariant,
+} from "@/components/ui/Button";
 import ButtonRow from "@/components/ui/ButtonRow";
 import Callout from "@/components/ui/Callout";
 import Closing from "@/components/ui/Closing";
@@ -14,7 +21,7 @@ import ProsePage, { ProseMeta } from "@/components/ui/ProsePage";
 import Section, { Lede, SectionHeader } from "@/components/ui/Section";
 import SmallPrint from "@/components/ui/SmallPrint";
 import type { Group } from "../_components/types";
-import { LightboxExample, SubmitButtonExample } from "./ui.client";
+import { LightboxExample, PendingButtonAnchorExample, SubmitButtonExample } from "./ui.client";
 
 // Every value of a look's union, so a new one is a type error until it's here.
 const VARIANTS: Record<ButtonVariant, string> = {
@@ -99,6 +106,30 @@ export const ui: Group = {
               <ButtonAnchor variant="primary" href="https://example.org/" fit>
                 Somewhere else
               </ButtonAnchor>
+            </div>
+          ),
+        },
+        {
+          label: "Pending, on its way to another site",
+          render: () => (
+            <div className="container">
+              <PendingButtonAnchorExample />
+            </div>
+          ),
+        },
+      ],
+    },
+    {
+      name: "ButtonInside",
+      file: "components/ui/Button.tsx",
+      variants: [
+        {
+          label: "Pending, in a button with a look of its own, which places the spinner and greys itself",
+          render: () => (
+            <div className="container">
+              <button type="button" aria-busy="true" disabled style={{ position: "relative", padding: "12px 20px" }}>
+                <ButtonInside pending>A button of its own</ButtonInside>
+              </button>
             </div>
           ),
         },

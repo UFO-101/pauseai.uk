@@ -7,6 +7,7 @@ import { Button, ButtonAnchor } from "@/components/ui/Button";
 import { Select, TextInput } from "@/components/ui/Controls";
 import { Field, Hint, Label } from "@/components/ui/Field";
 import { Muted } from "@/components/ui/Text";
+import { useLeaving } from "@/components/ui/useLeaving";
 import { staffCopy } from "@/lib/content/staff-interface";
 import {
   checkMailingDoc,
@@ -185,6 +186,11 @@ export default function MailingWriter({
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const heading = useRef<HTMLHeadingElement>(null);
   const [titleGone, setTitleGone] = useState(false);
+  // Change who, from its click while the draft's saved until the list comes.
+  const [choosing, choose] = useLeaving();
+  // The link to add an ask, likewise, until the ask's page comes.
+  const [asking, goToAsk] = useLeaving();
+  const [scheduling, setScheduling] = useState(false);
   useEffect(() => {
     // Gone once half of it has scrolled off.
     const watch = new IntersectionObserver(([entry]) => setTitleGone(entry.intersectionRatio < 0.5), {
@@ -377,10 +383,12 @@ export default function MailingWriter({
               size="small"
               fit
               href={whoPath(savedId)}
+              pending={choosing}
               onClick={async (event) => {
                 // What's typed is saved first, so going to the list loses none of it; a new
                 // mailing worth keeping becomes a draft, which the list then chooses for.
                 event.preventDefault();
+                choose();
                 await saveNow();
                 leavePage(whoPath(id.current));
               }}
@@ -435,8 +443,10 @@ export default function MailingWriter({
               {copy.newAsk.before}
               <a
                 href={`/staff/asks/new?${new URLSearchParams({ back: writerPath })}`}
+                data-pending={asking || undefined}
                 onClick={async (event) => {
                   event.preventDefault();
+                  goToAsk();
                   leavePage(`/staff/asks/new?${new URLSearchParams({ back: await saveNow() })}`);
                 }}
               >
@@ -463,7 +473,7 @@ export default function MailingWriter({
             <MailingFiles
               files={attachments}
               base={`/staff/mailings/${savedId}/files`}
-              onAdd={(files) => void attach(files)}
+              onAdd={attach}
               onRemove={async (file) => void attached(await actions.detach(id.current!, version.current, file))}
               problem={fileProblem}
             />
@@ -554,14 +564,19 @@ export default function MailingWriter({
               variant="primary"
               fit
               disabled={problems.length > 0 || !data.sends}
+              pending={scheduling}
               onClick={async () => {
+                setScheduling(true);
                 // What's still to be saved, such as a time just chosen, goes first, or it's scheduled without it.
                 await saveNow();
                 const result = await actions.schedule(savedId!, version.current);
-                // The page becomes the scheduled mailing's, which starts at its top, at once, as a new page would.
+                // The page becomes the scheduled mailing's, which starts at its top, at once, as a new page would;
+                // till then the button stays pending.
                 if (result.scheduled) {
                   window.scrollTo({ top: 0, behavior: "instant" });
                   router.refresh();
+                } else {
+                  setScheduling(false);
                 }
               }}
             >

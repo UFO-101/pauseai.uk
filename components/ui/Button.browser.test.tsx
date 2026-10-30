@@ -138,6 +138,41 @@ describe("Button pending", () => {
   });
 });
 
+describe("ButtonAnchor pending", () => {
+  it("looks disabled and busy, with a spinner, and a click does nothing", async () => {
+    const clicks: string[] = [];
+    await render(
+      <ButtonAnchor variant="primary" href="#here" pending onClick={() => clicks.push("clicked")}>
+        Connect
+      </ButtonAnchor>,
+    );
+    const link = page.getByRole("link", { name: "Connect" });
+    await expect.element(link).toHaveAttribute("aria-disabled", "true");
+    await expect.element(link).toHaveAttribute("aria-busy", "true");
+    expect(link.element().querySelector("[aria-hidden]")).not.toBeNull();
+    // Clicked as the browser would, as Playwright won't click what's aria-disabled.
+    (link.element() as HTMLElement).click();
+    expect(clicks).toEqual([]);
+    expect(location.hash).toBe("");
+  });
+
+  it("follows its link, without a spinner, otherwise", async () => {
+    const clicks: string[] = [];
+    await render(
+      <ButtonAnchor variant="primary" href="#here" onClick={() => clicks.push("clicked")}>
+        Connect
+      </ButtonAnchor>,
+    );
+    const link = page.getByRole("link", { name: "Connect" });
+    await expect.element(link).not.toHaveAttribute("aria-busy");
+    expect(link.element().querySelector("[aria-hidden]")).toBeNull();
+    await link.click();
+    expect(clicks).toEqual(["clicked"]);
+    expect(location.hash).toBe("#here");
+    location.hash = "";
+  });
+});
+
 describe("SubmitButton", () => {
   it("is pending while its form's action runs, then not", async () => {
     let finish = () => {};
@@ -153,5 +188,38 @@ describe("SubmitButton", () => {
     await expect.element(button).toHaveAttribute("aria-busy", "true");
     finish();
     await expect.element(button).toBeEnabled();
+  });
+
+  it("is pending once its form is sent to a URL, until the page shows again, as after the browser's Back", async () => {
+    // Sent into a frame, so this page stays to be looked at.
+    await render(
+      <>
+        <iframe name="elsewhere" title="elsewhere" />
+        <form method="get" action="about:blank" target="elsewhere">
+          <SubmitButton variant="primary">Log out</SubmitButton>
+        </form>
+        <form method="get" action="about:blank" target="elsewhere">
+          <button type="submit">Another form</button>
+        </form>
+      </>,
+    );
+    const button = page.getByRole("button", { name: "Log out" });
+    await page.getByRole("button", { name: "Another form" }).click();
+    await expect.element(button).not.toHaveAttribute("aria-busy");
+    await button.click();
+    await expect.element(button).toHaveAttribute("aria-busy", "true");
+    window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true }));
+    await expect.element(button).not.toHaveAttribute("aria-busy");
+  });
+
+  it("isn't pending when its form's sending is stopped", async () => {
+    await render(
+      <form method="get" action="about:blank" onSubmit={(event) => event.preventDefault()}>
+        <SubmitButton variant="primary">Add</SubmitButton>
+      </form>,
+    );
+    const button = page.getByRole("button", { name: "Add" });
+    await button.click();
+    await expect.element(button).not.toHaveAttribute("aria-busy");
   });
 });

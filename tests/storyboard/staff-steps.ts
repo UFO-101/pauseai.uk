@@ -59,6 +59,29 @@ export async function holdNextPage(page: Page, target: RegExp): Promise<{ releas
   };
 }
 
+/**
+ * Keeps the browser on the page when a button there next leaves it for a
+ * URL matching `target`: the page cancels that navigation itself (the
+ * Navigation API's navigate event), as if the next page were slow to come,
+ * so a flow can picture the button waiting. No page load is begun, which
+ * Playwright would wait on. `asked` gives the URL it was going to, to go on
+ * to with page.goto.
+ */
+export async function stayOnPage(page: Page, target: RegExp): Promise<{ asked: () => Promise<string> }> {
+  await page.evaluate((source) => {
+    const pattern = new RegExp(source);
+    const stay = (event: Event) => {
+      const going = event as Event & { destination: { url: string } };
+      if (!pattern.test(going.destination.url)) return;
+      event.preventDefault();
+      document.documentElement.dataset.stayedFrom = going.destination.url;
+      (window as unknown as { navigation: EventTarget }).navigation.removeEventListener("navigate", stay);
+    };
+    (window as unknown as { navigation: EventTarget }).navigation.addEventListener("navigate", stay);
+  }, target.source);
+  return { asked: () => page.evaluate(() => document.documentElement.dataset.stayedFrom!) };
+}
+
 /** Whether the line along the top of the page, while something loads, is showing (StaffPage). */
 export const loadingLine = (page: Page) =>
   page.evaluate(() => {

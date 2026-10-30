@@ -128,12 +128,12 @@ describe("QrGenerator", () => {
     expect(downloads.png.mock.lastCall![0].height).toBeGreaterThan(2048);
   });
 
-  it("says 'Preparing…' while the PNG is made, and explains a failure", async () => {
+  it("is pending while the PNG is made, and explains a failure", async () => {
     let finish: () => void = () => {};
     downloads.png.mockReturnValueOnce(new Promise<void>((r) => (finish = r)));
     await render(<QrGenerator />);
     await page.getByRole("button", { name: "Download PNG" }).click();
-    await expect.element(page.getByRole("button", { name: "Preparing…" })).toBeDisabled();
+    await expect.element(page.getByRole("button", { name: "Download PNG" })).toHaveAttribute("aria-busy", "true");
     finish();
     await expect.element(page.getByRole("button", { name: "Download PNG" })).toBeEnabled();
     downloads.png.mockRejectedValueOnce(new Error("nope"));

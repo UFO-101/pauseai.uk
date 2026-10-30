@@ -217,7 +217,6 @@ export const copy = {
     consent: "Keep me in the loop about future campaigns by email. (You can unsubscribe at any time.)",
     replyNotice: "A copy of the letter and responses will be sent to PauseAI UK.",
     send: "Send email",
-    sending: "Sending",
     networkError: "Network error - please try again.",
     // Opened with no letter in this browser: straight from a link, say.
     none: "You haven't written a letter yet.",
