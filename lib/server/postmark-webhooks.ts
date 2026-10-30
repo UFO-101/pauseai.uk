@@ -23,6 +23,8 @@ export function isPostmark(request: Request): boolean {
 /** Postmark's bounce and spam complaint webhooks' payloads, as far as we read them. */
 export type PostmarkProblem = {
   RecordType?: string;
+  /** The bounce's own ID. */
+  ID?: number;
   MessageID?: string;
   Type?: string;
   Description?: string;
@@ -34,14 +36,23 @@ export type PostmarkProblem = {
 };
 
 /**
+ * Whether a bounce is an automatic reply, such as an out-of-office, sent to
+ * the email's bounce address (Return-Path) rather than its From.
+ */
+function isAutoResponder(payload: PostmarkProblem): boolean {
+  return payload.RecordType === "Bounce" && payload.Type === "AutoResponder";
+}
+
+/**
  * A bounce or complaint in Postmark's words, as any provider's: hard when
- * Postmark suppressed the address, else soft. Undefined for anything else.
+ * Postmark suppressed the address, else soft. Undefined for anything else,
+ * an automatic reply included: the email was delivered.
  */
 export function deliveryProblem(payload: PostmarkProblem): DeliveryProblem | undefined {
   const kind =
     payload.RecordType === "SpamComplaint"
       ? "complaint"
-      : payload.RecordType === "Bounce"
+      : payload.RecordType === "Bounce" && !isAutoResponder(payload)
         ? payload.Inactive
           ? "hard"
           : "soft"
@@ -55,6 +66,25 @@ export function deliveryProblem(payload: PostmarkProblem): DeliveryProblem | und
     canReset: payload.CanActivate === true,
     details: { type: payload.Type },
   };
+}
+
+/**
+ * Adds an 'auto_reply' event to the letter an automatic reply that Postmark
+ * reported as a bounce answers, once per bounce. Returns whether it was one.
+ */
+export async function recordAutoResponder(payload: PostmarkProblem): Promise<boolean> {
+  if (!isAutoResponder(payload)) return false;
+  const details = { from: payload.Email ?? "", bounceId: payload.ID ?? null };
+  await query(
+    `INSERT INTO letter_events (letter_id, status, details)
+     SELECT s.letter_id, 'auto_reply', $2 FROM email_sends s
+     WHERE s.message_id = $1 AND s.letter_id IS NOT NULL
+       AND NOT EXISTS (SELECT 1 FROM letter_events e WHERE e.letter_id = s.letter_id AND e.status = 'auto_reply'
+                       AND e.details->>'bounceId' = $3)
+     LIMIT 1`,
+    [payload.MessageID ?? null, JSON.stringify(details), String(details.bounceId)],
+  );
+  return true;
 }
 
 type Address = { Email?: string; Name?: string };

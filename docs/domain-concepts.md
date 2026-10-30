@@ -128,8 +128,9 @@ adds what its kind has, joined as notable people are:
   entries", below), which holds their name, email, address, postcode and
   consent. Sent through the
   site, it goes from an address of its own on `letters.pauseai.uk`
-  (`reply_hash`), so a reply comes back to us, matched by that address, and
-  is forwarded to the sender and the policy team. Its text isn't kept: the
+  (`reply_hash`), with the sender on Cc and no Reply-To, so a reply comes
+  back to us, matched by that address, and is forwarded to the sender and
+  the policy team. Its text isn't kept: the
   only copy is the one Bcc'd to `POLICY_INBOX`. Each sender email can send
   one letter per campaign, except to a test MP. The letters sent through
   pauseai.info's old form were imported once from Airtable

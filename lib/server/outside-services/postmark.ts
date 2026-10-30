@@ -21,6 +21,7 @@ export type Attachment = { Name: string; Content: string; ContentType: string };
 export type Email = {
   From: string;
   To: string;
+  Cc?: string;
   Bcc?: string;
   ReplyTo?: string;
   Subject: string;

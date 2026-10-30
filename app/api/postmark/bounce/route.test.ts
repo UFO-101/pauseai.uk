@@ -45,6 +45,39 @@ describeWithDatabase("POST /api/postmark/bounce", () => {
     expect((await POST(webhookRequest("/api/postmark/bounce", "not json"))).status).toBe(200);
   });
 
+  it("records an automatic reply to our bounce address on the letter, once, without marking it bounced", async () => {
+    const mp = await addTestMp();
+    const id = await addTestLetter({ politicianId: mp, senderName: "Jane", senderEmail: "jane@example.com" });
+    await query(
+      "INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id) VALUES ('letter', $1, 'test-mp@example.org', 'sent', 'msg-1')",
+      [id],
+    );
+    const [{ status }] = await query<{ status: string }>("SELECT status FROM letters");
+    const autoReply = {
+      RecordType: "Bounce",
+      Type: "AutoResponder",
+      ID: 42,
+      MessageID: "msg-1",
+      Email: "test-mp@example.org",
+    };
+    for (let i = 0; i < 2; i++) {
+      const res = await POST(webhookRequest("/api/postmark/bounce", autoReply));
+      expect(await res.json()).toEqual({ recorded: true });
+    }
+    expect(await query("SELECT status FROM letters")).toEqual([{ status }]);
+    expect(await query("SELECT status, details FROM letter_events WHERE status = 'auto_reply'")).toEqual([
+      { status: "auto_reply", details: { from: "test-mp@example.org", bounceId: 42 } },
+    ]);
+    expect(await query("SELECT address FROM email_problems")).toEqual([]);
+  });
+
+  it("takes an automatic reply for no letter of ours, or missing its details, as recorded, and records nothing", async () => {
+    const res = await POST(webhookRequest("/api/postmark/bounce", { RecordType: "Bounce", Type: "AutoResponder" }));
+    expect(await res.json()).toEqual({ recorded: true });
+    expect(await query("SELECT 1 FROM letter_events")).toEqual([]);
+    expect(await query("SELECT 1 FROM email_problems")).toEqual([]);
+  });
+
   it("refuses requests without the right credentials", async () => {
     for (const auth of [null, `Basic ${Buffer.from("postmark:wrong").toString("base64")}`]) {
       const res = await POST(webhookRequest("/api/postmark/bounce", bounce, auth));

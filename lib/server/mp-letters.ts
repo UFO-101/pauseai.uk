@@ -106,21 +106,6 @@ export function letterAddress(mailbox: string): string {
   return `${mailbox}@${lettersDomain()}`;
 }
 
-/**
- * Who the MP's office replies to: the sender, our shared inbox, and the
- * letter's own address, which records the reply.
- */
-function replyTo(form: LetterForm, address: string): string {
-  const inbox = process.env.POLICY_INBOX;
-  return [
-    `"${headerName(form.name)}" <${form.email}>`,
-    inbox && `"PauseAI Policy Team" <${inbox}>`,
-    `"PauseAI Letters" <${address}>`,
-  ]
-    .filter(Boolean)
-    .join(", ");
-}
-
 /** The MP, by name: "Jane Smith MP" <jane.smith.mp@parliament.uk>. "MP" is added unless their name ends with it. */
 export function recipient(mp: { name: string }, email: string): string {
   const name = headerName(mp.name);
@@ -245,8 +230,12 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
       {
         From: `"${headerName(form.name)} via PauseAI" <${address}>`,
         To: recipient(mp, to),
+        // The sender has a copy, and a reply-all reaches them. There's no
+        // Reply-To: MPs' offices answer one address, so it's the From, the
+        // letter's own, whose replies are recorded and forwarded to the
+        // sender and the policy team.
+        Cc: `"${headerName(form.name)}" <${form.email}>`,
         Bcc: bcc(),
-        ReplyTo: replyTo(form, address),
         Subject: form.subject,
         TextBody: body,
         HtmlBody: html,

@@ -159,11 +159,12 @@ describeWithDatabase("submitLetter", () => {
     expect(letter.reply_hash).toMatch(/^jane\.smith\.\d{6}$/);
     const address = `${letter.reply_hash}@letters.pauseai.uk`;
     expect(sent).toHaveLength(1);
+    expect(sent[0].ReplyTo).toBeUndefined();
     expect(sent[0]).toMatchObject({
       From: `"Jane Smith via PauseAI" <${address}>`,
       To: '"Testy McTestface MP" <test-mp@example.org>',
       Bcc: "replies@pauseai.uk",
-      ReplyTo: `"Jane Smith" <jane@example.com>, "PauseAI Policy Team" <replies@pauseai.uk>, "PauseAI Letters" <${address}>`,
+      Cc: '"Jane Smith" <jane@example.com>',
       Subject: "Subject",
       TextBody: "Dear Mr McTestface,\n\nPlease do sign.\n\nThanks,\n\nJane Smith\n\n1 High Street\nTestville\nZZ9 9ZZ",
       HtmlBody:
@@ -209,15 +210,11 @@ describeWithDatabase("submitLetter", () => {
     ).toEqual(["sending", "sent"]);
   });
 
-  it("leaves the shared inbox out of Reply-To and Bcc when there isn't one", async () => {
+  it("sends no Bcc when there's no shared inbox", async () => {
     vi.stubEnv("POLICY_INBOX", "");
     const sent = postmark();
     await submitLetter(FORM);
-    const [{ reply_hash }] = await query<{ reply_hash: string }>("SELECT reply_hash FROM letters_from_supporters");
     expect(sent[0].Bcc).toBeUndefined();
-    expect(sent[0].ReplyTo).toBe(
-      `"Jane Smith" <jane@example.com>, "PauseAI Letters" <${reply_hash}@letters.pauseai.uk>`,
-    );
   });
 
   it("sends a campaign without attachments without any", async () => {

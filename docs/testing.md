@@ -99,7 +99,7 @@ any other outside service.
   requests, which would bypass the fixtures in Playwright builds.
 - **Vitest checks what we sent.** The Postmark fixture just returns a
   `MessageID`. Tests read the request MSW received and check From,
-  Reply-To, the text and the attachments (`lib/server/mp-letters.test.ts`).
+  Cc, the text and the attachments (`lib/server/mp-letters.test.ts`).
 - **Playwright reads an outbox.** With `DATA_FIXTURES=1`, `sendEmail` also
   writes each outgoing email to a mail file (`.eml`) in `OUTBOX_DIR`
   (`tests/fixtures/outbox.ts`). The flow test checks the letter in the
