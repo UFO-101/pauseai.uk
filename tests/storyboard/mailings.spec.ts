@@ -305,8 +305,14 @@ test("Send a mailing from a connected Gmail: schedule it, and the hourly job sen
     .getByRole("row", { name: /Morag Example/ })
     .getByRole("link", { name: copy.theLetter })
     .click();
-  await expect(page.getByRole("link", { name: staffCopy.letterThread.openInGmail })).toBeVisible();
-  await frame(page, "the letter as it went, with Open in Gmail for you who sent it, and no replies yet");
+  await frame(page, "the letter as it went, with Copy Gmail search, and no replies yet");
+
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  // Copy Gmail search copies the search for it by its Message-ID, and says to paste it where your mail is.
+  await page.getByRole("button", { name: staffCopy.findInGmail.copy }).click();
+  await expect(page.getByRole("status")).toContainText(staffCopy.findInGmail.where(staffEmail()));
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/^rfc822msgid:\S+$/);
+  await frame(page, "copied: paste it in Gmail search where you can see your mail");
 
   // Morag answers, and the hourly read of your Gmail keeps her reply (tests/fixtures/letter-replies/).
   const letterId = page.url().split("/").at(-1);

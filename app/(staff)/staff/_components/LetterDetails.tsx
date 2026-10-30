@@ -1,19 +1,13 @@
 import StaffLink from "./ui/StaffLink";
 import { Fragment, type ReactNode } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { gmailThreadUrl } from "@/lib/gmail-connect";
-import { gmailSearchUrl, googleGroupUrl } from "@/lib/letter-links";
-import type {
-  LetterDetails as Details,
-  LetterEvent,
-  PauseaiLetterDetails,
-  SupporterLetterDetails,
-} from "@/lib/server/letters";
+import type { LetterDetails as Details, LetterEvent } from "@/lib/server/letters";
 import { staffTime } from "@/lib/staff-time";
 import Tag from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
 import Breadcrumb from "./Breadcrumb";
 import CampaignName from "./CampaignName";
+import FindInGmail from "./FindInGmail";
 import { LoggedJson } from "./Logged";
 import Grid, { Card } from "./ui/Grid";
 import styles from "./Details.module.css";
@@ -36,41 +30,6 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
       <dt>{label}</dt>
       <dd>{children}</dd>
     </>
-  );
-}
-
-/** Where to read a supporter's letter as it was sent: its copy in the policy@ group. */
-function GroupLink({ letter }: { letter: SupporterLetterDetails }) {
-  return (
-    letter.postmarkId && (
-      <p className={styles.source}>
-        <a href={googleGroupUrl(letter.postmarkId)} target="_blank" rel="noreferrer">
-          {copy.detail.googleGroup}
-        </a>
-      </p>
-    )
-  );
-}
-
-/**
- * Where to read one of PauseAI's letters in Gmail: in its thread, for
- * `me` if it went from their Gmail; or else by a search for it, by its
- * MP's address and when it went, or was made. Nothing with no address.
- */
-export function GmailLink({ letter, me }: { letter: PauseaiLetterDetails; me: string }) {
-  if (letter.gmailThreadId && letter.sentFrom === me) {
-    return (
-      <a href={gmailThreadUrl(me, letter.gmailThreadId)} target="_blank" rel="noreferrer">
-        {staffCopy.letterThread.openInGmail}
-      </a>
-    );
-  }
-  return (
-    letter.mpEmail && (
-      <a href={gmailSearchUrl(letter.mpEmail, letter.sentAt ?? letter.createdAt)} target="_blank" rel="noreferrer">
-        {copy.detail.gmail}
-      </a>
-    )
   );
 }
 
@@ -180,9 +139,10 @@ export function LetterHistory({ events }: { events: LetterEvent[] }) {
 /**
  * A letter's page, a supporter's or PauseAI's: its title, then a card of
  * who it's from and to, what it was and how it stands, with, for a
- * supporter's, its copy in the policy@ group; beside it, what happened to
- * it; then `children`, for PauseAI's its thread, with GmailLink. A supporter's goes back to the letters list,
- * PauseAI's to its mailing.
+ * supporter's, Find it in Gmail, for its copy in the policy inbox; beside
+ * it, what happened to it; then `children`, for PauseAI's its thread, with
+ * Find it in Gmail. A supporter's goes back to the letters list, PauseAI's
+ * to its mailing.
  */
 export default function LetterDetails({ letter, children }: { letter: Details; children?: ReactNode }) {
   const back =
@@ -207,7 +167,11 @@ export default function LetterDetails({ letter, children }: { letter: Details; c
               {letter.kind === "supporter" && letter.repliedAt && staffTime(letter.repliedAt)}
             </Fact>
           </dl>
-          {letter.kind === "supporter" && <GroupLink letter={letter} />}
+          {letter.kind === "supporter" && letter.gmail && (
+            <div className={styles.source}>
+              <FindInGmail find={letter.gmail} />
+            </div>
+          )}
         </Card>
         <Card span={3} look="log" title={copy.detail.historyTitle} id="letter-history">
           <LetterHistory events={letter.events} />

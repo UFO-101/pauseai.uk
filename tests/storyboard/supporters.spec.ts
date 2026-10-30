@@ -268,16 +268,17 @@ test("A letter writer's page, from the letters list", async ({ page, request, fl
   await expect(page.getByText("ZZ9 9ZZ", { exact: false })).toBeVisible();
   await frame(page, "the letter writer's page: the letter, and the postcode they gave");
 
-  // The letter's status leads to its page, its copy in the policy@ group, and back to her.
+  // The letter's status leads to its page, its copy in the policy inbox, and back to her.
   await page.getByRole("link", { name: staffCopy.letters.status.sent }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     staffCopy.letters.oneTitle("Jane Smith", "Testy McTestface MP"),
   );
-  await expect(page.getByRole("link", { name: staffCopy.letters.detail.googleGroup })).toHaveAttribute(
-    "href",
-    /^https:\/\/groups\.google\.com\/a\/pauseai\.uk\/d\/msgid\/policy\/[\w-]+@mtasv\.net$/,
-  );
-  await frame(page, "her letter's page, with its copy in the policy@ group");
+  await frame(page, "her letter's page, with Copy Gmail search for its copy in the policy inbox");
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.getByRole("button", { name: staffCopy.findInGmail.copy }).click();
+  await expect(page.getByRole("status")).toContainText(staffCopy.findInGmail.where("replies@example.org"));
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/^rfc822msgid:[\w-]+@mtasv\.net$/);
+  await frame(page, "copied: paste it in Gmail search where you can see the policy inbox's mail");
   await page.getByRole("link", { name: "Jane Smith" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Jane Smith");
 });

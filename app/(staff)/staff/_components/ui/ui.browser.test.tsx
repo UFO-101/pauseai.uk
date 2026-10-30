@@ -15,6 +15,7 @@ import Counts from "./Counts";
 import DownloadMenu from "./DownloadMenu";
 import Grid, { Card, Column } from "./Grid";
 import Progress from "./Progress";
+import CopyButton from "./CopyButton";
 
 import { renderToString } from "react-dom/server";
 import { NAV_FOLD_KEY } from "@/lib/staff-nav";
@@ -722,6 +723,44 @@ describe("DownloadMenu", () => {
     await rerender(<DownloadMenu download={(format) => `/x?format=${format}`} formats={["vcf"]} />);
     await expect.element(page.getByRole("link", { name: staffCopy.lists.formats.vcf })).toBeInTheDocument();
     await expect.element(page.getByRole("link", { name: staffCopy.lists.formats.csv })).not.toBeInTheDocument();
+  });
+});
+
+describe("CopyButton", () => {
+  // The note's live region, there while empty, hidden then.
+  const status = () => document.querySelector<HTMLElement>('[role="status"]')!;
+
+  it("copies its text and says so a few seconds; its note stays till closed, and opens again at the next copy", async () => {
+    const write = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+    await render(<CopyButton text="rfc822msgid:a@b" label="Copy" copied="Copied!" close="Close" note="Paste it" />);
+    expect(getComputedStyle(status()).display).toBe("none");
+    await page.getByRole("button", { name: "Copy" }).click();
+    expect(write).toHaveBeenCalledWith("rfc822msgid:a@b");
+    await expect.element(page.getByRole("button", { name: "Copied!" })).toBeVisible();
+    await expect.poll(() => status().textContent).toContain("Paste it");
+    expect(getComputedStyle(status()).display).toBe("block");
+    // The button goes back to its label; the note stays.
+    await expect.element(page.getByRole("button", { name: "Copy" }), { timeout: 6000 }).toBeVisible();
+    expect(status().textContent).toContain("Paste it");
+    await page.getByRole("button", { name: "Close" }).click();
+    expect(status().textContent).toBe("");
+    await page.getByRole("button", { name: "Copy" }).click();
+    await expect.poll(() => status().textContent).toContain("Paste it");
+    write.mockRestore();
+  });
+
+  it("with no note, nothing under it; and as it was when the clipboard refuses", async () => {
+    const write = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+    const { rerender } = await render(<CopyButton text="x" label="Copy" copied="Copied!" close="Close" />);
+    await page.getByRole("button", { name: "Copy" }).click();
+    await expect.element(page.getByRole("button", { name: "Copied!" })).toBeVisible();
+    expect(getComputedStyle(status()).display).toBe("none");
+    write.mockRejectedValue(new Error("denied"));
+    await rerender(<CopyButton key="again" text="x" label="Copy" copied="Copied!" close="Close" />);
+    await page.getByRole("button", { name: "Copy" }).click();
+    expect(write).toHaveBeenCalledTimes(2);
+    expect(page.getByRole("button", { name: "Copied!" }).all()).toHaveLength(0);
+    write.mockRestore();
   });
 });
 

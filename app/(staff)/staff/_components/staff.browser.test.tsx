@@ -19,9 +19,9 @@ import { exampleBlock, exampleComplaint, exampleGmailBlock, exampleProblems } fr
 import EmailProblemsTable from "./EmailProblemsTable";
 import { exampleChanges } from "./ChangesTable.examples";
 import LettersTable, { LettersList, letterColumns, letterDownloadColumns } from "./LettersTable";
-import LetterDetails, { GmailLink } from "./LetterDetails";
+import LetterDetails from "./LetterDetails";
+import FindInGmail from "./FindInGmail";
 import { examplePauseaiLetterDetails, exampleSupporterLetterDetails } from "./LettersTable.examples";
-import { gmailSearchUrl, googleGroupUrl } from "@/lib/letter-links";
 import { exampleLetter } from "./LettersTable.examples";
 import JobActions from "./JobActions";
 import LoginCard from "./LoginCard";
@@ -2780,7 +2780,7 @@ describe("LettersTable", () => {
 describe("LetterDetails", () => {
   const copy = staffCopy.letters;
 
-  it("shows a supporter's letter: from and to whom, its facts, its copy in the policy@ group, and its history", async () => {
+  it("shows a supporter's letter: from and to whom, its facts, Find it in Gmail, and its history", async () => {
     const letter = exampleSupporterLetterDetails;
     await render(<LetterDetails letter={letter} />);
     await expect
@@ -2794,9 +2794,8 @@ describe("LetterDetails", () => {
       .element(page.getByRole("link", { name: letter.mpName }))
       .toHaveAttribute("href", "/staff/politicians/3");
     await expect.element(page.getByText(letter.subject)).toBeVisible();
-    await expect
-      .element(page.getByRole("link", { name: copy.detail.googleGroup }))
-      .toHaveAttribute("href", googleGroupUrl(letter.postmarkId!));
+    // Its copy in the policy inbox, in the corner.
+    await expect.element(page.getByRole("button", { name: staffCopy.findInGmail.copy })).toBeVisible();
     // Each change in words, and a {} for those that recorded anything, opening it as recorded.
     const history = page.getByRole("list", { name: copy.detail.historyTitle });
     // Newest first.
@@ -2811,13 +2810,13 @@ describe("LetterDetails", () => {
     expect(document.body.textContent).toContain(copy.consent.yes);
   });
 
-  it("names one not yet a supporter's, and has no Google link for one Postmark didn't send", async () => {
+  it("names one not yet a supporter's, and has no Find it in Gmail for one with nothing to find", async () => {
     await render(
       <LetterDetails
         letter={{
           ...exampleSupporterLetterDetails,
           supporterId: null,
-          postmarkId: null,
+          gmail: null,
           imported: true,
           contactConsent: false,
           status: "odd",
@@ -2851,7 +2850,7 @@ describe("LetterDetails", () => {
       .element(history.getByRole("link", { name: "jo@example.org" }))
       .toHaveAttribute("href", "/staff/politicians/blocked-emails?q=jo%40example.org");
     expect(page.getByRole("link", { name: exampleSupporterLetterDetails.senderName }).all()).toHaveLength(0);
-    expect(page.getByRole("link", { name: copy.detail.googleGroup }).all()).toHaveLength(0);
+    expect(page.getByRole("button", { name: staffCopy.findInGmail.copy }).all()).toHaveLength(0);
     await expect.element(page.getByText(copy.imported)).toBeVisible();
     await expect.element(page.getByText("odd", { exact: true })).toBeVisible();
     await expect.element(page.getByText("13 Oct 2026, 09:00")).toBeVisible();
@@ -2879,40 +2878,41 @@ describe("LetterDetails", () => {
       .toHaveAttribute("href", "/staff/politicians/1");
     await expect.element(page.getByText(copy.detail.personalised)).toBeVisible();
     await expect.element(page.getByText(copy.detail.noHistory)).toBeVisible();
-    // Its Gmail link goes with its thread, not in the card.
-    expect(page.getByRole("link", { name: copy.detail.gmail }).all()).toHaveLength(0);
+    // Find it in Gmail goes with its thread, not in the card.
+    expect(page.getByRole("button", { name: staffCopy.findInGmail.copy }).all()).toHaveLength(0);
     await rerender(<LetterDetails letter={{ ...letter, personalised: false }} />);
     expect(page.getByText(copy.detail.personalised).all()).toHaveLength(0);
   });
 });
 
-describe("GmailLink", () => {
-  const copy = staffCopy.letters;
-  const letter = examplePauseaiLetterDetails;
+describe("FindInGmail", () => {
+  const copy = staffCopy.findInGmail;
+  const find = { mailbox: "policy@pauseai.uk", search: "rfc822msgid:abc@pauseai.uk" };
 
-  it("searches Gmail for a letter by its MP's address and when it went, or was made; with no address, nothing", async () => {
-    const { rerender } = await render(<GmailLink letter={letter} me="jo@pauseai.uk" />);
-    await expect
-      .element(page.getByRole("link", { name: copy.detail.gmail }))
-      .toHaveAttribute("href", gmailSearchUrl(letter.mpEmail!, letter.sentAt!));
-    await rerender(
-      <GmailLink letter={{ ...letter, sentAt: null, createdAt: "2026-09-01T08:00:00Z" }} me="jo@pauseai.uk" />,
+  it("copies the search, not shown, then says where to paste it", async () => {
+    const write = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+    await render(<FindInGmail find={find} />);
+    expect(document.body.textContent).not.toContain(find.search);
+    await page.getByRole("button", { name: copy.copy }).click();
+    expect(write).toHaveBeenCalledWith(find.search);
+    await expect.element(page.getByRole("button", { name: copy.copied })).toBeVisible();
+    // Bold, what to do, "paste" stressed; under it, lighter, where.
+    await expect.poll(() => page.getByRole("status").element().textContent).toContain(copy.where("policy@pauseai.uk"));
+    expect(page.getByRole("status").element().querySelector("strong")!.textContent).toBe(
+      `${copy.next.before}${copy.next.stressed}${copy.next.after}`,
     );
-    await expect
-      .element(page.getByRole("link", { name: copy.detail.gmail }))
-      .toHaveAttribute("href", gmailSearchUrl(letter.mpEmail!, "2026-09-01T08:00:00Z"));
-    await rerender(<GmailLink letter={{ ...letter, mpEmail: null }} me="jo@pauseai.uk" />);
-    expect(page.getByRole("link").all()).toHaveLength(0);
+    expect(page.getByRole("status").element().querySelector("em")!.textContent).toBe(copy.next.stressed);
+    write.mockRestore();
   });
 
-  it("opens the thread in Gmail for the one it went from, and searches for anyone else", async () => {
-    const fromJo = { ...letter, sentFrom: "jo@pauseai.uk", gmailThreadId: "thread-1" };
-    const { rerender } = await render(<GmailLink letter={fromJo} me="jo@pauseai.uk" />);
-    await expect
-      .element(page.getByRole("link", { name: staffCopy.letterThread.openInGmail }))
-      .toHaveAttribute("href", "https://mail.google.com/mail/u/jo%40pauseai.uk/#all/thread-1");
-    await rerender(<GmailLink letter={fromJo} me="al@pauseai.uk" />);
-    await expect.element(page.getByRole("link", { name: copy.detail.gmail })).toBeVisible();
+  it("says to paste it where the mail it was sent from is, when that isn't known; and is nothing with nothing to find", async () => {
+    const write = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+    const { rerender } = await render(<FindInGmail find={{ ...find, mailbox: null }} />);
+    await page.getByRole("button", { name: copy.copy }).click();
+    await expect.poll(() => page.getByRole("status").element().textContent).toContain(copy.whereUnknown);
+    write.mockRestore();
+    await rerender(<FindInGmail find={null} />);
+    expect(page.getByRole("button").all()).toHaveLength(0);
   });
 });
 

@@ -69,12 +69,23 @@ export const staffCopy = {
     mpEmails: "Blocked emails",
     logout: "Log out",
   },
+  // A letter in Gmail, by its page's heading: a button that copies a
+  // search for it, then says to paste it, and where.
+  findInGmail: {
+    copy: "Copy Gmail search",
+    copied: "Copied!",
+    // The × that closes the note, as a screen reader names it.
+    close: "Close",
+    // Then, in the note under it, what to do, in bold, "paste" stressed; under that, where.
+    next: { before: "Next, ", stressed: "paste", after: " into Gmail search." },
+    where: (mailbox: string) => `You must be in an inbox that can see ${mailbox}'s mail.`,
+    whereUnknown: "You must be in an inbox that can see mail from the address it was sent from.",
+  },
   // One of PauseAI's letters, and the replies in its thread.
   letterThread: {
     title: "Letter and replies",
     // An imported letter, whose text Airtable didn't keep.
     noText: "This letter was sent before the site sent mailings, so its text isn't here.",
-    openInGmail: "Open in Gmail",
     noReplies: "No replies yet.",
     unreadable: "This message couldn't be read.",
     // Over each message, as an email shows them.
@@ -1462,10 +1473,6 @@ export const staffCopy = {
         account: "Gmail",
         status: "Code",
       } as Record<string, string>,
-      // A supporter's letter, Bcc'd to policy@: its copy there.
-      googleGroup: "Find it in Google Groups",
-      // PauseAI's letter, sent from Gmail: a search for it.
-      gmail: "Find it in Gmail",
     },
     none: "No letters.",
     status: {

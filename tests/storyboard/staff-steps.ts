@@ -3,6 +3,7 @@ import { longDay } from "@/lib/calendar-days";
 import { DATE_PICKER_WORDS } from "@/lib/content/date-picker";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { TEST_MPS } from "@/lib/test-mps";
+import { runSql } from "@/scripts/fresh-database.mjs";
 import { ROUTES } from "../routes";
 import {
   addStaffAccount,
@@ -117,7 +118,7 @@ export async function postBounce(request: APIRequestContext, messageId?: string)
   expect(await bounce.json()).toEqual({ recorded: true });
 }
 
-/** Writes to `mp` as `sender`, signed `name`, then, logged in, reads the letter's Postmark MessageID from its link to the policy@ group. */
+/** Writes to `mp` as `sender`, signed `name`, then, logged in, sees it sent, and gives its Postmark MessageID. */
 export async function sentLetterId(
   page: Page,
   database: string,
@@ -134,10 +135,10 @@ export async function sentLetterId(
   await page.goto(`${BASE}/staff/letters`);
   const row = page.getByRole("row").filter({ hasText: sender });
   await expect(row).toContainText(staffCopy.letters.status.sent);
-  await row.getByRole("link", { name: staffCopy.letters.status.sent, exact: true }).click();
-  const group = page.getByRole("link", { name: staffCopy.letters.detail.googleGroup });
-  const id = (await group.getAttribute("href"))!.match(/\/msgid\/policy\/([\w-]+)@mtasv\.net$/)![1];
-  await page.goto(`${BASE}/staff/letters`);
+  const [id] = runSql(
+    database,
+    "SELECT message_id FROM email_sends WHERE purpose = 'letter' AND outcome = 'sent' ORDER BY id DESC LIMIT 1",
+  );
   return id;
 }
 

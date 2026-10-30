@@ -1,0 +1,84 @@
+/* The button and its note, each in its parent's own layout: in a row
+   that wraps, such as a heading's with the button at its right, the note
+   takes a row of its own under them, the whole width. */
+.copy {
+  display: contents;
+}
+
+/* Copied, with its tick, popping in where the label was. */
+.done {
+  display: inline-flex;
+  gap: var(--space-1);
+  align-items: center;
+  animation: pop 0.2s ease-out;
+}
+
+/* The live region the note goes in, there from the start for screen
+   readers, taking no room while it's empty; the whole width, on a row of
+   its own. */
+.status {
+  display: block;
+  flex-basis: 100%;
+  width: 100%;
+}
+
+.status:empty {
+  display: none;
+}
+
+/* What to do with what it copied, a strip under the button: opening
+   a moment after Copied! pops in, so the eye goes there first and then
+   down to it, lit in the accent colour, fading to plain; room at its
+   right for the × at its top right. */
+.note {
+  position: relative;
+  display: block;
+  padding: var(--space-2) calc(var(--space-3) + 22px) var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  font-size: var(--text-sm);
+  text-align: left;
+  animation:
+    open 0.3s 0.2s ease-out backwards,
+    lit 8s 0.4s ease-out backwards;
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+/* Its ×, in its top right corner. */
+.close {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+}
+
+/* The note opens down from the button. */
+@keyframes open {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-1 * var(--space-1)));
+  }
+}
+
+/* And starts in the accent colour, fading to its own. */
+@keyframes lit {
+  from {
+    background: var(--accent-light);
+  }
+}
+
+/* With motion turned off, nothing moves; the note still fades from lit. */
+@media (prefers-reduced-motion: reduce) {
+  .done {
+    animation: none;
+  }
+
+  .note {
+    animation: lit 8s 0.4s ease-out backwards;
+  }
+}
