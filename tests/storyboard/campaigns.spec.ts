@@ -449,6 +449,8 @@ test("Each campaign's page; /campaigns opens the first; an unknown one is a 404"
     await page.goto(`${BASE}/campaigns/${campaign.slug}`);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.getByLabel(copy.lookup.postcodeLabel)).toBeVisible();
+    // A letter's signatories load after the page: the frame is of them, not of their loading.
+    await expect(page.getByText("Loading signatories…")).toHaveCount(0);
     await frame(page, `/campaigns/${campaign.slug}`);
   }
   await page.goto(`${BASE}/campaigns`);
