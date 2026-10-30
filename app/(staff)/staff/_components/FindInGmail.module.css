@@ -3,10 +3,15 @@
   gap: var(--space-1);
 }
 
-/* Its box: a line each for the mailbox, the link and the search, and the button to copy it. */
+/* Its box: a line each for the mailbox, the link and the search, and the
+   button to copy it. As wide as it can be, so it flips to fit beside a
+   button at the right rather than squeezing, and reading from the left
+   wherever the button sits. */
 .box {
   display: grid;
   gap: var(--space-2);
+  width: min(20rem, calc(100vw - 4 * var(--space-4)));
+  text-align: left;
 }
 
 .box p {
