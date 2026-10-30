@@ -27,17 +27,20 @@ export default function Band({
   tag,
   lead,
   aside,
+  className,
   children,
 }: {
   title: ReactNode;
   tag?: ReactNode;
   lead?: ReactNode;
   aside?: ReactNode;
+  /** For its place on the page: the space under it. */
+  className?: string;
   /** The facts, each a BandFact. */
   children: ReactNode;
 }) {
   return (
-    <div className={styles.band}>
+    <div className={className ? `${styles.band} ${className}` : styles.band}>
       {lead}
       <div className={styles.main}>
         <div className={styles.heading}>

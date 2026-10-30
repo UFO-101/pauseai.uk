@@ -189,6 +189,7 @@ function SupporterBand({ supporter, events, letters }: { supporter: Details; eve
   const first = identities[0];
   return (
     <Band
+      className={styles.band}
       title={summary.name ?? copy.noName}
       lead={place && <PlaceMap latitude={place.latitude} longitude={place.longitude} />}
       aside={

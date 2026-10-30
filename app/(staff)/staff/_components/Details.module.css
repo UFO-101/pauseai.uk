@@ -427,6 +427,11 @@
   }
 }
 
+/* A supporter's band, a step above the card and tables under it. */
+.band {
+  margin-bottom: var(--space-6);
+}
+
 /* A supporter's place on a map of the UK: the coast as a thin line, the
    place as a dot in the accent colour, as tall as a few lines of text. */
 .map {

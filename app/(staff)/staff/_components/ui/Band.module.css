@@ -1,12 +1,11 @@
 /* The band over a record's page: what leads it at its left, then the
    title, and under it the facts, with what's aside at their right, all
-   wrapping on a narrow screen. */
+   wrapping on a narrow screen. The space under it is the page's. */
 .band {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-5) var(--space-6);
   align-items: center;
-  margin-bottom: var(--space-6);
   padding: var(--space-4) var(--space-5);
   border-radius: var(--radius-xl);
   background: var(--surface-2);
