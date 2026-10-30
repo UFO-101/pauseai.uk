@@ -1391,14 +1391,17 @@ export const staff: Group = {
       variants: [
         {
           label: "Choosing who a new mailing is for: the bar at the foot writes to these",
+          // The bar is fixed to the window's foot; a transform makes this example its window, so it sits at the example's foot.
           render: () => (
-            <StaffPage as="div">
-              <PoliticiansListExample
-                list={examplePoliticiansPage}
-                search={{ ...EMPTY_POLITICIAN_FILTERS, house: "commons", mailing: NEW_MAILING }}
-                asks={exampleAsks}
-              />
-            </StaffPage>
+            <div style={{ transform: "translateZ(0)" }}>
+              <StaffPage as="div">
+                <PoliticiansListExample
+                  list={examplePoliticiansPage}
+                  search={{ ...EMPTY_POLITICIAN_FILTERS, house: "commons", mailing: NEW_MAILING }}
+                  asks={exampleAsks}
+                />
+              </StaffPage>
+            </div>
           ),
         },
         {

@@ -839,7 +839,12 @@ describe("ChoosingHead", () => {
     );
     await expect.element(page.getByRole("heading", { level: 1, name: "Politicians" })).toBeVisible();
     await expect.element(page.getByText(copy.choosingNew)).toBeVisible();
-    await expect.element(page.getByText(copy.choosingHow)).toBeVisible();
+    await page.viewport(1280, 800);
+    await expect.element(page.getByText(copy.choosingHowNew)).toBeVisible();
+    // Not on a phone, where the title says enough.
+    await page.viewport(390, 800);
+    await expect.element(page.getByText(copy.choosingHowNew)).not.toBeVisible();
+    await page.viewport(1280, 800);
     await expect.element(page.getByRole("link", { name: copy.cancelNew })).toHaveAttribute("href", "/staff/mailings");
   });
 
@@ -850,6 +855,7 @@ describe("ChoosingHead", () => {
       </ChoosingHead>,
     );
     await expect.element(page.getByText(copy.choosingDraft("Lords only"))).toBeVisible();
+    await expect.element(page.getByText(copy.choosingHowDraft)).toBeVisible();
     await expect
       .element(page.getByRole("link", { name: copy.backToDraft }))
       .toHaveAttribute("href", "/staff/mailings/12");

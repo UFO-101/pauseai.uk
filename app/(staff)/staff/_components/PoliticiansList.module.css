@@ -16,12 +16,24 @@
   margin-block: var(--space-4);
 }
 
+/* What to do: not on a phone, where the strip is held at the top and the
+   title says enough. */
+@media (max-width: 720px) {
+  .how {
+    display: none;
+  }
+}
+
 /* The bar while the list is choosing who a mailing is for: dark, so it
-   stands apart from the page, held at the foot of the window as the list
-   scrolls, the count at the left and the button at the right. */
+   stands apart from the page, always at the foot of the window, however
+   short the list, across the page's column (beside the sidebar, open or
+   folded), the count at the left and the button at the right. */
 .bar {
-  position: sticky;
+  position: fixed;
+  right: var(--space-5);
   bottom: var(--space-4);
+  left: var(--space-5);
+  z-index: 1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -32,6 +44,21 @@
   background: var(--charcoal);
   color: var(--on-dark);
   box-shadow: 0 var(--space-2) var(--space-6) var(--shadow-strong);
+}
+
+@media (min-width: 721px) {
+  .bar {
+    left: calc(14rem + var(--space-5));
+  }
+
+  :global(:root[data-staff-nav="folded"]) .bar {
+    left: calc(4rem + var(--space-5));
+  }
+}
+
+/* Room at the page's foot, so the bar never covers the list's last rows. */
+:has(> .bar) {
+  padding-bottom: calc(var(--space-9) * 2);
 }
 
 .count {

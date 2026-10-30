@@ -66,7 +66,7 @@ export function ChoosingHead({
         }
       >
         <span>{isNew ? mailingCopy.choosingNew : mailingCopy.choosingDraft(title ?? mailingCopy.untitled)}</span>
-        <span>{mailingCopy.choosingHow}</span>
+        <span className={styles.how}>{isNew ? mailingCopy.choosingHowNew : mailingCopy.choosingHowDraft}</span>
       </Strip>
       {children}
     </div>
