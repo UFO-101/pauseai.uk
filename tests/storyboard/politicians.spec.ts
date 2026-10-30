@@ -42,7 +42,11 @@ test("A politician's page: markers, notes, answers and emails", async ({ page, r
   await frame(page, "Polly's page: important, with notes, her answers from Airtable and PauseAI's invitation");
 });
 
-test("Answer an ask staff added, from the menu under a politician's asks", async ({ page, request, flowDatabase }) => {
+test("Answer an ask staff added, from the button under a politician's asks", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
   runSql(
     flowDatabase,
     `INSERT INTO asks (slug, title, kind, date, asked_by)
@@ -53,16 +57,20 @@ test("Answer an ask staff added, from the menu under a politician's asks", async
   await openPolitician(page, "Polly Placeholder");
   const asks = page.getByRole("region", { name: copy.statusesTitle });
   await expect(asks.getByRole("group", { name: "Giant pause button" })).toHaveCount(0);
-  await frame(page, "Polly's asks, with the menu of the others under them");
-  await asks.getByRole("combobox", { name: copy.otherAsk }).selectOption("Giant pause button");
-  const form = asks.getByRole("form", { name: `${copy.setStatus}: Giant pause button` });
-  await form.getByLabel(copy.note).fill("Said yes on the phone");
-  await frame(page, "the ask chosen, with its form and a note of how we know");
-  await form.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
+  await frame(page, "Polly's asks, with the button for another under them");
+  await asks.getByRole("button", { name: copy.otherAsk }).click();
+  const menu = page.getByRole("list", { name: copy.otherAsk });
+  await expect(menu.getByRole("button", { name: "Giant pause button" })).toBeVisible();
+  await frame(page, "its menu: the other asks staff record", { window: true });
+  await menu.getByRole("button", { name: "Giant pause button" }).click();
   const row = asks.getByRole("group", { name: "Giant pause button" });
+  await expect(row.getByText(staffCopy.statuses.none)).toBeVisible();
+  await row.getByLabel(copy.note).fill("Said yes on the phone");
+  await frame(page, "a row like the others, not signed, its form open for a note of how we know", { window: true });
+  await row.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
   await expect(row.locator("[class*=answer]")).toHaveText(new RegExp(`^${staffCopy.statuses.signed}`));
   await expect(row.getByText(/Said yes on the phone/)).toBeVisible();
-  await frame(page, "signed: a row of its own, with Edit");
+  await frame(page, "signed, with Edit like the rest");
 });
 
 test("A peer, an MSP, and an MP who left office", async ({ page, request, flowDatabase }) => {

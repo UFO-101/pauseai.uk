@@ -1597,35 +1597,42 @@ describe("PoliticianDetails", () => {
     expect(going.element().querySelector("select")!.value).toBe("going");
   });
 
-  it("sets an answer to another ask staff record from a menu under the asks, and edits one they've answered", async () => {
+  it("adds another ask staff record from the button under the asks, as a row with no answer and its form open", async () => {
     const dome = { ...ask("frontier-ai-letter"), slug: "giant-pause-button-oct-2026", title: "Giant Pause Button" };
     const fair = { ...dome, slug: "village-fair-nov-2026", title: "Village Fair", kind: "event" as const };
     const { fn, sent } = action();
-    const { rerender } = await render(
+    const details = (statuses: typeof MP.statuses) => (
       <PoliticianDetails
         {...none}
         asks={[ask("controlai-letter"), dome, fair]}
-        politician={{ ...MP, statuses: {} }}
+        politician={{ ...MP, statuses }}
         setStatus={fn}
         unblock={vi.fn()}
-      />,
+      />
     );
+    const { rerender } = await render(details({}));
     // Neither has a row yet, and ControlAI's letter, which its import fills, isn't in the menu.
     expect(page.getByRole("group").all()).toHaveLength(0);
-    const menu = page.getByRole("combobox", { name: staffCopy.politician.otherAsk });
-    expect([...(menu.element() as HTMLSelectElement).options].map((o) => o.text)).toEqual([
-      staffCopy.politician.otherAsk,
-      "Giant Pause Button",
-      "Village Fair",
-    ]);
-    expect(page.getByRole("form").all()).toHaveLength(0);
-    await menu.selectOptions("Village Fair");
-    await expect
-      .element(page.getByRole("form", { name: `${staffCopy.politician.setStatus}: Village Fair` }))
-      .toBeVisible();
-    await menu.selectOptions("Giant Pause Button");
-    await page.getByLabelText(staffCopy.politician.note).fill("At the march");
-    await page.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
+    const another = page.getByRole("button", { name: staffCopy.politician.otherAsk });
+    const menu = page.getByRole("list", { name: staffCopy.politician.otherAsk });
+    await another.click();
+    expect(
+      menu
+        .getByRole("button")
+        .all()
+        .map((b) => b.element().textContent),
+    ).toEqual(["Giant Pause Button", "Village Fair"]);
+
+    // Chosen, it's a row like the others, with no answer, its form open, and gone from the menu.
+    await menu.getByRole("button", { name: "Giant Pause Button" }).click();
+    await expect.poll(() => menu.query()).toBeNull();
+    const row = page.getByRole("group", { name: "Giant Pause Button" });
+    expect(row.element().querySelector("[class*=answer]")!.textContent).toBe(
+      `${staffCopy.statuses.none}${staffCopy.politician.edit}`,
+    );
+    await expect.element(row.getByRole("button", { name: staffCopy.politicians.markSigned })).toBeVisible();
+    await row.getByLabelText(staffCopy.politician.note).fill("At the march");
+    await row.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
     expect(sent[0]).toEqual({
       politicianId: "7",
@@ -1633,26 +1640,20 @@ describe("PoliticianDetails", () => {
       status: "signed",
       note: "At the march",
     });
-    // Signed, it's a row with Edit, and the menu has only the other.
-    await rerender(
-      <PoliticianDetails
-        {...none}
-        asks={[ask("controlai-letter"), dome, fair]}
-        politician={{ ...MP, statuses: { "giant-pause-button-oct-2026": MP.statuses["frontier-ai-letter"] } }}
-        setStatus={fn}
-        unblock={vi.fn()}
-      />,
-    );
-    await expect
-      .element(
-        page.getByRole("group", { name: "Giant Pause Button" }).getByText(staffCopy.politician.edit, { exact: true }),
-      )
-      .toBeVisible();
-    expect([...(menu.element() as HTMLSelectElement).options].map((o) => o.text)).toEqual([
-      staffCopy.politician.otherAsk,
-      "Village Fair",
-    ]);
-    expect(page.getByRole("form", { name: `${staffCopy.politician.setStatus}: Village Fair` }).query()).toBeNull();
+
+    // Signed, the page has it as a row of its own, and the menu only the other; with that added, there's no button.
+    await rerender(details({ "giant-pause-button-oct-2026": MP.statuses["frontier-ai-letter"] }));
+    await expect.element(page.getByRole("group", { name: "Giant Pause Button" })).toBeVisible();
+    await another.click();
+    expect(
+      menu
+        .getByRole("button")
+        .all()
+        .map((b) => b.element().textContent),
+    ).toEqual(["Village Fair"]);
+    await menu.getByRole("button", { name: "Village Fair" }).click();
+    await expect.element(page.getByRole("group", { name: "Village Fair" })).toBeVisible();
+    expect(another.query()).toBeNull();
   });
 
   it("says in one place that letters aren't being sent, why, what to check, and unblocks it with a note", async () => {
