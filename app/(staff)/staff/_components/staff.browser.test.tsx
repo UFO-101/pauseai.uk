@@ -69,8 +69,6 @@ import EraseLink from "./EraseLink";
 import DeletePolitician from "./DeletePolitician";
 import PoliticiansList, { ChoosingHead, HouseTabs } from "./PoliticiansList";
 import { emptyPoliticiansSearch, examplePoliticiansPage } from "./PoliticianTable.examples";
-import { mailingColumns } from "@/lib/mailing-columns";
-import { exampleMailings } from "./MailingsTable.examples";
 import ImportCard, { ImportCards } from "./ImportCard";
 import ImportIcon from "./ImportIcon";
 import DevLogin from "./DevLogin";
@@ -3874,14 +3872,6 @@ describe("each list's download values and contact cards", () => {
     expect(row.campaign).toBe(campaignBySlug(exampleLetter.campaign)?.title);
     expect(values(letterColumns, { ...exampleLetter, campaign: "gone", campaignTitle: "Gone" }).campaign).toBe("Gone");
     expect(typeof row.history).toBe("string");
-  });
-
-  it("mailings: from whom, copied from Airtable, or no sender recorded", () => {
-    expect(exampleMailings.map((m) => values(mailingColumns, m).sender)).toEqual([
-      "Jo Example",
-      null,
-      staffCopy.mailings.imported,
-    ]);
   });
 
   it("politicians: every column, and as cards, with what they have", async () => {

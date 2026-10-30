@@ -280,8 +280,8 @@ a filter or a part of the letter, never a button that makes a new thing.
 
 Buttons that act on what a list's filters found ("Mail these",
 Download) aren't adding. They sit over the table, in the list frame's
-count row. A page whose list isn't a table, the mailings, has Download
-(`ui/DownloadMenu`, the same button) beside its title's button instead.
+count row. A page whose list isn't a table has Download (`ui/DownloadMenu`, the
+same button) beside its title's button instead.
 
 **Choosing something for another part of the pages.** Sometimes one
 part needs a set of things chosen with another part's full tools: who a
