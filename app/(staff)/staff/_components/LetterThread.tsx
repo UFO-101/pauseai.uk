@@ -2,15 +2,12 @@ import type { ReactNode } from "react";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { LetterThread as Thread } from "@/lib/server/letter-threads";
+import { named } from "@/lib/named-address";
 import { staffTime } from "@/lib/staff-time";
 import { MailingLetter } from "./MailingLetter";
 import styles from "./LetterThread.module.css";
 
 const copy = staffCopy.letterThread;
-
-/** Someone as an email names them: their name and address, or their address alone. */
-export const named = (name: string | null | undefined, address: string | null) =>
-  [name, name && address ? `<${address}>` : address].filter(Boolean).join(" ");
 
 /** One message of the thread as an email shows it: who it's from and to, when, and its subject, over its text. */
 function Email({
