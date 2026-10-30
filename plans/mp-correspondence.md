@@ -278,7 +278,7 @@ privacy policy and erasure need changing before anything is built:
   politician. The hourly read already fetches the headers of every new
   message in a connected account. That should be stated.
 - The privacy policy needs a line saying that copying us into an email to
-  your MP means we keep it. (Placeholder copy, ⁂, for a person to write.)
+  your MP means we keep it. (Placeholder copy, for a person to write.)
 
 ## Open questions
 
