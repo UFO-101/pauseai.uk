@@ -203,7 +203,7 @@ function When({ mailing, written }: { mailing: Mailing; written?: WrittenMailing
  * A mailing's page, once scheduled: a band of its title, when it went and
  * who sent it, who from, its ask and who it was for, with its counts, each
  * leading to those recipients; where it stands (Standing); then the email,
- * beside its recipients, of all of them or those a count chose. One
+ * white on an aside, as a mail app shows it, beside its recipients, of all of them or those a count chose. One
  * imported from Airtable, with no `written`, has only what Airtable kept:
  * who got it and how it was written, but no text or filter.
  */
@@ -260,7 +260,7 @@ export default function MailingView({
       <Standing mailing={mailing} written={written} stop={stop} reschedule={reschedule} />
       <Grid>
         {written ? (
-          <Card span={3} title={copy.emailTitle} id="email-title">
+          <Card span={3} look="aside" title={copy.emailTitle} id="email-title">
             <div className={styles.email}>
               <dl className={styles.headers}>
                 <dt>{copy.from}</dt>
