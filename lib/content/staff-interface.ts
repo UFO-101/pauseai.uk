@@ -947,7 +947,7 @@ export const staffCopy = {
     savedAt: (when: string) => `Saved ${when}`,
     toCount: (n: number) => `to ${n} ${n === 1 ? "person" : "people"}`,
     // A mailing's box of counts in the list, which opens the mailing, for screen readers.
-    countsLabel: (title: string) => `⁂ How “${title}” went`,
+    countsLabel: (title: string) => `How “${title}” went`,
     // The bar of how far a mailing sending has got, and once it's sent, how many have answered its ask.
     sendingBar: (n: number, of: number) => `Sending: ${n} of ${of} sent`,
     answeredBar: (n: number, of: number) => `Sent: ✓ ${n} of ${of} answered the ask`,
