@@ -27,13 +27,14 @@ export function mailingCounts(mailing: MailingSummary) {
 
 /**
  * When, at a row's left: when a draft was last saved; when one scheduled
- * goes, in blue; when one sending started; the day one went, with its year
- * when that's not `year`.
+ * goes, or one sending started, in blue, as it's going out; the day one
+ * went, with its year when that's not `year`.
  */
 function When({ mailing, year }: { mailing: MailingSummary; year: string }) {
   if (mailing.state === "draft") return <Muted>{copy.savedAt(staffDate(mailing.updatedAt))}</Muted>;
-  if (mailing.state === "scheduled") return <strong className={styles.due}>{londonWhenShort(mailing.dueAt!)}</strong>;
-  if (mailing.state === "sending") return <>{londonWhenShort(mailing.dueAt!)}</>;
+  if (mailing.state === "scheduled" || mailing.state === "sending") {
+    return <strong className={styles.due}>{londonWhenShort(mailing.dueAt!)}</strong>;
+  }
   const day = staffDate(mailingWhen(mailing));
   return <>{day.endsWith(year) ? day.slice(0, -5) : day}</>;
 }

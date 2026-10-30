@@ -25,7 +25,7 @@
   font-size: var(--text-sm);
 }
 
-/* When one scheduled goes: blue, as it is about to go out. */
+/* When one scheduled goes, or one sending started: blue, as it is going out. */
 .due {
   color: var(--status-blue);
 }
