@@ -21,7 +21,7 @@ import ProsePage, { ProseMeta } from "@/components/ui/ProsePage";
 import Section, { Lede, SectionHeader } from "@/components/ui/Section";
 import SmallPrint from "@/components/ui/SmallPrint";
 import type { Group } from "../_components/types";
-import { LightboxExample, SubmitButtonExample } from "./ui.client";
+import { LightboxExample, PendingButtonAnchorExample, SubmitButtonExample } from "./ui.client";
 
 // Every value of a look's union, so a new one is a type error until it's here.
 const VARIANTS: Record<ButtonVariant, string> = {
@@ -113,9 +113,7 @@ export const ui: Group = {
           label: "Pending, on its way to another site",
           render: () => (
             <div className="container">
-              <ButtonAnchor variant="primary" href="https://example.org/" pending fit>
-                Somewhere else
-              </ButtonAnchor>
+              <PendingButtonAnchorExample />
             </div>
           ),
         },
