@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { mailingColumns } from "../../../_components/MailingsTable";
+import { mailingColumns } from "@/lib/mailing-columns";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { listMailings } from "@/lib/server/mailings";
 import { requireStaff } from "@/lib/server/staff-auth";

@@ -1,32 +1,77 @@
-/* The mailings not sent yet: a row each, as wide as the measure, its title
-   over who and when, its button at the right. */
+/* The list of mailings: a heading for each group, its rows ruled apart. */
+.group h2 {
+  margin-bottom: var(--space-1);
+}
+
 .rows {
-  display: grid;
-  max-width: var(--staff-measure);
-  gap: var(--space-2);
-  margin: 0;
+  margin: 0 0 var(--space-6);
   padding: 0;
   list-style: none;
 }
 
+/* A row: when, the mailing, and how it stands, in columns that line up
+   from row to row; on a phone, how it stands goes under the rest. */
 .row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 1fr) 24rem;
+  gap: var(--space-2) var(--space-4);
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
 }
 
-/* The title, and under it who wrote it, when and to how many. */
+.when {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+/* When one scheduled goes: blue, as it is about to go out. */
+.due {
+  color: var(--status-blue);
+}
+
+/* The title, and under it who it's from and its ask. */
 .what {
   display: grid;
   gap: var(--space-1);
   min-width: 0;
+  font-size: var(--text-sm);
 }
 
 .title {
+  font-size: var(--text-md);
   font-weight: 600;
+}
+
+.standing {
+  display: flex;
+  min-width: 0;
+}
+
+.state {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  font-size: var(--text-sm);
+}
+
+/* The sending bar, the width of the column, leading to the mailing. */
+.bar {
+  flex: 1;
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (max-width: 860px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .when {
+    order: 1;
+  }
+
+  .standing {
+    order: 2;
+  }
 }

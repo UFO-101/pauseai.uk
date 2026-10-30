@@ -170,8 +170,8 @@ test("Change who a draft goes to, then delete it", async ({ page, request, flowD
   await frame(page, "Delete draft turns red, asking to be pressed again", { window: true });
   await page.getByRole("button", { name: copy.deleteIt }).click();
   await expect(page).toHaveURL(`${BASE}/staff/mailings`);
-  await expect(page.getByText(copy.noDrafts)).toBeVisible();
-  await frame(page, "the mailings, with no drafts left");
+  await expect(page.getByRole("link", { name: "Lords only" })).toHaveCount(0);
+  await frame(page, "the mailings, with the draft gone");
 });
 
 test("Reschedule a mailing, then unschedule it", async ({ page, request, flowDatabase }) => {
@@ -180,8 +180,10 @@ test("Reschedule a mailing, then unschedule it", async ({ page, request, flowDat
   const id = addMailing(flowDatabase, "Edinburgh reminder", "scheduled", ["scheduled", "scheduled", "scheduled"]);
   runSql(flowDatabase, `UPDATE mailings SET due_at = '2026-10-30T09:00:00Z' WHERE id = ${id}`);
   await page.goto(`${BASE}/staff/mailings`);
-  await expect(page.getByRole("button", { name: copy.unschedule })).toBeVisible();
-  await frame(page, "the mailings: one coming up, with Unschedule, over those sent");
+  await expect(page.getByRole("listitem").filter({ hasText: "Edinburgh reminder" })).toContainText(
+    copy.states.scheduled,
+  );
+  await frame(page, "the mailings: one coming up, when it goes in blue, over those sent, each a box of counts");
 
   await page.getByRole("link", { name: "Edinburgh reminder" }).click();
   await expect(page.getByText(copy.sends("Friday 30 October at 09:18"))).toBeVisible();
@@ -211,24 +213,24 @@ test("A mailing sending, and one sent with bounces", async ({ page, request, flo
   await logIn(page, flowDatabase);
   const sending = addMailing(flowDatabase, "Going out now", "sending", ["sent", "scheduled", "scheduled"]);
   await page.goto(`${BASE}/staff/mailings/${sending}`);
-  await expect(page.getByText(copy.sending(1, 3))).toBeVisible();
-  await frame(page, "sending: how far it's got, with Stop");
+  await expect(page.getByText(copy.sendingBar(1, 3))).toBeVisible();
+  await frame(page, "sending: how far it's got, in blue, with Stop sending");
 
   const sent = addMailing(flowDatabase, "Edinburgh follow-up", "sent", ["sent", "bounced", "skipped", "sent"]);
   await page.goto(`${BASE}/staff/mailings/${sent}`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Edinburgh follow-up");
-  await expect(page.getByRole("list").filter({ hasText: copy.counts.answered })).toBeVisible();
-  await frame(page, "sent: its counts, its recipients, and the email beside them");
+  await expect(page.getByRole("link", { name: `1 ${copy.counts.bounced}` })).toBeVisible();
+  await frame(page, "sent: its band of counts, then the email beside its recipients");
 
-  await page.getByRole("link", { name: copy.tab(copy.tabs.bounced, 1) }).click();
+  await page.getByRole("link", { name: `1 ${copy.counts.bounced}` }).click();
   await expect(page.getByRole("row")).toHaveCount(2);
-  await frame(page, "only the one that bounced");
+  await frame(page, "only the one that bounced, its count marked, with the way back to everyone");
 
-  // Its outcome leads to the letter's own page, under the mailing, back to which it goes.
-  await page.getByRole("table").getByRole("link", { name: staffCopy.letters.status.bounced }).click();
+  // Each recipient leads to their letter's own page, under the mailing, back to which it goes.
+  await page.getByRole("table").getByRole("link", { name: copy.theLetter }).click();
   await expect(page).toHaveURL(new RegExp(`/staff/mailings/${sent}/letters/\\d+$`));
   await expect(page.getByRole("navigation").getByRole("link", { name: "Edinburgh follow-up" })).toBeVisible();
-  await frame(page, "the letter that bounced: to whom and how it stands, with no history, as Airtable kept none");
+  await frame(page, "the letter that bounced: its status in red, the letter, and its history beside it");
 });
 
 test("Send a mailing from a connected Gmail: schedule it, and the hourly job sends it", async ({
@@ -301,7 +303,7 @@ test("Send a mailing from a connected Gmail: schedule it, and the hourly job sen
 
   await page
     .getByRole("row", { name: /Morag Example/ })
-    .getByRole("link", { name: staffCopy.letters.status.sent })
+    .getByRole("link", { name: copy.theLetter })
     .click();
   await expect(page.getByRole("link", { name: staffCopy.letterThread.openInGmail })).toBeVisible();
   await frame(page, "the letter as it went, with Open in Gmail for you who sent it, and no replies yet");

@@ -82,6 +82,22 @@ export const exampleScheduled: MailingSummary = {
   to: 72,
 };
 
+/** One sending to every MP, a third of the way. */
+export const exampleSending: MailingSummary = {
+  ...mailing,
+  id: 8,
+  title: "All MPs: the AI bill's second reading",
+  state: "sending",
+  createdBy: "jo@pauseai.uk",
+  fromName: "Jo Example",
+  dueAt: "2026-10-30T09:00:00Z",
+  to: 650,
+  sent: 212,
+  skipped: 2,
+  bounced: 3,
+  replied: 4,
+};
+
 /** The Edinburgh invitation, with its recipients: one personalised who replied, one that bounced, one left out. */
 export const exampleMailing: Mailing = {
   ...exampleMailings[2],
@@ -95,6 +111,8 @@ export const exampleMailing: Mailing = {
       letterId: 11,
       politicianId: 7,
       name: "Polly Placeholder",
+      constituency: "Cities of London and Westminster",
+      party: "Labour (Co-op)",
       status: "sent",
       sentAt: "2026-10-01T09:00:00Z",
       repliedAt: "2026-10-03T14:00:00Z",
@@ -106,6 +124,8 @@ export const exampleMailing: Mailing = {
       letterId: 12,
       politicianId: 8,
       name: "Morag Example",
+      constituency: "Edinburgh Central",
+      party: "SNP",
       status: "bounced",
       sentAt: "2026-10-01T09:00:00Z",
       repliedAt: null,
@@ -117,6 +137,8 @@ export const exampleMailing: Mailing = {
       letterId: 13,
       politicianId: 9,
       name: "Dora Dummy",
+      constituency: null,
+      party: "Crossbench",
       status: "not_sent",
       sentAt: null,
       repliedAt: null,

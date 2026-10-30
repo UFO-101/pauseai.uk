@@ -46,6 +46,7 @@ export const examplePauseaiLetterDetails: PauseaiLetterDetails = {
   politicianId: 1,
   mpEmail: "polly.placeholder.mp@parliament.uk",
   mailingId: 3,
+  mailingAsk: null,
   mailing: "Edinburgh Conference Nov 26 Invitation",
   personalised: true,
   sentFrom: null,

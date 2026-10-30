@@ -22,7 +22,7 @@ import {
   examplePauseaiLetterDetails,
   exampleSupporterLetterDetails,
 } from "@/app/(staff)/staff/_components/LettersTable.examples";
-import LetterDetails, { GmailLink } from "@/app/(staff)/staff/_components/LetterDetails";
+import LetterDetails, { GmailLink, LetterHistory } from "@/app/(staff)/staff/_components/LetterDetails";
 import DevLogin from "@/app/(staff)/staff/_components/DevLogin";
 import LoginCard from "@/app/(staff)/staff/_components/LoginCard";
 import LoginForm from "@/app/(staff)/staff/_components/LoginForm";
@@ -52,12 +52,10 @@ import StaffNav, { type StaffPage as StaffPageName } from "@/app/(staff)/staff/_
 import AccountsNotice from "@/app/(staff)/staff/_components/AccountsNotice";
 import Breadcrumb from "@/app/(staff)/staff/_components/Breadcrumb";
 import EraseLink from "@/app/(staff)/staff/_components/EraseLink";
-import MailingsTable from "@/app/(staff)/staff/_components/MailingsTable";
 import NotIcon from "@/app/(staff)/staff/_components/ui/NotIcon";
 import { MailingLetter } from "@/app/(staff)/staff/_components/MailingLetter";
-import { FilterPills, MailingCounts } from "@/app/(staff)/staff/_components/MailingParts";
+import { FilterPills } from "@/app/(staff)/staff/_components/MailingParts";
 import { exampleMailingLetter, exampleWriterData } from "@/app/(staff)/staff/_components/MailingWriter.examples";
-import { exampleMailings } from "@/app/(staff)/staff/_components/MailingsTable.examples";
 import ListFrame, { ListTable, type ListColumn } from "@/app/(staff)/staff/_components/ui/ListFrame";
 import ChoiceSearch from "@/app/(staff)/staff/_components/ui/ChoiceSearch";
 import NavFold from "@/app/(staff)/staff/_components/ui/NavFold";
@@ -92,7 +90,11 @@ import {
 } from "@/app/(staff)/staff/_components/SupportersTable.examples";
 import { NEW_MAILING, supportersSearch } from "@/lib/staff-search";
 import StaffPage from "@/app/(staff)/staff/_components/ui/StaffPage";
-import Grid, { Card } from "@/app/(staff)/staff/_components/ui/Grid";
+import Band, { BandFact } from "@/app/(staff)/staff/_components/ui/Band";
+import Counts from "@/app/(staff)/staff/_components/ui/Counts";
+import DownloadMenu from "@/app/(staff)/staff/_components/ui/DownloadMenu";
+import Grid, { Card, Column } from "@/app/(staff)/staff/_components/ui/Grid";
+import Progress from "@/app/(staff)/staff/_components/ui/Progress";
 import PageTitle from "@/app/(staff)/staff/_components/ui/PageTitle";
 import Strip from "@/app/(staff)/staff/_components/ui/Strip";
 import Tabs from "@/app/(staff)/staff/_components/ui/Tabs";
@@ -126,6 +128,7 @@ import {
   MailingFilesExample,
   MailingForExample,
   MailingsOverviewExample,
+  MailingLetterViewExample,
   MailingViewExample,
   MailingWriterExample,
   ChangeWhoListExample,
@@ -439,6 +442,30 @@ export const staff: Group = {
       ],
     },
     {
+      name: "Column",
+      file: "app/(staff)/staff/_components/ui/Grid.tsx",
+      variants: [
+        {
+          label: "Two cards, one under the other, beside a record two-thirds wide",
+          render: () => (
+            <StaffPage as="div">
+              <Grid>
+                <Card span={4}>The record, two-thirds wide.</Card>
+                <Column span={2}>
+                  <Card look="aside" title="Asks" id="column-asks">
+                    An aside
+                  </Card>
+                  <Card look="log" title="History" id="column-history">
+                    A history under it
+                  </Card>
+                </Column>
+              </Grid>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
       name: "StaffLink",
       file: "app/(staff)/staff/_components/ui/StaffLink.tsx",
       variants: [
@@ -592,6 +619,139 @@ export const staff: Group = {
               >
                 Mailings
               </PageTitle>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "DownloadMenu",
+      file: "app/(staff)/staff/_components/ui/DownloadMenu.tsx",
+      variants: [
+        {
+          label: "Download, opening the formats of every row: CSV and JSON",
+          render: () => (
+            <StaffPage as="div">
+              <DownloadMenu download={(format) => `#${format}`} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "Band",
+      file: "app/(staff)/staff/_components/ui/Band.tsx",
+      variants: [
+        {
+          label: "A title with a tag, three facts, two with a line under them, and counts at the right",
+          render: () => (
+            <StaffPage as="div">
+              <Band
+                title="Please make the Millennium Dome into a giant pause button"
+                tag={<Tag>Sent</Tag>}
+                aside={
+                  <Counts
+                    counts={[
+                      { key: "sent", n: 84, label: "sent" },
+                      { key: "bounced", n: 3, label: "bounced", tone: "red" },
+                    ]}
+                  />
+                }
+              >
+                <BandFact label="Sent" detail="by francis@pauseai.uk">
+                  29 Oct 2026, 14:18
+                </BandFact>
+                <BandFact label="From" detail="Francis, PauseAI UK">
+                  policy@pauseai.uk
+                </BandFact>
+                <BandFact label="Ask">
+                  <a href="#">Giant pause button funding request</a>
+                </BandFact>
+              </Band>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "BandFact",
+      file: "app/(staff)/staff/_components/ui/Band.tsx",
+      variants: [
+        {
+          label: "A fact in a band, and one with no value, which shows nothing",
+          render: () => (
+            <StaffPage as="div">
+              <Band title="A supporter">
+                <BandFact label="Place" detail="from their postcode, M1 1AE">
+                  Manchester, England
+                </BandFact>
+                <BandFact label="Their MP">{null}</BandFact>
+              </Band>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "Counts",
+      file: "app/(staff)/staff/_components/ui/Counts.tsx",
+      variants: [
+        {
+          label: "Each leading to its list, the bounced one chosen; a 0 and a count that doesn't apply, grey",
+          render: () => (
+            <StaffPage as="div">
+              <Counts
+                counts={[
+                  { key: "sent", n: 84, label: "sent", href: "#sent" },
+                  { key: "replied", n: 9, label: "replied", href: "#replied" },
+                  { key: "bounced", n: 3, label: "bounced", tone: "red", href: "#bounced", current: true },
+                  { key: "skipped", n: 0, label: "skipped", href: "#skipped" },
+                  { key: "answered", n: null, label: "answered the ask" },
+                ]}
+              />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Small, in a list's row, the whole box one link; answers in green",
+          render: () => (
+            <StaffPage as="div">
+              <Counts
+                small
+                href="#mailing"
+                label="How the mailing went"
+                counts={[
+                  { key: "sent", n: 129, label: "sent" },
+                  { key: "replied", n: 11, label: "replied" },
+                  { key: "bounced", n: 2, label: "bounced", tone: "red" },
+                  { key: "skipped", n: 0, label: "skipped" },
+                  { key: "answered", n: 14, label: "answered the ask", tone: "green" },
+                ]}
+              />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "Progress",
+      file: "app/(staff)/staff/_components/ui/Progress.tsx",
+      variants: [
+        {
+          label: "Sending, in a list's row, and big, on a page; answers, in green",
+          render: () => (
+            <StaffPage as="div">
+              <div style={{ display: "grid", gap: "24px", maxWidth: "40rem" }}>
+                <Progress value={212} max={650} tone="blue" label="Sent">
+                  Sending: 212 of 650 sent
+                </Progress>
+                <Progress value={40} max={86} tone="blue" label="Sent" big>
+                  Sending: 40 of 86 sent
+                </Progress>
+                <Progress value={14} max={127} tone="green" label="Answered the ask" big>
+                  Sent: ✓ 14 of 127 answered the ask
+                </Progress>
+              </div>
             </StaffPage>
           ),
         },
@@ -1463,21 +1623,6 @@ export const staff: Group = {
       ],
     },
     {
-      name: "MailingsTable",
-      file: "app/(staff)/staff/_components/MailingsTable.tsx",
-      variants: [
-        {
-          label: "One from Airtable, sent, with an ask; one not sent yet; and none",
-          render: () => (
-            <StaffPage as="div">
-              <MailingsTable mailings={exampleMailings} />
-              <MailingsTable mailings={[]} />
-            </StaffPage>
-          ),
-        },
-      ],
-    },
-    {
       name: "MailingFiles",
       file: "app/(staff)/staff/_components/MailingFiles.tsx",
       variants: [
@@ -1521,7 +1666,8 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/MailingsOverview.tsx",
       variants: [
         {
-          label: "Two drafts, one coming up, and those sent",
+          label:
+            "Coming up: one sending, one scheduled and two drafts; then October, June and 2025, each sent row a box of counts",
           render: () => (
             <StaffPage as="div">
               <MailingsOverviewExample />
@@ -1529,7 +1675,7 @@ export const staff: Group = {
           ),
         },
         {
-          label: "No drafts and nothing coming up",
+          label: "No mailings at all",
           render: () => (
             <StaffPage as="div">
               <MailingsOverviewExample empty />
@@ -1651,20 +1797,6 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <FilterPills data={{ ...exampleWriterData, filter: { list: "politicians", params: {} } }} />
-            </StaffPage>
-          ),
-        },
-      ],
-    },
-    {
-      name: "MailingCounts",
-      file: "app/(staff)/staff/_components/MailingParts.tsx",
-      variants: [
-        {
-          label: "Sent, replied, bounced, skipped and answered",
-          render: () => (
-            <StaffPage as="div">
-              <MailingCounts mailing={exampleMailings[0]} />
             </StaffPage>
           ),
         },
@@ -2550,6 +2682,34 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <LetterDetails letter={examplePauseaiLetterDetails} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "MailingLetterView",
+      file: "app/(staff)/staff/_components/MailingLetterView.tsx",
+      variants: [
+        {
+          label: "A mailing's letter and its reply, beside the ask, as a politician's page has it, and its history",
+          render: () => (
+            <StaffPage as="div">
+              <MailingLetterViewExample />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "LetterHistory",
+      file: "app/(staff)/staff/_components/LetterDetails.tsx",
+      variants: [
+        {
+          label: "Nothing recorded yet",
+          render: () => (
+            <StaffPage as="div">
+              <LetterHistory events={[]} />
             </StaffPage>
           ),
         },

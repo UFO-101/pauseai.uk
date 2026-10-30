@@ -4,7 +4,7 @@ import { query } from "./db";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { NEW_MAILING } from "@/lib/staff-search";
 import { createDraft, saveDraft } from "./mailing-drafts";
-import { choosingTitle, getMailing, listMailings, mailingsOverview, mailingTitle } from "./mailings";
+import { choosingTitle, getMailing, listMailings, mailingsOverview, mailingsPage, mailingTitle } from "./mailings";
 
 /** A PauseAI letter of the mailing titled `title`, to `politicianId`. */
 async function addLetter(
@@ -76,6 +76,8 @@ describeWithDatabase("mailings", () => {
         letterId: letter,
         politicianId: polly,
         name: "Polly Placeholder",
+        constituency: expect.any(String),
+        party: expect.any(String),
         status: "sent",
         sentAt: new Date("2026-10-01"),
         repliedAt: new Date("2026-10-04"),
@@ -112,11 +114,12 @@ describeWithDatabase("mailings", () => {
       [polly],
     );
     const [{ id }] = await query<{ id: number }>("SELECT id::int AS id FROM mailings WHERE title = $1", [EDINBURGH]);
-    const names = async (tab: "replied" | "bounced" | "skipped") =>
+    const names = async (tab: "replied" | "bounced" | "skipped" | "answered") =>
       (await getMailing(id, 1, tab))!.recipients.map((r) => [r.name, r.answer, r.skipReason]);
     expect(await names("replied")).toEqual([["Polly Placeholder", "going", null]]);
     expect(await names("bounced")).toEqual([["Dora Dummy", null, null]]);
     expect(await names("skipped")).toEqual([["Rob Example", null, "left-office"]]);
+    expect(await names("answered")).toEqual([["Polly Placeholder", "going", null]]);
     expect(await getMailing(id, 1, "bounced")).toMatchObject({
       tab: "bounced",
       recipientsTotal: 1,
@@ -158,5 +161,10 @@ describeWithDatabase("mailings", () => {
     expect(sent.map((m) => m.state)).not.toContain("draft");
     // The list for the download leaves the drafts out.
     expect((await listMailings()).map((m) => m.title)).not.toContain("Everyone");
+    // The page's groups, Coming up first, and when now is.
+    const page = await mailingsPage();
+    expect(page.groups[0]).toMatchObject({ key: "coming", heading: staffCopy.mailingPages.comingUp });
+    expect(page.groups[0].mailings.map((m) => m.title)).toEqual(["Sooner", "Later", "To the Lords", "Everyone"]);
+    expect(Date.parse(page.now)).not.toBeNaN();
   });
 });

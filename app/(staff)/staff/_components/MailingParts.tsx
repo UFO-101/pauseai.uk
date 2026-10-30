@@ -1,13 +1,11 @@
 import { staffCopy } from "@/lib/content/staff-interface";
-import type { MailingSummary } from "@/lib/server/mailings";
 import { firstOf } from "@/lib/staff-search";
 import type { FilterWordsData } from "@/lib/server/mailing-pages";
 import { politicianFilters } from "./PoliticianFilters";
 import { filterWords } from "./ui/FilterBar";
 import styles from "./MailingParts.module.css";
 
-// Pieces of the mailing pages: the filter that chose who a mailing is to,
-// and how many it went to and what came back.
+// Pieces of the mailing pages: the filter that chose who a mailing is to.
 
 const copy = staffCopy.mailingPages;
 
@@ -28,27 +26,6 @@ export function FilterPills({ data }: { data: FilterWordsData }) {
     <ul className={styles.pills} aria-label={copy.whoLabel}>
       {words.map((word) => (
         <li key={word}>{word}</li>
-      ))}
-    </ul>
-  );
-}
-
-/** How a mailing went: how many it was sent to, replied, bounced, were skipped and answered its ask, each a coloured count. */
-export function MailingCounts({ mailing }: { mailing: MailingSummary }) {
-  const counts: [keyof typeof copy.counts, number, string][] = [
-    ["sent", mailing.sent, styles.green],
-    ["replied", mailing.replied, styles.blue],
-    ["bounced", mailing.bounced, styles.red],
-    ["skipped", mailing.skipped, styles.amber],
-    ["answered", mailing.answered, styles.plain],
-  ];
-  return (
-    <ul className={styles.counts}>
-      {counts.map(([key, n, tone]) => (
-        <li key={key} className={tone}>
-          <strong>{n}</strong>
-          {copy.counts[key]}
-        </li>
       ))}
     </ul>
   );

@@ -44,6 +44,8 @@ export async function setAskStatus(form: FormData): Promise<void> {
   );
   revalidatePath("/staff/politicians");
   revalidatePath(`/staff/politicians/${parsed.politicianId}`);
+  // A mailing's counts, and its letters' pages, where the answer can be set too.
+  revalidatePath("/staff/mailings", "layout");
 }
 
 /** The button on the page of a politician gone from Airtable: deletes them, and goes back to the list. */

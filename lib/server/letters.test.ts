@@ -252,6 +252,7 @@ describeWithDatabase("a letter for its page", () => {
       mpEmail: "mp@example.org",
       mailingId: mailing,
       mailing: "CSRB Iqbal Amendment",
+      mailingAsk: null,
       personalised: true,
       sentFrom: null,
       gmailThreadId: null,

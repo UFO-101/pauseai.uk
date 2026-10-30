@@ -62,6 +62,14 @@
   }
 }
 
+/* A column of cards, one under another, a grid's gap apart. */
+.column {
+  display: grid;
+  gap: var(--grid-gap);
+  align-content: start;
+  min-width: 0;
+}
+
 /* A card: like the import page's, its parts spaced down it. Every card has
    the same edge; what it's for sets only its fill, from one warm family. */
 .card {

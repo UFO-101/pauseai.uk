@@ -10,6 +10,11 @@ import ListFrame, { ListTable, type ListColumn } from "./ListFrame";
 import NavFold from "./NavFold";
 import FormPending from "./FormPending";
 import PageTitle from "./PageTitle";
+import Band, { BandFact } from "./Band";
+import Counts from "./Counts";
+import DownloadMenu from "./DownloadMenu";
+import Grid, { Card, Column } from "./Grid";
+import Progress from "./Progress";
 
 import { renderToString } from "react-dom/server";
 import { NAV_FOLD_KEY } from "@/lib/staff-nav";
@@ -634,5 +639,104 @@ describe("FormPending", () => {
     await vi.waitFor(() => expect(mark()).not.toBeNull());
     finish();
     await vi.waitFor(() => expect(mark()).toBeNull());
+  });
+});
+
+describe("Band", () => {
+  it("is the title with its tag, what leads it, the facts with their lines under, and what's aside", async () => {
+    await render(
+      <Band title="A mailing" tag={<span>Sent</span>} lead={<span>map</span>} aside={<span>counts</span>}>
+        <BandFact label="From" detail="Jo Example">
+          jo@pauseai.uk
+        </BandFact>
+        <BandFact label="Ask">{null}</BandFact>
+      </Band>,
+    );
+    await expect.element(page.getByRole("heading", { level: 1, name: "A mailing" })).toBeVisible();
+    for (const text of ["Sent", "map", "counts", "From", "jo@pauseai.uk", "Jo Example"]) {
+      await expect.element(page.getByText(text, { exact: true })).toBeVisible();
+    }
+    // A fact with no value isn't there.
+    await expect.element(page.getByText("Ask")).not.toBeInTheDocument();
+  });
+});
+
+describe("Counts", () => {
+  it("each leads to its own, the chosen one marked; a 0 and a dash grey, a problem red and an answer green", async () => {
+    await render(
+      <Counts
+        counts={[
+          { key: "sent", n: 1200, label: "sent", href: "/sent" },
+          { key: "bounced", n: 3, label: "bounced", tone: "red", href: "/bounced", current: true },
+          { key: "skipped", n: 0, label: "skipped" },
+          { key: "answered", n: null, label: "answered", tone: "green" },
+          { key: "replied", n: 2, label: "replied", tone: "green" },
+        ]}
+      />,
+    );
+    await expect.element(page.getByRole("link", { name: "1,200 sent" })).toHaveAttribute("href", "/sent");
+    await expect.element(page.getByRole("link", { name: "3 bounced" })).toHaveAttribute("aria-current", "true");
+    await expect.element(page.getByRole("link", { name: "1,200 sent" })).not.toHaveAttribute("aria-current");
+    const colour = (text: string) => getComputedStyle(page.getByText(text, { exact: true }).element()).color;
+    expect(colour("3")).not.toBe(colour("1,200"));
+    expect(colour("2")).not.toBe(colour("1,200"));
+    expect(colour("0")).toBe(colour("–"));
+  });
+
+  it("small, the whole box one link, named", async () => {
+    await render(
+      <Counts small href="/mailing" label="How it went" counts={[{ key: "sent", n: 4, label: "sent", href: "/x" }]} />,
+    );
+    await expect.element(page.getByRole("link", { name: "How it went" })).toHaveAttribute("href", "/mailing");
+    expect(page.getByRole("link").all()).toHaveLength(1);
+  });
+});
+
+describe("Progress", () => {
+  it("is its words over a bar of how far it's got, thicker when big; none to do counts as one", async () => {
+    await render(
+      <>
+        <Progress value={2} max={4} tone="blue" label="Sent">
+          2 of 4
+        </Progress>
+        <Progress value={0} max={0} tone="green" label="Answered" big>
+          none
+        </Progress>
+      </>,
+    );
+    await expect.element(page.getByText("2 of 4")).toBeVisible();
+    await expect.element(page.getByRole("progressbar", { name: "Sent" })).toHaveAttribute("value", "2");
+    await expect.element(page.getByRole("progressbar", { name: "Answered" })).toHaveAttribute("max", "1");
+    const height = (name: string) => page.getByRole("progressbar", { name }).element().getBoundingClientRect().height;
+    expect(height("Answered")).toBeGreaterThan(height("Sent"));
+  });
+});
+
+describe("DownloadMenu", () => {
+  it("opens CSV and JSON of every row, or the formats it's given", async () => {
+    const { rerender } = await render(<DownloadMenu download={(format) => `/x?format=${format}`} />);
+    await page.getByRole("button", { name: staffCopy.lists.download }).click();
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.lists.formats.json }))
+      .toHaveAttribute("href", "/x?format=json");
+    await rerender(<DownloadMenu download={(format) => `/x?format=${format}`} formats={["vcf"]} />);
+    await expect.element(page.getByRole("link", { name: staffCopy.lists.formats.vcf })).toBeInTheDocument();
+    await expect.element(page.getByRole("link", { name: staffCopy.lists.formats.csv })).not.toBeInTheDocument();
+  });
+});
+
+describe("Column", () => {
+  it("stacks its cards beside a record, each card with no span of its own", async () => {
+    await render(
+      <Grid>
+        <Card span={4}>Record</Card>
+        <Column span={2}>
+          <Card>First</Card>
+          <Card>Second</Card>
+        </Column>
+      </Grid>,
+    );
+    const top = (text: string) => page.getByText(text).element().getBoundingClientRect().top;
+    expect(top("Second")).toBeGreaterThan(top("First"));
   });
 });

@@ -1,11 +1,11 @@
-import { useId, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { buttonClass } from "@/components/ui/Button";
 import Table from "@/components/ui/Table";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { pageRange, type DownloadColumn, type DownloadFormat } from "@/lib/staff-list";
 import StaffLink from "./StaffLink";
-import Menu from "./Menu";
+import DownloadMenu from "./DownloadMenu";
 import styles from "./ListFrame.module.css";
 
 /**
@@ -147,14 +147,13 @@ export default function ListFrame<Row>({
   href,
   download,
   actions,
-  formats = ["csv", "json"],
+  formats,
   columns,
   rows,
   rowKey,
   empty,
   align,
 }: Props<Row>) {
-  const menuId = useId();
   if (total === 0) return <p>{empty}</p>;
   const copy = staffCopy.lists;
   const from = (page - 1) * pageSize + 1;
@@ -168,39 +167,7 @@ export default function ListFrame<Row>({
         </p>
         <div className={styles.actions}>
           {actions}
-          {download && (
-            <Menu
-              id={`download-${menuId}`}
-              trigger={buttonClass({ variant: "ghost", size: "small", fit: true, className: styles.download })}
-              label={
-                <>
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M12 4v12M6 11l6 6 6-6M5 20h14" />
-                  </svg>
-                  {copy.download}
-                </>
-              }
-            >
-              <ul className={styles.formats}>
-                {formats.map((format) => (
-                  <li key={format}>
-                    <a href={download(format)} download>
-                      {copy.formats[format]}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </Menu>
-          )}
+          {download && <DownloadMenu download={download} formats={formats} />}
         </div>
       </div>
       <ListTable columns={columns} rows={rows} rowKey={rowKey} align={align} />

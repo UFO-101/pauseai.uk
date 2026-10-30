@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 import { found } from "@/lib/found";
 import { letterThread } from "@/lib/server/letter-threads";
+import { listAsks } from "@/lib/server/asks";
 import { getPauseaiLetter } from "@/lib/server/letters";
+import { getPolitician } from "@/lib/server/politicians";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { letterId, mailingId } from "@/lib/staff-search";
-import LetterDetails, { GmailLink, letterTitle } from "../../../../../_components/LetterDetails";
+import { GmailLink, letterTitle } from "../../../../../_components/LetterDetails";
+import MailingLetterView from "../../../../../_components/MailingLetterView";
 import LetterThread from "../../../../../_components/LetterThread";
+import { setAskStatus } from "../../../../../actions";
 
 type Params = { params: Promise<{ id: string; letter: string }> };
 
@@ -21,18 +25,19 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 }
 
 /**
- * One of a mailing's letters: to whom, how it stands, what happened to it;
- * then the letter as it went and every reply in its thread, with Open in
- * Gmail for the one who sent it.
+ * One of a mailing's letters: how it stands, the letter as it went and
+ * every reply in its thread, with Open in Gmail for the one who sent it,
+ * beside the mailing's ask, to set the politician's answer, and its history.
  */
 export default async function MailingLetterPage({ params }: Params) {
   const { email } = await requireStaff();
   const ids = await idsOf(params);
-  const [pauseaiLetter, thread] = await Promise.all([getPauseaiLetter(...ids), letterThread(...ids)]);
+  const [pauseaiLetter, thread, asks] = await Promise.all([getPauseaiLetter(...ids), letterThread(...ids), listAsks()]);
   const letter = found(pauseaiLetter);
+  const politician = found(await getPolitician(letter.politicianId));
   return (
-    <LetterDetails letter={letter}>
+    <MailingLetterView letter={letter} politician={politician} asks={asks} setStatus={setAskStatus}>
       <LetterThread thread={found(thread)} link={<GmailLink letter={letter} me={email} />} />
-    </LetterDetails>
+    </MailingLetterView>
   );
 }

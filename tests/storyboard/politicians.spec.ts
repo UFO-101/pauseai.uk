@@ -295,8 +295,8 @@ test("Mailings: the list, one mailing's recipients, and back from a politician",
   const mailings = staffCopy.mailings;
   await page.goto(`${BASE}/staff/mailings`);
   const invitation = "Edinburgh Conference Nov 26 Invitation";
-  await expect(page.getByRole("row").filter({ hasText: invitation })).toContainText(mailings.imported);
-  await frame(page, "every mailing, newest first, each copied from Airtable");
+  await expect(page.getByRole("listitem").filter({ hasText: invitation })).toContainText(mailings.imported);
+  await frame(page, "every mailing, by month, newest first, each copied from Airtable, with a box of its counts");
 
   await page.getByRole("link", { name: invitation }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(invitation);

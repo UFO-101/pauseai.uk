@@ -157,7 +157,7 @@ function EventFields({ event }: { event: LetterEvent }) {
  * recorded, as the audit log has; under them every field, a line each, in
  * words.
  */
-function History({ events }: { events: LetterEvent[] }) {
+export function LetterHistory({ events }: { events: LetterEvent[] }) {
   if (events.length === 0) return <p className={styles.none}>{copy.detail.noHistory}</p>;
   return (
     <ol className={`${styles.history} ${styles.events}`} aria-label={copy.detail.historyTitle}>
@@ -210,7 +210,7 @@ export default function LetterDetails({ letter, children }: { letter: Details; c
           {letter.kind === "supporter" && <GroupLink letter={letter} />}
         </Card>
         <Card span={3} look="log" title={copy.detail.historyTitle} id="letter-history">
-          <History events={letter.events} />
+          <LetterHistory events={letter.events} />
         </Card>
       </Grid>
       {children}
