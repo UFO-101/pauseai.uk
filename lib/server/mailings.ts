@@ -135,6 +135,11 @@ export async function mailingTitle(id: number): Promise<string | undefined> {
   return mailing && (mailing.title || staffCopy.mailingPages.untitled);
 }
 
+/** The title of the draft the politicians list is choosing for, from its `mailing` parameter: none for a new mailing. */
+export async function choosingTitle(mailing: string): Promise<string | undefined> {
+  return /^\d+$/.test(mailing) ? mailingTitle(Number(mailing)) : undefined;
+}
+
 /** One mailing, with a page, from 1, of its recipients in `tab`, by name, with their outcomes. */
 export async function getMailing(id: number, page = 1, tab: RecipientTab = "all"): Promise<Mailing | undefined> {
   const [mailing] = await query<MailingSummary>(`${SELECT_MAILINGS} WHERE m.id = $1 GROUP BY m.id, a.title`, [id]);

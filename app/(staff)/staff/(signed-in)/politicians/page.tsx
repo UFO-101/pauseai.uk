@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { listAsks } from "@/lib/server/asks";
-import { mailingTitle } from "@/lib/server/mailings";
+import { choosingTitle } from "@/lib/server/mailings";
 import { listParties, politiciansPage, politiciansSearch, type PoliticiansSearch } from "@/lib/server/politicians";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { changeMailingWho } from "../../mailing-actions";
@@ -26,8 +26,7 @@ export default async function PoliticiansPage({ searchParams }: Props) {
     politiciansPage(filter),
     listAsks(),
     listParties(),
-    // The draft's title, while the list is choosing who a draft goes to.
-    /^\d+$/.test(search.mailing) ? mailingTitle(Number(search.mailing)) : undefined,
+    choosingTitle(search.mailing),
   ]);
   return (
     <>

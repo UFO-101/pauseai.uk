@@ -4,9 +4,10 @@ import { runSql } from "@/scripts/fresh-database.mjs";
 import { addStaffAccount, logInAsStaff, newestEmail, syncPoliticians } from "../steps";
 import { BASE, emailFrame, expect, frame, test } from "./fixtures";
 
-// Mailings to politicians written on the site: started from the politicians
-// list, written and saved as a draft, previewed and sent to yourself as a
-// test; who it's to changed from the list, and a draft deleted; one sent
+// Mailings to politicians written on the site: started from New mailing,
+// who it's for chosen on the politicians list, written and saved as a
+// draft, previewed and sent to yourself as a test; who it's to changed
+// from the list, and a draft deleted; one sent
 // from your Gmail, connected from the page, scheduled and sent by the
 // hourly job; and the pages of mailings scheduled, sending and sent, made in
 // the database as scheduling would make them.
@@ -68,11 +69,24 @@ test("Write a new mailing, save it, preview it and send yourself a test", async 
   await page.goto(`${BASE}/staff/me`);
   await page.getByRole("link", { name: staffCopy.gmail.connect }).click();
   await expect(page.getByText(staffCopy.gmail.outcomes.connected)).toBeVisible();
-  await page.goto(`${BASE}/staff/politicians?nation=scotland`);
-  await expect(page.getByRole("link", { name: copy.mailThese(1) })).toBeVisible();
-  await frame(page, "the politicians in Scotland, with Mail these beside Download");
+  await page.goto(`${BASE}/staff/mailings`);
+  await frame(page, "the mailings, with New mailing at the top right");
 
-  await page.getByRole("link", { name: copy.mailThese(1) }).click();
+  await page.getByRole("link", { name: copy.newMailing }).click();
+  await expect(page.getByText(copy.choosingNew)).toBeVisible();
+  await page.getByRole("link", { name: staffCopy.houses["scottish-parliament"] }).click();
+  await expect(page).toHaveURL(/house=scottish-parliament/);
+  const bar = page.getByRole("region", { name: copy.choosingCount(1) });
+  await expect(bar).toBeVisible();
+  await frame(
+    page,
+    "the politicians list, choosing who it's for: what to do at the top, and at the foot how many, with Write to these",
+    {
+      window: true,
+    },
+  );
+
+  await bar.getByRole("link", { name: copy.writeToThese(1) }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.newTitle);
   await expect(page.getByRole("status").first()).toHaveText("");
   await frame(page, "a new mailing to them: who, write, preview, sent from, when and send; nothing saved yet");
@@ -117,11 +131,18 @@ test("Change who a draft goes to, then delete it", async ({ page, request, flowD
   await startDraft(page, "Lords only");
   await page.getByRole("link", { name: copy.changeWho }).click();
   await expect(page).toHaveURL(/mailing=\d+/);
+  await expect(page.getByText(copy.choosingDraft("Lords only"))).toBeVisible();
   await page.getByRole("link", { name: staffCopy.houses.lords }).click();
   await expect(page).toHaveURL(/house=lords/);
   const use = page.getByRole("button", { name: copy.useThese(1) });
   await expect(use).toBeVisible();
-  await frame(page, "back on the list, with the draft's filter: the button makes the draft go to these instead");
+  await frame(
+    page,
+    "back on the list, choosing for the draft, named at the top: the bar's button makes it go to these instead",
+    {
+      window: true,
+    },
+  );
 
   await use.click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Lords only");

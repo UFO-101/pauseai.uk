@@ -235,7 +235,7 @@ describe("MailingWriter", () => {
     await expect.element(page.getByText(copy.leftOutReasons.blocked)).toBeVisible();
     await expect
       .element(page.getByRole("link", { name: copy.changeWho }))
-      .toHaveAttribute("href", "/staff/politicians?house=commons&party=%21Labour&ask=frontier-ai-letter&mailing=new");
+      .toHaveAttribute("href", "/staff/politicians?house=commons&party=%21Labour&ask=frontier-ai-letter");
   });
 
   it("explains the ask behind its ?", async () => {

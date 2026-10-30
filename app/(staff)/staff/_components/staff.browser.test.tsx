@@ -896,8 +896,12 @@ describe("PoliticiansList", () => {
       />,
     );
     await expect
-      .element(page.getByRole("region", { name: staffCopy.mailingPages.choosingCount(1) }))
-      .toHaveTextContent(staffCopy.mailingPages.writeToThese(1));
+      .element(
+        page
+          .getByRole("region", { name: staffCopy.mailingPages.choosingCount(1) })
+          .getByRole("link", { name: staffCopy.mailingPages.writeToThese(1) }),
+      )
+      .toBeVisible();
   });
 
   it("is the count, the table and the pages, and links to those the search finds elsewhere", async () => {
