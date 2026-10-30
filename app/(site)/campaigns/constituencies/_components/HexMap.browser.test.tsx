@@ -36,9 +36,19 @@ describe("HexMap", () => {
     expect(document.querySelector("svg")!.getAttribute("aria-label")).toBe("The map");
   });
 
+  it("names the regions round the edge, a name of two lines on two", async () => {
+    const { screen } = await renderMap();
+    await expect.element(screen.getByText("Scotland")).toBeVisible();
+    const yorkshire = [...document.querySelectorAll("tspan")].filter((t) =>
+      t.closest("text")!.textContent!.startsWith("Yorkshire"),
+    );
+    expect(yorkshire.map((t) => t.textContent)).toEqual(["Yorkshire and", "the Humber"]);
+    expect(Number(yorkshire[1].getAttribute("y"))).toBeGreaterThan(Number(yorkshire[0].getAttribute("y")));
+  });
+
   it("picks a hexagon clicked, and lets the picked one go", async () => {
     const { onPick } = await renderMap({ picked: WESTMINSTER });
-    expect(document.querySelectorAll("path")).toHaveLength(651);
+    expect(document.querySelectorAll("path")).toHaveLength(652);
     hex(EDINBURGH).dispatchEvent(new MouseEvent("click", { bubbles: true }));
     expect(onPick).toHaveBeenLastCalledWith(EDINBURGH);
     hex(WESTMINSTER).dispatchEvent(new MouseEvent("click", { bubbles: true }));

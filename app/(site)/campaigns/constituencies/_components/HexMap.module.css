@@ -54,21 +54,30 @@
   pointer-events: none;
 }
 
-/* The nations' and London's names, haloed in paper so they read over the
-   hexagons. In the map's own units: a hexagon is 17 wide. */
-.area {
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 900;
-  fill: var(--text);
-  paint-order: stroke;
-  stroke: var(--bg);
-  stroke-width: 4px;
-  stroke-linejoin: round;
-  text-anchor: middle;
-  dominant-baseline: middle;
+/* The line round each region, over the hexagons' own. */
+.borders {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1.6;
+  stroke-linecap: round;
   pointer-events: none;
-  opacity: 0.85;
+}
+
+/* Each region's name, in the sea, with a hairline to the region. */
+.leader {
+  stroke: var(--text);
+  stroke-width: 0.8;
+}
+
+.end {
+  fill: var(--text);
+}
+
+.region {
+  font-family: var(--font-display);
+  font-weight: 800;
+  fill: var(--text);
+  dominant-baseline: middle;
 }
 
 .tip {

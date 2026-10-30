@@ -1,9 +1,11 @@
 import type { SyntheticEvent } from "react";
 import {
-  AREA_LABELS,
   CELLS,
-  MAP_SIZE,
+  LABEL_SIZE,
+  MAP_BOX,
   MAP_STEPS,
+  REGION_BORDERS,
+  REGION_LABELS,
   hexPath,
   stepOf,
   type ConstituencyRow,
@@ -21,7 +23,8 @@ function codeOf(event: SyntheticEvent): string | null {
 
 /**
  * The 650 constituencies as hexagons, each filled by its count on the
- * layer: hollow for none, then darker for more. Clicking or tapping one
+ * layer: hollow for none, then darker for more, with a line round each
+ * region and its name in the sea. Clicking or tapping one
  * picks it, and clicking it again lets it go; a mouse over one shows its
  * name and count. The picked one is outlined. The numbers are in the
  * table too, as a hexagon can't be reached from the keyboard.
@@ -54,7 +57,7 @@ export default function HexMap({
     <div className={styles.map}>
       <svg
         className={styles.svg}
-        viewBox={`0 0 ${MAP_SIZE.width.toFixed(1)} ${MAP_SIZE.height.toFixed(1)}`}
+        viewBox={[MAP_BOX.x, MAP_BOX.y, MAP_BOX.width, MAP_BOX.height].map((n) => n.toFixed(1)).join(" ")}
         role="img"
         aria-label={label}
       >
@@ -78,10 +81,19 @@ export default function HexMap({
             />
           ))}
         </g>
-        {AREA_LABELS.map((area) => (
-          <text key={area.name} className={styles.area} x={area.x} y={area.y}>
-            {area.name}
-          </text>
+        <path className={styles.borders} d={REGION_BORDERS} />
+        {REGION_LABELS.map(({ region, lines, x, align, leader }) => (
+          <g key={region}>
+            <line className={styles.leader} {...leader} />
+            <circle className={styles.end} cx={leader.x2} cy={leader.y2} r={2} />
+            <text className={styles.region} x={x} textAnchor={align} fontSize={LABEL_SIZE}>
+              {lines.map((line) => (
+                <tspan key={line.text} x={x} y={line.y}>
+                  {line.text}
+                </tspan>
+              ))}
+            </text>
+          </g>
         ))}
         {pickedCell && <path className={styles.picked} d={hexPath(pickedCell.x, pickedCell.y, -0.4)} />}
       </svg>
@@ -90,8 +102,8 @@ export default function HexMap({
           className={styles.tip}
           role="presentation"
           style={{
-            left: `${(hoveredCell.x / MAP_SIZE.width) * 100}%`,
-            top: `${(hoveredCell.y / MAP_SIZE.height) * 100}%`,
+            left: `${((hoveredCell.x - MAP_BOX.x) / MAP_BOX.width) * 100}%`,
+            top: `${((hoveredCell.y - MAP_BOX.y) / MAP_BOX.height) * 100}%`,
           }}
         >
           <strong>{hoveredCell.name}</strong>

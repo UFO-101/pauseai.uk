@@ -35,7 +35,7 @@ export type Cell = { code: string; name: string; region: string; x: number; y: n
 const RADIUS = 10;
 const WIDTH = Math.sqrt(3) * RADIUS;
 const ROW = 1.5 * RADIUS;
-/** The space round the hexagons, so a selected one's outline isn't cut off. */
+/** The space round the hexagons and names, so a selected one's outline isn't cut off. */
 const MARGIN = 4;
 
 const LAYOUT = hexes as unknown as Record<string, [q: number, r: number, region: string]>;
@@ -50,44 +50,126 @@ export const CELLS: readonly Cell[] = Object.entries(LAYOUT)
     code,
     name: constituencyName(code)!,
     region,
-    x: MARGIN + WIDTH / 2 + WIDTH * (q - MIN_Q + (r & 1 ? 0.5 : 0)),
-    y: MARGIN + RADIUS + ROW * (MAX_R - r),
+    x: WIDTH / 2 + WIDTH * (q - MIN_Q + (r & 1 ? 0.5 : 0)),
+    y: RADIUS + ROW * (MAX_R - r),
   }))
   .sort((a, b) => a.name.localeCompare(b.name, "en-GB"));
 
-/** The map's size, in its own units, for the SVG's viewBox. */
-export const MAP_SIZE = {
-  width: Math.max(...CELLS.map((c) => c.x)) + WIDTH / 2 + MARGIN,
-  height: Math.max(...CELLS.map((c) => c.y)) + RADIUS + MARGIN,
-};
+/** A corner of a hexagon, at an angle from its centre: -90 is the top. */
+function corner(x: number, y: number, r: number, deg: number): [number, number] {
+  const a = (deg * Math.PI) / 180;
+  return [x + r * Math.cos(a), y + r * Math.sin(a)];
+}
+
+const point = ([x, y]: [number, number]) => `${x.toFixed(2)},${y.toFixed(2)}`;
 
 /** A hexagon's outline round a centre, a little smaller than the grid so a hairline of paper shows between. */
 export function hexPath(x: number, y: number, inset = 0.6): string {
-  const r = RADIUS - inset;
-  const corners = [-90, -30, 30, 90, 150, 210].map((deg) => {
-    const a = (deg * Math.PI) / 180;
-    return `${(x + r * Math.cos(a)).toFixed(2)},${(y + r * Math.sin(a)).toFixed(2)}`;
-  });
-  return `M${corners.join("L")}Z`;
+  return `M${[-90, -30, 30, 90, 150, 210].map((deg) => point(corner(x, y, RADIUS - inset, deg))).join("L")}Z`;
 }
 
-/** The areas named on the map, each by the regions its hexagons are in. */
-const AREAS: { name: string; regions: (region: string) => boolean }[] = [
-  { name: "Scotland", regions: (region) => region.startsWith("S") },
-  { name: "Northern Ireland", regions: (region) => region.startsWith("N") },
-  { name: "Wales", regions: (region) => region.startsWith("W") },
-  { name: "London", regions: (region) => region === "E12000007" },
+/** Each hexagon's region, by where its centre is. */
+const REGION_AT = new Map(CELLS.map((c) => [`${c.x.toFixed(1)},${c.y.toFixed(1)}`, c.region]));
+
+/**
+ * The line round each region, London too, and so round the coast: every
+ * side of a hexagon with another region or the sea across it. A side
+ * between two regions is drawn once, from the hexagon whose code is first.
+ * Its neighbour across the side facing angle a is a hexagon's width away
+ * that way, and the side runs between the corners 30° either side of a.
+ */
+export const REGION_BORDERS: string = CELLS.flatMap((cell) =>
+  [0, 60, 120, 180, 240, 300].flatMap((deg) => {
+    const [nx, ny] = corner(cell.x, cell.y, WIDTH, deg);
+    const across = REGION_AT.get(`${nx.toFixed(1)},${ny.toFixed(1)}`);
+    if (across === cell.region || (across && across < cell.region)) return [];
+    return [`M${point(corner(cell.x, cell.y, RADIUS, deg - 30))}L${point(corner(cell.x, cell.y, RADIUS, deg + 30))}`];
+  }),
+).join("");
+
+/** A region's name in the sea round the map, a line or two, and the line from it to the region. */
+export type RegionLabel = {
+  region: string;
+  /** Each line of the name, and the middle of its height. */
+  lines: readonly { text: string; y: number }[];
+  x: number;
+  /** Which end of the name is at x, as SVG's text-anchor says it. */
+  align: "start" | "middle" | "end";
+  /** The leader: from beside the name to the middle of the region's nearest hexagon. */
+  leader: { x1: number; y1: number; x2: number; y2: number };
+};
+
+/** The labels' type size, and the space between a name's lines, in the map's units. */
+export const LABEL_SIZE = 15;
+const LINE = LABEL_SIZE * 1.1;
+/** The gap between a name and its leader. */
+const GAP = 4;
+
+/**
+ * The regions' names, each placed by hand in the sea beside its region, in
+ * the map's units: west of the map for the regions on the west, east for
+ * those on the east, and below for two with no room beside them.
+ */
+const PLACES: { region: string; lines: string[]; x: number; y: number; align: RegionLabel["align"] }[] = [
+  { region: "S92000003", lines: ["Scotland"], x: 94, y: 161, align: "end" },
+  { region: "N92000002", lines: ["Northern", "Ireland"], x: 48, y: 314, align: "middle" },
+  { region: "E12000001", lines: ["North East"], x: 306, y: 228, align: "start" },
+  { region: "E12000002", lines: ["North West"], x: 114, y: 379, align: "end" },
+  { region: "E12000003", lines: ["Yorkshire and", "the Humber"], x: 406, y: 331, align: "start" },
+  { region: "E12000004", lines: ["East Midlands"], x: 398, y: 381, align: "start" },
+  { region: "W92000004", lines: ["Wales"], x: 76, y: 446, align: "end" },
+  { region: "E12000005", lines: ["West Midlands"], x: 108, y: 501, align: "end" },
+  { region: "E12000006", lines: ["East of", "England"], x: 501, y: 491, align: "start" },
+  { region: "E12000007", lines: ["London"], x: 476, y: 579, align: "start" },
+  { region: "E12000009", lines: ["South West"], x: 116, y: 611, align: "end" },
+  { region: "E12000008", lines: ["South East"], x: 466, y: 708, align: "middle" },
 ];
 
-/** Where each area's name goes: the middle of its hexagons. */
-export const AREA_LABELS: readonly { name: string; x: number; y: number }[] = AREAS.map(({ name, regions }) => {
-  const cells = CELLS.filter((c) => regions(c.region));
+/** Every region's name, its lines centred on its place, and its leader. */
+export const REGION_LABELS: readonly RegionLabel[] = PLACES.map(({ region, lines, x, y, align }) => {
+  const first = y - (LINE * (lines.length - 1)) / 2;
+  // The leader leaves the end of a name beside its region, or the top of
+  // one below it, and goes to the region's nearest hexagon.
+  const from =
+    align === "middle" ? { x, y: first - LABEL_SIZE / 2 - GAP } : { x: align === "end" ? x + GAP : x - GAP, y };
+  const to = CELLS.filter((c) => c.region === region).reduce((best, c) =>
+    Math.hypot(c.x - from.x, c.y - from.y) < Math.hypot(best.x - from.x, best.y - from.y) ? c : best,
+  );
   return {
-    name,
-    x: cells.reduce((sum, c) => sum + c.x, 0) / cells.length,
-    y: cells.reduce((sum, c) => sum + c.y, 0) / cells.length,
+    region,
+    lines: lines.map((text, i) => ({ text, y: first + LINE * i })),
+    x,
+    align,
+    leader: { x1: from.x, y1: from.y, x2: to.x, y2: to.y },
   };
 });
+
+/**
+ * Roughly how wide a name's line is: the display face's heavy letters
+ * average about 0.6 of its size. It only has to keep the names inside the
+ * map's box, which has a margin to spare.
+ */
+const textWidth = (text: string) => text.length * LABEL_SIZE * 0.6;
+
+/**
+ * The box the map is drawn in, in its own units, for the SVG's viewBox:
+ * round the hexagons and the names in the sea, with a margin.
+ */
+export const MAP_BOX = (() => {
+  const xs = CELLS.flatMap((c) => [c.x - WIDTH / 2, c.x + WIDTH / 2]);
+  const ys = CELLS.flatMap((c) => [c.y - RADIUS, c.y + RADIUS]);
+  for (const { lines, x, align } of REGION_LABELS) {
+    for (const line of lines) {
+      const width = textWidth(line.text);
+      const left = align === "start" ? x : align === "middle" ? x - width / 2 : x - width;
+      xs.push(left, left + width);
+      ys.push(line.y - LABEL_SIZE / 2, line.y + LABEL_SIZE / 2);
+    }
+  }
+  const x = Math.min(...xs) - MARGIN;
+  const y = Math.min(...ys) - MARGIN;
+  return { x, y, width: Math.max(...xs) + MARGIN - x, height: Math.max(...ys) + MARGIN - y };
+})();
 
 /**
  * Where each layer's colours change: the lowest count of each step after

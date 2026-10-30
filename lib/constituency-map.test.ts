@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  AREA_LABELS,
   CELLS,
-  MAP_SIZE,
+  MAP_BOX,
   MAP_STEPS,
+  REGION_BORDERS,
+  REGION_LABELS,
   hexPath,
   reach,
   rowsByCode,
@@ -17,22 +18,67 @@ describe("the constituency map's hexagons", () => {
     expect(CELLS[0].name).toBe("Aberafan Maesteg");
     expect(new Set(CELLS.map((c) => `${c.x.toFixed(1)},${c.y.toFixed(1)}`)).size).toBe(650);
     for (const { x, y } of CELLS) {
-      expect(x).toBeGreaterThan(0);
-      expect(x).toBeLessThan(MAP_SIZE.width);
-      expect(y).toBeGreaterThan(0);
-      expect(y).toBeLessThan(MAP_SIZE.height);
+      expect(x).toBeGreaterThan(MAP_BOX.x);
+      expect(x).toBeLessThan(MAP_BOX.x + MAP_BOX.width);
+      expect(y).toBeGreaterThan(MAP_BOX.y);
+      expect(y).toBeLessThan(MAP_BOX.y + MAP_BOX.height);
     }
   });
 
   it("put Scotland north of London, and Northern Ireland west of Wales", () => {
-    const at = (name: string) => AREA_LABELS.find((a) => a.name === name)!;
-    expect(at("Scotland").y).toBeLessThan(at("London").y);
-    expect(at("Northern Ireland").x).toBeLessThan(at("Wales").x);
+    const middle = (name: string) => {
+      const cells = CELLS.filter((c) => c.region === REGION_LABELS.find((l) => l.lines[0].text === name)!.region);
+      return {
+        x: cells.reduce((sum, c) => sum + c.x, 0) / cells.length,
+        y: cells.reduce((sum, c) => sum + c.y, 0) / cells.length,
+      };
+    };
+    expect(middle("Scotland").y).toBeLessThan(middle("London").y);
+    expect(middle("Northern").x).toBeLessThan(middle("Wales").x);
   });
 
   it("draw a hexagon as six corners round its centre, inset or outset", () => {
     expect(hexPath(0, 0)).toBe("M0.00,-9.40L8.14,-4.70L8.14,4.70L0.00,9.40L-8.14,4.70L-8.14,-4.70Z");
     expect(hexPath(0, 0, -0.4)).toContain("M0.00,-10.40");
+  });
+});
+
+describe("the map's regions", () => {
+  // Each side of a hexagon, by its two corners either way round.
+  const sides = (code: string) => {
+    const cell = CELLS.find((c) => c.code === code)!;
+    const corners = hexPath(cell.x, cell.y, 0).slice(1, -1).split("L");
+    return corners.map((a, i) => [a, corners[(i + 1) % 6]].sort().join(" "));
+  };
+  const drawn = REGION_BORDERS.slice(1)
+    .split("M")
+    .map((side) => side.split("L").sort().join(" "));
+
+  it("are outlined: round a hexagon alone in the sea, between regions once, not inside one", () => {
+    expect(new Set(drawn).size).toBe(drawn.length);
+    for (const side of sides("W07000112")) expect(drawn).toContain(side);
+    for (const side of sides("E14001172")) expect(drawn).not.toContain(side);
+    // London's outer hexagons have a side drawn, its inner ones none.
+    const london = CELLS.filter((c) => c.region === "E12000007").map((c) => c.code);
+    const outlined = london.filter((code) => sides(code).some((side) => drawn.includes(side)));
+    expect(outlined.length).toBeGreaterThan(0);
+    expect(outlined.length).toBeLessThan(london.length);
+  });
+
+  it("are named in the sea, each with a leader to one of its own hexagons, inside the map's box", () => {
+    expect(new Set(REGION_LABELS.map((l) => l.region))).toEqual(new Set(CELLS.map((c) => c.region)));
+    for (const { region, x, lines, leader } of REGION_LABELS) {
+      expect(CELLS.find((c) => c.x === leader.x2 && c.y === leader.y2)!.region).toBe(region);
+      expect(x).toBeGreaterThan(MAP_BOX.x);
+      expect(x).toBeLessThan(MAP_BOX.x + MAP_BOX.width);
+      for (const { y } of lines) {
+        expect(y).toBeGreaterThan(MAP_BOX.y);
+        expect(y).toBeLessThan(MAP_BOX.y + MAP_BOX.height);
+      }
+    }
+    const northernIreland = REGION_LABELS.find((l) => l.region === "N92000002")!;
+    expect(northernIreland.lines.map((l) => l.text)).toEqual(["Northern", "Ireland"]);
+    expect(northernIreland.leader.y1).toBeLessThan(northernIreland.lines[0].y);
   });
 });
 
