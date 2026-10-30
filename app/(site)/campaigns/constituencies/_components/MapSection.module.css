@@ -1,5 +1,19 @@
+/* Straight on from the title, on the same paper, so little room above;
+   a section's room below. */
+.band {
+  padding: var(--space-5) 0 var(--space-9);
+}
+
+/* As wide as the title band (PageHero's `wide`), so they share a left edge. */
 .stack {
+  --container-width: var(--measure-wide);
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
+}
+
+@media (max-width: 640px) {
+  .band {
+    padding-bottom: var(--space-7);
+  }
 }

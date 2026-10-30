@@ -1,3 +1,8 @@
+/* As wide as the title band and the map, so they share a left edge. */
+.wide {
+  --container-width: var(--measure-wide);
+}
+
 .steps {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

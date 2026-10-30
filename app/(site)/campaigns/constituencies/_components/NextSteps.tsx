@@ -8,7 +8,7 @@ import styles from "./NextSteps.module.css";
 export default function NextSteps() {
   return (
     <Section tone="muted">
-      <div className="container">
+      <div className={`container ${styles.wide}`}>
         <SectionHeader title={copy.next.title} />
         <ul className={styles.steps}>
           {copy.next.steps.map((step) => (
