@@ -129,6 +129,7 @@ import {
   MailingWriterExample,
   ChangeWhoListExample,
   PoliticiansListExample,
+  AskRowExample,
   PoliticianDetailsExample,
   PoliticianTableEmptyExample,
   PoliticianTableExample,
@@ -1972,6 +1973,18 @@ export const staff: Group = {
           ),
         },
       ],
+    },
+    {
+      name: "AskRow",
+      file: "app/(staff)/staff/_components/AskRow.tsx",
+      variants: [
+        { label: "An answer from Airtable, and an ask staff record with none yet", render: () => <AskRowExample /> },
+      ],
+    },
+    {
+      name: "OtherAsks",
+      file: "app/(staff)/staff/_components/AskRow.tsx",
+      variants: [{ label: "Under the rows, the button for another ask", render: () => <AskRowExample others /> }],
     },
     {
       name: "PoliticianDetails",

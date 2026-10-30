@@ -42,6 +42,37 @@ test("A politician's page: markers, notes, answers and emails", async ({ page, r
   await frame(page, "Polly's page: important, with notes, her answers from Airtable and PauseAI's invitation");
 });
 
+test("Answer an ask staff added, from the button under a politician's asks", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  runSql(
+    flowDatabase,
+    `INSERT INTO asks (slug, title, kind, date, asked_by)
+     VALUES ('giant-pause-button-oct-2026', 'Giant pause button', 'letter', '2026-10-29', '{pauseai}')`,
+  );
+  await syncPoliticians(request, BASE);
+  await logIn(page, flowDatabase);
+  await openPolitician(page, "Polly Placeholder");
+  const asks = page.getByRole("region", { name: copy.statusesTitle });
+  await expect(asks.getByRole("group", { name: "Giant pause button" })).toHaveCount(0);
+  await frame(page, "Polly's asks, with the button for another under them");
+  await asks.getByRole("button", { name: copy.otherAsk }).click();
+  const menu = page.getByRole("list", { name: copy.otherAsk });
+  await expect(menu.getByRole("button", { name: "Giant pause button" })).toBeVisible();
+  await frame(page, "its menu: the other asks staff record", { window: true });
+  await menu.getByRole("button", { name: "Giant pause button" }).click();
+  const row = asks.getByRole("group", { name: "Giant pause button" });
+  await expect(row.getByText(staffCopy.statuses.none)).toBeVisible();
+  await row.getByLabel(copy.note).fill("Said yes on the phone");
+  await frame(page, "a row like the others, not signed, its form open for a note of how we know", { window: true });
+  await row.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
+  await expect(row.locator("[class*=answer]")).toHaveText(new RegExp(`^${staffCopy.statuses.signed}`));
+  await expect(row.getByText(/Said yes on the phone/)).toBeVisible();
+  await frame(page, "signed, with Edit like the rest");
+});
+
 test("A peer, an MSP, and an MP who left office", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
@@ -383,8 +414,12 @@ test("Import pauseai.info's letters and Go to Parliament's meetings", async ({ p
 
   // On the letters page, marked as from the old form; the sender a supporter from it.
   await page.goto(`${BASE}/staff/letters`);
-  await expect(page.getByText(staffCopy.letters.imported)).toHaveCount(3);
-  await frame(page, "the letters page: the old form's letters marked");
+  await expect(page.getByText(staffCopy.letters.imported, { exact: true })).toHaveCount(3);
+  await expect(page.getByRole("link", { name: "DeepMind letter, from pauseai.info" }).first()).toHaveAttribute(
+    "href",
+    "https://pauseai.uk/campaigns/dear-sir-demis-2025",
+  );
+  await frame(page, "the letters page: the old form's letters marked, their campaigns linked to their letters");
   await page.getByRole("link", { name: "Dee Deepmind" }).first().click();
   await expect(page.getByText(staffCopy.supporters.sources["web-form"]).first()).toBeVisible();
   await frame(page, "a supporter who wrote through the old form");

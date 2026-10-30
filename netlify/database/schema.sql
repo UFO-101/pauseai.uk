@@ -1000,7 +1000,9 @@ CREATE TABLE public.campaigns (
     slug text NOT NULL,
     title text NOT NULL,
     ask text,
-    CONSTRAINT campaigns_slug_check CHECK ((slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'::text))
+    url text,
+    CONSTRAINT campaigns_slug_check CHECK ((slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'::text)),
+    CONSTRAINT campaigns_url_check CHECK ((url ~ '^https://'::text))
 );
 
 --

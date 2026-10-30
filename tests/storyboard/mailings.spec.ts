@@ -308,5 +308,7 @@ test("Send a mailing from a connected Gmail: schedule it, and the hourly job sen
   );
   await page.reload();
   await expect(page.getByText("I look", { exact: false })).toBeVisible();
-  await frame(page, "her reply, under the letter");
+  // Without the letter she quotes, which is above it already.
+  await expect(page.getByText("We'd love to see you", { exact: false })).toHaveCount(0);
+  await frame(page, "her reply, under the letter, without the letter it quotes");
 });

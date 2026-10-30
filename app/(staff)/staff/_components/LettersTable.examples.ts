@@ -7,6 +7,8 @@ const [pm] = campaigns;
 export const exampleLetter: LetterSummary = {
   id: 1,
   campaign: pm.slug,
+  campaignTitle: pm.title,
+  campaignUrl: null,
   status: "bounced",
   senderName: "Jane Smith",
   senderEmail: "jane@example.com",

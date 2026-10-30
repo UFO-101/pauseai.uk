@@ -81,6 +81,36 @@
   gap: var(--space-4) var(--space-4);
 }
 
+/* Under the asks: the small button with the menu of the others. */
+.otherAsks {
+  grid-column: 1 / -1;
+}
+
+/* The menu's asks, each a button the width of the menu. */
+.askChoices {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.askChoices button {
+  width: 100%;
+  padding: 2px var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.askChoices button:hover {
+  background: var(--accent-light);
+}
+
 .ask {
   display: grid;
   grid-column: 1 / -1;

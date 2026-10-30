@@ -10,6 +10,10 @@ export type LetterEvent = { at: string; status: string; details: Record<string, 
 export type LetterSummary = {
   id: number;
   campaign: string;
+  /** The campaign's title, as the campaigns table has it. */
+  campaignTitle: string;
+  /** Where an old campaign's letter can be read, as the campaigns table has it. */
+  campaignUrl: string | null;
   status: string;
   senderName: string;
   senderEmail: string;
@@ -77,14 +81,14 @@ async function letterRows({
   (LetterSummary & { total: number })[]
 > {
   return query<LetterSummary & { total: number }>(
-    `SELECT l.id::int AS id, s.campaign, l.status, f.name AS "senderName", f.email AS "senderEmail",
+    `SELECT l.id::int AS id, s.campaign, c.title AS "campaignTitle", c.url AS "campaignUrl", l.status, f.name AS "senderName", f.email AS "senderEmail",
        f.contact_consent AS "contactConsent", n.name AS "mpName", n.id::int AS "politicianId", p.is_test AS "isTest", s.airtable_id IS NOT NULL AS imported, l.created_at AS "createdAt", l.sent_at AS "sentAt", l.replied_at AS "repliedAt",
        (SELECT k.supporter_id::int FROM supporter_links k WHERE k.form_entry_id = s.entry_id) AS "supporterId",
        coalesce((SELECT json_agg(json_build_object('at', e.at, 'status', e.status, 'details', e.details) ORDER BY e.at DESC, e.id DESC)
                  FROM letter_events e WHERE e.letter_id = l.id), '[]') AS events,
        count(*) OVER ()::int AS total
      FROM letters_from_supporters s JOIN letters l ON l.id = s.id JOIN form_entries f ON f.id = s.entry_id
-       JOIN notable_people n ON n.id = l.notable_person_id JOIN politicians p ON p.id = n.id
+       JOIN campaigns c ON c.slug = s.campaign JOIN notable_people n ON n.id = l.notable_person_id JOIN politicians p ON p.id = n.id
      WHERE ($1::text IS NULL OR l.status = $1 OR ($1 = 'replied' AND l.replied_at IS NOT NULL)
        OR ($1 = 'auto_reply' AND EXISTS (SELECT 1 FROM letter_events e WHERE e.letter_id = l.id AND e.status = 'auto_reply')))
        AND ($3::bigint IS NULL OR l.notable_person_id = $3)
@@ -194,7 +198,10 @@ export async function getSupporterLetter(id: number): Promise<SupporterLetterDet
 }
 
 /** A letter on an MP's page for staff without `supporters`: what happened to it, and nothing of who wrote it. */
-export type UnsignedLetter = Pick<LetterSummary, "id" | "campaign" | "status" | "createdAt" | "repliedAt">;
+export type UnsignedLetter = Pick<
+  LetterSummary,
+  "id" | "campaign" | "campaignTitle" | "campaignUrl" | "status" | "createdAt" | "repliedAt"
+>;
 
 /** An MP's letters: with their senders, or without. */
 export type PoliticianLetters =
@@ -203,8 +210,8 @@ export type PoliticianLetters =
 /** The letters to a politician, newest first, selecting nothing of their senders, so none reach the page. */
 async function unsignedLetters(politicianId: number, limit = 200): Promise<UnsignedLetter[]> {
   return query<UnsignedLetter>(
-    `SELECT l.id::int AS id, s.campaign, l.status, l.created_at AS "createdAt", l.replied_at AS "repliedAt"
-     FROM letters_from_supporters s JOIN letters l ON l.id = s.id
+    `SELECT l.id::int AS id, s.campaign, c.title AS "campaignTitle", c.url AS "campaignUrl", l.status, l.created_at AS "createdAt", l.replied_at AS "repliedAt"
+     FROM letters_from_supporters s JOIN letters l ON l.id = s.id JOIN campaigns c ON c.slug = s.campaign
      WHERE l.notable_person_id = $1 ORDER BY l.created_at DESC, l.id DESC LIMIT $2`,
     [politicianId, limit],
   );

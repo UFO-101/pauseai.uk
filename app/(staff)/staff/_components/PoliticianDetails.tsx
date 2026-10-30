@@ -1,13 +1,10 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { SubmitButton } from "@/components/ui/SubmitButton";
-import { Select, TextInput } from "@/components/ui/Controls";
-import { FilterForm } from "@/components/ui/Form";
-import { ASK_STATUSES } from "@/lib/asks";
-import { trackedAsks } from "@/lib/email-your-mp";
+import { answeredByHand, trackedAsks } from "@/lib/email-your-mp";
 import type { Ask } from "@/lib/server/asks";
-import { AskLead, AskTitle } from "./AskLine";
+import { AskTitle } from "./AskLine";
+import AskRow, { OtherAsks } from "./AskRow";
 import CampaignName from "./CampaignName";
 import { FieldChanges } from "./AuditDetail";
 import type { FieldChange } from "@/lib/field-changes";
@@ -62,7 +59,7 @@ function Sender({ letter }: { letter: LetterSummary }) {
       )}
       <Muted>
         {" · "}
-        <CampaignName slug={letter.campaign} />
+        <CampaignName slug={letter.campaign} title={letter.campaignTitle} url={letter.campaignUrl} />
       </Muted>
     </>
   );
@@ -73,7 +70,7 @@ function Unsigned({ letter, status }: { letter: UnsignedLetter; status: boolean 
   return (
     <Muted>
       {" · "}
-      <CampaignName slug={letter.campaign} />
+      <CampaignName slug={letter.campaign} title={letter.campaignTitle} url={letter.campaignUrl} />
       {status && <> · {staffCopy.letters.status[letter.status] ?? letter.status}</>}
     </Muted>
   );
@@ -218,129 +215,12 @@ function Detail({ change, asks }: { change: PoliticianChange; asks: Ask[] }) {
   }
 }
 
-/** The asks a politician has a row for: those staff record, then any other they have a status for, in the asks' order. */
+/** The asks a politician has a row for: the campaigns' that staff record, then any other they have a status for, in the asks' order. */
 function asksOf(politician: Politician, asks: Ask[]): Ask[] {
   return [
     ...asks.filter((ask) => trackedAsks.includes(ask.slug)),
     ...asks.filter((ask) => !trackedAsks.includes(ask.slug) && politician.statuses[ask.slug]),
   ];
-}
-
-/**
- * Setting their answer to an ask staff record, with a note: Signed, or
- * taking it away, for a letter; one of an event's answers, or none.
- */
-function StatusForm({
-  politician,
-  ask,
-  setStatus,
-}: {
-  politician: Politician;
-  ask: Ask;
-  setStatus: (form: FormData) => void | Promise<void>;
-}) {
-  const status = politician.statuses[ask.slug];
-  const note = (
-    <span className={styles.note}>
-      <TextInput name="note" aria-label={copy.note} placeholder={copy.notePlaceholder} required />
-    </span>
-  );
-  return (
-    <FilterForm action={setStatus} aria-label={`${copy.setStatus}: ${ask.title}`}>
-      <input type="hidden" name="politicianId" value={politician.id} />
-      <input type="hidden" name="ask" value={ask.slug} />
-      {ask.kind === "letter" ? (
-        <>
-          <input type="hidden" name="status" value={status ? "" : "signed"} />
-          {note}
-          <SubmitButton variant={status ? "ghost" : "primary"} size="small">
-            {status ? staffCopy.politicians.unmarkSigned : staffCopy.politicians.markSigned}
-          </SubmitButton>
-        </>
-      ) : (
-        <>
-          <Select name="status" defaultValue={status?.status ?? ""} aria-label={copy.status}>
-            <option value="">{staffCopy.statuses.noAnswer}</option>
-            {ASK_STATUSES.event.map((value) => (
-              <option key={value} value={value}>
-                {staffCopy.statuses[value]}
-              </option>
-            ))}
-          </Select>
-          {note}
-          <SubmitButton variant="primary" size="small">
-            {copy.save}
-          </SubmitButton>
-        </>
-      )}
-    </FilterForm>
-  );
-}
-
-/** Answers that are a yes, ticked in green, and a no, crossed. */
-const YES = ["signed", "going"];
-const NO = ["declined", "declined_surgery"];
-
-/**
- * One ask, a row of the asks card: who asked them to do what, and when,
- * leading into the ask's title; the note and who set the answer, or which
- * import; beside it, in a column of its own, their answer and its date, a
- * yes ticked in green and a no crossed, and for an ask staff record, Edit
- * under it, which opens the form to change it in a bubble below.
- */
-function AskRow({
-  politician,
-  ask,
-  setStatus,
-}: {
-  politician: Politician;
-  ask: Ask;
-  setStatus: (form: FormData) => void | Promise<void>;
-}) {
-  const status = politician.statuses[ask.slug];
-  const none = ask.kind === "letter" ? staffCopy.statuses.none : staffCopy.statuses.noAnswer;
-  const tracked = trackedAsks.includes(ask.slug);
-  const editId = `edit-${ask.slug}`;
-  const tone = status && (YES.includes(status.status) ? styles.yes : NO.includes(status.status) ? styles.no : "");
-  return (
-    <div className={styles.ask} role="group" aria-label={ask.title}>
-      <div className={styles.asked}>
-        <AskLead ask={ask} />
-        {status && (
-          <span className={styles.askMeta}>
-            {status.note && `${status.note} · `}
-            {copy.fromImport[status.updatedBy] ?? copy.setBy(status.updatedBy, staffDate(status.updatedAt))}
-          </span>
-        )}
-      </div>
-      <div className={`${styles.answer} ${tone || ""}`}>
-        <span>{status ? staffCopy.statuses[status.status] : none}</span>
-        {status?.date && <span className={styles.askMeta}>{staffDate(status.date)}</span>}
-        {tracked && (
-          <button
-            type="button"
-            className={styles.edit}
-            popoverTarget={editId}
-            style={{ anchorName: `--${editId}` } as React.CSSProperties}
-          >
-            {copy.edit}
-          </button>
-        )}
-      </div>
-      {tracked && (
-        // Keyed on the answer, so a change made from it closes it and empties the note.
-        <div
-          key={status?.updatedAt ?? "none"}
-          id={editId}
-          popover="auto"
-          className={styles.editPopover}
-          style={{ positionAnchor: `--${editId}` } as React.CSSProperties}
-        >
-          <StatusForm politician={politician} ask={ask} setStatus={setStatus} />
-        </div>
-      )}
-    </div>
-  );
 }
 
 /**
@@ -394,6 +274,8 @@ export default function PoliticianDetails({
       ),
     })),
   ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+  const rows = asksOf(politician, asks);
+  const others = asks.filter((ask) => answeredByHand(ask.slug) && !rows.includes(ask));
   const source = politician.isTest
     ? copy.sources.test
     : politician.airtableId
@@ -518,9 +400,10 @@ export default function PoliticianDetails({
         </Card>
         <Card span={3} look="aside" title={copy.statusesTitle} id="asks-title">
           <div className={styles.asks}>
-            {asksOf(politician, asks).map((ask) => (
+            {rows.map((ask) => (
               <AskRow key={ask.slug} politician={politician} ask={ask} setStatus={setStatus} />
             ))}
+            <OtherAsks politician={politician} asks={others} setStatus={setStatus} />
           </div>
         </Card>
         <Card span={6} look="log" title={copy.historyTitle} id="history-title">

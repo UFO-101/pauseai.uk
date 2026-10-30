@@ -1,6 +1,7 @@
 // Pure helpers for the Email your MP tool: picking a campaign and writing
 // the letter. Used by the form in the browser and by the server, which
 // checks what it's sent against the same campaigns.
+import { FIXED_ASKS } from "@/lib/asks";
 import { campaigns, type Campaign, type LetterDetails, type MpStatuses } from "@/lib/content/email-your-mp";
 import { docFromMarkup, type Inline, type LetterDoc } from "@/lib/letter-format";
 
@@ -50,6 +51,11 @@ export const trackedCampaigns = campaigns.filter((campaign) => campaign.done !==
 
 /** The asks staff record a status for by hand: those of the campaigns an MP can have done. */
 export const trackedAsks: string[] = trackedCampaigns.map((campaign) => campaign.ask!);
+
+/** Whether staff record answers to an ask by hand: a campaign's that staff record, or one staff added, which no import fills. */
+export function answeredByHand(ask: string): boolean {
+  return trackedAsks.includes(ask) || !FIXED_ASKS.includes(ask);
+}
 
 /** Whether the MP has met the campaign's ask. Nobody has done a campaign without `done`. */
 export function isDone(campaign: Campaign, statuses: MpStatuses): boolean {

@@ -145,6 +145,8 @@ describeWithDatabase("politicianLetters", () => {
         {
           id: 1,
           campaign: "regulate-letter-pm",
+          campaignTitle: "Regulate AI developers now",
+          campaignUrl: null,
           status: "sent",
           createdAt: expect.any(Date),
           repliedAt: expect.any(Date),

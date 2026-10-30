@@ -23,6 +23,8 @@ import {
 } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
 import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import Run from "@/app/(staff)/staff/_components/Run";
+import AskRow, { OtherAsks } from "@/app/(staff)/staff/_components/AskRow";
+import detailsStyles from "@/app/(staff)/staff/_components/Details.module.css";
 import EraseForm from "@/app/(staff)/staff/_components/EraseForm";
 import DeletePolitician from "@/app/(staff)/staff/_components/DeletePolitician";
 import RemoveAccountForm from "@/app/(staff)/staff/_components/RemoveAccountForm";
@@ -98,6 +100,25 @@ export function HeldSyncExample() {
  * A politician's page for a signer the policy team added, its saves logged;
  * or one of Airtable's MPs, not editable here, whose address may be blocked.
  */
+/**
+ * The asks card's rows: one answered from Airtable, one staff record with
+ * no answer yet; then, with `others`, the button whose menu adds another.
+ */
+export function AskRowExample({ others = false }: { others?: boolean }) {
+  const politician = { ...examplePolitician, airtableId: null };
+  return (
+    <Logged>
+      {(log) => (
+        <div className={detailsStyles.asks}>
+          <AskRow politician={politician} ask={exampleAsks[0]!} setStatus={log("setStatus")} />
+          <AskRow politician={politician} ask={exampleAsks[4]!} setStatus={log("setStatus")} />
+          {others && <OtherAsks politician={politician} asks={exampleAsks.slice(3)} setStatus={log("setStatus")} />}
+        </div>
+      )}
+    </Logged>
+  );
+}
+
 export function PoliticianDetailsExample({
   fromAirtable = false,
   blocked = false,
@@ -128,6 +149,8 @@ export function PoliticianDetailsExample({
                     {
                       id: letter.id,
                       campaign: letter.campaign,
+                      campaignTitle: letter.campaignTitle,
+                      campaignUrl: letter.campaignUrl,
                       status: letter.status,
                       createdAt: letter.createdAt,
                       repliedAt: letter.repliedAt,
