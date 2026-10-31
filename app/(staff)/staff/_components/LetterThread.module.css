@@ -56,3 +56,27 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+/* A body whose text isn't kept: tinted, as an empty slot, so the note in
+   it reads as about the letter, not part of it. */
+.missing {
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: var(--surface-2);
+}
+
+/* The note, small, grey and slanted, with the way to the letter in Gmail
+   beside it, or under it when there's no room. */
+.noText {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.noText p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-style: italic;
+}

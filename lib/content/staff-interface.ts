@@ -79,16 +79,18 @@ export const staffCopy = {
     // Then, in the note under it, what to do, in bold, "paste" stressed; under that, where.
     next: { before: "Next, ", stressed: "paste", after: " into Gmail search." },
     where: (mailbox: string) => `You must be in an inbox that can see ${mailbox}'s mail.`,
-    whereUnknown: "You must be in an inbox that can see mail from the address it was sent from.",
+    // A supporter's letter sent before policy@ was a Gmail account, when it was a Google Group.
+    policyGroup: "You must be in an inbox that got policy@'s mail when it was sent, such as Joseph's.",
+    // A letter of PauseAI's copied from Airtable, which kept no record of the Gmail it went from.
+    whereUnknown: "You must be in an inbox that sent it. Most of these went from Joseph's.",
   },
   // One of PauseAI's letters, and the replies in its thread.
   letterThread: {
     title: "Letter and replies",
     // An imported letter, whose text Airtable didn't keep.
-    noText: "⁂ Text not available. It was sent from Airtable via Gmail. Copy the Gmail search to find it in Gmail.",
+    noText: "Text not available, as sent from Airtable.",
     // A supporter's letter, whose text and replies the site doesn't keep.
-    supporterNoText:
-      "⁂ Text not available. The site does not keep supporters' letters or their MPs' replies. See the campaign for the draft, copy the .",
+    supporterNoText: "Text not available, the site does not keep supporters' letters.",
     noReplies: "No replies yet.",
     unreadable: "This message couldn't be read.",
     // Over each message, as an email shows them.
@@ -708,8 +710,7 @@ export const staffCopy = {
     },
     noAsk: "None",
     textTitle: "The email",
-    noText:
-      "⁂ Text not available. This mailing was copied from Airtable, which kept only who got it and whether it was personalised. Open a letter under Recipients to copy a Gmail search for it.",
+    noText: "Text not available, as sent from Airtable. Open a letter under Recipients to copy a Gmail search for it.",
     recipientsTitle: "Recipients",
     // Over the recipients: how many; instead of them, when there are none.
     recipientsCount: (n: number) => `${n} ${n === 1 ? "recipient" : "recipients"}`,

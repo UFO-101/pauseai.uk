@@ -53,7 +53,7 @@ function AskCard({
           </AskRows>
           {campaign && (
             <p className={styles.campaign}>
-              {staffCopy.letters.detail.basedOn} <em>{campaign}</em>
+              {staffCopy.letters.detail.basedOn} {campaign}
             </p>
           )}
         </>

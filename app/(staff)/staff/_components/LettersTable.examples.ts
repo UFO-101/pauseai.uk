@@ -31,7 +31,8 @@ export const exampleLetter: LetterSummary = {
 /**
  * A supporter's letter, for its page: its subject, its MP's address, its
  * campaign making no ask, its send by Postmark recorded between the others,
- * and its copy in the policy inbox, by Postmark's ID for the email.
+ * and its copy in the mail of the policy inbox's members, as it went while
+ * that was a Google Group, by Postmark's ID for the email.
  */
 export const exampleSupporterLetterDetails: SupporterLetterDetails = {
   ...exampleLetter,
@@ -47,6 +48,7 @@ export const exampleSupporterLetterDetails: SupporterLetterDetails = {
   gmail: {
     mailbox: "policy@pauseai.uk",
     search: "rfc822msgid:0a1b2c3d-1111-2222-3333-444455556666@mtasv.net",
+    inPolicyGroup: true,
   },
 };
 

@@ -2784,6 +2784,14 @@ export const staff: Group = {
           ),
         },
         {
+          label: "A supporter's letter sent while policy@ was a Google Group: paste it where its members' mail is",
+          render: () => (
+            <StaffPage as="div">
+              <FindInGmail find={exampleSupporterLetterDetails.gmail} />
+            </StaffPage>
+          ),
+        },
+        {
           label: "One copied from Airtable, from a mailbox we don't know",
           render: () => (
             <StaffPage as="div">

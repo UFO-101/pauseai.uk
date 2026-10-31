@@ -281,8 +281,19 @@ describeWithDatabase("a letter for its page", () => {
     // policy inbox, in a mailbox we don't know.
     vi.stubEnv("POLICY_INBOX", "");
     const imported = await addTestLetter({ politicianId: mp, sentAt: "2026-10-01T12:00:00Z" });
+    // Sent while the policy inbox was a Google Group, so in its members' mail.
     expect(await getSupporterLetter(imported)).toMatchObject({
-      gmail: { mailbox: null, search: sentNearSearch("test-mp@example.org", "2026-10-01T12:00:00Z") },
+      gmail: {
+        mailbox: null,
+        search: sentNearSearch("test-mp@example.org", "2026-10-01T12:00:00Z"),
+        inPolicyGroup: true,
+      },
+    });
+    // Sent once it was a Gmail account, in its own mail.
+    const lately = await addTestLetter({ politicianId: mp, sentAt: "2026-10-29T09:00:00Z" });
+    expect((await getSupporterLetter(lately))!.gmail).toEqual({
+      mailbox: null,
+      search: sentNearSearch("test-mp@example.org", "2026-10-29T09:00:00Z"),
     });
     // One never sent has nothing to find; nor has one to an MP with no address.
     const unsent = await addTestLetter({ politicianId: mp });

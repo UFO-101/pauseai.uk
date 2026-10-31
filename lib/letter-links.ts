@@ -5,8 +5,18 @@
 // letter with none, one copied from Airtable, is searched for by its MP's
 // address and a few minutes either side of when we recorded it went.
 
-/** A letter's way into Gmail: the mailbox it's in, if we know it, and the search for it there. */
-export type GmailFind = { mailbox: string | null; search: string };
+/**
+ * A letter's way into Gmail: the mailbox it's in, if we know it, and the
+ * search for it there; or, for a supporter's sent while policy@ was a
+ * Google Group, that it's in its members' mail (`inPolicyGroup`).
+ */
+export type GmailFind = { mailbox: string | null; search: string; inPolicyGroup?: true };
+
+/**
+ * When policy@ became a Gmail account. Mail to it before then went to a
+ * Google Group, now policy-archive, so its copies are in its members' mail.
+ */
+export const POLICY_GMAIL_SINCE = new Date("2026-10-29T00:00:00Z");
 
 /** How far either side of a letter's time a search by time looks, in minutes. */
 const SEARCH_MINUTES = 5;

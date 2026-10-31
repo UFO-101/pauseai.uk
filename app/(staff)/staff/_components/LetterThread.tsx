@@ -17,12 +17,15 @@ function Email({
   to,
   at,
   subject,
+  missing = false,
   children,
 }: {
   from: ReactNode;
   to: string;
   at: string | null;
   subject: string;
+  /** Its text isn't kept, so its body is a slot with a note in it (NoText), not words of the letter. */
+  missing?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -43,13 +46,23 @@ function Email({
           <strong>{subject}</strong>
         </dd>
       </dl>
-      <div className={styles.body}>{children}</div>
+      <div className={missing ? `${styles.body} ${styles.missing}` : styles.body}>{children}</div>
     </article>
   );
 }
 
-/** The thread's section: its heading, `link` at its right, over its messages. */
-function Thread({ link, children }: { link: ReactNode; children: ReactNode }) {
+/** In place of a letter's text that isn't kept: a short note saying why, and `link`, the way to it in Gmail. */
+function NoText({ note, link }: { note: string; link: ReactNode }) {
+  return (
+    <div className={styles.noText}>
+      <p>{note}</p>
+      {link}
+    </div>
+  );
+}
+
+/** The thread's section: its heading, `link`, if any, at its right, over its messages. */
+function Thread({ link, children }: { link?: ReactNode; children: ReactNode }) {
   return (
     <section aria-labelledby="letter-thread" className={styles.thread}>
       <div className={styles.heading}>
@@ -63,17 +76,25 @@ function Thread({ link, children }: { link: ReactNode; children: ReactNode }) {
 
 /**
  * One of PauseAI's letters' thread, beside its page's ask and history,
- * `link` at the right of its heading, each message as an email: the letter as it went, from the Gmail it went
- * from, or a note that an imported one's text isn't kept; then each reply
- * and answer, oldest first.
+ * each message as an email: the letter as it went, from the Gmail it went
+ * from, with `link`, the way to it in Gmail, at the right of the heading;
+ * or, for an imported one, whose text isn't kept, a note saying so with
+ * `link` beside it, in its place. Then each reply and answer, oldest first.
  */
 export default function LetterThread({ thread, link }: { thread: Thread; link?: ReactNode }) {
   const politician = named(thread.to.name, thread.to.email);
   const ours = thread.sentFrom ? named(thread.fromName, thread.sentFrom) : staffCopy.letters.fromPauseai;
+  const kept = thread.letter !== null;
   return (
-    <Thread link={link}>
-      <Email from={ours} to={politician} at={thread.sentAt} subject={thread.subject || thread.mailingTitle}>
-        {thread.letter ? <MailingLetter doc={thread.letter} /> : <Muted>{copy.noText}</Muted>}
+    <Thread link={kept && link}>
+      <Email
+        from={ours}
+        to={politician}
+        at={thread.sentAt}
+        subject={thread.subject || thread.mailingTitle}
+        missing={!kept}
+      >
+        {thread.letter ? <MailingLetter doc={thread.letter} /> : <NoText note={copy.noText} link={link} />}
       </Email>
       {thread.messages.map((message) => (
         <Email
@@ -96,16 +117,15 @@ export default function LetterThread({ thread, link }: { thread: Thread; link?: 
 }
 
 /**
- * A supporter's letter as an email, in a thread as PauseAI's are, `link`
- * at the right of its heading: from them, leading to their supporter page
- * once they're linked to one, to their MP, when it went, with its subject;
- * in place of its text, which the site doesn't keep, nor the replies, a
- * note that they're in the policy inbox.
+ * A supporter's letter as an email, in a thread as PauseAI's are: from
+ * them, leading to their supporter page once they're linked to one, to
+ * their MP, when it went, with its subject; in place of its text, which the
+ * site doesn't keep, a note saying so, with `link`, the way to it in Gmail.
  */
 export function SupporterLetterThread({ letter, link }: { letter: SupporterLetterDetails; link?: ReactNode }) {
   const sender = named(letter.senderName, letter.senderEmail);
   return (
-    <Thread link={link}>
+    <Thread>
       <Email
         from={
           letter.supporterId === null ? (
@@ -117,8 +137,9 @@ export function SupporterLetterThread({ letter, link }: { letter: SupporterLette
         to={named(letter.mpName, letter.mpEmail)}
         at={letter.sentAt}
         subject={letter.subject || letter.campaignTitle}
+        missing
       >
-        <Muted>{copy.supporterNoText}</Muted>
+        <NoText note={copy.supporterNoText} link={link} />
       </Email>
     </Thread>
   );

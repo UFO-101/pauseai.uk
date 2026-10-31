@@ -1,7 +1,13 @@
 import "server-only";
 import type { Permission } from "@/lib/staff-permissions";
 import type { LetterBackend, LetterFilter } from "@/lib/staff-search";
-import { messageIdSearch, postmarkSearch, sentNearSearch, type GmailFind } from "@/lib/letter-links";
+import {
+  messageIdSearch,
+  POLICY_GMAIL_SINCE,
+  postmarkSearch,
+  sentNearSearch,
+  type GmailFind,
+} from "@/lib/letter-links";
 import { LETTER_COLUMNS } from "@/lib/letter-sort";
 import type { PoliticianFlag } from "@/lib/politician-filters";
 import { query } from "./db";
@@ -262,7 +268,8 @@ export async function getPauseaiLetter(mailingId: number, id: number): Promise<P
  * PauseAI's letters have theirs under their mailing. Its copy is the one
  * Bcc'd to the policy inbox, found by the Message-ID of the newest send
  * Postmark made of it, or, for one copied from Airtable, by its MP's
- * address and when it went.
+ * address and when it went; in its members' mail for one sent while the
+ * policy inbox was a Google Group (POLICY_GMAIL_SINCE).
  */
 export async function getSupporterLetter(id: number): Promise<SupporterLetterDetails | undefined> {
   const [letter] = await recentLetters({ letterId: id });
@@ -283,7 +290,10 @@ export async function getSupporterLetter(id: number): Promise<SupporterLetterDet
   const search = postmarkId
     ? postmarkSearch(postmarkId)
     : letter.sentAt && mpEmail && sentNearSearch(mpEmail, letter.sentAt);
-  const gmail = search ? { mailbox: process.env.POLICY_INBOX || null, search } : null;
+  const group = letter.sentAt !== null && new Date(letter.sentAt) < POLICY_GMAIL_SINCE;
+  const gmail = search
+    ? { mailbox: process.env.POLICY_INBOX || null, search, ...(group ? { inPolicyGroup: true as const } : {}) }
+    : null;
   return { ...letter, kind: "supporter", subject, mpEmail, campaignAsk, gmail };
 }
 

@@ -126,6 +126,12 @@ describe("LetterThread", () => {
     expect(page.getByText(copy.noReplies).query()).toBeNull();
   });
 
+  it("puts the way to it in Gmail at the right of the heading when it has the letter's text", async () => {
+    await render(<LetterThread thread={exampleThread} link={<a href="#gmail">Gmail</a>} />);
+    await expect.element(page.getByRole("link", { name: "Gmail" })).toBeVisible();
+    expect(page.getByRole("article").first().getByRole("link", { name: "Gmail" }).all()).toHaveLength(0);
+  });
+
   it("names someone with no name by their address", async () => {
     const reply = { ...exampleThread.messages[0], fromName: "" };
     await render(<LetterThread thread={{ ...exampleThread, fromName: "", messages: [reply] }} />);
@@ -137,9 +143,13 @@ describe("LetterThread", () => {
     await render(
       <LetterThread
         thread={{ ...exampleImportedThread, subject: "", to: { name: "Polly Placeholder", email: null } }}
+        link={<a href="#gmail">Gmail</a>}
       />,
     );
     await expect.element(page.getByText(copy.noText)).toBeVisible();
+    // The way to it in Gmail beside the note, in the letter's place, not by the heading.
+    await expect.element(page.getByRole("article").getByRole("link", { name: "Gmail" })).toBeVisible();
+    expect(page.getByRole("link", { name: "Gmail" }).all()).toHaveLength(1);
     await expect.element(page.getByText(copy.noReplies)).toBeVisible();
     expect(headers()).toEqual([
       [
@@ -163,7 +173,8 @@ describe("SupporterLetterThread", () => {
   it("shows the letter as an email, from the sender, leading to their supporter page, saying its text is in Gmail", async () => {
     await render(<SupporterLetterThread letter={letter} link={<a href="#gmail">Gmail</a>} />);
     await expect.element(page.getByRole("heading", { level: 2, name: copy.title })).toBeVisible();
-    await expect.element(page.getByRole("link", { name: "Gmail" })).toBeVisible();
+    // The way to it in Gmail beside the note, in the letter's place.
+    await expect.element(page.getByRole("article").getByRole("link", { name: "Gmail" })).toBeVisible();
     expect(headers()).toEqual([
       [copy.headers.from, "Jane Smith <jane@example.com>"],
       [copy.headers.to, "Testy McTestface MP <testy.mctestface.mp@parliament.uk>"],

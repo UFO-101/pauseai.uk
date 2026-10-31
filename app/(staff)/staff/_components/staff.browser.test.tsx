@@ -2908,6 +2908,15 @@ describe("FindInGmail", () => {
     await rerender(<FindInGmail find={null} />);
     expect(page.getByRole("button").all()).toHaveLength(0);
   });
+
+  it("says to paste it in the mail of policy@'s members for a letter sent while it was a Google Group", async () => {
+    const write = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+    await render(<FindInGmail find={{ ...find, inPolicyGroup: true }} />);
+    await page.getByRole("button", { name: copy.copy }).click();
+    await expect.poll(() => page.getByRole("status").element().textContent).toContain(copy.policyGroup);
+    expect(page.getByRole("status").element().textContent).not.toContain(copy.where(find.mailbox));
+    write.mockRestore();
+  });
 });
 
 describe("SubscriptionBadges", () => {
