@@ -64,6 +64,7 @@ export const examplePauseaiLetterDetails: PauseaiLetterDetails = {
   mailingAsk: null,
   mailing: "Edinburgh Conference Nov 26 Invitation",
   personalised: true,
+  backend: "airtable",
   gmail: {
     mailbox: null,
     search: "to:polly.placeholder.mp@parliament.uk after:1759319700 before:1759320300",

@@ -2845,9 +2845,11 @@ describe("historyOf", () => {
     const notSent = [{ at: "2026-10-12T09:00:00Z", status: "not_sent", details: {} }];
     expect(historyOf({ ...airtable, backend: null, sentAt: null, events: notSent })).toEqual(notSent);
     // PauseAI's, sent from Gmail.
-    expect(historyOf({ ...examplePauseaiLetterDetails, events: [sentByGmail] })).toEqual([
+    expect(historyOf({ ...examplePauseaiLetterDetails, backend: "gmail", events: [sentByGmail] })).toEqual([
       { ...sentByGmail, tag: copy.backends.gmail },
     ]);
+    // A send recorded when nothing says what sent it, untagged.
+    expect(historyOf({ ...examplePauseaiLetterDetails, backend: null, events: [sentByGmail] })).toEqual([sentByGmail]);
   });
 
   it("for one copied from Airtable: sent when it says, and written, if earlier and nothing's recorded", () => {
@@ -2865,7 +2867,7 @@ describe("historyOf", () => {
       sent,
     ]);
     // PauseAI's never sent: nothing.
-    expect(historyOf({ ...examplePauseaiLetterDetails, sentAt: null })).toEqual([]);
+    expect(historyOf({ ...examplePauseaiLetterDetails, backend: null, sentAt: null })).toEqual([]);
   });
 
   it("shows the label and the tag in its line", async () => {

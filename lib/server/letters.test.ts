@@ -325,9 +325,16 @@ describeWithDatabase("a letter for its page", () => {
       mailing: "CSRB Iqbal Amendment",
       mailingAsk: null,
       personalised: true,
+      backend: "gmail",
       gmail: { mailbox: null, search: sentNearSearch("mp@example.org", "2026-10-01T09:00:00Z") },
       events: [],
     });
+    // Copied from Airtable, Airtable sent it; never sent, nothing did.
+    await query("UPDATE letters_from_pauseai SET airtable_id = 'recA' WHERE id = $1", [id]);
+    expect(await getPauseaiLetter(mailing, id)).toMatchObject({ backend: "airtable" });
+    await query("UPDATE letters_from_pauseai SET airtable_id = NULL WHERE id = $1", [id]);
+    await query("UPDATE letters SET sent_at = NULL WHERE id = $1", [id]);
+    expect(await getPauseaiLetter(mailing, id)).toMatchObject({ backend: null });
   });
 
   it("finds PauseAI's letter in Gmail by its Message-ID, a reply's, or its MP's address and time; an unsent one not at all", async () => {

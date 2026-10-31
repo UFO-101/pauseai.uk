@@ -191,6 +191,8 @@ export type PauseaiLetterDetails = {
   /** The ask the mailing makes, if any, by its slug. */
   mailingAsk: string | null;
   personalised: boolean;
+  /** What sent it: Airtable, for one copied from it, else a staff member's Gmail; none for one never sent. */
+  backend: LetterBackend | null;
   /** Where to find it in Gmail, if it went. */
   gmail: GmailFind | null;
   events: LetterEvent[];
@@ -234,6 +236,7 @@ export async function getPauseaiLetter(mailingId: number, id: number): Promise<P
     `SELECT 'pauseai' AS kind, l.id::int AS id, l.status, l.created_at AS "createdAt", l.sent_at AS "sentAt",
        n.name AS "mpName", n.id::int AS "politicianId", n.email AS "mpEmail", m.id::int AS "mailingId",
        m.title AS mailing, m.ask AS "mailingAsk", p.personalised,
+       CASE WHEN p.airtable_id IS NOT NULL THEN 'airtable' WHEN l.sent_at IS NOT NULL THEN 'gmail' END AS backend,
        json_build_object(
          'sentFrom', m.sent_from,
          'sentId', (SELECT s.rfc_message_id FROM email_sends s
