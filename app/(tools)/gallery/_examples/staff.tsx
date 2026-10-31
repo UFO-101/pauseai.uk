@@ -24,7 +24,7 @@ import {
   examplePauseaiLetterDetails,
   exampleSupporterLetterDetails,
 } from "@/app/(staff)/staff/_components/LettersTable.examples";
-import LetterDetails, { LetterHistory } from "@/app/(staff)/staff/_components/LetterDetails";
+import { historyOf, LetterHistory } from "@/app/(staff)/staff/_components/LetterHistory";
 import FindInGmail from "@/app/(staff)/staff/_components/FindInGmail";
 import CopyButton from "@/app/(staff)/staff/_components/ui/CopyButton";
 import DevLogin from "@/app/(staff)/staff/_components/DevLogin";
@@ -115,7 +115,7 @@ import BounceReason from "@/app/(staff)/staff/_components/BounceReason";
 import { GmailConnect, GmailOutcome, SentToday } from "@/app/(staff)/staff/_components/GmailConnect";
 import AccountTitle from "@/app/(staff)/staff/_components/AccountTitle";
 import { AskLead, AskPreview, AskTitle } from "@/app/(staff)/staff/_components/AskLine";
-import LetterThread from "@/app/(staff)/staff/_components/LetterThread";
+import LetterThread, { SupporterLetterThread } from "@/app/(staff)/staff/_components/LetterThread";
 import { exampleImportedThread, exampleThread } from "@/app/(staff)/staff/_components/LetterThread.examples";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { ImportJob } from "@/lib/import-runs";
@@ -133,6 +133,7 @@ import {
   MailingForExample,
   MailingsOverviewExample,
   MailingLetterViewExample,
+  SupporterLetterViewExample,
   MailingViewExample,
   MailingWriterExample,
   ChangeWhoListExample,
@@ -1306,6 +1307,21 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <LetterThread thread={exampleImportedThread} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "SupporterLetterThread",
+      file: "app/(staff)/staff/_components/LetterThread.tsx",
+      variants: [
+        {
+          label:
+            "A supporter's letter, from them, leading to their supporter page: no text, which is in the policy inbox",
+          render: () => (
+            <StaffPage as="div">
+              <SupporterLetterThread letter={exampleSupporterLetterDetails} />
             </StaffPage>
           ),
         },
@@ -2696,30 +2712,8 @@ export const staff: Group = {
       ],
     },
     {
-      name: "LetterDetails",
-      file: "app/(staff)/staff/_components/LetterDetails.tsx",
-      variants: [
-        {
-          label: "A supporter's letter that bounced, with Find it in Gmail for its copy in the policy inbox",
-          render: () => (
-            <StaffPage as="div">
-              <LetterDetails letter={exampleSupporterLetterDetails} />
-            </StaffPage>
-          ),
-        },
-        {
-          label: "PauseAI's letter, personalised, copied from Airtable, nothing recorded since",
-          render: () => (
-            <StaffPage as="div">
-              <LetterDetails letter={examplePauseaiLetterDetails} />
-            </StaffPage>
-          ),
-        },
-      ],
-    },
-    {
-      name: "MailingLetterView",
-      file: "app/(staff)/staff/_components/MailingLetterView.tsx",
+      name: "LetterView",
+      file: "app/(staff)/staff/_components/LetterView.tsx",
       variants: [
         {
           label: "A mailing's letter and its reply, beside the ask, as a politician's page has it, and its history",
@@ -2729,17 +2723,49 @@ export const staff: Group = {
             </StaffPage>
           ),
         },
+        {
+          label: "A supporter's letter to a test MP that bounced, beside its campaign's ask, not yet answered",
+          render: () => (
+            <StaffPage as="div">
+              <SupporterLetterViewExample ask />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "One whose campaign makes no ask: the campaign alone",
+          render: () => (
+            <StaffPage as="div">
+              <SupporterLetterViewExample ask={false} />
+            </StaffPage>
+          ),
+        },
       ],
     },
     {
       name: "LetterHistory",
-      file: "app/(staff)/staff/_components/LetterDetails.tsx",
+      file: "app/(staff)/staff/_components/LetterHistory.tsx",
       variants: [
         {
           label: "Nothing recorded yet",
           render: () => (
             <StaffPage as="div">
               <LetterHistory events={[]} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "A supporter's letter copied from Airtable: when it was written, and sent through pauseai.info",
+          render: () => (
+            <StaffPage as="div">
+              <LetterHistory
+                events={historyOf({
+                  ...exampleSupporterLetterDetails,
+                  imported: true,
+                  createdAt: "2026-09-30T18:00:00Z",
+                  sentAt: "2026-09-30T18:02:00Z",
+                  events: [],
+                })}
+              />
             </StaffPage>
           ),
         },

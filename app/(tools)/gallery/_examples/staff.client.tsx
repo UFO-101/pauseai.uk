@@ -21,7 +21,11 @@ import {
   examplePolitician,
   examplePoliticianHistory,
 } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
-import { exampleLetter, examplePauseaiLetterDetails } from "@/app/(staff)/staff/_components/LettersTable.examples";
+import {
+  exampleLetter,
+  examplePauseaiLetterDetails,
+  exampleSupporterLetterDetails,
+} from "@/app/(staff)/staff/_components/LettersTable.examples";
 import Run from "@/app/(staff)/staff/_components/Run";
 import AskRow, { AskRows, OtherAsks } from "@/app/(staff)/staff/_components/AskRow";
 import EraseForm from "@/app/(staff)/staff/_components/EraseForm";
@@ -51,8 +55,9 @@ import MailingView from "@/app/(staff)/staff/_components/MailingView";
 import MailingWriter from "@/app/(staff)/staff/_components/MailingWriter";
 import { exampleWriterData, exampleWrittenMailing } from "@/app/(staff)/staff/_components/MailingWriter.examples";
 import MailingsOverview from "@/app/(staff)/staff/_components/MailingsOverview";
-import MailingLetterView from "@/app/(staff)/staff/_components/MailingLetterView";
-import LetterThread from "@/app/(staff)/staff/_components/LetterThread";
+import LetterView from "@/app/(staff)/staff/_components/LetterView";
+import FindInGmail from "@/app/(staff)/staff/_components/FindInGmail";
+import LetterThread, { SupporterLetterThread } from "@/app/(staff)/staff/_components/LetterThread";
 import { mailingGroups } from "@/lib/mailing-groups";
 import {
   exampleDraft,
@@ -472,14 +477,36 @@ export function MailingLetterViewExample() {
   return (
     <Logged>
       {(log) => (
-        <MailingLetterView
+        <LetterView
           letter={{ ...examplePauseaiLetterDetails, mailingAsk: exampleAsks[0]!.slug }}
           politician={{ ...examplePolitician, airtableId: null }}
           asks={exampleAsks}
           setStatus={log("setStatus")}
         >
           <LetterThread thread={exampleThread} link={<a href="#">Open in Gmail</a>} />
-        </MailingLetterView>
+        </LetterView>
+      )}
+    </Logged>
+  );
+}
+
+/**
+ * A supporter's letter to a test MP, which bounced, as an email with Find
+ * it in Gmail, beside its campaign's ask, which `ask` says whether it makes.
+ */
+export function SupporterLetterViewExample({ ask }: { ask: boolean }) {
+  const letter = { ...exampleSupporterLetterDetails, campaignAsk: ask ? exampleAsks[0]!.slug : null };
+  return (
+    <Logged>
+      {(log) => (
+        <LetterView
+          letter={letter}
+          politician={{ ...examplePolitician, airtableId: null, isTest: true, statuses: {} }}
+          asks={exampleAsks}
+          setStatus={log("setStatus")}
+        >
+          <SupporterLetterThread letter={letter} link={<FindInGmail find={letter.gmail} />} />
+        </LetterView>
       )}
     </Logged>
   );

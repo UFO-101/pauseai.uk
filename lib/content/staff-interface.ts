@@ -86,6 +86,9 @@ export const staffCopy = {
     title: "Letter and replies",
     // An imported letter, whose text Airtable didn't keep.
     noText: "This letter was sent before the site sent mailings, so its text isn't here.",
+    // A supporter's letter, whose text and replies the site doesn't keep.
+    supporterNoText:
+      "⁂ The site doesn't keep the text of supporters' letters, nor their MPs' replies. They're in the policy inbox: copy the Gmail search to find the letter there.",
     noReplies: "No replies yet.",
     unreadable: "This message couldn't be read.",
     // Over each message, as an email shows them.

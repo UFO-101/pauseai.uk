@@ -8,8 +8,8 @@ import { DeleteDraft, StopMailing } from "./MailingButtons";
 import MailingFor from "./MailingFor";
 import { MailingLetter } from "./MailingLetter";
 import { FilterPills } from "./MailingParts";
-import MailingLetterView from "./MailingLetterView";
-import { examplePauseaiLetterDetails } from "./LettersTable.examples";
+import LetterView from "./LetterView";
+import { examplePauseaiLetterDetails, exampleSupporterLetterDetails } from "./LettersTable.examples";
 import { mailingGroups } from "@/lib/mailing-groups";
 import MailingView from "./MailingView";
 import MailingsOverview from "./MailingsOverview";
@@ -461,14 +461,14 @@ describe("MailingView, for a mailing imported from Airtable", () => {
   });
 });
 
-describe("MailingLetterView", () => {
+describe("LetterView", () => {
   const letter = { ...examplePauseaiLetterDetails, mailingAsk: exampleAsks[0]!.slug };
   const politician = { ...examplePolitician, airtableId: null };
-  const view = (props: Partial<Parameters<typeof MailingLetterView>[0]>) =>
+  const view = (props: Partial<Parameters<typeof LetterView>[0]>) =>
     render(
-      <MailingLetterView letter={letter} politician={politician} asks={exampleAsks} setStatus={noAction} {...props}>
+      <LetterView letter={letter} politician={politician} asks={exampleAsks} setStatus={noAction} {...props}>
         <p>the thread</p>
-      </MailingLetterView>,
+      </LetterView>,
     );
 
   it("answered: green, with the ask as the politician's page has it, beside the thread and history", async () => {
@@ -495,27 +495,56 @@ describe("MailingLetterView", () => {
       .element(page.getByRole("heading", { name: staffCopy.mailings.fields.ask, exact: true }))
       .not.toBeInTheDocument();
     await rerender(
-      <MailingLetterView
+      <LetterView
         letter={{ ...letter, status: "queued" }}
         politician={{ ...politician, statuses: {} }}
         asks={exampleAsks}
         setStatus={noAction}
       >
         <p>the thread</p>
-      </MailingLetterView>,
+      </LetterView>,
     );
     await expect.element(page.getByText("queued", { exact: true })).toBeVisible();
     await rerender(
-      <MailingLetterView
+      <LetterView
         letter={{ ...letter, status: "spam_complaint" }}
         politician={{ ...politician, statuses: {} }}
         asks={exampleAsks}
         setStatus={noAction}
       >
         <p>the thread</p>
-      </MailingLetterView>,
+      </LetterView>,
     );
     await expect.element(page.getByText(staffCopy.letters.status.spam_complaint, { exact: true })).toBeVisible();
+  });
+
+  it("a supporter's: back to the letters, its campaign over its ask, tagged when it's to a test politician", async () => {
+    const supporters = { ...exampleSupporterLetterDetails, campaignAsk: exampleAsks[0]!.slug };
+    await view({ letter: supporters, politician: { ...politician, isTest: true } });
+    await expect
+      .element(page.getByRole("navigation").getByRole("link", { name: staffCopy.nav.letters }))
+      .toHaveAttribute("href", "/staff/letters");
+    await expect
+      .element(page.getByRole("heading", { level: 1 }))
+      .toHaveTextContent(staffCopy.letters.oneTitle(supporters.senderName, supporters.mpName));
+    await expect.element(page.getByText(staffCopy.mailings.columns.answered, { exact: true })).toBeVisible();
+    await expect.element(page.getByText(staffCopy.politicians.flags.test, { exact: true })).toBeVisible();
+    await expect.element(page.getByRole("heading", { name: staffCopy.mailings.fields.ask, exact: true })).toBeVisible();
+    await expect.element(page.getByText(staffCopy.letters.columns.campaign, { exact: true })).toBeVisible();
+    await expect.element(page.getByRole("link", { name: supporters.campaignTitle })).toBeVisible();
+    await expect.element(page.getByRole("group", { name: exampleAsks[0]!.title })).toBeVisible();
+    expect(document.body.textContent).not.toContain(staffCopy.mailings.personalised);
+  });
+
+  it("a supporter's whose campaign makes no ask: the card is the campaign alone", async () => {
+    await view({ letter: exampleSupporterLetterDetails });
+    await expect
+      .element(page.getByRole("heading", { name: staffCopy.letters.columns.campaign, exact: true }))
+      .toBeVisible();
+    await expect.element(page.getByRole("link", { name: exampleSupporterLetterDetails.campaignTitle })).toBeVisible();
+    expect(page.getByRole("group").all()).toHaveLength(0);
+    await expect.element(page.getByText(staffCopy.letters.status.bounced, { exact: true })).toBeVisible();
+    expect(page.getByText(staffCopy.politicians.flags.test, { exact: true }).all()).toHaveLength(0);
   });
 });
 

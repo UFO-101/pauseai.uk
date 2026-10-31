@@ -163,8 +163,18 @@ export async function pauseaiLetters(politicianId: number): Promise<PauseaiLette
   );
 }
 
-/** A supporter's letter, for its own page: what the list has, its subject, and where to find its copy in Gmail. */
-export type SupporterLetterDetails = LetterSummary & { kind: "supporter"; subject: string; gmail: GmailFind | null };
+/**
+ * A supporter's letter, for its own page: what the list has, its subject,
+ * its MP's address, its campaign's ask, if any, by its slug, and where to
+ * find its copy in Gmail.
+ */
+export type SupporterLetterDetails = LetterSummary & {
+  kind: "supporter";
+  subject: string;
+  mpEmail: string | null;
+  campaignAsk: string | null;
+  gmail: GmailFind | null;
+};
 
 /** One of PauseAI's letters, for its own page: to whom, at which address now, in which mailing, and what happened. */
 export type PauseaiLetterDetails = {
@@ -254,14 +264,16 @@ export async function getPauseaiLetter(mailingId: number, id: number): Promise<P
 export async function getSupporterLetter(id: number): Promise<SupporterLetterDetails | undefined> {
   const [letter] = await recentLetters({ letterId: id });
   if (!letter) return undefined;
-  const [{ subject, postmarkId, mpEmail }] = await query<{
+  const [{ subject, postmarkId, mpEmail, campaignAsk }] = await query<{
     subject: string;
     postmarkId: string | null;
     mpEmail: string | null;
+    campaignAsk: string | null;
   }>(
-    `SELECT s.subject, (SELECT e.message_id FROM email_sends e WHERE e.letter_id = s.id AND e.purpose = 'letter'
+    `SELECT s.subject, c.ask AS "campaignAsk", (SELECT e.message_id FROM email_sends e WHERE e.letter_id = s.id AND e.purpose = 'letter'
        AND e.outcome = 'sent' ORDER BY e.at DESC, e.id DESC LIMIT 1) AS "postmarkId", n.email AS "mpEmail"
      FROM letters_from_supporters s JOIN letters l USING (id) JOIN notable_people n ON n.id = l.notable_person_id
+       JOIN campaigns c ON c.slug = s.campaign
      WHERE s.id = $1`,
     [id],
   );
@@ -269,7 +281,7 @@ export async function getSupporterLetter(id: number): Promise<SupporterLetterDet
     ? postmarkSearch(postmarkId)
     : letter.sentAt && mpEmail && sentNearSearch(mpEmail, letter.sentAt);
   const gmail = search ? { mailbox: process.env.POLICY_INBOX || null, search } : null;
-  return { ...letter, kind: "supporter", subject, gmail };
+  return { ...letter, kind: "supporter", subject, mpEmail, campaignAsk, gmail };
 }
 
 /** A letter on an MP's page for staff without `supporters`: what happened to it, and nothing of who wrote it. */

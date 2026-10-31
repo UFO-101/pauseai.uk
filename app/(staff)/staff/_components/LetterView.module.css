@@ -14,3 +14,12 @@
 .about {
   margin: var(--space-1) 0 var(--space-5);
 }
+
+/* A supporter's letter's campaign, over the ask it makes. */
+.campaign {
+  margin: 0 0 var(--space-3);
+}
+
+.campaign:last-child {
+  margin: 0;
+}

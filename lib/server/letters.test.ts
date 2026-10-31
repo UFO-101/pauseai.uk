@@ -271,6 +271,8 @@ describeWithDatabase("a letter for its page", () => {
       kind: "supporter",
       id,
       senderName: "Jane Smith",
+      mpEmail: "test-mp@example.org",
+      campaignAsk: "frontier-ai-letter",
       gmail: { mailbox: "policy@pauseai.uk", search: "rfc822msgid:pm-new@mtasv.net" },
     });
     expect(typeof (letter as { subject: string }).subject).toBe("string");
