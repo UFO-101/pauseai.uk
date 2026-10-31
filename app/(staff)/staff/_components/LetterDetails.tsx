@@ -3,7 +3,6 @@ import { Fragment, type ReactNode } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { LetterDetails as Details, LetterEvent } from "@/lib/server/letters";
 import { staffTime } from "@/lib/staff-time";
-import Tag from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
 import Breadcrumb from "./Breadcrumb";
 import CampaignName from "./CampaignName";
@@ -57,9 +56,9 @@ function Sender({ letter }: { letter: Details }) {
         <Muted>{letter.senderEmail}</Muted>
       </Fact>
       <Fact label={copy.columns.campaign}>
-        <CampaignName slug={letter.campaign} title={letter.campaignTitle} url={letter.campaignUrl} />{" "}
-        {letter.imported && <Tag>{copy.imported}</Tag>}
+        <CampaignName slug={letter.campaign} title={letter.campaignTitle} url={letter.campaignUrl} />
       </Fact>
+      <Fact label={copy.columns.backend}>{letter.backend && copy.backends[letter.backend]}</Fact>
       <Fact label={copy.detail.subject}>{letter.subject}</Fact>
       <Fact label={copy.columns.consent}>{letter.contactConsent ? copy.consent.yes : copy.consent.no}</Fact>
     </>

@@ -1,5 +1,6 @@
 import { campaigns } from "@/lib/content/email-your-mp";
 import type { LetterSummary, PauseaiLetterDetails, SupporterLetterDetails } from "@/lib/server/letters";
+import type { LettersSearch } from "@/lib/staff-search";
 
 const [pm] = campaigns;
 
@@ -16,7 +17,7 @@ export const exampleLetter: LetterSummary = {
   mpName: "Testy McTestface MP",
   politicianId: 3,
   isTest: true,
-  imported: false,
+  backend: "postmark",
   createdAt: "2026-10-12T09:00:00Z",
   sentAt: "2026-10-12T09:05:00Z",
   repliedAt: null,
@@ -58,3 +59,23 @@ export const examplePauseaiLetterDetails: PauseaiLetterDetails = {
   },
   events: [],
 };
+
+/** The letters page's filters and sort, all blank. */
+export const emptyLettersSearch: LettersSearch = {
+  status: "",
+  q: "",
+  answered: "",
+  campaign: [],
+  flag: [],
+  backend: [],
+  consent: "",
+  sort: "",
+  dir: "",
+  page: "",
+};
+
+/** The campaigns the letters page's Campaign filter offers: one of this site's and one of pauseai.info's. */
+export const exampleLetterCampaigns = [
+  { slug: pm.slug, title: pm.title },
+  { slug: "pauseai-info-frontier-ai", title: "Frontier AI letter, from pauseai.info" },
+];

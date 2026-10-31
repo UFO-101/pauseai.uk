@@ -1,16 +1,16 @@
 import { campaigns, copy } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { addFilter, fakeTurnstile, lookUpTestMp, newestEmail, openLookup } from "../steps";
-import { BASE, emailFrame, expect, frame, test } from "./fixtures";
+import { BASE, emailFrame, expect, madeUpAddress, frame, test } from "./fixtures";
 import { logIn, STAFF_INBOX, bouncy, BOUNCY_ADDRESS, postBounce, sentLetterId } from "./staff-steps";
 
 // Supporters' letters to MPs: the list filtered, and a letter that bounces,
 // emailing staff and blocking the address until staff unblock it. Each flow
 // on its own database.
 
-test("Filter letters by status and campaign, then reset", async ({ page, request, flowDatabase }, testInfo) => {
-  const jane = `jane+${testInfo.testId}@example.com`;
-  const sam = `sam+${testInfo.testId}@example.com`;
+test("Filter letters by status and campaigns, reset, then sort by sender", async ({ page, request, flowDatabase }) => {
+  const jane = madeUpAddress("Jane Smith", 11);
+  const sam = madeUpAddress("Sam Smith", 12);
   await sentLetterId(page, flowDatabase, jane);
   await postBounce(request, await sentLetterId(page, flowDatabase, sam, bouncy, "Sam Smith"));
 
@@ -33,6 +33,12 @@ test("Filter letters by status and campaign, then reset", async ({ page, request
   await expect(page.getByText(staffCopy.letters.none)).toBeVisible();
   await frame(page, "filtered to the other campaign: no letters");
 
+  // The Campaign filter repeats: either campaign finds the bounced letter again.
+  await addFilter(page, staffCopy.letters.columns.campaign, campaigns[0].title);
+  await expect(page).toHaveURL(new RegExp(`campaign=${campaigns[0].slug}`));
+  await expect(sams).toBeVisible();
+  await frame(page, "either campaign: the bounced letter again");
+
   await page.getByRole("link", { name: staffCopy.resetFilters }).click();
   await expect(page).toHaveURL(`${BASE}/staff/letters`);
   await expect(janes).toBeVisible();
@@ -40,15 +46,18 @@ test("Filter letters by status and campaign, then reset", async ({ page, request
   await expect(page.getByRole("button", { name: new RegExp(`^${staffCopy.letters.columns.campaign}:`) })).toHaveCount(
     0,
   );
-  await frame(page, "reset: both letters again");
+  await frame(page, "reset: both letters again, newest written first");
+
+  // Sam wrote last, so is first; by sender, Jane is.
+  await expect(page.getByRole("row").nth(1)).toContainText(sam);
+  await page.getByRole("columnheader", { name: staffCopy.letters.columns.from }).getByRole("link").click();
+  await expect(page).toHaveURL(/sort=from&dir=asc/);
+  await expect(page.getByRole("row").nth(1)).toContainText(jane);
+  await frame(page, "sorted by sender, A to Z");
 });
 
-test("A letter bounces: staff are emailed, the address is blocked", async ({
-  page,
-  request,
-  flowDatabase,
-}, testInfo) => {
-  const sender = `jane+${testInfo.testId}@example.com`;
+test("A letter bounces: staff are emailed, the address is blocked", async ({ page, request, flowDatabase }) => {
+  const sender = madeUpAddress("Jane Smith", 13);
   const messageId = await sentLetterId(page, flowDatabase, sender, bouncy);
   const sent = newestEmail((email) => email.Cc?.includes(sender) ?? false);
   expect(sent?.To).toBe(`"Bouncy McTestface MP" <${BOUNCY_ADDRESS}>`);

@@ -417,7 +417,7 @@ test("Import pauseai.info's letters and Go to Parliament's meetings", async ({ p
 
   // On the letters page, marked as from the old form; the sender a supporter from it.
   await page.goto(`${BASE}/staff/letters`);
-  await expect(page.getByText(staffCopy.letters.imported, { exact: true })).toHaveCount(3);
+  await expect(page.getByRole("cell", { name: staffCopy.letters.backends.airtable, exact: true })).toHaveCount(3);
   await expect(page.getByRole("link", { name: "DeepMind letter, from pauseai.info" }).first()).toHaveAttribute(
     "href",
     "https://pauseai.uk/campaigns/dear-sir-demis-2025",

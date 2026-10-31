@@ -2,7 +2,16 @@ import "server-only";
 import type { AskStatus } from "@/lib/asks";
 import type { Mp, MpStatuses } from "@/lib/email-your-mp";
 import { parseSort, type SortSpec } from "@/lib/staff-sort";
-import { anyAndNone, firstOf, NEW_MAILING, notOf, pageNumber, valuesOf, type ParamValue } from "@/lib/staff-search";
+import {
+  among,
+  anyAndNone,
+  firstOf,
+  NEW_MAILING,
+  notOf,
+  pageNumber,
+  valuesOf,
+  type ParamValue,
+} from "@/lib/staff-search";
 import { POLITICIAN_COLUMNS, POLITICIAN_SORTS, type PoliticianSort } from "@/lib/politician-sort";
 import {
   COUNTRIES,
@@ -206,11 +215,6 @@ export type PoliticiansSearch = {
   mailing: string;
 };
 
-/** The values of `list` that are among `known`. */
-function among<T extends string>(list: string[], known: readonly T[]): T[] {
-  return list.filter((value): value is T => (known as readonly string[]).includes(value));
-}
-
 /**
  * The politicians page's filter, from its URL: each field as typed, for the
  * form, and the filter they make, leaving out what's blank or unknown, but
@@ -272,8 +276,8 @@ export function politiciansSearch(params: Partial<Record<keyof PoliticiansSearch
   };
 }
 
-/** When a politician has each marker. */
-const FLAG_CONDITIONS: Record<PoliticianFlag, string> = {
+/** When a politician has each marker, `n` their notable_people row and `p` their politicians row. */
+export const FLAG_CONDITIONS: Record<PoliticianFlag, string> = {
   important: "n.important_target",
   connection: "n.personal_connection",
   removed: "n.airtable_removed_at IS NOT NULL",

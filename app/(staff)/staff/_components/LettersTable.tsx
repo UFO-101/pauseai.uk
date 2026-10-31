@@ -5,7 +5,10 @@ import { campaignBySlug } from "@/lib/email-your-mp";
 import type { DownloadColumn } from "@/lib/staff-list";
 import { staffTime } from "@/lib/staff-time";
 import type { LetterSummary } from "@/lib/server/letters";
+import { LETTER_SORTS, type LetterSort } from "@/lib/letter-sort";
 import { filtersPath, pageParam, type LettersSearch } from "@/lib/staff-search";
+import { parseSort, sortHref } from "@/lib/staff-sort";
+import SortHeading from "./SortHeading";
 import ListFrame, { ListTable, type ListColumn } from "./ui/ListFrame";
 import { Muted } from "@/components/ui/Text";
 import Tag from "@/components/ui/Tag";
@@ -20,11 +23,14 @@ const statusOf = (status: string) => copy.status[status] ?? status;
  * The letters list's columns, as every list's go (docs/style-guide.md):
  * first its status, leading to the letter's page, as a letter has no
  * name; who it was from (leading to their supporter) and their email, and
- * to (leading to the MP's page), and the campaign (leading to its page on
- * the site); whether the sender agreed to hear from us; then when it was
- * sent and when the MP replied.
+ * to (leading to the MP's page), the campaign (leading to its page on
+ * the site) and what sent it; whether the sender agreed to hear from us; then when it was
+ * written, sent and when the MP replied. A letter from the pauseai.info form
+ * is written when its sender filled the form in, and sent later, when
+ * Airtable's automation emailed it. Each is a sort (lib/letter-sort.ts),
+ * newest written first unless another is chosen.
  */
-export const letterColumns: ListColumn<LetterSummary>[] = [
+const columns: (ListColumn<LetterSummary> & { key: LetterSort })[] = [
   {
     key: "status",
     label: copy.columns.status,
@@ -63,12 +69,14 @@ export const letterColumns: ListColumn<LetterSummary>[] = [
     key: "campaign",
     label: copy.columns.campaign,
     text: (l) => campaignBySlug(l.campaign)?.title ?? l.campaignTitle,
-    cell: (l) => (
-      <>
-        <CampaignName slug={l.campaign} title={l.campaignTitle} url={l.campaignUrl} />{" "}
-        {l.imported && <Tag>{copy.imported}</Tag>}
-      </>
-    ),
+    cell: (l) => <CampaignName slug={l.campaign} title={l.campaignTitle} url={l.campaignUrl} />,
+  },
+  {
+    key: "backend",
+    label: copy.columns.backend,
+    short: true,
+    text: (l) => l.backend && copy.backends[l.backend],
+    cell: (l) => l.backend && copy.backends[l.backend],
   },
   {
     key: "consent",
@@ -76,6 +84,13 @@ export const letterColumns: ListColumn<LetterSummary>[] = [
     short: true,
     text: (l) => l.contactConsent,
     cell: (l) => (l.contactConsent ? copy.consent.yes : copy.consent.no),
+  },
+  {
+    key: "created",
+    label: copy.columns.created,
+    short: true,
+    text: (l) => l.createdAt,
+    cell: (l) => staffTime(l.createdAt),
   },
   {
     key: "sent",
@@ -93,10 +108,33 @@ export const letterColumns: ListColumn<LetterSummary>[] = [
   },
 ];
 
-/** The list's columns for a download, with when each was written and each change of status, which its page shows. */
+/**
+ * The list's columns; with the list's filters and sort as typed, each
+ * heading sorts the list by its column, keeping the filters.
+ */
+export function letterColumns(search?: LettersSearch): ListColumn<LetterSummary>[] {
+  if (!search) return columns;
+  const { sort, dir, page, ...filters } = search;
+  void page;
+  const current = parseSort(LETTER_SORTS, "created", sort, dir);
+  return columns.map((column) => ({
+    ...column,
+    heading: (
+      <SortHeading
+        key={column.key}
+        sortKey={column.key}
+        current={current}
+        href={sortHref(PATH, filters, LETTER_SORTS, current, column.key)}
+      >
+        {column.label}
+      </SortHeading>
+    ),
+  }));
+}
+
+/** The list's columns for a download, with each change of status, which its page shows. */
 export const letterDownloadColumns: DownloadColumn<LetterSummary>[] = [
-  ...letterColumns,
-  { key: "created", label: copy.columns.created, text: (l) => l.createdAt },
+  ...columns,
   {
     key: "history",
     label: copy.columns.history,
@@ -107,7 +145,7 @@ export const letterDownloadColumns: DownloadColumn<LetterSummary>[] = [
 /** Letters, a row each, in the list's columns; or that there are none. */
 export default function LettersTable({ letters }: { letters: LetterSummary[] }) {
   if (letters.length === 0) return <p>{copy.none}</p>;
-  return <ListTable columns={letterColumns} rows={letters} rowKey={(l) => l.id} />;
+  return <ListTable columns={columns} rows={letters} rowKey={(l) => l.id} />;
 }
 
 /** The letters page's list, in the list frame: how many, its downloads, the letters and the way through the pages. */
@@ -134,7 +172,7 @@ export function LettersList({
       pageSize={pageSize}
       href={(n) => filtersPath(PATH, filters, pageParam(n))}
       download={(format) => filtersPath(`${PATH}/download`, filters, { format })}
-      columns={letterColumns}
+      columns={letterColumns(search)}
       rows={letters}
       rowKey={(l) => l.id}
       empty={copy.none}

@@ -1489,19 +1489,23 @@ export const staffCopy = {
       skipped: "Skipped",
     } as Record<string, string>,
     columns: {
-      created: "Created",
+      created: "Written",
       sent: "Sent",
       from: "From",
       consent: "Consent",
       to: "To",
       campaign: "Campaign",
+      backend: "Backend",
       status: "Status",
       replied: "Replied",
       history: "History",
     },
     consent: { yes: "Yes", no: "No" },
-    // Beside a letter sent through pauseai.info's old form, copied from Airtable.
-    imported: "pauseai.info",
+    // What sent a letter: pauseai.info's old form, whose letters are copied from Airtable, or this site, by Postmark
+    // or by a staff member's Gmail.
+    backends: { airtable: "Airtable", postmark: "Postmark", gmail: "Gmail" },
+    // The filter by the MP's markers, which are the politicians list's.
+    mpFlag: "MP marked",
   },
   // The button beside a list's search box; its other filters apply as soon as they're chosen.
   search: "Search",
