@@ -19,6 +19,18 @@ export const localGroupPages: Record<LocalGroupName, LocalGroupPageContent> = {
       actions: [
         { label: "View event calendar", href: site.social.luma, variant: "primary", newTab: true },
         { ...WHATSAPP, variant: "ghost" },
+        {
+          label: "March against data centres, Edinburgh, Sat 14th Nov",
+          href: "https://luma.com/mpan6y4o",
+          variant: "ghost",
+          newTab: true,
+        },
+        {
+          label: "Citizens Assembly on AI, Glasgow, Sun 8th Nov",
+          href: "https://assemble.qomon.org/en/action/39a4d41f-glasgow-assembly-on-ai/",
+          variant: "ghost",
+          newTab: true,
+        },
       ],
       photo: "/images/local-groups/scotland/GlasgowUniUnion.jpg",
     },
