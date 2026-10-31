@@ -18,7 +18,7 @@ import {
   sendLetter,
   syncPoliticians,
 } from "../steps";
-import { BASE, expect, flowTag, frame, test } from "./fixtures";
+import { BASE, expect, madeUpAddress, frame, test } from "./fixtures";
 
 // The supporter pages, behind the supporters permission, on the fixture
 // Luma calendar (five guests at every event, three contacts) and the
@@ -250,7 +250,7 @@ test("Supporters merged by phone number: the old page redirects", async ({ page,
 
 test("A letter writer's page, from the letters list", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
-  const sender = `jane+${flowTag()}@example.com`;
+  const sender = madeUpAddress("Jane Smith", 41);
   await fakeTurnstile(page);
   await lookUpTestMp(page, BASE, TEST_MPS[0]);
   await fillLetter(page, sender);
@@ -284,7 +284,7 @@ test("A letter writer's page, from the letters list", async ({ page, request, fl
 });
 
 test("A march sign-up's page", async ({ page, flowDatabase }) => {
-  const email = `march-${flowTag()}@example.org`;
+  const email = madeUpAddress("Marta Marcher", 42, "example.org");
   const form = marchSignupCopy.form;
   await page.goto(`${BASE}/protests/march-against-ai-extinction-nov-26?utm_source=nl#register`);
   await page.getByLabel(form.name).fill("Marta Marcher");

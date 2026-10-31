@@ -1,7 +1,7 @@
 import { campaigns, copy } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { addFilter, fakeTurnstile, lookUpTestMp, newestEmail, openLookup } from "../steps";
-import { BASE, emailFrame, expect, flowTag, frame, test } from "./fixtures";
+import { BASE, emailFrame, expect, madeUpAddress, frame, test } from "./fixtures";
 import { logIn, STAFF_INBOX, bouncy, BOUNCY_ADDRESS, postBounce, sentLetterId } from "./staff-steps";
 
 // Supporters' letters to MPs: the list filtered, and a letter that bounces,
@@ -9,8 +9,8 @@ import { logIn, STAFF_INBOX, bouncy, BOUNCY_ADDRESS, postBounce, sentLetterId } 
 // on its own database.
 
 test("Filter letters by status and campaigns, reset, then sort by sender", async ({ page, request, flowDatabase }) => {
-  const jane = `jane+${flowTag()}@example.com`;
-  const sam = `sam+${flowTag()}@example.com`;
+  const jane = madeUpAddress("Jane Smith", 11);
+  const sam = madeUpAddress("Sam Smith", 12);
   await sentLetterId(page, flowDatabase, jane);
   await postBounce(request, await sentLetterId(page, flowDatabase, sam, bouncy, "Sam Smith"));
 
@@ -57,7 +57,7 @@ test("Filter letters by status and campaigns, reset, then sort by sender", async
 });
 
 test("A letter bounces: staff are emailed, the address is blocked", async ({ page, request, flowDatabase }) => {
-  const sender = `jane+${flowTag()}@example.com`;
+  const sender = madeUpAddress("Jane Smith", 13);
   const messageId = await sentLetterId(page, flowDatabase, sender, bouncy);
   const sent = newestEmail((email) => email.Cc?.includes(sender) ?? false);
   expect(sent?.To).toBe(`"Bouncy McTestface MP" <${BOUNCY_ADDRESS}>`);

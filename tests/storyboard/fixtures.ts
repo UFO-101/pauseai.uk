@@ -95,8 +95,13 @@ export const test = base.extend<{ flowDatabase: string }>({
 });
 
 /**
- * A short tag unique to the flow on its viewport, for the addresses it
- * makes up: jane+3fa91c@example.com reads like a real address, and no two
- * flows share one.
+ * A made-up address for `name`, as a real one looks:
+ * jane.smith11@example.com. Flows run side by side and find their emails
+ * in one outbox by address, so each address a flow makes up has its own
+ * `number`, 1 to 49, that no other uses; on the phone it's 50 more, as both
+ * viewports run at once.
  */
-export const flowTag = () => test.info().testId.replace(/\W/g, "").slice(-6);
+export function madeUpAddress(name: string, number: number, domain = "example.com"): string {
+  const local = name.toLowerCase().replace(/\s+/g, ".");
+  return `${local}${number + (test.info().project.name === "phone" ? 50 : 0)}@${domain}`;
+}

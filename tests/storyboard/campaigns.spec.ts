@@ -12,7 +12,7 @@ import {
   sendLetter,
   WEBHOOK_AUTH,
 } from "../steps";
-import { BASE, emailFrame, expect, flowTag, frame, test } from "./fixtures";
+import { BASE, emailFrame, expect, madeUpAddress, frame, test } from "./fixtures";
 import { wholePage } from "./settle";
 
 // Email your MP, end to end on fixture data. ZZ99ZZ finds the test
@@ -70,7 +70,7 @@ test(
   { tag: "@phone" },
   async ({ page, request }) => {
     // Each flow writes as its own sender, so its letter is its own in the outbox.
-    const sender = `jane+${flowTag()}@example.com`;
+    const sender = madeUpAddress("Jane Smith", 21);
     await openLookup(page, BASE);
     await frame(page, "the postcode form, filled in");
     await lookUp(page);
@@ -244,7 +244,7 @@ async function paste(page: Page, html: string, text: string) {
 }
 
 test("Format the letter and paste into it: the preview is what the MP gets", async ({ page }) => {
-  const sender = `jane+${flowTag()}@example.com`;
+  const sender = madeUpAddress("Jane Smith", 22);
   await lookUp(page);
   const letter = editor(page);
   await expect(letter).toContainText("Dear Mr McTestface");

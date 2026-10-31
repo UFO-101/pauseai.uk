@@ -1,6 +1,6 @@
 import type { Locator, Page } from "@playwright/test";
 import { marchSignupCopy as copy } from "@/lib/content/march-signup";
-import { BASE, expect, flowTag, frame, test } from "./fixtures";
+import { BASE, expect, madeUpAddress, frame, test } from "./fixtures";
 import { hydrated, layoutSettled, scrollSettled } from "./settle";
 
 // The march sign-up (app/(march)/): its own header, which drops in past the
@@ -68,7 +68,7 @@ test("Register: the form becomes the share card", { tag: "@phone" }, async ({ pa
   await expect(page.getByRole("contentinfo")).toBeVisible();
   await frame(page, "the sign-up page, with the site's footer and no nav");
 
-  await fillIn(page, `march-${flowTag()}@example.org`);
+  await fillIn(page, madeUpAddress("Testy McTestface", 43, "example.org"));
   await expect(header(page)).toBeInViewport();
   await expect(page.getByRole("heading", { name: "Register for the march" })).toBeInViewport();
   await frame(page, "the form, filled in, under the header that dropped in");
@@ -76,7 +76,7 @@ test("Register: the form becomes the share card", { tag: "@phone" }, async ({ pa
   await page.getByRole("button", { name: copy.form.submit, exact: true }).click();
   const confirmation = registered(page);
   await expect(confirmation).toBeFocused();
-  await expect(confirmation).toContainText(`march-${flowTag()}@example.org`);
+  await expect(confirmation).toContainText(madeUpAddress("Testy McTestface", 43, "example.org"));
   await expect(page).toHaveURL(`${BASE}/protests/march-against-ai-extinction-nov-26#register`);
   await expect(page.getByRole("link", { name: copy.share.impact.link })).toBeVisible();
   await scrollSettled(page);

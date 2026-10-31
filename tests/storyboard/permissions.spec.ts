@@ -16,7 +16,7 @@ import {
   syncPoliticians,
   WEBHOOK_AUTH,
 } from "../steps";
-import { BASE, expect, flowStorageState, flowTag, frame, test } from "./fixtures";
+import { BASE, expect, flowStorageState, madeUpAddress, frame, test } from "./fixtures";
 
 // Who sees what: supporter data only with `supporters`, wherever it would
 // show; and the sessions an account has, which an admin, or its owner, can
@@ -66,7 +66,7 @@ test("No permissions: no page shows a supporter's name or email", async ({ page,
   await syncPoliticians(request, BASE);
   await importLuma(request, BASE);
   await importMembers(request, BASE);
-  const sender = `jane+${flowTag()}@example.com`;
+  const sender = madeUpAddress("Jane Smith", 31);
   await writeLetter(page, sender);
   await postBounce(request, sender);
   // Everyone the flow's database knows of, by name and by every address.
@@ -129,7 +129,7 @@ test("Without Supporters: letters and supporters' blocked emails are closed", as
   const bouncy = TEST_MPS.find((mp) => mp.postcode === "ZZ99ZH")!;
   await fakeTurnstile(page);
   await lookUpTestMp(page, BASE, bouncy);
-  await fillLetter(page, `jane+${flowTag()}@example.com`);
+  await fillLetter(page, madeUpAddress("Jane Smith", 32));
   await sendLetter(page, bouncy);
   const messageId = runSql(flowDatabase, "SELECT message_id FROM email_sends WHERE purpose = 'letter'")[0];
   const bounce = await request.post(`${BASE}/api/postmark/bounce`, {
