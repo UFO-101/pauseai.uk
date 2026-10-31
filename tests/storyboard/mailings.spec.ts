@@ -205,6 +205,9 @@ test("Reschedule a mailing, then unschedule it", async ({ page, request, flowDat
   await page.getByRole("button", { name: copy.unschedule }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Edinburgh reminder");
   await expect(page.getByRole("status").first()).toHaveText(copy.savePill.saved);
+  // The draft comes back wherever the click on Unschedule left the window, which isn't the same each time;
+  // the frame is of the page as a whole, so from its top.
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
   await frame(page, "unscheduled: a draft again, to change and schedule again");
 });
 
