@@ -2,6 +2,7 @@ import StaffLink from "./ui/StaffLink";
 import { Fragment } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { LetterDetails as Details, LetterEvent } from "@/lib/server/letters";
+import type { LetterBackend } from "@/lib/staff-search";
 import { staffTime } from "@/lib/staff-time";
 import Tag from "@/components/ui/Tag";
 import { LoggedJson } from "./Logged";
@@ -20,26 +21,40 @@ export function letterTitle(letter: Details): string {
 /**
  * A line of a letter's history: a change of its status as recorded, or one
  * its dates give where nothing was, with `label` in place of the status's
- * words and `tag` beside it, saying where it was sent from.
+ * words and `tag` beside it, saying what sent it.
  */
 export type HistoryEntry = LetterEvent & { label?: string; tag?: string };
 
+const wasSent = (event: LetterEvent) => event.status === "sent";
+
 /**
- * A letter's history, newest first: each change recorded; and for one
- * copied from Airtable, a supporter's marked imported or PauseAI's with no
- * send recorded, that it was sent, when Airtable says, tagged with where
- * from, and, when nothing's recorded and it was written earlier, that too.
+ * What sent a letter: a supporter's, as the letters list says; PauseAI's,
+ * Gmail when its send is recorded, else Airtable, which it was copied from.
+ * Nothing for one never sent.
+ */
+function backendOf(letter: Details): LetterBackend | null {
+  if (letter.kind === "supporter") return letter.backend;
+  if (!letter.sentAt) return null;
+  return letter.events.some(wasSent) ? "gmail" : "airtable";
+}
+
+/**
+ * A letter's history, newest first: each change recorded, Sent tagged with
+ * what sent it. One copied from Airtable, which recorded no send, was sent
+ * when Airtable says; and, with nothing recorded, written then too, if
+ * earlier.
  */
 export function historyOf(letter: Details): HistoryEntry[] {
-  const imported = letter.kind === "pauseai" || letter.imported;
-  if (!imported || !letter.sentAt || letter.events.some((event) => event.status === "sent")) return letter.events;
-  const from = letter.kind === "supporter" ? copy.imported : staffCopy.mailings.imported;
-  const sent: HistoryEntry = { at: letter.sentAt, status: "sent", details: {}, tag: from };
+  const backend = backendOf(letter);
+  const tag = backend ? copy.backends[backend] : undefined;
+  const events: HistoryEntry[] = letter.events.map((event) => (wasSent(event) && tag ? { ...event, tag } : event));
+  if (!letter.sentAt || letter.events.some(wasSent)) return events;
+  const sent: HistoryEntry = { at: letter.sentAt, status: "sent", details: {}, tag };
   const written: HistoryEntry[] =
-    letter.events.length === 0 && Date.parse(letter.createdAt) < Date.parse(letter.sentAt)
+    events.length === 0 && Date.parse(letter.createdAt) < Date.parse(letter.sentAt)
       ? [{ at: letter.createdAt, status: "created", label: copy.columns.created, details: {} }]
       : [];
-  return [...letter.events, sent, ...written].sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+  return [...events, sent, ...written].sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
 }
 
 /** The kind of bounce or complaint Postmark gave that each status already says, so the history leaves it out. */

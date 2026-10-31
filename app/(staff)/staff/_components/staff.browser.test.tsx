@@ -2777,11 +2777,14 @@ describe("LetterHistory", () => {
   const copy = staffCopy.letters;
   const history = () => page.getByRole("list", { name: copy.detail.historyTitle });
 
-  it("shows each change newest first, in words, with a {} for those that recorded anything, opening it as recorded", async () => {
+  it("shows each change newest first, in words, Sent tagged with what sent it, with a {} for those that recorded anything", async () => {
     await render(<LetterHistory events={historyOf(exampleSupporterLetterDetails)} />);
-    const [bounced, sending] = history().getByRole("listitem").all();
+    const [bounced, sent, sending] = history().getByRole("listitem").all();
     expect(sending.element().textContent).toContain(copy.status.sending);
     expect(sending.getByRole("button").all()).toHaveLength(0);
+    // Sent says Postmark; its ID is only in its {}.
+    await expect.element(sent.getByText(copy.backends.postmark)).toBeVisible();
+    expect(sent.element().querySelector("dl")).toBeNull();
     // A hard bounce says no more than its status; the {} has what Postmark said.
     expect(bounced.element().querySelector("strong")!.textContent).toBe(copy.status.bounced);
     expect(bounced.element().querySelector("dl")).toBeNull();
@@ -2828,37 +2831,48 @@ describe("LetterHistory", () => {
 
 describe("historyOf", () => {
   const copy = staffCopy.letters;
-  const supporters = { ...exampleSupporterLetterDetails, imported: true, events: [] };
+  const airtable = { ...exampleSupporterLetterDetails, backend: "airtable" as const, events: [] };
+  const sentByGmail = { at: "2026-10-01T12:00:00Z", status: "sent", details: {} };
 
-  it("is the changes recorded, when one says it was sent, or it never went", () => {
-    expect(historyOf(exampleSupporterLetterDetails)).toBe(exampleSupporterLetterDetails.events);
-    const sent = [{ at: "2026-10-12T09:05:00Z", status: "sent", details: {} }];
-    expect(historyOf({ ...supporters, events: sent })).toBe(sent);
-    expect(historyOf({ ...supporters, sentAt: null })).toEqual([]);
+  it("is the changes recorded, Sent tagged with what sent it; nothing more for one never sent", () => {
+    const [bounced, sent, sending] = exampleSupporterLetterDetails.events;
+    expect(historyOf(exampleSupporterLetterDetails)).toEqual([
+      bounced,
+      { ...sent, tag: copy.backends.postmark },
+      sending,
+    ]);
+    // One of this site's never sent: no backend, no Sent.
+    const notSent = [{ at: "2026-10-12T09:00:00Z", status: "not_sent", details: {} }];
+    expect(historyOf({ ...airtable, backend: null, sentAt: null, events: notSent })).toEqual(notSent);
+    // PauseAI's, sent from Gmail.
+    expect(historyOf({ ...examplePauseaiLetterDetails, events: [sentByGmail] })).toEqual([
+      { ...sentByGmail, tag: copy.backends.gmail },
+    ]);
   });
 
-  it("for one copied from Airtable: sent when it says, tagged with where from, and written, if earlier", () => {
-    expect(historyOf({ ...supporters, createdAt: "2026-09-30T18:00:00Z", sentAt: "2026-09-30T18:02:00Z" })).toEqual([
-      { at: "2026-09-30T18:02:00Z", status: "sent", details: {}, tag: copy.imported },
+  it("for one copied from Airtable: sent when it says, and written, if earlier and nothing's recorded", () => {
+    expect(historyOf({ ...airtable, createdAt: "2026-09-30T18:00:00Z", sentAt: "2026-09-30T18:02:00Z" })).toEqual([
+      { at: "2026-09-30T18:02:00Z", status: "sent", details: {}, tag: copy.backends.airtable },
       { at: "2026-09-30T18:00:00Z", status: "created", label: copy.columns.created, details: {} },
     ]);
     // PauseAI's, from a mailing copied from Airtable, written and sent at once.
-    expect(historyOf(examplePauseaiLetterDetails)).toEqual([
-      { at: examplePauseaiLetterDetails.sentAt, status: "sent", details: {}, tag: staffCopy.mailings.imported },
-    ]);
+    const sent = { at: examplePauseaiLetterDetails.sentAt, status: "sent", details: {}, tag: copy.backends.airtable };
+    expect(historyOf(examplePauseaiLetterDetails)).toEqual([sent]);
     // With something recorded later, it goes in its place, and when it was written isn't wanted.
     const bounce = { at: "2026-10-02T09:00:00Z", status: "bounced", details: {} };
     expect(historyOf({ ...examplePauseaiLetterDetails, createdAt: "2026-09-01T09:00:00Z", events: [bounce] })).toEqual([
       bounce,
-      { at: examplePauseaiLetterDetails.sentAt, status: "sent", details: {}, tag: staffCopy.mailings.imported },
+      sent,
     ]);
+    // PauseAI's never sent: nothing.
+    expect(historyOf({ ...examplePauseaiLetterDetails, sentAt: null })).toEqual([]);
   });
 
   it("shows the label and the tag in its line", async () => {
-    await render(<LetterHistory events={historyOf({ ...supporters, createdAt: "2026-10-12T08:00:00Z" })} />);
+    await render(<LetterHistory events={historyOf({ ...airtable, createdAt: "2026-10-12T08:00:00Z" })} />);
     const [sent, written] = page.getByRole("listitem").all();
     expect(sent.element().textContent).toContain(copy.status.sent);
-    await expect.element(sent.getByText(copy.imported)).toBeVisible();
+    await expect.element(sent.getByText(copy.backends.airtable)).toBeVisible();
     expect(written.element().querySelector("strong")!.textContent).toBe(copy.columns.created);
   });
 });

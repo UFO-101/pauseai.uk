@@ -2754,13 +2754,13 @@ export const staff: Group = {
           ),
         },
         {
-          label: "A supporter's letter copied from Airtable: when it was written, and sent through pauseai.info",
+          label: "A supporter's letter copied from Airtable: when it was written, and sent, through Airtable",
           render: () => (
             <StaffPage as="div">
               <LetterHistory
                 events={historyOf({
                   ...exampleSupporterLetterDetails,
-                  imported: true,
+                  backend: "airtable",
                   createdAt: "2026-09-30T18:00:00Z",
                   sentAt: "2026-09-30T18:02:00Z",
                   events: [],
