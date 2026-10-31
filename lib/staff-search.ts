@@ -19,8 +19,8 @@ export type LettersSearch = {
   campaign: string[];
   /** The MP's markers, as POLITICIAN_FLAGS. */
   flag: string[];
-  /** Where the letter was sent from: "imported" (pauseai.info's old form) or "site" (this site). */
-  source: string;
+  /** What sent it, as LETTER_BACKENDS. */
+  backend: string[];
   /** "yes" or "no". */
   consent: string;
   sort: string;
@@ -28,8 +28,15 @@ export type LettersSearch = {
   page: string;
 };
 
+/**
+ * What sent a letter: pauseai.info's old form, whose letters are copied
+ * from Airtable, or this site, by Postmark or by a staff member's Gmail.
+ */
+export const LETTER_BACKENDS = ["airtable", "postmark", "gmail"] as const;
+export type LetterBackend = (typeof LETTER_BACKENDS)[number];
+
 /** The filters of the letters list that repeat, which can leave out as well as find. */
-type NegatableLetterFilter = "campaign" | "flags";
+type NegatableLetterFilter = "campaign" | "flags" | "backend";
 
 /** Which letters the letters page lists (recentLetters in lib/server/letters.ts). */
 export type LetterFilter = {
@@ -43,8 +50,8 @@ export type LetterFilter = {
   campaign?: string[];
   /** To an MP with any of these markers. */
   flags?: PoliticianFlag[];
-  /** Sent through pauseai.info's old form and copied from Airtable, or, false, sent from this site. */
-  imported?: boolean;
+  /** Sent by any of these. */
+  backend?: LetterBackend[];
   /** Whether the sender agreed to hear about events and ways to help. */
   consent?: boolean;
   /** One supporter's letters (/staff/letters/supporter/[id]). */
@@ -73,12 +80,13 @@ export function among<T extends string>(values: string[], known: readonly T[]): 
 export function lettersSearch(
   params: Partial<Record<keyof LettersSearch, ParamValue>>,
 ): LettersSearch & { filter: LetterFilter & { page: number } } {
-  const [status, q, answered, source, consent, sort, dir, page] = (
-    ["status", "q", "answered", "source", "consent", "sort", "dir", "page"] as const
+  const [status, q, answered, consent, sort, dir, page] = (
+    ["status", "q", "answered", "consent", "sort", "dir", "page"] as const
   ).map((name) => firstOf(params[name]));
-  const [campaign, flag] = (["campaign", "flag"] as const).map((name) => valuesOf(params[name]));
+  const [campaign, flag, backend] = (["campaign", "flag", "backend"] as const).map((name) => valuesOf(params[name]));
   const [campaigns, notCampaigns] = anyAndNone(campaign, (values) => values.filter(isSlug));
   const [flags, notFlags] = anyAndNone(flag, (values) => among(values, POLITICIAN_FLAGS));
+  const [backends, notBackends] = anyAndNone(backend, (values) => among(values, LETTER_BACKENDS));
   const sorting = parseSort(LETTER_SORTS, "created", sort, dir);
   const filter: LetterFilter = {
     status: Object.hasOwn(staffCopy.letters.status, status) ? status : undefined,
@@ -86,9 +94,9 @@ export function lettersSearch(
     answered: yesOrNo(answered),
     campaign: campaigns,
     flags,
-    imported: source === "imported" ? true : source === "site" ? false : undefined,
+    backend: backends,
     consent: yesOrNo(consent),
-    not: notOf({ campaign: notCampaigns, flags: notFlags }),
+    not: notOf({ campaign: notCampaigns, flags: notFlags, backend: notBackends }),
     sort: sorting,
   };
   return {
@@ -97,7 +105,7 @@ export function lettersSearch(
     answered,
     campaign,
     flag,
-    source,
+    backend,
     consent,
     sort,
     dir,

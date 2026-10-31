@@ -2725,7 +2725,7 @@ describe("LettersTable", () => {
             campaignUrl: null,
             status: "odd",
             isTest: false,
-            imported: true,
+            backend: "airtable",
             contactConsent: false,
             sentAt: null,
             repliedAt: "2026-10-13T09:00:00Z",
@@ -2735,13 +2735,9 @@ describe("LettersTable", () => {
       />,
     );
     await expect.element(page.getByText("jane@example.com").first()).toBeInTheDocument();
-    // One sent through pauseai.info's old form says so, by its campaign.
-    expect(
-      page
-        .getByText(staffCopy.letters.imported)
-        .all()
-        .map((tag) => tag.element().closest("td")!.textContent),
-    ).toEqual([`Gone, from pauseai.info ${staffCopy.letters.imported}`]);
+    // What sent each: Postmark, or for one sent through pauseai.info's old form, Airtable.
+    await expect.element(page.getByRole("cell", { name: staffCopy.letters.backends.postmark })).toBeVisible();
+    await expect.element(page.getByRole("cell", { name: staffCopy.letters.backends.airtable })).toBeVisible();
     // The campaign leads to its page on the site, the MP to their page, the sender to their supporter.
     await expect
       .element(page.getByRole("link", { name: pm.title }).first())
@@ -2817,7 +2813,7 @@ describe("LetterDetails", () => {
           ...exampleSupporterLetterDetails,
           supporterId: null,
           gmail: null,
-          imported: true,
+          backend: null,
           contactConsent: false,
           status: "odd",
           sentAt: null,
@@ -2851,7 +2847,6 @@ describe("LetterDetails", () => {
       .toHaveAttribute("href", "/staff/politicians/blocked-emails?q=jo%40example.org");
     expect(page.getByRole("link", { name: exampleSupporterLetterDetails.senderName }).all()).toHaveLength(0);
     expect(page.getByRole("button", { name: staffCopy.findInGmail.copy }).all()).toHaveLength(0);
-    await expect.element(page.getByText(copy.imported)).toBeVisible();
     await expect.element(page.getByText("odd", { exact: true })).toBeVisible();
     await expect.element(page.getByText("13 Oct 2026, 09:00")).toBeVisible();
     expect(page.getByText(copy.detail.sent, { exact: true }).all()).toHaveLength(0);
@@ -4145,7 +4140,7 @@ describe("LetterFilters", () => {
       status: "sent",
       campaign: ["support-sobel-bill", "!pauseai-info-frontier-ai"],
       flag: "test",
-      source: "imported",
+      backend: "!airtable",
     });
     void filter;
     await render(<LetterFilters search={search} campaigns={exampleLetterCampaigns} />);
@@ -4153,15 +4148,15 @@ describe("LetterFilters", () => {
     // In the columns' order; a campaign the list doesn't offer by its slug.
     expect(chips()).toEqual([
       `${copy.columns.status}: ${copy.status.sent}`,
-      `${staffCopy.politicians.flag}: ${staffCopy.politicians.flags.test}`,
+      `${copy.mpFlag}: ${staffCopy.politicians.flags.test}`,
       `${copy.columns.campaign}: support-sobel-bill`,
       staffCopy.filters.notChip(copy.columns.campaign, exampleLetterCampaigns[1].title),
-      `${copy.source}: ${copy.imported}`,
+      staffCopy.filters.notChip(copy.columns.backend, copy.backends.airtable),
     ]);
     const add = await menu(staffCopy.filters.add);
     expect(add).toContainEqual([
       copy.consent.yes,
-      "/staff/letters?status=sent&q=jane&campaign=support-sobel-bill&campaign=%21pauseai-info-frontier-ai&flag=test&source=imported&consent=yes",
+      "/staff/letters?status=sent&q=jane&campaign=support-sobel-bill&campaign=%21pauseai-info-frontier-ai&flag=test&backend=%21airtable&consent=yes",
     ]);
   });
 });
@@ -4180,6 +4175,12 @@ describe("LettersList headings", () => {
       />
     );
     const { rerender } = await render(list({ q: "x", page: "2" }));
+    // One of this site's never sent has no backend.
+    expect(
+      letterColumns()
+        .find((column) => column.key === "backend")!
+        .cell({ ...exampleLetter, backend: null }),
+    ).toBe(null);
     await expect.element(heading(copy.created)).toHaveAttribute("href", "/staff/letters?q=x&sort=created&dir=asc");
     expect(heading(copy.created).element().closest("th")!.getAttribute("aria-sort")).toBe("descending");
     await expect.element(heading(copy.from)).toHaveAttribute("href", "/staff/letters?q=x&sort=from&dir=asc");

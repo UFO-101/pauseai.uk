@@ -2997,7 +2997,7 @@ export const staff: Group = {
                   status: "bounced",
                   flag: ["!test"],
                   campaign: ["regulate-letter-pm", "pauseai-info-frontier-ai"],
-                  source: "site",
+                  backend: ["!airtable"],
                   consent: "yes",
                 }}
                 campaigns={exampleLetterCampaigns}

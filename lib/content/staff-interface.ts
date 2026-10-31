@@ -1495,17 +1495,17 @@ export const staffCopy = {
       consent: "Consent",
       to: "To",
       campaign: "Campaign",
+      backend: "Backend",
       status: "Status",
       replied: "Replied",
       history: "History",
     },
     consent: { yes: "Yes", no: "No" },
-    // Beside a letter sent through pauseai.info's old form, copied from Airtable, and the Sent from filter's choice of them.
-    imported: "Airtable",
-    // The filter of where a letter was sent from, and its choice of letters sent from this site; its other choice is
-    // `imported`.
-    source: "⁂ Sent from",
-    fromSite: "⁂ This site",
+    // What sent a letter: pauseai.info's old form, whose letters are copied from Airtable, or this site, by Postmark
+    // or by a staff member's Gmail.
+    backends: { airtable: "Airtable", postmark: "Postmark", gmail: "Gmail" },
+    // The filter by the MP's markers, which are the politicians list's.
+    mpFlag: "MP marked",
   },
   // The button beside a list's search box; its other filters apply as soon as they're chosen.
   search: "Search",

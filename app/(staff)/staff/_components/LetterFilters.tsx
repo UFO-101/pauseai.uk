@@ -1,16 +1,16 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import { POLITICIAN_FLAGS } from "@/lib/politician-filters";
 import type { CampaignRow } from "@/lib/server/asks";
-import type { LettersSearch } from "@/lib/staff-search";
+import { LETTER_BACKENDS, type LettersSearch } from "@/lib/staff-search";
 import FilterBar, { type Filter } from "./ui/FilterBar";
 
 const copy = staffCopy.letters;
 
 /**
  * The letters list's filters, in the table's columns' order: its status,
- * the MP's markers, `campaigns` (every one, by title), where it was sent
- * from, the sender's consent and whether the MP replied. The markers and
- * campaigns repeat.
+ * the MP's markers, `campaigns` (every one, by title), what sent it, the
+ * sender's consent and whether the MP replied. All but the status, consent
+ * and reply repeat.
  */
 export function letterFilters(campaigns: Pick<CampaignRow, "slug" | "title">[]): Filter[] {
   return [
@@ -21,7 +21,7 @@ export function letterFilters(campaigns: Pick<CampaignRow, "slug" | "title">[]):
     },
     {
       name: "flag",
-      label: staffCopy.politicians.flag,
+      label: copy.mpFlag,
       repeat: true,
       options: POLITICIAN_FLAGS.map((flag) => ({ value: flag, label: staffCopy.politicians.flags[flag] })),
     },
@@ -32,12 +32,10 @@ export function letterFilters(campaigns: Pick<CampaignRow, "slug" | "title">[]):
       options: campaigns.map((campaign) => ({ value: campaign.slug, label: campaign.title })),
     },
     {
-      name: "source",
-      label: copy.source,
-      options: [
-        { value: "site", label: copy.fromSite },
-        { value: "imported", label: copy.imported },
-      ],
+      name: "backend",
+      label: copy.columns.backend,
+      repeat: true,
+      options: LETTER_BACKENDS.map((backend) => ({ value: backend, label: copy.backends[backend] })),
     },
     {
       name: "consent",

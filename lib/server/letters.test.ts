@@ -115,10 +115,21 @@ describeWithDatabase("recentLetters", () => {
     expect(await ids({ campaign: ["regulate-letter-pm"] })).toEqual([1]);
     expect(await ids({ campaign: ["regulate-letter-pm", "support-sobel-bill"] })).toEqual([2, 1]);
     expect(await ids({ not: { campaign: ["support-sobel-bill"] } })).toEqual([1]);
-    // Where it was sent from: pauseai.info's old form, copied from Airtable, or this site.
+    // What sent it: Airtable, for one copied from it, or the backend of its newest send that went.
     await query("UPDATE letters_from_supporters SET airtable_id = 'rec1', reply_hash = NULL WHERE id = 2");
-    expect(await ids({ imported: true })).toEqual([2]);
-    expect(await ids({ imported: false })).toEqual([1]);
+    await query(
+      `INSERT INTO email_sends (at, purpose, letter_id, address, outcome, message_id, backend, sender) VALUES
+         ('2026-10-01T09:00:00Z', 'letter', 1, 'test-mp@example.org', 'sent', 'pm-1', 'postmark', NULL),
+         ('2026-10-02T09:00:00Z', 'letter', 1, 'test-mp@example.org', 'sent', 'gm-1', 'gmail', 'staff@pauseai.uk'),
+         ('2026-10-03T09:00:00Z', 'letter', 1, 'test-mp@example.org', 'failed', NULL, 'postmark', NULL)`,
+    );
+    expect((await recentLetters()).map((l) => [l.id, l.backend])).toEqual([
+      [2, "airtable"],
+      [1, "gmail"],
+    ]);
+    expect(await ids({ backend: ["airtable"] })).toEqual([2]);
+    expect(await ids({ backend: ["postmark", "gmail"] })).toEqual([1]);
+    expect(await ids({ not: { backend: ["airtable"] } })).toEqual([1]);
     // The MP's markers: the test MP is one of ours.
     expect(await ids({ flags: ["test"] })).toEqual([2, 1]);
     expect(await ids({ flags: ["important", "connection"] })).toEqual([]);
@@ -236,7 +247,7 @@ describeWithDatabase("pauseaiLetters", () => {
         personalised: false,
       },
     ]);
-    expect((await recentLetters()).map((l) => [l.id, l.imported])).toEqual([[3, false]]);
+    expect((await recentLetters()).map((l) => [l.id, l.backend])).toEqual([[3, null]]);
     expect(await pauseaiLetters(mp + 1)).toEqual([]);
   });
 });

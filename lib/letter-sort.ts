@@ -4,12 +4,13 @@ import type { SortColumns } from "./staff-sort";
 // table's headings. It's newest written first unless another is chosen.
 
 export const LETTER_SORTS: SortColumns<
-  "status" | "from" | "to" | "campaign" | "consent" | "created" | "sent" | "replied"
+  "status" | "from" | "to" | "campaign" | "backend" | "consent" | "created" | "sent" | "replied"
 > = {
   status: "asc",
   from: "asc",
   to: "asc",
   campaign: "asc",
+  backend: "asc",
   consent: "desc",
   created: "desc",
   sent: "desc",
@@ -23,6 +24,7 @@ export const LETTER_COLUMNS: Record<LetterSort, string> = {
   from: "f.name",
   to: "n.name",
   campaign: "c.title",
+  backend: '"backend"',
   consent: "f.contact_consent",
   created: "l.created_at",
   sent: "l.sent_at",

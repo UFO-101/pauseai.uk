@@ -1,6 +1,6 @@
 import "server-only";
 import type { Permission } from "@/lib/staff-permissions";
-import type { LetterFilter } from "@/lib/staff-search";
+import type { LetterBackend, LetterFilter } from "@/lib/staff-search";
 import { messageIdSearch, postmarkSearch, sentNearSearch, type GmailFind } from "@/lib/letter-links";
 import { LETTER_COLUMNS } from "@/lib/letter-sort";
 import type { PoliticianFlag } from "@/lib/politician-filters";
@@ -26,8 +26,8 @@ export type LetterSummary = {
   mpName: string;
   politicianId: number;
   isTest: boolean;
-  /** Sent through pauseai.info's old form, and copied from Airtable. */
-  imported: boolean;
+  /** What sent it; none for one of this site's never sent. */
+  backend: LetterBackend | null;
   createdAt: string;
   sentAt: string | null;
   /** When a reply from anyone but the sender first reached us. */
@@ -69,6 +69,13 @@ export async function recentLetters(filter: LetterFilter & { politicianId?: numb
   return (await letterRows(filter)).map(withoutTotal);
 }
 
+/**
+ * What sent a supporter's letter `s`: Airtable, for one copied from it,
+ * or the backend of its newest send that went.
+ */
+const BACKEND = `CASE WHEN s.airtable_id IS NOT NULL THEN 'airtable' ELSE (SELECT e.backend FROM email_sends e
+  WHERE e.letter_id = s.id AND e.purpose = 'letter' AND e.outcome = 'sent' ORDER BY e.at DESC, e.id DESC LIMIT 1) END`;
+
 /** Letters as recentLetters finds them, from `offset`, each with how many the filter finds in all. */
 async function letterRows({
   status,
@@ -76,7 +83,7 @@ async function letterRows({
   answered,
   campaign,
   flags,
-  imported,
+  backend,
   consent,
   supporterId,
   letterId,
@@ -96,7 +103,7 @@ async function letterRows({
     .join(" ");
   return query<LetterSummary & { total: number }>(
     `SELECT l.id::int AS id, s.campaign, c.title AS "campaignTitle", c.url AS "campaignUrl", l.status, f.name AS "senderName", f.email AS "senderEmail",
-       f.contact_consent AS "contactConsent", n.name AS "mpName", n.id::int AS "politicianId", p.is_test AS "isTest", s.airtable_id IS NOT NULL AS imported, l.created_at AS "createdAt", l.sent_at AS "sentAt", l.replied_at AS "repliedAt",
+       f.contact_consent AS "contactConsent", n.name AS "mpName", n.id::int AS "politicianId", p.is_test AS "isTest", ${BACKEND} AS backend, l.created_at AS "createdAt", l.sent_at AS "sentAt", l.replied_at AS "repliedAt",
        (SELECT k.supporter_id::int FROM supporter_links k WHERE k.form_entry_id = s.entry_id) AS "supporterId",
        coalesce((SELECT json_agg(json_build_object('at', e.at, 'status', e.status, 'details', e.details) ORDER BY e.at DESC, e.id DESC)
                  FROM letter_events e WHERE e.letter_id = l.id), '[]') AS events,
@@ -113,7 +120,8 @@ async function letterRows({
        AND ($8::text[] IS NULL OR s.campaign = ANY($8))
        AND ($9::boolean IS NULL OR f.contact_consent = $9)
        AND ($11::text[] IS NULL OR s.campaign <> ALL($11))
-       AND ($12::boolean IS NULL OR (s.airtable_id IS NOT NULL) = $12) ${flagConditions}
+       AND ($12::text[] IS NULL OR ${BACKEND} = ANY($12))
+       AND ($13::text[] IS NULL OR (${BACKEND} = ANY($13)) IS NOT TRUE) ${flagConditions}
      ORDER BY ${LETTER_COLUMNS[sort.key]} ${sort.dir === "asc" ? "ASC" : "DESC"} NULLS LAST, l.created_at DESC, l.id DESC
      LIMIT $2 OFFSET $10`,
     [
@@ -128,7 +136,8 @@ async function letterRows({
       consent ?? null,
       offset,
       not?.campaign ?? null,
-      imported ?? null,
+      backend ?? null,
+      not?.backend ?? null,
     ],
   );
 }

@@ -23,8 +23,8 @@ const statusOf = (status: string) => copy.status[status] ?? status;
  * The letters list's columns, as every list's go (docs/style-guide.md):
  * first its status, leading to the letter's page, as a letter has no
  * name; who it was from (leading to their supporter) and their email, and
- * to (leading to the MP's page), and the campaign (leading to its page on
- * the site); whether the sender agreed to hear from us; then when it was
+ * to (leading to the MP's page), the campaign (leading to its page on
+ * the site) and what sent it; whether the sender agreed to hear from us; then when it was
  * written, sent and when the MP replied. A letter from the pauseai.info form
  * is written when its sender filled the form in, and sent later, when
  * Airtable's automation emailed it. Each is a sort (lib/letter-sort.ts),
@@ -69,12 +69,14 @@ const columns: (ListColumn<LetterSummary> & { key: LetterSort })[] = [
     key: "campaign",
     label: copy.columns.campaign,
     text: (l) => campaignBySlug(l.campaign)?.title ?? l.campaignTitle,
-    cell: (l) => (
-      <>
-        <CampaignName slug={l.campaign} title={l.campaignTitle} url={l.campaignUrl} />{" "}
-        {l.imported && <Tag>{copy.imported}</Tag>}
-      </>
-    ),
+    cell: (l) => <CampaignName slug={l.campaign} title={l.campaignTitle} url={l.campaignUrl} />,
+  },
+  {
+    key: "backend",
+    label: copy.columns.backend,
+    short: true,
+    text: (l) => l.backend && copy.backends[l.backend],
+    cell: (l) => l.backend && copy.backends[l.backend],
   },
   {
     key: "consent",
