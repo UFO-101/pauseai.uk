@@ -543,7 +543,7 @@ describe("LetterView", () => {
       .toBeVisible();
     await expect.element(page.getByRole("link", { name: exampleSupporterLetterDetails.campaignTitle })).toBeVisible();
     expect(page.getByRole("group").all()).toHaveLength(0);
-    await expect.element(page.getByText(staffCopy.letters.status.bounced, { exact: true })).toBeVisible();
+    await expect.element(page.getByText(staffCopy.letters.status.bounced, { exact: true }).first()).toBeVisible();
     expect(page.getByText(staffCopy.politicians.flags.test, { exact: true }).all()).toHaveLength(0);
   });
 });

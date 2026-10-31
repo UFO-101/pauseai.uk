@@ -26,11 +26,13 @@ export type HistoryEntry = LetterEvent & { label?: string; tag?: string };
 
 /**
  * A letter's history, newest first: each change recorded; and for one
- * copied from Airtable, which recorded none, that it was sent, when Airtable
- * says, tagged with where from, and, when it was written earlier, that too.
+ * copied from Airtable, a supporter's marked imported or PauseAI's with no
+ * send recorded, that it was sent, when Airtable says, tagged with where
+ * from, and, when nothing's recorded and it was written earlier, that too.
  */
 export function historyOf(letter: Details): HistoryEntry[] {
-  if (letter.events.some((event) => event.status === "sent") || !letter.sentAt) return letter.events;
+  const imported = letter.kind === "pauseai" || letter.imported;
+  if (!imported || !letter.sentAt || letter.events.some((event) => event.status === "sent")) return letter.events;
   const from = letter.kind === "supporter" ? copy.imported : staffCopy.mailings.imported;
   const sent: HistoryEntry = { at: letter.sentAt, status: "sent", details: {}, tag: from };
   const written: HistoryEntry[] =

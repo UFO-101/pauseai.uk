@@ -77,13 +77,18 @@ test("A supporter's letter: the letter as an email, Copy Gmail search, and the M
   await expect(letter.getByText(staffCopy.letterThread.supporterNoText)).toBeVisible();
   await frame(page, "the letter's page: sent, the letter as an email, beside its campaign's ask and its history");
 
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.getByRole("button", { name: staffCopy.findInGmail.copy }).click();
-  await expect(page.getByRole("button", { name: staffCopy.findInGmail.copied })).toBeVisible();
+  await expect(page.getByRole("status")).toContainText(staffCopy.findInGmail.next.stressed);
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/^rfc822msgid:\S+@mtasv\.net$/);
   await frame(page, "Copy Gmail search: copied, and where to paste it", { window: true });
 
   const ask = page.getByRole("region", { name: staffCopy.mailings.fields.ask });
   await expect(ask.getByRole("link", { name: campaigns[0].title })).toBeVisible();
-  await ask.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
+  await ask.getByRole("button", { name: staffCopy.politician.edit }).click();
+  await page.getByLabel(staffCopy.politician.note).fill("Signed, says their reply");
+  await frame(page, "Edit: a note of how we know, and Mark as signed", { window: true });
+  await page.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
   await expect(page.getByText(staffCopy.mailings.columns.answered, { exact: true })).toBeVisible();
   await frame(page, "the MP marked as having signed: the letter's tag says answered, in green");
 });
