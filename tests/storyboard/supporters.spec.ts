@@ -276,9 +276,10 @@ test("A letter writer's page, from the letters list", async ({ page, request, fl
   await frame(page, "her letter's page, with Copy Gmail search for its copy in the policy inbox");
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.getByRole("button", { name: staffCopy.findInGmail.copy }).click();
-  await expect(page.getByRole("status")).toContainText(staffCopy.findInGmail.where("replies@example.org"));
+  // Sent while policy@ was a Google Group, so it's in the mail of the group's members.
+  await expect(page.getByRole("status")).toContainText(staffCopy.findInGmail.policyGroup);
   expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/^rfc822msgid:[\w-]+@mtasv\.net$/);
-  await frame(page, "copied: paste it in Gmail search where you can see the policy inbox's mail");
+  await frame(page, "copied: paste it in Gmail search in the mail of someone who got policy@'s when it went");
   await page.getByRole("link", { name: "Jane Smith" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Jane Smith");
 });
