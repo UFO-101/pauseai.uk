@@ -22,55 +22,88 @@ describe("lettersSearch", () => {
     search: undefined,
     answered: undefined,
     campaign: undefined,
+    flags: undefined,
+    imported: undefined,
     consent: undefined,
+    not: undefined,
+    sort: { key: "created", dir: "desc" },
     page: 1,
   };
+  const blank = {
+    status: "",
+    q: "",
+    answered: "",
+    campaign: [],
+    flag: [],
+    source: "",
+    consent: "",
+    sort: "",
+    dir: "",
+    page: "",
+  };
 
-  it("filters by a status, a search, whether answered, a campaign and consent", () => {
+  it("filters by a status, a search, whether answered, campaigns, the MP's markers, where from and consent, and sorts", () => {
     expect(
       lettersSearch({
         status: "sent",
         q: " jane ",
         answered: "yes",
-        campaign: "regulate-letter-pm",
+        campaign: ["regulate-letter-pm", "!pauseai-info-deepmind"],
+        flag: ["test", "!important"],
+        source: "imported",
         consent: "yes",
+        sort: "from",
+        dir: "asc",
         page: "2",
       }),
     ).toEqual({
       status: "sent",
       q: " jane ",
       answered: "yes",
-      campaign: "regulate-letter-pm",
+      campaign: ["regulate-letter-pm", "!pauseai-info-deepmind"],
+      flag: ["test", "!important"],
+      source: "imported",
       consent: "yes",
+      sort: "from",
+      dir: "asc",
       page: "2",
       filter: {
         status: "sent",
         search: "jane",
         answered: true,
-        campaign: "regulate-letter-pm",
+        campaign: ["regulate-letter-pm"],
+        flags: ["test"],
+        imported: true,
         consent: true,
+        not: { campaign: ["pauseai-info-deepmind"], flags: ["important"] },
+        sort: { key: "from", dir: "asc" },
         page: 2,
       },
     });
-    expect(lettersSearch({ answered: "no", consent: "no" }).filter).toEqual({
+    expect(
+      lettersSearch({ answered: "no", consent: "no", source: "site", campaign: "support-sobel-bill" }).filter,
+    ).toEqual({
       ...none,
       answered: false,
       consent: false,
+      imported: false,
+      campaign: ["support-sobel-bill"],
     });
   });
 
-  it("filters by nothing when each is blank or unknown", () => {
-    expect(lettersSearch({})).toEqual({
-      status: "",
-      q: "",
-      answered: "",
-      campaign: "",
-      consent: "",
-      page: "",
-      filter: none,
-    });
+  it("filters by nothing when each is blank or unknown, newest written first", () => {
+    expect(lettersSearch({})).toEqual({ ...blank, filter: none });
     expect(
-      lettersSearch({ status: "nope", q: "  ", answered: "maybe", campaign: "nope", consent: "maybe" }).filter,
+      lettersSearch({
+        status: "nope",
+        q: "  ",
+        answered: "maybe",
+        campaign: ["Not A Slug", "!"],
+        flag: "nope",
+        source: "nope",
+        consent: "maybe",
+        sort: "nope",
+      }).filter,
     ).toEqual(none);
     // A name every object inherits isn't a status.
     expect(lettersSearch({ status: "toString" }).filter).toEqual(none);

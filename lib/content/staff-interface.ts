@@ -1489,7 +1489,7 @@ export const staffCopy = {
       skipped: "Skipped",
     } as Record<string, string>,
     columns: {
-      created: "Created",
+      created: "Written",
       sent: "Sent",
       from: "From",
       consent: "Consent",
@@ -1502,6 +1502,10 @@ export const staffCopy = {
     consent: { yes: "Yes", no: "No" },
     // Beside a letter sent through pauseai.info's old form, copied from Airtable.
     imported: "pauseai.info",
+    // The filter of where a letter was sent from, and its choice of letters sent from this site; its other choice is
+    // `imported`.
+    source: "⁂ Sent from",
+    fromSite: "⁂ This site",
   },
   // The button beside a list's search box; its other filters apply as soon as they're chosen.
   search: "Search",

@@ -5,7 +5,9 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { contactState } from "@/lib/contact-permissions";
 import type { BlocksFilter } from "@/lib/server/email";
 import { campaignBySlug } from "@/lib/email-your-mp";
-import { parseSort } from "@/lib/staff-sort";
+import { LETTER_SORTS, type LetterSort } from "@/lib/letter-sort";
+import { POLITICIAN_FLAGS, type PoliticianFlag } from "@/lib/politician-filters";
+import { parseSort, type SortSpec } from "@/lib/staff-sort";
 import { isSupporterBadge, NEAR_MILES, SUPPORTER_SORTS, type SupporterFilter } from "@/lib/supporters";
 
 export type LettersSearch = {
@@ -13,12 +15,21 @@ export type LettersSearch = {
   q: string;
   /** "yes" or "no". */
   answered: string;
-  /** A campaign's slug. */
-  campaign: string;
+  /** Campaigns' slugs. */
+  campaign: string[];
+  /** The MP's markers, as POLITICIAN_FLAGS. */
+  flag: string[];
+  /** Where the letter was sent from: "imported" (pauseai.info's old form) or "site" (this site). */
+  source: string;
   /** "yes" or "no". */
   consent: string;
+  sort: string;
+  dir: string;
   page: string;
 };
+
+/** The filters of the letters list that repeat, which can leave out as well as find. */
+type NegatableLetterFilter = "campaign" | "flags";
 
 /** Which letters the letters page lists (recentLetters in lib/server/letters.ts). */
 export type LetterFilter = {
@@ -28,14 +39,21 @@ export type LetterFilter = {
   search?: string;
   /** Whether the MP replied. */
   answered?: boolean;
-  /** A campaign's slug. */
-  campaign?: string;
+  /** In any of these campaigns, by slug. */
+  campaign?: string[];
+  /** To an MP with any of these markers. */
+  flags?: PoliticianFlag[];
+  /** Sent through pauseai.info's old form and copied from Airtable, or, false, sent from this site. */
+  imported?: boolean;
   /** Whether the sender agreed to hear about events and ways to help. */
   consent?: boolean;
   /** One supporter's letters (/staff/letters/supporter/[id]). */
   supporterId?: number;
   /** One letter (/staff/letters/[id]). */
   letterId?: number;
+  /** Those with none of these, each a filter above that repeats. */
+  not?: Pick<LetterFilter, NegatableLetterFilter>;
+  sort?: SortSpec<LetterSort>;
 };
 
 /** A yes-or-no filter: "yes" or "no", or neither. */
@@ -43,23 +61,49 @@ function yesOrNo(value: string): boolean | undefined {
   return value === "yes" ? true : value === "no" ? false : undefined;
 }
 
-/** The letters page's filters, as the URL gives them and as the server applies them. */
-export function lettersSearch({
-  status = "",
-  q = "",
-  answered = "",
-  campaign = "",
-  consent = "",
-  page = "",
-}: Partial<LettersSearch>): LettersSearch & { filter: LetterFilter & { page: number } } {
+/** What a campaign's slug looks like, as the campaigns table checks it. */
+const isSlug = (value: string) => /^[a-z0-9]+(-[a-z0-9]+)*$/.test(value);
+
+/** The values of `values` that are among `known`. */
+export function among<T extends string>(values: string[], known: readonly T[]): T[] {
+  return values.filter((value): value is T => (known as readonly string[]).includes(value));
+}
+
+/** The letters page's filters and sort, as the URL gives them and as the server applies them. */
+export function lettersSearch(
+  params: Partial<Record<keyof LettersSearch, ParamValue>>,
+): LettersSearch & { filter: LetterFilter & { page: number } } {
+  const [status, q, answered, source, consent, sort, dir, page] = (
+    ["status", "q", "answered", "source", "consent", "sort", "dir", "page"] as const
+  ).map((name) => firstOf(params[name]));
+  const [campaign, flag] = (["campaign", "flag"] as const).map((name) => valuesOf(params[name]));
+  const [campaigns, notCampaigns] = anyAndNone(campaign, (values) => values.filter(isSlug));
+  const [flags, notFlags] = anyAndNone(flag, (values) => among(values, POLITICIAN_FLAGS));
+  const sorting = parseSort(LETTER_SORTS, "created", sort, dir);
   const filter: LetterFilter = {
     status: Object.hasOwn(staffCopy.letters.status, status) ? status : undefined,
     search: q.trim() || undefined,
     answered: yesOrNo(answered),
-    campaign: campaignBySlug(campaign)?.slug,
+    campaign: campaigns,
+    flags,
+    imported: source === "imported" ? true : source === "site" ? false : undefined,
     consent: yesOrNo(consent),
+    not: notOf({ campaign: notCampaigns, flags: notFlags }),
+    sort: sorting,
   };
-  return { status, q, answered, campaign, consent, page, filter: { ...filter, page: pageNumber(page) } };
+  return {
+    status,
+    q,
+    answered,
+    campaign,
+    flag,
+    source,
+    consent,
+    sort,
+    dir,
+    page,
+    filter: { ...filter, page: pageNumber(page) },
+  };
 }
 
 /**

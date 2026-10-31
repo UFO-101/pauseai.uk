@@ -3,6 +3,7 @@ import { letterFilters } from "../../../_components/LetterFilters";
 import { letterDownloadColumns } from "../../../_components/LettersTable";
 import { filterWords } from "../../../_components/ui/FilterBar";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { listCampaigns } from "@/lib/server/asks";
 import { recentLetters } from "@/lib/server/letters";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { staffDownload } from "@/lib/server/staff-download";
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
       void page;
       return {
         what: staffCopy.letters.title,
-        filters: filterWords(letterFilters(), search, "q"),
+        filters: filterWords(letterFilters(await listCampaigns()), search, "q"),
         columns: letterDownloadColumns,
         rows: await recentLetters({ ...filter, limit: null }),
       };

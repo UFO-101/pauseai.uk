@@ -18,7 +18,9 @@ import LetterFilters from "@/app/(staff)/staff/_components/LetterFilters";
 import LetterLink from "@/app/(staff)/staff/_components/LetterLink";
 import LettersTable, { LettersList } from "@/app/(staff)/staff/_components/LettersTable";
 import {
+  emptyLettersSearch,
   exampleLetter,
+  exampleLetterCampaigns,
   examplePauseaiLetterDetails,
   exampleSupporterLetterDetails,
 } from "@/app/(staff)/staff/_components/LettersTable.examples";
@@ -2633,7 +2635,7 @@ export const staff: Group = {
                 total={150}
                 pages={2}
                 pageSize={100}
-                search={{ status: "", q: "", answered: "", campaign: "", consent: "", page: "2" }}
+                search={{ ...emptyLettersSearch, page: "2" }}
               />
             </StaffPage>
           ),
@@ -2991,13 +2993,14 @@ export const staff: Group = {
             <StaffPage as="div">
               <LetterFilters
                 search={{
+                  ...emptyLettersSearch,
                   status: "bounced",
-                  q: "",
-                  answered: "",
-                  campaign: "regulate-letter-pm",
+                  flag: ["!test"],
+                  campaign: ["regulate-letter-pm", "pauseai-info-frontier-ai"],
+                  source: "site",
                   consent: "yes",
-                  page: "",
                 }}
+                campaigns={exampleLetterCampaigns}
               />
             </StaffPage>
           ),

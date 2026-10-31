@@ -1,6 +1,7 @@
 import { expect, it, vi } from "vitest";
 import { addTestLetter, addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { sentNearSearch } from "@/lib/letter-links";
+import type { LetterFilter } from "@/lib/staff-search";
 import { query } from "./db";
 import {
   getPauseaiLetter,
@@ -110,8 +111,19 @@ describeWithDatabase("recentLetters", () => {
     expect(await ids({ answered: true })).toEqual([2]);
     expect(await ids({ answered: false })).toEqual([1]);
     await query("UPDATE letters_from_supporters SET campaign = 'support-sobel-bill' WHERE id = 2");
-    expect(await ids({ campaign: "support-sobel-bill" })).toEqual([2]);
-    expect(await ids({ campaign: "regulate-letter-pm" })).toEqual([1]);
+    expect(await ids({ campaign: ["support-sobel-bill"] })).toEqual([2]);
+    expect(await ids({ campaign: ["regulate-letter-pm"] })).toEqual([1]);
+    expect(await ids({ campaign: ["regulate-letter-pm", "support-sobel-bill"] })).toEqual([2, 1]);
+    expect(await ids({ not: { campaign: ["support-sobel-bill"] } })).toEqual([1]);
+    // Where it was sent from: pauseai.info's old form, copied from Airtable, or this site.
+    await query("UPDATE letters_from_supporters SET airtable_id = 'rec1' WHERE id = 2");
+    expect(await ids({ imported: true })).toEqual([2]);
+    expect(await ids({ imported: false })).toEqual([1]);
+    // The MP's markers: the test MP is one of ours.
+    expect(await ids({ flags: ["test"] })).toEqual([2, 1]);
+    expect(await ids({ flags: ["important", "connection"] })).toEqual([]);
+    expect(await ids({ not: { flags: ["test"] } })).toEqual([]);
+    expect(await ids({ not: { flags: ["important"] } })).toEqual([2, 1]);
     await query(
       "UPDATE form_entries SET contact_consent = true WHERE id = (SELECT entry_id FROM letters_from_supporters WHERE id = 1)",
     );
@@ -120,6 +132,32 @@ describeWithDatabase("recentLetters", () => {
     expect(await ids({ supporterId: 1 })).toEqual([1]);
     expect(await ids({ supporterId: 2 })).toEqual([]);
     expect(await ids({ letterId: 1 })).toEqual([1]);
+  });
+
+  it("sorts by any column, either way, then newest written first", async () => {
+    const mp = await addTestMp();
+    for (const [hash, name, day] of [
+      ["a", "Sam Jones", "01"],
+      ["b", "Jane Smith", "02"],
+      ["c", "Jane Smith", "03"],
+    ]) {
+      await addTestLetter({
+        politicianId: mp,
+        senderName: name,
+        senderEmail: `${hash}@example.com`,
+        replyHash: hash,
+        createdAt: `2026-10-${day}T09:00:00Z`,
+        repliedAt: hash === "c" ? "2026-10-04T09:00:00Z" : null,
+      });
+    }
+    const ids = async (sort: LetterFilter["sort"]) => (await recentLetters({ sort })).map((l) => l.id);
+    expect(await ids(undefined)).toEqual([3, 2, 1]);
+    expect(await ids({ key: "created", dir: "asc" })).toEqual([1, 2, 3]);
+    expect(await ids({ key: "from", dir: "asc" })).toEqual([3, 2, 1]);
+    expect(await ids({ key: "from", dir: "desc" })).toEqual([1, 3, 2]);
+    // Those with none last, either way.
+    expect(await ids({ key: "replied", dir: "desc" })).toEqual([3, 2, 1]);
+    expect(await ids({ key: "replied", dir: "asc" })).toEqual([3, 2, 1]);
   });
 });
 

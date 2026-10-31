@@ -2,7 +2,10 @@ import "server-only";
 import type { Permission } from "@/lib/staff-permissions";
 import type { LetterFilter } from "@/lib/staff-search";
 import { messageIdSearch, postmarkSearch, sentNearSearch, type GmailFind } from "@/lib/letter-links";
+import { LETTER_COLUMNS } from "@/lib/letter-sort";
+import type { PoliticianFlag } from "@/lib/politician-filters";
 import { query } from "./db";
+import { FLAG_CONDITIONS } from "./politicians";
 
 // Letters, for the staff interface.
 
@@ -39,7 +42,7 @@ export const LETTERS_PAGE_SIZE = 100;
 
 export type LettersPage = { letters: LetterSummary[]; total: number; pages: number; pageSize: number };
 
-/** One page of the letters page's list, newest first, and how many the filter finds in all. */
+/** One page of the letters page's list, in its sort, and how many the filter finds in all. */
 export async function listLetters({ page = 1, ...filter }: LetterFilter & { page?: number }): Promise<LettersPage> {
   const rows = await letterRows({ ...filter, limit: LETTERS_PAGE_SIZE, offset: (page - 1) * LETTERS_PAGE_SIZE });
   // A page past the end has no rows to carry the count, so it counts again from the first.
@@ -59,7 +62,7 @@ function withoutTotal(row: LetterSummary & { total: number }): LetterSummary {
 }
 
 /**
- * Recent letters, newest first, filtered (LetterFilter), or only those to
+ * Letters, newest written first unless the filter sorts them, filtered (LetterFilter), or only those to
  * one politician; the newest 200, or `limit`, or with null every one.
  */
 export async function recentLetters(filter: LetterFilter & { politicianId?: number; limit?: number | null } = {}) {
@@ -72,15 +75,25 @@ async function letterRows({
   search,
   answered,
   campaign,
+  flags,
+  imported,
   consent,
   supporterId,
   letterId,
   politicianId,
   limit = 200,
   offset = 0,
+  not,
+  sort = { key: "created", dir: "desc" },
 }: LetterFilter & { politicianId?: number; limit?: number | null; offset?: number }): Promise<
   (LetterSummary & { total: number })[]
 > {
+  // Each marker's condition is SQL of our own (FLAG_CONDITIONS), so it goes in the query as it is.
+  const marked = (flags: PoliticianFlag[]) => `(${flags.map((flag) => FLAG_CONDITIONS[flag]).join(" OR ")})`;
+  const flagConditions = [flags && marked(flags), not?.flags && `${marked(not.flags)} IS NOT TRUE`]
+    .filter(Boolean)
+    .map((condition) => `AND ${condition}`)
+    .join(" ");
   return query<LetterSummary & { total: number }>(
     `SELECT l.id::int AS id, s.campaign, c.title AS "campaignTitle", c.url AS "campaignUrl", l.status, f.name AS "senderName", f.email AS "senderEmail",
        f.contact_consent AS "contactConsent", n.name AS "mpName", n.id::int AS "politicianId", p.is_test AS "isTest", s.airtable_id IS NOT NULL AS imported, l.created_at AS "createdAt", l.sent_at AS "sentAt", l.replied_at AS "repliedAt",
@@ -97,9 +110,12 @@ async function letterRows({
        AND ($5::boolean IS NULL OR (l.replied_at IS NOT NULL) = $5)
        AND ($6::bigint IS NULL OR EXISTS (SELECT 1 FROM supporter_links k WHERE k.form_entry_id = s.entry_id AND k.supporter_id = $6))
        AND ($7::bigint IS NULL OR l.id = $7)
-       AND ($8::text IS NULL OR s.campaign = $8)
+       AND ($8::text[] IS NULL OR s.campaign = ANY($8))
        AND ($9::boolean IS NULL OR f.contact_consent = $9)
-     ORDER BY l.created_at DESC, l.id DESC LIMIT $2 OFFSET $10`,
+       AND ($11::text[] IS NULL OR s.campaign <> ALL($11))
+       AND ($12::boolean IS NULL OR (s.airtable_id IS NOT NULL) = $12) ${flagConditions}
+     ORDER BY ${LETTER_COLUMNS[sort.key]} ${sort.dir === "asc" ? "ASC" : "DESC"} NULLS LAST, l.created_at DESC, l.id DESC
+     LIMIT $2 OFFSET $10`,
     [
       status ?? null,
       limit,
@@ -111,6 +127,8 @@ async function letterRows({
       campaign ?? null,
       consent ?? null,
       offset,
+      not?.campaign ?? null,
+      imported ?? null,
     ],
   );
 }

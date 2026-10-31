@@ -22,7 +22,7 @@ import LettersTable, { LettersList, letterColumns, letterDownloadColumns } from 
 import LetterDetails from "./LetterDetails";
 import FindInGmail from "./FindInGmail";
 import { examplePauseaiLetterDetails, exampleSupporterLetterDetails } from "./LettersTable.examples";
-import { exampleLetter } from "./LettersTable.examples";
+import { emptyLettersSearch, exampleLetter, exampleLetterCampaigns } from "./LettersTable.examples";
 import JobActions from "./JobActions";
 import LoginCard from "./LoginCard";
 import LoginForm from "./LoginForm";
@@ -3829,13 +3829,7 @@ describe("the lists' paging", () => {
       .element(page.getByRole("link", { name: staffCopy.paging.next }))
       .toHaveAttribute("href", "/staff/audit-log?page=3");
     await rerender(
-      <LettersList
-        letters={[exampleLetter]}
-        total={150}
-        pages={2}
-        pageSize={100}
-        search={{ status: "", q: "", answered: "", campaign: "", consent: "", page: "" }}
-      />,
+      <LettersList letters={[exampleLetter]} total={150} pages={2} pageSize={100} search={emptyLettersSearch} />,
     );
     await expect
       .element(page.getByRole("link", { name: staffCopy.paging.next }))
@@ -3870,7 +3864,9 @@ describe("each list's download values and contact cards", () => {
   it("letters: the campaign by its title, the campaigns table's once it's gone, and the history", () => {
     const row = values(letterDownloadColumns, exampleLetter);
     expect(row.campaign).toBe(campaignBySlug(exampleLetter.campaign)?.title);
-    expect(values(letterColumns, { ...exampleLetter, campaign: "gone", campaignTitle: "Gone" }).campaign).toBe("Gone");
+    expect(values(letterColumns(), { ...exampleLetter, campaign: "gone", campaignTitle: "Gone" }).campaign).toBe(
+      "Gone",
+    );
     expect(typeof row.history).toBe("string");
   });
 
@@ -4144,20 +4140,54 @@ describe("PoliticianFilters, chosen more than once", () => {
 describe("LetterFilters", () => {
   it("has a chip for each filter on, and the rest under + Filter", async () => {
     const copy = staffCopy.letters;
-    const { filter, ...search } = lettersSearch({ q: "jane", status: "sent", campaign: "support-sobel-bill" });
+    const { filter, ...search } = lettersSearch({
+      q: "jane",
+      status: "sent",
+      campaign: ["support-sobel-bill", "!pauseai-info-frontier-ai"],
+      flag: "test",
+      source: "imported",
+    });
     void filter;
-    await render(<LetterFilters search={search} />);
+    await render(<LetterFilters search={search} campaigns={exampleLetterCampaigns} />);
     await expect.element(page.getByRole("searchbox", { name: copy.search })).toHaveValue("jane");
-    // In the columns' order.
+    // In the columns' order; a campaign the list doesn't offer by its slug.
     expect(chips()).toEqual([
       `${copy.columns.status}: ${copy.status.sent}`,
-      `${copy.columns.campaign}: ${campaignBySlug("support-sobel-bill")!.title}`,
+      `${staffCopy.politicians.flag}: ${staffCopy.politicians.flags.test}`,
+      `${copy.columns.campaign}: support-sobel-bill`,
+      staffCopy.filters.notChip(copy.columns.campaign, exampleLetterCampaigns[1].title),
+      `${copy.source}: ${copy.imported}`,
     ]);
     const add = await menu(staffCopy.filters.add);
-    expect(add[0]).toEqual([
+    expect(add).toContainEqual([
       copy.consent.yes,
-      "/staff/letters?status=sent&q=jane&campaign=support-sobel-bill&consent=yes",
+      "/staff/letters?status=sent&q=jane&campaign=support-sobel-bill&campaign=%21pauseai-info-frontier-ai&flag=test&source=imported&consent=yes",
     ]);
+  });
+});
+
+describe("LettersList headings", () => {
+  it("sort the list, keeping its filters, newest written first unless another is chosen", async () => {
+    const heading = (name: string) => page.getByRole("columnheader", { name }).getByRole("link");
+    const copy = staffCopy.letters.columns;
+    const list = (search: Partial<typeof emptyLettersSearch>) => (
+      <LettersList
+        letters={[exampleLetter]}
+        total={1}
+        pages={1}
+        pageSize={100}
+        search={{ ...emptyLettersSearch, ...search }}
+      />
+    );
+    const { rerender } = await render(list({ q: "x", page: "2" }));
+    await expect.element(heading(copy.created)).toHaveAttribute("href", "/staff/letters?q=x&sort=created&dir=asc");
+    expect(heading(copy.created).element().closest("th")!.getAttribute("aria-sort")).toBe("descending");
+    await expect.element(heading(copy.from)).toHaveAttribute("href", "/staff/letters?q=x&sort=from&dir=asc");
+    await rerender(list({ campaign: ["regulate-letter-pm"], sort: "sent", dir: "asc" }));
+    await expect
+      .element(heading(copy.sent))
+      .toHaveAttribute("href", "/staff/letters?campaign=regulate-letter-pm&sort=sent&dir=desc");
+    expect(heading(copy.sent).element().closest("th")!.getAttribute("aria-sort")).toBe("ascending");
   });
 });
 
