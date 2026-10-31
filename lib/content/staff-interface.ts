@@ -1500,8 +1500,8 @@ export const staffCopy = {
       history: "History",
     },
     consent: { yes: "Yes", no: "No" },
-    // Beside a letter sent through pauseai.info's old form, copied from Airtable.
-    imported: "pauseai.info",
+    // Beside a letter sent through pauseai.info's old form, copied from Airtable, and the Sent from filter's choice of them.
+    imported: "Airtable",
     // The filter of where a letter was sent from, and its choice of letters sent from this site; its other choice is
     // `imported`.
     source: "⁂ Sent from",
