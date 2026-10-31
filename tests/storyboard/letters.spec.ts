@@ -2,6 +2,7 @@ import { campaigns, copy } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { addFilter, fakeTurnstile, lookUpTestMp, newestEmail, openLookup } from "../steps";
 import { BASE, emailFrame, expect, madeUpAddress, frame, test } from "./fixtures";
+import { TEST_MPS } from "@/lib/test-mps";
 import { logIn, STAFF_INBOX, bouncy, BOUNCY_ADDRESS, postBounce, sentLetterId } from "./staff-steps";
 
 // Supporters' letters to MPs: the list filtered, and a letter that bounces,
@@ -56,6 +57,37 @@ test("Filter letters by status and campaigns, reset, then sort by sender", async
   await frame(page, "sorted by sender, A to Z");
 });
 
+test("A supporter's letter: the letter as an email, Copy Gmail search, and the MP's answer set from it", async ({
+  page,
+  flowDatabase,
+}) => {
+  const sender = madeUpAddress("Jane Smith", 14);
+  await sentLetterId(page, flowDatabase, sender);
+  // A letter's status in the list leads to its page.
+  await page
+    .getByRole("row")
+    .filter({ hasText: sender })
+    .getByRole("link", { name: staffCopy.letters.status.sent, exact: true })
+    .click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    staffCopy.letters.oneTitle("Jane Smith", TEST_MPS[0].name),
+  );
+  const letter = page.getByRole("article");
+  await expect(letter).toContainText(sender);
+  await expect(letter.getByText(staffCopy.letterThread.supporterNoText)).toBeVisible();
+  await frame(page, "the letter's page: sent, the letter as an email, beside its campaign's ask and its history");
+
+  await page.getByRole("button", { name: staffCopy.findInGmail.copy }).click();
+  await expect(page.getByRole("button", { name: staffCopy.findInGmail.copied })).toBeVisible();
+  await frame(page, "Copy Gmail search: copied, and where to paste it", { window: true });
+
+  const ask = page.getByRole("region", { name: staffCopy.mailings.fields.ask });
+  await expect(ask.getByRole("link", { name: campaigns[0].title })).toBeVisible();
+  await ask.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
+  await expect(page.getByText(staffCopy.mailings.columns.answered, { exact: true })).toBeVisible();
+  await frame(page, "the MP marked as having signed: the letter's tag says answered, in green");
+});
+
 test("A letter bounces: staff are emailed, the address is blocked", async ({ page, request, flowDatabase }) => {
   const sender = madeUpAddress("Jane Smith", 13);
   const messageId = await sentLetterId(page, flowDatabase, sender, bouncy);
@@ -83,7 +115,7 @@ test("A letter bounces: staff are emailed, the address is blocked", async ({ pag
   );
   await expect(page.getByText(sender)).toBeVisible();
   await expect(page.getByText(staffCopy.letters.status.bounced).first()).toBeVisible();
-  await frame(page, "the letter's page: from and to whom, bounced, and what happened to it");
+  await frame(page, "the letter's page: bounced, in red, the letter as an email, and what happened to it");
   await page.getByRole("list", { name: staffCopy.letters.detail.historyTitle }).getByRole("button").first().click();
   await expect(page.locator("pre:popover-open")).toContainText('"reason"');
   await frame(page, "the bounce's {}: what Postmark said, as JSON, in a bubble by the button", { window: true });
