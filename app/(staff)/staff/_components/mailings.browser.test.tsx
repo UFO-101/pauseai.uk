@@ -532,11 +532,12 @@ describe("LetterView", () => {
     await expect.element(page.getByRole("heading", { name: staffCopy.mailings.fields.ask, exact: true })).toBeVisible();
     // Under the ask, the campaign it's based on.
     await expect.element(page.getByRole("group", { name: exampleAsks[0]!.title })).toBeVisible();
-    const basedOn = page.getByText(staffCopy.letters.detail.basedOn);
-    await expect.element(basedOn).toHaveTextContent(`${staffCopy.letters.detail.basedOn} ${supporters.campaignTitle}`);
-    await expect.element(basedOn.getByRole("link", { name: supporters.campaignTitle })).toBeVisible();
+    const campaign = page.getByRole("link", { name: supporters.campaignTitle });
+    await expect.element(campaign).toBeVisible();
+    const basedOn = campaign.element().closest("p")!;
+    expect(basedOn.textContent).toBe(`${staffCopy.letters.detail.basedOn} ${supporters.campaignTitle}`);
     expect(
-      page.getByRole("group").element().compareDocumentPosition(basedOn.element()) & Node.DOCUMENT_POSITION_FOLLOWING,
+      page.getByRole("group").element().compareDocumentPosition(basedOn) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(document.body.textContent).not.toContain(staffCopy.mailings.personalised);
   });

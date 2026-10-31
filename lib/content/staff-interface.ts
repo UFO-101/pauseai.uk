@@ -85,11 +85,10 @@ export const staffCopy = {
   letterThread: {
     title: "Letter and replies",
     // An imported letter, whose text Airtable didn't keep.
-    noText:
-      "⁂ Text not available. This letter was copied from Airtable, which kept only who got it. It was sent with Gmail: copy the Gmail search to find it there.",
+    noText: "⁂ Text not available. It was sent from Airtable via Gmail. Copy the Gmail search to find it in Gmail.",
     // A supporter's letter, whose text and replies the site doesn't keep.
     supporterNoText:
-      "⁂ Text not available. The site doesn't keep supporters' letters or their MPs' replies. The campaign has the draft they started from, which they may have changed. What was sent is in the policy inbox: copy the Gmail search to find it.",
+      "⁂ Text not available. The site does not keep supporters' letters or their MPs' replies. See the campaign for the draft, copy the .",
     noReplies: "No replies yet.",
     unreadable: "This message couldn't be read.",
     // Over each message, as an email shows them.
