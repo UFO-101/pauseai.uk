@@ -85,10 +85,11 @@ export const staffCopy = {
   letterThread: {
     title: "Letter and replies",
     // An imported letter, whose text Airtable didn't keep.
-    noText: "This letter was sent before the site sent mailings, so its text isn't here.",
+    noText:
+      "⁂ Text not available. This letter was copied from Airtable, which kept only who got it. It was sent with Gmail: copy the Gmail search to find it there.",
     // A supporter's letter, whose text and replies the site doesn't keep.
     supporterNoText:
-      "⁂ The site doesn't keep the text of supporters' letters, nor their MPs' replies. They're in the policy inbox: copy the Gmail search to find the letter there.",
+      "⁂ Text not available. The site doesn't keep supporters' letters or their MPs' replies. The campaign has the draft they started from, which they may have changed. What was sent is in the policy inbox: copy the Gmail search to find it.",
     noReplies: "No replies yet.",
     unreadable: "This message couldn't be read.",
     // Over each message, as an email shows them.
@@ -709,7 +710,7 @@ export const staffCopy = {
     noAsk: "None",
     textTitle: "The email",
     noText:
-      "Text not available. This was imported from Airtable's Emails table, which keeps only who got it and how it was written. It was sent with Gmail, look there.",
+      "⁂ Text not available. This mailing was copied from Airtable, which kept only who got it and whether it was personalised. Open a letter under Recipients to copy a Gmail search for it.",
     recipientsTitle: "Recipients",
     // Over the recipients: how many; instead of them, when there are none.
     recipientsCount: (n: number) => `${n} ${n === 1 ? "recipient" : "recipients"}`,
