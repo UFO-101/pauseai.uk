@@ -2673,6 +2673,7 @@ export const staff: Group = {
                     id: 3,
                     status: "not_sent",
                     mpName: "Bouncy McTestface MP",
+                    backend: null,
                     sentAt: null,
                     events: [
                       { at: "2026-10-12T09:00:00Z", status: "sending", details: {} },
