@@ -4168,7 +4168,7 @@ describe("LetterFilters", () => {
 
 describe("LettersList headings", () => {
   it("sort the list, keeping its filters, newest written first unless another is chosen", async () => {
-    const heading = (name: string) => page.getByRole("columnheader", { name }).getByRole("link");
+    const heading = (name: string) => page.getByRole("link", { name, exact: true });
     const copy = staffCopy.letters.columns;
     const list = (search: Partial<typeof emptyLettersSearch>) => (
       <LettersList

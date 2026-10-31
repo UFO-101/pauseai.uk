@@ -116,7 +116,7 @@ describeWithDatabase("recentLetters", () => {
     expect(await ids({ campaign: ["regulate-letter-pm", "support-sobel-bill"] })).toEqual([2, 1]);
     expect(await ids({ not: { campaign: ["support-sobel-bill"] } })).toEqual([1]);
     // Where it was sent from: pauseai.info's old form, copied from Airtable, or this site.
-    await query("UPDATE letters_from_supporters SET airtable_id = 'rec1' WHERE id = 2");
+    await query("UPDATE letters_from_supporters SET airtable_id = 'rec1', reply_hash = NULL WHERE id = 2");
     expect(await ids({ imported: true })).toEqual([2]);
     expect(await ids({ imported: false })).toEqual([1]);
     // The MP's markers: the test MP is one of ours.
