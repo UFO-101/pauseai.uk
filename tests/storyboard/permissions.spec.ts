@@ -16,7 +16,7 @@ import {
   syncPoliticians,
   WEBHOOK_AUTH,
 } from "../steps";
-import { BASE, expect, flowStorageState, frame, test } from "./fixtures";
+import { BASE, expect, flowStorageState, flowTag, frame, test } from "./fixtures";
 
 // Who sees what: supporter data only with `supporters`, wherever it would
 // show; and the sessions an account has, which an admin, or its owner, can
@@ -62,11 +62,11 @@ async function postBounce(request: APIRequestContext, address: string) {
 const politicianId = (database: string, name: string) =>
   runSql(database, `SELECT id FROM notable_people WHERE name = '${name}'`)[0];
 
-test("No permissions: no page shows a supporter's name or email", async ({ page, request, flowDatabase }, testInfo) => {
+test("No permissions: no page shows a supporter's name or email", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await importLuma(request, BASE);
   await importMembers(request, BASE);
-  const sender = `jane+${testInfo.testId}@example.com`;
+  const sender = `jane+${flowTag()}@example.com`;
   await writeLetter(page, sender);
   await postBounce(request, sender);
   // Everyone the flow's database knows of, by name and by every address.
@@ -124,12 +124,12 @@ test("Without Supporters: letters and supporters' blocked emails are closed", as
   page,
   request,
   flowDatabase,
-}, testInfo) => {
+}) => {
   await syncPoliticians(request, BASE);
   const bouncy = TEST_MPS.find((mp) => mp.postcode === "ZZ99ZH")!;
   await fakeTurnstile(page);
   await lookUpTestMp(page, BASE, bouncy);
-  await fillLetter(page, `jane+${testInfo.testId}@example.com`);
+  await fillLetter(page, `jane+${flowTag()}@example.com`);
   await sendLetter(page, bouncy);
   const messageId = runSql(flowDatabase, "SELECT message_id FROM email_sends WHERE purpose = 'letter'")[0];
   const bounce = await request.post(`${BASE}/api/postmark/bounce`, {

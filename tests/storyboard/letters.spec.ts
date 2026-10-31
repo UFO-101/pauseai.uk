@@ -1,20 +1,16 @@
 import { campaigns, copy } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { addFilter, fakeTurnstile, lookUpTestMp, newestEmail, openLookup } from "../steps";
-import { BASE, emailFrame, expect, frame, test } from "./fixtures";
+import { BASE, emailFrame, expect, flowTag, frame, test } from "./fixtures";
 import { logIn, STAFF_INBOX, bouncy, BOUNCY_ADDRESS, postBounce, sentLetterId } from "./staff-steps";
 
 // Supporters' letters to MPs: the list filtered, and a letter that bounces,
 // emailing staff and blocking the address until staff unblock it. Each flow
 // on its own database.
 
-test("Filter letters by status and campaigns, reset, then sort by sender", async ({
-  page,
-  request,
-  flowDatabase,
-}, testInfo) => {
-  const jane = `jane+${testInfo.testId}@example.com`;
-  const sam = `sam+${testInfo.testId}@example.com`;
+test("Filter letters by status and campaigns, reset, then sort by sender", async ({ page, request, flowDatabase }) => {
+  const jane = `jane+${flowTag()}@example.com`;
+  const sam = `sam+${flowTag()}@example.com`;
   await sentLetterId(page, flowDatabase, jane);
   await postBounce(request, await sentLetterId(page, flowDatabase, sam, bouncy, "Sam Smith"));
 
@@ -60,12 +56,8 @@ test("Filter letters by status and campaigns, reset, then sort by sender", async
   await frame(page, "sorted by sender, A to Z");
 });
 
-test("A letter bounces: staff are emailed, the address is blocked", async ({
-  page,
-  request,
-  flowDatabase,
-}, testInfo) => {
-  const sender = `jane+${testInfo.testId}@example.com`;
+test("A letter bounces: staff are emailed, the address is blocked", async ({ page, request, flowDatabase }) => {
+  const sender = `jane+${flowTag()}@example.com`;
   const messageId = await sentLetterId(page, flowDatabase, sender, bouncy);
   const sent = newestEmail((email) => email.Cc?.includes(sender) ?? false);
   expect(sent?.To).toBe(`"Bouncy McTestface MP" <${BOUNCY_ADDRESS}>`);

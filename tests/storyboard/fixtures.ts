@@ -93,3 +93,10 @@ export const test = base.extend<{ flowDatabase: string }>({
     await provide(page);
   },
 });
+
+/**
+ * A short tag unique to the flow on its viewport, for the addresses it
+ * makes up: jane+3fa91c@example.com reads like a real address, and no two
+ * flows share one.
+ */
+export const flowTag = () => test.info().testId.replace(/\W/g, "").slice(-6);
