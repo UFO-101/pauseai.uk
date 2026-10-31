@@ -18,6 +18,13 @@ interface Tracker {
 // Newest first.
 const trackers: Tracker[] = [
   {
+    href: "/trackers/2026-10-31-flyering",
+    title: "Flyering team race",
+    date: "31 October 2026",
+    description:
+      "Which team gets the most people signed up to the March Against AI Extinction, counted from each team's QR code.",
+  },
+  {
     href: "/trackers/2026-10-25-flyering",
     title: "Flyering team race",
     date: "25 October 2026",
