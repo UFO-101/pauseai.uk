@@ -48,6 +48,8 @@ the letter's own address:
   (`forwardReply`). That adds a `replied` or `auto_reply` event, keeping
   who and when but not the text, and forwards it from noreply@ to
   `POLICY_INBOX` and the sender, unless they're already in its To or Cc.
+  Mail from the sender themselves, writing back to their MP with the
+  letter's address copied, goes to `POLICY_INBOX` only.
   Inbound needs Postmark's Pro plan or above: on Basic, Postmark still
   accepts the mail but drops it, with no bounce and no webhook.
 - The letter's page has "Copy Gmail search" for the Bcc'd copy
@@ -56,11 +58,16 @@ the letter's own address:
 ### What's known about getting through
 
 - **No site letter has had a reply or an automatic reply that we've
-  seen.** Mimecast, Parliament's mail filter, accepts them, often after a
-  first `451` (greylisting a sender it doesn't know), but what happens
-  next can't be seen from outside.
-- **Letters sent from policy@ get answers:** automatic replies within
-  minutes, casework replies within weeks. So do volunteers' own emails.
+  seen,** from 35 sent to MPs between 16 and 29 October 2026. That proves
+  little: Postmark dropped all mail to the letters' addresses from 15 to
+  30 October, while the account was on the Basic plan, and automatic
+  replies go there. Mimecast, Parliament's mail filter, accepts the
+  letters, often after a first `451` (greylisting a sender it doesn't
+  know), but what happens next can't be seen from outside.
+- **Letters sent from policy@ get answers.** Of pauseai.info's 24 letters
+  on 15 October, 2 had automatic replies within minutes; of its 40 on
+  4 October, 2 had casework replies, within weeks. Volunteers' own emails
+  get answers too.
 - **The site's letters authenticate cleanly:** SPF, DKIM for
   letters.pauseai.uk and DMARC all pass. The domain is new, the sender
   address random-looking, and every letter has the same text, in HTML,
@@ -89,8 +96,9 @@ the letter's own address:
 - **A forwarded reply is our own email quoting the MP's.** Re-sending the
   office's message from our server would break its SPF and DKIM. So the
   constituent gets mail from PauseAI, not their MP. Its Reply-To is the
-  MP's address, so answering it reaches the office, and it names the
-  letter's Message-ID, so it sits in the letter's thread.
+  MP's address and the letter's, so answering it reaches the office and
+  is kept with the letter, and it names the letter's Message-ID, so it
+  sits in the letter's thread.
 - **People forward replies by hand.** Supporters forward their MP's reply
   to policy@, and policy@ forwards replies on to supporters.
 
@@ -112,11 +120,11 @@ emails with us on Cc.
 
 ## 1. Now: find out whether letters get through
 
-1. **Watch for automatic replies.** Letters now go with one Cc instead of
-   three Reply-To addresses. Many offices send an acknowledgement within
-   minutes, so `auto_reply` events should start appearing on new letters.
-   If none have after a few dozen letters, the letters are probably being
-   filtered, and the Reply-To list wasn't the cause.
+1. **Watch for automatic replies.** Mail to the letters' addresses has
+   reached the site since 30 October 2026, so for the first time an
+   office's acknowledgement adds an `auto_reply` event to its letter.
+   pauseai.info's letters got about 2 in 24. If none have come after
+   about 30 letters, the letters are probably being filtered.
 2. **Ask.**
    - A few senders of past letters: did they get a reply or an
      acknowledgement, and from which address?
@@ -218,24 +226,53 @@ its politician. Nothing is lost, and nothing is wrongly joined.
 
 ### Where the mail comes from
 
-- **Policy@'s Gmail.** It's connected like any staff Gmail and read hourly
-  with the others, with the option "Keep all its conversations with
-  politicians" turned on. Only policy@ and the archive account below have
-  it.
+- **Policy@'s Gmail.** It's connected like any staff Gmail and read
+  hourly with the others, with the option "Keep all its conversations
+  with politicians" turned on. Only policy@, and Joseph's account if the
+  archive is imported from it, have it.
 - **The group's archive, from Joseph's Gmail.** Google has no API that
   reads a group's messages, and Vault isn't in PauseAI's Workspace, so a
   member's mailbox is the only way in. Joseph was a member getting every
-  email, so his mailbox has a copy of each message with its original
-  headers. He connects his Gmail on `/staff/me`, as for sending mailings,
-  with the existing OAuth flow and scopes. "Import the policy archive"
-  under Import data then reads only the group's mail, with a Gmail search
-  on its List-Id (`list:`, https://support.google.com/mail/answer/7190),
-  paged, from the oldest message:
-  `list:policy@pauseai.uk OR list:policy-archive@pauseai.uk`. Mail to the
-  Gmail account has no List-Id, so the search can't overlap with what's
-  read from policy@ itself. It's a one-off that can be run again: what's
-  already kept is skipped. It covers only what reached Joseph, from when
-  he joined.
+  email, so his mailbox has a copy of each message with its
+  original headers. He connects his Gmail on `/staff/me`, as for sending
+  mailings, with the existing OAuth flow and scopes. "Import the policy
+  archive" under Import data then reads only the group's mail, with a
+  Gmail search on its List-Id (`list:`,
+  https://support.google.com/mail/answer/7190), paged, from the oldest
+  message: `list:policy@pauseai.uk OR list:policy-archive@pauseai.uk`.
+  Mail sent straight to the Gmail account has no List-Id, so the search
+  doesn't find it. It's a one-off that can be run again: what's already
+  kept is skipped. It covers only what reached Joseph, from when he
+  joined.
+- **Or the group's archive copied into policy@'s Gmail, with no import on
+  the site.** The group's mail goes back to 14 May 2026. Got Your Back
+  (GYB, https://github.com/GAM-team/got-your-back), the GAM team's
+  open-source tool for backing up and restoring Gmail, copies it from a
+  member's mailbox that holds all of it, and policy@ is then the only
+  source:
+
+  ```bash
+  gyb --email <member> --action backup --search "list:policy@pauseai.uk OR list:policy-archive@pauseai.uk" --local-folder <folder>
+  gyb --email policy@pauseai.uk --action restore --local-folder <folder> --label-restored "Group archive"
+  ```
+
+  It backs up each message as its raw original (`.eml`). The restore uses
+  Gmail's `messages.import`
+  (https://developers.google.com/gmail/api/reference/rest/v1/users.messages/import),
+  which sends nothing and dates a message by its own `Date:` header
+  (`internalDateSource` defaults to `dateHeader`). So every copy keeps its
+  date, headers (List-Id included), body and attachments, and Gmail
+  threads them again by References, In-Reply-To and subject. Gmail
+  message and thread IDs are new, so old Gmail links don't open them;
+  labels and read state come from the member's mailbox. Each account
+  signs in once with OAuth, or a service account with domain-wide
+  delegation reaches both (https://github.com/GAM-team/got-your-back/wiki).
+  The backup folder holds supporters' letters, so it stays out of the
+  repo. Gaps: Gmail doesn't deliver a member's own posts back to them,
+  and the copies in their Sent mail have no List-Id, so their posts come
+  from another member's mailbox; a second restore isn't skipped by GYB,
+  so it duplicates what's already there. Try a few first
+  (`before:2026/05/20`) and compare "Show original" in both mailboxes.
 - **Airtable's emails in the Sent mail of whoever sent them.** Most of
   PauseAI's emails recorded in Airtable went from Joseph's Gmail, some
   from others'. The archive import also searches each connected account's
@@ -318,8 +355,7 @@ then) is left for later.
 
 A message in a site letter's thread (part 3) joins that letter's
 conversation, so a supporter's Bcc'd copy never becomes a second
-conversation. The same message read from policy@, the archive and a staff
-Gmail is kept once, by Message-ID.
+conversation.
 
 ### Staff pages
 
@@ -362,18 +398,22 @@ privacy policy and erasure change before they're built:
    its own.
 2. **When did Joseph join the group, and was he always on "every
    email"?** Does the `list:` search find its mail as expected? Check in
-   his Gmail before building.
-3. **Who else sent Airtable's emails?** They went mostly from Joseph's
+   his Gmail before building. Whose mailbox has all of it, back to 14 May
+   2026? Francis's has it only from October.
+3. **Import the archive on the site, or copy it into policy@'s Gmail with
+   GYB?** If it's copied, does the hourly read of policy@ take in mail
+   dated before the account was connected, or only new mail?
+4. **Who else sent Airtable's emails?** They went mostly from Joseph's
    Gmail, some from others'. Those people would need to connect their
    Gmail too, for their letters to be joined.
-4. **Should any other staff account have "Keep all its conversations with
+5. **Should any other staff account have "Keep all its conversations with
    politicians" turned on?**
 
 ### What counts
 
-5. **Which addresses count as an MP's:** only `notable_people.email`, or
+6. **Which addresses count as an MP's:** only `notable_people.email`, or
    any `@parliament.uk`? And which other politicians: peers, MSPs, MSs,
    councillors? Should an address we don't know yet be suggested as one of
    theirs?
-6. **A thread the MP started, or one between a volunteer and the MP's
+7. **A thread the MP started, or one between a volunteer and the MP's
    caseworker with no MP address:** keep it or not?
