@@ -1,24 +1,25 @@
-.details {
-  border-top: 1px solid var(--border);
-  padding-top: var(--space-4);
+.top {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
-.summary {
-  cursor: pointer;
-  font-weight: 600;
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
-.details[open] .summary {
-  margin-bottom: var(--space-4);
+.title {
+  margin: 0;
+  font-size: clamp(24px, 2.6vw, 30px);
+  line-height: 1.15;
 }
 
-.caption {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
+.total {
+  margin: 0;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
 .number {

@@ -1,7 +1,49 @@
 .explorer {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
   gap: var(--space-5);
+}
+
+.write {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(24px, 2.6vw, 30px);
+  line-height: 1.15;
+}
+
+.body {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+/* The map in a box of its own, with its switch and its key. */
+.map {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
 }
 
 .controls {
@@ -11,43 +53,32 @@
   gap: var(--space-3);
 }
 
-/* How far the layer reaches, said once, large: the number the map is about. */
+/* How many constituencies the layer reaches, said once, large: the number
+   the map is about. */
 .reach {
   margin: 0;
-  max-width: 30ch;
   font-family: var(--font-display);
-  font-size: clamp(22px, 2.6vw, 30px);
+  font-size: clamp(22px, 2.4vw, 28px);
   font-weight: 900;
   line-height: 1.15;
-  text-wrap: balance;
+  font-variant-numeric: tabular-nums;
 }
 
-.map {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-}
-
+/* Side by side: what to do on the left, kept in view while the map
+   scrolls past, clear of the sticky header; the map on the right. */
 @media (min-width: 900px) {
   .explorer {
-    grid-template-columns: minmax(0, 3fr) minmax(300px, 2fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     column-gap: var(--space-7);
   }
 
-  .controls {
-    grid-column: 1 / -1;
-  }
-
-  /* Beside the map while it scrolls past, clear of the sticky header. */
   .panel {
     position: sticky;
     top: calc(var(--site-header-h, 77px) + var(--space-5));
     align-self: start;
+  }
+
+  .map {
+    padding: var(--space-5);
   }
 }

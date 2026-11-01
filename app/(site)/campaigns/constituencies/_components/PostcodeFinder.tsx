@@ -7,12 +7,14 @@ import { Field, FieldError } from "@/components/ui/Field";
 import { FilterForm } from "@/components/ui/Form";
 import { constituencyCode } from "@/lib/constituencies";
 import { constituencyMapCopy as copy } from "@/lib/content/constituency-map";
+import styles from "./PostcodeFinder.module.css";
 
 type Lookup = { ok: true; mp: { constituency: string } } | { ok: false; message: string };
 
 /**
  * A postcode box that finds its constituency on the map, through the same
- * lookup as Email your MP, and says why when it can't.
+ * lookup as Email your MP, and says why when it can't. Boxed in orange,
+ * large, as it's the quickest way into the map.
  */
 export default function PostcodeFinder({ onFound }: { onFound: (code: string) => void }) {
   const [postcode, setPostcode] = useState("");
@@ -42,17 +44,18 @@ export default function PostcodeFinder({ onFound }: { onFound: (code: string) =>
   }
 
   return (
-    <div>
-      <FilterForm onSubmit={find} noValidate>
-        <Field label={copy.finder.label}>
+    <div className={styles.finder}>
+      <FilterForm className={styles.form} onSubmit={find} noValidate>
+        <Field className={styles.field} label={copy.finder.label}>
           <TextInput
             value={postcode}
+            placeholder={copy.finder.placeholder}
             onChange={(e) => setPostcode(e.target.value)}
             autoComplete="postal-code"
             aria-invalid={error ? true : undefined}
           />
         </Field>
-        <Button variant="primary" type="submit" pending={finding}>
+        <Button variant="primary" size="large" type="submit" pending={finding}>
           {finding ? copy.finder.finding : copy.finder.button}
         </Button>
       </FilterForm>

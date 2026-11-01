@@ -9,6 +9,6 @@ describe("MapSection", () => {
     const screen = await render(<MapSection rows={exampleRows} />);
     await expect.element(screen.getByRole("img")).toBeVisible();
     await expect.element(screen.getByRole("link", { name: copy.sourceLink })).toHaveAttribute("href", copy.sourceLink);
-    await expect.element(screen.getByText(copy.table.summary)).toBeVisible();
+    await expect.element(screen.getByRole("heading", { name: copy.table.title })).toBeVisible();
   });
 });

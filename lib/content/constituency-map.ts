@@ -8,7 +8,6 @@ type NextStep = { title: string; body: string; link: { label: string; href: stri
 const counted = (n: number, one: string, many: string) => `${n.toLocaleString("en-GB")} ${n === 1 ? one : many}`;
 
 export const constituencyMapCopy = {
-  draftNotice: "This is a draft for testing, has not been copy edited.",
   title: "The Road to 650",
   description: "Where PauseAI supporters are, and which MPs have heard from them, constituency by constituency.",
   lede: "Help us make sure every MP is briefed by their own constituents about the risk of out of control superintelligent AI.",
@@ -17,34 +16,31 @@ export const constituencyMapCopy = {
   layerLabel: "Show",
   layers: {
     supporters: "Supporters",
-    frontier: "Regulate AI developers",
-    sobel: "Letters: Superintelligence Bill",
+    letters: "Letters",
   } satisfies Record<MapLayer, string>,
 
-  /** The sentence over the map saying how far a layer reaches. */
-  reach: {
-    supporters: (places: number, total: number) =>
-      `${counted(total, "supporter", "supporters")} in ${places} of 650 constituencies.`,
-    frontier: (places: number, total: number) =>
-      `${counted(total, "letter", "letters")} about regulating AI developers, to ${places} of 650 MPs.`,
-    sobel: (places: number, total: number) =>
-      `${counted(total, "letter", "letters")} about the Superintelligence Bill, to ${places} of 650 MPs.`,
-  } satisfies Record<MapLayer, (places: number, total: number) => string>,
+  /** The line over the map saying how many constituencies a layer reaches. */
+  reach: (places: number) => `So far: ${places} / 650 constituencies`,
 
   /** The key under the map. */
   legendLabel: {
     supporters: "Supporters in the constituency",
-    frontier: "Letters sent to the MP",
-    sobel: "Letters sent to the MP",
+    letters: "Letters sent to the MP",
   } satisfies Record<MapLayer, string>,
   none: "None yet",
 
   /** What the map is, read out in place of drawing it. */
-  mapLabel: (layer: string) =>
-    `Map of the UK's 650 constituencies, coloured by ${layer}. The table below has every number.`,
+  mapLabel: (layer: string) => `Map of the UK's 650 constituencies, coloured by ${layer}.`,
+
+  /** Beside the map, first: what to do. */
+  write: {
+    title: "Write to your MP",
+    body: "It takes two minutes. One letter turns your constituency on the map from empty to coloured, and puts AI risk on your MP's desk.",
+  },
 
   finder: {
     label: "Your postcode",
+    placeholder: "Postcode",
     button: "Find",
     finding: "Finding…",
     notOnMap: "We found your MP, but their constituency isn't on this map.",
@@ -52,17 +48,17 @@ export const constituencyMapCopy = {
   },
 
   card: {
-    prompt: "Pick a constituency on the map, or find yours by postcode.",
     yours: "Your constituency",
     mp: (name: string, party: string) => `MP: ${name} (${party})`,
     noMp: "No MP in office",
     supporters: (n: number) => counted(n, "supporter", "supporters"),
+    letters: (n: number) => counted(n, "letter", "letters"),
     frontier: (n: number) => `${counted(n, "letter", "letters")} about regulating AI developers`,
     sobel: (n: number) => `${counted(n, "letter", "letters")} about the Superintelligence Bill`,
     close: "Clear",
   },
 
-  /** What a person can do about the constituency they picked: the first is the one the map is showing. */
+  /** What a person can do about the constituency they picked: the bill's letter first, as it's sooner. */
   actions: {
     frontier: { label: "Ask your MP to regulate AI developers", href: "/campaigns/regulate-letter-pm" },
     sobel: {
@@ -79,11 +75,6 @@ export const constituencyMapCopy = {
     title: "How to fill it in",
     steps: <NextStep[]>[
       {
-        title: "Write to your MP",
-        body: "It takes two minutes. One letter turns your constituency on the map from empty to coloured, and puts AI risk on your MP's desk.",
-        link: { label: "Email your MP", href: "/campaigns/support-sobel-bill" },
-      },
-      {
         title: "Ask someone in an empty constituency",
         body: "Know someone in a seat with no supporters yet? Send them this map. Their letter will be the first that MP has had from us.",
         link: { label: "Copy the link to this map", href: "/campaigns/constituencies", share: true },
@@ -97,13 +88,11 @@ export const constituencyMapCopy = {
   },
 
   table: {
-    summary: "Every constituency as a table",
-    caption: "Supporters and letters in each constituency",
+    title: "Top 10 letter writing constituencies",
+    total: (n: number) => `${counted(n, "letter", "letters")} sent`,
     constituency: "Constituency",
     mp: "MP",
-    supporters: "Supporters",
-    frontier: "Regulate AI developers letters",
-    sobel: "Bill letters",
+    letters: "Letters",
   },
 
   source:

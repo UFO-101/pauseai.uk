@@ -1,6 +1,6 @@
 import "server-only";
 import { constituencyCode } from "@/lib/constituencies";
-import { LAYER_CAMPAIGNS, type ConstituencyRow } from "@/lib/constituency-map";
+import { LETTER_CAMPAIGNS, type ConstituencyRow } from "@/lib/constituency-map";
 import { query } from "./db";
 import { MP_CHOICES } from "./supporters";
 
@@ -36,7 +36,7 @@ export async function constituencyCounts(): Promise<ConstituencyRow[]> {
        SELECT coalesce(s.constituency, l.constituency) AS constituency, coalesce(s.n, 0) AS supporters,
          coalesce(l.frontier, 0) AS frontier, coalesce(l.sobel, 0) AS sobel
        FROM supporters s FULL JOIN letters l ON l.constituency = s.constituency`,
-      [LAYER_CAMPAIGNS.frontier, LAYER_CAMPAIGNS.sobel],
+      [LETTER_CAMPAIGNS.frontier, LETTER_CAMPAIGNS.sobel],
     ),
     query<{ constituency: string; name: string; party: string }>(
       `SELECT m.constituency, m.name, p.party FROM (${MP_CHOICES}) m JOIN politicians p ON p.id = m.id`,

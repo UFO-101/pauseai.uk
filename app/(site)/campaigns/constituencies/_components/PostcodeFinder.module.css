@@ -1,0 +1,16 @@
+.finder {
+  --control-height: 52px;
+  --control-font-size: 18px;
+  padding: var(--space-5);
+  border: 1px solid var(--accent-light);
+  border-radius: var(--radius-lg);
+  background: var(--accent-bg);
+}
+
+.form {
+  flex-wrap: nowrap;
+}
+
+.field {
+  flex: 1;
+}

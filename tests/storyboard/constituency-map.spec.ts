@@ -6,7 +6,7 @@ import { BASE, expect, frame, test } from "./fixtures";
 import { hydrated, scrollSettled } from "./settle";
 
 // The constituency map (/campaigns/constituencies): switching between
-// supporters and each campaign's letters, picking a constituency, and
+// supporters and letters, the top ten letter writing constituencies, picking a constituency, and
 // finding one's own by postcode. On made-up counts across the map
 // (constituency-map-data.ts), each flow on its own database.
 
@@ -21,21 +21,17 @@ async function openMap(page: Page, database: string) {
 test("Switch the map between supporters and letters", { tag: "@phone" }, async ({ page, flowDatabase }) => {
   await openMap(page, flowDatabase);
   await expect(page.getByRole("radio", { name: copy.layers.supporters })).toHaveAttribute("aria-checked", "true");
-  await expect(page.getByText(/in \d+ of 650 constituencies/)).toBeVisible();
+  await expect(page.getByText(/^So far: \d+ \/ 650 constituencies$/)).toBeVisible();
   await frame(page, "supporters in each constituency, the empty ones hollow");
 
-  await page.getByRole("radio", { name: copy.layers.frontier }).click();
-  await expect(page.getByText(/about regulating AI developers, to \d+ of 650 MPs/)).toBeVisible();
-  await frame(page, "letters about regulating AI developers, to about a third of MPs");
+  await page.getByRole("radio", { name: copy.layers.letters }).click();
+  await expect(page.getByRole("radio", { name: copy.layers.letters })).toHaveAttribute("aria-checked", "true");
+  await frame(page, "letters in both campaigns, to fewer MPs");
 
-  await page.getByRole("radio", { name: copy.layers.sobel }).click();
-  await expect(page.getByText(/about the Superintelligence Bill, to \d+ of 650 MPs/)).toBeVisible();
-  await frame(page, "letters about the bill, to fewer");
-
-  await page.getByText(copy.table.summary).click();
-  await expect(page.getByRole("row", { name: new RegExp(`^${WESTMINSTER}`) })).toContainText("42");
-  // Six hundred and fifty rows: too long to picture whole.
-  await frame(page, "every constituency's numbers as a table", { window: true });
+  await page.getByRole("heading", { name: copy.table.title }).scrollIntoViewIfNeeded();
+  await expect(page.getByRole("row", { name: new RegExp(`^${WESTMINSTER}`) })).toBeVisible();
+  await scrollSettled(page);
+  await frame(page, "the top ten letter writing constituencies");
 });
 
 test(
@@ -43,7 +39,7 @@ test(
   { tag: "@phone" },
   async ({ page, flowDatabase }) => {
     await openMap(page, flowDatabase);
-    await expect(page.getByText(copy.card.prompt)).toBeVisible();
+    await expect(card(page)).toHaveCount(0);
 
     await page.locator('[data-code="S14000078"]').click();
     await expect(card(page).getByRole("heading")).toHaveText("Edinburgh East and Musselburgh");
@@ -70,7 +66,7 @@ test(
     await frame(page, "their own constituency, found by postcode");
 
     await card(page).getByRole("button", { name: copy.card.close }).click();
-    await expect(page.getByText(copy.card.prompt)).toBeVisible();
+    await expect(card(page)).toHaveCount(0);
     await frame(page, "cleared");
   },
 );

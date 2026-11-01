@@ -5,14 +5,14 @@ import { exampleRows } from "./ConstituencyMap.examples";
 import ConstituencyTable from "./ConstituencyTable";
 
 describe("ConstituencyTable", () => {
-  it("folds every constituency's numbers away, by name, with its MP if it has one", async () => {
+  it("lists the constituencies most written from, most first, with their MPs, under the total sent", async () => {
     const screen = await render(<ConstituencyTable rows={exampleRows} />);
-    expect(document.querySelector("details")!.open).toBe(false);
-    await screen.getByText(copy.table.summary).click();
-    expect(document.querySelectorAll("tbody tr")).toHaveLength(650);
-    await expect
-      .element(screen.getByRole("row", { name: /^Cities of London and Westminster/ }))
-      .toHaveTextContent("Cities of London and WestminsterWes Minster MP42124");
-    await expect.element(screen.getByRole("row", { name: /^Cardiff North/ })).toHaveTextContent("Cardiff North1230");
+    await expect.element(screen.getByRole("heading", { name: copy.table.title })).toBeVisible();
+    await expect.element(screen.getByText(copy.table.total(21))).toBeVisible();
+    expect([...document.querySelectorAll("tbody tr")].map((tr) => tr.textContent)).toEqual([
+      "Cities of London and WestminsterWes Minster MP16",
+      "Cardiff North3",
+      "Edinburgh East and MusselburghEdie Burgh MP2",
+    ]);
   });
 });

@@ -11,7 +11,7 @@ import {
 } from "@/app/(site)/campaigns/constituencies/_components/ConstituencyMap.examples";
 import HexMap from "@/app/(site)/campaigns/constituencies/_components/HexMap";
 import PostcodeFinder from "@/app/(site)/campaigns/constituencies/_components/PostcodeFinder";
-import { CELLS, REGION_NAMES, rowsByCode, type MapLayer } from "@/lib/constituency-map";
+import { CELLS, REGION_NAMES, countOf, rowsByCode, type MapLayer } from "@/lib/constituency-map";
 
 const ROWS = rowsByCode(exampleRows);
 const cellOf = (code: string) => CELLS.find((cell) => cell.code === code)!;
@@ -28,7 +28,7 @@ export function HexMapExample({ layer = "supporters" }: { layer?: MapLayer }) {
         label="An example map"
         picked={picked}
         hovered={hovered}
-        tip={(row) => `${row[layer]} on this layer`}
+        tip={(row) => `${countOf(row, layer)} on this layer`}
         onPick={setPicked}
         onHover={setHovered}
       />
@@ -36,14 +36,14 @@ export function HexMapExample({ layer = "supporters" }: { layer?: MapLayer }) {
   );
 }
 
-/** A constituency's card, or the prompt with none picked. */
-export function ConstituencyCardExample({ code, yours = false }: { code: string | null; yours?: boolean }) {
+/** A constituency's card. */
+export function ConstituencyCardExample({ code, yours = false }: { code: string; yours?: boolean }) {
   return (
     <div style={{ maxWidth: 420 }}>
       <ConstituencyCard
-        picked={
-          code ? { name: cellOf(code).name, region: REGION_NAMES[cellOf(code).region], row: ROWS.get(code)! } : null
-        }
+        name={cellOf(code).name}
+        region={REGION_NAMES[cellOf(code).region]}
+        row={ROWS.get(code)!}
         layer="supporters"
         yours={yours}
         onClose={() => {}}

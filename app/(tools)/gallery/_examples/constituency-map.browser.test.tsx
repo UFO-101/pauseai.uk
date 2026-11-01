@@ -15,9 +15,7 @@ describe("the constituency map group's examples", () => {
     await expect.element(page.getByText("7 on this layer")).toBeVisible();
   });
 
-  it("shows a card, the prompt, and a card with nothing to clear to", async () => {
-    await render(<ConstituencyCardExample code={null} />);
-    await expect.element(page.getByText(copy.card.prompt)).toBeVisible();
+  it("shows a card with nothing to clear to", async () => {
     await render(<ConstituencyCardExample code="S14000078" yours />);
     await page.getByRole("button", { name: copy.card.close }).click();
     await expect.element(page.getByText(copy.card.yours)).toBeVisible();

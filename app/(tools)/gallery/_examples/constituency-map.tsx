@@ -6,7 +6,6 @@ import {
   WESTMINSTER,
   exampleRows,
 } from "@/app/(site)/campaigns/constituencies/_components/ConstituencyMap.examples";
-import DraftNotice from "@/app/(site)/campaigns/constituencies/_components/DraftNotice";
 import ConstituencyTable from "@/app/(site)/campaigns/constituencies/_components/ConstituencyTable";
 import MapKey from "@/app/(site)/campaigns/constituencies/_components/MapKey";
 import MapSection from "@/app/(site)/campaigns/constituencies/_components/MapSection";
@@ -19,11 +18,6 @@ export const constituencyMap: Group = {
   title: "Constituency map",
   examples: [
     {
-      name: "DraftNotice",
-      file: "app/(site)/campaigns/constituencies/_components/DraftNotice.tsx",
-      variants: [{ label: "Over the page", render: () => <DraftNotice /> }],
-    },
-    {
       name: "ConstituencyMap",
       file: "app/(site)/campaigns/constituencies/_components/ConstituencyMap.tsx",
       variants: [{ label: "The map and its panel", render: () => <ConstituencyMap rows={exampleRows} /> }],
@@ -33,7 +27,7 @@ export const constituencyMap: Group = {
       file: "app/(site)/campaigns/constituencies/_components/HexMap.tsx",
       variants: [
         { label: "Supporters, one picked and one hovered", render: () => <HexMapExample /> },
-        { label: "Letters about the bill", render: () => <HexMapExample layer="sobel" /> },
+        { label: "Letters", render: () => <HexMapExample layer="letters" /> },
       ],
     },
     {
@@ -41,14 +35,13 @@ export const constituencyMap: Group = {
       file: "app/(site)/campaigns/constituencies/_components/MapKey.tsx",
       variants: [
         { label: "Supporters", render: () => <MapKey layer="supporters" /> },
-        { label: "Letters", render: () => <MapKey layer="frontier" /> },
+        { label: "Letters", render: () => <MapKey layer="letters" /> },
       ],
     },
     {
       name: "ConstituencyCard",
       file: "app/(site)/campaigns/constituencies/_components/ConstituencyCard.tsx",
       variants: [
-        { label: "None picked", render: () => <ConstituencyCardExample code={null} /> },
         { label: "Picked on the map", render: () => <ConstituencyCardExample code={EDINBURGH} /> },
         { label: "Found by their postcode", render: () => <ConstituencyCardExample code={WESTMINSTER} yours /> },
         { label: "No MP in office", render: () => <ConstituencyCardExample code="W07000090" /> },
@@ -62,7 +55,7 @@ export const constituencyMap: Group = {
     {
       name: "ConstituencyTable",
       file: "app/(site)/campaigns/constituencies/_components/ConstituencyTable.tsx",
-      variants: [{ label: "Folded", render: () => <ConstituencyTable rows={exampleRows} /> }],
+      variants: [{ label: "The top ten", render: () => <ConstituencyTable rows={exampleRows} /> }],
     },
     {
       name: "MapSection",

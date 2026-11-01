@@ -10,17 +10,17 @@ import hexes from "./constituency-hexes.json";
 // hexagons, each odd row pushed half a hexagon right, and r grows northwards.
 // Replace it with lib/constituencies.json after the next boundary review.
 
-/** What the map can be coloured by: supporters, or letters in one of two campaigns. */
-export type MapLayer = "supporters" | "frontier" | "sobel";
+/** What the map can be coloured by: supporters, or letters in both campaigns together. */
+export type MapLayer = "supporters" | "letters";
 
 /** The layers, in the order the switch offers them. */
-export const MAP_LAYERS: readonly MapLayer[] = ["supporters", "frontier", "sobel"];
+export const MAP_LAYERS: readonly MapLayer[] = ["supporters", "letters"];
 
-/** The campaign whose letters each letters layer counts, by slug. */
-export const LAYER_CAMPAIGNS = { frontier: "regulate-letter-pm", sobel: "support-sobel-bill" } as const;
+/** The campaigns whose letters are counted, each by its slug. */
+export const LETTER_CAMPAIGNS = { frontier: "regulate-letter-pm", sobel: "support-sobel-bill" } as const;
 
-/** What's counted in a constituency, one number a layer. */
-export type ConstituencyCounts = Record<MapLayer, number>;
+/** What's counted in a constituency: its supporters, and its letters in each campaign. */
+export type ConstituencyCounts = Record<"supporters" | keyof typeof LETTER_CAMPAIGNS, number>;
 
 /** A constituency's MP in office. */
 export type ConstituencyMp = { name: string; party: string };
@@ -196,9 +196,13 @@ export const MAP_BOX = (() => {
  */
 export const MAP_STEPS: Record<MapLayer, readonly number[]> = {
   supporters: [1, 3, 10, 30],
-  frontier: [1, 2, 5, 10],
-  sobel: [1, 2, 5, 10],
+  letters: [1, 2, 5, 10],
 };
+
+/** A constituency's count on a layer: its supporters, or its letters in both campaigns. */
+export function countOf(row: ConstituencyCounts, layer: MapLayer): number {
+  return layer === "letters" ? row.frontier + row.sobel : row.supporters;
+}
 
 /** Which step of its layer's colours a count takes: 0 for none, up to the number of steps. */
 export function stepOf(count: number, steps: readonly number[]): number {
@@ -228,8 +232,22 @@ export function reach(rows: Iterable<ConstituencyRow>, layer: MapLayer): { place
   let places = 0;
   let total = 0;
   for (const row of rows) {
-    if (row[layer] > 0) places++;
-    total += row[layer];
+    if (countOf(row, layer) > 0) places++;
+    total += countOf(row, layer);
   }
   return { places, total };
+}
+
+/** The constituencies most written from: their letters, most first, then by name, the ones with none left out. */
+export function topLetters(
+  rows: ReadonlyMap<string, ConstituencyRow>,
+  count: number,
+): { code: string; name: string; mp: ConstituencyMp | null; letters: number }[] {
+  return CELLS.map((cell) => {
+    const row = rows.get(cell.code)!;
+    return { code: cell.code, name: cell.name, mp: row.mp, letters: countOf(row, "letters") };
+  })
+    .filter((seat) => seat.letters > 0)
+    .sort((a, b) => b.letters - a.letters || a.name.localeCompare(b.name))
+    .slice(0, count);
 }

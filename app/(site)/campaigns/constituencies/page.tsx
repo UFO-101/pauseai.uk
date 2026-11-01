@@ -3,7 +3,6 @@ import PageHero from "@/components/ui/PageHero";
 import { constituencyMapCopy as copy } from "@/lib/content/constituency-map";
 import { pageMetadata } from "@/lib/metadata";
 import { constituencyCounts } from "@/lib/server/constituency-counts";
-import DraftNotice from "./_components/DraftNotice";
 import MapSection from "./_components/MapSection";
 import NextSteps from "./_components/NextSteps";
 
@@ -24,7 +23,6 @@ export default async function ConstituenciesPage() {
   const rows = await constituencyCounts();
   return (
     <main>
-      <DraftNotice />
       <PageHero title={copy.title} lede={copy.lede} width="wide" tight />
       <MapSection rows={rows} />
       <NextSteps />

@@ -11,6 +11,7 @@ import {
   rowsByCode,
   stepLabels,
   stepOf,
+  topLetters,
 } from "./constituency-map";
 
 describe("the constituency map's hexagons", () => {
@@ -96,7 +97,7 @@ describe("the map's steps", () => {
 
   it("say each step's counts, one number for a step of one", () => {
     expect(stepLabels(MAP_STEPS.supporters)).toEqual(["1–2", "3–9", "10–29", "30+"]);
-    expect(stepLabels(MAP_STEPS.frontier)).toEqual(["1", "2–4", "5–9", "10+"]);
+    expect(stepLabels(MAP_STEPS.letters)).toEqual(["1", "2–4", "5–9", "10+"]);
   });
 });
 
@@ -114,6 +115,28 @@ describe("the map's rows", () => {
   it("count the constituencies a layer reaches, and its total", () => {
     const rows = rowsByCode([westminster, leeds]).values();
     expect(reach([westminster, leeds], "supporters")).toEqual({ places: 2, total: 5 });
-    expect(reach(rows, "sobel")).toEqual({ places: 1, total: 3 });
+    expect(reach(rows, "letters")).toEqual({ places: 2, total: 5 });
+  });
+
+  it("list the constituencies most written from, ties by name, none left out", () => {
+    const leicester = {
+      code: "E14001331",
+      supporters: 0,
+      frontier: 1,
+      sobel: 1,
+      mp: { name: "Lee Sester MP", party: "Labour" },
+    };
+    const top = topLetters(rowsByCode([westminster, leeds, leicester]), 2);
+    expect(top.map((seat) => [seat.code, seat.letters])).toEqual([
+      ["E14001319", 3],
+      ["E14001172", 2],
+    ]);
+    expect(topLetters(rowsByCode([westminster, leicester]), 10).map((seat) => seat.name)).toEqual(
+      [
+        CELLS.find((cell) => cell.code === "E14001172")!.name,
+        CELLS.find((cell) => cell.code === "E14001331")!.name,
+      ].sort((a, b) => a.localeCompare(b)),
+    );
+    expect(topLetters(rowsByCode([leicester]), 10)[0].mp).toBe(leicester.mp);
   });
 });

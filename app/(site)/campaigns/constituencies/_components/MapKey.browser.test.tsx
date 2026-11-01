@@ -5,8 +5,8 @@ import MapKey from "./MapKey";
 
 describe("MapKey", () => {
   it("names the layer and each step, none first", async () => {
-    const screen = await render(<MapKey layer="frontier" />);
-    await expect.element(screen.getByText(copy.legendLabel.frontier)).toBeVisible();
+    const screen = await render(<MapKey layer="letters" />);
+    await expect.element(screen.getByText(copy.legendLabel.letters)).toBeVisible();
     expect([...document.querySelectorAll("li")].map((li) => li.textContent)).toEqual([
       copy.none,
       "1",

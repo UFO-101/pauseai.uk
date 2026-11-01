@@ -4,6 +4,7 @@ import {
   LABEL_SIZE,
   MAP_BOX,
   MAP_STEPS,
+  countOf,
   REGION_BORDERS,
   REGION_LABELS,
   hexPath,
@@ -77,7 +78,7 @@ export default function HexMap({
               className={styles.hex}
               d={PATHS.get(cell.code)}
               data-code={cell.code}
-              data-step={stepOf(rows.get(cell.code)![layer], steps)}
+              data-step={stepOf(countOf(rows.get(cell.code)!, layer), steps)}
             />
           ))}
         </g>

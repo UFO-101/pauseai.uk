@@ -29,20 +29,27 @@ async function renderMap() {
 }
 
 describe("ConstituencyMap", () => {
-  it("says how far each layer reaches, switching between them", async () => {
+  it("says how many constituencies each layer reaches, switching between them", async () => {
     const { screen } = await renderMap();
-    await expect.element(screen.getByText(copy.reach.supporters(4, 62))).toBeVisible();
+    await expect.element(screen.getByText(copy.reach(4))).toBeVisible();
     await expect.element(screen.getByRole("img")).toHaveAccessibleName(copy.mapLabel(copy.layers.supporters));
-    await screen.getByRole("radio", { name: copy.layers.frontier }).click();
-    await expect.element(screen.getByText(copy.reach.frontier(3, 16))).toBeVisible();
-    await screen.getByRole("radio", { name: copy.layers.sobel }).click();
-    await expect.element(screen.getByText(copy.reach.sobel(2, 5))).toBeVisible();
-    expect(copy.reach.supporters(1, 1)).toContain("1 supporter in");
+    await screen.getByRole("radio", { name: copy.layers.letters }).click();
+    await expect.element(screen.getByText(copy.reach(3))).toBeVisible();
+    await expect.element(screen.getByRole("img")).toHaveAccessibleName(copy.mapLabel(copy.layers.letters));
   });
 
-  it("shows the picked constituency's card, the layer's count and letter first, and clears it", async () => {
+  it("starts with what to do, the bill's letter first", async () => {
     const { screen } = await renderMap();
-    await expect.element(screen.getByText(copy.card.prompt)).toBeVisible();
+    await expect.element(screen.getByRole("heading", { name: copy.write.title })).toBeVisible();
+    await expect.element(screen.getByRole("article")).not.toBeInTheDocument();
+    expect([...document.querySelectorAll("a")].map((a) => a.textContent)).toEqual([
+      copy.actions.sobel.label,
+      copy.actions.frontier.label,
+    ]);
+  });
+
+  it("shows the picked constituency's card, the layer's counts first, and clears it", async () => {
+    const { screen } = await renderMap();
     click(EDINBURGH);
     const card = screen.getByRole("article");
     await expect.element(card.getByRole("heading")).toHaveTextContent("Edinburgh East and Musselburgh");
@@ -56,15 +63,18 @@ describe("ConstituencyMap", () => {
     ]);
     expect(card.element().querySelector("a")!.textContent).toBe(copy.actions.sobel.label);
 
-    await screen.getByRole("radio", { name: copy.layers.frontier }).click();
-    expect(card.element().querySelector("li")!.textContent).toBe(copy.card.frontier(1));
-    expect(card.element().querySelector("a")!.textContent).toBe(copy.actions.frontier.label);
+    await screen.getByRole("radio", { name: copy.layers.letters }).click();
+    expect([...card.element().querySelectorAll("li")].map((li) => li.textContent)).toEqual([
+      copy.card.frontier(1),
+      copy.card.sobel(1),
+      "1 supporter",
+    ]);
 
     click("W07000090");
     await expect.element(card.getByText(copy.card.noMp)).toBeVisible();
     await expect.element(card.getByText("Wales")).toBeVisible();
     await card.getByRole("button", { name: copy.card.close }).click();
-    await expect.element(screen.getByText(copy.card.prompt)).toBeVisible();
+    await expect.element(screen.getByRole("article")).not.toBeInTheDocument();
   });
 
   it("finds their constituency by postcode, and marks it theirs", async () => {
