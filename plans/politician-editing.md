@@ -75,12 +75,8 @@ All four give each member's name, party, constituency and email.
 3. Let staff edit a politician's salutation, notes and markers, and add
    people who aren't in any official list (house `other`). A change of
    status needs the date it happened and a note.
-4. Let staff set the status of any ask, not only those in
-   `trackedAsks`. A politician's page shows the asks they have answered
-   or received a letter about, from a mailing or a campaign, and an
-   "Add an answer" menu for the others. An ask they never received
-   shows nothing, rather than "Not signed". The asks page shows how
-   many politicians received a letter about each ask.
+4. The asks page shows how many politicians received a letter about
+   each ask, from a mailing or a campaign.
 5. Read ControlAI's statement every night from
    [controlai.org/statement](https://controlai.org/statement), with the
    statuses owned by `controlai`. Each supporter on the page links to

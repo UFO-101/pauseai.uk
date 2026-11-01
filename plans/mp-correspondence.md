@@ -367,6 +367,23 @@ conversation.
   letter.
 - The politician's page lists all of them.
 
+## Open issue: ask and campaign pages
+
+Sort out the asks and the campaigns together, at the same time as the
+staff pages above.
+
+- On `/staff/asks`, each ask links to the place it came from, and each
+  campaign links to the campaign's own site wherever it's named. Both
+  seem messy.
+- Should an ask and a campaign each have a staff page of its own? Then
+  the asks list and the letters link to the ask's or campaign's page,
+  and that page links out to where it came from.
+- Maybe Letters to MPs becomes a list of campaigns, like the list of
+  mailings, with each campaign's page listing its letters. Then the
+  conversations "Copied to us" (above) need a place of their own.
+- The asks page's count of letters received about each ask
+  (`plans/politician-editing.md`, step 4) would go on the ask's page.
+
 ## Data protection
 
 Parts 3 and 4 touch personal data, so `docs/data-protection.md`, the
