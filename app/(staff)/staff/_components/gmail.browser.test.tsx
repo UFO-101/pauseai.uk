@@ -7,7 +7,8 @@ import AskForm from "./AskForm";
 import BounceReason from "./BounceReason";
 import { GmailConnect, GmailOutcome, SentToday } from "./GmailConnect";
 import AccountTitle from "./AccountTitle";
-import LetterThread from "./LetterThread";
+import LetterThread, { SupporterLetterThread } from "./LetterThread";
+import { exampleSupporterLetterDetails } from "./LettersTable.examples";
 import { exampleEditableAsk, exampleGmailAccount, exampleImportedThread, exampleThread } from "./LetterThread.examples";
 import { DeleteTwice } from "./MailingButtons";
 import MyGmail from "./MyGmail";
@@ -125,6 +126,12 @@ describe("LetterThread", () => {
     expect(page.getByText(copy.noReplies).query()).toBeNull();
   });
 
+  it("puts the way to it in Gmail at the right of the heading when it has the letter's text", async () => {
+    await render(<LetterThread thread={exampleThread} link={<a href="#gmail">Gmail</a>} />);
+    await expect.element(page.getByRole("link", { name: "Gmail" })).toBeVisible();
+    expect(page.getByRole("article").first().getByRole("link", { name: "Gmail" }).all()).toHaveLength(0);
+  });
+
   it("names someone with no name by their address", async () => {
     const reply = { ...exampleThread.messages[0], fromName: "" };
     await render(<LetterThread thread={{ ...exampleThread, fromName: "", messages: [reply] }} />);
@@ -136,9 +143,13 @@ describe("LetterThread", () => {
     await render(
       <LetterThread
         thread={{ ...exampleImportedThread, subject: "", to: { name: "Polly Placeholder", email: null } }}
+        link={<a href="#gmail">Gmail</a>}
       />,
     );
     await expect.element(page.getByText(copy.noText)).toBeVisible();
+    // The way to it in Gmail beside the note, in the letter's place, not by the heading.
+    await expect.element(page.getByRole("article").getByRole("link", { name: "Gmail" })).toBeVisible();
+    expect(page.getByRole("link", { name: "Gmail" }).all()).toHaveLength(1);
     await expect.element(page.getByText(copy.noReplies)).toBeVisible();
     expect(headers()).toEqual([
       [
@@ -147,6 +158,45 @@ describe("LetterThread", () => {
         [copy.headers.subject, exampleThread.mailingTitle],
       ],
     ]);
+  });
+});
+
+describe("SupporterLetterThread", () => {
+  const copy = staffCopy.letterThread;
+  const letter = exampleSupporterLetterDetails;
+  const headers = () =>
+    [...document.querySelectorAll("article dt")].map((name) => [
+      name.textContent,
+      name.nextElementSibling!.textContent,
+    ]);
+
+  it("shows the letter as an email, from the sender, leading to their supporter page, saying its text is in Gmail", async () => {
+    await render(<SupporterLetterThread letter={letter} link={<a href="#gmail">Gmail</a>} />);
+    await expect.element(page.getByRole("heading", { level: 2, name: copy.title })).toBeVisible();
+    // The way to it in Gmail beside the note, in the letter's place.
+    await expect.element(page.getByRole("article").getByRole("link", { name: "Gmail" })).toBeVisible();
+    expect(headers()).toEqual([
+      [copy.headers.from, "Jane Smith <jane@example.com>"],
+      [copy.headers.to, "Testy McTestface MP <testy.mctestface.mp@parliament.uk>"],
+      [copy.headers.date, "12 Oct 2026, 09:05"],
+      [copy.headers.subject, letter.subject],
+    ]);
+    await expect
+      .element(page.getByRole("link", { name: "Jane Smith <jane@example.com>" }))
+      .toHaveAttribute("href", "/staff/supporters/7");
+    await expect.element(page.getByText(copy.supporterNoText)).toBeVisible();
+  });
+
+  it("one not yet a supporter's, never sent, with no subject: unlinked, undated, by its campaign", async () => {
+    await render(
+      <SupporterLetterThread letter={{ ...letter, supporterId: null, sentAt: null, subject: "", mpEmail: null }} />,
+    );
+    expect(headers()).toEqual([
+      [copy.headers.from, "Jane Smith <jane@example.com>"],
+      [copy.headers.to, "Testy McTestface MP"],
+      [copy.headers.subject, letter.campaignTitle],
+    ]);
+    expect(page.getByRole("link").all()).toHaveLength(0);
   });
 });
 

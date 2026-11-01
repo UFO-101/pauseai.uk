@@ -1,7 +1,13 @@
 import "server-only";
 import type { Permission } from "@/lib/staff-permissions";
 import type { LetterBackend, LetterFilter } from "@/lib/staff-search";
-import { messageIdSearch, postmarkSearch, sentNearSearch, type GmailFind } from "@/lib/letter-links";
+import {
+  messageIdSearch,
+  POLICY_GMAIL_SINCE,
+  postmarkSearch,
+  sentNearSearch,
+  type GmailFind,
+} from "@/lib/letter-links";
 import { LETTER_COLUMNS } from "@/lib/letter-sort";
 import type { PoliticianFlag } from "@/lib/politician-filters";
 import { query } from "./db";
@@ -163,8 +169,18 @@ export async function pauseaiLetters(politicianId: number): Promise<PauseaiLette
   );
 }
 
-/** A supporter's letter, for its own page: what the list has, its subject, and where to find its copy in Gmail. */
-export type SupporterLetterDetails = LetterSummary & { kind: "supporter"; subject: string; gmail: GmailFind | null };
+/**
+ * A supporter's letter, for its own page: what the list has, its subject,
+ * its MP's address, its campaign's ask, if any, by its slug, and where to
+ * find its copy in Gmail.
+ */
+export type SupporterLetterDetails = LetterSummary & {
+  kind: "supporter";
+  subject: string;
+  mpEmail: string | null;
+  campaignAsk: string | null;
+  gmail: GmailFind | null;
+};
 
 /** One of PauseAI's letters, for its own page: to whom, at which address now, in which mailing, and what happened. */
 export type PauseaiLetterDetails = {
@@ -181,6 +197,8 @@ export type PauseaiLetterDetails = {
   /** The ask the mailing makes, if any, by its slug. */
   mailingAsk: string | null;
   personalised: boolean;
+  /** What sent it: Airtable, for one copied from it, else a staff member's Gmail; none for one never sent. */
+  backend: LetterBackend | null;
   /** Where to find it in Gmail, if it went. */
   gmail: GmailFind | null;
   events: LetterEvent[];
@@ -224,6 +242,7 @@ export async function getPauseaiLetter(mailingId: number, id: number): Promise<P
     `SELECT 'pauseai' AS kind, l.id::int AS id, l.status, l.created_at AS "createdAt", l.sent_at AS "sentAt",
        n.name AS "mpName", n.id::int AS "politicianId", n.email AS "mpEmail", m.id::int AS "mailingId",
        m.title AS mailing, m.ask AS "mailingAsk", p.personalised,
+       CASE WHEN p.airtable_id IS NOT NULL THEN 'airtable' WHEN l.sent_at IS NOT NULL THEN 'gmail' END AS backend,
        json_build_object(
          'sentFrom', m.sent_from,
          'sentId', (SELECT s.rfc_message_id FROM email_sends s
@@ -249,27 +268,33 @@ export async function getPauseaiLetter(mailingId: number, id: number): Promise<P
  * PauseAI's letters have theirs under their mailing. Its copy is the one
  * Bcc'd to the policy inbox, found by the Message-ID of the newest send
  * Postmark made of it, or, for one copied from Airtable, by its MP's
- * address and when it went.
+ * address and when it went; in its members' mail for one sent while the
+ * policy inbox was a Google Group (POLICY_GMAIL_SINCE).
  */
 export async function getSupporterLetter(id: number): Promise<SupporterLetterDetails | undefined> {
   const [letter] = await recentLetters({ letterId: id });
   if (!letter) return undefined;
-  const [{ subject, postmarkId, mpEmail }] = await query<{
+  const [{ subject, postmarkId, mpEmail, campaignAsk }] = await query<{
     subject: string;
     postmarkId: string | null;
     mpEmail: string | null;
+    campaignAsk: string | null;
   }>(
-    `SELECT s.subject, (SELECT e.message_id FROM email_sends e WHERE e.letter_id = s.id AND e.purpose = 'letter'
+    `SELECT s.subject, c.ask AS "campaignAsk", (SELECT e.message_id FROM email_sends e WHERE e.letter_id = s.id AND e.purpose = 'letter'
        AND e.outcome = 'sent' ORDER BY e.at DESC, e.id DESC LIMIT 1) AS "postmarkId", n.email AS "mpEmail"
      FROM letters_from_supporters s JOIN letters l USING (id) JOIN notable_people n ON n.id = l.notable_person_id
+       JOIN campaigns c ON c.slug = s.campaign
      WHERE s.id = $1`,
     [id],
   );
   const search = postmarkId
     ? postmarkSearch(postmarkId)
     : letter.sentAt && mpEmail && sentNearSearch(mpEmail, letter.sentAt);
-  const gmail = search ? { mailbox: process.env.POLICY_INBOX || null, search } : null;
-  return { ...letter, kind: "supporter", subject, gmail };
+  const group = letter.sentAt !== null && new Date(letter.sentAt) < POLICY_GMAIL_SINCE;
+  const gmail = search
+    ? { mailbox: process.env.POLICY_INBOX || null, search, ...(group ? { inPolicyGroup: true as const } : {}) }
+    : null;
+  return { ...letter, kind: "supporter", subject, mpEmail, campaignAsk, gmail };
 }
 
 /** A letter on an MP's page for staff without `supporters`: what happened to it, and nothing of who wrote it. */

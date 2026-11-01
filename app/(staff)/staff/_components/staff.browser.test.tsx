@@ -19,7 +19,7 @@ import { exampleBlock, exampleComplaint, exampleGmailBlock, exampleProblems } fr
 import EmailProblemsTable from "./EmailProblemsTable";
 import { exampleChanges } from "./ChangesTable.examples";
 import LettersTable, { LettersList, letterColumns, letterDownloadColumns } from "./LettersTable";
-import LetterDetails from "./LetterDetails";
+import { historyOf, LetterHistory } from "./LetterHistory";
 import FindInGmail from "./FindInGmail";
 import { examplePauseaiLetterDetails, exampleSupporterLetterDetails } from "./LettersTable.examples";
 import { emptyLettersSearch, exampleLetter, exampleLetterCampaigns } from "./LettersTable.examples";
@@ -2773,62 +2773,38 @@ describe("LettersTable", () => {
   });
 });
 
-describe("LetterDetails", () => {
+describe("LetterHistory", () => {
   const copy = staffCopy.letters;
+  const history = () => page.getByRole("list", { name: copy.detail.historyTitle });
 
-  it("shows a supporter's letter: from and to whom, its facts, Find it in Gmail, and its history", async () => {
-    const letter = exampleSupporterLetterDetails;
-    await render(<LetterDetails letter={letter} />);
-    await expect
-      .element(page.getByRole("heading", { level: 1 }))
-      .toHaveTextContent(copy.oneTitle(letter.senderName, letter.mpName));
-    await expect.element(page.getByRole("link", { name: copy.title })).toHaveAttribute("href", "/staff/letters");
-    await expect
-      .element(page.getByRole("link", { name: letter.senderName }))
-      .toHaveAttribute("href", "/staff/supporters/7");
-    await expect
-      .element(page.getByRole("link", { name: letter.mpName }))
-      .toHaveAttribute("href", "/staff/politicians/3");
-    await expect.element(page.getByText(letter.subject)).toBeVisible();
-    // Its copy in the policy inbox, in the corner.
-    await expect.element(page.getByRole("button", { name: staffCopy.findInGmail.copy })).toBeVisible();
-    // Each change in words, and a {} for those that recorded anything, opening it as recorded.
-    const history = page.getByRole("list", { name: copy.detail.historyTitle });
-    // Newest first.
-    const [bounced, sending] = history.getByRole("listitem").all();
+  it("shows each change newest first, in words, Sent tagged with what sent it, with a {} for those that recorded anything", async () => {
+    await render(<LetterHistory events={historyOf(exampleSupporterLetterDetails)} />);
+    const [bounced, sent, sending] = history().getByRole("listitem").all();
     expect(sending.element().textContent).toContain(copy.status.sending);
     expect(sending.getByRole("button").all()).toHaveLength(0);
+    // Sent says Postmark; its ID is only in its {}.
+    await expect.element(sent.getByText(copy.backends.postmark)).toBeVisible();
+    expect(sent.element().querySelector("dl")).toBeNull();
     // A hard bounce says no more than its status; the {} has what Postmark said.
     expect(bounced.element().querySelector("strong")!.textContent).toBe(copy.status.bounced);
     expect(bounced.element().querySelector("dl")).toBeNull();
     await bounced.getByRole("button", { name: staffCopy.changes.json }).click();
     await expect.element(page.getByText('"type": "HardBounce"', { exact: false })).toBeVisible();
-    expect(document.body.textContent).toContain(copy.consent.yes);
   });
 
-  it("names one not yet a supporter's, and has no Find it in Gmail for one with nothing to find", async () => {
+  it("puts each field a line, by name, in words where it has them; a status nobody knows as stored", async () => {
     await render(
-      <LetterDetails
-        letter={{
-          ...exampleSupporterLetterDetails,
-          supporterId: null,
-          gmail: null,
-          backend: null,
-          contactConsent: false,
-          status: "odd",
-          sentAt: null,
-          repliedAt: "2026-10-13T09:00:00Z",
-          events: [
-            { at: "2026-10-14T10:00:00Z", status: "replied", details: { subject: "Thanks", spam: 0.1 } },
-            { at: "2026-10-12T10:00:00Z", status: "bounced", details: { type: "SoftBounce", email: "jo@example.org" } },
-          ],
-        }}
+      <LetterHistory
+        events={[
+          { at: "2026-10-14T10:00:00Z", status: "replied", details: { subject: "Thanks", spam: 0.1 } },
+          { at: "2026-10-12T10:00:00Z", status: "bounced", details: { type: "SoftBounce", email: "jo@example.org" } },
+          { at: "2026-10-12T09:00:00Z", status: "odd", details: {} },
+        ]}
       />,
     );
-    // Each change's fields a line each, by name: one with no name in the copy as recorded, a value that isn't
-    // words as JSON, a soft bounce in words, and the address leading to it among the blocked emails.
-    const history = page.getByRole("list", { name: copy.detail.historyTitle });
-    const fields = [...history.element().querySelectorAll("dl")].map((list) =>
+    // One with no name in the copy as recorded, a value that isn't words as JSON, a soft bounce in words,
+    // and the address leading to it among the blocked emails.
+    const fields = [...history().element().querySelectorAll("dl")].map((list) =>
       [...list.querySelectorAll("dt")].map((name) => [name.textContent, name.nextElementSibling!.textContent]),
     );
     expect(fields).toEqual([
@@ -2841,42 +2817,65 @@ describe("LetterDetails", () => {
         [copy.detail.fields.email, "jo@example.org"],
       ],
     ]);
-    expect(history.element().textContent).toContain(copy.status.bounced);
     await expect
-      .element(history.getByRole("link", { name: "jo@example.org" }))
+      .element(history().getByRole("link", { name: "jo@example.org" }))
       .toHaveAttribute("href", "/staff/politicians/blocked-emails?q=jo%40example.org");
-    expect(page.getByRole("link", { name: exampleSupporterLetterDetails.senderName }).all()).toHaveLength(0);
-    expect(page.getByRole("button", { name: staffCopy.findInGmail.copy }).all()).toHaveLength(0);
     await expect.element(page.getByText("odd", { exact: true })).toBeVisible();
-    await expect.element(page.getByText("13 Oct 2026, 09:00")).toBeVisible();
-    expect(page.getByText(copy.detail.sent, { exact: true }).all()).toHaveLength(0);
   });
 
-  it("shows PauseAI's letter: its mailing, whether personalised, and that nothing's recorded since", async () => {
-    const letter = examplePauseaiLetterDetails;
-    const { rerender } = await render(<LetterDetails letter={letter} />);
-    await expect
-      .element(page.getByRole("heading", { level: 1 }))
-      .toHaveTextContent(copy.oneTitle(copy.fromPauseai, letter.mpName));
-    // Back to its mailing, which the facts name too; and on to its MP.
-    await expect
-      .element(page.getByRole("navigation").getByRole("link", { name: letter.mailing }))
-      .toHaveAttribute("href", "/staff/mailings/3");
-    expect(
-      page
-        .getByRole("link", { name: letter.mailing })
-        .all()
-        .map((link) => link.element().getAttribute("href")),
-    ).toEqual(["/staff/mailings/3", "/staff/mailings/3"]);
-    await expect
-      .element(page.getByRole("link", { name: letter.mpName }))
-      .toHaveAttribute("href", "/staff/politicians/1");
-    await expect.element(page.getByText(copy.detail.personalised)).toBeVisible();
+  it("says when nothing's recorded", async () => {
+    await render(<LetterHistory events={[]} />);
     await expect.element(page.getByText(copy.detail.noHistory)).toBeVisible();
-    // Find it in Gmail goes with its thread, not in the card.
-    expect(page.getByRole("button", { name: staffCopy.findInGmail.copy }).all()).toHaveLength(0);
-    await rerender(<LetterDetails letter={{ ...letter, personalised: false }} />);
-    expect(page.getByText(copy.detail.personalised).all()).toHaveLength(0);
+  });
+});
+
+describe("historyOf", () => {
+  const copy = staffCopy.letters;
+  const airtable = { ...exampleSupporterLetterDetails, backend: "airtable" as const, events: [] };
+  const sentByGmail = { at: "2026-10-01T12:00:00Z", status: "sent", details: {} };
+
+  it("is the changes recorded, Sent tagged with what sent it; nothing more for one never sent", () => {
+    const [bounced, sent, sending] = exampleSupporterLetterDetails.events;
+    expect(historyOf(exampleSupporterLetterDetails)).toEqual([
+      bounced,
+      { ...sent, tag: copy.backends.postmark },
+      sending,
+    ]);
+    // One of this site's never sent: no backend, no Sent.
+    const notSent = [{ at: "2026-10-12T09:00:00Z", status: "not_sent", details: {} }];
+    expect(historyOf({ ...airtable, backend: null, sentAt: null, events: notSent })).toEqual(notSent);
+    // PauseAI's, sent from Gmail.
+    expect(historyOf({ ...examplePauseaiLetterDetails, backend: "gmail", events: [sentByGmail] })).toEqual([
+      { ...sentByGmail, tag: copy.backends.gmail },
+    ]);
+    // A send recorded when nothing says what sent it, untagged.
+    expect(historyOf({ ...examplePauseaiLetterDetails, backend: null, events: [sentByGmail] })).toEqual([sentByGmail]);
+  });
+
+  it("for one copied from Airtable: sent when it says, and written, if earlier and nothing's recorded", () => {
+    expect(historyOf({ ...airtable, createdAt: "2026-09-30T18:00:00Z", sentAt: "2026-09-30T18:02:00Z" })).toEqual([
+      { at: "2026-09-30T18:02:00Z", status: "sent", details: {}, tag: copy.backends.airtable },
+      { at: "2026-09-30T18:00:00Z", status: "created", label: copy.columns.created, details: {} },
+    ]);
+    // PauseAI's, from a mailing copied from Airtable, written and sent at once.
+    const sent = { at: examplePauseaiLetterDetails.sentAt, status: "sent", details: {}, tag: copy.backends.airtable };
+    expect(historyOf(examplePauseaiLetterDetails)).toEqual([sent]);
+    // With something recorded later, it goes in its place, and when it was written isn't wanted.
+    const bounce = { at: "2026-10-02T09:00:00Z", status: "bounced", details: {} };
+    expect(historyOf({ ...examplePauseaiLetterDetails, createdAt: "2026-09-01T09:00:00Z", events: [bounce] })).toEqual([
+      bounce,
+      sent,
+    ]);
+    // PauseAI's never sent: nothing.
+    expect(historyOf({ ...examplePauseaiLetterDetails, backend: null, sentAt: null })).toEqual([]);
+  });
+
+  it("shows the label and the tag in its line", async () => {
+    await render(<LetterHistory events={historyOf({ ...airtable, createdAt: "2026-10-12T08:00:00Z" })} />);
+    const [sent, written] = page.getByRole("listitem").all();
+    expect(sent.element().textContent).toContain(copy.status.sent);
+    await expect.element(sent.getByText(copy.backends.airtable)).toBeVisible();
+    expect(written.element().querySelector("strong")!.textContent).toBe(copy.columns.created);
   });
 });
 
@@ -2908,6 +2907,15 @@ describe("FindInGmail", () => {
     write.mockRestore();
     await rerender(<FindInGmail find={null} />);
     expect(page.getByRole("button").all()).toHaveLength(0);
+  });
+
+  it("says to paste it in the mail of policy@'s members for a letter sent while it was a Google Group", async () => {
+    const write = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+    await render(<FindInGmail find={{ ...find, inPolicyGroup: true }} />);
+    await page.getByRole("button", { name: copy.copy }).click();
+    await expect.poll(() => page.getByRole("status").element().textContent).toContain(copy.policyGroup);
+    expect(page.getByRole("status").element().textContent).not.toContain(copy.where(find.mailbox));
+    write.mockRestore();
   });
 });
 

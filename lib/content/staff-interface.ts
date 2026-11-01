@@ -79,13 +79,18 @@ export const staffCopy = {
     // Then, in the note under it, what to do, in bold, "paste" stressed; under that, where.
     next: { before: "Next, ", stressed: "paste", after: " into Gmail search." },
     where: (mailbox: string) => `You must be in an inbox that can see ${mailbox}'s mail.`,
-    whereUnknown: "You must be in an inbox that can see mail from the address it was sent from.",
+    // A supporter's letter sent before policy@ was a Gmail account, when it was a Google Group.
+    policyGroup: "You must be in an inbox that got policy@'s mail when it was sent, such as Joseph's.",
+    // A letter of PauseAI's copied from Airtable, which kept no record of the Gmail it went from.
+    whereUnknown: "You must be in an inbox that sent it. Most of these went from Joseph's.",
   },
   // One of PauseAI's letters, and the replies in its thread.
   letterThread: {
     title: "Letter and replies",
     // An imported letter, whose text Airtable didn't keep.
-    noText: "This letter was sent before the site sent mailings, so its text isn't here.",
+    noText: "Text not available, as sent from Airtable.",
+    // A supporter's letter, whose text and replies the site doesn't keep.
+    supporterNoText: "Text not available, the site does not keep supporters' letters.",
     noReplies: "No replies yet.",
     unreadable: "This message couldn't be read.",
     // Over each message, as an email shows them.
@@ -705,8 +710,7 @@ export const staffCopy = {
     },
     noAsk: "None",
     textTitle: "The email",
-    noText:
-      "Text not available. This was imported from Airtable's Emails table, which keeps only who got it and how it was written. It was sent with Gmail, look there.",
+    noText: "Text not available, as sent from Airtable. Open a letter under Recipients to copy a Gmail search for it.",
     recipientsTitle: "Recipients",
     // Over the recipients: how many; instead of them, when there are none.
     recipientsCount: (n: number) => `${n} ${n === 1 ? "recipient" : "recipients"}`,
@@ -1458,6 +1462,8 @@ export const staffCopy = {
       mailing: "Mailing",
       personalised: "Personalised",
       historyTitle: "History",
+      // Under the ask a supporter's letter makes, before its campaign's name.
+      basedOn: "Based on the campaign",
       noHistory: "Nothing recorded yet.",
       // What a change of status recorded, each field's name before its value: Postmark's, a bounce's, a reply's.
       fields: {

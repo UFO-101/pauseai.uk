@@ -271,6 +271,8 @@ describeWithDatabase("a letter for its page", () => {
       kind: "supporter",
       id,
       senderName: "Jane Smith",
+      mpEmail: "test-mp@example.org",
+      campaignAsk: "frontier-ai-letter",
       gmail: { mailbox: "policy@pauseai.uk", search: "rfc822msgid:pm-new@mtasv.net" },
     });
     expect(typeof (letter as { subject: string }).subject).toBe("string");
@@ -279,8 +281,19 @@ describeWithDatabase("a letter for its page", () => {
     // policy inbox, in a mailbox we don't know.
     vi.stubEnv("POLICY_INBOX", "");
     const imported = await addTestLetter({ politicianId: mp, sentAt: "2026-10-01T12:00:00Z" });
+    // Sent while the policy inbox was a Google Group, so in its members' mail.
     expect(await getSupporterLetter(imported)).toMatchObject({
-      gmail: { mailbox: null, search: sentNearSearch("test-mp@example.org", "2026-10-01T12:00:00Z") },
+      gmail: {
+        mailbox: null,
+        search: sentNearSearch("test-mp@example.org", "2026-10-01T12:00:00Z"),
+        inPolicyGroup: true,
+      },
+    });
+    // Sent once it was a Gmail account, in its own mail.
+    const lately = await addTestLetter({ politicianId: mp, sentAt: "2026-10-29T09:00:00Z" });
+    expect((await getSupporterLetter(lately))!.gmail).toEqual({
+      mailbox: null,
+      search: sentNearSearch("test-mp@example.org", "2026-10-29T09:00:00Z"),
     });
     // One never sent has nothing to find; nor has one to an MP with no address.
     const unsent = await addTestLetter({ politicianId: mp });
@@ -323,9 +336,16 @@ describeWithDatabase("a letter for its page", () => {
       mailing: "CSRB Iqbal Amendment",
       mailingAsk: null,
       personalised: true,
+      backend: "gmail",
       gmail: { mailbox: null, search: sentNearSearch("mp@example.org", "2026-10-01T09:00:00Z") },
       events: [],
     });
+    // Copied from Airtable, Airtable sent it; never sent, nothing did.
+    await query("UPDATE letters_from_pauseai SET airtable_id = 'recA' WHERE id = $1", [id]);
+    expect(await getPauseaiLetter(mailing, id)).toMatchObject({ backend: "airtable" });
+    await query("UPDATE letters_from_pauseai SET airtable_id = NULL WHERE id = $1", [id]);
+    await query("UPDATE letters SET sent_at = NULL WHERE id = $1", [id]);
+    expect(await getPauseaiLetter(mailing, id)).toMatchObject({ backend: null });
   });
 
   it("finds PauseAI's letter in Gmail by its Message-ID, a reply's, or its MP's address and time; an unsent one not at all", async () => {

@@ -7,8 +7,8 @@ import { getPolitician } from "@/lib/server/politicians";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { letterId, mailingId } from "@/lib/staff-search";
 import FindInGmail from "../../../../../_components/FindInGmail";
-import { letterTitle } from "../../../../../_components/LetterDetails";
-import MailingLetterView from "../../../../../_components/MailingLetterView";
+import { letterTitle } from "../../../../../_components/LetterHistory";
+import LetterView from "../../../../../_components/LetterView";
 import LetterThread from "../../../../../_components/LetterThread";
 import { setAskStatus } from "../../../../../actions";
 
@@ -37,8 +37,8 @@ export default async function MailingLetterPage({ params }: Params) {
   const letter = found(pauseaiLetter);
   const politician = found(await getPolitician(letter.politicianId));
   return (
-    <MailingLetterView letter={letter} politician={politician} asks={asks} setStatus={setAskStatus}>
+    <LetterView letter={letter} politician={politician} asks={asks} setStatus={setAskStatus}>
       <LetterThread thread={found(thread)} link={<FindInGmail find={letter.gmail} />} />
-    </MailingLetterView>
+    </LetterView>
   );
 }
