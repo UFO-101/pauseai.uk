@@ -238,7 +238,7 @@ export const copy = {
       `${mpName} replied to the letter that ${senderName} sent. Here is the response:`,
     // The sender wrote back to their MP, copying the letter's address.
     followUp: (senderName: string, mpName: string) =>
-      `⁂ ${senderName} wrote back to ${mpName} about their letter. Here is what they sent:`,
+      `${senderName} wrote back to ${mpName} about their letter. Here is what they sent:`,
   },
   // The bill's page, for an MP who signed ControlAI's letter to the PM
   // backing it (lib/controlai-letter.ts): the note above the form, and the
