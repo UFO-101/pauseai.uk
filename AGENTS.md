@@ -10,11 +10,11 @@ A comment says what the code does and why, as it stands. It doesn't tell the cod
 
 Put throwaway scripts, logs and screenshots in `tmp/` at the repo root (to screenshot the site, see "Screenshots" below). It's gitignored, and scripts there can import the project's `node_modules` (e.g. `@playwright/test`, `sharp`). Long-running checks, such as probing the site in Chromium, Firefox and WebKit, can run in the background and write their output there.
 
-## Commit early, then run the CI gate
+## The CI gate
 
-Commit as soon as the fast checks pass, so there's something to open a pull request from, then run the slow ones and commit the fixes on top. Check exit codes, not a grep of the output: `npm test` can report every test passing and still fail on coverage.
+Run the fast checks first, then the slow ones. Check exit codes, not a grep of the output: `npm test` can report every test passing and still fail on coverage.
 
-The fast checks, seconds each. Run them on the files you changed, fix what they find, and commit:
+The fast checks, seconds each. Run them on the files you changed and fix what they find:
 
 ```bash
 npx tsc --noEmit                  # types
@@ -23,7 +23,7 @@ npx eslint --max-warnings 0 <files>
 npx stylelint <css files>
 ```
 
-Then everything CI runs (`.github/workflows/ci.yml`), which takes minutes. Anything it finds is fixed in a follow-on commit; the branch isn't done until every command exits 0:
+Then everything CI runs (`.github/workflows/ci.yml`), which takes minutes. The branch isn't done until every command exits 0:
 
 ```bash
 npm test                          # both Vitest projects, and the 100% per-file coverage gate
