@@ -146,6 +146,35 @@ test(
       (email) => email.To === "replies@example.org" && email.Subject === `Re: ${letter.Subject}`,
     )!;
     expect(ours.TextBody).toContain(MP_REPLY);
+
+    // The sender answers our copy: its Reply-To sends their answer to the MP
+    // and the letter's address, which copies it to us alone.
+    const followUp = await request.post(`${BASE}/api/postmark/inbound`, {
+      headers: { Authorization: WEBHOOK_AUTH },
+      data: {
+        OriginalRecipient: address,
+        MailboxHash: address.match(/\+([^@]+)@/)?.[1] ?? "",
+        FromFull: { Email: sender, Name: "Jane Smith" },
+        ToFull: [
+          { Email: "test-mp@example.org", Name: "" },
+          { Email: address, Name: "" },
+        ],
+        CcFull: [],
+        Subject: `Re: ${letter.Subject}`,
+        Date: "Fri, 16 Oct 2026 12:00:00 +0000",
+        TextBody: `Dear Mr McTestface,\n\nThank you for your reply. I'd be glad to meet at one of your surgeries.\n\nJane Smith`,
+      },
+    });
+    expect(await followUp.json()).toEqual({ forwarded: 1 });
+    // Nothing goes back to the sender: their newest email is still the MP's reply.
+    expect(newestEmailTo(sender)!.TextBody).toContain(copy.forwardedReply.toSender("Testy McTestface MP"));
+    const kept = newestEmail(
+      (email) => email.To === "replies@example.org" && email.Subject === `Re: ${letter.Subject}`,
+    )!;
+    expect(kept.TextBody).toContain(copy.forwardedReply.followUp("Jane Smith", "Testy McTestface MP"));
+    expect(kept.TextBody).toContain("I'd be glad to meet at one of your surgeries.");
+    expect(kept.ReplyTo).toBe(`${sender}, ${address}`);
+    await emailFrame(page, kept, "the sender's answer, copied to the shared inbox");
   },
 );
 
