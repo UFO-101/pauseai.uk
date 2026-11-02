@@ -147,14 +147,23 @@ describeWithDatabase("staff Server Actions", () => {
     );
     const doc = "https://docs.google.com/document/d/abc/edit";
     const saved = () => query("SELECT o.owner, d.url FROM event_owners o FULL JOIN event_docs d USING (event_id)");
-    await saveEventNow(form({ eventId: "evt-1", owner: "Jo@pauseai.uk", doc }));
+    // Jo chose themselves, so no one was emailed.
+    expect(await saveEventNow(form({ eventId: "evt-1", owner: "Jo@pauseai.uk", doc }))).toEqual({
+      emailed: [],
+      owner: "jo@pauseai.uk",
+    });
     expect(await saved()).toEqual([{ owner: "jo@pauseai.uk", url: doc }]);
     expect(revalidatePath).toHaveBeenCalledWith("/staff/events");
 
     // The same again, or a link anywhere else, changes nothing.
     revalidatePath.mockClear();
     await saveEventNow(form({ eventId: "evt-1", owner: "jo@pauseai.uk", doc }));
-    await saveEventNow(form({ eventId: "evt-1", owner: "jo@pauseai.uk", doc: "https://example.com/" }));
+    expect(await saveEventNow(form({ eventId: "evt-1", owner: "jo@pauseai.uk", doc: "https://example.com/" }))).toEqual(
+      {
+        emailed: [],
+        owner: null,
+      },
+    );
     expect(revalidatePath).not.toHaveBeenCalled();
 
     // Only the doc, cleared, with no owner chosen.

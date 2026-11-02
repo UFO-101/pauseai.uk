@@ -136,6 +136,16 @@
   gap: var(--space-2);
 }
 
+/* The note of whom a save emailed, under the event, the whole row; taking
+   no room while it's empty. */
+.emailed {
+  grid-column: 1 / -1;
+}
+
+.emailed:empty {
+  display: none;
+}
+
 /* Narrower: the date over two lines, and the owner over the doc, so the
    event keeps its room; the form, when open, in their column, each label
    over its field. */

@@ -57,7 +57,11 @@ test("Events get their owners by the rules, and one with none is given one", asy
     "href",
     "https://docs.google.com/document/d/oxford-talk-plan/edit",
   );
-  await frame(page, "saved: Sean owns it, and its Google Doc is linked, so neither is in red");
+  await expect(talk.getByRole("status")).toHaveText(copy.emailed(["sean@pauseai.uk"], "sean@pauseai.uk"));
+  await frame(
+    page,
+    "saved: Sean owns it, and its Google Doc is linked, so neither is in red; a note under it says Sean was emailed",
+  );
 
   // Both viewports' flows email Sean: this one's names its own address.
   const seans = newestEmail((one) => one.To === "sean@pauseai.uk" && one.TextBody.includes(staffEmail()))!;

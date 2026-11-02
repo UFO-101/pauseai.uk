@@ -7,7 +7,7 @@ import EventsOverview, { EventsSource } from "./EventsOverview";
 import { exampleEventGroups, exampleEventsNow, exampleStaff } from "./EventsOverview.examples";
 
 const copy = staffCopy.events;
-const noAction = async () => {};
+const noAction = async () => ({ emailed: [], owner: null });
 
 describe("EventsOverview", () => {
   const row = (name: string) => page.getByRole("listitem").filter({ hasText: name });
@@ -94,7 +94,7 @@ describe("EventEdit", () => {
   });
 
   it("saves the owner and doc together, only a link to Google, then closes", async () => {
-    const save = vi.fn<(form: FormData) => void>();
+    const save = vi.fn(async (form: FormData) => ({ emailed: [], owner: form.get("owner") as string }));
     await render(
       <EventEdit event={event} staff={exampleStaff} save={save}>
         <span>Cells</span>
@@ -113,6 +113,24 @@ describe("EventEdit", () => {
     const form = save.mock.calls[0][0];
     expect([form.get("eventId"), form.get("owner"), form.get("doc")]).toEqual(["evt-1", "sean@pauseai.uk", doc]);
     await expect.element(page.getByRole("form")).not.toBeInTheDocument();
+  });
+
+  it("says whom a save emailed, under the event, till its × closes it", async () => {
+    const save = async () => ({ emailed: ["sean@pauseai.uk", "joseph@pauseai.uk"], owner: "sean@pauseai.uk" });
+    await render(
+      <EventEdit event={event} staff={exampleStaff} save={save}>
+        <span>Cells</span>
+      </EventEdit>,
+    );
+    await page.getByRole("button", { name: copy.editLabel("AI risk talk") }).click();
+    await page.getByRole("combobox").selectOptions("sean@pauseai.uk");
+    await page.getByRole("button", { name: copy.save }).click();
+    const note = page.getByRole("status");
+    await expect
+      .element(note)
+      .toHaveTextContent(copy.emailed(["sean@pauseai.uk", "joseph@pauseai.uk"], "sean@pauseai.uk"));
+    await note.getByRole("button", { name: copy.closeEmailed }).click();
+    await expect.element(note).toBeEmptyDOMElement();
   });
 
   it("begins with the owner and doc it has", async () => {

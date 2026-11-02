@@ -712,6 +712,10 @@ export const staffCopy = {
     // In the empty box: the start of the link it takes (Google Drive's are taken too).
     docPlaceholder: "https://docs.google.com/…",
     save: "Save",
+    // After a save that emailed anyone, in a note under the event: whom, and why. Its × closes it.
+    emailed: (to: string[], owner: string) =>
+      `Emailed ${to.join(" and ")} to let them know ${owner} now owns this event.`,
+    closeEmailed: "Close",
     cancel: "Cancel",
     // The email when an event's owner changes: to the new owner, copied to the one before, saying who changed it,
     // from whom and to whom; or, when the import gives events their owners by the rules, to each new owner, listing them.

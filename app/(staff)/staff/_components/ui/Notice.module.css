@@ -1,0 +1,42 @@
+/* A note that draws the eye: a strip, opening down a moment after what
+   brought it, lit in the accent colour, fading to plain; room at its
+   right for the × at its top right. */
+.notice {
+  position: relative;
+  display: block;
+  padding: var(--space-2) calc(var(--space-3) + 22px) var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  font-size: var(--text-sm);
+  text-align: left;
+  animation:
+    open 0.3s 0.2s ease-out backwards,
+    lit 8s 0.4s ease-out backwards;
+}
+
+/* Its ×, in its top right corner. */
+.close {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+}
+
+@keyframes open {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-1 * var(--space-1)));
+  }
+}
+
+@keyframes lit {
+  from {
+    background: var(--accent-light);
+  }
+}
+
+/* With motion turned off, it doesn't move; it still fades from lit. */
+@media (prefers-reduced-motion: reduce) {
+  .notice {
+    animation: lit 8s 0.4s ease-out backwards;
+  }
+}

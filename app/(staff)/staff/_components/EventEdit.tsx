@@ -6,13 +6,15 @@ import { Select, TextInput } from "@/components/ui/Controls";
 import { Label } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
+import type { EventSaved } from "@/lib/server/staff-events";
 import { GOOGLE_DOC_PATTERN } from "@/lib/staff-forms";
+import Notice from "./ui/Notice";
 import styles from "./EventsOverview.module.css";
 
 const copy = staffCopy.events;
 
-/** The Server Action that saves an event's owner and Google Doc. */
-export type SaveEvent = (form: FormData) => void | Promise<void>;
+/** The Server Action that saves an event's owner and Google Doc, saying whom it emailed. */
+export type SaveEvent = (form: FormData) => Promise<EventSaved>;
 
 /**
  * An event's owner and doc cells (`children`) and its Edit button, at its
@@ -21,6 +23,8 @@ export type SaveEvent = (form: FormData) => void | Promise<void>;
  * any staff account, and the link to its Google Doc, only to Google Docs
  * or Drive, blank to clear it; saved together, which closes it. With no
  * owner, that's the select's first choice, which can't be chosen back.
+ * A save that emailed anyone says so in a Notice under the event, till its
+ * × closes it.
  */
 export default function EventEdit({
   event,
@@ -34,6 +38,8 @@ export default function EventEdit({
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  // What the last save emailed, for the note under the event, till its × closes it.
+  const [saved, setSaved] = useState<EventSaved>();
   const ownerId = useId();
   const docId = useId();
   return (
@@ -60,7 +66,7 @@ export default function EventEdit({
           className={styles.editor}
           aria-label={copy.editLabel(event.name)}
           action={async (form) => {
-            await save(form);
+            setSaved(await save(form));
             setOpen(false);
           }}
         >
@@ -105,6 +111,13 @@ export default function EventEdit({
           </span>
         </form>
       )}
+      <span role="status" className={styles.emailed}>
+        {saved?.owner && saved.emailed.length > 0 && (
+          <Notice close={copy.closeEmailed} onClose={() => setSaved(undefined)}>
+            {copy.emailed(saved.emailed, saved.owner)}
+          </Notice>
+        )}
+      </span>
     </>
   );
 }

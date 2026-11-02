@@ -48,10 +48,14 @@ function Owner({ owner, needed }: { owner: string | null; needed: boolean }) {
   );
 }
 
-/** The link to an event's Google Doc. */
+/** The link to an event's Google Doc, opening in a new tab. */
 function Doc({ doc, needed }: { doc: string | null; needed: boolean }) {
   if (!doc) return <Missing needed={needed}>{copy.noDoc}</Missing>;
-  return <a href={doc}>{copy.doc}</a>;
+  return (
+    <a href={doc} target="_blank" rel="noreferrer">
+      {copy.doc}
+    </a>
+  );
 }
 
 /**

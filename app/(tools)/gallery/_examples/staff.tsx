@@ -135,6 +135,7 @@ import {
   MailingsOverviewExample,
   EventsOverviewExample,
   EventEditExample,
+  NoticeExample,
   MailingLetterViewExample,
   SupporterLetterViewExample,
   MailingViewExample,
@@ -1728,6 +1729,11 @@ export const staff: Group = {
           ),
         },
       ],
+    },
+    {
+      name: "Notice",
+      file: "app/(staff)/staff/_components/ui/Notice.tsx",
+      variants: [{ label: "Open, lit as it opens; its × closes it", render: () => <NoticeExample /> }],
     },
     {
       name: "EventsSource",

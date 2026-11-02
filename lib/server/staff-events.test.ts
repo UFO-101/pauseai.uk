@@ -5,6 +5,7 @@ import { server } from "@/tests/fixtures/msw";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query, transaction } from "./db";
+import { recordProblem } from "./email";
 import { assignRuleOwners, eventsPage, ownerEmails, setEventDoc, setEventOwner } from "./staff-events";
 
 type Sent = { From: string; To: string; Cc?: string; Subject: string; TextBody: string; Tag: string };
@@ -137,7 +138,7 @@ describeWithDatabase("staff events", () => {
       });
 
     // A first owner: only them.
-    expect(await setEventOwner("evt-1", "sean@pauseai.uk", "jo@pauseai.uk")).toBe(true);
+    expect(await setEventOwner("evt-1", "sean@pauseai.uk", "jo@pauseai.uk")).toEqual(["sean@pauseai.uk"]);
     expect(await owners()).toEqual([{ event_id: "evt-1", owner: "sean@pauseai.uk", assigned_by: "jo@pauseai.uk" }]);
     expect(sent).toEqual([
       expect.objectContaining({
@@ -151,11 +152,14 @@ describeWithDatabase("staff events", () => {
     expect(sent[0].TextBody).toContain("jo@pauseai.uk");
 
     // The same owner again changes nothing.
-    expect(await setEventOwner("evt-1", "sean@pauseai.uk", "jo@pauseai.uk")).toBe(false);
+    expect(await setEventOwner("evt-1", "sean@pauseai.uk", "jo@pauseai.uk")).toBeUndefined();
     expect(sent).toHaveLength(1);
 
     // Changed by someone else: one email, to the new owner, copied to the one before.
-    expect(await setEventOwner("evt-1", "joseph@pauseai.uk", "jo@pauseai.uk")).toBe(true);
+    expect(await setEventOwner("evt-1", "joseph@pauseai.uk", "jo@pauseai.uk")).toEqual([
+      "joseph@pauseai.uk",
+      "sean@pauseai.uk",
+    ]);
     expect(sent[1]).toMatchObject({
       To: "joseph@pauseai.uk",
       Cc: "sean@pauseai.uk",
@@ -163,7 +167,7 @@ describeWithDatabase("staff events", () => {
     });
 
     // Taken by yourself: only the one before is told.
-    expect(await setEventOwner("evt-1", "jo@pauseai.uk", "jo@pauseai.uk")).toBe(true);
+    expect(await setEventOwner("evt-1", "jo@pauseai.uk", "jo@pauseai.uk")).toEqual(["joseph@pauseai.uk"]);
     expect(sent[2]).toMatchObject({
       To: "joseph@pauseai.uk",
       TextBody: body("jo@pauseai.uk", "joseph@pauseai.uk", "jo@pauseai.uk"),
@@ -171,7 +175,7 @@ describeWithDatabase("staff events", () => {
     expect(sent[2].Cc).toBeUndefined();
 
     // Given back by its owner before, who did it: only the new one.
-    expect(await setEventOwner("evt-1", "joseph@pauseai.uk", "jo@pauseai.uk")).toBe(true);
+    expect(await setEventOwner("evt-1", "joseph@pauseai.uk", "jo@pauseai.uk")).toEqual(["joseph@pauseai.uk"]);
     expect(sent[3]).toMatchObject({ To: "joseph@pauseai.uk" });
     expect(sent[3].Cc).toBeUndefined();
     expect(sent).toHaveLength(4);
@@ -195,7 +199,7 @@ describeWithDatabase("staff events", () => {
     const sent = postmark();
     await addStaff("jo@pauseai.uk");
     await addEvent("evt-1", "2026-11-10T18:00:00Z");
-    expect(await setEventOwner("evt-1", "jo@pauseai.uk", "jo@pauseai.uk")).toBe(true);
+    expect(await setEventOwner("evt-1", "jo@pauseai.uk", "jo@pauseai.uk")).toEqual([]);
     expect(sent).toEqual([]);
   });
 
@@ -225,13 +229,21 @@ describeWithDatabase("staff events", () => {
     ]);
   });
 
+  it("says it emailed no one when the email couldn't go", async () => {
+    postmark();
+    await addStaff("jo@pauseai.uk", "sean@pauseai.uk");
+    await addEvent("evt-1", "2026-11-10T18:00:00Z");
+    await recordProblem({ address: "sean@pauseai.uk", messageId: null, kind: "hard", reason: "Gone", canReset: true });
+    expect(await setEventOwner("evt-1", "sean@pauseai.uk", "jo@pauseai.uk")).toEqual([]);
+  });
+
   it("gives no owner to an event that isn't ours or doesn't exist, or to an address with no account", async () => {
     await addStaff("jo@pauseai.uk");
     await addEvent("evt-theirs", "2026-11-10T18:00:00Z", { access: "view" });
     await addEvent("evt-ours", "2026-11-10T18:00:00Z");
-    expect(await setEventOwner("evt-theirs", "jo@pauseai.uk", "jo@pauseai.uk")).toBe(false);
-    expect(await setEventOwner("evt-none", "jo@pauseai.uk", "jo@pauseai.uk")).toBe(false);
-    expect(await setEventOwner("evt-ours", "nobody@pauseai.uk", "jo@pauseai.uk")).toBe(false);
+    expect(await setEventOwner("evt-theirs", "jo@pauseai.uk", "jo@pauseai.uk")).toBeUndefined();
+    expect(await setEventOwner("evt-none", "jo@pauseai.uk", "jo@pauseai.uk")).toBeUndefined();
+    expect(await setEventOwner("evt-ours", "nobody@pauseai.uk", "jo@pauseai.uk")).toBeUndefined();
     expect(await owners()).toEqual([]);
   });
 

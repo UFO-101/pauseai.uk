@@ -39,6 +39,9 @@ export type StaffEvent = {
 
 export type EventGroup = DatedGroup<StaffEvent>;
 
+/** What saving an event's edit form did, for the page to say: whom it emailed, and its owner as chosen. */
+export type EventSaved = { emailed: string[]; owner: string | null };
+
 const SELECT_EVENTS = `SELECT e.id, e.name, 'https://luma.com/' || e.url AS url, e.start_at AS "startAt", e.city, e.tags,
     e.removed_at IS NOT NULL AS removed,
     (SELECT count(*)::int FROM luma_guests g WHERE g.event_id = e.id AND g.approval_status = 'approved' AND g.removed_at IS NULL) AS going,
@@ -83,19 +86,20 @@ export async function eventsPage(): Promise<{ groups: EventGroup[]; staff: strin
 /**
  * Emails that `owner` owns `ids` now: to them, copied to `previous`, the
  * owner before, as `by` changed it; or with no `by`, the rules gave them.
- * Never to `by`, who knows: with neither left, nothing is sent.
+ * Never to `by`, who knows: with neither left, nothing is sent. Returns
+ * whom it emailed, none if it wasn't sent.
  */
 async function tellOwner(
   owner: string,
   ids: string[],
   by: string | null,
   previous: string | null = null,
-): Promise<void> {
+): Promise<string[]> {
   const [to, cc] = [owner, previous].filter((address): address is string => !!address && address !== by);
-  if (!to) return;
+  if (!to) return [];
   const events = await listEvents(ids);
   const copy = staffCopy.events.ownerEmail;
-  await send(
+  const result = await send(
     {
       From: `PauseAI UK <noreply@${notifyDomain()}>`,
       To: to,
@@ -111,15 +115,16 @@ async function tellOwner(
     },
     "staff-alert",
   );
+  return result.sent ? [to, ...(cc ? [cc] : [])] : [];
 }
 
 /**
  * Makes `owner` the owner of one of our events, as `by`, in the audit log,
  * and emails them and the owner before (tellOwner). Nothing for an event
  * not ours, an address with no staff account, or the owner it has.
- * Returns whether it changed.
+ * Returns whom it emailed, or undefined if nothing changed.
  */
-export async function setEventOwner(eventId: string, owner: string, by: string): Promise<boolean> {
+export async function setEventOwner(eventId: string, owner: string, by: string): Promise<string[] | undefined> {
   const previous = await transaction(async (db) => {
     const [event] = await query<{ previous: string | null }>(
       `SELECT o.owner AS previous FROM luma_events e LEFT JOIN event_owners o ON o.event_id = e.id
@@ -138,9 +143,8 @@ export async function setEventOwner(eventId: string, owner: string, by: string):
     await logChange(by, "set event owner", { eventId, owner, previous: event.previous }, db);
     return { was: event.previous };
   });
-  if (!previous) return false;
-  await tellOwner(owner, [eventId], by, previous.was);
-  return true;
+  if (!previous) return undefined;
+  return tellOwner(owner, [eventId], by, previous.was);
 }
 
 /**
