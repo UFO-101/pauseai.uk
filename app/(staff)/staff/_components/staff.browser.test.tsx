@@ -2967,8 +2967,11 @@ describe("LetterHistory", () => {
       [done.forwarded, `policy@pauseai.uk · 13 Oct 2026, 09:00${why.policy_inbox}`],
       [done.forwarded, `jane@example.com · 13 Oct 2026, 09:00${why.sender}`],
     ]);
-    // One that went to no one has no one to name.
-    expect(lists(auto)[1]).toEqual([[done.nowhere, why.bounce_address]]);
+    // One that went to no one has no one to name; the bounce's ID is only in its {}.
+    expect(lists(auto)).toEqual([
+      [[copy.detail.fields.from, "testy.mctestface.mp@parliament.uk"]],
+      [[done.nowhere, why.bounce_address]],
+    ]);
     expect(lists(sent)).toEqual([
       [
         [copy.detail.fields.from, "jane.smith.482913@letters.pauseai.uk"],
@@ -2994,6 +2997,20 @@ describe("LetterHistory", () => {
     ]);
     // Nothing was logged between the automatic reply and the next.
     expect(handling(auto)).toEqual([]);
+  });
+
+  it("puts who it was from and to first, in an email's order, however the database kept them", async () => {
+    const details = {
+      cc: "c@example.com",
+      spam: 1,
+      to: "t@example.com",
+      replyTo: "r@example.com",
+      from: "f@example.com",
+    };
+    await render(<LetterHistory events={[{ at: "2026-10-14T10:00:00Z", status: "replied", details }]} />);
+    const names = [...history().element().querySelectorAll("dt")].map((name) => name.textContent);
+    const fields = copy.detail.fields;
+    expect(names).toEqual([fields.from, fields.to, fields.cc, fields.replyTo, "spam"]);
   });
 
   it("for a logged forward Postmark refused, says so", () => {

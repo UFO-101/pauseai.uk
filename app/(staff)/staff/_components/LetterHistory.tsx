@@ -91,21 +91,25 @@ function EventValue({ name, value }: { name: string; value: unknown }) {
 }
 
 /**
- * The IDs a send or a read of Gmail records, for finding a message, not
+ * The IDs a send, a bounce or a read of Gmail records, for finding a message, not
  * reading, in the {} bubble, not the list; and what was done with a reply,
  * which has a list of its own (Handling).
  */
-const IDS = ["messageId", "threadId", "gmailMessageId", "handling"];
+const IDS = ["messageId", "threadId", "gmailMessageId", "bounceId", "handling"];
+
+/** Who an email was from and to, in an email's order, first: the database keeps a record's fields in an order of its own. */
+const ADDRESSES = ["from", "name", "to", "cc", "replyTo"];
+const place = (name: string) => (ADDRESSES.includes(name) ? ADDRESSES.indexOf(name) : ADDRESSES.length);
 
 /**
  * What a change recorded, a field to a line, each by its name, one with no
  * name in the copy as recorded: every field but Postmark's kind when the
- * status already says it, and the IDs.
+ * status already says it, and the IDs; who it was from and to first.
  */
 function EventFields({ event }: { event: LetterEvent }) {
-  const fields = Object.entries(event.details).filter(
-    ([name, value]) => !IDS.includes(name) && !(name === "type" && SAID_BY_STATUS[event.status] === value),
-  );
+  const fields = Object.entries(event.details)
+    .filter(([name, value]) => !IDS.includes(name) && !(name === "type" && SAID_BY_STATUS[event.status] === value))
+    .sort(([a], [b]) => place(a) - place(b));
   if (fields.length === 0) return null;
   return (
     <dl className={styles.eventFields}>

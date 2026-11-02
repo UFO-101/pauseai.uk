@@ -1,6 +1,7 @@
 import "server-only";
 import { timingSafeEqual } from "node:crypto";
 import { copy } from "@/lib/content/email-your-mp";
+import { now } from "@/lib/now";
 import { query, transaction } from "./db";
 import { send, type DeliveryProblem } from "./email";
 import type { HandlingReason, ReplyHandling } from "./letters";
@@ -297,7 +298,7 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
     );
     handling.push(
       result.sent
-        ? { outcome: "forwarded", to, reason, at: new Date().toISOString() }
+        ? { outcome: "forwarded", to, reason, at: now().toISOString() }
         : { outcome: "failed", to, reason: result.reason === "blocked" ? "blocked" : "refused" },
     );
     // Thrown, so Postmark tries again. A blocked address is skipped: it would never work.
