@@ -3,7 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 import { copy } from "@/lib/content/email-your-mp";
 import { now } from "@/lib/now";
 import { query, transaction } from "./db";
-import { send, type DeliveryProblem } from "./email";
+import { isBlocked, send, type DeliveryProblem } from "./email";
 import type { HandlingReason, ReplyHandling } from "./letters";
 import { lettersDomain, notifyDomain, type Attachment } from "./outside-services/postmark";
 
@@ -207,8 +207,10 @@ function letterMailboxes(email: InboundEmail): string[] {
  * Records a reply to a letter, and forwards it to the shared inbox and to the
  * sender, unless they already have it (their address is in its To or Cc). The
  * sender's own follow-up, sent to the MP and the letter's address from our
- * forward's Reply-To, goes to the shared inbox only. Only when it came and
- * who from is kept, not its text. Returns who it went to.
+ * forward's Reply-To, goes to the shared inbox only. The shared inbox's copy
+ * says when the sender wasn't sent one because they're copied in or their
+ * address is blocked. Only when it came and who from is kept, not its text.
+ * Returns who it went to.
  */
 export async function forwardReply(email: InboundEmail): Promise<string[]> {
   const from = email.FromFull?.Email ?? "";
@@ -265,11 +267,29 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
     ? ["In-Reply-To", "References"].map((Name) => ({ Name, Value: `<${sentLetter.messageId}@mtasv.net>` }))
     : undefined;
 
+  const named = (list: Address[] | undefined) =>
+    list
+      ?.filter((a) => a.Email)
+      .map((a) => (a.Name ? `${a.Name} <${a.Email}>` : a.Email))
+      .join(", ");
   const original = [
     `From: ${email.FromFull?.Name ?? ""} <${from}>`,
+    ...[
+      ["To", named(email.ToFull)],
+      ["Cc", named(email.CcFull)],
+    ].flatMap(([field, list]) => (list ? [`${field}: ${list}`] : [])),
     `Date: ${email.Date ?? ""}`,
     `Subject: ${email.Subject ?? ""}`,
   ].join("\n");
+  // Why the sender won't get a copy, for the shared inbox's: their own follow-up says so already.
+  const senderNote = fromSender
+    ? undefined
+    : copied.includes(letter.senderEmail.toLowerCase())
+      ? copy.forwardedReply.senderCopied(letter.senderName)
+      : (await isBlocked(letter.senderEmail))
+        ? copy.forwardedReply.senderBlocked(letter.senderName)
+        : undefined;
+  const sentTo: string[] = [];
   for (const { to, reason, forward } of plan) {
     if (!forward) {
       handling.push({ outcome: "not_forwarded", to, reason });
@@ -287,7 +307,7 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
             ? copy.forwardedReply.followUp(letter.senderName, letter.mpName)
             : to === letter.senderEmail
               ? copy.forwardedReply.toSender(letter.mpName)
-              : copy.forwardedReply.toInbox(letter.mpName, letter.senderName)
+              : [copy.forwardedReply.toInbox(letter.mpName, letter.senderName), senderNote].filter(Boolean).join("\n\n")
         }\n\n${original}\n\n${email.TextBody ?? ""}`,
         Headers: threading,
         Attachments: email.Attachments?.map(({ Name, Content, ContentType }) => ({ Name, Content, ContentType })),
@@ -296,6 +316,7 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
       "forwarded-reply",
       letter.id,
     );
+    if (result.sent) sentTo.push(to);
     handling.push(
       result.sent
         ? { outcome: "forwarded", to, reason, at: now().toISOString() }
@@ -308,5 +329,5 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
     }
   }
   await noteHandling(eventId, handling);
-  return plan.filter((p) => p.forward).map((p) => p.to);
+  return sentTo;
 }

@@ -239,6 +239,9 @@ export const copy = {
     // The sender wrote back to their MP, copying the letter's address.
     followUp: (senderName: string, mpName: string) =>
       `${senderName} wrote back to ${mpName} about their letter. Here is what they sent:`,
+    // Under toInbox, when the sender wasn't sent a copy: the MP copied them in, or their address is blocked.
+    senderCopied: (senderName: string) => `⁂ The MP copied ${senderName} in, so we didn't send them a copy.`,
+    senderBlocked: (senderName: string) => `⁂ We couldn't send ${senderName} a copy, as their address is blocked.`,
   },
   // The bill's page, for an MP who signed ControlAI's letter to the PM
   // backing it (lib/controlai-letter.ts): the note above the form, and the

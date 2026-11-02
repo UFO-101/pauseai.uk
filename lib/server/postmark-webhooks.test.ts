@@ -163,7 +163,12 @@ describeWithDatabase("forwardReply", () => {
     expect(sent[1].TextBody).toContain(copy.forwardedReply.toSender("Testy McTestface MP"));
     expect(sent[1].TextBody).not.toContain(copy.forwardedReply.toInbox("Testy McTestface MP", "Jane Smith"));
     expect(sent[0].Headers).toBeUndefined();
-    expect(sent[0].TextBody).toContain("From: Testy McTestface MP <test-mp@parliament.example>");
+    expect(sent[0].TextBody).toContain(
+      `From: Testy McTestface MP <test-mp@parliament.example>\nTo: ${mailbox}@letters.pauseai.uk\nDate: `,
+    );
+    // Jane gets a copy, so the shared inbox's says nothing of hers.
+    expect(sent[0].TextBody).not.toContain(copy.forwardedReply.senderCopied("Jane Smith"));
+    expect(sent[0].TextBody).not.toContain(copy.forwardedReply.senderBlocked("Jane Smith"));
     expect(sent[0].TextBody).toContain("Thanks for your letter.");
     expect(sent[0].Attachments).toEqual([{ Name: "a.pdf", Content: "QQ==", ContentType: "application/pdf" }]);
     // Who it was to, and to whom it was forwarded and why, in order.
@@ -273,9 +278,16 @@ describeWithDatabase("forwardReply", () => {
     const mailbox = await sentLetter();
     const sent = postmark();
     expect(
-      await forwardReply(reply(mailbox, { CcFull: [{ Email: "jane@example.com" }], ReplyTo: "office@example.org" })),
+      await forwardReply(
+        reply(mailbox, { CcFull: [{ Email: "jane@example.com", Name: "Jane Smith" }], ReplyTo: "office@example.org" }),
+      ),
     ).toEqual(["replies@pauseai.uk"]);
     expect(sent).toHaveLength(1);
+    // The shared inbox's copy says why, and quotes the Cc.
+    expect(sent[0].TextBody).toContain(
+      `${copy.forwardedReply.toInbox("Testy McTestface MP", "Jane Smith")}\n\n${copy.forwardedReply.senderCopied("Jane Smith")}\n\n`,
+    );
+    expect(sent[0].TextBody).toContain("Cc: Jane Smith <jane@example.com>\n");
     expect((await events())[0].details).toMatchObject({
       cc: "jane@example.com",
       replyTo: "office@example.org",
@@ -305,6 +317,7 @@ describeWithDatabase("forwardReply", () => {
     const sent = postmark();
     expect(await forwardReply({ OriginalRecipient: `${mailbox}@letters.pauseai.uk` })).toEqual(["Jane@Example.com"]);
     expect(sent[0].Subject).toBe("");
+    expect(sent[0].TextBody).toContain("From:  <>\nDate: \n");
     expect(sent[0].ReplyTo).toBe(`${mailbox}@letters.pauseai.uk`);
     expect(await events()).toEqual([
       {
@@ -335,8 +348,9 @@ describeWithDatabase("forwardReply", () => {
     const mailbox = await sentLetter();
     const sent = postmark();
     await recordProblem({ address: "jane@example.com", messageId: null, kind: "hard", reason: "", canReset: true });
-    expect(await forwardReply(reply(mailbox))).toEqual(["replies@pauseai.uk", "Jane@Example.com"]);
+    expect(await forwardReply(reply(mailbox))).toEqual(["replies@pauseai.uk"]);
     expect(sent.map((e) => e.To)).toEqual(["replies@pauseai.uk"]);
+    expect(sent[0].TextBody).toContain(copy.forwardedReply.senderBlocked("Jane Smith"));
     expect((await events())[0].details).toMatchObject({
       handling: [
         { outcome: "forwarded", to: "replies@pauseai.uk" },

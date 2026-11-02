@@ -203,7 +203,10 @@ test("A reply-all that copies the sender, then a reply after the sender's addres
       TextBody: MP_REPLY,
     }),
   ).toBe(1);
-  await emailFrame(page, inboxCopy(letter), "the reply-all, forwarded to the shared inbox only");
+  const replyAll = inboxCopy(letter);
+  expect(replyAll.TextBody).toContain(`Cc: Jane Smith <${sender}>`);
+  expect(replyAll.TextBody).toContain(copy.forwardedReply.senderCopied("Jane Smith"));
+  await emailFrame(page, replyAll, "the reply-all, forwarded to the shared inbox only, saying Jane was copied in");
   let entries = await openLetter(page, letter);
   await expect(entries.first()).toContainText(`${history.fields.cc}${sender}`);
   await expect(entries.first()).toContainText(`${history.handling.not_forwarded}${sender}`);
@@ -212,8 +215,10 @@ test("A reply-all that copies the sender, then a reply after the sender's addres
 
   // Jane's address bounces, so it's blocked; the MP's next reply can't be forwarded to her.
   await bounce(request, { Type: "HardBounce", Email: sender, Inactive: true, CanActivate: true });
-  expect(await inbound(request, letter, { FromFull: MP, MessageID: "reply-2", TextBody: MP_REPLY })).toBe(2);
-  await emailFrame(page, inboxCopy(letter), "the MP's second reply, at the shared inbox; Jane's copy blocked");
+  expect(await inbound(request, letter, { FromFull: MP, MessageID: "reply-2", TextBody: MP_REPLY })).toBe(1);
+  const secondReply = inboxCopy(letter);
+  expect(secondReply.TextBody).toContain(copy.forwardedReply.senderBlocked("Jane Smith"));
+  await emailFrame(page, secondReply, "the MP's second reply, at the shared inbox, saying Jane's copy couldn't go");
   entries = await openLetter(page, letter);
   await expect(entries.first()).toContainText(`${history.handling.failed}${sender}`);
   await expect(entries.first()).toContainText(history.handlingReasons.blocked);
