@@ -73,6 +73,11 @@ async function bounce(request: APIRequestContext, body: Record<string, unknown>)
   expect(await res.json()).toEqual({ recorded: true });
 }
 
+/** The newest forward of a reply to the letter that reached the shared inbox; flows run at once, so it's found by the letter's address in its Reply-To. */
+function inboxCopy(letter: Letter): OutboxEmail {
+  return newestEmail((one) => one.To === POLICY_INBOX && !!one.ReplyTo?.includes(letter.address))!;
+}
+
 /** The letter's page, with its history, the newest first. */
 async function openLetter(page: Page, letter: Letter) {
   await page.goto(`${BASE}/staff/letters/${letter.id}`);
@@ -104,6 +109,10 @@ test("The MP replies and the sender writes back: each forwarded, and the letter'
   // Answering it reaches the MP and the letter's address, so a follow-up is kept with the letter.
   expect(forwarded.ReplyTo).toBe(`${MP.Email}, ${letter.address}`);
   await emailFrame(page, forwarded, "the MP's reply, forwarded to Jane");
+  const inboxReply = inboxCopy(letter);
+  expect(inboxReply.TextBody).toContain(copy.forwardedReply.toInbox(MP.Name, "Jane Smith"));
+  expect(inboxReply.TextBody).toContain(MP_REPLY);
+  await emailFrame(page, inboxReply, "the MP's reply, forwarded to the shared inbox");
   entries = await openLetter(page, letter);
   await expect(entries.first()).toContainText(`${history.fields.to}${letter.address}`);
   await expect(entries.first()).toContainText(`${POLICY_INBOX} · `);
@@ -125,7 +134,8 @@ test("The MP replies and the sender writes back: each forwarded, and the letter'
   ).toBe(1);
   // Nothing goes back to Jane: her newest email is still the MP's reply.
   expect(newestEmailTo(sender)!.TextBody).toContain(MP_REPLY);
-  const kept = newestEmail((one) => one.To === POLICY_INBOX && one.TextBody.includes("glad to meet"))!;
+  const kept = inboxCopy(letter);
+  expect(kept.TextBody).toContain("glad to meet");
   expect(kept.TextBody).toContain(copy.forwardedReply.followUp("Jane Smith", MP.Name));
   expect(kept.ReplyTo).toBe(`${sender}, ${letter.address}`);
   await emailFrame(page, kept, "Jane's answer, copied to the shared inbox");
@@ -157,6 +167,9 @@ test("Automatic replies: one to the letter's address, forwarded; one to the boun
     }),
   ).toBe(2);
   await emailFrame(page, newestEmailTo(sender)!, "the office's acknowledgement, forwarded to Jane");
+  const inboxAcknowledgement = inboxCopy(letter);
+  expect(inboxAcknowledgement.TextBody).toContain(ACKNOWLEDGEMENT);
+  await emailFrame(page, inboxAcknowledgement, "the office's acknowledgement, forwarded to the shared inbox");
   let entries = await openLetter(page, letter);
   await expect(entries.first()).toContainText(staffCopy.letters.status.auto_reply);
   await expect(entries.first()).toContainText(history.handlingReasons.sender);
@@ -190,6 +203,7 @@ test("A reply-all that copies the sender, then a reply after the sender's addres
       TextBody: MP_REPLY,
     }),
   ).toBe(1);
+  await emailFrame(page, inboxCopy(letter), "the reply-all, forwarded to the shared inbox only");
   let entries = await openLetter(page, letter);
   await expect(entries.first()).toContainText(`${history.fields.cc}${sender}`);
   await expect(entries.first()).toContainText(`${history.handling.not_forwarded}${sender}`);
@@ -199,6 +213,7 @@ test("A reply-all that copies the sender, then a reply after the sender's addres
   // Jane's address bounces, so it's blocked; the MP's next reply can't be forwarded to her.
   await bounce(request, { Type: "HardBounce", Email: sender, Inactive: true, CanActivate: true });
   expect(await inbound(request, letter, { FromFull: MP, MessageID: "reply-2", TextBody: MP_REPLY })).toBe(2);
+  await emailFrame(page, inboxCopy(letter), "the MP's second reply, at the shared inbox; Jane's copy blocked");
   entries = await openLetter(page, letter);
   await expect(entries.first()).toContainText(`${history.handling.failed}${sender}`);
   await expect(entries.first()).toContainText(history.handlingReasons.blocked);
@@ -214,6 +229,7 @@ test("A sender whose address bounced writes to their MP: the letter goes without
   await bounce(request, { Type: "HardBounce", Email: sender, Inactive: true, CanActivate: true });
   const letter = await sendLetter(page, flowDatabase, sender);
   expect(letter.email.Cc).toBeUndefined();
+  await emailFrame(page, letter.email, "the letter the MP gets, with no Cc");
   const entries = await openLetter(page, letter);
   await expect(entries.first()).toContainText(`${history.fields.to}${MP.Email}`);
   await expect(entries.first()).not.toContainText(history.fields.cc);
