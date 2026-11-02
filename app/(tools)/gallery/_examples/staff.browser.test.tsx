@@ -11,6 +11,7 @@ import {
   NoteChangesExample,
   NoteEntryExample,
   NoteFormExample,
+  NoteHistoryExample,
   NotesExample,
   NoteTextExample,
   PoliticianDetailsExample,
@@ -50,6 +51,20 @@ describe("the staff examples", () => {
     await unmount();
     await render(<NoteTextExample />);
     await expect.element(page.getByRole("link", { name: "www.example.com/rota" })).toBeVisible();
+  });
+
+  it("logs a note drafted at the top of a history, and has no Write a note without its action", async () => {
+    const { unmount } = await render(<NoteHistoryExample lines={false} />);
+    await page.getByRole("button", { name: staffCopy.notes.write }).click();
+    await page.getByRole("textbox", { name: staffCopy.notes.note }).fill("Met them");
+    await page.getByRole("button", { name: staffCopy.notes.add }).click();
+    await expect.element(log().nth(0)).toHaveTextContent('add({"politicianId":"7","body":"Met them"})');
+    await unmount();
+    const plain = await render(<NoteHistoryExample writable={false} />);
+    await expect.element(page.getByRole("button", { name: staffCopy.notes.write })).not.toBeInTheDocument();
+    await plain.unmount();
+    await render(<NoteHistoryExample />);
+    await expect.element(page.getByText("Email from PauseAI: Example Mailing")).toBeVisible();
   });
 
   it("logs a note's edit, and gives an admin Delete alone", async () => {

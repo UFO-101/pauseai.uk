@@ -151,6 +151,7 @@ import {
   NoteChangesExample,
   NoteEntryExample,
   NoteFormExample,
+  NoteHistoryExample,
   NoteTextExample,
   AskFormExample,
   DeleteTwiceExample,
@@ -2484,6 +2485,36 @@ export const staff: Group = {
       variants: [
         { label: "Its writer's: Edit, which opens Save, Cancel and Delete", render: () => <NoteChangesExample /> },
         { label: "An admin's, on someone else's: Delete alone", render: () => <NoteChangesExample editable={false} /> },
+      ],
+    },
+    {
+      name: "NoteHistory",
+      file: "app/(staff)/staff/_components/NoteHistory.tsx",
+      variants: [
+        {
+          label: "With Write a note, which drafts one at the top",
+          render: () => (
+            <StaffPage as="div">
+              <NoteHistoryExample />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Nothing yet",
+          render: () => (
+            <StaffPage as="div">
+              <NoteHistoryExample lines={false} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Without Write a note",
+          render: () => (
+            <StaffPage as="div">
+              <NoteHistoryExample writable={false} />
+            </StaffPage>
+          ),
+        },
       ],
     },
     {

@@ -65,3 +65,11 @@ export function noteParts(body: string): NotePart[] {
   if (last < body.length) parts.push({ text: body.slice(last) });
   return parts;
 }
+
+/** The keys a keyboard event pressed, as a browser's and React's both say. */
+type Keys = { key: string; ctrlKey: boolean; metaKey: boolean; altKey: boolean; shiftKey: boolean };
+
+/** Ctrl+Enter, or Cmd+Enter on a Mac: what saves a note from its field. */
+export function isSaveKey(event: Keys): boolean {
+  return (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && event.key === "Enter";
+}

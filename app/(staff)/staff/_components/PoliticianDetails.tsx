@@ -21,7 +21,7 @@ import Grid, { Card, Column } from "./ui/Grid";
 import Strip from "./ui/Strip";
 import { NationShape, Rosette, StatusDot } from "./PoliticianIcons";
 import UnblockForm from "./UnblockForm";
-import NoteForm from "./NoteForm";
+import NoteHistory from "./NoteHistory";
 import { NoteEntry, NoteText, type NotesProps } from "./Notes";
 import Tag from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
@@ -221,10 +221,11 @@ function asksOf(politician: Politician, asks: Ask[]): Ask[] {
 }
 
 /**
- * The band at the top of their page: their name and tags, and under it
- * what they are; then their party, whether they're in office, their nation, how to write
- * to them, and where their record came from, an Airtable MP's linked to it
- * there; and how many asks they did (asksDone), leading to the asks, and
+ * The band at the top of their page: their name and tags, with whether
+ * their record has gone from Airtable, and under it what they are; at its
+ * top right, quietly, where their record came from, an Airtable MP's linked
+ * to it there; then their party, whether they're in office, their nation
+ * and how to write to them; and how many asks they did (asksDone), leading to the asks, and
  * letters supporters wrote them and emails PauseAI sent, to the history.
  */
 function PoliticianBand({
@@ -254,6 +255,24 @@ function PoliticianBand({
           {politician.isTest && <Tag>{staffCopy.politicians.flags.test}</Tag>}
           {politician.importantTarget && <Tag tone="amber">{copy.importantTarget}</Tag>}
           {politician.personalConnection && <Tag>{copy.personalConnection}</Tag>}
+          {politician.airtableRemovedAt && (
+            <Tag tone="amber">{copy.airtableRemoved(staffDate(politician.airtableRemovedAt))}</Tag>
+          )}
+        </>
+      }
+      corner={
+        <>
+          {copy.source}{" "}
+          {politician.airtableId ? (
+            <>
+              <a href={`${airtableTable}/${politician.airtableId}`} target="_blank" rel="noreferrer">
+                {source}
+              </a>
+              {copy.editInAirtable}
+            </>
+          ) : (
+            source
+          )}
         </>
       }
       aside={
@@ -300,25 +319,6 @@ function PoliticianBand({
           staffCopy.politicians.noEmail
         )}
       </BandFact>
-      <BandFact
-        label={copy.band.source}
-        detail={
-          politician.airtableRemovedAt && (
-            <Tag tone="amber">{copy.airtableRemoved(staffDate(politician.airtableRemovedAt))}</Tag>
-          )
-        }
-      >
-        {politician.airtableId ? (
-          <>
-            <a href={`${airtableTable}/${politician.airtableId}`} target="_blank" rel="noreferrer">
-              {source}
-            </a>
-            {copy.editInAirtable}
-          </>
-        ) : (
-          source
-        )}
-      </BandFact>
     </Band>
   );
 }
@@ -329,7 +329,8 @@ function PoliticianBand({
  * unblock it; then their history, newest first: the letters written to
  * them, the replies, PauseAI's emails, staff's notes, and everything the
  * audit log says about them, the letters' senders only when it's given
- * them, with Write a note at its top right; and beside it the card of
+ * them, with Write a note at its top right, which drafts one at the top
+ * (NoteHistory); and beside it the card of
  * their answer to each ask, with the button to change one staff record,
  * and under that Airtable's notes on them, which are changed there.
  */
@@ -430,26 +431,22 @@ export default function PoliticianDetails({
       )}
 
       <Grid>
-        <Card
-          span={3}
-          look="log"
+        <NoteHistory
           title={copy.historyTitle}
           id="history-title"
-          action={notes && <NoteForm target={{ name: "politicianId", value: politician.id }} add={notes.add} />}
+          empty={copy.noHistory}
+          politicianId={politician.id}
+          writer={notes?.reader.email ?? ""}
+          at={notes?.at ?? ""}
+          add={notes?.add}
         >
-          {entries.length === 0 ? (
-            <p className={styles.none}>{copy.noHistory}</p>
-          ) : (
-            <ol className={styles.history} aria-label={copy.historyTitle}>
-              {entries.map((entry) => (
-                <li key={entry.key}>
-                  <span className={styles.when}>{entry.day ? staffDate(entry.at) : staffTime(entry.at)}</span>
-                  <div>{entry.what}</div>
-                </li>
-              ))}
-            </ol>
-          )}
-        </Card>
+          {entries.map((entry) => (
+            <li key={entry.key}>
+              <span className={styles.when}>{entry.day ? staffDate(entry.at) : staffTime(entry.at)}</span>
+              <div>{entry.what}</div>
+            </li>
+          ))}
+        </NoteHistory>
         <Column span={3}>
           <Card look="aside" title={copy.statusesTitle} id="asks-title">
             <AskRows>

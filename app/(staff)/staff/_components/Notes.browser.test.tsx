@@ -57,6 +57,11 @@ describe("Notes", () => {
     await first.getByRole("textbox", { name: copy.note }).fill("Spoke in Leeds");
     await first.getByRole("button", { name: copy.save }).click();
     expect(fields(edit.mock.calls[0][0])).toEqual({ id: "3", body: "Spoke in Leeds" });
+    // Ctrl+Enter saves too; Enter alone is a new line.
+    await first.getByRole("button", { name: copy.edit }).click();
+    await first.getByRole("textbox", { name: copy.note }).fill("Spoke");
+    await userEvent.keyboard("{Enter}in Leeds{Control>}{Enter}{/Control}");
+    expect(fields(edit.mock.calls[1][0])).toEqual({ id: "3", body: "Spoke\nin Leeds" });
     // Saved, it closes.
     await expect.element(first.getByRole("button", { name: copy.edit })).toBeVisible();
     await first.getByRole("button", { name: copy.edit }).click();
@@ -144,6 +149,11 @@ describe("NoteForm", () => {
     await page.getByRole("textbox", { name: copy.note }).fill("Met them");
     await page.getByRole("button", { name: copy.add }).click();
     expect(fields(add.mock.calls[0][0])).toEqual({ politicianId: "7", body: "Met them" });
+    // Cmd+Enter adds one too.
+    await page.getByRole("button", { name: copy.write }).click();
+    await page.getByRole("textbox", { name: copy.note }).fill("Met them again");
+    await userEvent.keyboard("{Meta>}{Enter}{/Meta}");
+    expect(fields(add.mock.calls[1][0])).toEqual({ politicianId: "7", body: "Met them again" });
   });
 });
 

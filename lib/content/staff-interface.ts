@@ -1055,7 +1055,7 @@ export const staffCopy = {
     // Over an ask's title, leading into it: who asked them, by staffCopy.asks.askedBy, if we know, and to do what.
     askedThem: (who: string, kind: string) =>
       `${who ? `${who} asked` : "Asked"} them to ${kind === "letter" ? "sign" : "attend"}`,
-    // The box at the top of their page: where they came from, and each campaign's status.
+    // At the top right of their page, before where they came from.
     source: "Source:",
     sources: {
       airtable: "Airtable",
@@ -1089,9 +1089,8 @@ export const staffCopy = {
     // The band at the top of their page: where their record came from, and the counts at its right.
     band: {
       // The asks they signed, are going to, or are meeting our staff at.
-      asksDone: (n: number) => (n === 1 ? "⁂ ask done" : "⁂ asks done"),
-      source: "⁂ Source",
-      lettersCounted: (n: number) => (n === 1 ? "⁂ letter from a supporter" : "⁂ letters from supporters"),
+      asksDone: (n: number) => (n === 1 ? "ask done" : "asks done"),
+      lettersCounted: (n: number) => (n === 1 ? "letter from a supporter" : "⁂ letters from supporters"),
       emailsCounted: (n: number) => (n === 1 ? "⁂ email from PauseAI" : "⁂ emails from PauseAI"),
     },
     historyTitle: "History",
@@ -1122,7 +1121,7 @@ export const staffCopy = {
       note: "Their record has gone from Airtable and nobody has written to them, so they can be deleted here too.",
     },
     // On an MP from Airtable, after the source, which links to their record there.
-    editInAirtable: ", update there.",
+    editInAirtable: ", update there",
     // On an ask that isn't set by hand: where its statuses come from.
     importedAsk: "set each night by an import",
     personalised: "personalised",

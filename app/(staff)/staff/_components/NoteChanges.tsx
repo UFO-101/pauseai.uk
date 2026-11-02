@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { TextArea } from "@/components/ui/Controls";
 import { ErrorText } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { isSaveKey } from "@/lib/notes";
 import { DeleteTwice } from "./DeleteTwice";
 import styles from "./Notes.module.css";
 
@@ -17,7 +18,8 @@ type Change = (form: FormData) => boolean | void | Promise<boolean | void>;
  * A note that someone may change: `text`, and under it `meta`, who wrote
  * it and when, with its buttons at the right. Its writer, while they may
  * change it, has Edit, which puts the field, with its text, focused, in
- * place of the text, and Save, Cancel and Delete, red, pressed twice, in
+ * place of the text, saved by Save or Ctrl+Enter (Cmd+Enter on a Mac), and
+ * Save, Cancel and Delete, red, pressed twice, in
  * place of Edit; saving or cancelling puts the text back. Anyone else who
  * may delete it, an admin, has Delete alone. If the server refuses, as it
  * does once the day is up on a page left open, it stays open and says why.
@@ -90,7 +92,19 @@ export default function NoteChanges({
           }
         >
           <input type="hidden" name="id" value={note.id} />
-          <TextArea name="body" defaultValue={note.body} required autoFocus aria-label={copy.note} rows={4} />
+          <TextArea
+            name="body"
+            defaultValue={note.body}
+            required
+            autoFocus
+            aria-label={copy.note}
+            rows={4}
+            onKeyDown={(event) => {
+              if (!isSaveKey(event)) return;
+              event.preventDefault();
+              event.currentTarget.form!.requestSubmit();
+            }}
+          />
         </form>
       ) : (
         text

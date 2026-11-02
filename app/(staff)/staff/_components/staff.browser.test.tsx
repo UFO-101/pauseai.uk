@@ -1173,7 +1173,6 @@ describe("PoliticianDetails", () => {
       staffCopy.politician.status,
       staffCopy.politician.country,
       staffCopy.fields.email,
-      staffCopy.politician.band.source,
     ]);
     expect(definitions()).toEqual([
       MP.party,
@@ -1181,8 +1180,11 @@ describe("PoliticianDetails", () => {
       staffCopy.countries.england,
       staffCopy.politicians.noEmail,
       MP.salutation,
-      staffCopy.politician.sources.staff,
     ]);
+    // Where they came from, quietly, at the top right.
+    await expect
+      .element(page.getByText(`${staffCopy.politician.source} ${staffCopy.politician.sources.staff}`))
+      .toBeVisible();
     expect(document.querySelectorAll("dd svg[aria-hidden]")).toHaveLength(2);
     // The asks done: MP signed one.
     const done = page.getByRole("link", { name: `1 ${staffCopy.politician.band.asksDone(1)}` });
@@ -1222,7 +1224,7 @@ describe("PoliticianDetails", () => {
       />,
     );
     await expect.element(page.getByRole("link", { name: MP.email! })).toHaveAttribute("href", `mailto:${MP.email}`);
-    expect(terms()).toEqual([staffCopy.politician.status, staffCopy.fields.email, staffCopy.politician.band.source]);
+    expect(terms()).toEqual([staffCopy.politician.status, staffCopy.fields.email]);
   });
 
   it("sends Airtable's politicians to Airtable, saying if their record has gone; each says where they came from", async () => {
@@ -1239,7 +1241,7 @@ describe("PoliticianDetails", () => {
         await expect.element(page.getByText(staffCopy.politician.editInAirtable, { exact: false })).toBeVisible();
       } else {
         await expect.element(record).not.toBeInTheDocument();
-        expect(definitions().at(-1)).toBe(source);
+        await expect.element(page.getByText(`${staffCopy.politician.source} ${source}`)).toBeVisible();
         await expect.element(page.getByText(staffCopy.politicians.flags.test)).toBeVisible();
       }
       await unmount();
@@ -1252,6 +1254,34 @@ describe("PoliticianDetails", () => {
       />,
     );
     await expect.element(page.getByText(staffCopy.politician.airtableRemoved("20 Oct 2026"))).toBeVisible();
+  });
+
+  it("drafts a note in a history with nothing in it yet", async () => {
+    await render(
+      <PoliticianDetails
+        politician={MP}
+        unblock={vi.fn()}
+        {...none}
+        notes={{
+          notes: [],
+          reader: exampleNoteWriter,
+          at: exampleNotesAt,
+          add: vi.fn(),
+          edit: vi.fn(),
+          remove: vi.fn(),
+        }}
+      />,
+    );
+    await expect.element(page.getByText(staffCopy.politician.noHistory)).toBeVisible();
+    await page.getByRole("button", { name: staffCopy.notes.write }).click();
+    await expect.element(page.getByText(staffCopy.politician.noHistory)).not.toBeInTheDocument();
+    await expect
+      .element(
+        page
+          .getByRole("list", { name: staffCopy.politician.historyTitle })
+          .getByRole("textbox", { name: staffCopy.notes.note }),
+      )
+      .toBeVisible();
   });
 
   it("puts staff's notes in the history, by when they were written, with the button to write one over it", async () => {
@@ -1277,13 +1307,31 @@ describe("PoliticianDetails", () => {
       `${staffTime(exampleNotes[0].createdAt)}${exampleNotes[0].body}${staffCopy.politician.history.note} · jo@pauseai.uk`,
     );
     await expect.element(history.nth(0).getByRole("button", { name: staffCopy.notes.edit })).toBeVisible();
-    await page.getByRole("button", { name: staffCopy.notes.write }).click();
+    // Write a note drafts it at the top of the history, as it will be, and goes while it's there.
+    const write = page.getByRole("button", { name: staffCopy.notes.write });
+    await write.click();
+    await expect.element(write).not.toBeInTheDocument();
+    await expect.element(page.getByRole("textbox", { name: staffCopy.notes.note })).toHaveFocus();
+    expect(history.nth(0).element().textContent).toContain(
+      `${staffTime(exampleNotesAt)}${staffCopy.politician.history.note} · jo@pauseai.uk`,
+    );
+    // Cancel takes it away.
+    await page.getByRole("button", { name: staffCopy.notes.cancel }).click();
+    await expect.element(page.getByRole("textbox")).not.toBeInTheDocument();
+    expect(history.nth(0).element().textContent).toContain(exampleNotes[0].body);
+    await write.click();
     await page.getByRole("textbox", { name: staffCopy.notes.note }).fill("Met them");
     await page.getByRole("button", { name: staffCopy.notes.add }).click();
     expect(Object.fromEntries((add.mock.calls[0][0] as FormData).entries())).toEqual({
       politicianId: String(MP.id),
       body: "Met them",
     });
+    await expect.element(page.getByRole("textbox")).not.toBeInTheDocument();
+    // Ctrl+Enter adds one too.
+    await write.click();
+    await page.getByRole("textbox", { name: staffCopy.notes.note }).fill("Again");
+    await userEvent.keyboard("{Control>}{Enter}{/Control}");
+    await vi.waitFor(() => expect(add).toHaveBeenCalledTimes(2));
   });
 
   it("says under their name what they are: in which house, for where, and if they're no longer in office", async () => {

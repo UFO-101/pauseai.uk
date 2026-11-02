@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canDeleteNote, canEditNote, NOTE_EDIT_HOURS, noteParts } from "./notes";
+import { canDeleteNote, canEditNote, isSaveKey, NOTE_EDIT_HOURS, noteParts } from "./notes";
 
 const note = { writtenBy: "jo@pauseai.uk", createdAt: "2026-11-02T09:00:00Z" };
 const jo = { email: "jo@pauseai.uk", permissions: [] };
@@ -57,5 +57,17 @@ describe("noteParts", () => {
     expect(noteParts("javascript:alert(1) or ftp://x or mailwww.example")).toEqual([
       { text: "javascript:alert(1) or ftp://x or mailwww.example" },
     ]);
+  });
+});
+
+describe("isSaveKey", () => {
+  const keys = { key: "Enter", ctrlKey: false, metaKey: false, altKey: false, shiftKey: false };
+  it("is Ctrl+Enter, or Cmd+Enter, and nothing else", () => {
+    expect(isSaveKey({ ...keys, ctrlKey: true })).toBe(true);
+    expect(isSaveKey({ ...keys, metaKey: true })).toBe(true);
+    expect(isSaveKey(keys)).toBe(false);
+    expect(isSaveKey({ ...keys, ctrlKey: true, shiftKey: true })).toBe(false);
+    expect(isSaveKey({ ...keys, metaKey: true, altKey: true })).toBe(false);
+    expect(isSaveKey({ ...keys, key: "a", ctrlKey: true })).toBe(false);
   });
 });

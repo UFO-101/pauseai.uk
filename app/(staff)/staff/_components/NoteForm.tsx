@@ -6,13 +6,14 @@ import { TextArea } from "@/components/ui/Controls";
 import { FormStack } from "@/components/ui/Form";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { isSaveKey } from "@/lib/notes";
 import styles from "./Notes.module.css";
 
 const copy = staffCopy.notes;
 
 /**
  * Write a note, a button that opens the form to add one: the field, its
- * focus in it, then Add note and Cancel, which closes it unsent. Adding one
+ * focus in it, sent by Ctrl+Enter (Cmd+Enter on a Mac) too, then Add note and Cancel, which closes it unsent. Adding one
  * closes it too, for the page to show the note. `target` is the hidden
  * field that says whom it's about: `supporterId` or `politicianId`, and the
  * ID. On a supporter, a reminder under the field of what a note about them
@@ -55,6 +56,11 @@ export default function NoteForm({
         aria-label={copy.note}
         aria-describedby={guided ? "note-guidance" : undefined}
         rows={3}
+        onKeyDown={(event) => {
+          if (!isSaveKey(event)) return;
+          event.preventDefault();
+          event.currentTarget.form!.requestSubmit();
+        }}
       />
       {guided && (
         <p id="note-guidance" className={styles.guidance}>

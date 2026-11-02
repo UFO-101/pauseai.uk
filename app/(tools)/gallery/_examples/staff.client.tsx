@@ -35,6 +35,7 @@ import StaffAccountsTable from "@/app/(staff)/staff/_components/StaffAccountsTab
 import UnblockForm from "@/app/(staff)/staff/_components/UnblockForm";
 import NoteChanges from "@/app/(staff)/staff/_components/NoteChanges";
 import NoteForm from "@/app/(staff)/staff/_components/NoteForm";
+import NoteHistory from "@/app/(staff)/staff/_components/NoteHistory";
 import Notes, { NoteEntry, NoteText } from "@/app/(staff)/staff/_components/Notes";
 import {
   exampleNoteAdmin,
@@ -282,6 +283,36 @@ export function NoteChangesExample({ editable = true }: { editable?: boolean }) 
           edit={log("edit")}
           remove={log("delete")}
         />
+      )}
+    </Logged>
+  );
+}
+
+/** A politician's history card, its Write a note logged: two lines, or none; or without Write a note. */
+export function NoteHistoryExample({ lines = true, writable = true }: { lines?: boolean; writable?: boolean }) {
+  const rows = [
+    { at: "2 Nov 2026, 11:00", what: "Email from PauseAI: Example Mailing" },
+    { at: "1 Nov 2026, 09:30", what: "Signed 'Example Letter to the PM'" },
+  ];
+  return (
+    <Logged>
+      {(log) => (
+        <NoteHistory
+          title="History"
+          id="example-history"
+          empty="Nothing yet."
+          politicianId={7}
+          writer={exampleNoteWriter.email}
+          at={exampleNotesAt}
+          add={writable ? log("add") : undefined}
+        >
+          {(lines ? rows : []).map((row) => (
+            <li key={row.at}>
+              <span>{row.at}</span>
+              <div>{row.what}</div>
+            </li>
+          ))}
+        </NoteHistory>
       )}
     </Logged>
   );
