@@ -2734,11 +2734,9 @@ describe("LettersTable", () => {
             contactConsent: false,
             sentAt: null,
             repliedAt: "2026-10-13T09:00:00Z",
-            // A written reply is the one shown, though an automatic one came first.
             autoRepliedAt: "2026-10-12T10:00:00Z",
             events: [{ at: letter.createdAt, status: "strange", details: {} }],
           },
-          { ...letter, id: 3, autoRepliedAt: "2026-10-12T11:00:00Z" },
         ]}
       />,
     );
@@ -2773,13 +2771,18 @@ describe("LettersTable", () => {
     await expect.element(page.getByRole("cell", { name: "–", exact: true })).toBeInTheDocument();
     expect(page.getByText(staffCopy.politicians.flags.test).all()).toHaveLength(1);
     await expect.element(page.getByRole("cell", { name: "13 Oct 2026, 09:00", exact: true })).toBeInTheDocument();
-    // Only an automatic reply: said so, greyed, with when it came.
-    await expect
-      .element(
-        page.getByRole("cell", { name: `${staffCopy.letters.status.auto_reply} 12 Oct 2026, 11:00`, exact: true }),
-      )
-      .toBeInTheDocument();
+    // The written reply's, though an automatic one came first.
     expect(document.body.textContent).not.toContain("12 Oct 2026, 10:00");
+  });
+
+  it("says when only an automatic reply came, greyed, with when", async () => {
+    await render(<LettersTable letters={[{ ...letter, autoRepliedAt: "2026-10-12T11:00:00Z" }]} />);
+    const cell = page.getByRole("cell", {
+      name: `${staffCopy.letters.status.auto_reply} 12 Oct 2026, 11:00`,
+      exact: true,
+    });
+    await expect.element(cell).toBeInTheDocument();
+    expect(cell.element().querySelector("span")).not.toBeNull();
   });
 
   it("says when there are none", async () => {
