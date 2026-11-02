@@ -705,7 +705,7 @@ export const staffCopy = {
     noDoc: "No doc",
     // The button at a row's right, and its name for a screen reader, which opens the form to change its owner and doc.
     edit: "Edit",
-    editLabel: (event: string) => `⁂ Edit ${event}`,
+    editLabel: (event: string) => `Edit ${event}`,
     // The edit form's fields and buttons.
     owner: "Owner",
     docField: "Google Doc",
