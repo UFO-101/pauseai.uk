@@ -1,20 +1,20 @@
 import Link from "next/link";
-import { formatPostDate, ORGANISATION_AVATAR, postAuthor, type BlogPost } from "@/lib/content/blog";
+import { formatPostDate, ORGANISATION_AVATAR, postAuthor, type BlogPost, type PostSection } from "@/lib/content/blog";
 import { parseCssStyle } from "@/lib/storyRender";
 import PageHero from "@/components/ui/PageHero";
 import styles from "./PostHeader.module.css";
 
-// A post's title and byline: the author's photo and name link to their story
+// A post's title, its link back to its section's index, and its byline: the author's photo and name link to their story
 // when they have one; posts by the organisation show its logo.
-export default function PostHeader({ post }: { post: BlogPost }) {
+export default function PostHeader({ post, section }: { post: BlogPost; section: PostSection }) {
   const author = postAuthor(post);
   return (
     <PageHero
       title={post.title}
       smallTitle
       before={
-        <Link className={styles.backLink} href="/blog/">
-          ← All posts
+        <Link className={styles.backLink} href={`${section.path}/`}>
+          {section.backLink}
         </Link>
       }
     >

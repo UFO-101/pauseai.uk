@@ -31,6 +31,9 @@ components/               React components used by more than one route
   ui/                     the design system: Button, fields, tables, tags, cards
   events/                 EventList, LocalGroupEvents
   people/                 PersonCard, StoryShareForm
+  posts/                  the blog's and the briefings' index, cards, header
+                          and body
+  briefings/              the briefings' charts and calendar
   local-groups/           LocalGroupPage, which renders every group's page
   tools/                  the tools index's cards, and the kit the
                           collateral maker and QR tool share
@@ -39,7 +42,8 @@ lib/                      logic and data, no React state
                           `import "server-only"`
     outside-services/     one binding per outside service, the only
                           code that calls one (outsideFetch)
-  content/                the site's content as typed data (people, blog, ...)
+  content/                the site's content as typed data (people, blog,
+                          briefings, ...)
   collateral/             the collateral tool's drawing engine
   events.ts, trackers.ts  pure helpers for one feature each
   metadata.ts             pageMetadata()

@@ -164,6 +164,12 @@
   --status-blue: #1d4e89;
   --status-blue-bg: #dbe8f7;
 
+  /* A chart's categories, in this order (the briefings' budget chart).
+     Checked as a set for colour-blind readers and for contrast on white. */
+  --chart-orange: #d9591f;
+  --chart-blue: #2a78d6;
+  --chart-green: #16966a;
+
   /* The colours of the marks of the services the imports read from
      (ImportIcon), as each draws its own. */
   --brand-airtable-yellow: #fcb400;

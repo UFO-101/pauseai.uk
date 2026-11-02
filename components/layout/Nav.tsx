@@ -29,6 +29,7 @@ const CAMPAIGN_LINKS = [
   ["/campaigns/regulate-letter-pm/", "Regulate AI developers now"],
   ["/campaigns/support-sobel-bill/", "Support the Artificial Superintelligence Bill"],
   ["/future-of-workforce-inquiry/", "Future of the Workforce Inquiry"],
+  ["/campaigns/briefings/", "Briefings"],
 ];
 
 /**

@@ -9,12 +9,14 @@ import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { discoverStaticRoutes } from "../app/sitemap";
 import { posts } from "@/lib/content/blog";
+import { briefings } from "@/lib/content/briefings";
 import { people, personSlug } from "@/lib/content/people";
 
 const APP_DIR = join(__dirname, "..", "app");
 
 export const DYNAMIC_EXAMPLES: Record<string, string> = {
   "/blog/[slug]": `/blog/${posts[0].slug}`,
+  "/campaigns/briefings/[slug]": `/campaigns/briefings/${briefings[0].slug}`,
   "/people/[slug]": `/people/${personSlug(people[0])}`,
   // Without a session this redirects to the login page, which is what the
   // smoke test sees.

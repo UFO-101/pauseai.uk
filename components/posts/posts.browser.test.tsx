@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
-import { posts, postsNewestFirst, type BlogPost } from "@/lib/content/blog";
+import { BLOG, newestFirst, posts, type BlogPost, type PostSection } from "@/lib/content/blog";
 import type { Person } from "@/lib/content/people";
 import PostBody from "./PostBody";
 import PostCard from "./PostCard";
@@ -25,11 +25,12 @@ vi.mock("@/lib/content/people", async (importActual) => {
   return { ...actual, people: [...actual.people, named, framed, noPhoto] };
 });
 const post = (extra: Partial<BlogPost>): BlogPost => ({ ...examplePost, ...extra });
+const OTHER: PostSection = { path: "/elsewhere", backLink: "Back to elsewhere", moreHeading: "More from elsewhere" };
 
 describe("PostList", () => {
   it("leads with the newest post, then a pair, then the rest as a list", async () => {
-    const sorted = postsNewestFirst();
-    const { container } = await render(<PostList posts={sorted} />);
+    const sorted = newestFirst(posts);
+    const { container } = await render(<PostList posts={sorted} section={BLOG} />);
     const lead = container.querySelector("a")!;
     expect(lead.querySelector("h2")?.textContent).toBe(sorted[0].title);
     expect(lead.textContent).toContain("Latest");
@@ -45,15 +46,27 @@ describe("PostList", () => {
   });
 
   it("leaves out the pair and the list when there are too few posts", async () => {
-    const { container } = await render(<PostList posts={[post({})]} />);
+    const { container } = await render(<PostList posts={[post({})]} section={BLOG} />);
     const lead = container.querySelector("a")!;
     expect(lead.parentElement!.children).toHaveLength(1);
     expect(page.getByRole("region", { name: "More from the blog" }).query()).toBeNull();
     expect(page.getByRole("list").query()).toBeNull();
   });
 
+  it("links to its section's pages, under its heading for older posts", async () => {
+    const list = Array.from({ length: 4 }, (_, i) => post({ slug: `p${i}` }));
+    const { container } = await render(<PostList posts={list} section={OTHER} />);
+    expect([...container.querySelectorAll("a")].map((a) => a.getAttribute("href"))).toEqual([
+      "/elsewhere/p0",
+      "/elsewhere/p1",
+      "/elsewhere/p2",
+      "/elsewhere/p3",
+    ]);
+    await expect.element(page.getByRole("region", { name: "More from elsewhere" })).toBeVisible();
+  });
+
   it("shows nothing for no posts", async () => {
-    const { container } = await render(<PostList posts={[]} />);
+    const { container } = await render(<PostList posts={[]} section={BLOG} />);
     expect(container.querySelector("a")).toBeNull();
   });
 });
@@ -64,8 +77,8 @@ describe("PostCard", () => {
     const diagram = post({ slug: "d", cover: { src: "/images/x.png", width: 10, height: 10 } });
     const { container } = await render(
       <>
-        <PostCard post={photo} variant="lead" />
-        <PostCard post={diagram} variant="row" />
+        <PostCard post={photo} section={BLOG} variant="lead" />
+        <PostCard post={diagram} section={BLOG} variant="row" />
       </>,
     );
     const images = container.querySelectorAll("img");
@@ -77,7 +90,7 @@ describe("PostCard", () => {
   });
 
   it("is a text-only card without an image", async () => {
-    const { container } = await render(<PostCard post={post({})} variant="secondary" />);
+    const { container } = await render(<PostCard post={post({})} section={BLOG} variant="secondary" />);
     expect(container.querySelector("a img")).toBeNull();
     expect(container.querySelector("h2")?.textContent).toBe("A post");
   });
@@ -85,10 +98,10 @@ describe("PostCard", () => {
   it("shows the author's photo, the organisation's logo, or no avatar", async () => {
     const { container } = await render(
       <>
-        <PostCard post={post({ author: named.name! })} variant="row" />
-        <PostCard post={post({ slug: "b" })} variant="row" />
-        <PostCard post={post({ slug: "c", author: noPhoto.name! })} variant="row" />
-        <PostCard post={post({ slug: "d", author: framed.name! })} variant="row" />
+        <PostCard post={post({ author: named.name! })} section={BLOG} variant="row" />
+        <PostCard post={post({ slug: "b" })} section={BLOG} variant="row" />
+        <PostCard post={post({ slug: "c", author: noPhoto.name! })} section={BLOG} variant="row" />
+        <PostCard post={post({ slug: "d", author: framed.name! })} section={BLOG} variant="row" />
       </>,
     );
     const avatars = container.querySelectorAll<HTMLElement>('span[aria-hidden="true"]');
@@ -101,10 +114,10 @@ describe("PostCard", () => {
 
 describe("PostHeader and PostBody", () => {
   it("links a person's byline to their story", async () => {
-    const { rerender } = await render(<PostHeader post={post({ author: framed.name! })} />);
+    const { rerender } = await render(<PostHeader post={post({ author: framed.name! })} section={BLOG} />);
     const avatar = page.getByRole("link", { name: `Read ${framed.name}'s story` }).element() as HTMLElement;
     expect(avatar.style.backgroundPosition).toBe("10% 20%");
-    await rerender(<PostHeader post={post({ author: named.name! })} />);
+    await rerender(<PostHeader post={post({ author: named.name! })} section={BLOG} />);
     await expect
       .element(page.getByRole("link", { name: named.name! }))
       .toHaveAttribute("href", expect.stringContaining("/people/"));
@@ -113,7 +126,7 @@ describe("PostHeader and PostBody", () => {
   });
 
   it("shows the organisation's logo as the byline", async () => {
-    const { container } = await render(<PostHeader post={post({})} />);
+    const { container } = await render(<PostHeader post={post({})} section={BLOG} />);
     await expect.element(page.getByText("PauseAI UK", { exact: true })).toBeVisible();
     expect(page.getByRole("link", { name: "PauseAI UK" }).query()).toBeNull();
     expect(container.querySelector<HTMLElement>('span[aria-hidden="true"]')?.style.backgroundImage).toContain(
@@ -122,8 +135,13 @@ describe("PostHeader and PostBody", () => {
     expect(container.querySelector("time")?.getAttribute("datetime")).toBe("2026-05-01");
   });
 
+  it("links back to its section's index", async () => {
+    await render(<PostHeader post={post({})} section={OTHER} />);
+    await expect.element(page.getByRole("link", { name: "Back to elsewhere" })).toHaveAttribute("href", "/elsewhere");
+  });
+
   it("has no avatar for an author without a photo", async () => {
-    const { container } = await render(<PostHeader post={post({ author: noPhoto.name! })} />);
+    const { container } = await render(<PostHeader post={post({ author: noPhoto.name! })} section={BLOG} />);
     expect(page.getByRole("link", { name: `Read ${noPhoto.name}'s story` }).query()).toBeNull();
     expect(container.querySelector('span[aria-hidden="true"]')).toBeNull();
   });
