@@ -734,6 +734,20 @@ FROM supporter_links k WHERE k.luma_user_id = 'usr-fixture-1';
 -- Each supporter's first seen, as refreshSupporterFacts() (lib/server/supporter-facts.ts) sets it after linking.
 UPDATE supporters s SET first_seen_at = f.first_seen_at FROM supporter_first_seen f WHERE f.supporter_id = s.id;
 
+-- Notes: two on Jane, one Jo's from an hour ago, with a link, which she can
+-- still change, and a colleague's, edited; and one on Polly, from last week.
+INSERT INTO notes (supporter_id, body, written_by, created_at, edited_at)
+SELECT k.supporter_id, n.body, n.written_by, n.created_at, n.edited_at
+FROM supporter_links k, (VALUES
+  ('Met her at the Leeds stall. Slides from her talk: https://example.org/slides/leeds', 'jo@pauseai.uk',
+   now() - interval '1 hour', NULL::timestamptz),
+  ('Happy to flyer on Saturdays.', 'sam@pauseai.uk', now() - interval '3 days', now() - interval '3 days' + interval '10 minutes')
+) n (body, written_by, created_at, edited_at)
+WHERE k.luma_user_id = 'usr-fixture-1';
+INSERT INTO notes (notable_person_id, body, written_by, created_at)
+SELECT id, 'Her office says write to www.example.org/contact', 'jo@pauseai.uk', now() - interval '8 days'
+FROM notable_people WHERE airtable_id = 'recPlaceholder';
+
 -- The supporters mailing's messages, now there are supporters to send them to.
 WITH m AS (SELECT id, due_at FROM mailings WHERE title = 'Events this month'),
   three AS (SELECT s.id, row_number() OVER (ORDER BY s.id) AS n FROM supporters s ORDER BY s.id LIMIT 3),
