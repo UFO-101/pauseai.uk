@@ -320,7 +320,7 @@ describeWithDatabase("listBlocks, blockOn and recentProblems", () => {
 
   it("list each blocked address with whose it is, the letter that found it out, and emails not sent since", async () => {
     const mp = await addTestMp();
-    const polly = await addTestPolitician({ email: "Test-MP@example.org" });
+    const polly = await addTestPolitician({ email: "Test-MP@parliament.example" });
     const letterId = await addTestLetter({ politicianId: mp, senderName: "Jane", senderEmail: "jane@example.com" });
     await query(
       `INSERT INTO email_sends (at, purpose, letter_id, address, outcome, message_id)
@@ -378,7 +378,7 @@ describeWithDatabase("listBlocks, blockOn and recentProblems", () => {
     expect((await listBlocks("others", { search: "OTHER@" })).map((b) => b.address)).toEqual(["other@example.org"]);
     expect(await listBlocks("others", { search: "nobody" })).toEqual([]);
 
-    expect(await blockOn("Test-MP@example.org")).toMatchObject({ address: "test-mp@parliament.example" });
+    expect(await blockOn("Test-MP@parliament.example")).toMatchObject({ address: "test-mp@parliament.example" });
     expect(await blockOn("soft@example.org")).toBeUndefined();
     expect(await blockOn(null)).toBeUndefined();
 
