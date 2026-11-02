@@ -1838,6 +1838,16 @@ describe("PoliticianDetails", () => {
     await menu.getByRole("button", { name: "Village Fair" }).click();
     await expect.element(page.getByRole("group", { name: "Village Fair" })).toBeVisible();
     expect(another.query()).toBeNull();
+
+    // Its answer cleared, it has no row, and it's back in the menu.
+    await rerender(details({}));
+    await expect.element(page.getByRole("group", { name: "Giant Pause Button" })).not.toBeInTheDocument();
+    await expect.element(another).toBeVisible();
+    expect(
+      [...document.querySelectorAll(`ul[aria-label="${staffCopy.politician.otherAsk}"] button`)].map(
+        (b) => b.textContent,
+      ),
+    ).toEqual(["Giant Pause Button"]);
   });
 
   it("says in one place that letters aren't being sent, why, what to check, and unblocks it with a note", async () => {

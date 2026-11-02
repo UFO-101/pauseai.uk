@@ -86,7 +86,7 @@ test("Answer an ask staff added, from the button under a politician's asks", asy
   await frame(page, "its menu: the other asks staff record", { window: true });
   await menu.getByRole("button", { name: "Giant pause button" }).click();
   const row = asks.getByRole("group", { name: "Giant pause button" });
-  await expect(row.getByText(staffCopy.statuses.none)).toBeVisible();
+  await expect(row.locator("[class*=answer]")).toHaveText(new RegExp(`^${staffCopy.statuses.none}`));
   await row.getByLabel(copy.note).fill("Said yes on the phone");
   await frame(page, "a row like the others, not signed, its form open for a note of how we know", { window: true });
   await row.getByRole("combobox", { name: copy.status }).selectOption("signed");

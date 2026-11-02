@@ -130,7 +130,8 @@ export default function AskRow({
 /**
  * Under the asks card's rows: a small button whose menu lists the other
  * asks staff record by hand. One chosen joins the rows, with no answer and
- * its form open; once answered, the page has it as a row of its own.
+ * its form open; once answered, the page has it as a row of its own, and
+ * if its answer is cleared, it's back in the menu.
  */
 export function OtherAsks({
   politician,
@@ -142,6 +143,9 @@ export function OtherAsks({
   setStatus: SetStatus;
 }) {
   const [added, setAdded] = useState<string[]>([]);
+  // One answered has left `asks` for a row of its own, so it's no longer one added here.
+  const still = added.filter((slug) => asks.some((ask) => ask.slug === slug));
+  if (still.length < added.length) setAdded(still);
   const rows = asks.filter((ask) => added.includes(ask.slug));
   const left = asks.filter((ask) => !added.includes(ask.slug));
   return (
