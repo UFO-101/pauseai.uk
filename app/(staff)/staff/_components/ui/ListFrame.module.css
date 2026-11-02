@@ -119,11 +119,21 @@
   }
 }
 
-/* The row a link picked out, tinted, and scrolled to a little below the window's top. */
+/* The row a link picked out, scrolled to a little below the window's top:
+   lit in the accent colour as the page comes, so the eye finds it, fading
+   to a tint that stays. A fade, not a movement, so it stays with motion
+   turned off. */
 .picked {
   scroll-margin-top: var(--space-8);
 }
 
 .picked > td {
   background: rgb(var(--pause-orange-rgb) / 0.12);
+  animation: picked 3s 0.3s ease-out backwards;
+}
+
+@keyframes picked {
+  from {
+    background: var(--accent-light);
+  }
 }
