@@ -47,7 +47,7 @@ describe("EventsOverview", () => {
       .toHaveAttribute("href", "https://docs.google.com/document/d/example-protest-plan/edit");
     await expect.element(row("AI risk talk").getByRole("link", { name: copy.doc })).not.toBeInTheDocument();
     // No forms, only an Edit button on each.
-    expect(page.getByRole("button", { name: new RegExp(`^${copy.edit} `) }).all()).toHaveLength(5);
+    expect(page.getByRole("button", { name: new RegExp(`^${copy.editLabel("")}`) }).all()).toHaveLength(5);
     expect(document.querySelectorAll("form")).toHaveLength(0);
   });
 
