@@ -730,7 +730,9 @@ export const staffCopy = {
       }) =>
         `${by ? `${by} changed the owner of this event${previous ? ` from ${previous}` : ""} to ${owner}` : `By the rules for who owns which events, ${owner} is now the owner of ${events.length === 1 ? "this event" : "these events"}`}:\n\n${events
           .map((event) => `${event.name}\n${event.when}\n${event.url}`)
-          .join("\n\n")}\n\n⁂ Say what owning an event means.`,
+          .join(
+            "\n\n",
+          )}\n\nAs the owner, you make sure the event is exceptional:\n- Spot early what could go wrong, like an entrance that's hard to find\n- Make sure enough people come\n- Have everyone leave feeling it was better than they expected`,
     },
   },
   mailings: {
