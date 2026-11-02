@@ -732,7 +732,7 @@ export const staffCopy = {
           .map((event) => `${event.name}\n${event.when}\n${event.url}`)
           .join(
             "\n\n",
-          )}\n\nAs the owner, you make sure the event is exceptional:\n- Spot early what could go wrong, like an entrance that's hard to find\n- Make sure enough people come\n- Have everyone leave feeling it was better than they expected`,
+          )}\n\nAs the owner, you make sure the event is exceptional:\n- Be chronically early: arrive before anyone else to get everything ready, and leave last\n- Spot early what could go wrong, like an entrance that's hard to find\n- Make sure enough people come\n- Have everyone leave feeling it was better than they expected`,
     },
   },
   mailings: {

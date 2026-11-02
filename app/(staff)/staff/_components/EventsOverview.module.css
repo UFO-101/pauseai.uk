@@ -19,7 +19,7 @@
    columns that line up from row to row. */
 .row {
   display: grid;
-  grid-template-columns: 10rem minmax(0, 1fr) 14rem 7rem auto;
+  grid-template-columns: 10rem minmax(0, 1fr) 14rem 9rem auto;
   gap: var(--space-2) var(--space-4);
   align-items: center;
   padding: var(--space-3) 0;
@@ -85,15 +85,39 @@
 }
 
 /* The form to edit it, in the row, in place of the owner, doc and Edit
-   button: the owner over the doc, then Save and Cancel. */
+   button, on the row's own columns: the labels on one line, the doc's
+   running on into the Edit button's column, and under them the owner, the
+   doc and Save and Cancel. */
 .editor {
   display: grid;
   grid-column: 3 / -1;
-  gap: var(--space-2);
+  grid-template-columns: subgrid;
+  gap: var(--space-1) var(--space-4);
+  align-items: center;
+}
+
+.ownerLabel {
+  grid-area: 1 / 1;
+}
+
+.docLabel {
+  grid-area: 1 / 2 / auto / -1;
+  white-space: nowrap;
+}
+
+.ownerField {
+  grid-area: 2 / 1;
+  min-width: 0;
+}
+
+.docField {
+  grid-area: 2 / 2;
+  min-width: 0;
 }
 
 .editorButtons {
   display: flex;
+  grid-area: 2 / 3;
   gap: var(--space-2);
 }
 
@@ -114,7 +138,17 @@
     grid-column: 1 / -1;
   }
 
+  /* The form under the event, each label over its field, then Save and Cancel. */
   .editor {
     grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ownerLabel,
+  .docLabel,
+  .ownerField,
+  .docField,
+  .editorButtons {
+    grid-area: auto;
   }
 }
