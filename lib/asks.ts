@@ -19,7 +19,7 @@ export type Asker = "supporters" | "pauseai" | "controlai";
 export type AskStatuses = Partial<Record<string, AskStatus>>;
 
 /** The answers that mean they did what was asked: signed the letter, or are going to the event, or meeting our staff there. */
-export const DONE_STATUSES: readonly AskStatus[] = ["signed", "going", "meeting_staff"];
+const DONE_STATUSES: readonly AskStatus[] = ["signed", "going", "meeting_staff"];
 
 /** How many asks someone did, by their answers (DONE_STATUSES). */
 export function asksDone(statuses: Record<string, { status: AskStatus }>): number {
