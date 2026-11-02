@@ -38,7 +38,7 @@ test("Events get their owners by the rules, and one with none is given one", asy
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.title);
   await expect(page.getByRole("link", { name: copy.source.link })).toHaveAttribute("href", "/staff/import-data/luma");
   const talk = page.getByRole("row").filter({ hasText: "AI risk talk" });
-  await expect(talk.getByText(copy.noOwner)).toBeVisible();
+  await expect(talk.getByRole("cell").nth(3).getByText(copy.noOwner)).toBeVisible();
   await frame(
     page,
     "the events page, on Future, soonest first: Joseph's but for Oxford's, with no owner in red, and none with a doc",

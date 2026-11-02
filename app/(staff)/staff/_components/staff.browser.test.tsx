@@ -657,9 +657,7 @@ describe("StaffAccountsTable", () => {
     expect(permissions("admin@pauseai.uk")).toBe(copy.names.admin);
     expect(permissions("jo@pauseai.uk")).toBe(copy.names.supporters);
     expect(permissions("samuel.whitlock@pauseai.uk")).toBe("–");
-    for (const box of page.getByRole("checkbox", { includeHidden: true }).all()) {
-      await expect.element(box).not.toBeVisible();
-    }
+    expect([...document.querySelectorAll("input[type=checkbox]")].some((box) => box.checkVisibility())).toBe(false);
     // The last row: everyone else at pauseai.uk, who can log in with no permissions.
     const last = [...document.querySelectorAll("tfoot td")].map((td) => td.textContent);
     expect(last).toEqual([copy.everyone, "–", copy.everyoneNote]);
@@ -709,8 +707,13 @@ describe("StaffAccountsTable", () => {
     await expect.element(saveButton).toBeDisabled();
     // A tick isn't saved till Save; Cancel forgets it.
     await admin.click();
+    const open = () =>
+      document
+        .querySelector(`form[aria-label="${copy.editLabel("jo@pauseai.uk")}"]`)!
+        .closest("[popover]")!
+        .matches(":popover-open");
     await form.getByRole("button", { name: copy.cancel }).click();
-    await expect.element(form).not.toBeVisible();
+    await expect.poll(open).toBe(false);
     expect(save.sent).toHaveLength(0);
     await edit.click();
     await expect.element(admin).not.toBeChecked();
@@ -719,7 +722,7 @@ describe("StaffAccountsTable", () => {
     await form.getByRole("button", { name: copy.save }).click();
     await vi.waitFor(() => expect(save.sent).toHaveLength(1));
     expect(save.sent[0]).toEqual({ email: "jo@pauseai.uk", "permission:admin": "on" });
-    await expect.element(form).not.toBeVisible();
+    await expect.poll(open).toBe(false);
   });
 });
 
@@ -769,7 +772,7 @@ describe("AccountsNotice", () => {
 
   it("says what removing an account leaves them, till its × closes it", async () => {
     await render(<AccountsNotice notice="removed" />);
-    await expect.element(page.getByRole("status")).toHaveTextContent(staffCopy.accounts.removeNote);
+    await expect.element(page.getByRole("status")).toHaveTextContent(`${staffCopy.accounts.removeNote}×`);
     await page.getByRole("button", { name: staffCopy.accounts.closeRemoved }).click();
     expect(document.querySelector("[role=status]")!.textContent).toBe("");
   });

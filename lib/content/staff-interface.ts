@@ -709,7 +709,7 @@ export const staffCopy = {
     total: (n: number) => `${n} ${n === 1 ? "event" : "events"}`,
     noneFound: "No events match.",
     // Under it, when a search finds none, but would among those taken off Luma, linked to them.
-    removedMatches: (n: number) => `⁂ ${n} ${n === 1 ? "match" : "matches"} found for events taken off Luma`,
+    removedMatches: (n: number) => `${n} ${n === 1 ? "match" : "matches"} found for events taken off Luma`,
     // The table's headings; the owner's and Google Doc's are `owner` and `doc` below. Going is how many registered
     // and were approved.
     columns: { when: "When", name: "Event", tags: "Tags", place: "Place", going: "Going" },

@@ -35,6 +35,9 @@ const bubble = (name: string) => {
     cancel: form.getByRole("button", { name: copy.cancel }),
   };
 };
+/** Whether a form's bubble is open. */
+const open = (label: string) =>
+  document.querySelector(`form[aria-label="${label}"]`)!.closest("[popover]")!.matches(":popover-open");
 /** The text of a row's cells, but its Edit's, whose bubble holds a form. */
 const cells = (name: string) =>
   [...row(name).element().querySelectorAll("td")].slice(0, -1).map((td) => td.textContent);
@@ -72,7 +75,7 @@ describe("EventsTable", () => {
       .element(protest.getByRole("link", { name: copy.doc }))
       .toHaveAttribute("href", "https://docs.google.com/document/d/example-protest-plan/edit");
     // To come with no owner or doc: errors.
-    await expect.element(row("AI risk talk").getByText(copy.noOwner, { exact: true })).toHaveClass(/missing/);
+    await expect.element(row("AI risk talk").getByRole("cell").nth(3).getByText(copy.noOwner)).toHaveClass(/missing/);
     await expect.element(row("AI risk talk").getByText(copy.noDoc)).toHaveClass(/missing/);
     // Sorted by when, soonest first: its heading says so, and leads to the other way; the doc's sorts too.
     const when = th(copy.columns.when);
@@ -83,7 +86,7 @@ describe("EventsTable", () => {
     expect(th(copy.columns.tags).querySelector("a")).toBeNull();
     // Only Edit on each; its bubble shut.
     expect(page.getByRole("button", { name: copy.edit, exact: true }).all()).toHaveLength(2);
-    await expect.element(bubble("AI risk talk").form).not.toBeVisible();
+    expect(open(copy.editLabel("AI risk talk"))).toBe(false);
   });
 
   it("lists those past, latest first, what they lack only said, and leaves out those taken off Luma", async () => {
@@ -101,7 +104,9 @@ describe("EventsTable", () => {
     await renderTable({ when: "past", removed: "yes" });
     expect(names()).toEqual(["PauseAI Manchester Social"]);
     await expect.element(row("Manchester Social").getByText(copy.removed)).toBeVisible();
-    await expect.element(row("Manchester Social").getByText(copy.noOwner, { exact: true })).not.toHaveClass(/missing/);
+    await expect
+      .element(row("Manchester Social").getByRole("cell").nth(3).getByText(copy.noOwner))
+      .not.toHaveClass(/missing/);
     await expect.element(row("Manchester Social").getByText(copy.noDoc)).not.toHaveClass(/missing/);
   });
 
@@ -112,7 +117,7 @@ describe("EventsTable", () => {
     await render(
       <EventsTable found={found} search={search} staff={exampleStaff} now={exampleEventsNow} save={noAction} />,
     );
-    await expect.element(row("Protest").getByText(copy.noOwner, { exact: true })).not.toHaveClass(/missing/);
+    await expect.element(row("Protest").getByRole("cell").nth(3).getByText(copy.noOwner)).not.toHaveClass(/missing/);
     await expect.element(row("Protest").getByText(copy.removed)).toBeVisible();
   });
 
@@ -155,7 +160,7 @@ describe("EventsTable", () => {
     await owner.selectOptions("sean@pauseai.uk");
     await expect.element(save).toBeEnabled();
     await cancel.click();
-    await expect.element(form).not.toBeVisible();
+    await expect.poll(() => open(copy.editLabel("AI risk talk"))).toBe(false);
     // Opened again, as it was.
     await row("AI risk talk").getByRole("button", { name: copy.edit }).click();
     await expect.element(owner).toHaveValue("");
@@ -193,7 +198,7 @@ describe("EventsTable", () => {
       "sean@pauseai.uk",
       doc,
     ]);
-    await expect.element(fields.form).not.toBeVisible();
+    await expect.poll(() => open(copy.editLabel("AI risk talk"))).toBe(false);
     // Emailing no one, it says nothing.
     expect(status().textContent).toBe("");
   });

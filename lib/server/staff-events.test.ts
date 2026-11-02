@@ -99,7 +99,8 @@ describeWithDatabase("staff events", () => {
     // Every tag and city of our events, of either tab, for the filters.
     expect(future.tags).toEqual(["Big events", "London", "Oxford"]);
     expect(future.cities).toEqual(["London", "Oxford"]);
-    expect([future.total, future.pages]).toEqual([2, 1]);
+    // Taken off Luma, left out unless asked for.
+    expect([future.total, future.pages]).toEqual([1, 1]);
     expect(future.events).toEqual([
       {
         id: "evt-soon",
@@ -113,6 +114,8 @@ describeWithDatabase("staff events", () => {
         owner: null,
         doc: "https://docs.google.com/document/d/soon",
       },
+    ]);
+    expect((await eventsPage(eventsSearch({ removed: "yes" }).filter)).events).toEqual([
       expect.objectContaining({ id: "evt-later", city: null, removed: true, going: 0 }),
     ]);
     const past = await eventsPage(eventsSearch({ when: "past" }).filter);
