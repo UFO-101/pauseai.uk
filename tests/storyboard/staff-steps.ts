@@ -28,7 +28,7 @@ export const PM_LETTER = "Frontier AI letter to the Prime Minister";
 /** This flow's own staff address: flows run alongside each other, and share the outbox. Short, as real ones are. */
 export const staffEmail = () => `staff-${test.info().testId.replace(/\W/g, "").slice(-8)}@pauseai.uk`;
 
-/** Gives this flow's staff member an account, then logs them in with the link emailed to them. */
+/** Gives this flow's staff member an account, then logs them in (logInAsStaff in tests/steps.ts). */
 export async function logIn(page: Page, database: string, permissions: string[] = []) {
   addStaffAccount(database, staffEmail(), permissions);
   return logInAsStaff(page, BASE, staffEmail());

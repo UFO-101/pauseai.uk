@@ -5,6 +5,7 @@
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
 import { copy } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { DEV_LOGIN_PATH } from "@/lib/staff-session";
 import { TEST_MPS, type TestMp } from "@/lib/test-mps";
 import { OUTBOX_DIR } from "./checkout.mjs";
 import { FIXTURE_NOW } from "./fixture-env.mjs";
@@ -203,12 +204,25 @@ export async function askForLoginLink(page: Page, base: string, email: string, k
 }
 
 /**
+ * Logs in on `base` as `email` with the fixture build's dev login
+ * (app/(staff)/staff/api/dev-login): a session at once, which the callback
+ * of a login link would have given, then the staff home, where a login link
+ * lands. The staff-login section logs in with the emailed link itself
+ * (logInWithLink).
+ */
+export async function logInAsStaff(page: Page, base: string, email = "staff@pauseai.uk"): Promise<void> {
+  const res = await page.request.post(`${base}${DEV_LOGIN_PATH}`, { form: { email }, maxRedirects: 0 });
+  if (res.status() !== 303) throw new Error(`The dev login on ${base} refused ${email}: ${res.status()}`);
+  await page.goto(`${base}/staff`);
+}
+
+/**
  * Logs in on `base` as `email`, as staff do: asks for a link, takes it from
  * the build's outbox (tests/fixtures/outbox.ts), and opens it in the same
- * browser. There's no login bypass. For an address that gets no link, stops
- * at "check your inbox" and returns false.
+ * browser. For an address that gets no link, stops at "check your inbox"
+ * and returns false.
  */
-export async function logInAsStaff(page: Page, base: string, email = "staff@pauseai.uk"): Promise<boolean> {
+export async function logInWithLink(page: Page, base: string, email = "staff@pauseai.uk"): Promise<boolean> {
   await askForLoginLink(page, base, email);
   const link = loginLinkFor(email);
   if (!link) return false;

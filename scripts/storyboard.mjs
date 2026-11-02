@@ -32,7 +32,9 @@
 // Main's frames are kept in test-results/storyboard-main/, under main's
 // commit and a hash of the suite's shared files, each flow with a hash of
 // its spec file (scripts/storyboard-main.mjs): main runs only the flows that
-// aren't there, and a run whose flows all are doesn't build main.
+// aren't there, and a run whose flows all are doesn't build main. When it
+// will need main, it builds it while this branch's flows run, its output in
+// the run's folder (main-server.log).
 //
 // A difference never fails; only this branch's checks do, and the exit code
 // is theirs.
@@ -40,6 +42,7 @@ import { execFileSync, spawn, spawnSync } from "node:child_process";
 import {
   existsSync,
   linkSync,
+  openSync,
   mkdirSync,
   readdirSync,
   readFileSync,
@@ -59,6 +62,7 @@ import {
   cacheKey,
   carryable,
   carryFlows,
+  flowKey,
   listedFlows,
   mergeRun,
   missingFlows,
@@ -247,7 +251,7 @@ async function waitFor(url, child, timeoutMs) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     if (child?.exitCode !== null && child?.exitCode !== undefined)
-      throw new Error(`The server for ${url} exited with ${child.exitCode}`);
+      throw new Error(`The server for ${url} exited with ${child.exitCode}: see main-server.log in ${runDir}`);
     if (await answers(url)) return;
     await new Promise((done) => setTimeout(done, 1000));
   }
@@ -287,46 +291,86 @@ if (carried) {
   }
 }
 
+// Main: where this branch left it, and which of its frames are kept.
+const base = options.main !== undefined ? git("merge-base", options.main, "HEAD") : undefined;
+const cacheDir = usesCache ? mainCacheDir(base) : undefined;
+const cacheFile = cacheDir && join(cacheDir, "frames.json");
+let cached = !options.freshMain && cacheFile && existsSync(cacheFile) ? readJson(cacheFile) : { frames: [] };
+const specs = specHashes();
+
+/** Starts building and serving main on MAIN_URL, its output in the run's folder. */
+async function startMain() {
+  // Something already serving there would be taken for main: a server left from an earlier review.
+  if (await answers(MAIN_URL))
+    throw new Error(`Something is already serving on ${MAIN_URL}. Stop it, or pass --main-server=${MAIN_URL}.`);
+  const port = new URL(MAIN_URL).port || "80";
+  const log = join(runDir, "main-server.log");
+  console.log(`\n▶ Storyboard: building main, ${git("log", "-1", "--format=%h %s", base)} (${log})\n`);
+  const out = openSync(log, "w");
+  // In a process group of its own, stopped whole (stopMain), so a build cut short doesn't run on.
+  const server = spawn("node", ["scripts/serve-main.mjs", "--ref", base, "--port", port], {
+    stdio: ["ignore", out, out],
+    detached: true,
+  });
+  process.on("exit", () => stopMain(server));
+  for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, () => process.exit(130));
+  return server;
+}
+
+/** Stops main's server, or its build, and everything it started. */
+async function stopMain(server) {
+  if (!server || server.exitCode !== null || server.signalCode !== null) return;
+  const exited = new Promise((done) => server.on("exit", done));
+  try {
+    process.kill(-server.pid, "SIGTERM");
+  } catch {
+    return;
+  }
+  await exited;
+}
+
+// Main is built while this branch's flows run, when it looks as if it will be
+// needed: when the cache lacks a flow that pictured in the latest run, or
+// that the latest run didn't have. Which flows picture is only known once
+// they've run, so a guess; a wrong one builds main for nothing, or, the
+// other way, builds it afterwards, as it would have anyway.
+let mainServer;
+if (cacheDir) {
+  const latestFile = join(LATEST, "branch", "frames.json");
+  const latest = existsSync(latestFile) ? readJson(latestFile) : { frames: [] };
+  const known = new Set(latest.frames.map(flowKey));
+  const likely = [...picturedFlows(latest, wanted.keys()), ...[...wanted.keys()].filter((key) => !known.has(key))];
+  if (missingFlows(cached, likely, specs).length > 0) mainServer = await startMain();
+}
+
 const code = runSuite("branch", options.server);
 
 const branchFrames = join(runDir, "branch", "frames.json");
-if (options.main !== undefined && existsSync(branchFrames)) {
+if (options.main === undefined || !existsSync(branchFrames)) {
+  await stopMain(mainServer);
+} else {
   const pictured = picturedFlows(readJson(branchFrames), wanted.keys());
-  const base = git("merge-base", options.main, "HEAD");
   console.log(`\n▶ Storyboard: main is ${git("log", "-1", "--format=%h %s", base)}\n`);
-  const cacheDir = usesCache ? mainCacheDir(base) : undefined;
-  const cacheFile = cacheDir && join(cacheDir, "frames.json");
-  let cached = !options.freshMain && cacheFile && existsSync(cacheFile) ? readJson(cacheFile) : { frames: [] };
-  const specs = specHashes();
   const missing = cacheDir ? missingFlows(cached, pictured, specs) : [...pictured];
 
   if (missing.length === 0) {
+    await stopMain(mainServer);
     console.log(`\n▶ Storyboard: main's frames of the ${pictured.size} pictured flows are kept; not running main.\n`);
   } else {
     console.log(`\n▶ Storyboard: running main for the ${missing.length} pictured flows it hasn't kept.\n`);
     const testList = join(runDir, "main-tests.txt");
     writeFileSync(testList, missing.map((key) => wanted.get(key)).join("\n"));
-    let mainServer;
     let mainUrl = options.mainServer;
     if (!mainUrl) {
       mainUrl = MAIN_URL;
-      // Something already serving there would be taken for main: a server left from an earlier review.
-      if (await answers(mainUrl))
-        throw new Error(`Something is already serving on ${mainUrl}. Stop it, or pass --main-server=${mainUrl}.`);
-      const port = new URL(mainUrl).port || "80";
-      mainServer = spawn("node", ["scripts/serve-main.mjs", "--ref", base, "--port", port], {
-        stdio: "inherit",
-      });
+      mainServer ??= await startMain();
       // The first run installs main's dependencies as well as building it.
       await waitFor(mainUrl, mainServer, 900_000);
     }
     // Main may lack a flow, or a step of one: its failures are missing frames, not ours.
     runSuite("main-run", mainUrl, { OUTBOX_DIR: MAIN_OUTBOX_DIR }, [`--test-list=${testList}`]);
     rmSync(testList);
-    if (mainServer) {
-      mainServer.kill("SIGTERM");
-      await new Promise((done) => mainServer.on("exit", done));
-    }
+    await stopMain(mainServer);
     if (cacheDir) {
       cached = keepMainRun(cacheDir, cached, specs);
       prune(MAIN_CACHE, MAIN_CACHE_KEEP, cacheDir);

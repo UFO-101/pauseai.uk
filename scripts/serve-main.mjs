@@ -43,7 +43,10 @@ if (existsSync(join(dir, ".git"))) {
 }
 if (existsSync(join(dir, ".git"))) {
   run("git", ["checkout", "--detach", "--force", ref], { cwd: dir });
-  run("git", ["clean", "-fdx", "-e", "node_modules"], { cwd: dir });
+  // Not its dependencies, nor Next's cache: Turbopack's work, which the
+  // build checks against the sources, and the resized images, without which
+  // every picture on main's side waits on an image being resized.
+  run("git", ["clean", "-fdx", "-e", "node_modules", "-e", "/.next/cache"], { cwd: dir });
 } else {
   run("git", ["worktree", "add", "--detach", "--force", dir, ref]);
 }
