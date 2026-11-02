@@ -56,7 +56,7 @@ test("Events get their owners by the rules, and one with none is given one", asy
 
   await form.getByRole("button", { name: copy.save }).click();
   await expect(form).not.toBeVisible();
-  await expect(talk.getByText("sean@pauseai.uk", { exact: true })).toBeVisible();
+  await expect(talk.getByRole("cell").nth(3).getByText("sean@pauseai.uk")).toBeVisible();
   await expect(talk.getByRole("link", { name: copy.doc })).toHaveAttribute(
     "href",
     "https://docs.google.com/document/d/oxford-talk-plan/edit",
