@@ -9,14 +9,19 @@
   margin-bottom: var(--space-1);
 }
 
+/* The rows' layout follows the list's own width, not the window's, as the
+   sidebar may be open or folded. */
 .rows {
   margin: 0 0 var(--space-6);
   padding: 0;
   list-style: none;
+  container: events / inline-size;
 }
 
 /* A row: when, the event, its owner, its doc, and its Edit button, in
-   columns that line up from row to row, the one being edited too. */
+   columns that line up from row to row, the one being edited too. Narrower,
+   the owner over the doc in one column (below); narrower still, one under
+   another, as on a phone. */
 .row {
   display: grid;
   grid-template-columns: 10rem minmax(0, 1fr) 14rem 9rem 4rem;
@@ -131,35 +136,43 @@
   gap: var(--space-2);
 }
 
-@media (max-width: 860px) {
-  /* When, then the event, across the row; under them the owner, the doc
-     and the Edit button, side by side. */
+/* Narrower: the date over two lines, and the owner over the doc, so the
+   event keeps its room; the form, when open, in their column, each label
+   over its field. */
+@container events (width < 64rem) {
   .row {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: 7rem minmax(0, 1fr) 13rem 4rem;
   }
 
-  .when {
-    grid-column: 1 / -1;
-    margin-bottom: calc(-1 * var(--space-1));
-    font-size: var(--text-xs);
+  .when,
+  .row:has(.editor) .when {
+    grid-area: 1 / 1 / span 2;
   }
 
-  .what {
-    grid-column: 1 / -1;
+  .what,
+  .row:has(.editor) .what {
+    grid-area: 1 / 2 / span 2;
   }
 
-  /* The form under the event, each label over its field, then Save and Cancel. */
+  .ownerCell {
+    grid-area: 1 / 3;
+    align-self: end;
+  }
+
+  .docCell {
+    grid-area: 2 / 3;
+    align-self: start;
+  }
+
+  .editCell {
+    grid-area: 1 / 4 / span 2;
+  }
+
   .editor {
-    grid-row: auto;
-    grid-column: 1 / -1;
+    grid-area: 1 / 3 / span 2 / -1;
     grid-template-rows: none;
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-1);
-  }
-
-  .row:has(.editor) .when,
-  .row:has(.editor) .what {
-    grid-row: auto;
   }
 
   .ownerLabel,
@@ -168,5 +181,40 @@
   .docField,
   .editorButtons {
     grid-area: auto;
+  }
+}
+
+/* Narrowest, as on a phone: when, then the event, across the row; under
+   them the owner, the doc and the Edit button, side by side; the form under
+   the event, each label over its field, then Save and Cancel. */
+@container events (width < 40rem) {
+  .row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .when,
+  .row:has(.editor) .when {
+    grid-area: auto;
+    grid-column: 1 / -1;
+    margin-bottom: calc(-1 * var(--space-1));
+    font-size: var(--text-xs);
+  }
+
+  .what,
+  .row:has(.editor) .what {
+    grid-area: auto;
+    grid-column: 1 / -1;
+  }
+
+  .ownerCell,
+  .docCell,
+  .editCell {
+    grid-area: auto;
+    align-self: auto;
+  }
+
+  .editor {
+    grid-area: auto;
+    grid-column: 1 / -1;
   }
 }
