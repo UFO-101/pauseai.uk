@@ -19,7 +19,7 @@ describeWithDatabase("POST /api/postmark/bounce", () => {
     Type: "HardBounce",
     MessageID: "msg-1",
     Description: "The server was unable to deliver your message",
-    Email: "test-mp@example.org",
+    Email: "test-mp@parliament.example",
     Inactive: true,
     CanActivate: true,
   };
@@ -28,18 +28,18 @@ describeWithDatabase("POST /api/postmark/bounce", () => {
     const mp = await addTestMp();
     const id = await addTestLetter({ politicianId: mp, senderName: "Jane", senderEmail: "jane@example.com" });
     await query(
-      "INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id) VALUES ('letter', $1, 'test-mp@example.org', 'sent', 'msg-1')",
+      "INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id) VALUES ('letter', $1, 'test-mp@parliament.example', 'sent', 'msg-1')",
       [id],
     );
     const res = await POST(webhookRequest("/api/postmark/bounce", bounce));
     expect(await res.json()).toEqual({ recorded: true });
     expect(await query("SELECT status FROM letters")).toEqual([{ status: "bounced" }]);
-    expect(await query("SELECT address FROM email_blocks")).toEqual([{ address: "test-mp@example.org" }]);
+    expect(await query("SELECT address FROM email_blocks")).toEqual([{ address: "test-mp@parliament.example" }]);
   });
 
   it("records a bounce for an email we didn't send, and answers 200 for anything else, or a body that isn't JSON", async () => {
     expect(await (await POST(webhookRequest("/api/postmark/bounce", bounce))).json()).toEqual({ recorded: true });
-    expect(await query("SELECT address FROM email_problems")).toEqual([{ address: "test-mp@example.org" }]);
+    expect(await query("SELECT address FROM email_problems")).toEqual([{ address: "test-mp@parliament.example" }]);
     const delivery = await POST(webhookRequest("/api/postmark/bounce", { ...bounce, RecordType: "Delivery" }));
     expect(await delivery.json()).toEqual({ recorded: false });
     expect((await POST(webhookRequest("/api/postmark/bounce", "not json"))).status).toBe(200);
@@ -49,7 +49,7 @@ describeWithDatabase("POST /api/postmark/bounce", () => {
     const mp = await addTestMp();
     const id = await addTestLetter({ politicianId: mp, senderName: "Jane", senderEmail: "jane@example.com" });
     await query(
-      "INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id) VALUES ('letter', $1, 'test-mp@example.org', 'sent', 'msg-1')",
+      "INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id) VALUES ('letter', $1, 'test-mp@parliament.example', 'sent', 'msg-1')",
       [id],
     );
     const [{ status }] = await query<{ status: string }>("SELECT status FROM letters");
@@ -58,7 +58,7 @@ describeWithDatabase("POST /api/postmark/bounce", () => {
       Type: "AutoResponder",
       ID: 42,
       MessageID: "msg-1",
-      Email: "test-mp@example.org",
+      Email: "test-mp@parliament.example",
     };
     for (let i = 0; i < 2; i++) {
       const res = await POST(webhookRequest("/api/postmark/bounce", autoReply));
@@ -70,7 +70,7 @@ describeWithDatabase("POST /api/postmark/bounce", () => {
         status: "auto_reply",
         // It went no further: Postmark keeps only that it came.
         details: {
-          from: "test-mp@example.org",
+          from: "test-mp@parliament.example",
           bounceId: 42,
           handling: [{ outcome: "not_forwarded", reason: "bounce_address" }],
         },

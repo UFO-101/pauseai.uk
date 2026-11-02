@@ -12,7 +12,7 @@ export const LOCAL_URL = process.env.LOCAL_URL ?? "http://localhost:3100";
 export const MAIN_URL = process.env.MAIN_URL ?? "http://localhost:3001";
 
 /** The test MPs' inbox in a fixture build. */
-export const TEST_MP_EMAIL = "test-mp@example.org";
+export const TEST_MP_EMAIL = "test-mp@parliament.example";
 
 /**
  * The moment a fixture build thinks it is: the server (lib/now.ts and the

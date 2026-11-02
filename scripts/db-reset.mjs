@@ -40,7 +40,7 @@ resetDatabase(url);
 recordApplied(url, migrationFiles());
 giveAdminSupporters(url);
 const fixtures = process.env.DATA_FIXTURES === "1";
-const email = process.env.TEST_MP_EMAIL?.trim() || (fixtures ? "test-mp@example.org" : undefined);
+const email = process.env.TEST_MP_EMAIL?.trim() || (fixtures ? "test-mp@parliament.example" : undefined);
 if (email) addTestMps(url, email);
 if (fixtures) addFixtureData(url);
 const mps = email ? `, with the test MPs (${email})` : ", without the test MPs: set TEST_MP_EMAIL to add them";

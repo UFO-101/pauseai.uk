@@ -19,7 +19,7 @@ describeWithDatabase("POST /api/postmark/inbound", () => {
 
   // Postmark's inbound webhook payload, trimmed to what we read.
   const inbound = {
-    FromFull: { Email: "test-mp@example.org", Name: "Testy McTestface MP" },
+    FromFull: { Email: "test-mp@parliament.example", Name: "Testy McTestface MP" },
     ToFull: [{ Email: "jane.482913@letters.pauseai.uk", Name: "" }],
     CcFull: [],
     Subject: "Re: S",
@@ -47,7 +47,11 @@ describeWithDatabase("POST /api/postmark/inbound", () => {
     expect(await query("SELECT status, details FROM letter_events")).toEqual([
       {
         status: "replied",
-        details: expect.objectContaining({ from: "test-mp@example.org", name: "Testy McTestface MP", messageId: null }),
+        details: expect.objectContaining({
+          from: "test-mp@parliament.example",
+          name: "Testy McTestface MP",
+          messageId: null,
+        }),
       },
     ]);
     expect(JSON.stringify(await query("SELECT * FROM letters JOIN letters_from_supporters USING (id)"))).not.toContain(

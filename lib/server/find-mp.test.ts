@@ -53,7 +53,7 @@ describeWithDatabase("findMp", () => {
     });
     expect(await findMp("zz9 9zz")).toMatchObject({
       ok: true,
-      mp: { name: "Testy McTestface MP", email: "test-mp@example.org" },
+      mp: { name: "Testy McTestface MP", email: "test-mp@parliament.example" },
       place: { latitude: 51.4995, longitude: -0.1248 },
     });
     expect(await findMp("ZZ99ZS")).toMatchObject({ ok: true, mp: { name: "Signy McTestface MP", isTest: true } });

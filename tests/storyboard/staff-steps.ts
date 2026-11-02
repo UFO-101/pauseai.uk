@@ -135,7 +135,7 @@ export async function postReply(request: APIRequestContext, database: string, me
     data: {
       OriginalRecipient: address,
       MailboxHash: "",
-      FromFull: { Email: "test-mp@example.org", Name: "Testy McTestface MP" },
+      FromFull: { Email: "test-mp@parliament.example", Name: "Testy McTestface MP" },
       ToFull: [{ Email: address, Name: "" }],
       CcFull: [],
       Subject: auto ? "Automatic reply: Please back a pause" : "Re: Please back a pause",

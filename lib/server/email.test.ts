@@ -324,10 +324,10 @@ describeWithDatabase("listBlocks, blockOn and recentProblems", () => {
     const letterId = await addTestLetter({ politicianId: mp, senderName: "Jane", senderEmail: "jane@example.com" });
     await query(
       `INSERT INTO email_sends (at, purpose, letter_id, address, outcome, message_id)
-       VALUES (now() - interval '1 day', 'letter', $1, 'test-mp@example.org', 'sent', 'msg-1')`,
+       VALUES (now() - interval '1 day', 'letter', $1, 'test-mp@parliament.example', 'sent', 'msg-1')`,
       [letterId],
     );
-    await recordProblem({ ...BOUNCE, address: "test-mp@example.org" });
+    await recordProblem({ ...BOUNCE, address: "test-mp@parliament.example" });
     await recordProblem({ ...BOUNCE, address: "other@example.org", messageId: null, kind: "complaint" });
     await recordProblem({
       ...BOUNCE,
@@ -339,15 +339,15 @@ describeWithDatabase("listBlocks, blockOn and recentProblems", () => {
     // One refused before the bounce, which doesn't count, and one after.
     await query(
       `INSERT INTO email_sends (at, purpose, address, outcome) VALUES
-       (now() - interval '2 days', 'letter', 'test-mp@example.org', 'refused'),
-       (now() + interval '1 minute', 'letter', 'test-mp@example.org', 'refused')`,
+       (now() - interval '2 days', 'letter', 'test-mp@parliament.example', 'refused'),
+       (now() + interval '1 minute', 'letter', 'test-mp@parliament.example', 'refused')`,
     );
 
     // A politician's address is on their side; the rest, unknown ones too, on the other.
     const blocks = await listBlocks("politicians");
     expect(blocks).toEqual([
       {
-        address: "test-mp@example.org",
+        address: "test-mp@parliament.example",
         kind: "hard",
         reason: "Unknown user",
         since: expect.any(Date),
@@ -378,7 +378,7 @@ describeWithDatabase("listBlocks, blockOn and recentProblems", () => {
     expect((await listBlocks("others", { search: "OTHER@" })).map((b) => b.address)).toEqual(["other@example.org"]);
     expect(await listBlocks("others", { search: "nobody" })).toEqual([]);
 
-    expect(await blockOn("Test-MP@example.org")).toMatchObject({ address: "test-mp@example.org" });
+    expect(await blockOn("Test-MP@example.org")).toMatchObject({ address: "test-mp@parliament.example" });
     expect(await blockOn("soft@example.org")).toBeUndefined();
     expect(await blockOn(null)).toBeUndefined();
 
@@ -394,7 +394,7 @@ describeWithDatabase("listBlocks, blockOn and recentProblems", () => {
     ]);
     expect(await recentProblems("politicians")).toEqual([
       expect.objectContaining({
-        address: "test-mp@example.org",
+        address: "test-mp@parliament.example",
         kind: "hard",
         purpose: "letter",
         letter: { id: letterId, to: "Testy McTestface MP" },
@@ -403,9 +403,12 @@ describeWithDatabase("listBlocks, blockOn and recentProblems", () => {
     expect(await recentProblems("others", 1)).toHaveLength(1);
 
     // An address no longer a politician's moves to the other side.
-    await query("UPDATE notable_people SET email = NULL WHERE email ILIKE 'test-mp@example.org'");
+    await query("UPDATE notable_people SET email = NULL WHERE email ILIKE 'test-mp@parliament.example'");
     expect(await listBlocks("politicians")).toEqual([]);
-    expect((await listBlocks("others")).map((b) => b.address)).toEqual(["other@example.org", "test-mp@example.org"]);
+    expect((await listBlocks("others")).map((b) => b.address)).toEqual([
+      "other@example.org",
+      "test-mp@parliament.example",
+    ]);
   });
 
   it("isPoliticianAddress says whether an address is a politician's, however it's written", async () => {

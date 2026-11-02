@@ -127,7 +127,7 @@ describeWithDatabase("forwardReply", () => {
 
   const reply = (mailbox: string, extra = {}) => ({
     MessageID: "inbound-1",
-    FromFull: { Email: "test-mp@example.org", Name: "Testy McTestface MP" },
+    FromFull: { Email: "test-mp@parliament.example", Name: "Testy McTestface MP" },
     ToFull: [{ Email: `${mailbox}@letters.pauseai.uk` }],
     CcFull: [],
     Subject: "Re: S",
@@ -156,14 +156,14 @@ describeWithDatabase("forwardReply", () => {
     expect(sent.map((e) => e.To)).toEqual(["replies@pauseai.uk", "Jane@Example.com"]);
     expect(sent[0]).toMatchObject({
       From: "PauseAI UK <noreply@notify.pauseai.uk>",
-      ReplyTo: "test-mp@example.org, jane.smith.482913@letters.pauseai.uk",
+      ReplyTo: "test-mp@parliament.example, jane.smith.482913@letters.pauseai.uk",
       Subject: "Re: S",
     });
     expect(sent[0].TextBody).toContain(copy.forwardedReply.toInbox("Testy McTestface MP", "Jane Smith"));
     expect(sent[1].TextBody).toContain(copy.forwardedReply.toSender("Testy McTestface MP"));
     expect(sent[1].TextBody).not.toContain(copy.forwardedReply.toInbox("Testy McTestface MP", "Jane Smith"));
     expect(sent[0].Headers).toBeUndefined();
-    expect(sent[0].TextBody).toContain("From: Testy McTestface MP <test-mp@example.org>");
+    expect(sent[0].TextBody).toContain("From: Testy McTestface MP <test-mp@parliament.example>");
     expect(sent[0].TextBody).toContain("Thanks for your letter.");
     expect(sent[0].Attachments).toEqual([{ Name: "a.pdf", Content: "QQ==", ContentType: "application/pdf" }]);
     // Who it was to, and to whom it was forwarded and why, in order.
@@ -171,7 +171,7 @@ describeWithDatabase("forwardReply", () => {
       {
         status: "replied",
         details: {
-          from: "test-mp@example.org",
+          from: "test-mp@parliament.example",
           name: "Testy McTestface MP",
           to: `${mailbox}@letters.pauseai.uk`,
           messageId: "inbound-1",
@@ -190,7 +190,7 @@ describeWithDatabase("forwardReply", () => {
     const [{ id }] = await query<{ id: number }>("SELECT id::int AS id FROM letters");
     await query(
       `INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id)
-       VALUES ('letter', $1, 'test-mp@example.org', 'sent', 'letter-1'), ('letter', $1, 'test-mp@example.org', 'failed', NULL)`,
+       VALUES ('letter', $1, 'test-mp@parliament.example', 'sent', 'letter-1'), ('letter', $1, 'test-mp@parliament.example', 'failed', NULL)`,
       [id],
     );
     const sent = postmark();
@@ -226,7 +226,7 @@ describeWithDatabase("forwardReply", () => {
     expect(await events()).toEqual([
       {
         status: "auto_reply",
-        details: expect.objectContaining({ from: "test-mp@example.org", messageId: "inbound-1" }),
+        details: expect.objectContaining({ from: "test-mp@parliament.example", messageId: "inbound-1" }),
       },
     ]);
     expect(await repliedAt()).toBeNull();
@@ -245,7 +245,7 @@ describeWithDatabase("forwardReply", () => {
       await forwardReply(
         reply(mailbox, {
           FromFull: { Email: "jane@example.com", Name: "Jane Smith" },
-          ToFull: [{ Email: "test-mp@example.org" }, { Email: `${mailbox}@letters.pauseai.uk` }],
+          ToFull: [{ Email: "test-mp@parliament.example" }, { Email: `${mailbox}@letters.pauseai.uk` }],
         }),
       ),
     ).toEqual(["replies@pauseai.uk"]);
@@ -257,7 +257,7 @@ describeWithDatabase("forwardReply", () => {
         details: {
           from: "jane@example.com",
           name: "Jane Smith",
-          to: `test-mp@example.org, ${mailbox}@letters.pauseai.uk`,
+          to: `test-mp@parliament.example, ${mailbox}@letters.pauseai.uk`,
           messageId: "inbound-1",
           handling: [
             { outcome: "forwarded", to: "replies@pauseai.uk", reason: "policy_inbox", at: expect.any(String) },

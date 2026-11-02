@@ -13,7 +13,7 @@ import { POLICY_INBOX, sentLetterId } from "./staff-steps";
 // letter to the test MP from the form, logged in as staff to see its page.
 
 const history = staffCopy.letters.detail;
-const MP = { Email: "test-mp@example.org", Name: "Testy McTestface MP" };
+const MP = { Email: "test-mp@parliament.example", Name: "Testy McTestface MP" };
 
 /** The test MP's words in their reply: made up, but as long and as formal as a real one. */
 const MP_REPLY = `Dear Jane,

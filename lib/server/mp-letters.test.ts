@@ -167,7 +167,7 @@ describeWithDatabase("submitLetter", () => {
     expect(sent[0].ReplyTo).toBeUndefined();
     expect(sent[0]).toMatchObject({
       From: `"Jane Smith via PauseAI" <${address}>`,
-      To: '"Testy McTestface MP" <test-mp@example.org>',
+      To: '"Testy McTestface MP" <test-mp@parliament.example>',
       Bcc: "replies@pauseai.uk",
       Cc: '"Jane Smith" <jane@example.com>',
       Subject: "Subject",
@@ -196,7 +196,7 @@ describeWithDatabase("submitLetter", () => {
       {
         purpose: "letter",
         id: Number(letter.id),
-        address: "test-mp@example.org",
+        address: "test-mp@parliament.example",
         outcome: "sent",
         message_id: "msg-1",
       },
@@ -374,7 +374,13 @@ describeWithDatabase("submitLetter", () => {
 
   it("keeps a letter to an MP whose address is blocked as not sent, and says why", async () => {
     const sent = postmark();
-    await recordProblem({ address: "test-mp@example.org", messageId: null, kind: "hard", reason: "", canReset: true });
+    await recordProblem({
+      address: "test-mp@parliament.example",
+      messageId: null,
+      kind: "hard",
+      reason: "",
+      canReset: true,
+    });
     expect(await submitLetter(FORM)).toEqual({ ok: false, status: 409, message: copy.errors.unreachable });
     expect(sent).toEqual([]);
     expect(await query("SELECT status FROM letters")).toEqual([{ status: "not_sent" }]);
