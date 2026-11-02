@@ -90,15 +90,17 @@ export function OwnerField({
 export function DocField({ event, children }: { event: { id: string; doc: string | null }; children: ReactNode }) {
   if (use(EditingContext)!.open !== event.id) return children;
   return (
-    <TextInput
-      form={formId(event.id)}
-      type="url"
-      name="doc"
-      aria-label={copy.docField}
-      defaultValue={event.doc ?? ""}
-      pattern={GOOGLE_DOC_PATTERN}
-      placeholder={copy.docPlaceholder}
-    />
+    <span className={styles.docField}>
+      <TextInput
+        form={formId(event.id)}
+        type="url"
+        name="doc"
+        aria-label={copy.docField}
+        defaultValue={event.doc ?? ""}
+        pattern={GOOGLE_DOC_PATTERN}
+        placeholder={copy.docPlaceholder}
+      />
+    </span>
   );
 }
 

@@ -36,6 +36,11 @@
   white-space: nowrap;
 }
 
+/* The Google Doc's box, while it's edited: wide enough to see a link's start. */
+.docField input {
+  min-width: 14rem;
+}
+
 /* Save and Cancel, side by side, where the Edit button was. */
 .editorButtons {
   display: flex;
