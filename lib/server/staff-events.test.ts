@@ -125,7 +125,7 @@ describeWithDatabase("staff events", () => {
     expect((await eventsPage()).groups.map((g) => g.key)).toEqual(["2026-10"]);
   });
 
-  it("changes an event's owner, logs it, and emails the new owner and the one before, saying who changed it, but never whoever did", async () => {
+  it("changes an event's owner, logs it, and emails the new owner, whoever chose them, copied to the one before", async () => {
     const sent = postmark();
     await addStaff("jo@pauseai.uk", "sean@pauseai.uk", "joseph@pauseai.uk");
     await addEvent("evt-1", "2026-11-10T18:00:00Z");
@@ -143,7 +143,7 @@ describeWithDatabase("staff events", () => {
     expect(sent).toEqual([
       expect.objectContaining({
         To: "sean@pauseai.uk",
-        Subject: staffCopy.events.ownerEmail.subject(1, "Event evt-1"),
+        Subject: staffCopy.events.ownerEmail.subject(1, "Event evt-1", "sean@pauseai.uk"),
         TextBody: body("sean@pauseai.uk", null, "jo@pauseai.uk"),
         Tag: "staff-alert",
       }),
@@ -166,18 +166,23 @@ describeWithDatabase("staff events", () => {
       TextBody: body("joseph@pauseai.uk", "sean@pauseai.uk", "jo@pauseai.uk"),
     });
 
-    // Taken by yourself: only the one before is told.
-    expect(await setEventOwner("evt-1", "jo@pauseai.uk", "jo@pauseai.uk")).toEqual(["joseph@pauseai.uk"]);
+    // Taken by yourself: to you, copied to the one before.
+    expect(await setEventOwner("evt-1", "jo@pauseai.uk", "jo@pauseai.uk")).toEqual([
+      "jo@pauseai.uk",
+      "joseph@pauseai.uk",
+    ]);
     expect(sent[2]).toMatchObject({
-      To: "joseph@pauseai.uk",
+      To: "jo@pauseai.uk",
+      Cc: "joseph@pauseai.uk",
       TextBody: body("jo@pauseai.uk", "joseph@pauseai.uk", "jo@pauseai.uk"),
     });
-    expect(sent[2].Cc).toBeUndefined();
 
-    // Given back by its owner before, who did it: only the new one.
-    expect(await setEventOwner("evt-1", "joseph@pauseai.uk", "jo@pauseai.uk")).toEqual(["joseph@pauseai.uk"]);
-    expect(sent[3]).toMatchObject({ To: "joseph@pauseai.uk" });
-    expect(sent[3].Cc).toBeUndefined();
+    // Given back by its owner before: to the new one, copied to them.
+    expect(await setEventOwner("evt-1", "joseph@pauseai.uk", "jo@pauseai.uk")).toEqual([
+      "joseph@pauseai.uk",
+      "jo@pauseai.uk",
+    ]);
+    expect(sent[3]).toMatchObject({ To: "joseph@pauseai.uk", Cc: "jo@pauseai.uk" });
     expect(sent).toHaveLength(4);
 
     expect(await owners()).toEqual([{ event_id: "evt-1", owner: "joseph@pauseai.uk", assigned_by: "jo@pauseai.uk" }]);
@@ -195,12 +200,18 @@ describeWithDatabase("staff events", () => {
     );
   });
 
-  it("sends nothing when you take an event that had no owner", async () => {
+  it("emails you when you take an event that had no owner", async () => {
     const sent = postmark();
     await addStaff("jo@pauseai.uk");
     await addEvent("evt-1", "2026-11-10T18:00:00Z");
-    expect(await setEventOwner("evt-1", "jo@pauseai.uk", "jo@pauseai.uk")).toEqual([]);
-    expect(sent).toEqual([]);
+    expect(await setEventOwner("evt-1", "jo@pauseai.uk", "jo@pauseai.uk")).toEqual(["jo@pauseai.uk"]);
+    expect(sent).toEqual([
+      expect.objectContaining({
+        To: "jo@pauseai.uk",
+        Subject: staffCopy.events.ownerEmail.subject(1, "Event evt-1", "jo@pauseai.uk"),
+      }),
+    ]);
+    expect(sent[0].TextBody).toContain("You took it on");
   });
 
   it("sets, changes and clears an event's Google Doc, logging each, but only for one of ours", async () => {
@@ -284,8 +295,8 @@ describeWithDatabase("staff events", () => {
 
     await ownerEmails(given);
     expect(sent.map((email) => [email.To, email.Subject])).toEqual([
-      ["joseph@pauseai.uk", staffCopy.events.ownerEmail.subject(2, "Event evt-london")],
-      ["sean@pauseai.uk", staffCopy.events.ownerEmail.subject(2, "Event evt-oxford")],
+      ["joseph@pauseai.uk", staffCopy.events.ownerEmail.subject(2, "Event evt-london", "joseph@pauseai.uk")],
+      ["sean@pauseai.uk", staffCopy.events.ownerEmail.subject(2, "Event evt-oxford", "sean@pauseai.uk")],
     ]);
     expect(sent[0].TextBody).toContain("https://luma.com/evt-london-2");
   });

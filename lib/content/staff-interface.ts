@@ -717,10 +717,12 @@ export const staffCopy = {
       `Emailed ${to.join(" and ")} to let them know ${owner} now owns this event.`,
     closeEmailed: "Close",
     cancel: "Cancel",
-    // The email when an event's owner changes: to the new owner, copied to the one before, saying who changed it,
-    // from whom and to whom; or, when the import gives events their owners by the rules, to each new owner, listing them.
+    // The email when an event's owner changes: to the new owner, whoever chose them, copied to the one before, saying who
+    // gave it to them and from whom; or, when the import gives events their owners by the rules, to each new owner,
+    // listing them.
     ownerEmail: {
-      subject: (n: number, first: string) => (n === 1 ? `New owner for ${first}` : `New owner for ${n} events`),
+      subject: (n: number, first: string, owner: string) =>
+        n === 1 ? `You're now owner for ${first}, ${owner}` : `You're now owner for ${n} events, ${owner}`,
       body: ({
         events,
         owner,
@@ -732,7 +734,7 @@ export const staffCopy = {
         previous: string | null;
         by: string | null;
       }) =>
-        `${by ? `${by} changed the owner of this event${previous ? ` from ${previous}` : ""} to ${owner}` : `By the rules for who owns which events, ${owner} is now the owner of ${events.length === 1 ? "this event" : "these events"}`}:\n\n${events
+        `${by ? `You're now the owner of this event, ${owner}. ${by === owner ? "You took it on" : `${by} gave it to you`}${previous ? `, from ${previous}` : ""}.` : `You're now the owner of ${events.length === 1 ? "this event" : "these events"}, ${owner}, by the rules for who owns which events.`}\n\n${events
           .map((event) => `${event.name}\n${event.when}\n${event.url}`)
           .join(
             "\n\n",

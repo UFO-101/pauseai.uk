@@ -12,8 +12,8 @@ import { notifyDomain } from "./outside-services/postmark";
 // Our events on Luma, as the hourly import has them (luma-import.ts), for
 // the staff interface's events page, and who on staff owns each
 // (event_owners). Only our own: one another calendar runs and ours lists
-// isn't ours to own. When an owner changes, the new owner and the one
-// before are emailed, saying who changed it, but not whoever did. Each can
+// isn't ours to own. When an owner changes, the new owner is emailed,
+// copied to the one before, saying who gave it to them. Each can
 // have a link to its Google Doc too (event_docs), which anyone can set.
 
 export type StaffEvent = {
@@ -84,10 +84,9 @@ export async function eventsPage(): Promise<{ groups: EventGroup[]; staff: strin
 }
 
 /**
- * Emails that `owner` owns `ids` now: to them, copied to `previous`, the
- * owner before, as `by` changed it; or with no `by`, the rules gave them.
- * Never to `by`, who knows: with neither left, nothing is sent. Returns
- * whom it emailed, none if it wasn't sent.
+ * Emails `owner` that they own `ids` now, whoever chose them, copied to
+ * `previous`, the owner before, saying `by` gave it to them; or with no
+ * `by`, that the rules did. Returns whom it emailed, none if it wasn't sent.
  */
 async function tellOwner(
   owner: string,
@@ -95,8 +94,8 @@ async function tellOwner(
   by: string | null,
   previous: string | null = null,
 ): Promise<string[]> {
-  const [to, cc] = [owner, previous].filter((address): address is string => !!address && address !== by);
-  if (!to) return [];
+  const to = owner;
+  const cc = previous && previous !== owner ? previous : null;
   const events = await listEvents(ids);
   const copy = staffCopy.events.ownerEmail;
   const result = await send(
@@ -104,7 +103,7 @@ async function tellOwner(
       From: `PauseAI UK <noreply@${notifyDomain()}>`,
       To: to,
       ...(cc ? { Cc: cc } : {}),
-      Subject: copy.subject(events.length, events[0].name),
+      Subject: copy.subject(events.length, events[0].name, owner),
       TextBody: copy.body({
         events: events.map((event) => ({ name: event.name, when: londonStart(event.startAt), url: event.url })),
         owner,

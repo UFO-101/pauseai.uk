@@ -335,9 +335,9 @@ and then past, with how many are going. Each can have one owner on staff
 (`event_owners`, `lib/server/staff-events.ts`), kept apart from
 `luma_events` as only the import writes that. Any staff member can make
 anyone with a staff account an event's owner, from the page, but can't
-take an owner away. One email, to the new owner and copied to the one
-before, says who changed it, from whom and to whom; whoever changed it
-isn't sent it. At the end of each import,
+take an owner away. One email goes to the new owner, whoever chose them,
+copied to the one before, saying who gave it to them and from whom, and
+the page says whom it emailed. At the end of each import,
 every event still to come with no owner gets one by the rules in
 `lib/event-owners.ts`, written there for now: by the place in its city or
 Luma tags, or else a default owner. Each owner is emailed once, listing the
