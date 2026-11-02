@@ -66,7 +66,15 @@ describeWithDatabase("POST /api/postmark/bounce", () => {
     }
     expect(await query("SELECT status FROM letters")).toEqual([{ status }]);
     expect(await query("SELECT status, details FROM letter_events WHERE status = 'auto_reply'")).toEqual([
-      { status: "auto_reply", details: { from: "test-mp@example.org", bounceId: 42 } },
+      {
+        status: "auto_reply",
+        // It went no further: Postmark keeps only that it came.
+        details: {
+          from: "test-mp@example.org",
+          bounceId: 42,
+          handling: [{ outcome: "not_forwarded", reason: "bounce_address" }],
+        },
+      },
     ]);
     expect(await query("SELECT address FROM email_problems")).toEqual([]);
   });

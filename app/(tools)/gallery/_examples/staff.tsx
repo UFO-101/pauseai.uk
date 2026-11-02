@@ -23,6 +23,8 @@ import {
   exampleLetter,
   exampleLetterCampaigns,
   examplePauseaiLetterDetails,
+  exampleOlderRepliedLetterDetails,
+  exampleRepliedLetterDetails,
   exampleSupporterLetterDetails,
 } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import { historyOf, LetterHistory } from "@/app/(staff)/staff/_components/LetterHistory";
@@ -2931,6 +2933,23 @@ export const staff: Group = {
                   events: [],
                 })}
               />
+            </StaffPage>
+          ),
+        },
+        {
+          label:
+            "Replies: who each was to, and what was done with it; an automatic reply to the bounce address, and the sender's follow-up",
+          render: () => (
+            <StaffPage as="div">
+              <LetterHistory events={historyOf(exampleRepliedLetterDetails)} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Replies recorded before what was done with them was: the forwards logged, one refused",
+          render: () => (
+            <StaffPage as="div">
+              <LetterHistory events={historyOf(exampleOlderRepliedLetterDetails)} />
             </StaffPage>
           ),
         },

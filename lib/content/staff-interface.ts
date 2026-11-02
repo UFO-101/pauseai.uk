@@ -1542,12 +1542,33 @@ export const staffCopy = {
         reason: "Reason",
         email: "Address",
         from: "From",
+        to: "To",
+        cc: "Cc",
+        replyTo: "Reply-To",
         subject: "Subject",
         // What sending from Gmail and reading its mailbox record.
         name: "Name",
         account: "Gmail",
         status: "Code",
       } as Record<string, string>,
+      // Under a reply, what was done with it: each line's name, before who to; "Not forwarded" when it went to no one.
+      handling: {
+        forwarded: "Forwarded to",
+        not_forwarded: "Not forwarded to",
+        nowhere: "Not forwarded",
+        failed: "Forward failed",
+      },
+      // Why, under each line of what was done with a reply.
+      handlingReasons: {
+        policy_inbox: "Every reply goes to the shared inbox",
+        sender: "The sender, who wasn't sent it",
+        copied: "Already in its To or Cc",
+        own_follow_up: "It's their own follow-up",
+        bounce_address: "It came to the bounce address, and Postmark keeps only that it came",
+        gmail: "Read from Gmail, where it already is",
+        refused: "Postmark refused it",
+        blocked: "The address is blocked",
+      },
     },
     none: "No letters.",
     status: {

@@ -163,6 +163,9 @@ describeWithDatabase("reading Gmail", () => {
         r1: {
           headers: {
             From: "Polly <Polly@example.org>",
+            To: "=?UTF-8?Q?Jo_St=C3=A4ff?= <jo@pauseai.uk>",
+            Cc: "office@example.org",
+            "Reply-To": "caseworker@example.org",
             Subject: "Re: AI",
             "Message-ID": "<r1@example.org>",
             "In-Reply-To": "<letter-1@pauseai.uk>",
@@ -195,7 +198,16 @@ describeWithDatabase("reading Gmail", () => {
       {
         letterId: letter,
         status: "replied",
-        details: { from: "polly@example.org", name: "Polly", gmailMessageId: "r1" },
+        // Who it was to, as it came, its encoded words decoded; read here, it goes no further.
+        details: {
+          from: "polly@example.org",
+          name: "Polly",
+          to: "Jo Stäff <jo@pauseai.uk>",
+          cc: "office@example.org",
+          replyTo: "caseworker@example.org",
+          handling: [{ outcome: "not_forwarded", reason: "gmail" }],
+          gmailMessageId: "r1",
+        },
       },
     ]);
     expect(await query("SELECT gmail_history_id FROM staff_accounts")).toEqual([{ gmail_history_id: "2000" }]);
@@ -251,7 +263,15 @@ describeWithDatabase("reading Gmail", () => {
     expect(await read()).toMatchObject([{ replies: 0, autoReplies: 1 }]);
     expect(await read()).toMatchObject([{ autoReplies: 0 }]);
     expect(await events()).toEqual([
-      { letterId: letter, status: "auto_reply", details: { from: "polly@example.org", gmailMessageId: "ooo" } },
+      {
+        letterId: letter,
+        status: "auto_reply",
+        details: {
+          from: "polly@example.org",
+          handling: [{ outcome: "not_forwarded", reason: "gmail" }],
+          gmailMessageId: "ooo",
+        },
+      },
     ]);
     expect(await replies()).toEqual([]);
     expect(fetched.filter((one) => one.endsWith(":raw"))).toEqual([]);

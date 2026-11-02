@@ -3,6 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 import { copy } from "@/lib/content/email-your-mp";
 import { query, transaction } from "./db";
 import { send, type DeliveryProblem } from "./email";
+import type { HandlingReason, ReplyHandling } from "./letters";
 import { lettersDomain, notifyDomain, type Attachment } from "./outside-services/postmark";
 
 // What Postmark tells us: bounces and spam complaints, and replies to
@@ -74,7 +75,8 @@ export function deliveryProblem(payload: PostmarkProblem): DeliveryProblem | und
  */
 export async function recordAutoResponder(payload: PostmarkProblem): Promise<boolean> {
   if (!isAutoResponder(payload)) return false;
-  const details = { from: payload.Email ?? "", bounceId: payload.ID ?? null };
+  const handling: ReplyHandling[] = [{ outcome: "not_forwarded", reason: "bounce_address" }];
+  const details = { from: payload.Email ?? "", bounceId: payload.ID ?? null, handling };
   await query(
     `INSERT INTO letter_events (letter_id, status, details)
      SELECT s.letter_id, 'auto_reply', $2 FROM email_sends s
@@ -120,29 +122,55 @@ export function isMachineReply(header: (name: string) => string | undefined, sub
  * person's reply from anyone but the sender, who may write back into the
  * thread, marks the letter as replied to.
  */
-async function recordReply(letter: { id: number; senderEmail: string }, email: InboundEmail): Promise<void> {
+async function recordReply(letter: { id: number; senderEmail: string }, email: InboundEmail): Promise<number> {
   const from = email.FromFull?.Email ?? "";
   const status = isAutoReply(email) ? "auto_reply" : "replied";
-  const details = { from, name: email.FromFull?.Name ?? "", messageId: email.MessageID ?? null };
-  await transaction(async (db) => {
+  const details = {
+    from,
+    name: email.FromFull?.Name ?? "",
+    to: addresses(email.ToFull),
+    cc: addresses(email.CcFull),
+    replyTo: email.ReplyTo || undefined,
+    messageId: email.MessageID ?? null,
+  };
+  return transaction(async (db) => {
     await query("SELECT 1 FROM letters WHERE id = $1 FOR UPDATE", [letter.id], db);
     if (details.messageId) {
-      const [seen] = await query(
-        "SELECT 1 FROM letter_events WHERE letter_id = $1 AND status IN ('replied', 'auto_reply') AND details->>'messageId' = $2",
+      const [seen] = await query<{ id: number }>(
+        "SELECT id::int AS id FROM letter_events WHERE letter_id = $1 AND status IN ('replied', 'auto_reply') AND details->>'messageId' = $2",
         [letter.id, details.messageId],
         db,
       );
-      if (seen) return;
+      if (seen) return seen.id;
     }
-    await query(
-      "INSERT INTO letter_events (letter_id, status, details) VALUES ($1, $2, $3)",
+    const [event] = await query<{ id: number }>(
+      "INSERT INTO letter_events (letter_id, status, details) VALUES ($1, $2, $3) RETURNING id::int AS id",
       [letter.id, status, JSON.stringify(details)],
       db,
     );
     if (status === "replied" && from.toLowerCase() !== letter.senderEmail.toLowerCase()) {
       await query("UPDATE letters SET replied_at = coalesce(replied_at, now()) WHERE id = $1", [letter.id], db);
     }
+    return event.id;
   });
+}
+
+/** The addresses of a list of them, as a line: "a@example.com, b@example.com"; none for an empty list. */
+function addresses(list: Address[] | undefined): string | undefined {
+  return (
+    list
+      ?.map((a) => a.Email)
+      .filter(Boolean)
+      .join(", ") || undefined
+  );
+}
+
+/** Adds to a reply's event how it was handled, replacing any from an earlier try. */
+async function noteHandling(eventId: number, handling: ReplyHandling[]): Promise<void> {
+  await query("UPDATE letter_events SET details = details || jsonb_build_object('handling', $2::jsonb) WHERE id = $1", [
+    eventId,
+    JSON.stringify(handling),
+  ]);
 }
 
 export type InboundEmail = {
@@ -155,6 +183,8 @@ export type InboundEmail = {
   Subject?: string;
   Date?: string;
   Headers?: { Name?: string; Value?: string }[];
+  /** The Reply-To line, as it came. */
+  ReplyTo?: string;
   TextBody?: string;
   Attachments?: Attachment[];
 };
@@ -201,13 +231,27 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
     [mailboxes],
   );
   if (!letter) return [];
-  await recordReply(letter, email);
+  const eventId = await recordReply(letter, email);
 
+  // Who it might go to, and why: the shared inbox, then the sender, each
+  // left out if they already have it, and the sender if they wrote it.
   const fromSender = from.toLowerCase() === letter.senderEmail.toLowerCase();
   const copied = [...(email.ToFull ?? []), ...(email.CcFull ?? [])].map((a) => a.Email?.toLowerCase());
-  const recipients = [process.env.POLICY_INBOX, fromSender ? undefined : letter.senderEmail].filter(
-    (to): to is string => !!to && !copied.includes(to.toLowerCase()),
-  );
+  const plan = (
+    [
+      [process.env.POLICY_INBOX, "policy_inbox"],
+      [letter.senderEmail, "sender"],
+    ] as const
+  )
+    .filter((entry): entry is [string, "policy_inbox" | "sender"] => !!entry[0])
+    .map(([to, why]): { to: string; reason: HandlingReason; forward: boolean } =>
+      why === "sender" && fromSender
+        ? { to, reason: "own_follow_up", forward: false }
+        : copied.includes(to.toLowerCase())
+          ? { to, reason: "copied", forward: false }
+          : { to, reason: why, forward: true },
+    );
+  const handling: ReplyHandling[] = [];
 
   // The letter's own Message-ID, so the forward joins the letter's thread for anyone
   // who has the letter: the sender on Cc, the shared inbox on Bcc.
@@ -225,7 +269,11 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
     `Date: ${email.Date ?? ""}`,
     `Subject: ${email.Subject ?? ""}`,
   ].join("\n");
-  for (const to of recipients) {
+  for (const { to, reason, forward } of plan) {
+    if (!forward) {
+      handling.push({ outcome: "not_forwarded", to, reason });
+      continue;
+    }
     const result = await send(
       {
         From: `PauseAI UK <noreply@${notifyDomain()}>`,
@@ -247,8 +295,17 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
       "forwarded-reply",
       letter.id,
     );
+    handling.push(
+      result.sent
+        ? { outcome: "forwarded", to, reason, at: new Date().toISOString() }
+        : { outcome: "failed", to, reason: result.reason === "blocked" ? "blocked" : "refused" },
+    );
     // Thrown, so Postmark tries again. A blocked address is skipped: it would never work.
-    if (!result.sent && result.reason === "failed") throw new Error(`Couldn't forward a reply to letter ${letter.id}`);
+    if (!result.sent && result.reason === "failed") {
+      await noteHandling(eventId, handling);
+      throw new Error(`Couldn't forward a reply to letter ${letter.id}`);
+    }
   }
-  return recipients;
+  await noteHandling(eventId, handling);
+  return plan.filter((p) => p.forward).map((p) => p.to);
 }

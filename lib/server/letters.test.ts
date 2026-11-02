@@ -273,10 +273,17 @@ describeWithDatabase("a letter for its page", () => {
       `INSERT INTO email_sends (at, purpose, letter_id, address, outcome, message_id) VALUES
          ('2026-10-01T09:00:00Z', 'letter', $1, 'test-mp@example.org', 'sent', 'pm-old'),
          ('2026-10-02T09:00:00Z', 'letter', $1, 'test-mp@example.org', 'sent', 'pm-new'),
-         ('2026-10-03T09:00:00Z', 'letter', $1, 'test-mp@example.org', 'failed', NULL)`,
+         ('2026-10-03T09:00:00Z', 'letter', $1, 'test-mp@example.org', 'failed', NULL),
+         ('2026-10-05T09:00:00Z', 'forwarded-reply', $1, 'jane@example.com', 'refused', NULL),
+         ('2026-10-04T09:00:00Z', 'forwarded-reply', $1, 'policy@pauseai.uk', 'sent', 'fwd-1')`,
       [id],
     );
     const letter = await getSupporterLetter(id);
+    // Its replies' forwards, oldest first, for the history of replies recorded before their handling was.
+    expect(letter!.forwards).toEqual([
+      { at: "2026-10-04T09:00:00+00:00", address: "policy@pauseai.uk", outcome: "sent" },
+      { at: "2026-10-05T09:00:00+00:00", address: "jane@example.com", outcome: "refused" },
+    ]);
     expect(letter).toMatchObject({
       kind: "supporter",
       id,

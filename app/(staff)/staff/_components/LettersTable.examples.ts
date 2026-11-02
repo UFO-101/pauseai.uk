@@ -51,6 +51,93 @@ export const exampleSupporterLetterDetails: SupporterLetterDetails = {
     search: "rfc822msgid:0a1b2c3d-1111-2222-3333-444455556666@mtasv.net",
     inPolicyGroup: true,
   },
+  forwards: [],
+};
+
+const LETTER_ADDRESS = "jane.smith.482913@letters.pauseai.uk";
+const MP_ADDRESS = "testy.mctestface.mp@parliament.uk";
+
+/**
+ * A supporter's letter with replies: sent with the sender on Cc; an
+ * automatic reply to the bounce address; the MP's reply, forwarded to the
+ * shared inbox and the sender; and the sender's follow-up, to the shared
+ * inbox only. Each reply records who it was to and what was done with it.
+ */
+export const exampleRepliedLetterDetails: SupporterLetterDetails = {
+  ...exampleSupporterLetterDetails,
+  status: "sent",
+  repliedAt: "2026-10-13T09:00:00Z",
+  autoRepliedAt: "2026-10-12T09:06:00Z",
+  events: [
+    {
+      at: "2026-10-14T09:00:00Z",
+      status: "replied",
+      details: {
+        from: "jane@example.com",
+        name: "Jane Smith",
+        to: `${MP_ADDRESS}, ${LETTER_ADDRESS}`,
+        messageId: "<follow-up@example.com>",
+        handling: [
+          { outcome: "forwarded", to: "policy@pauseai.uk", reason: "policy_inbox", at: "2026-10-14T09:00:01Z" },
+          { outcome: "not_forwarded", to: "jane@example.com", reason: "own_follow_up" },
+        ],
+      },
+    },
+    {
+      at: "2026-10-13T09:00:00Z",
+      status: "replied",
+      details: {
+        from: MP_ADDRESS,
+        name: "Testy McTestface MP",
+        to: LETTER_ADDRESS,
+        cc: "caseworker@parliament.uk",
+        replyTo: MP_ADDRESS,
+        messageId: "<reply@parliament.uk>",
+        handling: [
+          { outcome: "forwarded", to: "policy@pauseai.uk", reason: "policy_inbox", at: "2026-10-13T09:00:01Z" },
+          { outcome: "forwarded", to: "jane@example.com", reason: "sender", at: "2026-10-13T09:00:02Z" },
+        ],
+      },
+    },
+    {
+      at: "2026-10-12T09:06:00Z",
+      status: "auto_reply",
+      details: {
+        from: MP_ADDRESS,
+        bounceId: 42,
+        handling: [{ outcome: "not_forwarded", reason: "bounce_address" }],
+      },
+    },
+    {
+      at: "2026-10-12T09:05:00Z",
+      status: "sent",
+      details: {
+        from: LETTER_ADDRESS,
+        to: MP_ADDRESS,
+        cc: "jane@example.com",
+        messageId: "0a1b2c3d-1111-2222-3333-444455556666",
+      },
+    },
+    { at: "2026-10-12T09:00:00Z", status: "sending", details: {} },
+  ],
+};
+
+/**
+ * The same letter as recorded before replies' handling was: what's known
+ * of it is the forwards logged, one of them refused, as the address was
+ * blocked.
+ */
+export const exampleOlderRepliedLetterDetails: SupporterLetterDetails = {
+  ...exampleRepliedLetterDetails,
+  events: exampleRepliedLetterDetails.events.map(({ details: { handling, ...details }, ...event }) => {
+    void handling;
+    return { ...event, details };
+  }),
+  forwards: [
+    { at: "2026-10-13T09:00:01Z", address: "policy@pauseai.uk", outcome: "sent" },
+    { at: "2026-10-13T09:00:02Z", address: "jane@example.com", outcome: "refused" },
+    { at: "2026-10-14T09:00:01Z", address: "policy@pauseai.uk", outcome: "sent" },
+  ],
 };
 
 /** One of PauseAI's letters, copied from Airtable, for its page: found in Gmail by its MP's address and when it went, in a mailbox we don't know. */

@@ -17,6 +17,31 @@ import { FLAG_CONDITIONS } from "./politicians";
 
 export type LetterEvent = { at: string; status: string; details: Record<string, unknown> };
 
+/**
+ * Why a reply was forwarded to someone or not, or why its forward failed:
+ * the shared inbox gets every reply; the sender gets one they weren't sent,
+ * unless it's their own follow-up or they're already in its To or Cc; one
+ * that came to the bounce address, or was read from Gmail, goes nowhere;
+ * and a forward fails when Postmark refuses it or the address is blocked.
+ */
+export type HandlingReason =
+  "policy_inbox" | "sender" | "copied" | "own_follow_up" | "bounce_address" | "gmail" | "refused" | "blocked";
+
+/**
+ * One thing done with a reply, in its event's `handling`: forwarded to `to`,
+ * not forwarded (to `to`, or to anyone), or a forward that failed; why, and
+ * when a forward went.
+ */
+export type ReplyHandling = {
+  outcome: "forwarded" | "not_forwarded" | "failed";
+  to?: string;
+  reason?: HandlingReason;
+  at?: string;
+};
+
+/** A forward of a reply to a letter, as its send was logged: for the history of replies recorded before their handling was. */
+export type LetterForward = { at: string; address: string; outcome: string };
+
 export type LetterSummary = {
   id: number;
   campaign: string;
@@ -183,6 +208,8 @@ export type SupporterLetterDetails = LetterSummary & {
   mpEmail: string | null;
   campaignAsk: string | null;
   gmail: GmailFind | null;
+  /** Every forward of a reply to it, oldest first. */
+  forwards: LetterForward[];
 };
 
 /** One of PauseAI's letters, for its own page: to whom, at which address now, in which mailing, and what happened. */
@@ -277,14 +304,17 @@ export async function getPauseaiLetter(mailingId: number, id: number): Promise<P
 export async function getSupporterLetter(id: number): Promise<SupporterLetterDetails | undefined> {
   const [letter] = await recentLetters({ letterId: id });
   if (!letter) return undefined;
-  const [{ subject, postmarkId, mpEmail, campaignAsk }] = await query<{
+  const [{ subject, postmarkId, mpEmail, campaignAsk, forwards }] = await query<{
     subject: string;
     postmarkId: string | null;
     mpEmail: string | null;
     campaignAsk: string | null;
+    forwards: LetterForward[];
   }>(
     `SELECT s.subject, c.ask AS "campaignAsk", (SELECT e.message_id FROM email_sends e WHERE e.letter_id = s.id AND e.purpose = 'letter'
-       AND e.outcome = 'sent' ORDER BY e.at DESC, e.id DESC LIMIT 1) AS "postmarkId", n.email AS "mpEmail"
+       AND e.outcome = 'sent' ORDER BY e.at DESC, e.id DESC LIMIT 1) AS "postmarkId", n.email AS "mpEmail",
+       coalesce((SELECT json_agg(json_build_object('at', e.at, 'address', e.address, 'outcome', e.outcome) ORDER BY e.at, e.id)
+                 FROM email_sends e WHERE e.letter_id = s.id AND e.purpose = 'forwarded-reply'), '[]') AS forwards
      FROM letters_from_supporters s JOIN letters l USING (id) JOIN notable_people n ON n.id = l.notable_person_id
        JOIN campaigns c ON c.slug = s.campaign
      WHERE s.id = $1`,
@@ -297,7 +327,7 @@ export async function getSupporterLetter(id: number): Promise<SupporterLetterDet
   const gmail = search
     ? { mailbox: process.env.POLICY_INBOX || null, search, ...(group ? { inPolicyGroup: true as const } : {}) }
     : null;
-  return { ...letter, kind: "supporter", subject, mpEmail, campaignAsk, gmail };
+  return { ...letter, kind: "supporter", subject, mpEmail, campaignAsk, gmail, forwards };
 }
 
 /** A letter on an MP's page for staff without `supporters`: what happened to it, and nothing of who wrote it. */
