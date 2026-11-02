@@ -56,7 +56,7 @@ const statuses = () =>
   );
 
 beforeEach(() => {
-  vi.stubEnv("TEST_MP_EMAIL", "test-mp@example.org");
+  vi.stubEnv("TEST_MP_EMAIL", "test-mp@parliament.example");
   vi.stubEnv("AIRTABLE_TOKEN", "token");
 });
 afterEach(() => vi.unstubAllEnvs());

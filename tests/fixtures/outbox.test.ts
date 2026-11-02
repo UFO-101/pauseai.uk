@@ -61,7 +61,7 @@ describe("the test outbox", () => {
     const pdf = Buffer.alloc(300, 7).toString("base64");
     const sent = {
       From: '"Jane Smith via PauseAI" <jane.smith.482913@letters.pauseai.uk>',
-      To: "test-mp@example.org",
+      To: "test-mp@parliament.example",
       Bcc: "replies@pauseai.uk",
       ReplyTo: "jane@example.com, jane.smith.482913@letters.pauseai.uk",
       Subject: "Pause AI — please sign",

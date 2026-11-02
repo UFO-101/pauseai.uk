@@ -3,7 +3,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { addFilter, changeFilter, fakeTurnstile, lookUpTestMp, newestEmail, openLookup } from "../steps";
 import { BASE, emailFrame, expect, madeUpAddress, frame, test } from "./fixtures";
 import { TEST_MPS } from "@/lib/test-mps";
-import { logIn, STAFF_INBOX, bouncy, BOUNCY_ADDRESS, postBounce, postReply, sentLetterId } from "./staff-steps";
+import { bouncy, BOUNCY_ADDRESS, logIn, POLICY_INBOX, postBounce, postReply, sentLetterId } from "./staff-steps";
 
 // Supporters' letters to MPs: the list filtered, by status and by what came
 // back to a letter, and a letter that bounces,
@@ -153,7 +153,7 @@ test("A letter bounces: staff are emailed, the address is blocked", async ({ pag
   await postBounce(request, messageId);
 
   const alert = newestEmail(
-    (email) => email.To === STAFF_INBOX && email.Subject === staffCopy.alert.subject(bouncy.name),
+    (email) => email.To === POLICY_INBOX && email.Subject === staffCopy.alert.subject(bouncy.name),
   );
   expect(alert?.TextBody).toContain(`${BASE}/staff/politicians/blocked-emails`);
   await emailFrame(page, alert!, "the email staff get about it");
@@ -170,7 +170,8 @@ test("A letter bounces: staff are emailed, the address is blocked", async ({ pag
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     staffCopy.letters.oneTitle("Jane Smith", bouncy.name),
   );
-  await expect(page.getByText(sender)).toBeVisible();
+  // Who wrote it, leading to them as a supporter; their address is in its history too.
+  await expect(page.getByRole("link", { name: `Jane Smith <${sender}>` })).toBeVisible();
   await expect(page.getByText(staffCopy.letters.status.bounced).first()).toBeVisible();
   await frame(page, "the letter's page: bounced, in red, the letter as an email, and what happened to it");
   await page.getByRole("list", { name: staffCopy.letters.detail.historyTitle }).getByRole("button").first().click();

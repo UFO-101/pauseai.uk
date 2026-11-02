@@ -4,7 +4,7 @@ import type { OutboxEmail } from "./outbox";
 
 const email: OutboxEmail = {
   From: '"Jane <Smith>" <jane.smith.482913@letters.pauseai.uk>',
-  To: "test-mp@example.org",
+  To: "test-mp@parliament.example",
   Subject: "Pause AI & <you>",
   Date: "Thu, 01 Oct 2026 09:30:00 GMT",
   TextBody: "Dear Testy,\n\n<Please> sign.",

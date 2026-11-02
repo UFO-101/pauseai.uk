@@ -12,7 +12,7 @@ export const LOCAL_URL = process.env.LOCAL_URL ?? "http://localhost:3100";
 export const MAIN_URL = process.env.MAIN_URL ?? "http://localhost:3001";
 
 /** The test MPs' inbox in a fixture build. */
-export const TEST_MP_EMAIL = "test-mp@example.org";
+export const TEST_MP_EMAIL = "test-mp@parliament.example";
 
 /**
  * The moment a fixture build thinks it is: the server (lib/now.ts and the
@@ -56,7 +56,7 @@ export function fixtureEnv({ outboxDir }) {
     POSTMARK_SERVER_TOKEN: "fixture",
     POSTMARK_WEBHOOK_USER: "postmark",
     POSTMARK_WEBHOOK_PASSWORD: "fixture-webhook-password",
-    POLICY_INBOX: "replies@example.org",
+    POLICY_INBOX: "policy@example.org",
     // Each email sent is also written here (tests/fixtures/outbox.ts).
     OUTBOX_DIR: outboxDir,
   };

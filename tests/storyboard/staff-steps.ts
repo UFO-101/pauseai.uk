@@ -90,8 +90,8 @@ export const loadingLine = (page: Page) =>
     return line.content !== "none" && line.opacity === "1";
   });
 
-/** The shared inbox in a fixture build (tests/fixture-env.mjs), where staff alerts go. */
-export const STAFF_INBOX = "replies@example.org";
+/** The policy inbox in a fixture build (tests/fixture-env.mjs), where staff alerts and forwarded replies go. */
+export const POLICY_INBOX = "policy@example.org";
 
 /** Bouncy McTestface MP, whose address doesn't exist. */
 export const bouncy = TEST_MPS.find((mp) => mp.postcode === "ZZ99ZH")!;
@@ -135,7 +135,7 @@ export async function postReply(request: APIRequestContext, database: string, me
     data: {
       OriginalRecipient: address,
       MailboxHash: "",
-      FromFull: { Email: "test-mp@example.org", Name: "Testy McTestface MP" },
+      FromFull: { Email: "test-mp@parliament.example", Name: "Testy McTestface MP" },
       ToFull: [{ Email: address, Name: "" }],
       CcFull: [],
       Subject: auto ? "Automatic reply: Please back a pause" : "Re: Please back a pause",

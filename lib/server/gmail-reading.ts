@@ -5,7 +5,16 @@ import { query } from "./db";
 import { handleDeliveryProblem } from "./delivery-problems";
 import { gmailAccess, gmailReadingState, saveGmailName, saveHistoryId } from "./gmail-accounts";
 import { keepingFailure, recordRun } from "./import-runs";
-import { allParts, fromAddress, messageIds, parseHeaders, parseMime, partText, type MimePart } from "./mime";
+import {
+  allParts,
+  decodeWords,
+  fromAddress,
+  messageIds,
+  parseHeaders,
+  parseMime,
+  partText,
+  type MimePart,
+} from "./mime";
 import { saveLetterReply } from "./outside-services/blobs";
 import {
   gmailHistory,
@@ -17,6 +26,7 @@ import {
   searchGmail,
   type GmailMessageHeaders,
 } from "./outside-services/gmail";
+import type { ReplyHandling } from "./letters";
 import { isMachineReply } from "./postmark-webhooks";
 
 // Reading the connected Gmail accounts, hourly: the replies to PauseAI's
@@ -33,6 +43,9 @@ const JOB = "read-gmail";
 /** The headers that say what a message is and what it answers. */
 const HEADERS = [
   "From",
+  "To",
+  "Cc",
+  "Reply-To",
   "Subject",
   "Message-ID",
   "In-Reply-To",
@@ -127,8 +140,22 @@ async function keepReply(
   await query("UPDATE letters SET replied_at = coalesce(replied_at, $2) WHERE id = $1", [letterId, at]);
   await query("INSERT INTO letter_events (letter_id, status, details) VALUES ($1, 'replied', $2)", [
     letterId,
-    JSON.stringify({ from: from.address, name: from.name, gmailMessageId: message.id }),
+    JSON.stringify({ from: from.address, name: from.name, ...addressed(message), gmailMessageId: message.id }),
   ]);
+}
+
+/**
+ * Who a message read from Gmail was to, copied to and asked replies to go
+ * to, a line each as it came, and that it went no further: it's already in
+ * the mailbox, for whoever reads it.
+ */
+function addressed(message: GmailMessageHeaders) {
+  const handling: ReplyHandling[] = [{ outcome: "not_forwarded", reason: "gmail" }];
+  const line = (name: string) => {
+    const value = message.headers.get(name);
+    return value === undefined ? undefined : decodeWords(value);
+  };
+  return { to: line("to"), cc: line("cc"), replyTo: line("reply-to"), handling };
 }
 
 /** Notes an automatic reply on its letter, once. */
@@ -140,7 +167,11 @@ async function noteAutoReply(letterId: number, message: GmailMessageHeaders): Pr
   if (seen) return false;
   await query("INSERT INTO letter_events (letter_id, status, details) VALUES ($1, 'auto_reply', $2)", [
     letterId,
-    JSON.stringify({ from: fromAddress(message.headers.get("from")).address, gmailMessageId: message.id }),
+    JSON.stringify({
+      from: fromAddress(message.headers.get("from")).address,
+      ...addressed(message),
+      gmailMessageId: message.id,
+    }),
   ]);
   return true;
 }

@@ -10,7 +10,7 @@ import type { DeliveryProblem, Purpose } from "./email";
 /** Postmark's webhook call, which on Netlify arrives on the netlify.app host. */
 const REQUEST = new Request("https://main--pauseaiuk.netlify.app/api/postmark/bounce", { method: "POST" });
 const BOUNCE: DeliveryProblem = {
-  address: "test-mp@example.org",
+  address: "test-mp@parliament.example",
   messageId: "msg-1",
   kind: "hard",
   reason: "Unknown user",
@@ -47,7 +47,7 @@ describeWithDatabase("handleDeliveryProblem", () => {
     const mp = await addTestMp();
     const id = await addTestLetter({ politicianId: mp, senderName: "Jane", senderEmail: "jane@example.com" });
     await query(
-      "INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id) VALUES ($1, $2, 'test-mp@example.org', 'sent', 'msg-1')",
+      "INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id) VALUES ($1, $2, 'test-mp@parliament.example', 'sent', 'msg-1')",
       [purpose, purpose === "letter" ? id : null],
     );
     return id;
@@ -63,7 +63,7 @@ describeWithDatabase("handleDeliveryProblem", () => {
       [mp],
     );
     await query(
-      "INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id, backend, sender) VALUES ('mailing', $1, 'test-mp@example.org', 'sent', 'msg-1', 'gmail', 'jo@pauseai.uk')",
+      "INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id, backend, sender) VALUES ('mailing', $1, 'test-mp@parliament.example', 'sent', 'msg-1', 'gmail', 'jo@pauseai.uk')",
       [id],
     );
     const sent = postmark();
@@ -81,17 +81,17 @@ describeWithDatabase("handleDeliveryProblem", () => {
     expect(await events()).toEqual([
       {
         status: "bounced",
-        details: { type: "HardBounce", reason: "Unknown user", email: "test-mp@example.org" },
+        details: { type: "HardBounce", reason: "Unknown user", email: "test-mp@parliament.example" },
       },
     ]);
-    expect(await query("SELECT address FROM email_blocks")).toEqual([{ address: "test-mp@example.org" }]);
+    expect(await query("SELECT address FROM email_blocks")).toEqual([{ address: "test-mp@parliament.example" }]);
     expect(sent).toEqual([
       expect.objectContaining({
         To: "replies@pauseai.uk",
         Subject: staffCopy.alert.subject("Testy McTestface MP"),
         TextBody: staffCopy.alert.body(
           "Testy McTestface MP",
-          "test-mp@example.org",
+          "test-mp@parliament.example",
           "Unknown user",
           "https://pauseai.uk/staff/politicians/blocked-emails",
         ),

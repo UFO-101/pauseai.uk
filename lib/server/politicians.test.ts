@@ -185,7 +185,11 @@ describeWithDatabase("politicians", () => {
   it("finds a test MP by their postcode", async () => {
     expect(await findTestMp("ZZ99ZZ")).toBeUndefined();
     const id = await addTestMp();
-    expect(await findTestMp("ZZ99ZZ")).toMatchObject({ id, name: "Testy McTestface MP", email: "test-mp@example.org" });
+    expect(await findTestMp("ZZ99ZZ")).toMatchObject({
+      id,
+      name: "Testy McTestface MP",
+      email: "test-mp@parliament.example",
+    });
     expect(await findTestMp("ZZ99ZS")).toBeUndefined();
   });
 

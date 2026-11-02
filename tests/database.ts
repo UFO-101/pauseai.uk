@@ -197,7 +197,7 @@ export async function addTestLetter(letter: {
 }
 
 /** Testy McTestface MP (ZZ99ZZ), as the sync adds them, without statuses. */
-export function addTestMp(email: string | null = "test-mp@example.org"): Promise<number> {
+export function addTestMp(email: string | null = "test-mp@parliament.example"): Promise<number> {
   return addTestPolitician({
     airtableId: null,
     name: "Testy McTestface MP",

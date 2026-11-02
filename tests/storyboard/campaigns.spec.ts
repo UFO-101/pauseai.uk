@@ -1,17 +1,7 @@
 import type { Page } from "@playwright/test";
-import type { OutboxEmail } from "../fixtures/outbox";
 import { campaigns, copy } from "@/lib/content/email-your-mp";
 import { site } from "@/lib/content/site";
-import {
-  fakeTurnstile,
-  fillLetter,
-  lookUpTestMp,
-  newestEmail,
-  newestEmailTo,
-  openLookup,
-  sendLetter,
-  WEBHOOK_AUTH,
-} from "../steps";
+import { fakeTurnstile, fillLetter, lookUpTestMp, newestEmail, openLookup, sendLetter, WEBHOOK_AUTH } from "../steps";
 import { BASE, emailFrame, expect, madeUpAddress, frame, test } from "./fixtures";
 import { wholePage } from "./settle";
 
@@ -30,30 +20,6 @@ function adsEvents(page: Page) {
 
 const PAGE = `${BASE}/campaigns/${campaigns[0].slug}`;
 
-/** The test MP's words in their reply: made up, but as long and as formal as a real one. */
-const MP_REPLY = `Dear Jane,
-
-Thank you for writing to me about the risks from frontier AI, and for sending the open letter and the policy briefing.
-
-I share many of your concerns. I have passed your letter to the Secretary of State for Science, Innovation and Technology, asking what the Government plans to legislate and when, and I will write to you again when I have a reply.
-
-I would be glad to meet to talk about this further. My office will be in touch to find a time at one of my constituency surgeries.
-
-Yours sincerely,
-
-Testy McTestface MP
-Member of Parliament for Testshire
-House of Commons, London SW1A 0AA`;
-
-/** The MP's reply to `letter`, quoting it under their words, as a mail app does. */
-function replyQuoting(letter: OutboxEmail): string {
-  const from = letter.From.replace(/^"([^"]*)" /, "$1 ");
-  const quoted = letter.TextBody.split("\n")
-    .map((line) => (line ? `> ${line}` : ">"))
-    .join("\n");
-  return `${MP_REPLY}\n\nOn ${letter.Date}, ${from} wrote:\n${quoted}`;
-}
-
 /** Looks up ZZ99ZZ, then checks the address is the write page's. */
 async function lookUp(page: Page) {
   await lookUpTestMp(page, BASE);
@@ -66,9 +32,9 @@ async function fillAndPreview(page: Page, email: string) {
 }
 
 test(
-  "Write to your MP (ZZ99ZZ): postcode, letter, preview, send, reply forwarded",
+  "Write to your MP (ZZ99ZZ): postcode, letter, preview, send, the letter the MP gets",
   { tag: "@phone" },
-  async ({ page, request }) => {
+  async ({ page }) => {
     // Each flow writes as its own sender, so its letter is its own in the outbox.
     const sender = madeUpAddress("Jane Smith", 21);
     await openLookup(page, BASE);
@@ -104,77 +70,18 @@ test(
     await expect(page.getByRole("status")).toHaveText(copy.sent.body("Testy McTestface MP"));
     expect(await adsEvents(page)).toBe(0);
 
-    const letter = newestEmail((email) => email.To.includes("test-mp@example.org") && !!email.Cc?.includes(sender))!;
+    const letter = newestEmail(
+      (email) => email.To.includes("test-mp@parliament.example") && !!email.Cc?.includes(sender),
+    )!;
     // The letter's own address, whatever its shape (lib/server/mp-letters.test.ts checks that), so main gets this far too.
     const address = letter.From.match(/<([^>]+@letters\.pauseai\.uk)>/)![1];
     expect(letter.From).toBe(`"Jane Smith via PauseAI" <${address}>`);
-    expect(letter.Bcc).toBe("replies@example.org");
+    expect(letter.Bcc).toBe("policy@example.org");
     expect(letter.Cc).toBe(`"Jane Smith" <${sender}>`);
     expect(letter.ReplyTo).toBeUndefined();
     expect(letter.TextBody).toMatch(/Jane Smith\n\n1 High Street, Testville\nZZ9 9ZZ$/);
     expect(letter.Attachments!.map((a) => a.Name)).toEqual(campaigns[0].attachments.map((a) => a.file));
     await emailFrame(page, letter, "the letter the MP gets");
-
-    // The MP replies only to the letter's address: both we and the sender get a copy.
-    const reply = await request.post(`${BASE}/api/postmark/inbound`, {
-      headers: { Authorization: WEBHOOK_AUTH },
-      data: {
-        OriginalRecipient: address,
-        // As Postmark sends it: what follows a + in the address, if anything.
-        MailboxHash: address.match(/\+([^@]+)@/)?.[1] ?? "",
-        FromFull: { Email: "test-mp@example.org", Name: "Testy McTestface MP" },
-        ToFull: [{ Email: address, Name: "" }],
-        CcFull: [],
-        Subject: `Re: ${letter.Subject}`,
-        // The fixed clock's time (FIXTURE_NOW) in the MP's time zone: the letter
-        // and our forward of the reply are sent then too, so nothing's out of order.
-        Date: "Fri, 16 Oct 2026 13:00:00 +0100",
-        TextBody: replyQuoting(letter),
-      },
-    });
-    expect(await reply.json()).toEqual({ forwarded: 2 });
-    const copied = newestEmailTo(sender)!;
-    expect(copied.TextBody).toContain(MP_REPLY);
-    expect(copied.TextBody).toContain("Date: Fri, 16 Oct 2026 13:00:00 +0100");
-    expect(copied.TextBody).toContain(copy.forwardedReply.toSender("Testy McTestface MP"));
-    expect(copied.Subject).toBe(`Re: ${letter.Subject}`);
-    // Answering it reaches the MP and the letter's address, so a follow-up is kept with the letter.
-    expect(copied.ReplyTo).toBe(`test-mp@example.org, ${address}`);
-    await emailFrame(page, copied, "the MP's reply, forwarded to the sender");
-    // Our copy is of this flow's reply: the subject carries the letter's, and the body the MP's words.
-    const ours = newestEmail(
-      (email) => email.To === "replies@example.org" && email.Subject === `Re: ${letter.Subject}`,
-    )!;
-    expect(ours.TextBody).toContain(MP_REPLY);
-
-    // The sender answers our copy: its Reply-To sends their answer to the MP
-    // and the letter's address, which copies it to us alone.
-    const followUp = await request.post(`${BASE}/api/postmark/inbound`, {
-      headers: { Authorization: WEBHOOK_AUTH },
-      data: {
-        OriginalRecipient: address,
-        MailboxHash: address.match(/\+([^@]+)@/)?.[1] ?? "",
-        FromFull: { Email: sender, Name: "Jane Smith" },
-        ToFull: [
-          { Email: "test-mp@example.org", Name: "" },
-          { Email: address, Name: "" },
-        ],
-        CcFull: [],
-        Subject: `Re: ${letter.Subject}`,
-        Date: "Fri, 16 Oct 2026 12:00:00 +0000",
-        TextBody: `Dear Mr McTestface,\n\nThank you for your reply. I'd be glad to meet at one of your surgeries.\n\nJane Smith`,
-      },
-    });
-    expect(await followUp.json()).toEqual({ forwarded: 1 });
-    // Nothing goes back to the sender: their newest email is still the MP's reply.
-    expect(newestEmailTo(sender)!.TextBody).toContain(copy.forwardedReply.toSender("Testy McTestface MP"));
-    const kept = newestEmail(
-      (email) => email.To === "replies@example.org" && email.Subject === `Re: ${letter.Subject}`,
-    )!;
-    expect(kept.TextBody).toContain(copy.forwardedReply.followUp("Jane Smith", "Testy McTestface MP"));
-    expect(kept.TextBody).toContain("I'd be glad to meet at one of your surgeries.");
-    expect(kept.ReplyTo).toBe(`${sender}, ${address}`);
-    await emailFrame(page, kept, "the sender's answer, copied to the shared inbox");
   },
 );
 
@@ -330,7 +237,7 @@ test("Format the letter and paste into it: the preview is what the MP gets", asy
   await frame(page, "the preview, formatted as written");
   await sendLetter(page);
 
-  const sent = newestEmail((email) => email.To.includes("test-mp@example.org") && !!email.Cc?.includes(sender))!;
+  const sent = newestEmail((email) => email.To.includes("test-mp@parliament.example") && !!email.Cc?.includes(sender))!;
   expect(sent.HtmlBody).toContain("<strong>Please reply.</strong>");
   expect(sent.HtmlBody).toMatch(/<ul>\s*<li><p>First reason<\/p><\/li>\s*<li><p>Second reason<\/p><\/li>\s*<\/ul>/);
   expect(sent.HtmlBody).toContain('See <a href="https://example.com/">this report</a> and red words.');

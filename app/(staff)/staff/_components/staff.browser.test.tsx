@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
-import { page, userEvent } from "vitest/browser";
+import { page, userEvent, type Locator } from "vitest/browser";
 import { ASK_STATUSES } from "@/lib/asks";
 import { campaignBySlug } from "@/lib/email-your-mp";
 import { campaigns } from "@/lib/content/email-your-mp";
@@ -21,7 +21,12 @@ import { exampleChanges } from "./ChangesTable.examples";
 import LettersTable, { LettersList, letterColumns, letterDownloadColumns } from "./LettersTable";
 import { historyOf, LetterHistory } from "./LetterHistory";
 import FindInGmail from "./FindInGmail";
-import { examplePauseaiLetterDetails, exampleSupporterLetterDetails } from "./LettersTable.examples";
+import {
+  exampleOlderRepliedLetterDetails,
+  examplePauseaiLetterDetails,
+  exampleRepliedLetterDetails,
+  exampleSupporterLetterDetails,
+} from "./LettersTable.examples";
 import { emptyLettersSearch, exampleLetter, exampleLetterCampaigns } from "./LettersTable.examples";
 import JobActions from "./JobActions";
 import LoginCard from "./LoginCard";
@@ -2934,6 +2939,86 @@ describe("LetterHistory", () => {
       .element(history().getByRole("link", { name: "jo@example.org" }))
       .toHaveAttribute("href", "/staff/politicians/blocked-emails?q=jo%40example.org");
     await expect.element(page.getByText("odd", { exact: true })).toBeVisible();
+  });
+
+  it("shows who each reply and the letter were to, and under each reply what was done with it and why", async () => {
+    await render(<LetterHistory events={historyOf(exampleRepliedLetterDetails)} />);
+    const lists = (item: Locator) =>
+      [...item.element().querySelectorAll("dl")].map((list) =>
+        [...list.querySelectorAll("dt")].map((name) => [name.textContent, name.nextElementSibling!.textContent]),
+      );
+    const [followUp, reply, auto, sent] = history().getByRole("listitem").all();
+    const why = copy.detail.handlingReasons;
+    const done = copy.detail.handling;
+    expect(lists(followUp)).toEqual([
+      [
+        [copy.detail.fields.from, "jane@example.com"],
+        [copy.detail.fields.name, "Jane Smith"],
+        [copy.detail.fields.to, "testy.mctestface.mp@parliament.uk, jane.smith.482913@letters.pauseai.uk"],
+      ],
+      [
+        [done.forwarded, `policy@pauseai.uk · 14 Oct 2026, 09:00${why.policy_inbox}`],
+        [done.not_forwarded, `jane@example.com${why.own_follow_up}`],
+      ],
+    ]);
+    expect(lists(reply)[0]).toContainEqual([copy.detail.fields.cc, "caseworker@parliament.uk"]);
+    expect(lists(reply)[0]).toContainEqual([copy.detail.fields.replyTo, "testy.mctestface.mp@parliament.uk"]);
+    expect(lists(reply)[1]).toEqual([
+      [done.forwarded, `policy@pauseai.uk · 13 Oct 2026, 09:00${why.policy_inbox}`],
+      [done.forwarded, `jane@example.com · 13 Oct 2026, 09:00${why.sender}`],
+    ]);
+    // One that went to no one has no one to name; the bounce's ID is only in its {}.
+    expect(lists(auto)).toEqual([
+      [[copy.detail.fields.from, "testy.mctestface.mp@parliament.uk"]],
+      [[done.nowhere, why.bounce_address]],
+    ]);
+    expect(lists(sent)).toEqual([
+      [
+        [copy.detail.fields.from, "jane.smith.482913@letters.pauseai.uk"],
+        [copy.detail.fields.to, "testy.mctestface.mp@parliament.uk"],
+        [copy.detail.fields.cc, "jane@example.com"],
+      ],
+    ]);
+  });
+
+  it("for replies recorded before what was done with them was, the forwards logged, a failed one with why", async () => {
+    await render(<LetterHistory events={historyOf(exampleOlderRepliedLetterDetails)} />);
+    const handling = (item: Locator) =>
+      [...item.element().querySelectorAll("dl:nth-of-type(2) dt")].map((name) => [
+        name.textContent,
+        name.nextElementSibling!.textContent,
+      ]);
+    const [followUp, reply, auto] = history().getByRole("listitem").all();
+    const done = copy.detail.handling;
+    expect(handling(followUp)).toEqual([[done.forwarded, "policy@pauseai.uk · 14 Oct 2026, 09:00"]]);
+    expect(handling(reply)).toEqual([
+      [done.forwarded, "policy@pauseai.uk · 13 Oct 2026, 09:00"],
+      [done.failed, `jane@example.com${copy.detail.handlingReasons.blocked}`],
+    ]);
+    // Nothing was logged between the automatic reply and the next.
+    expect(handling(auto)).toEqual([]);
+  });
+
+  it("puts who it was from and to first, in an email's order, however the database kept them", async () => {
+    const details = {
+      cc: "c@example.com",
+      spam: 1,
+      to: "t@example.com",
+      replyTo: "r@example.com",
+      from: "f@example.com",
+    };
+    await render(<LetterHistory events={[{ at: "2026-10-14T10:00:00Z", status: "replied", details }]} />);
+    const names = [...history().element().querySelectorAll("dt")].map((name) => name.textContent);
+    const fields = copy.detail.fields;
+    expect(names).toEqual([fields.from, fields.to, fields.cc, fields.replyTo, "spam"]);
+  });
+
+  it("for a logged forward Postmark refused, says so", () => {
+    const [, reply] = historyOf({
+      ...exampleOlderRepliedLetterDetails,
+      forwards: [{ at: "2026-10-13T09:00:01Z", address: "policy@pauseai.uk", outcome: "failed" }],
+    });
+    expect(reply.handling).toEqual([{ outcome: "failed", to: "policy@pauseai.uk", reason: "refused" }]);
   });
 
   it("says when nothing's recorded", async () => {

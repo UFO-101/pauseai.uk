@@ -129,7 +129,7 @@ This:
   accounts for jo@pauseai.uk (supporters, with a kept session) and
   samuel.whitlock@pauseai.uk (none) beside the migration's admin; and an audit log of
   all that. Dates are relative to when it runs. Without `TEST_MP_EMAIL`,
-  the test MPs still go in, with `test-mp@example.org`, since the letters go
+  the test MPs still go in, with `test-mp@parliament.example`, since the letters go
   to the fixture outbox anyway. The storyboard's flows start from an empty
   database, without this.
 
@@ -358,7 +358,7 @@ curl -u postmark:secret -H 'Content-Type: application/json' localhost:3000/api/p
 
 # A reply. Send it to a letter's address: its reply_hash in the letters table, @letters.pauseai.uk.
 curl -u postmark:secret -H 'Content-Type: application/json' localhost:3000/api/postmark/inbound \
-  -d '{"FromFull":{"Email":"test-mp@example.org","Name":"Testy"},"ToFull":[{"Email":"<reply_hash>@letters.pauseai.uk"}],"CcFull":[],"Subject":"Re: hello","TextBody":"Thanks."}'
+  -d '{"FromFull":{"Email":"test-mp@parliament.example","Name":"Testy"},"ToFull":[{"Email":"<reply_hash>@letters.pauseai.uk"}],"CcFull":[],"Subject":"Re: hello","TextBody":"Thanks."}'
 ```
 
 With `POLICY_INBOX` set, the reply is forwarded there too. With fixtures,

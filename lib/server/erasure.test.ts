@@ -26,9 +26,9 @@ async function janeWithEverything(mp: number): Promise<number> {
   await query("INSERT INTO letter_events (letter_id, status, details) VALUES ($1, 'sent', '{}')", [letterId]);
   await query(
     `INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id) VALUES
-       ('letter', $1, 'test-mp@example.org', 'sent', 'm1'),
+       ('letter', $1, 'test-mp@parliament.example', 'sent', 'm1'),
        ('forwarded-reply', $1, 'jane.fixture@example.com', 'sent', 'm2'),
-       ('forwarded-reply', $1, 'replies@example.org', 'sent', 'm3')`,
+       ('forwarded-reply', $1, 'policy@example.org', 'sent', 'm3')`,
     [letterId],
   );
   await query(
@@ -85,8 +85,8 @@ describeWithDatabase("eraseSupporter", () => {
     expect(await query("SELECT count(*)::int AS n FROM letter_events")).toEqual([{ n: 0 }]);
     // The letter's own send and the copy to the shared inbox stay, without their letter; the one to Jane goes.
     expect(await query("SELECT address, letter_id FROM email_sends ORDER BY id")).toEqual([
-      { address: "test-mp@example.org", letter_id: null },
-      { address: "replies@example.org", letter_id: null },
+      { address: "test-mp@parliament.example", letter_id: null },
+      { address: "policy@example.org", letter_id: null },
     ]);
     expect(await query("SELECT count(*)::int AS n FROM email_problems")).toEqual([{ n: 1 }]);
     expect(await query("SELECT count(*)::int AS n FROM opt_outs WHERE address = 'jane.fixture@example.com'")).toEqual([

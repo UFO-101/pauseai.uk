@@ -123,9 +123,9 @@ describeWithDatabase("recentLetters", () => {
     await query("UPDATE letters_from_supporters SET airtable_id = 'rec1', reply_hash = NULL WHERE id = 2");
     await query(
       `INSERT INTO email_sends (at, purpose, letter_id, address, outcome, message_id, backend, sender) VALUES
-         ('2026-10-01T09:00:00Z', 'letter', 1, 'test-mp@example.org', 'sent', 'pm-1', 'postmark', NULL),
-         ('2026-10-02T09:00:00Z', 'letter', 1, 'test-mp@example.org', 'sent', 'gm-1', 'gmail', 'staff@pauseai.uk'),
-         ('2026-10-03T09:00:00Z', 'letter', 1, 'test-mp@example.org', 'failed', NULL, 'postmark', NULL)`,
+         ('2026-10-01T09:00:00Z', 'letter', 1, 'test-mp@parliament.example', 'sent', 'pm-1', 'postmark', NULL),
+         ('2026-10-02T09:00:00Z', 'letter', 1, 'test-mp@parliament.example', 'sent', 'gm-1', 'gmail', 'staff@pauseai.uk'),
+         ('2026-10-03T09:00:00Z', 'letter', 1, 'test-mp@parliament.example', 'failed', NULL, 'postmark', NULL)`,
     );
     expect((await recentLetters()).map((l) => [l.id, l.backend])).toEqual([
       [2, "airtable"],
@@ -271,17 +271,24 @@ describeWithDatabase("a letter for its page", () => {
     const id = await addTestLetter({ politicianId: mp, senderName: "Jane Smith" });
     await query(
       `INSERT INTO email_sends (at, purpose, letter_id, address, outcome, message_id) VALUES
-         ('2026-10-01T09:00:00Z', 'letter', $1, 'test-mp@example.org', 'sent', 'pm-old'),
-         ('2026-10-02T09:00:00Z', 'letter', $1, 'test-mp@example.org', 'sent', 'pm-new'),
-         ('2026-10-03T09:00:00Z', 'letter', $1, 'test-mp@example.org', 'failed', NULL)`,
+         ('2026-10-01T09:00:00Z', 'letter', $1, 'test-mp@parliament.example', 'sent', 'pm-old'),
+         ('2026-10-02T09:00:00Z', 'letter', $1, 'test-mp@parliament.example', 'sent', 'pm-new'),
+         ('2026-10-03T09:00:00Z', 'letter', $1, 'test-mp@parliament.example', 'failed', NULL),
+         ('2026-10-05T09:00:00Z', 'forwarded-reply', $1, 'jane@example.com', 'refused', NULL),
+         ('2026-10-04T09:00:00Z', 'forwarded-reply', $1, 'policy@pauseai.uk', 'sent', 'fwd-1')`,
       [id],
     );
     const letter = await getSupporterLetter(id);
+    // Its replies' forwards, oldest first, for the history of replies recorded before their handling was.
+    expect(letter!.forwards).toEqual([
+      { at: "2026-10-04T09:00:00+00:00", address: "policy@pauseai.uk", outcome: "sent" },
+      { at: "2026-10-05T09:00:00+00:00", address: "jane@example.com", outcome: "refused" },
+    ]);
     expect(letter).toMatchObject({
       kind: "supporter",
       id,
       senderName: "Jane Smith",
-      mpEmail: "test-mp@example.org",
+      mpEmail: "test-mp@parliament.example",
       campaignAsk: "frontier-ai-letter",
       gmail: { mailbox: "policy@pauseai.uk", search: "rfc822msgid:pm-new@mtasv.net" },
     });
@@ -295,7 +302,7 @@ describeWithDatabase("a letter for its page", () => {
     expect(await getSupporterLetter(imported)).toMatchObject({
       gmail: {
         mailbox: null,
-        search: sentNearSearch("test-mp@example.org", "2026-10-01T12:00:00Z"),
+        search: sentNearSearch("test-mp@parliament.example", "2026-10-01T12:00:00Z"),
         inPolicyGroup: true,
       },
     });
@@ -303,7 +310,7 @@ describeWithDatabase("a letter for its page", () => {
     const lately = await addTestLetter({ politicianId: mp, sentAt: "2026-10-29T09:00:00Z" });
     expect((await getSupporterLetter(lately))!.gmail).toEqual({
       mailbox: null,
-      search: sentNearSearch("test-mp@example.org", "2026-10-29T09:00:00Z"),
+      search: sentNearSearch("test-mp@parliament.example", "2026-10-29T09:00:00Z"),
     });
     // One never sent has nothing to find; nor has one to an MP with no address.
     const unsent = await addTestLetter({ politicianId: mp });

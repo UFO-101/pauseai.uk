@@ -242,14 +242,16 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
     // address, so it's the From, the letter's own, whose replies are
     // recorded and forwarded to the sender and the policy team.
     const cc = (await isBlocked(form.email)) ? undefined : `"${headerName(form.name)}" <${form.email}>`;
+    let copied = !!cc;
     let result = await send({ ...email, Cc: cc }, "letter", id);
     // Postmark refused the sender's address, which is blocked now: the letter goes without their copy.
     if (!result.sent && result.reason === "failed" && cc && (await isBlocked(form.email))) {
+      copied = false;
       result = await send(email, "letter", id);
     }
     if (result.sent) {
       await query("UPDATE letters SET status = 'sent', sent_at = now() WHERE id = $1", [id]);
-      await logEvent(id, "sent", { messageId: result.id });
+      await logEvent(id, "sent", { from: address, to, cc: copied ? form.email : undefined, messageId: result.id });
       return { ok: true };
     }
     if (result.reason === "blocked") {

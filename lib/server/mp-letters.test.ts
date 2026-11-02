@@ -142,6 +142,10 @@ describe("mailboxName", () => {
 
 describeWithDatabase("submitLetter", () => {
   useTestDatabase();
+
+  /** What the letter's Sent event recorded. */
+  const sentDetails = async () =>
+    (await query<{ details: object }>("SELECT details FROM letter_events WHERE status = 'sent'"))[0].details;
   beforeEach(async () => {
     await addTestMp();
     await addTestPolitician();
@@ -163,7 +167,7 @@ describeWithDatabase("submitLetter", () => {
     expect(sent[0].ReplyTo).toBeUndefined();
     expect(sent[0]).toMatchObject({
       From: `"Jane Smith via PauseAI" <${address}>`,
-      To: '"Testy McTestface MP" <test-mp@example.org>',
+      To: '"Testy McTestface MP" <test-mp@parliament.example>',
       Bcc: "replies@pauseai.uk",
       Cc: '"Jane Smith" <jane@example.com>',
       Subject: "Subject",
@@ -192,7 +196,7 @@ describeWithDatabase("submitLetter", () => {
       {
         purpose: "letter",
         id: Number(letter.id),
-        address: "test-mp@example.org",
+        address: "test-mp@parliament.example",
         outcome: "sent",
         message_id: "msg-1",
       },
@@ -209,6 +213,13 @@ describeWithDatabase("submitLetter", () => {
     expect(
       (await query<{ status: string }>("SELECT status FROM letter_events ORDER BY id")).map((e) => e.status),
     ).toEqual(["sending", "sent"]);
+    // Sent records who it was from, to and copied to.
+    expect(await sentDetails()).toEqual({
+      from: expect.stringMatching(/^jane\.smith\.\d{6}@letters\.pauseai\.uk$/),
+      to: expect.stringMatching(/@/),
+      cc: "jane@example.com",
+      messageId: expect.any(String),
+    });
   });
 
   it("sends no Bcc when there's no shared inbox", async () => {
@@ -334,6 +345,7 @@ describeWithDatabase("submitLetter", () => {
     expect(await submitLetter(FORM)).toEqual({ ok: true });
     expect(sent).toHaveLength(1);
     expect(sent[0].Cc).toBeUndefined();
+    expect(await sentDetails()).not.toHaveProperty("cc");
   });
 
   it("sends the letter again without the Cc when Postmark refuses the sender's address", async () => {
@@ -349,6 +361,7 @@ describeWithDatabase("submitLetter", () => {
     expect(await submitLetter(FORM)).toEqual({ ok: true });
     expect(sent.map((email) => email.Cc)).toEqual(['"Jane Smith" <jane@example.com>', undefined]);
     expect(await query("SELECT status FROM letters")).toEqual([{ status: "sent" }]);
+    expect(await sentDetails()).not.toHaveProperty("cc");
   });
 
   it("doesn't send again when it failed for another reason, with the sender's address blocked or not", async () => {
@@ -361,7 +374,13 @@ describeWithDatabase("submitLetter", () => {
 
   it("keeps a letter to an MP whose address is blocked as not sent, and says why", async () => {
     const sent = postmark();
-    await recordProblem({ address: "test-mp@example.org", messageId: null, kind: "hard", reason: "", canReset: true });
+    await recordProblem({
+      address: "test-mp@parliament.example",
+      messageId: null,
+      kind: "hard",
+      reason: "",
+      canReset: true,
+    });
     expect(await submitLetter(FORM)).toEqual({ ok: false, status: 409, message: copy.errors.unreachable });
     expect(sent).toEqual([]);
     expect(await query("SELECT status FROM letters")).toEqual([{ status: "not_sent" }]);

@@ -148,7 +148,12 @@ export async function sendDueLetters({
         await query("UPDATE letters SET status = 'sent', sent_at = now() WHERE id = $1", [letter.id]);
         await query("INSERT INTO letter_events (letter_id, status, details) VALUES ($1, 'sent', $2)", [
           letter.id,
-          JSON.stringify({ from: mailing.sentFrom, messageId: result.messageId, threadId: result.threadId }),
+          JSON.stringify({
+            from: mailing.sentFrom,
+            to: letter.email,
+            messageId: result.messageId,
+            threadId: result.threadId,
+          }),
         ]);
         run.sent++;
       } else if (result.reason === "blocked") {
