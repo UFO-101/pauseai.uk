@@ -46,7 +46,7 @@ export default function NoteChanges({
   const id = `note-${note.id}-edit`;
   let buttons: ReactNode;
   if (!editable) {
-    buttons = <DeleteTwice name="id" value={String(note.id)} label={copy.delete} action={removing} />;
+    buttons = <DeleteTwice name="id" value={String(note.id)} label={copy.delete} action={removing} short />;
   } else if (!editing) {
     // Keyed, as is Save, so the button clicked isn't reused as Save, a submit button, which the click would then send.
     buttons = (
@@ -72,7 +72,7 @@ export default function NoteChanges({
         >
           {copy.cancel}
         </Button>
-        <DeleteTwice name="id" value={String(note.id)} label={copy.delete} action={removing} danger />
+        <DeleteTwice name="id" value={String(note.id)} label={copy.delete} action={removing} danger short />
       </>
     );
   }

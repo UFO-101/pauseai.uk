@@ -276,7 +276,7 @@ test("Notes on a supporter: add one with a link, edit it, and an admin deletes a
   await page.reload();
   await notes.last().getByRole("button", { name: staffCopy.notes.delete }).click();
   await frame(page, "as an admin, deleting the colleague's note: pressed once, asking for a second");
-  await notes.last().getByRole("button", { name: staffCopy.deleteIt }).click();
+  await notes.last().getByRole("button", { name: staffCopy.deleteItShort }).click();
   await expect(notes).toHaveCount(1);
   await frame(page, "deleted");
 

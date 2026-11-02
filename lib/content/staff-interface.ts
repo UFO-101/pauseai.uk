@@ -29,6 +29,8 @@ export const staffCopy = {
   },
   // Any Delete pressed twice (DeleteTwice), after its first press, asking for a second.
   deleteIt: "Press again to delete it",
+  // The same, short, where there's little room (a note's buttons).
+  deleteItShort: "Confirm?",
   // The dev login's box under the login card, in a fixture build only.
   devLogin: {
     title: "Development only: sign in now as",
@@ -1116,7 +1118,7 @@ export const staffCopy = {
     } as Record<string, string>,
     // At the foot of the page of one whose record has gone from Airtable, and who's had no letters.
     delete: {
-      button: "Delete",
+      button: "Delete politician",
       note: "Their record has gone from Airtable and nobody has written to them, so they can be deleted here too.",
     },
     // On an MP from Airtable, after the source, which links to their record there.

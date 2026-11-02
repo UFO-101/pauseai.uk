@@ -63,7 +63,7 @@ describe("Notes", () => {
     const del = first.getByRole("button", { name: copy.delete });
     expect(del.element().className).toBe(buttonClass({ variant: "danger", size: "small", fit: true }));
     await del.click();
-    await page.getByRole("button", { name: staffCopy.deleteIt }).click();
+    await page.getByRole("button", { name: staffCopy.deleteItShort }).click();
     await vi.waitFor(() => expect(remove).toHaveBeenCalled());
     expect((remove.mock.calls[0][0] as FormData).get("id")).toBe("3");
   });
@@ -78,7 +78,7 @@ describe("Notes", () => {
     await expect.element(first.getByRole("alert")).toHaveTextContent(copy.tooLate.edit);
     await expect.element(first.getByRole("textbox", { name: copy.note })).toBeVisible();
     await first.getByRole("button", { name: copy.delete }).click();
-    await page.getByRole("button", { name: staffCopy.deleteIt }).click();
+    await page.getByRole("button", { name: staffCopy.deleteItShort }).click();
     await expect.element(first.getByRole("alert")).toHaveTextContent(copy.tooLate.delete);
     // Cancel closes it, and what it said with it.
     await first.getByRole("button", { name: copy.cancel }).click();
