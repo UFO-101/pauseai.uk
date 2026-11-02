@@ -25,7 +25,12 @@ vi.mock("@/lib/content/people", async (importActual) => {
   return { ...actual, people: [...actual.people, named, framed, noPhoto] };
 });
 const post = (extra: Partial<BlogPost>): BlogPost => ({ ...examplePost, ...extra });
-const OTHER: PostSection = { path: "/elsewhere", backLink: "Back to elsewhere", moreHeading: "More from elsewhere" };
+const OTHER: PostSection = {
+  path: "/elsewhere",
+  backLink: "Back to elsewhere",
+  moreHeading: "More from elsewhere",
+  feedTitle: "Elsewhere",
+};
 
 describe("PostList", () => {
   it("leads with the newest post, then a pair, then the rest as a list", async () => {

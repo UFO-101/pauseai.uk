@@ -42,16 +42,24 @@ export type BlogPost = {
 /**
  * A list of posts with pages of their own: the blog, or the campaigns'
  * briefings (lib/content/briefings.tsx). Its posts' pages are at
- * `${path}/${slug}`, and link back with `backLink`.
+ * `${path}/${slug}`, and link back with `backLink`; its Atom feed is at
+ * `${path}/feed.xml` (lib/content/posts-feed.ts).
  */
 export type PostSection = {
   path: string;
   backLink: string;
   /** The heading over the older posts on the index. */
   moreHeading: string;
+  /** The feed's name in a feed reader. */
+  feedTitle: string;
 };
 
-export const BLOG: PostSection = { path: "/blog", backLink: "← All posts", moreHeading: "More from the blog" };
+export const BLOG: PostSection = {
+  path: "/blog",
+  backLink: "← All posts",
+  moreHeading: "More from the blog",
+  feedTitle: "PauseAI UK blog",
+};
 
 export function postAuthor(post: BlogPost): { person: Person; slug: string } | null {
   const person = people.find((p) => p.name === post.author);
@@ -2244,13 +2252,17 @@ export function newestFirst(list: BlogPost[]): BlogPost[] {
   return [...list].sort((a, b) => b.date.localeCompare(a.date));
 }
 
-/** Where the blog's Atom feed is served. */
-export const BLOG_FEED_PATH = "/blog/feed.xml";
+/** Where a section's Atom feed is served. */
+export function feedPath(section: PostSection): string {
+  return `${section.path}/feed.xml`;
+}
 
-/** The blog's Atom feed, as metadata's `alternates`, so a feed reader finds it from the blog's pages. */
-export const blogFeedLink = {
-  types: { "application/atom+xml": [{ url: BLOG_FEED_PATH, title: "PauseAI UK blog" }] },
-} satisfies Metadata["alternates"];
+/** A section's Atom feed, as metadata's `alternates`, so a feed reader finds it from the section's pages. */
+export function feedLink(section: PostSection) {
+  return {
+    types: { "application/atom+xml": [{ url: feedPath(section), title: section.feedTitle }] },
+  } satisfies Metadata["alternates"];
+}
 
 /** A post's page metadata. */
 export function postMetadata(post: BlogPost, section: PostSection): Metadata {
@@ -2273,7 +2285,7 @@ export function postMetadata(post: BlogPost, section: PostSection): Metadata {
     twitter: {
       images: [image ? image.src : "/images/open-graph/open-graph-1600-840.jpg"],
     },
-    alternates: { canonical: `${section.path}/${post.slug}`, ...blogFeedLink },
+    alternates: { canonical: `${section.path}/${post.slug}`, ...feedLink(section) },
   };
 }
 

@@ -1,5 +1,7 @@
 import type { ConsoleMessage } from "@playwright/test";
 import { isStaffRoute } from "../../app/sitemap";
+import { BLOG, feedPath, posts } from "../../lib/content/blog";
+import { BRIEFINGS, briefings } from "../../lib/content/briefings";
 import { ROUTES } from "../routes";
 import { BASE, expect, frame, story, test } from "./fixtures";
 import { hydrated } from "./settle";
@@ -102,14 +104,22 @@ for (const route of PUBLIC_ROUTES) {
   });
 }
 
-test("/blog/feed.xml", async ({ page, request }) => {
-  story("The blog links to its feed, for feed readers. The feed lists the blog's posts.");
-  await page.goto(`${BASE}/blog`);
-  const link = page.locator('head link[rel="alternate"][type="application/atom+xml"]');
-  await expect(link).toHaveAttribute("href", /\/blog\/feed\.xml$/);
-  const feed = await request.get(`${BASE}/blog/feed.xml`);
-  expect(feed.headers()["content-type"]).toBe("application/xml; charset=utf-8");
-  const xml = await feed.text();
-  expect(xml).toContain('<feed xmlns="http://www.w3.org/2005/Atom">');
-  expect(xml).toContain("<entry>");
-});
+// Each section's Atom feed, linked from its index and its posts' pages.
+for (const { opening, section, post } of [
+  { opening: "The blog links to its feed", section: BLOG, post: posts[0] },
+  { opening: "The briefings link to their feed", section: BRIEFINGS, post: briefings[0] },
+]) {
+  test(`${feedPath(section)}: the Atom feed, linked from the section's pages`, async ({ page, request }) => {
+    story(`${opening}, for feed readers, from the index and each post. The feed lists the posts.`);
+    const link = page.locator('head link[rel="alternate"][type="application/atom+xml"]');
+    for (const path of [section.path, `${section.path}/${post.slug}`]) {
+      await page.goto(`${BASE}${path}`);
+      await expect(link).toHaveAttribute("href", new RegExp(`${feedPath(section)}$`));
+    }
+    const feed = await request.get(`${BASE}${feedPath(section)}`);
+    expect(feed.headers()["content-type"]).toBe("application/xml; charset=utf-8");
+    const xml = await feed.text();
+    expect(xml).toContain('<feed xmlns="http://www.w3.org/2005/Atom">');
+    expect(xml).toContain(`/${post.slug}"/>`);
+  });
+}

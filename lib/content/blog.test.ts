@@ -212,12 +212,15 @@ describe("postJsonLd", () => {
 });
 
 describe("a section other than the blog", () => {
-  const section: PostSection = { path: "/campaigns/news", backLink: "Back", moreHeading: "More" };
+  const section: PostSection = { path: "/campaigns/news", backLink: "Back", moreHeading: "More", feedTitle: "News" };
 
   it("puts its posts' pages under its path", () => {
     const meta = postMetadata({ ...base, slug: "a", content: null }, section);
     expect(meta.openGraph?.url).toBe("https://pauseai.uk/campaigns/news/a/");
-    expect(meta.alternates?.canonical).toBe("/campaigns/news/a");
+    expect(meta.alternates).toEqual({
+      canonical: "/campaigns/news/a",
+      types: { "application/atom+xml": [{ url: "/campaigns/news/feed.xml", title: "News" }] },
+    });
     expect(postJsonLd({ ...base, slug: "a", content: null }, section).url).toBe("https://pauseai.uk/campaigns/news/a");
   });
 });

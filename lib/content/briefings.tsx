@@ -12,6 +12,7 @@ export const BRIEFINGS: PostSection = {
   path: "/campaigns/briefings",
   backLink: "← All briefings",
   moreHeading: "More briefings",
+  feedTitle: "⁂ PauseAI UK weekly briefings",
 };
 
 /** Marks citing a briefing's sources by number, each linking to its note: "2,3". */
