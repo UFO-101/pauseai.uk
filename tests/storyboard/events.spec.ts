@@ -38,7 +38,7 @@ test("Events get their owners by the rules, and one with none is given one", asy
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.title);
   await expect(page.getByRole("link", { name: copy.source.link })).toHaveAttribute("href", "/staff/import-data/luma");
   const talk = page.getByRole("row").filter({ hasText: "AI risk talk" });
-  await expect(talk.getByRole("cell").nth(3).getByText(copy.noOwner)).toBeVisible();
+  await expect(talk.getByRole("cell").nth(5).getByText(copy.noOwner)).toBeVisible();
   await frame(
     page,
     "the events page, on Future, soonest first: Joseph's but for Oxford's, with no owner in red, and none with a doc",
@@ -56,7 +56,7 @@ test("Events get their owners by the rules, and one with none is given one", asy
 
   await form.getByRole("button", { name: copy.save }).click();
   await expect(form).not.toBeVisible();
-  await expect(talk.getByRole("cell").nth(3).getByText("sean@pauseai.uk")).toBeVisible();
+  await expect(talk.getByRole("cell").nth(5).getByText("sean@pauseai.uk")).toBeVisible();
   await expect(talk.getByRole("link", { name: copy.doc })).toHaveAttribute(
     "href",
     "https://docs.google.com/document/d/oxford-talk-plan/edit",
@@ -79,7 +79,7 @@ test("Past events, latest first, sorted and filtered", async ({ page, request, f
   await page.goto(`${BASE}/staff/events`);
   await page.getByRole("link", { name: copy.tabs.past }).click();
   await expect(page).toHaveURL(`${BASE}/staff/events?when=past`);
-  const names = page.locator("tbody tr td:nth-child(1) a");
+  const names = page.locator("tbody tr td:nth-child(2) a");
   await expect(names).toHaveText(["PauseAI London March", "Glasgow street stall"]);
   await frame(page, "the Past tab, latest first: what they lacked only said, not in red");
 
