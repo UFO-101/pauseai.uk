@@ -2996,6 +2996,14 @@ describe("LetterHistory", () => {
     expect(handling(auto)).toEqual([]);
   });
 
+  it("for a logged forward Postmark refused, says so", () => {
+    const [, reply] = historyOf({
+      ...exampleOlderRepliedLetterDetails,
+      forwards: [{ at: "2026-10-13T09:00:01Z", address: "policy@pauseai.uk", outcome: "failed" }],
+    });
+    expect(reply.handling).toEqual([{ outcome: "failed", to: "policy@pauseai.uk", reason: "refused" }]);
+  });
+
   it("says when nothing's recorded", async () => {
     await render(<LetterHistory events={[]} />);
     await expect.element(page.getByText(copy.detail.noHistory)).toBeVisible();
