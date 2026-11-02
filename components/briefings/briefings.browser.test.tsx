@@ -42,8 +42,10 @@ describe("BudgetChart", () => {
     const rows = page.getByRole("row").elements().slice(1);
     expect(rows.map((row) => row.querySelector("th")!.firstChild!.textContent)).toEqual(["Lab", "Prize", "Shield"]);
     expect(rows.map((row) => row.querySelector("td")!.textContent)).toEqual(["30", "20", "10"]);
-    await expect.element(page.getByRole("columnheader", { name: "For" })).toBeVisible();
+    // What each is for has a column of its own on a wide screen, and goes under the name on a phone.
+    expect(page.getByRole("table").element().querySelector("thead th")!.textContent).toBe("For");
     expect(rows[0].querySelector("td:last-child")!.textContent).toBe("Tests things");
+    expect(rows[0].querySelector("th span")!.textContent).toBe("Tests things");
     // The largest item's bar is the longest.
     const bars = rows.map((row) => row.querySelector("td span")!.getBoundingClientRect().width);
     expect(bars[0]).toBeGreaterThan(bars[1]);
