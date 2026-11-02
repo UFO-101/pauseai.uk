@@ -222,6 +222,71 @@ test("A supporter's page, and an opt-out from Luma", async ({ page, request, flo
   await frame(page, "the audit log: the download of supporters, and no viewing");
 });
 
+test("Notes on a supporter: add one with a link, edit it, and an admin deletes another's", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await importLuma(request, BASE);
+  const [jane] = runSql(
+    flowDatabase,
+    "SELECT supporter_id FROM supporter_links WHERE matched_value = 'jane.fixture@example.com' LIMIT 1",
+  );
+  // A colleague's note from last week, which only its writer could have changed, and only for a day.
+  runSql(
+    flowDatabase,
+    `INSERT INTO notes (supporter_id, body, written_by, created_at)
+     VALUES (${jane}, 'Asked about the Manchester group.', 'sam.example@pauseai.uk', '2026-10-09T10:00:00Z')`,
+  );
+  await logInWithSupporters(page, flowDatabase);
+  await page.goto(`${BASE}/staff/supporters/${jane}`);
+  const card = page.getByRole("region", { name: staffCopy.notes.title });
+  const notes = card.getByRole("listitem");
+  await expect(notes).toHaveCount(1);
+  await expect(card.getByRole("button", { name: staffCopy.notes.edit })).toHaveCount(0);
+  await expect(card.getByRole("button", { name: staffCopy.notes.delete })).toHaveCount(0);
+  await frame(page, "Jane's page: a colleague's note from last week, under her letters, and Write a note");
+  await card.getByRole("button", { name: staffCopy.notes.write }).click();
+  await card
+    .getByRole("textbox", { name: staffCopy.notes.note })
+    .fill("Met her at the Leeds stall.\nSlides from her talk: https://example.org/slides/leeds");
+  await frame(page, "Write a note opened, with what a note should be, and one typed, with a link");
+  await card.getByRole("button", { name: staffCopy.notes.add }).click();
+  await expect(notes).toHaveCount(2);
+  await expect(card.getByRole("textbox", { name: staffCopy.notes.note })).toHaveCount(0);
+  await expect(notes.first().getByRole("link", { name: "https://example.org/slides/leeds" })).toHaveAttribute(
+    "href",
+    "https://example.org/slides/leeds",
+  );
+  await frame(page, "added, newest first, its address a link; hers she can edit or delete for a day");
+
+  await notes.first().getByRole("button", { name: staffCopy.notes.edit }).click();
+  await notes
+    .first()
+    .getByRole("textbox", { name: staffCopy.notes.note })
+    .fill("Met her at the Leeds stall in October.");
+  await frame(page, "editing it: Save, Cancel, and Delete in red");
+  await notes.first().getByRole("button", { name: staffCopy.notes.save }).click();
+  await expect(notes.first()).toContainText(`· ${staffCopy.notes.edited}`);
+  await expect(notes.first().getByRole("textbox")).toBeHidden();
+  await frame(page, "edited, and marked so");
+
+  // An admin can delete anyone's note.
+  addStaffAccount(flowDatabase, staffEmail(), ["admin", "supporters"]);
+  await page.reload();
+  await notes.last().getByRole("button", { name: staffCopy.notes.delete }).click();
+  await frame(page, "as an admin, deleting the colleague's note: pressed once, asking for a second");
+  await notes.last().getByRole("button", { name: staffCopy.deleteItShort }).click();
+  await expect(notes).toHaveCount(1);
+  await frame(page, "deleted");
+
+  await page.goto(`${BASE}/staff/audit-log`);
+  for (const action of ["add note", "edit note", "delete note"]) {
+    await expect(page.getByRole("cell", { name: action, exact: true })).toBeVisible();
+  }
+  await frame(page, "the audit log: who added, edited and deleted a note on Jane, not what it said");
+});
+
 test("Supporters merged by phone number: the old page redirects", async ({ page, request, flowDatabase }) => {
   await importLuma(request, BASE);
   // A newer guest gives Jane's mobile, written as people write it; the next pass over everyone's numbers makes them one.

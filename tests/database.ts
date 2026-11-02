@@ -45,6 +45,7 @@ const TABLES = [
   "members_erased",
   "named_places",
   "notable_people",
+  "notes",
   "opt_outs",
   "politicians",
   "postcode_places",

@@ -10,7 +10,8 @@ import { refreshSupportersList } from "./supporter-facts";
 // their registrations and contact, and their Luma ID is kept in
 // luma_erased so the import never copies them back; a member's record goes
 // the same way, its ID kept in members_erased; a message of a mailing
-// sent to them loses its address and merge values. What stays is what
+// sent to them loses its address and merge values; staff's notes on them
+// go with their row. What stays is what
 // exists to stop us mailing the address: email_problems, email_blocks and
 // opt_outs. The audit log entry carries the supporter's ID and the
 // request's reference, never a name or address. Luma's own copy is left

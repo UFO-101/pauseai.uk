@@ -263,11 +263,21 @@ const letterColumns: ListColumn<SupporterLetter>[] = [
 /**
  * A supporter's page: the band of what we've worked out about them, with
  * their name; a card of whether we'd contact them, a row per topic; beside
- * it, tables of the events they registered for and their letters; then a
+ * it, tables of the events they registered for and their letters, and
+ * under those `notes`; then a
  * quiet foot, each row folded: everything they did, newest first, and
  * everything we hold, `erase` (the button to erase them) at its end.
  */
-export default function SupporterDetails({ supporter, erase }: { supporter: Details; erase?: ReactNode }) {
+export default function SupporterDetails({
+  supporter,
+  erase,
+  notes,
+}: {
+  supporter: Details;
+  erase?: ReactNode;
+  /** The notes card (Notes), under their letters. */
+  notes?: ReactNode;
+}) {
   const { summary, activity, permissions, letters } = supporter;
   const usable = new Set(permissions.filter((p) => p.channel === "phone" && p.send !== "no").map((p) => p.address));
   const holding = held(supporter, usable);
@@ -298,6 +308,7 @@ export default function SupporterDetails({ supporter, erase }: { supporter: Deta
               <p className={styles.none}>{copy.detail.noLetters}</p>
             )}
           </section>
+          {notes}
         </div>
       </Grid>
       <div className={styles.foot}>

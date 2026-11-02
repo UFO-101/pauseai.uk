@@ -147,6 +147,12 @@ import {
   StaffAccountsTableExample,
   RemoveAccountFormExample,
   UnblockFormExample,
+  NotesExample,
+  NoteChangesExample,
+  NoteEntryExample,
+  NoteFormExample,
+  NoteHistoryExample,
+  NoteTextExample,
   AskFormExample,
   DeleteTwiceExample,
   MyGmailExample,
@@ -2155,7 +2161,7 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/PoliticianDetails.tsx",
       variants: [
         {
-          label: "A signer the team added, editable",
+          label: "A signer the team added, staff's notes in the history",
           render: () => (
             <StaffPage as="div">
               <PoliticianDetailsExample />
@@ -2434,6 +2440,96 @@ export const staff: Group = {
           ),
         },
       ],
+    },
+    {
+      name: "Notes",
+      file: "app/(staff)/staff/_components/Notes.tsx",
+      variants: [
+        {
+          label: "A supporter's notes, as their writer sees them: her newest she can still change",
+          render: () => (
+            <StaffPage as="div">
+              <NotesExample />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "As an admin, who can delete any",
+          render: () => (
+            <StaffPage as="div">
+              <NotesExample as="admin" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "None yet",
+          render: () => (
+            <StaffPage as="div">
+              <NotesExample as="empty" />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "NoteEntry",
+      file: "app/(staff)/staff/_components/Notes.tsx",
+      variants: [
+        { label: "In a history: her own, which she can change", render: () => <NoteEntryExample /> },
+        { label: "Someone else's, edited", render: () => <NoteEntryExample own={false} /> },
+      ],
+    },
+    {
+      name: "NoteChanges",
+      file: "app/(staff)/staff/_components/NoteChanges.tsx",
+      variants: [
+        { label: "Its writer's: Edit, which opens Save, Cancel and Delete", render: () => <NoteChangesExample /> },
+        { label: "An admin's, on someone else's: Delete alone", render: () => <NoteChangesExample editable={false} /> },
+      ],
+    },
+    {
+      name: "NoteHistory",
+      file: "app/(staff)/staff/_components/NoteHistory.tsx",
+      variants: [
+        {
+          label: "With Write a note, which drafts one at the top",
+          render: () => (
+            <StaffPage as="div">
+              <NoteHistoryExample />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Nothing yet",
+          render: () => (
+            <StaffPage as="div">
+              <NoteHistoryExample lines={false} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Without Write a note",
+          render: () => (
+            <StaffPage as="div">
+              <NoteHistoryExample writable={false} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "NoteForm",
+      file: "app/(staff)/staff/_components/NoteForm.tsx",
+      variants: [
+        { label: "Closed: the button that opens it", render: () => <NoteFormExample /> },
+        { label: "Opened, on a supporter, with what a note should be", render: () => <NoteFormExample opened /> },
+        { label: "Opened, on a politician", render: () => <NoteFormExample on="politicianId" opened /> },
+      ],
+    },
+    {
+      name: "NoteText",
+      file: "app/(staff)/staff/_components/Notes.tsx",
+      variants: [{ label: "With addresses, as links, on two lines", render: () => <NoteTextExample /> }],
     },
     {
       name: "UnblockForm",

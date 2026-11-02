@@ -107,4 +107,13 @@ export const exampleChanges: LoggedChange[] = [
   change(21, "jo@pauseai.uk", "apply held MP sync", { id: 13 }),
   change(22, "jo@pauseai.uk", "apply held politician sync", { id: 14 }),
   change(23, "jo@pauseai.uk", "discard held politician sync", { id: 15 }),
+  change(24, "jo@pauseai.uk", "add note", { noteId: 3, politicianId: 7 }, { politician: POLLY }),
+  change(
+    25,
+    "ada@pauseai.uk",
+    "delete note",
+    { noteId: 4, supporterId: 3 },
+    { supporter: { id: 3, name: "Jane Example" } },
+  ),
+  change(26, "jo@pauseai.uk", "edit note", { noteId: 5, supporterId: 6 }),
 ];

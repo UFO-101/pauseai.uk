@@ -116,6 +116,19 @@ export default function AuditDetail({ change, airtableTable }: { change: LoggedC
       take("id");
       lead.push(<Who named={change.supporter} href="/staff/supporters" name="" id={details.id} />);
       break;
+    // Which note isn't said: only whom it's about.
+    case "add note":
+    case "edit note":
+    case "delete note":
+      take("noteId", "politicianId", "supporterId");
+      lead.push(
+        details.politicianId ? (
+          <Who named={change.politician} href="/staff/politicians" name="" id={details.politicianId} />
+        ) : (
+          <Who named={change.supporter} href="/staff/supporters" name="" id={details.supporterId} />
+        ),
+      );
+      break;
     case "erase supporter":
       take("id");
       lead.push(copy.gone(String(details.id)));

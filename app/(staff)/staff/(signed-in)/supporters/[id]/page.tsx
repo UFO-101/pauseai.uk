@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { found } from "@/lib/found";
+import { now } from "@/lib/now";
+import { notesOn } from "@/lib/server/notes";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { getSupporter } from "@/lib/server/supporters";
 import { supporterId } from "@/lib/staff-search";
 import { canonicalSupporter, supporterTitle } from "@/lib/supporters";
+import { addNoteNow, deleteNoteNow, editNoteNow } from "../../../actions";
 import EraseLink from "../../../_components/EraseLink";
+import Notes from "../../../_components/Notes";
 import SupporterDetails from "../../../_components/SupporterDetails";
 import Breadcrumb from "../../../_components/Breadcrumb";
 
@@ -25,12 +29,27 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 /** One supporter: everything known of them, and what they did. */
 export default async function SupporterPage({ params }: Params) {
-  await requireStaff("supporters");
+  const staff = await requireStaff("supporters");
   const supporter = await supporterOf(params);
+  const notes = await notesOn({ supporterId: supporter.summary.id });
   return (
     <>
       <Breadcrumb href="/staff/supporters">{staffCopy.nav.supporters}</Breadcrumb>
-      <SupporterDetails supporter={supporter} erase={<EraseLink supporterId={supporter.summary.id} />} />
+      <SupporterDetails
+        supporter={supporter}
+        erase={<EraseLink supporterId={supporter.summary.id} />}
+        notes={
+          <Notes
+            notes={notes}
+            supporterId={supporter.summary.id}
+            reader={staff}
+            at={now().toISOString()}
+            add={addNoteNow}
+            edit={editNoteNow}
+            remove={deleteNoteNow}
+          />
+        }
+      />
     </>
   );
 }

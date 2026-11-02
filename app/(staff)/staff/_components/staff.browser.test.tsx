@@ -27,6 +27,7 @@ import JobActions from "./JobActions";
 import LoginCard from "./LoginCard";
 import LoginForm from "./LoginForm";
 import PoliticianDetails from "./PoliticianDetails";
+import { exampleNotes, exampleNotesAt, exampleNoteWriter } from "./Notes.examples";
 import PoliticianFilters, { politicianWords } from "./PoliticianFilters";
 import PoliticianTable, { politicianColumns, politicianContact } from "./PoliticianTable";
 import {
@@ -1149,32 +1150,58 @@ describe("PoliticianDetails", () => {
     airtableTable: "https://airtable.com/app/tbl",
   };
 
-  it("heads the page with their name and Airtable's markers, and a card of what's known beside one of asks", async () => {
+  const definitions = () =>
+    page
+      .getByRole("definition")
+      .all()
+      .map((dd) => dd.element().textContent);
+  const terms = () =>
+    page
+      .getByRole("term")
+      .all()
+      .map((dt) => dt.element().textContent);
+
+  it("heads the page with a band of who they are, beside counts, then their history beside their asks and Airtable's notes", async () => {
     const { rerender } = await render(
       <PoliticianDetails politician={{ ...MP, airtableId: null, email: null }} unblock={vi.fn()} {...none} />,
     );
-    await expect
-      .element(page.getByRole("heading", { level: 1 }))
-      .toHaveTextContent(`${MP.name}${staffCopy.politician.importantTarget}`);
-    // The party, status and country with their icons; the constituency is in the heading.
-    const icons = [...document.querySelectorAll("small")].map((small) => small.parentElement!.textContent);
-    expect(icons).toEqual([
-      `${staffCopy.fields.party}${MP.party}`,
-      `${staffCopy.politician.status}${staffCopy.personStatuses.in_office}`,
-      `${staffCopy.politician.country}${staffCopy.countries.england}`,
+    await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent(MP.name);
+    await expect.element(page.getByText(staffCopy.politician.importantTarget)).toBeVisible();
+    // Their party, status and nation, the party's and the nation's with an icon; how to write to them; where they came from.
+    expect(terms()).toEqual([
+      staffCopy.fields.party,
+      staffCopy.politician.status,
+      staffCopy.politician.country,
+      staffCopy.fields.email,
     ]);
-    expect(document.querySelectorAll("svg[aria-hidden]")).toHaveLength(2);
-    // How to write to them, then the notes, then where they came from.
-    const facts = page.getByRole("definition").all();
-    expect(facts.map((d) => d.element().textContent)).toEqual([staffCopy.politicians.noEmail, MP.salutation]);
-    await expect.element(page.getByRole("heading", { name: staffCopy.politician.writing })).toBeVisible();
+    expect(definitions()).toEqual([
+      MP.party,
+      staffCopy.personStatuses.in_office,
+      staffCopy.countries.england,
+      staffCopy.politicians.noEmail,
+      MP.salutation,
+    ]);
+    // Where they came from, quietly, at the top right.
     await expect
       .element(page.getByText(`${staffCopy.politician.source} ${staffCopy.politician.sources.staff}`))
       .toBeVisible();
-    // The notes keep their lines.
-    expect(getComputedStyle(page.getByText(/example fair/).element()).whiteSpace).toBe("pre-line");
+    expect(document.querySelectorAll("dd svg[aria-hidden]")).toHaveLength(2);
+    // The asks done: MP signed one.
+    const done = page.getByRole("link", { name: `1 ${staffCopy.politician.band.asksDone(1)}` });
+    await expect.element(done).toBeVisible();
+    expect(done.element().getAttribute("href")).toMatch(/#asks-title$/);
+    await expect
+      .element(page.getByRole("link", { name: `0 ${staffCopy.politician.band.lettersCounted(0)}` }))
+      .toBeVisible();
+    // Not PauseAI's emails: they're in the history.
+    expect(page.getByRole("link", { name: /from PauseAI/ }).query()).toBeNull();
+    // Airtable's notes keep their lines.
+    const airtable = page.getByRole("region", { name: staffCopy.politician.notes });
+    expect(getComputedStyle(airtable.getByText(/example fair/).element()).whiteSpace).toBe("pre-line");
     await expect.element(page.getByRole("region", { name: staffCopy.politician.statusesTitle })).toBeVisible();
     await expect.element(page.getByText(staffCopy.politician.noHistory)).toBeVisible();
+    // Without staff's notes, no way to write one.
+    await expect.element(page.getByRole("button", { name: staffCopy.notes.write })).not.toBeInTheDocument();
     // A personal connection is a tag too; none of the rest is there for someone without them.
     await rerender(
       <PoliticianDetails
@@ -1184,7 +1211,7 @@ describe("PoliticianDetails", () => {
       />,
     );
     await expect.element(page.getByText(staffCopy.politician.personalConnection)).toBeVisible();
-    await expect.element(page.getByRole("heading", { name: staffCopy.politician.notes })).not.toBeInTheDocument();
+    await expect.element(page.getByRole("region", { name: staffCopy.politician.notes })).not.toBeInTheDocument();
   });
 
   it("links their address, to write to them, and has no party, country or salutation for someone with none", async () => {
@@ -1196,16 +1223,7 @@ describe("PoliticianDetails", () => {
       />,
     );
     await expect.element(page.getByRole("link", { name: MP.email! })).toHaveAttribute("href", `mailto:${MP.email}`);
-    expect([...document.querySelectorAll("small")].map((small) => small.textContent)).toEqual([
-      staffCopy.politician.status,
-    ]);
-    // No salutation, no line for it.
-    expect(
-      page
-        .getByRole("term")
-        .all()
-        .map((dt) => dt.element().textContent),
-    ).toEqual([staffCopy.fields.email]);
+    expect(terms()).toEqual([staffCopy.politician.status, staffCopy.fields.email]);
   });
 
   it("sends Airtable's politicians to Airtable, saying if their record has gone; each says where they came from", async () => {
@@ -1223,9 +1241,7 @@ describe("PoliticianDetails", () => {
       } else {
         await expect.element(record).not.toBeInTheDocument();
         await expect.element(page.getByText(`${staffCopy.politician.source} ${source}`)).toBeVisible();
-        expect(page.getByRole("heading", { level: 1 }).element().textContent).toBe(
-          `${MP.name}${staffCopy.politicians.flags.test}`,
-        );
+        await expect.element(page.getByText(staffCopy.politicians.flags.test)).toBeVisible();
       }
       await unmount();
     }
@@ -1237,6 +1253,84 @@ describe("PoliticianDetails", () => {
       />,
     );
     await expect.element(page.getByText(staffCopy.politician.airtableRemoved("20 Oct 2026"))).toBeVisible();
+  });
+
+  it("drafts a note in a history with nothing in it yet", async () => {
+    await render(
+      <PoliticianDetails
+        politician={MP}
+        unblock={vi.fn()}
+        {...none}
+        notes={{
+          notes: [],
+          reader: exampleNoteWriter,
+          at: exampleNotesAt,
+          add: vi.fn(),
+          edit: vi.fn(),
+          remove: vi.fn(),
+        }}
+      />,
+    );
+    await expect.element(page.getByText(staffCopy.politician.noHistory)).toBeVisible();
+    await page.getByRole("button", { name: staffCopy.notes.write }).click();
+    await expect.element(page.getByText(staffCopy.politician.noHistory)).not.toBeInTheDocument();
+    await expect
+      .element(
+        page
+          .getByRole("list", { name: staffCopy.politician.historyTitle })
+          .getByRole("textbox", { name: staffCopy.notes.note }),
+      )
+      .toBeVisible();
+  });
+
+  it("puts staff's notes in the history, by when they were written, with the button to write one over it", async () => {
+    const add = vi.fn();
+    await render(
+      <PoliticianDetails
+        politician={MP}
+        unblock={vi.fn()}
+        {...none}
+        notes={{
+          notes: exampleNotes,
+          reader: exampleNoteWriter,
+          at: exampleNotesAt,
+          add,
+          edit: vi.fn(),
+          remove: vi.fn(),
+        }}
+      />,
+    );
+    const history = page.getByRole("list", { name: staffCopy.politician.historyTitle }).getByRole("listitem");
+    await expect.element(history.nth(0)).toBeVisible();
+    expect(history.nth(0).element().textContent).toContain(
+      `${staffTime(exampleNotes[0].createdAt)}${exampleNotes[0].body}${staffCopy.politician.history.note} · jo@pauseai.uk`,
+    );
+    await expect.element(history.nth(0).getByRole("button", { name: staffCopy.notes.edit })).toBeVisible();
+    // Write a note drafts it at the top of the history, as it will be, and goes while it's there.
+    const write = page.getByRole("button", { name: staffCopy.notes.write });
+    await write.click();
+    await expect.element(write).not.toBeInTheDocument();
+    await expect.element(page.getByRole("textbox", { name: staffCopy.notes.note })).toHaveFocus();
+    expect(history.nth(0).element().textContent).toContain(
+      `${staffTime(exampleNotesAt)}${staffCopy.politician.history.note} · jo@pauseai.uk`,
+    );
+    // Cancel takes it away.
+    await page.getByRole("button", { name: staffCopy.notes.cancel }).click();
+    await expect.element(page.getByRole("textbox")).not.toBeInTheDocument();
+    expect(history.nth(0).element().textContent).toContain(exampleNotes[0].body);
+    await write.click();
+    await page.getByRole("textbox", { name: staffCopy.notes.note }).fill("Met them");
+    await page.getByRole("button", { name: staffCopy.notes.add }).click();
+    expect(Object.fromEntries((add.mock.calls[0][0] as FormData).entries())).toEqual({
+      politicianId: String(MP.id),
+      body: "Met them",
+    });
+    await expect.element(page.getByRole("textbox")).not.toBeInTheDocument();
+    // Ctrl+Enter adds one too.
+    await write.click();
+    await page.getByRole("textbox", { name: staffCopy.notes.note }).fill("Again");
+    await userEvent.keyboard("{Control>}{Enter}{/Control}");
+    await vi.waitFor(() => expect(add).toHaveBeenCalledTimes(2));
   });
 
   it("says under their name what they are: in which house, for where, and if they're no longer in office", async () => {
@@ -1352,8 +1446,8 @@ describe("PoliticianDetails", () => {
         ]}
       />,
     );
-    const facts = page.getByRole("definition").all();
-    expect(facts.map((d) => d.element().textContent)).toEqual([MP.email, MP.salutation]);
+    // No constituency or nation, so no nation in the band.
+    expect(terms()).not.toContain(staffCopy.politician.country);
     // The sender leads to their supporter once they're one; the letters and replies sit among the audit log's entries by time.
     await expect
       .element(page.getByRole("link", { name: exampleLetter.senderName }))
@@ -1703,9 +1797,7 @@ describe("PoliticianDetails", () => {
       />,
     );
     const copy = staffCopy.politician.blocked;
-    expect(page.getByRole("heading", { level: 1 }).element().textContent).toBe(
-      `${MP.name}${staffCopy.politician.importantTarget}`,
-    );
+    expect(page.getByRole("heading", { level: 1 }).element().textContent).toBe(MP.name);
     const notice = page.getByRole("region", { name: copy.title });
     // A red strip: the warning icon at the left, the rest beside it.
     const strip = notice.element().firstElementChild!;
@@ -1726,13 +1818,13 @@ describe("PoliticianDetails", () => {
     await expect
       .element(notice.getByRole("link", { name: copy.wrong.link }))
       .toHaveAttribute("href", "/staff/import-data/politicians");
-    // The address is in bold in the strip, and in the facts a link to write to it.
+    // The address is a link to write to it in the band, and under it in bold in the strip.
     expect(
       page
         .getByText(MP.email!, { exact: true })
         .all()
         .map((el) => el.element().tagName),
-    ).toEqual(["STRONG", "A"]);
+    ).toEqual(["A", "STRONG"]);
     await page.getByLabelText(staffCopy.emails.note).fill("Fixed in Airtable");
     await page.getByRole("button", { name: staffCopy.emails.unblock }).click();
     await vi.waitFor(() => expect(sent).toEqual([{ address: MP.email, note: "Fixed in Airtable" }]));
@@ -2686,15 +2778,21 @@ describe("ChangesTable", () => {
       copy.run("13"),
       copy.run("14"),
       copy.run("15"),
+      "Polly Placeholder",
+      "Jane Example",
+      copy.gone("6"),
     ]);
     const href = (i: number) => rows[i].element().children[4].querySelector("a")?.getAttribute("href");
-    expect([0, 1, 4, 7, 8, 14].map(href)).toEqual([
+    expect([0, 1, 4, 7, 8, 14, 23, 24, 25].map(href)).toEqual([
       "/staff/politicians/7",
       undefined,
       undefined,
       "/staff/supporters/3",
       "/staff/supporters/4",
       importPath("sync-politicians"),
+      "/staff/politicians/7",
+      "/staff/supporters/3",
+      undefined,
     ]);
     // The Airtable ID leads to the record, in a new tab.
     const record = rows[2].getByRole("link", { name: "recPolly" });

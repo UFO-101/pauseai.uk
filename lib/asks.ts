@@ -18,6 +18,14 @@ export type Asker = "supporters" | "pauseai" | "controlai";
 /** Each ask's status for one person, keyed by the ask's slug. */
 export type AskStatuses = Partial<Record<string, AskStatus>>;
 
+/** The answers that mean they did what was asked: signed the letter, or are going to the event, or meeting our staff there. */
+const DONE_STATUSES: readonly AskStatus[] = ["signed", "going", "meeting_staff"];
+
+/** How many asks someone did, by their answers (DONE_STATUSES). */
+export function asksDone(statuses: Record<string, { status: AskStatus }>): number {
+  return Object.values(statuses).filter((answer) => DONE_STATUSES.includes(answer.status)).length;
+}
+
 /** Where an ask's name leads: its row on the asks page, picked out and scrolled to (AsksTable). */
 export const askHref = (slug: string) => `/staff/asks?ask=${slug}#${slug}`;
 

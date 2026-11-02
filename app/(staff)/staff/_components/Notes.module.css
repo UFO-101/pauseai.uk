@@ -1,0 +1,80 @@
+/* A supporter's notes, one under another, a rule between each. */
+.notes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notes li {
+  padding-block: var(--space-3);
+}
+
+.notes li + li {
+  border-top: 1px solid var(--border);
+}
+
+.notes li:first-child {
+  padding-top: 0;
+}
+
+/* One note: its text, who wrote it, and the buttons to change it. */
+.note {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: start;
+}
+
+/* As it was typed: its line breaks kept, a long address broken to fit. */
+.body {
+  margin: 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* Who wrote it and when, with its buttons at the right. */
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+  justify-self: stretch;
+}
+
+/* At the right, even wrapped under a long address. */
+.meta > .buttons {
+  margin-left: auto;
+}
+
+/* The field, editing, the note's width. */
+.note form {
+  justify-self: stretch;
+}
+
+.none {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.add {
+  margin-top: var(--space-3);
+}
+
+.guidance {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+/* A form's buttons side by side, each its own width: Add note and Cancel; Save, Cancel and Delete. */
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Why a note wasn't changed, under its buttons. */
+.refused {
+  margin: 0;
+  font-size: var(--text-sm);
+}

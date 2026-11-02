@@ -32,6 +32,21 @@
   line-height: 1.15;
 }
 
+/* At the far right of the title's line, small and faint. */
+.corner {
+  align-self: flex-start;
+  margin: 0 0 0 auto;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+/* Under the title, close to it, in grey. */
+.subtitle {
+  margin: calc(-1 * var(--space-2)) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--text-lg);
+}
+
 /* The facts, with what's aside level with their tops. */
 .row {
   display: flex;

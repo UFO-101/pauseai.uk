@@ -41,7 +41,7 @@ export async function recentChanges(page = 1, limit: number | null = AUDIT_PAGE_
        (SELECT json_build_object('id', p.id, 'name', p.name) FROM notable_people p
         WHERE p.id::text = CASE WHEN a.action = ANY($2) THEN a.details->>'id' ELSE a.details->>'politicianId' END) AS politician,
        (SELECT json_build_object('id', s.id, 'name', s.name) FROM supporters_listed s
-        WHERE s.id = CASE WHEN a.action = 'view supporter' THEN (a.details->>'id')::bigint END) AS supporter
+        WHERE s.id = CASE WHEN a.action = 'view supporter' THEN a.details->>'id' ELSE a.details->>'supporterId' END::bigint) AS supporter
      FROM (SELECT * FROM audit_log ORDER BY at DESC, id DESC LIMIT $1 OFFSET $3) a ORDER BY a.at DESC, a.id DESC`,
     [limit, POLITICIAN_ACTIONS, (page - 1) * (limit ?? 0)],
   );

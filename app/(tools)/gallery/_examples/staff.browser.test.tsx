@@ -8,6 +8,12 @@ import {
   DueTimeFieldsExample,
   HeldSyncExample,
   MailingWriterExample,
+  NoteChangesExample,
+  NoteEntryExample,
+  NoteFormExample,
+  NoteHistoryExample,
+  NotesExample,
+  NoteTextExample,
   PoliticianDetailsExample,
   PoliticianTableEmptyExample,
   PoliticianTableExample,
@@ -28,6 +34,64 @@ describe("the staff examples", () => {
     await expect.element(page.getByText(/^rescheduleMailingNow\(\{"id":"5"/)).toBeVisible();
   });
 
+  it("logs a new note, as each reader sees the notes", async () => {
+    const { unmount } = await render(<NotesExample as="admin" />);
+    await expect.element(page.getByRole("button", { name: staffCopy.notes.delete }).nth(2)).toBeVisible();
+    await unmount();
+    await render(<NotesExample as="empty" />);
+    await page.getByRole("button", { name: staffCopy.notes.write }).click();
+    await page.getByRole("textbox", { name: staffCopy.notes.note }).fill("Met them");
+    await page.getByRole("button", { name: staffCopy.notes.add }).click();
+    await expect.element(log().nth(0)).toHaveTextContent('add({"supporterId":"1","body":"Met them"})');
+  });
+
+  it("shows a note's text with its links", async () => {
+    const { unmount } = await render(<NotesExample />);
+    await expect.element(page.getByRole("button", { name: staffCopy.notes.edit })).toBeVisible();
+    await unmount();
+    await render(<NoteTextExample />);
+    await expect.element(page.getByRole("link", { name: "www.example.com/rota" })).toBeVisible();
+  });
+
+  it("logs a note drafted at the top of a history, and has no Write a note without its action", async () => {
+    const { unmount } = await render(<NoteHistoryExample lines={false} />);
+    await page.getByRole("button", { name: staffCopy.notes.write }).click();
+    await page.getByRole("textbox", { name: staffCopy.notes.note }).fill("Met them");
+    await page.getByRole("button", { name: staffCopy.notes.add }).click();
+    await expect.element(log().nth(0)).toHaveTextContent('add({"politicianId":"7","body":"Met them"})');
+    await unmount();
+    const plain = await render(<NoteHistoryExample writable={false} />);
+    await expect.element(page.getByRole("button", { name: staffCopy.notes.write })).not.toBeInTheDocument();
+    await plain.unmount();
+    await render(<NoteHistoryExample />);
+    await expect.element(page.getByText("Email from PauseAI: Example Mailing")).toBeVisible();
+  });
+
+  it("logs a note's edit, and gives an admin Delete alone", async () => {
+    const { unmount } = await render(<NoteChangesExample />);
+    await page.getByRole("button", { name: staffCopy.notes.edit }).click();
+    await page.getByRole("button", { name: staffCopy.notes.save }).click();
+    await expect.poll(() => log().nth(0).query()?.textContent).toMatch(/^edit\(/);
+    await unmount();
+    await render(<NoteChangesExample editable={false} />);
+    await expect.element(page.getByRole("button", { name: staffCopy.notes.delete })).toBeVisible();
+    await expect.element(page.getByRole("button", { name: staffCopy.notes.edit })).not.toBeInTheDocument();
+  });
+
+  it("shows a note in a history, its own or another's, and logs the form on a politician", async () => {
+    const { unmount } = await render(<NoteEntryExample />);
+    await expect.element(page.getByRole("button", { name: staffCopy.notes.edit })).toBeVisible();
+    await unmount();
+    const other = await render(<NoteEntryExample own={false} />);
+    await expect.element(page.getByText(staffCopy.notes.edited, { exact: false })).toBeVisible();
+    await other.unmount();
+    await render(<NoteFormExample on="politicianId" opened />);
+    await expect.element(page.getByRole("textbox", { name: staffCopy.notes.note })).not.toHaveFocus();
+    await page.getByRole("textbox", { name: staffCopy.notes.note }).fill("Met them");
+    await page.getByRole("button", { name: staffCopy.notes.add }).click();
+    await expect.element(log().nth(0)).toHaveTextContent('add({"politicianId":"1","body":"Met them"})');
+  });
+
   it("logs a held sync's apply and discard", async () => {
     await render(<HeldSyncExample />);
     await page.getByRole("button", { name: staffCopy.syncs.apply }).click();
@@ -38,7 +102,10 @@ describe("the staff examples", () => {
 
   it("logs removing a politician's signature on their page", async () => {
     await render(<PoliticianDetailsExample />);
-    await page.getByText(staffCopy.politician.edit, { exact: true }).click();
+    await page
+      .getByRole("region", { name: staffCopy.politician.statusesTitle })
+      .getByText(staffCopy.politician.edit, { exact: true })
+      .click();
     await page.getByLabelText(staffCopy.politician.note).fill("Their office wrote");
     await page.getByRole("button", { name: staffCopy.politicians.unmarkSigned }).click();
     await expect

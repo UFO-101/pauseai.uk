@@ -29,6 +29,8 @@ export const staffCopy = {
   },
   // Any Delete pressed twice (DeleteTwice), after its first press, asking for a second.
   deleteIt: "Press again to delete it",
+  // The same, short, where there's little room (a note's buttons).
+  deleteItShort: "Confirm?",
   // The dev login's box under the login card, in a fixture build only.
   devLogin: {
     title: "Development only: sign in now as",
@@ -1053,7 +1055,7 @@ export const staffCopy = {
     // Over an ask's title, leading into it: who asked them, by staffCopy.asks.askedBy, if we know, and to do what.
     askedThem: (who: string, kind: string) =>
       `${who ? `${who} asked` : "Asked"} them to ${kind === "letter" ? "sign" : "attend"}`,
-    // The box at the top of their page: where they came from, and each campaign's status.
+    // At the top right of their page, before where they came from.
     source: "Source:",
     sources: {
       airtable: "Airtable",
@@ -1075,7 +1077,8 @@ export const staffCopy = {
     // The fields of the box at the top.
     status: "Status",
     country: "Nation",
-    notes: "Notes",
+    // Over the notes Airtable has on them, which are changed there.
+    notes: "Notes from Airtable",
     // Over how to write to them: their address and salutation.
     writing: "Writing to them",
     // Airtable's markers, as tags by their name.
@@ -1083,6 +1086,12 @@ export const staffCopy = {
     personalConnection: "Personal connection",
     // When their record was no longer in Airtable.
     airtableRemoved: (when: string) => `No longer in Airtable since ${when}`,
+    // The band at the top of their page: where their record came from, and the counts at its right.
+    band: {
+      // The asks they signed, are going to, or are meeting our staff at.
+      asksDone: (n: number) => (n === 1 ? "ask done" : "asks done"),
+      lettersCounted: (n: number) => (n === 1 ? "letter from a supporter" : "letters from supporters"),
+    },
     historyTitle: "History",
     // A status set or cleared, in the history: around the ask's name.
     statusSet: (status: string) => ({ before: `${status} '`, after: "'" }),
@@ -1097,6 +1106,8 @@ export const staffCopy = {
       "unsigned-letter-replied": "Answered a letter",
       // A letter of one of PauseAI's mailings, by its mailing, and how it was written.
       "pauseai-letter": "Email from PauseAI:",
+      // A staff member's note on them, before who wrote it.
+      note: "Note",
       "add politician": "Added",
       "edit politician": "Details edited",
       "remove politician": "No longer in Airtable",
@@ -1105,11 +1116,11 @@ export const staffCopy = {
     } as Record<string, string>,
     // At the foot of the page of one whose record has gone from Airtable, and who's had no letters.
     delete: {
-      button: "Delete",
+      button: "Delete politician",
       note: "Their record has gone from Airtable and nobody has written to them, so they can be deleted here too.",
     },
     // On an MP from Airtable, after the source, which links to their record there.
-    editInAirtable: ", update there.",
+    editInAirtable: ", update there",
     // On an ask that isn't set by hand: where its statuses come from.
     importedAsk: "set each night by an import",
     personalised: "personalised",
@@ -1555,6 +1566,30 @@ export const staffCopy = {
     // The button that opens the downloads, of every page, and each format in its menu.
     download: "Download",
     formats: { csv: "CSV, for a spreadsheet", json: "JSON, for an agent", vcf: "vCard, for WhatsApp" },
+  },
+  // The notes on a supporter's or a politician's page, and the form to add one.
+  notes: {
+    title: "Notes",
+    none: "No notes yet.",
+    // After who wrote it and when, once it's been edited.
+    edited: "edited",
+    // The field's name, for a screen reader.
+    note: "Note",
+    // Under a note's buttons, when the server wouldn't change it: its writer's day is up.
+    tooLate: {
+      edit: "Notes can only be edited for 24 hours.",
+      delete: "Notes can only be deleted for 24 hours.",
+    },
+    // The button that opens the field to write one, and the one that closes it unsent.
+    write: "Write a note",
+    cancel: "Cancel",
+    add: "Add note",
+    edit: "Edit",
+    save: "Save",
+    delete: "Delete",
+    // Under the field on a supporter's page: what a note about them should be.
+    guidance:
+      "Only write notes you'd be happy for them to read (as they can via GDPR). Avoid writing about health, beliefs or private life.",
   },
   changes: {
     title: "Audit log",

@@ -32,6 +32,7 @@ describeWithDatabase("the change log", () => {
     await logChange("sync", "edit politician", { id: polly, name: "Polly Placeholder" });
     await logChange("sync", "remove politician", { id: 999 });
     await logChange("jo@pauseai.uk", "view supporter", { id: 1 });
+    await logChange("jo@pauseai.uk", "add note", { noteId: 1, supporterId: 1 });
     await logChange("jo@pauseai.uk", "erase supporter", { id: 1 });
     const about = (await recentChanges()).changes.map(({ action, politician, supporter }) => [
       action,
@@ -40,6 +41,7 @@ describeWithDatabase("the change log", () => {
     ]);
     expect(about).toEqual([
       ["erase supporter", null, null],
+      ["add note", null, { id: 1, name: null }],
       ["view supporter", null, { id: 1, name: null }],
       ["remove politician", null, null],
       ["edit politician", { id: polly, name: "Polly Placeholder" }, null],

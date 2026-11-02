@@ -174,6 +174,7 @@ BEGIN
       WHERE m.supporter_id = pair.from_id
         AND EXISTS (SELECT 1 FROM messages_to_supporters o WHERE o.supporter_id = pair.into_id AND o.mailing_id = m.mailing_id);
       UPDATE messages_to_supporters SET supporter_id = pair.into_id WHERE supporter_id = pair.from_id;
+      UPDATE notes SET supporter_id = pair.into_id WHERE supporter_id = pair.from_id;
       UPDATE supporter_merges SET into_id = pair.into_id WHERE into_id = pair.from_id;
       INSERT INTO supporter_merges (from_id, into_id) VALUES (pair.from_id, pair.into_id);
       DELETE FROM supporters WHERE id = pair.from_id;
@@ -1517,6 +1518,35 @@ ALTER TABLE public.notable_people ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTI
 );
 
 --
+-- Name: notes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.notes (
+    id bigint NOT NULL,
+    supporter_id bigint,
+    notable_person_id bigint,
+    body text NOT NULL,
+    written_by text NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    edited_at timestamp with time zone,
+    CONSTRAINT notes_body_check CHECK ((btrim(body) <> ''::text)),
+    CONSTRAINT notes_check CHECK (((supporter_id IS NULL) <> (notable_person_id IS NULL)))
+);
+
+--
+-- Name: notes_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.notes ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.notes_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
 -- Name: opt_outs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -2002,6 +2032,13 @@ ALTER TABLE ONLY public.notable_people
     ADD CONSTRAINT notable_people_pkey PRIMARY KEY (id);
 
 --
+-- Name: notes notes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notes
+    ADD CONSTRAINT notes_pkey PRIMARY KEY (id);
+
+--
 -- Name: opt_outs opt_outs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2286,6 +2323,18 @@ CREATE INDEX message_events_message ON public.message_events USING btree (messag
 CREATE INDEX notable_people_email ON public.notable_people USING btree (lower(email));
 
 --
+-- Name: notes_notable_person; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX notes_notable_person ON public.notes USING btree (notable_person_id) WHERE (notable_person_id IS NOT NULL);
+
+--
+-- Name: notes_supporter; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX notes_supporter ON public.notes USING btree (supporter_id) WHERE (supporter_id IS NOT NULL);
+
+--
 -- Name: opt_outs_open; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2498,6 +2547,20 @@ ALTER TABLE ONLY public.messages_to_supporters
 
 ALTER TABLE ONLY public.messages_to_supporters
     ADD CONSTRAINT messages_to_supporters_supporter_id_fkey FOREIGN KEY (supporter_id) REFERENCES public.supporters(id) ON DELETE SET NULL;
+
+--
+-- Name: notes notes_notable_person_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notes
+    ADD CONSTRAINT notes_notable_person_id_fkey FOREIGN KEY (notable_person_id) REFERENCES public.notable_people(id) ON DELETE CASCADE;
+
+--
+-- Name: notes notes_supporter_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notes
+    ADD CONSTRAINT notes_supporter_id_fkey FOREIGN KEY (supporter_id) REFERENCES public.supporters(id) ON DELETE CASCADE;
 
 --
 -- Name: politicians politicians_notable_person_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -

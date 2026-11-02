@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { askFrom, eraseFrom, idFrom, permissionsFrom, statusFrom, unblockFrom } from "./staff-forms";
+import {
+  askFrom,
+  eraseFrom,
+  idFrom,
+  noteEditFrom,
+  noteFrom,
+  permissionsFrom,
+  statusFrom,
+  unblockFrom,
+} from "./staff-forms";
 
 function form(fields: Record<string, string | Blob>) {
   const data = new FormData();
@@ -121,5 +130,24 @@ describe("askFrom", () => {
     expect(askFrom(form({ title: "A", kind: "event", date: "2026-13-45" }))).toBeUndefined();
     expect(askFrom(form({ title: "A", kind: "event", url: "http://example.org" }))).toBeUndefined();
     expect(askFrom(form({ title: "A", kind: "event", url: "/events" }))).toBeUndefined();
+  });
+});
+
+describe("noteFrom and noteEditFrom", () => {
+  it("read whom a new note is on and what it says, trimmed, its lines kept", () => {
+    expect(noteFrom(form({ supporterId: "3", body: " One\nTwo " }))).toEqual({
+      target: { supporterId: 3 },
+      body: "One\nTwo",
+    });
+    expect(noteFrom(form({ politicianId: "4", body: "Hi" }))).toEqual({ target: { politicianId: 4 }, body: "Hi" });
+    expect(noteEditFrom(form({ id: "5", body: "Fixed" }))).toEqual({ id: 5, body: "Fixed" });
+  });
+
+  it("refuse a note on no one, on two, or saying nothing", () => {
+    expect(noteFrom(form({ body: "Hi" }))).toBeUndefined();
+    expect(noteFrom(form({ supporterId: "3", politicianId: "4", body: "Hi" }))).toBeUndefined();
+    expect(noteFrom(form({ supporterId: "3", body: "  " }))).toBeUndefined();
+    expect(noteEditFrom(form({ id: "x", body: "Fixed" }))).toBeUndefined();
+    expect(noteEditFrom(form({ id: "5", body: "" }))).toBeUndefined();
   });
 });

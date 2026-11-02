@@ -104,3 +104,17 @@
   margin: 0;
   font-size: var(--text-lg);
 }
+
+/* A title with its action at the right; a form the action opens takes
+   the line under them. */
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.action:has(form) {
+  flex-basis: 100%;
+}

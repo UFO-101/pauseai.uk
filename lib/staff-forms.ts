@@ -89,3 +89,24 @@ export function askFrom(form: FormData): AskForm | undefined {
   if (url && !url.startsWith("https://")) return undefined;
   return { title, kind: kind as AskKind, date: date || null, url: url || null, askedBy: [...new Set(askedBy)] };
 }
+
+export type NoteForm = { target: { supporterId: number } | { politicianId: number }; body: string };
+
+/** A new note: on whom, by a supporter's or a politician's ID, and what it says, which must be something. */
+export function noteFrom(form: FormData): NoteForm | undefined {
+  const supporterId = idFrom(form, "supporterId");
+  const politicianId = idFrom(form, "politicianId");
+  const body = text(form, "body");
+  if (!body || !supporterId === !politicianId) return undefined;
+  return { target: supporterId ? { supporterId } : { politicianId: Number(politicianId) }, body };
+}
+
+export type NoteEditForm = { id: number; body: string };
+
+/** A note's new text: which note, and what it says now, which must be something. */
+export function noteEditFrom(form: FormData): NoteEditForm | undefined {
+  const id = idFrom(form);
+  const body = text(form, "body");
+  if (!id || !body) return undefined;
+  return { id, body };
+}

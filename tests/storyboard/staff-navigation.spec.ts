@@ -138,11 +138,9 @@ test("Open a politician's page and sort the list", async ({ page, request, flowD
   await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/politicians?flag=test`);
   await page.getByRole("link", { name: "Testy McTestface MP" }).click();
-  // Their name, tagged as a test MP, and what they are; the box of what we hold; nothing in their history
-  // yet.
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    `Testy McTestface MP${staffCopy.politicians.flags.test}`,
-  );
+  // Their name, tagged as a test MP, and what they are; nothing in their history yet.
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Testy McTestface MP");
+  await expect(page.getByText(staffCopy.politicians.flags.test, { exact: true })).toBeVisible();
   await expect(
     page.getByText(staffCopy.politician.role(staffCopy.politician.roles.commons, "Testshire", true)),
   ).toBeVisible();

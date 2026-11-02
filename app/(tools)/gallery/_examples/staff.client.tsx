@@ -33,6 +33,16 @@ import DeletePolitician from "@/app/(staff)/staff/_components/DeletePolitician";
 import RemoveAccountForm from "@/app/(staff)/staff/_components/RemoveAccountForm";
 import StaffAccountsTable from "@/app/(staff)/staff/_components/StaffAccountsTable";
 import UnblockForm from "@/app/(staff)/staff/_components/UnblockForm";
+import NoteChanges from "@/app/(staff)/staff/_components/NoteChanges";
+import NoteForm from "@/app/(staff)/staff/_components/NoteForm";
+import NoteHistory from "@/app/(staff)/staff/_components/NoteHistory";
+import Notes, { NoteEntry, NoteText } from "@/app/(staff)/staff/_components/Notes";
+import {
+  exampleNoteAdmin,
+  exampleNotes,
+  exampleNotesAt,
+  exampleNoteWriter,
+} from "@/app/(staff)/staff/_components/Notes.examples";
 import { exampleFailedRun, exampleHeldSync, exampleRun } from "@/app/(staff)/staff/_components/RunList.examples";
 import type { JSONContent } from "@tiptap/react";
 import { useId, useState } from "react";
@@ -174,6 +184,18 @@ export function PoliticianDetailsExample({
           history={examplePoliticianHistory}
           unblock={log("unblock")}
           airtableTable="https://airtable.com/appExample/tblExample"
+          notes={
+            fromAirtable
+              ? undefined
+              : {
+                  notes: exampleNotes,
+                  reader: exampleNoteWriter,
+                  at: exampleNotesAt,
+                  add: log("addNote"),
+                  edit: log("editNote"),
+                  remove: log("deleteNote"),
+                }
+          }
         />
       )}
     </Logged>
@@ -205,6 +227,111 @@ export function UnblockFormExample() {
       )}
     </Logged>
   );
+}
+
+/**
+ * A supporter's notes, their forms logged, as Jo sees them, who can change
+ * her newest; as an admin, who can delete any; or with none yet.
+ */
+export function NotesExample({ as = "writer" }: { as?: "writer" | "admin" | "empty" }) {
+  return (
+    <Logged>
+      {(log) => (
+        <Notes
+          supporterId={1}
+          notes={as === "empty" ? [] : exampleNotes}
+          reader={as === "admin" ? exampleNoteAdmin : exampleNoteWriter}
+          at={exampleNotesAt}
+          add={log("add")}
+          edit={log("edit")}
+          remove={log("delete")}
+        />
+      )}
+    </Logged>
+  );
+}
+
+/** One note as a history shows it, labelled and without its time: Jo's, which she can change, or Sam's, edited, which she can't. */
+export function NoteEntryExample({ own = true }: { own?: boolean }) {
+  return (
+    <Logged>
+      {(log) => (
+        <NoteEntry
+          note={exampleNotes[own ? 0 : 1]}
+          reader={exampleNoteWriter}
+          at={exampleNotesAt}
+          edit={log("edit")}
+          remove={log("delete")}
+          label="Note"
+          dated={false}
+        />
+      )}
+    </Logged>
+  );
+}
+
+/** A note's buttons, logged: Edit, which opens Save, Cancel and Delete, for its writer; Delete alone for an admin. */
+export function NoteChangesExample({ editable = true }: { editable?: boolean }) {
+  return (
+    <Logged>
+      {(log) => (
+        <NoteChanges
+          note={exampleNotes[0]}
+          editable={editable}
+          text={<NoteText body={exampleNotes[0].body} />}
+          meta="jo@pauseai.uk"
+          edit={log("edit")}
+          remove={log("delete")}
+        />
+      )}
+    </Logged>
+  );
+}
+
+/** A politician's history card, its Write a note logged: two lines, or none; or without Write a note. */
+export function NoteHistoryExample({ lines = true, writable = true }: { lines?: boolean; writable?: boolean }) {
+  const rows = [
+    { at: "2 Nov 2026, 11:00", what: "Email from PauseAI: Example Mailing" },
+    { at: "1 Nov 2026, 09:30", what: "Signed 'Example Letter to the PM'" },
+  ];
+  return (
+    <Logged>
+      {(log) => (
+        <NoteHistory
+          title="History"
+          id="example-history"
+          empty="Nothing yet."
+          politicianId={7}
+          writer={exampleNoteWriter.email}
+          at={exampleNotesAt}
+          add={writable ? log("add") : undefined}
+        >
+          {(lines ? rows : []).map((row) => (
+            <li key={row.at}>
+              <span>{row.at}</span>
+              <div>{row.what}</div>
+            </li>
+          ))}
+        </NoteHistory>
+      )}
+    </Logged>
+  );
+}
+
+/** The form to add a note, logged: closed, or opened, on a supporter, with what a note should be, or on a politician. */
+export function NoteFormExample({
+  on = "supporterId",
+  opened = false,
+}: {
+  on?: "supporterId" | "politicianId";
+  opened?: boolean;
+}) {
+  return <Logged>{(log) => <NoteForm target={{ name: on, value: 1 }} add={log("add")} opened={opened} />}</Logged>;
+}
+
+/** A note's text, its addresses links, and its lines kept. */
+export function NoteTextExample() {
+  return <NoteText body={exampleNotes[0].body + "\n" + exampleNotes[1].body} />;
 }
 
 /** A job's page, its button and any held sync's buttons logged: the MP check with three runs, or the web form import, never run. */

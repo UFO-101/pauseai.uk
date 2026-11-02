@@ -7,7 +7,16 @@ import { redirect } from "next/navigation";
 import { type ImportJob, importPath } from "@/lib/import-runs";
 import { now } from "@/lib/now";
 import { staffBack } from "@/lib/staff-search";
-import { askFrom, eraseFrom, idFrom, permissionsFrom, statusFrom, unblockFrom } from "@/lib/staff-forms";
+import {
+  askFrom,
+  eraseFrom,
+  idFrom,
+  noteEditFrom,
+  noteFrom,
+  permissionsFrom,
+  statusFrom,
+  unblockFrom,
+} from "@/lib/staff-forms";
 import { addAsk, deleteAsk, editAsk } from "@/lib/server/asks";
 import { importControlAiLetter } from "@/lib/server/controlai-import";
 import { isPoliticianAddress, unblock } from "@/lib/server/email";
@@ -21,6 +30,7 @@ import { decideHeldSync, syncPoliticians } from "@/lib/server/politician-sync";
 import { syncEmails } from "@/lib/server/emails-sync";
 import { importGoToParliament } from "@/lib/server/go-to-parliament-import";
 import { importWebFormLetters } from "@/lib/server/web-form-import";
+import { addNote, deleteNote, editNote, type NoteTarget } from "@/lib/server/notes";
 import { deletePolitician, setStatus } from "@/lib/server/politicians";
 import { requireStaff } from "@/lib/server/staff-auth";
 import {
@@ -56,6 +66,38 @@ export async function deletePoliticianNow(form: FormData): Promise<void> {
     revalidatePath("/staff/politicians");
     redirect("/staff/politicians");
   }
+}
+
+/** Refreshes the page of whom a note is about. */
+function refreshNotes(target: NoteTarget): void {
+  revalidatePath(
+    "supporterId" in target ? `/staff/supporters/${target.supporterId}` : `/staff/politicians/${target.politicianId}`,
+  );
+}
+
+/** The form under the notes on a supporter's or a politician's page: adds one, as the staff member. */
+export async function addNoteNow(form: FormData): Promise<void> {
+  const staff = await requireStaff();
+  const parsed = noteFrom(form);
+  if (parsed && (await addNote(parsed.target, parsed.body, staff))) refreshNotes(parsed.target);
+}
+
+/** The form under a note its writer may still change: saves its new text; false if it can't, as after a day. */
+export async function editNoteNow(form: FormData): Promise<boolean> {
+  const staff = await requireStaff();
+  const parsed = noteEditFrom(form);
+  const target = parsed && (await editNote(parsed.id, parsed.body, staff));
+  if (target) refreshNotes(target);
+  return Boolean(target);
+}
+
+/** The button under a note its writer may still change, or under any for an admin: deletes it; false if it can't. */
+export async function deleteNoteNow(form: FormData): Promise<boolean> {
+  const staff = await requireStaff();
+  const id = idFrom(form);
+  const target = id && (await deleteNote(id, staff));
+  if (target) refreshNotes(target);
+  return Boolean(target);
 }
 
 /** Refreshes the pages that show a job's runs: its own, the overview of every job, and the home page's actions. */
