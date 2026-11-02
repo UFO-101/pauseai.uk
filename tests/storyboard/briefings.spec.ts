@@ -11,12 +11,12 @@ test("The Campaigns menu leads to the briefings", { tag: "@desktop-only" }, asyn
   // Opened by focus, not hover: a frame moves the pointer away first, which
   // would close a hovered menu.
   await trigger.focus();
-  const link = trigger.locator("..").getByRole("menuitem", { name: "Briefings" });
+  const link = trigger.locator("..").getByRole("menuitem", { name: "Weekly briefings" });
   await expect(link).toBeVisible();
   await frame(page, "the Campaigns menu, with the briefings");
   await link.click();
   await expect(page).toHaveURL(`${BASE}/campaigns/briefings`);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Briefings");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Weekly briefings");
   await frame(page, "the briefings, from the menu");
 });
 
@@ -45,7 +45,7 @@ test("Read a briefing: its charts, a source, and back", async ({ page }) => {
   await expect(page.locator("#source-14")).toBeInViewport();
   await frame(page, "a source, from its mark");
 
-  await page.getByRole("link", { name: "⁂ All briefings" }).click();
+  await page.getByRole("link", { name: "← All briefings" }).click();
   await expect(page).toHaveURL(`${BASE}/campaigns/briefings`);
   await frame(page, "back at the briefings");
 });
