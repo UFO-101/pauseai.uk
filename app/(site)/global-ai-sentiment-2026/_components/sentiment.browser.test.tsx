@@ -133,7 +133,8 @@ describe("DivergingBar", () => {
     expect(one(container, "bar-meta")?.textContent).toBe("Europe");
     const segments = all(container, "bar-segment");
     expect(segments).toHaveLength(5);
-    segments[0].dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+    // The real pointer, which would otherwise rest wherever the last test left it, perhaps over another segment.
+    await page.elementLocator(segments[0]).hover();
     await expect.poll(() => one(container, "bar-tooltip")?.textContent).toBe("Stop permanently: 10%");
     segments[4].click();
     await expect.poll(() => one(container, "bar-tooltip")?.textContent).toBe("As quickly as possible: 25%");
