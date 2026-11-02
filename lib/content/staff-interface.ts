@@ -976,9 +976,9 @@ export const staffCopy = {
     toEach: "Each recipient, by name and address",
     emailTitle: "The email",
     skipReasons: {
-      blocked: "Skipped: address blocked",
-      "left-office": "Skipped: left office",
-      "no-email": "Skipped: no email address",
+      blocked: "Address blocked",
+      "left-office": "Left office",
+      "no-email": "No email address",
     } as Record<string, string>,
   },
   // The asks page: each ask, its kind and date, and how many gave each answer.

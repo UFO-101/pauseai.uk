@@ -36,10 +36,11 @@ async function startDraft(page: Page, subject: string) {
 /**
  * A mailing written here, in `state`, from Jo, to every politician with
  * an address, as scheduling makes one: a PauseAI letter each, in `statuses`
- * by name. A status "skipped" is skipped as the address was blocked;
- * "skipped:left-office" says why. Returns its ID.
+ * by name, or with `everyone`, to those with no address too. A status
+ * "skipped" is skipped as the address was blocked; "skipped:left-office"
+ * says why. Returns its ID.
  */
-function addMailing(database: string, title: string, state: string, statuses: string[]): string {
+function addMailing(database: string, title: string, state: string, statuses: string[], everyone = false): string {
   const letter =
     '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Dear "}, {"type": "field", "attrs": {"field": "salutation"}}, {"type": "text", "text": ", will you come?"}]}]}';
   const [id] = runSql(
@@ -53,7 +54,7 @@ function addMailing(database: string, title: string, state: string, statuses: st
     database,
     `WITH given AS (
        SELECT n.id, (ARRAY[${statuses.map((s) => `'${s}'`).join(", ")}])[row_number() OVER (ORDER BY n.name)] AS given
-       FROM notable_people n JOIN politicians p USING (id) WHERE n.email IS NOT NULL AND NOT p.is_test),
+       FROM notable_people n JOIN politicians p USING (id) WHERE ${everyone ? "true" : "n.email IS NOT NULL"} AND NOT p.is_test),
      r AS (SELECT id, split_part(given, ':', 1) AS status, nullif(split_part(given, ':', 2), '') AS reason FROM given),
      l AS (
        INSERT INTO letters (kind, notable_person_id, status, sent_at, replied_at)
@@ -247,14 +248,13 @@ test("A mailing stopped part-way: why each letter failed, and those never sent",
 }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
-  addMailing(flowDatabase, "Briefing on the bill", "cancelled", [
-    "sent",
-    "skipped:left-office",
-    "skipped:no-email",
-    "skipped",
-    "not_sent",
+  addMailing(
+    flowDatabase,
+    "Briefing on the bill",
     "cancelled",
-  ]);
+    ["sent", "skipped:left-office", "skipped:no-email", "skipped", "not_sent", "cancelled"],
+    true,
+  );
   await page.goto(`${BASE}/staff/mailings`);
   const row = page.getByRole("listitem").filter({ hasText: "Briefing on the bill" });
   await expect(row).toContainText(copy.counts.stopped);
