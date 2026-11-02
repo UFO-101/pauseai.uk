@@ -41,6 +41,11 @@
   justify-self: stretch;
 }
 
+/* At the right, even wrapped under a long address. */
+.meta > .buttons {
+  margin-left: auto;
+}
+
 /* The field, editing, the note's width. */
 .note form {
   justify-self: stretch;

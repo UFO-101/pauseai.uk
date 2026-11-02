@@ -48,15 +48,16 @@ export default function NoteChanges({
   if (!editable) {
     buttons = <DeleteTwice name="id" value={String(note.id)} label={copy.delete} action={removing} />;
   } else if (!editing) {
+    // Keyed, as is Save, so the button clicked isn't reused as Save, a submit button, which the click would then send.
     buttons = (
-      <Button variant="ghost" size="small" fit type="button" onClick={() => setEditing(true)}>
+      <Button key="edit" variant="ghost" size="small" fit type="button" onClick={() => setEditing(true)}>
         {copy.edit}
       </Button>
     );
   } else {
     buttons = (
       <>
-        <Button variant="primary" size="small" fit type="submit" form={id} pending={pending}>
+        <Button key="save" variant="primary" size="small" fit type="submit" form={id} pending={pending}>
           {copy.save}
         </Button>
         <Button
