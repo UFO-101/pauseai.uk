@@ -31,13 +31,13 @@ describeWithDatabase("recentLetters", () => {
       pages: 2,
       pageSize: LETTERS_PAGE_SIZE,
     });
-    expect(await listLetters({ status: "replied" })).toEqual({
+    expect(await listLetters({ status: "bounced" })).toEqual({
       letters: [],
       total: 0,
       pages: 1,
       pageSize: LETTERS_PAGE_SIZE,
     });
-    expect(await listLetters({ status: "replied", page: 2 })).toEqual({
+    expect(await listLetters({ status: "bounced", page: 2 })).toEqual({
       letters: [],
       total: 0,
       pages: 1,
@@ -77,14 +77,6 @@ describeWithDatabase("recentLetters", () => {
     ]);
     expect(letters[0].events).toEqual([]);
     expect((await recentLetters({ status: "sent" })).map((l) => l.id)).toEqual([1]);
-    expect(await recentLetters({ status: "replied" })).toEqual([]);
-    await query("UPDATE letters SET replied_at = '2026-10-13T09:00:00Z' WHERE id = 2");
-    const replied = await recentLetters({ status: "replied" });
-    expect(replied.map((l) => l.id)).toEqual([2]);
-    expect(new Date(replied[0].repliedAt!).toISOString()).toBe("2026-10-13T09:00:00.000Z");
-    expect(await recentLetters({ status: "auto_reply" })).toEqual([]);
-    await query("INSERT INTO letter_events (letter_id, status, details) VALUES (1, 'auto_reply', '{}')");
-    expect((await recentLetters({ status: "auto_reply" })).map((l) => l.id)).toEqual([1]);
     expect(await recentLetters({ limit: 1 })).toHaveLength(1);
   });
 
@@ -108,8 +100,20 @@ describeWithDatabase("recentLetters", () => {
     // Not the subject.
     expect(await ids({ search: "risk" })).toEqual([]);
     expect(await ids({ search: "McTestface" })).toEqual([2, 1]);
-    expect(await ids({ answered: true })).toEqual([2]);
-    expect(await ids({ answered: false })).toEqual([1]);
+    expect(await ids({ answered: "yes" })).toEqual([2]);
+    expect(await ids({ answered: "auto" })).toEqual([]);
+    expect(await ids({ answered: "no" })).toEqual([1]);
+    // An automatic reply: from the first, when it came; a written reply outweighs one.
+    await query(
+      `INSERT INTO letter_events (letter_id, status, details, at) VALUES
+         (1, 'auto_reply', '{}', '2026-10-13T09:00:00Z'), (1, 'auto_reply', '{}', '2026-10-14T09:00:00Z'),
+         (2, 'auto_reply', '{}', '2026-10-13T09:00:00Z')`,
+    );
+    expect(await ids({ answered: "yes" })).toEqual([2]);
+    expect(await ids({ answered: "auto" })).toEqual([1]);
+    expect(await ids({ answered: "no" })).toEqual([]);
+    const [auto] = await recentLetters({ answered: "auto" });
+    expect([auto.repliedAt, new Date(auto.autoRepliedAt!).toISOString()]).toEqual([null, "2026-10-13T09:00:00.000Z"]);
     await query("UPDATE letters_from_supporters SET campaign = 'support-sobel-bill' WHERE id = 2");
     expect(await ids({ campaign: ["support-sobel-bill"] })).toEqual([2]);
     expect(await ids({ campaign: ["regulate-letter-pm"] })).toEqual([1]);
@@ -169,6 +173,12 @@ describeWithDatabase("recentLetters", () => {
     // Those with none last, either way.
     expect(await ids({ key: "replied", dir: "desc" })).toEqual([3, 2, 1]);
     expect(await ids({ key: "replied", dir: "asc" })).toEqual([3, 2, 1]);
+    // By when an automatic reply came, for one with no written reply.
+    await query(
+      "INSERT INTO letter_events (letter_id, status, details, at) VALUES (1, 'auto_reply', '{}', '2026-10-05T09:00:00Z')",
+    );
+    expect(await ids({ key: "replied", dir: "desc" })).toEqual([1, 3, 2]);
+    expect(await ids({ key: "replied", dir: "asc" })).toEqual([3, 1, 2]);
   });
 });
 

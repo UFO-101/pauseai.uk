@@ -70,7 +70,7 @@ describe("lettersSearch", () => {
       filter: {
         status: "sent",
         search: "jane",
-        answered: true,
+        answered: "yes",
         campaign: ["regulate-letter-pm"],
         flags: ["test"],
         backend: ["airtable"],
@@ -84,7 +84,7 @@ describe("lettersSearch", () => {
       lettersSearch({ answered: "no", consent: "no", backend: "postmark", campaign: "support-sobel-bill" }).filter,
     ).toEqual({
       ...none,
-      answered: false,
+      answered: "no",
       consent: false,
       backend: ["postmark"],
       campaign: ["support-sobel-bill"],
@@ -105,8 +105,9 @@ describe("lettersSearch", () => {
         sort: "nope",
       }).filter,
     ).toEqual(none);
-    // A name every object inherits isn't a status.
-    expect(lettersSearch({ status: "toString" }).filter).toEqual(none);
+    // A name every object inherits isn't a status; nor is a kind of event, which a letter's status never is.
+    for (const status of ["toString", "replied", "auto_reply"]) expect(lettersSearch({ status }).filter).toEqual(none);
+    expect(lettersSearch({ answered: "auto" }).filter).toEqual({ ...none, answered: "auto" });
   });
 });
 

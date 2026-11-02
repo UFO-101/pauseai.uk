@@ -118,6 +118,36 @@ export async function postBounce(request: APIRequestContext, messageId?: string)
   expect(await bounce.json()).toEqual({ recorded: true });
 }
 
+/**
+ * Postmark's inbound webhook, as it posts the MP's office's answer to the
+ * letter Postmark sent as `messageId`, at the letter's own address: written,
+ * or with `auto`, an acknowledgement marked only by its subject, as
+ * Parliament's Outlook sends them.
+ */
+export async function postReply(request: APIRequestContext, database: string, messageId: string, auto = false) {
+  const [mailbox] = runSql(
+    database,
+    `SELECT s.reply_hash FROM email_sends e JOIN letters_from_supporters s ON s.id = e.letter_id WHERE e.message_id = '${messageId}'`,
+  );
+  const address = `${mailbox}@letters.pauseai.uk`;
+  const reply = await request.post(`${BASE}/api/postmark/inbound`, {
+    headers: { Authorization: WEBHOOK_AUTH },
+    data: {
+      OriginalRecipient: address,
+      MailboxHash: "",
+      FromFull: { Email: "test-mp@example.org", Name: "Testy McTestface MP" },
+      ToFull: [{ Email: address, Name: "" }],
+      CcFull: [],
+      Subject: auto ? "Automatic reply: Please back a pause" : "Re: Please back a pause",
+      Date: "Fri, 16 Oct 2026 13:00:00 +0100",
+      TextBody: auto
+        ? "Thank you for contacting me. Please take this reply as confirmation that your email has been received."
+        : "Dear constituent,\n\nThank you for writing to me.",
+    },
+  });
+  expect(reply.ok()).toBe(true);
+}
+
 /** Writes to `mp` as `sender`, signed `name`, then, logged in, sees it sent, and gives its Postmark MessageID. */
 export async function sentLetterId(
   page: Page,

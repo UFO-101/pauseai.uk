@@ -21,6 +21,7 @@ export const exampleLetter: LetterSummary = {
   createdAt: "2026-10-12T09:00:00Z",
   sentAt: "2026-10-12T09:05:00Z",
   repliedAt: null,
+  autoRepliedAt: null,
   supporterId: 7,
   events: [
     { at: "2026-10-12T09:10:00Z", status: "bounced", details: { type: "HardBounce" } },

@@ -50,7 +50,7 @@ export type SeriesPoint = { from: string; count: number };
  */
 export const METRIC_LINKS: Record<DashboardMetric, { href?: string; permission?: Permission; worse?: true }> = {
   lettersSent: { href: "/staff/letters?status=sent", permission: "supporters" },
-  lettersReplied: { href: "/staff/letters?status=replied", permission: "supporters" },
+  lettersReplied: { href: "/staff/letters?answered=yes", permission: "supporters" },
   mpsSigned: { href: "/staff/politicians" },
   eventRegistrations: { href: "/staff/supporters?activity=registered", permission: "supporters" },
   eventsHeld: {},

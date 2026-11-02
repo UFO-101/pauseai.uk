@@ -25,7 +25,7 @@ const statusOf = (status: string) => copy.status[status] ?? status;
  * name; who it was from (leading to their supporter) and their email, and
  * to (leading to the MP's page), the campaign (leading to its page on
  * the site) and what sent it; whether the sender agreed to hear from us; then when it was
- * written, sent and when the MP replied. A letter from the pauseai.info form
+ * written, sent and when the MP replied, or failing that, greyed, when an automatic reply came. A letter from the pauseai.info form
  * is written when its sender filled the form in, and sent later, when
  * Airtable's automation emailed it. Each is a sort (lib/letter-sort.ts),
  * newest written first unless another is chosen.
@@ -103,8 +103,15 @@ const columns: (ListColumn<LetterSummary> & { key: LetterSort })[] = [
     key: "replied",
     label: copy.columns.replied,
     short: true,
-    text: (l) => l.repliedAt,
-    cell: (l) => l.repliedAt && staffTime(l.repliedAt),
+    text: (l) => l.repliedAt ?? (l.autoRepliedAt && `${copy.status.auto_reply} ${l.autoRepliedAt}`),
+    cell: (l) =>
+      l.repliedAt
+        ? staffTime(l.repliedAt)
+        : l.autoRepliedAt && (
+            <Muted>
+              {copy.status.auto_reply} {staffTime(l.autoRepliedAt)}
+            </Muted>
+          ),
   },
 ];
 

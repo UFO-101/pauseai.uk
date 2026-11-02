@@ -1,23 +1,23 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import { POLITICIAN_FLAGS } from "@/lib/politician-filters";
 import type { CampaignRow } from "@/lib/server/asks";
-import { LETTER_BACKENDS, type LettersSearch } from "@/lib/staff-search";
+import { LETTER_BACKENDS, LETTER_REPLIES, LETTER_STATUSES, type LettersSearch } from "@/lib/staff-search";
 import FilterBar, { type Filter } from "./ui/FilterBar";
 
 const copy = staffCopy.letters;
 
 /**
- * The letters list's filters, in the table's columns' order: its status,
- * the MP's markers, `campaigns` (every one, by title), what sent it, the
- * sender's consent and whether the MP replied. All but the status, consent
- * and reply repeat.
+ * The letters list's filters, in the table's columns' order: whether it was
+ * delivered, the MP's markers, `campaigns` (every one, by title), what sent
+ * it, the sender's consent and what came back to it. All but the status,
+ * consent and reply repeat.
  */
 export function letterFilters(campaigns: Pick<CampaignRow, "slug" | "title">[]): Filter[] {
   return [
     {
       name: "status",
       label: copy.columns.status,
-      options: Object.entries(copy.status).map(([value, label]) => ({ value, label })),
+      options: LETTER_STATUSES.map((status) => ({ value: status, label: copy.status[status] })),
     },
     {
       name: "flag",
@@ -48,10 +48,7 @@ export function letterFilters(campaigns: Pick<CampaignRow, "slug" | "title">[]):
     {
       name: "answered",
       label: copy.columns.replied,
-      options: [
-        { value: "yes", label: copy.answered.yes },
-        { value: "no", label: copy.answered.no },
-      ],
+      options: LETTER_REPLIES.map((reply) => ({ value: reply, label: copy.answered[reply] })),
     },
   ];
 }

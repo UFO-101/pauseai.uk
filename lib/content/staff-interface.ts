@@ -1447,7 +1447,8 @@ export const staffCopy = {
     total: (total: number) => `${total} ${total === 1 ? "letter" : "letters"}`,
     search: "Sender or MP",
     // The Replied filter: whether the MP replied.
-    answered: { yes: "Replied", no: "Not replied" },
+    // The Replied filter: what came back to a letter.
+    answered: { yes: "Written reply", auto: "Automatic reply only", no: "No reply" },
     // The titles of a letter's own page, and of a supporter's letters' page.
     oneTitle: (from: string, to: string) => `Letter from ${from} to ${to}`,
     fromTitle: (name: string) => `Letters from ${name}`,

@@ -18,7 +18,14 @@ export const LETTER_SORTS: SortColumns<
 };
 export type LetterSort = keyof typeof LETTER_SORTS;
 
-/** Each sort's column in the query (lib/server/letters.ts). */
+/** When a letter `l` first got an automatic reply, if it has. */
+export const AUTO_REPLIED_AT =
+  "(SELECT min(e.at) FROM letter_events e WHERE e.letter_id = l.id AND e.status = 'auto_reply')";
+
+/**
+ * Each sort's column in the query (lib/server/letters.ts). The reply's is
+ * the date the list shows: a written reply's, or failing one an automatic reply's.
+ */
 export const LETTER_COLUMNS: Record<LetterSort, string> = {
   status: "l.status",
   from: "f.name",
@@ -28,5 +35,5 @@ export const LETTER_COLUMNS: Record<LetterSort, string> = {
   consent: "f.contact_consent",
   created: "l.created_at",
   sent: "l.sent_at",
-  replied: "l.replied_at",
+  replied: `coalesce(l.replied_at, ${AUTO_REPLIED_AT})`,
 };
