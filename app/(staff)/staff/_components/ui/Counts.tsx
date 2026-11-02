@@ -5,7 +5,7 @@ import styles from "./Counts.module.css";
  * One count: its number, or none for a count that doesn't apply, shown as
  * a dash; its label; where it leads; and red for a problem or green for
  * what's hoped for, when it isn't 0. `current` marks the one a list under
- * it is filtered to.
+ * it is filtered to; `title`, what pressing it does, when that isn't plain.
  */
 export type Count = {
   key: string;
@@ -14,6 +14,7 @@ export type Count = {
   href?: string;
   tone?: "red" | "green";
   current?: boolean;
+  title?: string;
 };
 
 /**
@@ -49,6 +50,7 @@ export default function Counts({
         href={count.href}
         className={styles.count}
         aria-current={count.current ? "true" : undefined}
+        title={count.title}
       >
         {inner}
       </StaffLink>

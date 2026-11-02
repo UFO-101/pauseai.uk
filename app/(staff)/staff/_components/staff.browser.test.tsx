@@ -989,20 +989,18 @@ describe("PoliticiansList", () => {
 });
 
 describe("DeletePolitician", () => {
-  it("is the red button with its note, opening a box that asks to be sure, whose button sends their ID", async () => {
+  it("is Delete, pressed twice, with its note, sending their ID", async () => {
     const { fn, sent } = action();
-    await render(<DeletePolitician politician={{ id: 7, name: "Polly Placeholder" }} action={fn} />);
+    await render(<DeletePolitician politician={{ id: 7 }} action={fn} />);
     const copy = staffCopy.politician.delete;
     await expect.element(page.getByText(copy.note)).toBeVisible();
-    await expect.element(page.getByText(copy.sure("Polly Placeholder"))).not.toBeVisible();
     await page.getByRole("button", { name: copy.button, exact: true }).click();
-    await expect.element(page.getByText(copy.sure("Polly Placeholder"))).toBeVisible();
-    await page.getByRole("button", { name: copy.confirm }).click();
+    await page.getByRole("button", { name: staffCopy.deleteIt }).click();
     await expect.poll(() => sent).toEqual([{ politicianId: "7" }]);
   });
 
   it("is nothing for a politician who can't be deleted", async () => {
-    await render(<DeletePolitician politician={{ id: 7, name: "Polly" }} deletable={false} action={vi.fn()} />);
+    await render(<DeletePolitician politician={{ id: 7 }} deletable={false} action={vi.fn()} />);
     expect(page.getByRole("button").all()).toHaveLength(0);
   });
 });
@@ -2037,6 +2035,13 @@ describe("PoliticianTable headings", () => {
 });
 
 describe("AsksTable", () => {
+  it("picks out the ask a link led to: its row, by its slug, tinted and current", async () => {
+    await render(<AsksTable asks={exampleAsksWithCounts} picked={exampleAsks[1].slug} />);
+    const current = document.querySelectorAll("tr[aria-current=true]");
+    expect([...current].map((row) => row.id)).toEqual([exampleAsks[1].slug]);
+    expect(document.getElementById(exampleAsks[0].slug)!.hasAttribute("aria-current")).toBe(false);
+  });
+
   it("lists each ask: its kind, title linked to the letter or event, date, who asks it, and each answer's count, linked to who gave it", async () => {
     await render(<AsksTable asks={exampleAsksWithCounts} />);
     const row = (title: string) => page.getByRole("row").filter({ hasText: title });

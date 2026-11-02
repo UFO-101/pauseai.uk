@@ -40,7 +40,8 @@ import MailingEditor from "@/app/(staff)/staff/_components/MailingEditor";
 import ButtonRow from "@/components/ui/ButtonRow";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { ChangeTimeForm, DueTimeFields } from "@/app/(staff)/staff/_components/DueTime";
-import { DeleteDraft, DeleteTwice, StopMailing } from "@/app/(staff)/staff/_components/MailingButtons";
+import { DeleteDraft, StopMailing } from "@/app/(staff)/staff/_components/MailingButtons";
+import { DeleteTwice } from "@/app/(staff)/staff/_components/DeleteTwice";
 import AskForm from "@/app/(staff)/staff/_components/AskForm";
 import MyGmail from "@/app/(staff)/staff/_components/MyGmail";
 import {
@@ -296,13 +297,7 @@ export function RemoveAccountFormExample() {
 }
 
 export function DeletePoliticianExample() {
-  return (
-    <Logged>
-      {(log) => (
-        <DeletePolitician politician={{ id: 7, name: "Polly Placeholder" }} action={log("deletePoliticianNow")} />
-      )}
-    </Logged>
-  );
+  return <Logged>{(log) => <DeletePolitician politician={{ id: 7 }} action={log("deletePoliticianNow")} />}</Logged>;
 }
 
 export function EraseFormExample() {

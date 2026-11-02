@@ -134,7 +134,7 @@ describeWithDatabase("sending mailings", () => {
     expect(sent.map((m) => m.from)).toEqual([{ name: "Jo Gmail", address: JO }]);
   });
 
-  it("skips anyone who has left office or whose address is blocked since, and marks a failure", async () => {
+  it("skips anyone who has left office, has no address or whose address is blocked since, and marks a failure", async () => {
     await addTestPolitician({ airtableId: null, name: "Ann Away", email: "ann@example.org" });
     await addTestPolitician({ airtableId: null, name: "Bob Bounced", email: "bob@example.org" });
     await addTestPolitician({ airtableId: null, name: "Cat Fails", email: "cat@example.org" });
@@ -163,7 +163,7 @@ describeWithDatabase("sending mailings", () => {
       { name: "Bob Bounced", status: "skipped", skipReason: "blocked", sentAt: false },
       { name: "Cat Fails", status: "not_sent", skipReason: null, sentAt: false },
       { name: "Dan Refused", status: "skipped", skipReason: "blocked", sentAt: false },
-      { name: "Eve Emptied", status: "skipped", skipReason: "blocked", sentAt: false },
+      { name: "Eve Emptied", status: "skipped", skipReason: "no-email", sentAt: false },
     ]);
     expect(await query("SELECT status, details FROM letter_events WHERE status <> 'skipped'")).toEqual([
       { status: "failed", details: {} },

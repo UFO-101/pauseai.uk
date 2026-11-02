@@ -348,8 +348,11 @@ meaning: orange for what you can press, the status colours for state.
 supporter, a mailing) starts with a tinted band: its title and a tag, its
 facts (`BandFact`), each with a quiet line under it, and at their right
 its numbers in one white box (`ui/Counts`), each a link (`StaffLink`,
-below) to what it counts. The same white box, small, is a row's in a list of such records
-(the mailings), the whole box leading to the record.
+below) to what it counts. When the list under them is a record's own,
+as a mailing's recipients are, each count is a filter that toggles: it
+shows only those it counts, underlined, and pressed again, everyone, with
+"Show everyone" as its tooltip. The same white box, small, is a row's in a
+list of such records (the mailings), the whole box leading to the record.
 
 **Progress** (`ui/Progress`). How far something has got is a sentence
 over a thin bar: blue while it's going out, green for answers. In its
@@ -609,7 +612,18 @@ Delete is a ghost button naming what it deletes ("Delete ask"). Pressed
 once, it turns into a red "Delete it", which takes the focus; pressed
 again, it deletes. It goes back to how it was after a few seconds, or as
 soon as the focus leaves it, so a stray click deletes nothing
-(`DeleteTwice`, in `MailingButtons.tsx`). There's no dialog.
+(`DeleteTwice`). There's no dialog. While it deletes it stays red, with
+its spinner, as every button does while its work goes on.
+
+That's the standard way to delete one thing whose deleting has no
+consequence beyond its being gone: a draft, an ask nobody has answered,
+a politician gone from Airtable whom nobody has written to.
+
+Deleting that goes further is a page of its own, as erasing a supporter
+is (`EraseForm`): what will go, a box to tick before the red button does
+anything, and a field for why, such as the request's reference, kept in
+the audit log. Any feature that deletes a lot at once, or deletes what
+other records depend on, works that way.
 
 Delete is offered only when the thing can be deleted. While something
 refers to it (an ask politicians have answered, a mailing that's been

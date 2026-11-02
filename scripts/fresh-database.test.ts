@@ -160,20 +160,24 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
         // Letters in every state, and every kind of event about them.
         expect(runSql(name, "SELECT DISTINCT status FROM letters ORDER BY 1")).toEqual([
           "bounced",
+          "cancelled",
           "not_sent",
           "scheduled",
           "sending",
           "sent",
+          "skipped",
           "spam_complaint",
         ]);
         expect(runSql(name, "SELECT DISTINCT status FROM letter_events ORDER BY 1")).toEqual([
           "auto_reply",
           "bounced",
+          "failed",
           "not_sent",
           "replied",
           "scheduled",
           "sending",
           "sent",
+          "skipped",
           "spam_complaint",
         ]);
         expect(runSql(name, "SELECT DISTINCT kind FROM email_problems ORDER BY 1")).toEqual([
@@ -251,6 +255,7 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
         expect(
           runSql(name, "SELECT DISTINCT audience || ' ' || state FROM mailings WHERE body IS NOT NULL ORDER BY 1"),
         ).toEqual([
+          "politicians cancelled",
           "politicians draft",
           "politicians scheduled",
           "politicians sending",

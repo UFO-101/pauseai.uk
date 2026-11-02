@@ -658,7 +658,7 @@ export const staff: Group = {
                   <Counts
                     counts={[
                       { key: "sent", n: 84, label: "sent" },
-                      { key: "bounced", n: 3, label: "bounced", tone: "red" },
+                      { key: "failed", n: 3, label: "failed", tone: "red" },
                     ]}
                   />
                 }
@@ -702,15 +702,14 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/ui/Counts.tsx",
       variants: [
         {
-          label: "Each leading to its list, the bounced one chosen; a 0 and a count that doesn't apply, grey",
+          label: "Each leading to its list, the failed one chosen; a 0 and a count that doesn't apply, grey",
           render: () => (
             <StaffPage as="div">
               <Counts
                 counts={[
                   { key: "sent", n: 84, label: "sent", href: "#sent" },
-                  { key: "skipped", n: 0, label: "skipped", href: "#skipped" },
-                  { key: "bounced", n: 3, label: "bounced", tone: "red", href: "#bounced", current: true },
-                  { key: "replied", n: 9, label: "replied", href: "#replied" },
+                  { key: "failed", n: 3, label: "failed", tone: "red", href: "#failed", current: true },
+                  { key: "replied", n: 0, label: "replied", href: "#replied" },
                   { key: "answered", n: null, label: "answers" },
                 ]}
               />
@@ -727,8 +726,7 @@ export const staff: Group = {
                 label="How the mailing went"
                 counts={[
                   { key: "sent", n: 129, label: "sent" },
-                  { key: "skipped", n: 0, label: "skipped" },
-                  { key: "bounced", n: 2, label: "bounced", tone: "red" },
+                  { key: "failed", n: 2, label: "failed", tone: "red" },
                   { key: "replied", n: 11, label: "replied" },
                   { key: "answered", n: 14, label: "answers", tone: "green" },
                 ]}
@@ -2337,7 +2335,7 @@ export const staff: Group = {
     },
     {
       name: "DeleteTwice",
-      file: "app/(staff)/staff/_components/MailingButtons.tsx",
+      file: "app/(staff)/staff/_components/DeleteTwice.tsx",
       variants: [
         {
           label: "Press once to arm it, twice to delete; and one that can't be pressed",

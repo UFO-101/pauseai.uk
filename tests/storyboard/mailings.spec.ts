@@ -36,9 +36,11 @@ async function startDraft(page: Page, subject: string) {
 /**
  * A mailing written here, in `state`, from Jo, to every politician with
  * an address, as scheduling makes one: a PauseAI letter each, in `statuses`
- * by name. Returns its ID.
+ * by name, or with `everyone`, to those with no address too. A status
+ * "skipped" is skipped as the address was blocked; "skipped:left-office"
+ * says why. Returns its ID.
  */
-function addMailing(database: string, title: string, state: string, statuses: string[]): string {
+function addMailing(database: string, title: string, state: string, statuses: string[], everyone = false): string {
   const letter =
     '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Dear "}, {"type": "field", "attrs": {"field": "salutation"}}, {"type": "text", "text": ", will you come?"}]}]}';
   const [id] = runSql(
@@ -50,15 +52,18 @@ function addMailing(database: string, title: string, state: string, statuses: st
   );
   runSql(
     database,
-    `WITH r AS (
-       SELECT n.id, (ARRAY[${statuses.map((s) => `'${s}'`).join(", ")}])[row_number() OVER (ORDER BY n.name)] AS status
-       FROM notable_people n JOIN politicians p USING (id) WHERE n.email IS NOT NULL AND NOT p.is_test),
+    `WITH given AS (
+       SELECT n.id, (ARRAY[${statuses.map((s) => `'${s}'`).join(", ")}])[row_number() OVER (ORDER BY n.name)] AS given
+       FROM notable_people n JOIN politicians p USING (id) WHERE ${everyone ? "true" : "n.email IS NOT NULL"} AND NOT p.is_test),
+     r AS (SELECT id, split_part(given, ':', 1) AS status, nullif(split_part(given, ':', 2), '') AS reason FROM given),
      l AS (
        INSERT INTO letters (kind, notable_person_id, status, sent_at, replied_at)
        SELECT 'pauseai', r.id, r.status, CASE WHEN r.status IN ('sent', 'bounced') THEN '2026-10-20T08:00:00Z'::timestamptz END,
          CASE WHEN r.status = 'sent' AND r.id = (SELECT min(id) FROM r) THEN '2026-10-21T10:00:00Z'::timestamptz END
-       FROM r WHERE r.status IS NOT NULL RETURNING id)
-     INSERT INTO letters_from_pauseai (id, mailing_id) SELECT id, ${id} FROM l`,
+       FROM r WHERE r.status IS NOT NULL RETURNING id, notable_person_id, status)
+     INSERT INTO letters_from_pauseai (id, mailing_id, skip_reason)
+     SELECT l.id, ${id}, CASE WHEN l.status = 'skipped' THEN coalesce(r.reason, 'blocked') END
+     FROM l JOIN r ON r.id = l.notable_person_id`,
   );
   return id;
 }
@@ -166,9 +171,9 @@ test("Change who a draft goes to, then delete it", async ({ page, request, flowD
   await frame(page, "the draft, now to the Lords");
 
   await page.getByRole("button", { name: copy.deleteDraft }).click();
-  await expect(page.getByRole("button", { name: copy.deleteIt })).toBeFocused();
+  await expect(page.getByRole("button", { name: staffCopy.deleteIt })).toBeFocused();
   await frame(page, "Delete draft turns red, asking to be pressed again", { window: true });
-  await page.getByRole("button", { name: copy.deleteIt }).click();
+  await page.getByRole("button", { name: staffCopy.deleteIt }).click();
   await expect(page).toHaveURL(`${BASE}/staff/mailings`);
   await expect(page.getByRole("link", { name: "Lords only" })).toHaveCount(0);
   await frame(page, "the mailings, with the draft gone");
@@ -222,18 +227,59 @@ test("A mailing sending, and one sent with bounces", async ({ page, request, flo
   const sent = addMailing(flowDatabase, "Edinburgh follow-up", "sent", ["sent", "bounced", "skipped", "sent"]);
   await page.goto(`${BASE}/staff/mailings/${sent}`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Edinburgh follow-up");
-  await expect(page.getByRole("link", { name: `1 ${copy.counts.bounced}` })).toBeVisible();
+  await expect(page.getByRole("link", { name: `2 ${copy.counts.failed}` })).toBeVisible();
   await frame(page, "sent: its band of counts, then the email beside its recipients");
 
-  await page.getByRole("link", { name: `1 ${copy.counts.bounced}` }).click();
-  await expect(page.getByRole("row")).toHaveCount(2);
-  await frame(page, "only the one that bounced, its count marked, with the way back to everyone");
+  await page.getByRole("link", { name: `2 ${copy.counts.failed}` }).click();
+  await expect(page.getByRole("row")).toHaveCount(3);
+  await frame(page, "only the two that failed, skipped and bounced, its count marked, with the way back to everyone");
 
   // Each recipient leads to their letter's own page, under the mailing, back to which it goes.
   await page.getByRole("table").getByRole("link", { name: copy.theLetter }).click();
   await expect(page).toHaveURL(new RegExp(`/staff/mailings/${sent}/letters/\\d+$`));
   await expect(page.getByRole("navigation").getByRole("link", { name: "Edinburgh follow-up" })).toBeVisible();
   await frame(page, "the letter that bounced: its status in red, the letter, and its history beside it");
+});
+
+test("A mailing stopped part-way: why each letter failed, and those never sent", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await syncPoliticians(request, BASE);
+  await logIn(page, flowDatabase);
+  addMailing(
+    flowDatabase,
+    "Briefing on the bill",
+    "cancelled",
+    // By name: Gordon, who left office; Lord Seedling, with no address; Mo; Morag; Dora; Polly.
+    ["skipped:left-office", "skipped:no-email", "sent", "skipped", "not_sent", "cancelled"],
+    true,
+  );
+  await page.goto(`${BASE}/staff/mailings`);
+  const row = page.getByRole("listitem").filter({ hasText: "Briefing on the bill" });
+  await expect(row).toContainText(copy.counts.stopped);
+  await row.scrollIntoViewIfNeeded();
+  await frame(page, "in the list: one sent, four failed, one stopped", { window: true });
+
+  await row.getByRole("link", { name: "Briefing on the bill", exact: true }).click();
+  await page.getByRole("link", { name: `4 ${copy.counts.failed}` }).click();
+  await expect(page.getByRole("row")).toHaveCount(5);
+  await frame(page, "the four that failed: left office, no address, address blocked, and the one Gmail refused");
+
+  await page.getByRole("link", { name: `1 ${copy.counts.stopped}` }).click();
+  await expect(page.getByRole("row")).toHaveCount(2);
+  await frame(page, "the one never sent, as the mailing was stopped first");
+
+  // Pressed again, the count shows everyone.
+  await page.getByRole("link", { name: `1 ${copy.counts.stopped}` }).click();
+  await expect(page).toHaveURL(/\/staff\/mailings\/\d+$/);
+  await expect(page.getByRole("row")).toHaveCount(7);
+  await frame(page, "stopped pressed again: everyone, none of the counts chosen");
+
+  await page.getByRole("link", { name: `1 ${copy.counts.sent}` }).click();
+  await expect(page.getByRole("row")).toHaveCount(2);
+  await frame(page, "sent: only the one that arrived");
 });
 
 test("Send a mailing from a connected Gmail: schedule it, and the hourly job sends it", async ({

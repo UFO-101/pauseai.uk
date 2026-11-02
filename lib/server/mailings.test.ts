@@ -38,16 +38,20 @@ describeWithDatabase("mailings", () => {
     await addLetter(EDINBURGH, polly, { sent: "2026-10-02", replied: "2026-10-04", personalised: true });
     await addLetter(EDINBURGH, dora, { sent: "2026-10-01", status: "bounced" });
     await addLetter(EDINBURGH, rob, { status: "not_sent" });
+    const jo = await addTestPolitician({ name: "Jo Example", airtableId: "recJo" });
+    await addLetter(EDINBURGH, jo, { status: "cancelled" });
+    const sam = await addTestPolitician({ name: "Sam Example", airtableId: "recSam" });
+    await addLetter(EDINBURGH, sam, { status: "spam_complaint" });
     await addLetter(CSRB, polly, { sent: "2026-06-01" });
 
     const mailings = await listMailings();
-    // The unsent first, the newest made first.
-    expect(mailings.map((m) => [m.title, m.sent, m.skipped, m.bounced, m.replied])).toEqual([
+    // The unsent first, the newest made first. Sent is what arrived, a spam complaint too; failed, the bounce and the one not sent.
+    expect(mailings.map((m) => [m.title, m.sent, m.failed, m.stopped, m.replied])).toEqual([
       ["DeepMind letter", 0, 0, 0, 0],
       ["Westminster Hall Debate Invitation", 0, 0, 0, 0],
       ["Documentary Invitation", 0, 0, 0, 0],
       ["Ben Lake October 2026 Debate", 0, 0, 0, 0],
-      [EDINBURGH, 2, 1, 1, 1],
+      [EDINBURGH, 2, 2, 1, 1],
       [CSRB, 1, 0, 0, 0],
     ]);
     expect(mailings[4]).toMatchObject({
@@ -102,29 +106,35 @@ describeWithDatabase("mailings", () => {
     expect(await choosingTitle(NEW_MAILING)).toBeUndefined();
   });
 
-  it("lists a tab of the recipients: those who replied, bounced or were skipped, with their answer to its ask", async () => {
+  it("lists a tab of the recipients: those who replied, whose letter failed or was stopped, with their answer to its ask", async () => {
     const polly = await addTestPolitician();
     const dora = await addTestPolitician({ name: "Dora Dummy", airtableId: "recDora" });
     const rob = await addTestPolitician({ name: "Rob Example", airtableId: "recRob" });
+    const jo = await addTestPolitician({ name: "Jo Example", airtableId: "recJo" });
     await addLetter(EDINBURGH, polly, { replied: "2026-10-04" });
     await addLetter(EDINBURGH, dora, { status: "bounced" });
-    const skipped = await addLetter(EDINBURGH, rob, { status: "not_sent" });
+    const skipped = await addLetter(EDINBURGH, rob, { status: "skipped" });
     await query("UPDATE letters_from_pauseai SET skip_reason = 'left-office' WHERE id = $1", [skipped]);
+    await addLetter(EDINBURGH, jo, { status: "cancelled" });
     await query(
       `INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, updated_by) VALUES ($1, 'edinburgh-conference-2026', 'event', 'going', 'staff')`,
       [polly],
     );
     const [{ id }] = await query<{ id: number }>("SELECT id::int AS id FROM mailings WHERE title = $1", [EDINBURGH]);
-    const names = async (tab: "replied" | "bounced" | "skipped" | "answered") =>
+    const names = async (tab: "sent" | "replied" | "failed" | "stopped" | "answered") =>
       (await getMailing(id, 1, tab))!.recipients.map((r) => [r.name, r.answer, r.skipReason]);
+    expect(await names("sent")).toEqual([["Polly Placeholder", "going", null]]);
     expect(await names("replied")).toEqual([["Polly Placeholder", "going", null]]);
-    expect(await names("bounced")).toEqual([["Dora Dummy", null, null]]);
-    expect(await names("skipped")).toEqual([["Rob Example", null, "left-office"]]);
+    expect(await names("failed")).toEqual([
+      ["Dora Dummy", null, null],
+      ["Rob Example", null, "left-office"],
+    ]);
+    expect(await names("stopped")).toEqual([["Jo Example", null, null]]);
     expect(await names("answered")).toEqual([["Polly Placeholder", "going", null]]);
-    expect(await getMailing(id, 1, "bounced")).toMatchObject({
-      tab: "bounced",
-      recipientsTotal: 1,
-      to: 3,
+    expect(await getMailing(id, 1, "failed")).toMatchObject({
+      tab: "failed",
+      recipientsTotal: 2,
+      to: 4,
       answered: 1,
     });
   });

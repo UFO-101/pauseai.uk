@@ -18,8 +18,8 @@ const base: MailingSummary = {
   to: 1,
   sentAt: null,
   sent: 1,
-  skipped: 0,
-  bounced: 0,
+  failed: 0,
+  stopped: 0,
   replied: 0,
   answered: 0,
 };

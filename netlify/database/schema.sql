@@ -1318,7 +1318,7 @@ CREATE TABLE public.letters_from_pauseai (
     merge_values jsonb,
     skip_reason text,
     CONSTRAINT letters_from_pauseai_kind_check CHECK ((kind = 'pauseai'::text)),
-    CONSTRAINT letters_from_pauseai_skip_reason_check CHECK ((skip_reason = ANY (ARRAY['blocked'::text, 'left-office'::text])))
+    CONSTRAINT letters_from_pauseai_skip_reason_check CHECK ((skip_reason = ANY (ARRAY['blocked'::text, 'left-office'::text, 'no-email'::text])))
 );
 
 --

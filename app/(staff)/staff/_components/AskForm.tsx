@@ -11,7 +11,7 @@ import { ASK_STATUSES, ASKERS, askSlug, type AskKind, type Asker } from "@/lib/a
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { Ask } from "@/lib/server/asks";
 import { AskPreview } from "./AskLine";
-import { DeleteTwice } from "./MailingButtons";
+import { DeleteTwice } from "./DeleteTwice";
 import Grid, { Card } from "./ui/Grid";
 import Strip from "./ui/Strip";
 import styles from "./AskForm.module.css";

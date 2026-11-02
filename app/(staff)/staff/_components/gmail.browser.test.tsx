@@ -10,7 +10,7 @@ import AccountTitle from "./AccountTitle";
 import LetterThread, { SupporterLetterThread } from "./LetterThread";
 import { exampleSupporterLetterDetails } from "./LettersTable.examples";
 import { exampleEditableAsk, exampleGmailAccount, exampleImportedThread, exampleThread } from "./LetterThread.examples";
-import { DeleteTwice } from "./MailingButtons";
+import { DeleteTwice } from "./DeleteTwice";
 import MyGmail from "./MyGmail";
 
 const gmail = staffCopy.gmail;
@@ -280,7 +280,7 @@ describe("AskForm", () => {
     await expect.element(page.getByText("winter-reception-dec-2026", { exact: true })).toBeVisible();
     await expect.element(field(copy.byKind.event.title)).toHaveValue("Winter reception");
     await page.getByRole("button", { name: copy.delete }).click();
-    await page.getByRole("button", { name: staffCopy.mailingPages.deleteIt }).click();
+    await page.getByRole("button", { name: staffCopy.deleteIt }).click();
     await expect.poll(() => remove.mock.calls.length).toBe(1);
     expect((remove.mock.calls[0][0] as FormData).get("slug")).toBe("winter-reception-dec-2026");
   });
