@@ -3,7 +3,7 @@ import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { runSql } from "@/scripts/fresh-database.mjs";
 import { addFilter, addStaffAccount, changeFilter, logInAsStaff, syncPoliticians } from "../steps";
 import { BASE, expect, frame, test } from "./fixtures";
-import { chooseDay } from "./staff-steps";
+import { chooseDay, PM_LETTER } from "./staff-steps";
 
 // The politicians from Airtable: every body, their answers to the asks, and
 // PauseAI's emails to them, as the nightly sync copies them from the fixture
@@ -89,10 +89,42 @@ test("Answer an ask staff added, from the button under a politician's asks", asy
   await expect(row.getByText(staffCopy.statuses.none)).toBeVisible();
   await row.getByLabel(copy.note).fill("Said yes on the phone");
   await frame(page, "a row like the others, not signed, its form open for a note of how we know", { window: true });
-  await row.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
+  await row.getByRole("combobox", { name: copy.status }).selectOption("signed");
+  await row.getByRole("button", { name: copy.save }).click();
   await expect(row.locator("[class*=answer]")).toHaveText(new RegExp(`^${staffCopy.statuses.signed}`));
   await expect(row.getByText(/Said yes on the phone/)).toBeVisible();
   await frame(page, "signed, with Edit like the rest");
+});
+
+test("A letter a politician declined, recorded from the button under their asks, then cleared", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await syncPoliticians(request, BASE);
+  await logIn(page, flowDatabase);
+  await openPolitician(page, "Polly Placeholder");
+  const asks = page.getByRole("region", { name: copy.statusesTitle });
+  await expect(asks.getByRole("group", { name: PM_LETTER })).toHaveCount(0);
+  await frame(page, "Polly hasn't answered the letter to the PM, so it has no row");
+  await asks.getByRole("button", { name: copy.otherAsk }).click();
+  await page.getByRole("list", { name: copy.otherAsk }).getByRole("button", { name: PM_LETTER }).click();
+  const row = asks.getByRole("group", { name: PM_LETTER });
+  await row.getByRole("combobox", { name: copy.status }).selectOption("declined");
+  await row.getByLabel(copy.note).fill("Their office said no");
+  await frame(page, "added from the menu: Declined chosen, with a note of how we know", { window: true });
+  await row.getByRole("button", { name: copy.save }).click();
+  await expect(row.locator("[class*=answer]")).toHaveText(new RegExp(`^${staffCopy.statuses.declined}`));
+  await expect(page.getByRole("region", { name: copy.historyTitle })).toContainText(staffCopy.statuses.declined);
+  await frame(page, "declined: crossed, its note under it, and in her history");
+
+  await row.getByText(copy.edit, { exact: true }).click();
+  await row.getByRole("combobox", { name: copy.status }).selectOption("");
+  await row.getByLabel(copy.note).fill("Entered by mistake");
+  await row.getByRole("button", { name: copy.save }).click();
+  await expect(asks.getByRole("group", { name: PM_LETTER })).toHaveCount(0);
+  await expect(page.getByRole("region", { name: copy.historyTitle })).toContainText(copy.statusCleared.before);
+  await frame(page, "cleared: the row gone, back under the button, and the history says so");
 });
 
 test("A peer, an MSP, and an MP who left office", async ({ page, request, flowDatabase }) => {

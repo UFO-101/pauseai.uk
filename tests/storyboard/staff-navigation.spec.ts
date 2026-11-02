@@ -101,10 +101,15 @@ test("The MPs signed tile: who signed, then everyone", async ({ page, request, f
   await logIn(page, flowDatabase, ["admin"]);
   await page.goto(`${BASE}/staff/politicians`);
   await page.getByRole("link", { name: "Polly Placeholder" }).click();
+  await page.getByRole("button", { name: staffCopy.politician.otherAsk }).click();
+  await page
+    .getByRole("list", { name: staffCopy.politician.otherAsk })
+    .getByRole("button", { name: PM_LETTER })
+    .click();
   const letter = page.getByRole("group", { name: PM_LETTER });
-  await letter.getByText(staffCopy.politician.edit, { exact: true }).click();
+  await letter.getByRole("combobox", { name: staffCopy.politician.status }).selectOption("signed");
   await letter.getByLabel(staffCopy.politician.note).fill("They emailed");
-  await letter.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
+  await letter.getByRole("button", { name: staffCopy.politician.save }).click();
   await expect(letter.locator("[class*=answer]")).toHaveText(new RegExp(`^${staffCopy.statuses.signed}`));
 
   // One signed this week: the tile is their page.
@@ -181,12 +186,17 @@ test("Log in, set an MP's status, see it on /campaigns, log out", async ({ page,
   // Signed on their page, in the ask's row of the panel beside their details, with a note.
   await page.getByRole("link", { name: "Polly Placeholder" }).click();
   const card = page.getByRole("group", { name: PM_LETTER });
-  await expect(card.getByText(staffCopy.statuses.none)).toBeVisible();
-  await frame(page, "Polly Placeholder's page: the asks beside her details");
-  await card.getByText(staffCopy.politician.edit, { exact: true }).click();
+  await expect(card).toHaveCount(0);
+  await frame(page, "Polly Placeholder's page: the asks she's answered beside her details");
+  await page.getByRole("button", { name: staffCopy.politician.otherAsk }).click();
+  await page
+    .getByRole("list", { name: staffCopy.politician.otherAsk })
+    .getByRole("button", { name: PM_LETTER })
+    .click();
+  await card.getByRole("combobox", { name: staffCopy.politician.status }).selectOption("signed");
   await card.getByLabel(staffCopy.politician.note).fill("Told us at the march");
-  await frame(page, "Edit opens the form, with a note of how we know");
-  await card.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
+  await frame(page, "Add another answer: the letter's form, Signed chosen, with a note of how we know");
+  await card.getByRole("button", { name: staffCopy.politician.save }).click();
   await expect(card.locator("[class*=answer]")).toHaveText(new RegExp(`^${staffCopy.statuses.signed}`));
   await expect(card.getByText(/Told us at the march/)).toBeVisible();
   await frame(page, "Polly Placeholder marked as signed");

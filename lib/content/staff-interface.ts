@@ -683,8 +683,6 @@ export const staffCopy = {
     // On a politician whose address is blocked (/staff/politicians/blocked-emails).
     emailBlocked: "Email blocked",
     // The button on an ask staff record by hand.
-    markSigned: "Mark as signed",
-    unmarkSigned: "Remove signature",
   },
   fields: {
     name: "Name",
@@ -1182,7 +1180,7 @@ export const staffCopy = {
     historyTitle: "History",
     // A status set or cleared, in the history: around the ask's name.
     statusSet: (status: string) => ({ before: `${status} '`, after: "'" }),
-    statusCleared: { before: "No longer marked as signed '", after: "'" },
+    statusCleared: { before: "⁂ Answer cleared for '", after: "'" },
     noHistory: "Nothing yet.",
     // What each line of the history was: a letter, a reply, or an entry of the audit log about them.
     history: {

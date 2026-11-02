@@ -2275,6 +2275,7 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/AskRow.tsx",
       variants: [
         { label: "An answer from Airtable, and an ask staff record with none yet", render: () => <AskRowExample /> },
+        { label: "A letter they declined, crossed", render: () => <AskRowExample declined /> },
       ],
     },
     {

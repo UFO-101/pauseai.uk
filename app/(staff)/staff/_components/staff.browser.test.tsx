@@ -1600,7 +1600,7 @@ describe("PoliticianDetails", () => {
       .toHaveAttribute("href", "/staff/mailings/3/letters/12");
   });
 
-  it("gives each ask staff record, and each they've answered, a row: the answer first, the ask linked, who asked and when, who set the answer, and the form where staff record it", async () => {
+  it("gives each ask they've answered a row: the answer first, the ask linked, who asked and when, who set the answer, and the form where staff record it", async () => {
     const { fn, sent } = action();
     const signed = { ...MP.statuses["frontier-ai-letter"], note: "By email" };
     await render(
@@ -1612,14 +1612,14 @@ describe("PoliticianDetails", () => {
       />,
     );
     const row = (slug: string) => page.getByRole("group", { name: ask(slug).title });
-    // The ask staff record first, then the rest they've answered; an ask they haven't, staff don't record, isn't there.
+    // Those they've answered, in the asks' order; one they haven't isn't there.
     expect(
       page
         .getByRole("region", { name: staffCopy.politician.statusesTitle })
         .getByRole("group")
         .all()
         .map((g) => g.element().getAttribute("aria-label")),
-    ).toEqual([ask("frontier-ai-letter").title, ask("edinburgh-conference-2026").title]);
+    ).toEqual([ask("edinburgh-conference-2026").title, ask("frontier-ai-letter").title]);
     const letter = row("frontier-ai-letter");
     // Signed, and when, ticked in green.
     const answer = (group: typeof letter) => group.element().querySelector("[class*=answer]")!;
@@ -1654,11 +1654,19 @@ describe("PoliticianDetails", () => {
       .toBeVisible();
     expect(event.getByRole("button").all()).toHaveLength(0);
 
-    // The form, behind Edit.
-    expect(letter.getByRole("button", { name: staffCopy.politicians.unmarkSigned }).query()).toBeNull();
+    // The form, behind Edit: a letter's answers, starting from theirs.
+    expect(letter.getByRole("combobox").query()).toBeNull();
     await letter.getByText(staffCopy.politician.edit, { exact: true }).click();
+    const select = letter.getByRole("combobox", { name: staffCopy.politician.status });
+    await expect.element(select).toHaveValue("signed");
+    expect([...select.element().querySelectorAll("option")].map((o) => o.textContent)).toEqual([
+      staffCopy.statuses.none,
+      staffCopy.statuses.signed,
+      staffCopy.statuses.declined,
+    ]);
+    await select.selectOptions("");
     await letter.getByLabelText(staffCopy.politician.note).fill("Their office wrote");
-    await letter.getByRole("button", { name: staffCopy.politicians.unmarkSigned }).click();
+    await letter.getByRole("button", { name: staffCopy.politician.save }).click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
     expect(sent[0]).toEqual({ politicianId: "7", ask: "frontier-ai-letter", status: "", note: "Their office wrote" });
   });
@@ -1683,20 +1691,44 @@ describe("PoliticianDetails", () => {
     await expect.element(row.getByText(staffCopy.politician.askedThem("", "event"), { exact: true })).toBeVisible();
   });
 
-  it("offers to mark them signed where they haven't", async () => {
+  it("has no row for a letter they haven't answered, and records a decline from Add another answer", async () => {
     const { fn, sent } = action();
     await render(<PoliticianDetails {...none} politician={{ ...MP, statuses: {} }} setStatus={fn} unblock={vi.fn()} />);
+    expect(page.getByRole("group", { name: ask("frontier-ai-letter").title }).query()).toBeNull();
+    await page.getByRole("button", { name: staffCopy.politician.otherAsk }).click();
+    await page
+      .getByRole("list", { name: staffCopy.politician.otherAsk })
+      .getByRole("button", { name: ask("frontier-ai-letter").title })
+      .click();
     const letter = page.getByRole("group", { name: ask("frontier-ai-letter").title });
-    await expect.element(letter.getByText(staffCopy.statuses.none)).toBeVisible();
+    await expect.element(letter.getByText(staffCopy.statuses.none, { exact: true }).first()).toBeVisible();
+    await letter.getByRole("combobox", { name: staffCopy.politician.status }).selectOptions("declined");
     // Not without a note of how they know.
-    await letter.getByText(staffCopy.politician.edit, { exact: true }).click();
-    const mark = letter.getByRole("button", { name: staffCopy.politicians.markSigned });
-    await mark.click();
+    const save = letter.getByRole("button", { name: staffCopy.politician.save });
+    await save.click();
     expect(sent).toHaveLength(0);
     await letter.getByLabelText(staffCopy.politician.note).fill("They emailed");
-    await mark.click();
+    await save.click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
-    expect(sent[0]).toEqual({ politicianId: "7", ask: "frontier-ai-letter", status: "signed", note: "They emailed" });
+    expect(sent[0]).toEqual({ politicianId: "7", ask: "frontier-ai-letter", status: "declined", note: "They emailed" });
+  });
+
+  it("crosses a letter they declined", async () => {
+    const declined = { ...MP.statuses["frontier-ai-letter"], status: "declined" as const };
+    await render(
+      <PoliticianDetails
+        {...none}
+        politician={{ ...MP, statuses: { "frontier-ai-letter": declined } }}
+        setStatus={vi.fn()}
+        unblock={vi.fn()}
+      />,
+    );
+    const answer = page
+      .getByRole("group", { name: ask("frontier-ai-letter").title })
+      .element()
+      .querySelector("[class*=answer]")!;
+    expect(answer.textContent).toBe(`${staffCopy.statuses.declined}1 Oct 2026${staffCopy.politician.edit}`);
+    expect(answer.className).toMatch(/no/);
   });
 
   it("chooses an event's answer from a list, where staff record it", async () => {
@@ -1712,11 +1744,12 @@ describe("PoliticianDetails", () => {
         unblock={vi.fn()}
       />,
     );
+    await page.getByRole("button", { name: staffCopy.politician.otherAsk }).click();
+    await page.getByRole("button", { name: "Example Event" }).click();
     const row = page.getByRole("group", { name: "Example Event" });
     expect(row.element().querySelector("[class*=answer]")!.textContent).toBe(
       `${staffCopy.statuses.noAnswer}${staffCopy.politician.edit}`,
     );
-    await row.getByText(staffCopy.politician.edit, { exact: true }).click();
     const select = row.getByRole("combobox", { name: staffCopy.politician.status });
     await expect.element(select).toHaveValue("");
     await select.selectOptions("going");
@@ -1780,9 +1813,10 @@ describe("PoliticianDetails", () => {
     expect(row.element().querySelector("[class*=answer]")!.textContent).toBe(
       `${staffCopy.statuses.none}${staffCopy.politician.edit}`,
     );
-    await expect.element(row.getByRole("button", { name: staffCopy.politicians.markSigned })).toBeVisible();
+    await expect.element(row.getByRole("combobox", { name: staffCopy.politician.status })).toBeVisible();
+    await row.getByRole("combobox", { name: staffCopy.politician.status }).selectOptions("signed");
     await row.getByLabelText(staffCopy.politician.note).fill("At the march");
-    await row.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
+    await row.getByRole("button", { name: staffCopy.politician.save }).click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
     expect(sent[0]).toEqual({
       politicianId: "7",
@@ -2186,7 +2220,7 @@ describe("AsksTable", () => {
       exampleAsks[3].title,
       "",
       `${copy.askedBy.supporters}${copy.askedBy.pauseai}`,
-      copy.count(staffCopy.statuses.signed, 10),
+      [copy.count(staffCopy.statuses.signed, 10), copy.count(staffCopy.statuses.declined, 2)].join(" · "),
       "",
     ]);
     expect(cells(exampleAsks[2].title).at(-2)).toBe(copy.noAnswers);

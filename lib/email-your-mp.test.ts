@@ -45,6 +45,7 @@ describe("campaigns", () => {
 
   it("counts a campaign done only with the status it asks for", () => {
     expect(isDone(letterToPm, { [letterToPm.ask!]: "signed" })).toBe(true);
+    expect(isDone(letterToPm, { [letterToPm.ask!]: "declined" })).toBe(false);
     expect(isDone(letterToPm, { "controlai-letter": "signed" })).toBe(false);
     expect(isDone(letterToPm, {})).toBe(false);
   });

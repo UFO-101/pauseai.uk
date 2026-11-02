@@ -129,10 +129,18 @@ export function HeldSyncExample() {
  */
 /**
  * The asks card's rows: one answered from Airtable, one staff record with
- * no answer yet; then, with `others`, the button whose menu adds another.
+ * no answer yet, or, with `declined`, a letter they declined; then, with
+ * `others`, the button whose menu adds another.
  */
-export function AskRowExample({ others = false }: { others?: boolean }) {
-  const politician = { ...examplePolitician, airtableId: null };
+export function AskRowExample({ others = false, declined = false }: { others?: boolean; declined?: boolean }) {
+  const decline = { ...examplePolitician.statuses["frontier-ai-letter"]!, status: "declined" as const };
+  const politician = {
+    ...examplePolitician,
+    airtableId: null,
+    statuses: declined
+      ? { ...examplePolitician.statuses, [exampleAsks[4]!.slug]: decline }
+      : examplePolitician.statuses,
+  };
   return (
     <Logged>
       {(log) => (

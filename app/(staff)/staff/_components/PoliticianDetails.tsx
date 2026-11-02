@@ -2,7 +2,7 @@ import StaffLink from "./ui/StaffLink";
 import type { ReactNode } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { asksDone } from "@/lib/asks";
-import { answeredByHand, trackedAsks } from "@/lib/email-your-mp";
+import { answeredByHand } from "@/lib/email-your-mp";
 import type { Ask } from "@/lib/server/asks";
 import { AskTitle } from "./AskLine";
 import AskRow, { AskRows, OtherAsks } from "./AskRow";
@@ -212,12 +212,9 @@ function Detail({ change, asks }: { change: PoliticianChange; asks: Ask[] }) {
   }
 }
 
-/** The asks a politician has a row for: the campaigns' that staff record, then any other they have a status for, in the asks' order. */
+/** The asks a politician has a row for: those they have an answer to, in the asks' order. */
 function asksOf(politician: Politician, asks: Ask[]): Ask[] {
-  return [
-    ...asks.filter((ask) => trackedAsks.includes(ask.slug)),
-    ...asks.filter((ask) => !trackedAsks.includes(ask.slug) && politician.statuses[ask.slug]),
-  ];
+  return asks.filter((ask) => politician.statuses[ask.slug]);
 }
 
 /**

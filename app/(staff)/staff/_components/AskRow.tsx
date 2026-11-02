@@ -19,45 +19,32 @@ const copy = staffCopy.politician;
 
 type SetStatus = (form: FormData) => void | Promise<void>;
 
+/** What no answer to an ask is called: a letter not signed, or an invitation with no answer. */
+const noAnswer = (ask: Ask) => (ask.kind === "letter" ? staffCopy.statuses.none : staffCopy.statuses.noAnswer);
+
 /**
- * Setting their answer to an ask staff record, with a note: Signed, or
- * taking it away, for a letter; one of an event's answers, or none.
+ * Setting their answer to an ask staff record, with a note: one of the
+ * answers its kind allows (ASK_STATUSES), or none.
  */
 function AnswerForm({ politician, ask, setStatus }: { politician: Politician; ask: Ask; setStatus: SetStatus }) {
-  const status = politician.statuses[ask.slug];
-  const note = (
-    <span className={styles.note}>
-      <TextInput name="note" aria-label={copy.note} placeholder={copy.notePlaceholder} required />
-    </span>
-  );
   return (
     <FilterForm action={setStatus} aria-label={`${copy.setStatus}: ${ask.title}`}>
       <input type="hidden" name="politicianId" value={politician.id} />
       <input type="hidden" name="ask" value={ask.slug} />
-      {ask.kind === "letter" ? (
-        <>
-          <input type="hidden" name="status" value={status ? "" : "signed"} />
-          {note}
-          <SubmitButton variant={status ? "ghost" : "primary"} size="small">
-            {status ? staffCopy.politicians.unmarkSigned : staffCopy.politicians.markSigned}
-          </SubmitButton>
-        </>
-      ) : (
-        <>
-          <Select name="status" defaultValue={status?.status ?? ""} aria-label={copy.status}>
-            <option value="">{staffCopy.statuses.noAnswer}</option>
-            {ASK_STATUSES.event.map((value) => (
-              <option key={value} value={value}>
-                {staffCopy.statuses[value]}
-              </option>
-            ))}
-          </Select>
-          {note}
-          <SubmitButton variant="primary" size="small">
-            {copy.save}
-          </SubmitButton>
-        </>
-      )}
+      <Select name="status" defaultValue={politician.statuses[ask.slug]?.status ?? ""} aria-label={copy.status}>
+        <option value="">{noAnswer(ask)}</option>
+        {ASK_STATUSES[ask.kind].map((value) => (
+          <option key={value} value={value}>
+            {staffCopy.statuses[value]}
+          </option>
+        ))}
+      </Select>
+      <span className={styles.note}>
+        <TextInput name="note" aria-label={copy.note} placeholder={copy.notePlaceholder} required />
+      </span>
+      <SubmitButton variant="primary" size="small">
+        {copy.save}
+      </SubmitButton>
     </FilterForm>
   );
 }
@@ -91,7 +78,6 @@ export default function AskRow({
   open?: boolean;
 }) {
   const status = politician.statuses[ask.slug];
-  const none = ask.kind === "letter" ? staffCopy.statuses.none : staffCopy.statuses.noAnswer;
   const byHand = answeredByHand(ask.slug);
   const editId = `edit-${ask.slug}`;
   const tone = status && (YES.includes(status.status) ? styles.yes : NO.includes(status.status) ? styles.no : "");
@@ -111,7 +97,7 @@ export default function AskRow({
         )}
       </div>
       <div className={`${styles.answer} ${tone || ""}`}>
-        <span>{status ? staffCopy.statuses[status.status] : none}</span>
+        <span>{status ? staffCopy.statuses[status.status] : noAnswer(ask)}</span>
         {status?.date && <span className={styles.askMeta}>{staffDate(status.date)}</span>}
         {byHand && (
           <button

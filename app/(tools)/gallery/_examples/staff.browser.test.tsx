@@ -139,14 +139,15 @@ describe("the staff examples", () => {
     await expect.element(log().nth(1)).toHaveTextContent('decide({"id":"3","decision":"discard"})');
   });
 
-  it("logs removing a politician's signature on their page", async () => {
+  it("logs clearing a politician's signature on their page", async () => {
     await render(<PoliticianDetailsExample />);
     await page
       .getByRole("region", { name: staffCopy.politician.statusesTitle })
       .getByText(staffCopy.politician.edit, { exact: true })
       .click();
+    await page.getByRole("combobox", { name: staffCopy.politician.status }).selectOptions("");
     await page.getByLabelText(staffCopy.politician.note).fill("Their office wrote");
-    await page.getByRole("button", { name: staffCopy.politicians.unmarkSigned }).click();
+    await page.getByRole("button", { name: staffCopy.politician.save }).click();
     await expect
       .element(log().nth(0))
       .toHaveTextContent(
