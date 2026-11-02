@@ -126,11 +126,16 @@ describe("EventEdit", () => {
     await page.getByRole("combobox").selectOptions("sean@pauseai.uk");
     await page.getByRole("button", { name: copy.save }).click();
     const note = page.getByRole("status");
-    await expect
-      .element(note)
-      .toHaveTextContent(copy.emailed(["sean@pauseai.uk", "joseph@pauseai.uk"], "sean@pauseai.uk"));
+    // Its words, beside its ×.
+    await vi.waitFor(() =>
+      expect(note.element().textContent).toContain(
+        copy.emailed(["sean@pauseai.uk", "joseph@pauseai.uk"], "sean@pauseai.uk"),
+      ),
+    );
     await note.getByRole("button", { name: copy.closeEmailed }).click();
-    await expect.element(note).toBeEmptyDOMElement();
+    // Closed, the region is empty, and takes no room.
+    await expect.element(page.getByRole("button", { name: copy.closeEmailed })).not.toBeInTheDocument();
+    expect(document.body.textContent).not.toContain("Emailed");
   });
 
   it("begins with the owner and doc it has", async () => {
