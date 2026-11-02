@@ -16,7 +16,7 @@ async function supporter(phone: string): Promise<number> {
   const [{ id }] = await query<{ id: number }>("INSERT INTO supporters DEFAULT VALUES RETURNING id::int AS id");
   const [entry] = await query<{ id: number }>(
     `INSERT INTO form_entries (form, name, email, phone, contact_consent)
-     VALUES ('site-forms', 'Jane Smith', $1, $2, false) RETURNING id::int AS id`,
+     VALUES ('march-2026-11', 'Jane Smith', $1, $2, false) RETURNING id::int AS id`,
     [`jane${id}@example.com`, phone],
   );
   await query(

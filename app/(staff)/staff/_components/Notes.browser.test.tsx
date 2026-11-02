@@ -3,32 +3,24 @@ import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { staffTime } from "@/lib/staff-time";
-import Notes, { NoteText } from "./Notes";
+import NoteForm from "./NoteForm";
+import Notes, { NoteEntry, NoteText } from "./Notes";
 import { exampleNoteAdmin, exampleNotes, exampleNotesAt, exampleNoteWriter } from "./Notes.examples";
 
 const copy = staffCopy.notes;
 const notes = () => page.getByRole("list", { name: copy.title }).getByRole("listitem");
+const fields = (form: FormData) => Object.fromEntries(form.entries());
 
-function renderNotes(reader = exampleNoteWriter, list = exampleNotes) {
-  const add = vi.fn();
-  const edit = vi.fn();
-  const remove = vi.fn();
-  return render(
-    <Notes
-      notes={list}
-      target={{ name: "supporterId", value: 4 }}
-      reader={reader}
-      at={exampleNotesAt}
-      add={add}
-      edit={edit}
-      remove={remove}
-    />,
-  ).then(() => ({ add, edit, remove }));
+async function renderNotes(reader = exampleNoteWriter, list = exampleNotes) {
+  const actions = { add: vi.fn(), edit: vi.fn(), remove: vi.fn() };
+  await render(<Notes supporterId={4} notes={list} reader={reader} at={exampleNotesAt} {...actions} />);
+  return actions;
 }
 
 describe("Notes", () => {
-  it("lists the notes, newest first, with who wrote each, when, and whether it was edited, their addresses links", async () => {
+  it("lists a supporter's notes, newest first, with who wrote each, when, and whether it was edited, their addresses links", async () => {
     await renderNotes();
+    await expect.element(page.getByRole("heading", { name: copy.title })).toBeVisible();
     await expect.element(notes().nth(0)).toHaveTextContent(`jo@pauseai.uk · ${staffTime(exampleNotes[0].createdAt)}`);
     await expect
       .element(notes().nth(1))
@@ -43,17 +35,14 @@ describe("Notes", () => {
 
   it("lets the writer edit or delete only her note still young enough, sending its ID and new text", async () => {
     const { edit, remove } = await renderNotes();
-    await expect.element(notes().nth(1).getByText(copy.edit)).not.toBeInTheDocument();
+    await expect.element(notes().nth(1).getByText(copy.edit, { exact: true })).not.toBeInTheDocument();
     await expect.element(notes().nth(2).getByRole("button", { name: copy.delete })).not.toBeInTheDocument();
     await notes().nth(0).getByText(copy.edit, { exact: true }).click();
     const field = notes().nth(0).getByRole("textbox", { name: copy.note });
     await expect.element(field).toHaveValue(exampleNotes[0].body);
     await field.fill("Spoke in Leeds");
     await notes().nth(0).getByRole("button", { name: copy.save }).click();
-    expect(Object.fromEntries((edit.mock.calls[0][0] as FormData).entries())).toEqual({
-      id: "3",
-      body: "Spoke in Leeds",
-    });
+    expect(fields(edit.mock.calls[0][0])).toEqual({ id: "3", body: "Spoke in Leeds" });
     await notes().nth(0).getByRole("button", { name: copy.delete }).click();
     await page.getByRole("button", { name: staffCopy.deleteIt }).click();
     await vi.waitFor(() => expect(remove).toHaveBeenCalled());
@@ -62,23 +51,62 @@ describe("Notes", () => {
 
   it("lets an admin delete any note, but edit none of them", async () => {
     await renderNotes(exampleNoteAdmin);
-    for (const i of [0, 1, 2])
+    for (const i of [0, 1, 2]) {
       await expect.element(notes().nth(i).getByRole("button", { name: copy.delete })).toBeVisible();
+    }
     await expect.element(page.getByText(copy.edit, { exact: true })).not.toBeInTheDocument();
   });
 
-  it("says when there are none, and adds one on whom it's about, with what a note should be under the field", async () => {
+  it("says when there are none, and adds one on the supporter, with what a note should be under the field", async () => {
     const { add } = await renderNotes(exampleNoteWriter, []);
     await expect.element(page.getByText(copy.none)).toBeVisible();
+    await page.getByRole("button", { name: copy.write }).click();
     const field = page.getByRole("textbox", { name: copy.note });
-    await expect.element(field).toHaveAccessibleDescription(copy.guidance.supporterId);
+    await expect.element(field).toHaveFocus();
+    await expect.element(field).toHaveAccessibleDescription(copy.guidance);
     await field.click();
     await userEvent.keyboard("Keen{Shift>}{Enter}{/Shift}to help");
     await page.getByRole("button", { name: copy.add }).click();
-    expect(Object.fromEntries((add.mock.calls[0][0] as FormData).entries())).toEqual({
-      supporterId: "4",
-      body: "Keen\nto help",
-    });
+    expect(fields(add.mock.calls[0][0])).toEqual({ supporterId: "4", body: "Keen\nto help" });
+    // Added, it closes, for the page to show the note.
+    await expect.element(page.getByRole("button", { name: copy.write })).toBeVisible();
+  });
+});
+
+describe("NoteEntry", () => {
+  it("in a history: its label, who wrote it and no time, the history giving that", async () => {
+    await render(
+      <NoteEntry
+        note={exampleNotes[1]}
+        reader={exampleNoteWriter}
+        at={exampleNotesAt}
+        edit={vi.fn()}
+        remove={vi.fn()}
+        label="Note"
+        dated={false}
+      />,
+    );
+    await expect.element(page.getByText(`Note · sam@pauseai.uk · ${copy.edited}`)).toBeVisible();
+    await expect.element(page.getByRole("button")).not.toBeInTheDocument();
+  });
+});
+
+describe("NoteForm", () => {
+  it("opens from Write a note, closes unsent on Cancel, and on a politician has no reminder under the field", async () => {
+    const add = vi.fn();
+    await render(<NoteForm target={{ name: "politicianId", value: 7 }} add={add} />);
+    await expect.element(page.getByRole("textbox")).not.toBeInTheDocument();
+    await page.getByRole("button", { name: copy.write }).click();
+    await page.getByRole("textbox", { name: copy.note }).fill("Never sent");
+    await page.getByRole("button", { name: copy.cancel }).click();
+    await expect.element(page.getByRole("textbox")).not.toBeInTheDocument();
+    expect(add).not.toHaveBeenCalled();
+    await page.getByRole("button", { name: copy.write }).click();
+    await expect.element(page.getByRole("textbox", { name: copy.note })).not.toHaveAttribute("aria-describedby");
+    await expect.element(page.getByText(copy.guidance)).not.toBeInTheDocument();
+    await page.getByRole("textbox", { name: copy.note }).fill("Met them");
+    await page.getByRole("button", { name: copy.add }).click();
+    expect(fields(add.mock.calls[0][0])).toEqual({ politicianId: "7", body: "Met them" });
   });
 });
 

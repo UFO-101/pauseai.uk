@@ -245,13 +245,15 @@ test("Notes on a supporter: add one with a link, edit it, and an admin deletes a
   await expect(notes).toHaveCount(1);
   await expect(card.getByText(staffCopy.notes.edit, { exact: true })).toHaveCount(0);
   await expect(card.getByRole("button", { name: staffCopy.notes.delete })).toHaveCount(0);
+  await frame(page, "Jane's page: a colleague's note from last week, under her letters, and Write a note");
+  await card.getByRole("button", { name: staffCopy.notes.write }).click();
   await card
     .getByRole("textbox", { name: staffCopy.notes.note })
     .fill("Met her at the Leeds stall.\nSlides from her talk: https://example.org/slides/leeds");
-  await frame(page, "Jane's notes: a colleague's from last week, and a new one typed, with a link");
+  await frame(page, "Write a note opened, with what a note should be, and one typed, with a link");
   await card.getByRole("button", { name: staffCopy.notes.add }).click();
   await expect(notes).toHaveCount(2);
-  await expect(card.getByRole("textbox", { name: staffCopy.notes.note })).toHaveValue("");
+  await expect(card.getByRole("textbox", { name: staffCopy.notes.note })).toHaveCount(0);
   await expect(notes.first().getByRole("link", { name: "https://example.org/slides/leeds" })).toHaveAttribute(
     "href",
     "https://example.org/slides/leeds",

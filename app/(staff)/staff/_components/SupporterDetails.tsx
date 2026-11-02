@@ -263,8 +263,8 @@ const letterColumns: ListColumn<SupporterLetter>[] = [
 /**
  * A supporter's page: the band of what we've worked out about them, with
  * their name; a card of whether we'd contact them, a row per topic; beside
- * it, tables of the events they registered for and their letters; under
- * them `notes`; then a
+ * it, tables of the events they registered for and their letters, and
+ * under those `notes`; then a
  * quiet foot, each row folded: everything they did, newest first, and
  * everything we hold, `erase` (the button to erase them) at its end.
  */
@@ -275,7 +275,7 @@ export default function SupporterDetails({
 }: {
   supporter: Details;
   erase?: ReactNode;
-  /** The notes card (Notes), under the tables. */
+  /** The notes card (Notes), under their letters. */
   notes?: ReactNode;
 }) {
   const { summary, activity, permissions, letters } = supporter;
@@ -308,8 +308,8 @@ export default function SupporterDetails({
               <p className={styles.none}>{copy.detail.noLetters}</p>
             )}
           </section>
+          {notes}
         </div>
-        {notes}
       </Grid>
       <div className={styles.foot}>
         {activity.length === 0 ? (

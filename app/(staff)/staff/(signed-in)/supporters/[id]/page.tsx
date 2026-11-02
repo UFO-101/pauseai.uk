@@ -41,7 +41,7 @@ export default async function SupporterPage({ params }: Params) {
         notes={
           <Notes
             notes={notes}
-            target={{ name: "supporterId", value: supporter.summary.id }}
+            supporterId={supporter.summary.id}
             reader={staff}
             at={now().toISOString()}
             add={addNoteNow}

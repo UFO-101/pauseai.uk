@@ -42,23 +42,25 @@ test("A politician's page: markers, notes, answers and emails", async ({ page, r
   await frame(page, "Polly's page: important, with notes, her answers from Airtable and PauseAI's invitation");
 });
 
-test("Notes on a politician, under Airtable's", async ({ page, request, flowDatabase }) => {
+test("Notes on a politician, in their history, beside Airtable's", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   await openPolitician(page, "Polly Placeholder");
-  const card = page.getByRole("region", { name: staffCopy.notes.title });
-  await expect(card.getByText(staffCopy.notes.none)).toBeVisible();
-  await card
+  const history = page.getByRole("region", { name: copy.historyTitle });
+  await history.getByRole("button", { name: staffCopy.notes.write }).click();
+  await history
     .getByRole("textbox", { name: staffCopy.notes.note })
     .fill("Her office says write to www.example.org/contact");
-  await card.getByRole("button", { name: staffCopy.notes.add }).click();
-  await expect(card.getByRole("link", { name: "www.example.org/contact" })).toHaveAttribute(
+  await frame(page, "Write a note opened at the top of Polly's history");
+  await history.getByRole("button", { name: staffCopy.notes.add }).click();
+  const note = history.getByRole("listitem").filter({ hasText: "Her office says" });
+  await expect(note.getByRole("link", { name: "www.example.org/contact" })).toHaveAttribute(
     "href",
     "https://www.example.org/contact",
   );
-  // Airtable's notes stay where they were, the sync's to change.
-  await expect(page.getByText("Met at the example fair.")).toBeVisible();
-  await frame(page, "a note added on Polly, its address a link, Airtable's notes above it as they were");
+  // Airtable's notes stay beside the history, the sync's to change.
+  await expect(page.getByRole("region", { name: copy.notes })).toContainText("Met at the example fair.");
+  await frame(page, "the note in her history, newest first, its address a link; Airtable's notes beside it");
 });
 
 test("Answer an ask staff added, from the button under a politician's asks", async ({

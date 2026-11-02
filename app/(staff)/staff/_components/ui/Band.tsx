@@ -19,11 +19,13 @@ export function BandFact({ label, detail, children }: { label: string; detail?: 
 /**
  * The tinted band at the top of a record's page (a supporter's, a
  * mailing's): `lead` at its left, such as a map; the title, with a tag
- * beside it; under it the facts (BandFact), with `aside` at their right,
- * such as Counts. It wraps on a narrow screen.
+ * beside it, and under it in grey `subtitle`, such as what a politician
+ * is; under them the facts (BandFact), with `aside` at their right, such
+ * as Counts. It wraps on a narrow screen.
  */
 export default function Band({
   title,
+  subtitle,
   tag,
   lead,
   aside,
@@ -31,6 +33,7 @@ export default function Band({
   children,
 }: {
   title: ReactNode;
+  subtitle?: ReactNode;
   tag?: ReactNode;
   lead?: ReactNode;
   aside?: ReactNode;
@@ -47,6 +50,7 @@ export default function Band({
           <h1>{title}</h1>
           {tag}
         </div>
+        {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
         <div className={styles.row}>
           <dl className={styles.facts}>{children}</dl>
           {aside}

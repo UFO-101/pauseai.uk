@@ -1,22 +1,27 @@
-/* The notes, one under another, a rule between each. */
+/* A supporter's notes, one under another, a rule between each. */
 .notes {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.note {
-  display: grid;
-  gap: var(--space-1);
+.notes li {
   padding-block: var(--space-3);
 }
 
-.note + .note {
+.notes li + li {
   border-top: 1px solid var(--border);
 }
 
-.note:first-child {
+.notes li:first-child {
   padding-top: 0;
+}
+
+/* One note: its text, who wrote it, and the buttons to change it. */
+.note {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: start;
 }
 
 /* As it was typed: its line breaks kept, a long address broken to fit. */
@@ -29,6 +34,7 @@
 /* Edit and Delete on a line; the edit's form, opened, takes the line under them. */
 .changes {
   display: flex;
+  justify-self: stretch;
   flex-wrap: wrap;
   gap: var(--space-2);
   align-items: flex-start;
@@ -56,12 +62,18 @@
 }
 
 .add {
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--border);
+  margin-top: var(--space-3);
 }
 
 .guidance {
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--text-sm);
+}
+
+/* Add note and Cancel, side by side. */
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }

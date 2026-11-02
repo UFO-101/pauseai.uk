@@ -1,6 +1,7 @@
 import StaffLink from "./ui/StaffLink";
 import type { ReactNode } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { asksDone } from "@/lib/asks";
 import { answeredByHand, trackedAsks } from "@/lib/email-your-mp";
 import type { Ask } from "@/lib/server/asks";
 import { AskTitle } from "./AskLine";
@@ -14,26 +15,18 @@ import type { LetterSummary, PauseaiLetter, PoliticianLetters, UnsignedLetter } 
 import type { Politician, PoliticianChange } from "@/lib/server/politicians";
 import { staffDate, staffTime } from "@/lib/staff-time";
 import styles from "./Details.module.css";
-import Grid, { Card } from "./ui/Grid";
+import Band, { BandFact } from "./ui/Band";
+import Counts from "./ui/Counts";
+import Grid, { Card, Column } from "./ui/Grid";
 import Strip from "./ui/Strip";
 import { NationShape, Rosette, StatusDot } from "./PoliticianIcons";
 import UnblockForm from "./UnblockForm";
-import { NoteText } from "./Notes";
+import NoteForm from "./NoteForm";
+import { NoteEntry, NoteText, type NotesProps } from "./Notes";
 import Tag from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
 
 const copy = staffCopy.politician;
-
-/** One line of the box: its label and value. Nothing when there's no value. */
-function Fact({ label, children }: { label: string; children: React.ReactNode }) {
-  if (!children) return null;
-  return (
-    <>
-      <dt>{label}</dt>
-      <dd>{children}</dd>
-    </>
-  );
-}
 
 /** One line of the history: when, to the minute or, with `day`, only the day, and what, already in words. */
 type Entry = { key: string; at: string; day?: boolean; what: ReactNode };
@@ -228,15 +221,117 @@ function asksOf(politician: Politician, asks: Ask[]): Ask[] {
 }
 
 /**
- * A politician's page, laid out like a supporter's: their name and tags,
- * and under it what they are;
- * one card of what we hold, with where they came from, and beside it a
- * card of their status for each campaign, with the button to change it
- * for one staff record (ui/Grid); if their address is blocked, why, and a way to unblock it; one
- * history of the letters written to them, the replies, and everything the
- * audit log says about them, newest first, the letters' senders only when
- * it's given them; `notes` goes over the history. Nothing else here edits
- * them: an Airtable MP's source links to their record there.
+ * The band at the top of their page: their name and tags, and under it
+ * what they are; then their party, whether they're in office, their nation, how to write
+ * to them, and where their record came from, an Airtable MP's linked to it
+ * there; and how many asks they did (asksDone), leading to the asks, and
+ * letters supporters wrote them and emails PauseAI sent, to the history.
+ */
+function PoliticianBand({
+  politician,
+  letters,
+  emails,
+  airtableTable,
+}: {
+  politician: Politician;
+  letters: number;
+  emails: number;
+  airtableTable: string;
+}) {
+  const inOffice = politician.status === "in_office";
+  const source = politician.isTest
+    ? copy.sources.test
+    : politician.airtableId
+      ? copy.sources.airtable
+      : copy.sources.staff;
+  return (
+    <Band
+      className={styles.band}
+      title={politician.name}
+      subtitle={copy.role(copy.roles[politician.house], politician.constituency, inOffice)}
+      tag={
+        <>
+          {politician.isTest && <Tag>{staffCopy.politicians.flags.test}</Tag>}
+          {politician.importantTarget && <Tag tone="amber">{copy.importantTarget}</Tag>}
+          {politician.personalConnection && <Tag>{copy.personalConnection}</Tag>}
+        </>
+      }
+      aside={
+        <Counts
+          counts={[
+            {
+              key: "asks",
+              n: asksDone(politician.statuses),
+              label: copy.band.asksDone(asksDone(politician.statuses)),
+              href: "#asks-title",
+            },
+            { key: "letters", n: letters, label: copy.band.lettersCounted(letters), href: "#history-title" },
+            { key: "emails", n: emails, label: copy.band.emailsCounted(emails), href: "#history-title" },
+          ]}
+        />
+      }
+    >
+      <BandFact label={staffCopy.fields.party}>
+        {politician.party && (
+          <span className={styles.withIcon}>
+            <Rosette party={politician.party} />
+            {politician.party}
+          </span>
+        )}
+      </BandFact>
+      <BandFact label={copy.status}>
+        <span className={styles.withIcon}>
+          <StatusDot inOffice={inOffice} />
+          {staffCopy.personStatuses[politician.status]}
+        </span>
+      </BandFact>
+      <BandFact label={copy.country}>
+        {politician.country && (
+          <span className={styles.withIcon}>
+            <NationShape country={politician.country} />
+            {staffCopy.countries[politician.country]}
+          </span>
+        )}
+      </BandFact>
+      <BandFact label={staffCopy.fields.email} detail={politician.salutation}>
+        {politician.email ? (
+          <a href={`mailto:${politician.email}`}>{politician.email}</a>
+        ) : (
+          staffCopy.politicians.noEmail
+        )}
+      </BandFact>
+      <BandFact
+        label={copy.band.source}
+        detail={
+          politician.airtableRemovedAt && (
+            <Tag tone="amber">{copy.airtableRemoved(staffDate(politician.airtableRemovedAt))}</Tag>
+          )
+        }
+      >
+        {politician.airtableId ? (
+          <>
+            <a href={`${airtableTable}/${politician.airtableId}`} target="_blank" rel="noreferrer">
+              {source}
+            </a>
+            {copy.editInAirtable}
+          </>
+        ) : (
+          source
+        )}
+      </BandFact>
+    </Band>
+  );
+}
+
+/**
+ * A politician's page, laid out like a supporter's: the band of who they
+ * are (PoliticianBand); if their address is blocked, why, and a way to
+ * unblock it; then their history, newest first: the letters written to
+ * them, the replies, PauseAI's emails, staff's notes, and everything the
+ * audit log says about them, the letters' senders only when it's given
+ * them, with the form to add a note over it; and beside it the card of
+ * their answer to each ask, with the button to change one staff record,
+ * and under that Airtable's notes on them, which are changed there.
  */
 export default function PoliticianDetails({
   politician,
@@ -264,12 +359,17 @@ export default function PoliticianDetails({
   history: PoliticianChange[];
   /** Airtable's table of MPs, which the server knows; an MP's record there is under it. */
   airtableTable: string;
-  /** The notes card (Notes), under the cards and over the history. */
-  notes?: ReactNode;
+  /** Staff's notes on them, in the history, and what adding and changing them needs. */
+  notes?: NotesProps;
 }) {
   const entries: Entry[] = [
     ...letterEntries(letters),
     ...pauseaiEntries(pauseaiLetters),
+    ...(notes?.notes ?? []).map((note) => ({
+      key: `note-${note.id}`,
+      at: note.createdAt,
+      what: <NoteEntry note={note} {...notes!} label={copy.history.note} dated={false} />,
+    })),
     ...history.map((change) => ({
       key: `change-${change.id}`,
       ...whenOf(change),
@@ -283,22 +383,14 @@ export default function PoliticianDetails({
   ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
   const rows = asksOf(politician, asks);
   const others = asks.filter((ask) => answeredByHand(ask.slug) && !rows.includes(ask));
-  const source = politician.isTest
-    ? copy.sources.test
-    : politician.airtableId
-      ? copy.sources.airtable
-      : copy.sources.staff;
   return (
     <>
-      <header className={styles.heading}>
-        <h1>
-          {politician.name}
-          {politician.isTest && <Tag>{staffCopy.politicians.flags.test}</Tag>}
-          {politician.importantTarget && <Tag tone="amber">{copy.importantTarget}</Tag>}
-          {politician.personalConnection && <Tag>{copy.personalConnection}</Tag>}
-        </h1>
-        <p>{copy.role(copy.roles[politician.house], politician.constituency, politician.status === "in_office")}</p>
-      </header>
+      <PoliticianBand
+        politician={politician}
+        letters={letters.letters.length}
+        emails={pauseaiLetters.length}
+        airtableTable={airtableTable}
+      />
       {block && (
         <section className={styles.blocked} aria-labelledby="blocked-title">
           <Strip tone="red">
@@ -338,83 +430,12 @@ export default function PoliticianDetails({
       )}
 
       <Grid>
-        <Card span={3} as="div">
-          <div className={styles.icons}>
-            {politician.party && (
-              <div className={styles.iconFact}>
-                <Rosette party={politician.party} />
-                <span>
-                  <small>{staffCopy.fields.party}</small>
-                  {politician.party}
-                </span>
-              </div>
-            )}
-            <div className={styles.iconFact}>
-              <StatusDot inOffice={politician.status === "in_office"} />
-              <span>
-                <small>{copy.status}</small>
-                {staffCopy.personStatuses[politician.status]}
-              </span>
+        <Card span={4} look="log" title={copy.historyTitle} id="history-title">
+          {notes && (
+            <div className={styles.addNote}>
+              <NoteForm target={{ name: "politicianId", value: politician.id }} add={notes.add} />
             </div>
-            {politician.country && (
-              <div className={styles.iconFact}>
-                <NationShape country={politician.country} />
-                <span>
-                  <small>{copy.country}</small>
-                  {staffCopy.countries[politician.country]}
-                </span>
-              </div>
-            )}
-          </div>
-          <section className={styles.part}>
-            <h3 className={styles.partTitle}>{copy.writing}</h3>
-            <dl className={styles.facts}>
-              <Fact label={staffCopy.fields.email}>
-                {politician.email ? (
-                  <a href={`mailto:${politician.email}`}>{politician.email}</a>
-                ) : (
-                  staffCopy.politicians.noEmail
-                )}
-              </Fact>
-              <Fact label={staffCopy.fields.salutation}>{politician.salutation}</Fact>
-            </dl>
-          </section>
-          {politician.notes && (
-            <section className={styles.part}>
-              <h3 className={styles.partTitle}>{copy.notes}</h3>
-              <NoteText body={politician.notes} className={styles.notes} />
-            </section>
           )}
-          <p className={styles.source}>
-            {copy.source}{" "}
-            {politician.airtableId ? (
-              <>
-                <a href={`${airtableTable}/${politician.airtableId}`} target="_blank" rel="noreferrer">
-                  {source}
-                </a>
-                {copy.editInAirtable}
-                {politician.airtableRemovedAt && (
-                  <>
-                    {" "}
-                    <Tag tone="amber">{copy.airtableRemoved(staffDate(politician.airtableRemovedAt))}</Tag>
-                  </>
-                )}
-              </>
-            ) : (
-              source
-            )}
-          </p>
-        </Card>
-        <Card span={3} look="aside" title={copy.statusesTitle} id="asks-title">
-          <AskRows>
-            {rows.map((ask) => (
-              <AskRow key={ask.slug} politician={politician} ask={ask} setStatus={setStatus} />
-            ))}
-            <OtherAsks politician={politician} asks={others} setStatus={setStatus} />
-          </AskRows>
-        </Card>
-        {notes}
-        <Card span={6} look="log" title={copy.historyTitle} id="history-title">
           {entries.length === 0 ? (
             <p className={styles.none}>{copy.noHistory}</p>
           ) : (
@@ -422,12 +443,27 @@ export default function PoliticianDetails({
               {entries.map((entry) => (
                 <li key={entry.key}>
                   <span className={styles.when}>{entry.day ? staffDate(entry.at) : staffTime(entry.at)}</span>
-                  <span>{entry.what}</span>
+                  <div>{entry.what}</div>
                 </li>
               ))}
             </ol>
           )}
         </Card>
+        <Column span={2}>
+          <Card look="aside" title={copy.statusesTitle} id="asks-title">
+            <AskRows>
+              {rows.map((ask) => (
+                <AskRow key={ask.slug} politician={politician} ask={ask} setStatus={setStatus} />
+              ))}
+              <OtherAsks politician={politician} asks={others} setStatus={setStatus} />
+            </AskRows>
+          </Card>
+          {politician.notes && (
+            <Card look="aside" title={copy.notes} id="airtable-notes-title">
+              <NoteText body={politician.notes} className={styles.notes} />
+            </Card>
+          )}
+        </Column>
       </Grid>
     </>
   );

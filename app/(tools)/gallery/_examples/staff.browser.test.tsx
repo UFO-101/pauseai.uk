@@ -8,6 +8,8 @@ import {
   DueTimeFieldsExample,
   HeldSyncExample,
   MailingWriterExample,
+  NoteEntryExample,
+  NoteFormExample,
   NotesExample,
   NoteTextExample,
   PoliticianDetailsExample,
@@ -35,9 +37,10 @@ describe("the staff examples", () => {
     await expect.element(page.getByRole("button", { name: staffCopy.notes.delete }).nth(2)).toBeVisible();
     await unmount();
     await render(<NotesExample as="empty" />);
+    await page.getByRole("button", { name: staffCopy.notes.write }).click();
     await page.getByRole("textbox", { name: staffCopy.notes.note }).fill("Met them");
     await page.getByRole("button", { name: staffCopy.notes.add }).click();
-    await expect.element(log().nth(0)).toHaveTextContent('add({"politicianId":"1","body":"Met them"})');
+    await expect.element(log().nth(0)).toHaveTextContent('add({"supporterId":"1","body":"Met them"})');
   });
 
   it("shows a note's text with its links", async () => {
@@ -46,6 +49,20 @@ describe("the staff examples", () => {
     await unmount();
     await render(<NoteTextExample />);
     await expect.element(page.getByRole("link", { name: "www.example.com/rota" })).toBeVisible();
+  });
+
+  it("shows a note in a history, its own or another's, and logs the form on a politician", async () => {
+    const { unmount } = await render(<NoteEntryExample />);
+    await expect.element(page.getByText(staffCopy.notes.edit, { exact: true })).toBeVisible();
+    await unmount();
+    const other = await render(<NoteEntryExample own={false} />);
+    await expect.element(page.getByText(staffCopy.notes.edited, { exact: false })).toBeVisible();
+    await other.unmount();
+    await render(<NoteFormExample on="politicianId" opened />);
+    await expect.element(page.getByRole("textbox", { name: staffCopy.notes.note })).not.toHaveFocus();
+    await page.getByRole("textbox", { name: staffCopy.notes.note }).fill("Met them");
+    await page.getByRole("button", { name: staffCopy.notes.add }).click();
+    await expect.element(log().nth(0)).toHaveTextContent('add({"politicianId":"1","body":"Met them"})');
   });
 
   it("logs a held sync's apply and discard", async () => {

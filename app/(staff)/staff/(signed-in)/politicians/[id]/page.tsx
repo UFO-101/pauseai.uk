@@ -18,7 +18,6 @@ import {
   setAskStatus,
   unblockAddress,
 } from "../../../actions";
-import Notes from "../../../_components/Notes";
 import DeletePolitician from "../../../_components/DeletePolitician";
 import PoliticianDetails from "../../../_components/PoliticianDetails";
 import Breadcrumb from "../../../_components/Breadcrumb";
@@ -57,17 +56,14 @@ export default async function PoliticianPage({ params }: Params) {
         pauseaiLetters={fromPauseai}
         history={history}
         airtableTable={PARLIAMENTARIANS_TABLE_URL}
-        notes={
-          <Notes
-            notes={notes}
-            target={{ name: "politicianId", value: politician.id }}
-            reader={staff}
-            at={now().toISOString()}
-            add={addNoteNow}
-            edit={editNoteNow}
-            remove={deleteNoteNow}
-          />
-        }
+        notes={{
+          notes,
+          reader: staff,
+          at: now().toISOString(),
+          add: addNoteNow,
+          edit: editNoteNow,
+          remove: deleteNoteNow,
+        }}
       />
       <DeletePolitician politician={politician} deletable={deletable} action={deletePoliticianNow} />
     </>

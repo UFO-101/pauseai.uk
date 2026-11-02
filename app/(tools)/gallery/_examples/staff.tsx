@@ -148,6 +148,8 @@ import {
   RemoveAccountFormExample,
   UnblockFormExample,
   NotesExample,
+  NoteEntryExample,
+  NoteFormExample,
   NoteTextExample,
   AskFormExample,
   DeleteTwiceExample,
@@ -2157,7 +2159,7 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/PoliticianDetails.tsx",
       variants: [
         {
-          label: "A signer the team added, editable",
+          label: "A signer the team added, staff's notes in the history",
           render: () => (
             <StaffPage as="div">
               <PoliticianDetailsExample />
@@ -2458,13 +2460,30 @@ export const staff: Group = {
           ),
         },
         {
-          label: "None yet, on a politician",
+          label: "None yet",
           render: () => (
             <StaffPage as="div">
               <NotesExample as="empty" />
             </StaffPage>
           ),
         },
+      ],
+    },
+    {
+      name: "NoteEntry",
+      file: "app/(staff)/staff/_components/Notes.tsx",
+      variants: [
+        { label: "In a history: her own, which she can change", render: () => <NoteEntryExample /> },
+        { label: "Someone else's, edited", render: () => <NoteEntryExample own={false} /> },
+      ],
+    },
+    {
+      name: "NoteForm",
+      file: "app/(staff)/staff/_components/NoteForm.tsx",
+      variants: [
+        { label: "Closed: the button that opens it", render: () => <NoteFormExample /> },
+        { label: "Opened, on a supporter, with what a note should be", render: () => <NoteFormExample opened /> },
+        { label: "Opened, on a politician", render: () => <NoteFormExample on="politicianId" opened /> },
       ],
     },
     {
