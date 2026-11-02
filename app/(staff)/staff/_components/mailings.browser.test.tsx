@@ -195,7 +195,7 @@ describe("MailingsOverview", () => {
     await expect.element(row("Edinburgh: one week to go")).toMatchTextContent(copy.states.scheduled);
     // Sending: its bar, leading to it.
     await expect.element(page.getByRole("progressbar", { name: copy.sentLabel })).toHaveAttribute("value", "214");
-    await expect.element(page.getByText(copy.sendingBar(212, 650))).toBeVisible();
+    await expect.element(page.getByText(copy.sendingBar(209, 650))).toBeVisible();
     // Sent: its box of counts, one link to it, the day without this year; answered only with an ask.
     await expect
       .element(page.getByRole("link", { name: copy.countsLabel("Invitation: AI safety conference, Edinburgh") }))
@@ -342,7 +342,9 @@ describe("MailingView", () => {
       mailing: { ...mailing, ask: null, askTitle: null, sentAt: null, stopped: 3, tab: "stopped", page: 2, pages: 2 },
       written: { ...written, state: "cancelled" },
     });
-    await expect.element(page.getByText(copy.states.cancelled, { exact: true })).toBeVisible();
+    // Stopped as its tag, and the tab's heading.
+    expect(page.getByText(copy.states.cancelled, { exact: true }).all()).toHaveLength(2);
+    await expect.element(page.getByRole("heading", { name: copy.tabs.stopped })).toBeVisible();
     await expect.element(page.getByText(staffCopy.mailings.notSent)).toBeVisible();
     await expect
       .element(page.getByRole("link", { name: `3 ${copy.counts.stopped}` }))
@@ -451,7 +453,7 @@ describe("MailingView", () => {
 
   it("sending: how far it's got, when it started, and Stop sending", async () => {
     await view({ written: { ...written, state: "sending" } });
-    await expect.element(page.getByText(copy.sendingBar(11, 12))).toBeVisible();
+    await expect.element(page.getByText(copy.sendingBar(10, 12))).toBeVisible();
     await expect.element(page.getByText(copy.started)).toBeVisible();
     await expect.element(page.getByRole("progressbar", { name: copy.sentLabel })).toHaveAttribute("value", "12");
     await expect.element(page.getByRole("button", { name: copy.stopSending })).toBeVisible();

@@ -322,7 +322,7 @@ test("Asks: a mailing's ask leads to it, and each answer's count to who gave it"
   await page
     .getByRole("listitem")
     .filter({ hasText: "Edinburgh Conference Nov 26 Invitation" })
-    .getByRole("link", { name: "Edinburgh conference" })
+    .getByRole("link", { name: "Edinburgh conference", exact: true })
     .click();
   await expect(page).toHaveURL(`${BASE}/staff/asks#edinburgh-conference-2026`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.asks.title);

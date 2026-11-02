@@ -789,7 +789,7 @@ export const staffCopy = {
       replied: "replied",
       failed: "failed",
       stopped: "stopped",
-      answered: "answers",
+      answered: "answer",
     },
     // A new mailing's page's title, and the mailings page's button that starts one.
     newTitle: "New mailing",
@@ -978,7 +978,7 @@ export const staffCopy = {
     skipReasons: {
       blocked: "Skipped: address blocked",
       "left-office": "Skipped: left office",
-      "no-email": "⁂ Skipped: no email address",
+      "no-email": "Skipped: no email address",
     } as Record<string, string>,
   },
   // The asks page: each ask, its kind and date, and how many gave each answer.
