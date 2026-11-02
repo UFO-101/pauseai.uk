@@ -86,8 +86,8 @@
 
 /* The form to edit it, in the row, in place of the owner, doc and Edit
    button, on the row's own columns: the labels on one line, the doc's
-   running on into the Edit button's column, and under them the owner, the
-   doc and Save and Cancel. */
+   running on into the Edit button's column; under them the owner and the
+   doc; and Save and Cancel on a line of their own. */
 .editor {
   display: grid;
   grid-column: 3 / -1;
@@ -105,20 +105,24 @@
   white-space: nowrap;
 }
 
+/* The owner's select only as wide as the longest address in it. */
 .ownerField {
   grid-area: 2 / 1;
+  width: fit-content;
   min-width: 0;
+  max-width: 100%;
 }
 
 .docField {
-  grid-area: 2 / 2;
+  grid-area: 2 / 2 / auto / -1;
   min-width: 0;
 }
 
 .editorButtons {
   display: flex;
-  grid-area: 2 / 3;
+  grid-area: 3 / 1 / auto / -1;
   gap: var(--space-2);
+  margin-top: var(--space-1);
 }
 
 @media (max-width: 860px) {

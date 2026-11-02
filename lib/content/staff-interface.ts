@@ -708,7 +708,7 @@ export const staffCopy = {
     editLabel: (event: string) => `⁂ Edit ${event}`,
     // The edit form's fields and buttons.
     owner: "Owner",
-    docField: "Event organisation Google Doc",
+    docField: "Google Doc",
     // In the empty box: the start of the link it takes (Google Drive's are taken too).
     docPlaceholder: "https://docs.google.com/…",
     save: "Save",
