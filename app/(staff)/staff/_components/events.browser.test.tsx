@@ -99,6 +99,17 @@ describe("EventsTable", () => {
     await expect.element(page.getByText(copy.removed)).toBeVisible();
   });
 
+  it("leads to its other pages, keeping the tab and filters", async () => {
+    const { search } = exampleEventsTab({ when: "past", tag: "London" });
+    const found = { events: exampleEvents, total: 150, pages: 2 };
+    await render(
+      <EventsTable found={found} search={search} staff={exampleStaff} now={exampleEventsNow} save={noAction} />,
+    );
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.paging.next }))
+      .toHaveAttribute("href", "/staff/events?when=past&tag=London&page=2");
+  });
+
   it("says when the filters find none", async () => {
     await renderTable({ q: "nothing like this" });
     await expect.element(page.getByText(copy.noneFound)).toBeVisible();
