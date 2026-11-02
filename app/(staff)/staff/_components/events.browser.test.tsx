@@ -70,7 +70,11 @@ describe("EventEdit", () => {
   const event = { id: "evt-1", name: "AI risk talk", owner: null, doc: null };
 
   it("opens a form for its owner and Google Doc, which Cancel closes", async () => {
-    await render(<EventEdit event={event} staff={exampleStaff} save={noAction} />);
+    await render(
+      <EventEdit event={event} staff={exampleStaff} save={noAction}>
+        <span>Cells</span>
+      </EventEdit>,
+    );
     await page.getByRole("button", { name: copy.editLabel("AI risk talk") }).click();
     const form = page.getByRole("form", { name: copy.editLabel("AI risk talk") });
     await expect.element(form.getByText(copy.owner, { exact: true })).toBeVisible();
@@ -80,15 +84,22 @@ describe("EventEdit", () => {
     // No owner can't be chosen back.
     await expect.element(page.getByRole("option", { name: copy.noOwner })).toBeDisabled();
     await expect.element(form.getByRole("textbox")).toHaveAttribute("placeholder", copy.docPlaceholder);
+    // In place of its cells and its button.
     await expect.element(page.getByRole("button", { name: copy.editLabel("AI risk talk") })).not.toBeInTheDocument();
+    await expect.element(page.getByText("Cells")).not.toBeInTheDocument();
     await page.getByRole("button", { name: copy.cancel }).click();
     await expect.element(form).not.toBeInTheDocument();
     await expect.element(page.getByRole("button", { name: copy.editLabel("AI risk talk") })).toBeVisible();
+    await expect.element(page.getByText("Cells")).toBeVisible();
   });
 
   it("saves the owner and doc together, only a link to Google, then closes", async () => {
     const save = vi.fn<(form: FormData) => void>();
-    await render(<EventEdit event={event} staff={exampleStaff} save={save} />);
+    await render(
+      <EventEdit event={event} staff={exampleStaff} save={save}>
+        <span>Cells</span>
+      </EventEdit>,
+    );
     await page.getByRole("button", { name: copy.editLabel("AI risk talk") }).click();
     await page.getByRole("combobox").selectOptions("sean@pauseai.uk");
     // Anywhere else, the browser won't send it.
@@ -107,7 +118,9 @@ describe("EventEdit", () => {
   it("begins with the owner and doc it has", async () => {
     const doc = "https://docs.google.com/document/d/abc/edit";
     await render(
-      <EventEdit event={{ ...event, owner: "joseph@pauseai.uk", doc }} staff={exampleStaff} save={noAction} />,
+      <EventEdit event={{ ...event, owner: "joseph@pauseai.uk", doc }} staff={exampleStaff} save={noAction}>
+        <span>Cells</span>
+      </EventEdit>,
     );
     await page.getByRole("button", { name: copy.editLabel("AI risk talk") }).click();
     await expect.element(page.getByRole("combobox")).toHaveValue("joseph@pauseai.uk");

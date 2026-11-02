@@ -716,7 +716,7 @@ export const staffCopy = {
     // The email when an event's owner changes: to the new owner, copied to the one before, saying who changed it,
     // from whom and to whom; or, when the import gives events their owners by the rules, to each new owner, listing them.
     ownerEmail: {
-      subject: (n: number, first: string) => (n === 1 ? `⁂ New owner for ${first}` : `⁂ New owner for ${n} events`),
+      subject: (n: number, first: string) => (n === 1 ? `New owner for ${first}` : `New owner for ${n} events`),
       body: ({
         events,
         owner,
@@ -728,7 +728,7 @@ export const staffCopy = {
         previous: string | null;
         by: string | null;
       }) =>
-        `⁂ ${by ? `${by} changed the owner of this event${previous ? ` from ${previous}` : ""} to ${owner}` : `By the rules for who owns which events, ${owner} is now the owner of ${events.length === 1 ? "this event" : "these events"}`}:\n\n${events
+        `${by ? `${by} changed the owner of this event${previous ? ` from ${previous}` : ""} to ${owner}` : `By the rules for who owns which events, ${owner} is now the owner of ${events.length === 1 ? "this event" : "these events"}`}:\n\n${events
           .map((event) => `${event.name}\n${event.when}\n${event.url}`)
           .join("\n\n")}\n\n⁂ Say what owning an event means.`,
     },
@@ -1676,10 +1676,10 @@ export const staffCopy = {
       permissions: "Permissions",
       pdfUrl: "PDF",
       error: "Error",
-      eventId: "⁂ Event",
-      owner: "⁂ Owner",
-      previous: "⁂ Before",
-      url: "⁂ Google Doc",
+      eventId: "Event",
+      owner: "Owner",
+      previous: "Before",
+      url: "Google Doc",
     } as Record<string, string>,
     // A held MP import decided, linked to the import's page.
     run: (id: string) => `Import run ${id}`,

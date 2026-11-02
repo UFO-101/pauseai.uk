@@ -16,8 +16,7 @@
 }
 
 /* A row: when, the event, its owner, its doc, and its Edit button, in
-   columns that line up from row to row, with the form to edit it, when
-   open, across the whole row under them. */
+   columns that line up from row to row. */
 .row {
   display: grid;
   grid-template-columns: 10rem minmax(0, 1fr) 14rem 7rem auto;
@@ -85,23 +84,16 @@
   justify-content: flex-end;
 }
 
-/* The form to edit it, across the whole row: the owner and the doc side by
-   side, then Save and Cancel. */
+/* The form to edit it, in the row, in place of the owner, doc and Edit
+   button: the owner over the doc, then Save and Cancel. */
 .editor {
   display: grid;
-  grid-column: 1 / -1;
-  grid-template-columns: minmax(0, 16rem) minmax(0, 1fr);
-  gap: var(--space-3) var(--space-4);
-  align-items: end;
-  padding: var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--surface);
+  grid-column: 3 / -1;
+  gap: var(--space-2);
 }
 
 .editorButtons {
   display: flex;
-  grid-column: 1 / -1;
   gap: var(--space-2);
 }
 
@@ -123,6 +115,6 @@
   }
 
   .editor {
-    grid-template-columns: minmax(0, 1fr);
+    grid-column: 1 / -1;
   }
 }

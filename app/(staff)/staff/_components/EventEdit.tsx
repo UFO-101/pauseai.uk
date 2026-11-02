@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { Select, TextInput } from "@/components/ui/Controls";
 import { Field } from "@/components/ui/Field";
@@ -15,38 +15,43 @@ const copy = staffCopy.events;
 export type SaveEvent = (form: FormData) => void | Promise<void>;
 
 /**
- * An event's Edit button, at its row's right, which opens a form under the
- * row: its owner, any staff account, and the link to its Google Doc, only
- * to Google Docs or Drive, blank to clear it; saved together, which closes
- * it. With no owner, that's the select's first choice, which can't be chosen
- * back. Two grid items of the row, the button's cell and the form.
+ * An event's owner and doc cells (`children`) and its Edit button, at its
+ * row's right, which puts in their place, in the row, a form: its owner,
+ * any staff account, and the link to its Google Doc, only to Google Docs
+ * or Drive, blank to clear it; saved together, which closes it. With no
+ * owner, that's the select's first choice, which can't be chosen back.
  */
 export default function EventEdit({
   event,
   staff,
   save,
+  children,
 }: {
   event: { id: string; name: string; owner: string | null; doc: string | null };
   staff: readonly string[];
   save: SaveEvent;
+  children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <span className={styles.editCell}>
-        {!open && (
-          <Button
-            variant="ghost"
-            size="small"
-            fit
-            type="button"
-            aria-label={copy.editLabel(event.name)}
-            onClick={() => setOpen(true)}
-          >
-            {copy.edit}
-          </Button>
-        )}
-      </span>
+      {!open && (
+        <>
+          {children}
+          <span className={styles.editCell}>
+            <Button
+              variant="ghost"
+              size="small"
+              fit
+              type="button"
+              aria-label={copy.editLabel(event.name)}
+              onClick={() => setOpen(true)}
+            >
+              {copy.edit}
+            </Button>
+          </span>
+        </>
+      )}
       {open && (
         <form
           className={styles.editor}

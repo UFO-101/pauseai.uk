@@ -622,7 +622,9 @@ export function EventEditExample({ owner, doc }: { owner: string | null; doc: st
   return (
     <Logged>
       {(log) => (
-        <EventEdit event={{ id: "evt-1", name: "AI risk talk", owner, doc }} staff={exampleStaff} save={log("save")} />
+        <EventEdit event={{ id: "evt-1", name: "AI risk talk", owner, doc }} staff={exampleStaff} save={log("save")}>
+          <span>{owner ?? staffCopy.events.noOwner}</span>
+        </EventEdit>
       )}
     </Logged>
   );

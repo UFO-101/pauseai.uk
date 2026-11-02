@@ -57,8 +57,8 @@ function Doc({ doc, needed }: { doc: string | null; needed: boolean }) {
 /**
  * One event, a row: when it starts; its name, leading to it on Luma, and
  * its Luma tags, over where and how many are going; its owner; its Google
- * Doc; and its Edit button, which opens the form for its owner and doc
- * under it.
+ * Doc; and its Edit button, which puts the form for its owner and doc in
+ * their place.
  */
 function Row({
   event,
@@ -90,13 +90,14 @@ function Row({
           {event.city ?? copy.online} · {copy.going(event.going)}
         </Muted>
       </span>
-      <span className={styles.ownerCell}>
-        <Owner owner={event.owner} needed={needed} />
-      </span>
-      <span className={styles.docCell}>
-        <Doc doc={event.doc} needed={needed} />
-      </span>
-      <EventEdit event={event} staff={staff} save={save} />
+      <EventEdit event={event} staff={staff} save={save}>
+        <span className={styles.ownerCell}>
+          <Owner owner={event.owner} needed={needed} />
+        </span>
+        <span className={styles.docCell}>
+          <Doc doc={event.doc} needed={needed} />
+        </span>
+      </EventEdit>
     </li>
   );
 }
