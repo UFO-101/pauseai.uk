@@ -2686,15 +2686,21 @@ describe("ChangesTable", () => {
       copy.run("13"),
       copy.run("14"),
       copy.run("15"),
+      "Polly Placeholder",
+      "Jane Example",
+      copy.gone("6"),
     ]);
     const href = (i: number) => rows[i].element().children[4].querySelector("a")?.getAttribute("href");
-    expect([0, 1, 4, 7, 8, 14].map(href)).toEqual([
+    expect([0, 1, 4, 7, 8, 14, 23, 24, 25].map(href)).toEqual([
       "/staff/politicians/7",
       undefined,
       undefined,
       "/staff/supporters/3",
       "/staff/supporters/4",
       importPath("sync-politicians"),
+      "/staff/politicians/7",
+      "/staff/supporters/3",
+      undefined,
     ]);
     // The Airtable ID leads to the record, in a new tab.
     const record = rows[2].getByRole("link", { name: "recPolly" });

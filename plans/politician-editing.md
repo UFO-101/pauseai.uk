@@ -18,7 +18,8 @@ Two one-off imports also read that base
 | --------------------------------------------------------- | ------------------------------------------------- |
 | Name, body, constituency, party, country, email, status   | The official sources, every night                 |
 | Salutation                                                | Staff, with a new politician's made from the name |
-| Notes, Recommended, Important target, Personal connection | Staff                                             |
+| Notes, Recommended                                        | Kept as last synced; staff add notes on the site  |
+| Important target, Personal connection                     | Staff                                             |
 | Signed Frontier AI Letter, Edinburgh conference           | Staff                                             |
 | Signed DeepMind Letter                                    | Nothing; the letter was in 2025, so it's kept     |
 | ControlAI Signatory                                       | ControlAI's own page, every night                 |
@@ -72,7 +73,7 @@ All four give each member's name, party, constituency and email.
      `lib/server/staff-dashboard.ts` needs to include the new job), and
      the site emails the politicians' inbox about it, as it does for a
      bounce.
-3. Let staff edit a politician's salutation, notes and markers, and add
+3. Let staff edit a politician's salutation and markers, and add
    people who aren't in any official list (house `other`). A change of
    status needs the date it happened and a note.
 4. The asks page shows how many politicians received a letter about

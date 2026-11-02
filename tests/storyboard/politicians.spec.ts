@@ -42,6 +42,25 @@ test("A politician's page: markers, notes, answers and emails", async ({ page, r
   await frame(page, "Polly's page: important, with notes, her answers from Airtable and PauseAI's invitation");
 });
 
+test("Notes on a politician, under Airtable's", async ({ page, request, flowDatabase }) => {
+  await syncPoliticians(request, BASE);
+  await logIn(page, flowDatabase);
+  await openPolitician(page, "Polly Placeholder");
+  const card = page.getByRole("region", { name: staffCopy.notes.title });
+  await expect(card.getByText(staffCopy.notes.none)).toBeVisible();
+  await card
+    .getByRole("textbox", { name: staffCopy.notes.note })
+    .fill("Her office says write to www.example.org/contact");
+  await card.getByRole("button", { name: staffCopy.notes.add }).click();
+  await expect(card.getByRole("link", { name: "www.example.org/contact" })).toHaveAttribute(
+    "href",
+    "https://www.example.org/contact",
+  );
+  // Airtable's notes stay where they were, the sync's to change.
+  await expect(page.getByText("Met at the example fair.")).toBeVisible();
+  await frame(page, "a note added on Polly, its address a link, Airtable's notes above it as they were");
+});
+
 test("Answer an ask staff added, from the button under a politician's asks", async ({
   page,
   request,

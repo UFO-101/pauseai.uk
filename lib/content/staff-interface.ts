@@ -1075,7 +1075,8 @@ export const staffCopy = {
     // The fields of the box at the top.
     status: "Status",
     country: "Nation",
-    notes: "Notes",
+    // Over the notes Airtable has on them, which are changed there.
+    notes: "⁂ Notes from Airtable",
     // Over how to write to them: their address and salutation.
     writing: "Writing to them",
     // Airtable's markers, as tags by their name.
@@ -1555,6 +1556,26 @@ export const staffCopy = {
     // The button that opens the downloads, of every page, and each format in its menu.
     download: "Download",
     formats: { csv: "CSV, for a spreadsheet", json: "JSON, for an agent", vcf: "vCard, for WhatsApp" },
+  },
+  // The notes on a supporter's or a politician's page, and the form to add one.
+  notes: {
+    title: "⁂ Notes",
+    none: "⁂ No notes yet.",
+    // After who wrote it and when, once it's been edited.
+    edited: "⁂ edited",
+    // The field's name, for a screen reader, and what it says before anything's typed.
+    note: "⁂ Note",
+    placeholder: "⁂ Write a note",
+    add: "⁂ Add note",
+    edit: "⁂ Edit",
+    save: "⁂ Save",
+    delete: "⁂ Delete",
+    // Under the field: what a note should be, and that its writer has a day to change it.
+    guidance: {
+      supporterId:
+        "⁂ They can ask to see what we hold, notes included: write only what you'd be happy for them to read, and nothing about health, beliefs or private life. You can edit or delete your note for 24 hours.",
+      politicianId: "⁂ Facts and contacts, not opinions of them. You can edit or delete your note for 24 hours.",
+    },
   },
   changes: {
     title: "Audit log",

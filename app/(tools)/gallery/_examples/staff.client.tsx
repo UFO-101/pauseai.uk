@@ -33,6 +33,13 @@ import DeletePolitician from "@/app/(staff)/staff/_components/DeletePolitician";
 import RemoveAccountForm from "@/app/(staff)/staff/_components/RemoveAccountForm";
 import StaffAccountsTable from "@/app/(staff)/staff/_components/StaffAccountsTable";
 import UnblockForm from "@/app/(staff)/staff/_components/UnblockForm";
+import Notes, { NoteText } from "@/app/(staff)/staff/_components/Notes";
+import {
+  exampleNoteAdmin,
+  exampleNotes,
+  exampleNotesAt,
+  exampleNoteWriter,
+} from "@/app/(staff)/staff/_components/Notes.examples";
 import { exampleFailedRun, exampleHeldSync, exampleRun } from "@/app/(staff)/staff/_components/RunList.examples";
 import type { JSONContent } from "@tiptap/react";
 import { useId, useState } from "react";
@@ -205,6 +212,34 @@ export function UnblockFormExample() {
       )}
     </Logged>
   );
+}
+
+/**
+ * The notes on a supporter, their forms logged, as Jo sees them, who can
+ * change her newest; as an admin, who can delete any; or with none yet, on a
+ * politician.
+ */
+export function NotesExample({ as = "writer" }: { as?: "writer" | "admin" | "empty" }) {
+  return (
+    <Logged>
+      {(log) => (
+        <Notes
+          notes={as === "empty" ? [] : exampleNotes}
+          target={as === "empty" ? { name: "politicianId", value: 1 } : { name: "supporterId", value: 1 }}
+          reader={as === "admin" ? exampleNoteAdmin : exampleNoteWriter}
+          at={exampleNotesAt}
+          add={log("add")}
+          edit={log("edit")}
+          remove={log("delete")}
+        />
+      )}
+    </Logged>
+  );
+}
+
+/** A note's text, its addresses links, and its lines kept. */
+export function NoteTextExample() {
+  return <NoteText body={exampleNotes[0].body + "\n" + exampleNotes[1].body} />;
 }
 
 /** A job's page, its button and any held sync's buttons logged: the MP check with three runs, or the web form import, never run. */

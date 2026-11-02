@@ -11,7 +11,10 @@ import { gmailAccounts } from "@/lib/server/gmail-accounts";
 import { addTestPolitician, connectTestGmail, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { expectRedirect, requestCookies } from "@/tests/next-headers";
 import {
+  addNoteNow,
   checkNow,
+  deleteNoteNow,
+  editNoteNow,
   deleteAskNow,
   disconnectMyGmail,
   saveAskNow,
@@ -82,11 +85,45 @@ describeWithDatabase("staff Server Actions", () => {
       () => unblockAddress(form({ address: "a@example.org", note: "" })),
       () => endStaffSessionsNow(form({ email: "jo@pauseai.uk" })),
       () => deletePoliticianNow(form({ politicianId: "1" })),
+      () => addNoteNow(form({ politicianId: String(id), body: "Hi" })),
+      () => editNoteNow(form({ id: "1", body: "Hi" })),
+      () => deleteNoteNow(form({ id: "1" })),
     ];
     for (const attempt of attempts) expect(await expectRedirect(attempt)).toBe("/staff/login");
     expect(await statusCount()).toBe(0);
     expect(await query("SELECT name FROM notable_people")).toEqual([{ name: "Polly Placeholder" }]);
     expect(await query("SELECT count(*)::int AS n FROM import_runs")).toEqual([{ n: 0 }]);
+    expect(await query("SELECT count(*)::int AS n FROM notes")).toEqual([{ n: 0 }]);
+  });
+
+  it("addNoteNow, editNoteNow and deleteNoteNow change notes as the staff member, refreshing the page they're on", async () => {
+    const id = await addTestPolitician();
+    const [{ id: supporterId }] = await query<{ id: number }>(
+      "INSERT INTO supporters DEFAULT VALUES RETURNING id::int AS id",
+    );
+    const bodies = () => query("SELECT body, written_by FROM notes ORDER BY id");
+    await addNoteNow(form({ politicianId: String(id), body: "Met them" }));
+    expect(revalidatePath).toHaveBeenCalledWith(`/staff/politicians/${id}`);
+    // Without the supporters permission, a supporter's note isn't added; a bad form does nothing.
+    await addNoteNow(form({ supporterId: String(supporterId), body: "Keen" }));
+    await addNoteNow(form({ body: "On no one" }));
+    await saveStaffAccount("jo@pauseai.uk", ["supporters"], "a");
+    await addNoteNow(form({ supporterId: String(supporterId), body: "Keen" }));
+    expect(revalidatePath).toHaveBeenCalledWith(`/staff/supporters/${supporterId}`);
+    await editNoteNow(form({ id: "1", body: "Met them twice" }));
+    await editNoteNow(form({ id: "9", body: "No such note" }));
+    await editNoteNow(form({ id: "1", body: "" }));
+    expect(await bodies()).toEqual([
+      { body: "Met them twice", written_by: "jo@pauseai.uk" },
+      { body: "Keen", written_by: "jo@pauseai.uk" },
+    ]);
+    revalidatePath.mockClear();
+    await deleteNoteNow(form({ id: "x" }));
+    await deleteNoteNow(form({ id: "9" }));
+    expect(revalidatePath).not.toHaveBeenCalled();
+    await deleteNoteNow(form({ id: "2" }));
+    expect(revalidatePath).toHaveBeenCalledWith(`/staff/supporters/${supporterId}`);
+    expect(await bodies()).toEqual([{ body: "Met them twice", written_by: "jo@pauseai.uk" }]);
   });
 
   it("deletePoliticianNow deletes a politician gone from Airtable and goes to the list; anyone else, or a bad form, it leaves", async () => {

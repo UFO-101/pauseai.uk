@@ -18,6 +18,7 @@ import Grid, { Card } from "./ui/Grid";
 import Strip from "./ui/Strip";
 import { NationShape, Rosette, StatusDot } from "./PoliticianIcons";
 import UnblockForm from "./UnblockForm";
+import { NoteText } from "./Notes";
 import Tag from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
 
@@ -234,8 +235,8 @@ function asksOf(politician: Politician, asks: Ask[]): Ask[] {
  * for one staff record (ui/Grid); if their address is blocked, why, and a way to unblock it; one
  * history of the letters written to them, the replies, and everything the
  * audit log says about them, newest first, the letters' senders only when
- * it's given them. Nothing here edits them: an Airtable MP's source links
- * to their record there.
+ * it's given them; `notes` goes over the history. Nothing else here edits
+ * them: an Airtable MP's source links to their record there.
  */
 export default function PoliticianDetails({
   politician,
@@ -247,6 +248,7 @@ export default function PoliticianDetails({
   pauseaiLetters = [],
   history,
   airtableTable,
+  notes,
 }: {
   politician: Politician;
   /** Every ask, by the asks table's order. */
@@ -262,6 +264,8 @@ export default function PoliticianDetails({
   history: PoliticianChange[];
   /** Airtable's table of MPs, which the server knows; an MP's record there is under it. */
   airtableTable: string;
+  /** The notes card (Notes), under the cards and over the history. */
+  notes?: ReactNode;
 }) {
   const entries: Entry[] = [
     ...letterEntries(letters),
@@ -378,7 +382,7 @@ export default function PoliticianDetails({
           {politician.notes && (
             <section className={styles.part}>
               <h3 className={styles.partTitle}>{copy.notes}</h3>
-              <p className={styles.notes}>{politician.notes}</p>
+              <NoteText body={politician.notes} className={styles.notes} />
             </section>
           )}
           <p className={styles.source}>
@@ -409,6 +413,7 @@ export default function PoliticianDetails({
             <OtherAsks politician={politician} asks={others} setStatus={setStatus} />
           </AskRows>
         </Card>
+        {notes}
         <Card span={6} look="log" title={copy.historyTitle} id="history-title">
           {entries.length === 0 ? (
             <p className={styles.none}>{copy.noHistory}</p>

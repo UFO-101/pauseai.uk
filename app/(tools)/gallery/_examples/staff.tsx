@@ -147,6 +147,8 @@ import {
   StaffAccountsTableExample,
   RemoveAccountFormExample,
   UnblockFormExample,
+  NotesExample,
+  NoteTextExample,
   AskFormExample,
   DeleteTwiceExample,
   MyGmailExample,
@@ -2434,6 +2436,41 @@ export const staff: Group = {
           ),
         },
       ],
+    },
+    {
+      name: "Notes",
+      file: "app/(staff)/staff/_components/Notes.tsx",
+      variants: [
+        {
+          label: "A supporter's notes, as their writer sees them: her newest she can still change",
+          render: () => (
+            <StaffPage as="div">
+              <NotesExample />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "As an admin, who can delete any",
+          render: () => (
+            <StaffPage as="div">
+              <NotesExample as="admin" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "None yet, on a politician",
+          render: () => (
+            <StaffPage as="div">
+              <NotesExample as="empty" />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "NoteText",
+      file: "app/(staff)/staff/_components/Notes.tsx",
+      variants: [{ label: "With addresses, as links, on two lines", render: () => <NoteTextExample /> }],
     },
     {
       name: "UnblockForm",

@@ -8,6 +8,8 @@ import {
   DueTimeFieldsExample,
   HeldSyncExample,
   MailingWriterExample,
+  NotesExample,
+  NoteTextExample,
   PoliticianDetailsExample,
   PoliticianTableEmptyExample,
   PoliticianTableExample,
@@ -26,6 +28,24 @@ describe("the staff examples", () => {
     await render(<ChangeTimeFormExample />);
     await page.getByRole("button", { name: staffCopy.mailingPages.saveTime }).click();
     await expect.element(page.getByText(/^rescheduleMailingNow\(\{"id":"5"/)).toBeVisible();
+  });
+
+  it("logs a new note, as each reader sees the notes", async () => {
+    const { unmount } = await render(<NotesExample as="admin" />);
+    await expect.element(page.getByRole("button", { name: staffCopy.notes.delete }).nth(2)).toBeVisible();
+    await unmount();
+    await render(<NotesExample as="empty" />);
+    await page.getByRole("textbox", { name: staffCopy.notes.note }).fill("Met them");
+    await page.getByRole("button", { name: staffCopy.notes.add }).click();
+    await expect.element(log().nth(0)).toHaveTextContent('add({"politicianId":"1","body":"Met them"})');
+  });
+
+  it("shows a note's text with its links", async () => {
+    const { unmount } = await render(<NotesExample />);
+    await expect.element(page.getByText(staffCopy.notes.edit, { exact: true })).toBeVisible();
+    await unmount();
+    await render(<NoteTextExample />);
+    await expect.element(page.getByRole("link", { name: "www.example.com/rota" })).toBeVisible();
   });
 
   it("logs a held sync's apply and discard", async () => {

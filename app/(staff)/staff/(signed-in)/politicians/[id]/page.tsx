@@ -5,10 +5,20 @@ import { listAsks } from "@/lib/server/asks";
 import { blockOn } from "@/lib/server/email";
 import { pauseaiLetters, politicianLetters } from "@/lib/server/letters";
 import { PARLIAMENTARIANS_TABLE_URL } from "@/lib/server/outside-services/airtable";
+import { notesOn } from "@/lib/server/notes";
 import { canDeletePolitician, getPolitician, politicianHistory } from "@/lib/server/politicians";
 import { requireStaff } from "@/lib/server/staff-auth";
+import { now } from "@/lib/now";
 import { politicianId } from "@/lib/staff-search";
-import { deletePoliticianNow, setAskStatus, unblockAddress } from "../../../actions";
+import {
+  addNoteNow,
+  deleteNoteNow,
+  deletePoliticianNow,
+  editNoteNow,
+  setAskStatus,
+  unblockAddress,
+} from "../../../actions";
+import Notes from "../../../_components/Notes";
 import DeletePolitician from "../../../_components/DeletePolitician";
 import PoliticianDetails from "../../../_components/PoliticianDetails";
 import Breadcrumb from "../../../_components/Breadcrumb";
@@ -22,15 +32,17 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 }
 
 export default async function PoliticianPage({ params }: Params) {
-  const { permissions } = await requireStaff();
+  const staff = await requireStaff();
+  const { permissions } = staff;
   const politician = found(await getPolitician(found(politicianId((await params).id))));
-  const [asks, block, letters, fromPauseai, history, deletable] = await Promise.all([
+  const [asks, block, letters, fromPauseai, history, deletable, notes] = await Promise.all([
     listAsks(),
     blockOn(politician.email),
     politicianLetters(politician.id, permissions),
     pauseaiLetters(politician.id),
     politicianHistory(politician.id, politician.email),
     canDeletePolitician(politician.id),
+    notesOn({ politicianId: politician.id }),
   ]);
   return (
     <>
@@ -45,6 +57,17 @@ export default async function PoliticianPage({ params }: Params) {
         pauseaiLetters={fromPauseai}
         history={history}
         airtableTable={PARLIAMENTARIANS_TABLE_URL}
+        notes={
+          <Notes
+            notes={notes}
+            target={{ name: "politicianId", value: politician.id }}
+            reader={staff}
+            at={now().toISOString()}
+            add={addNoteNow}
+            edit={editNoteNow}
+            remove={deleteNoteNow}
+          />
+        }
       />
       <DeletePolitician politician={politician} deletable={deletable} action={deletePoliticianNow} />
     </>
