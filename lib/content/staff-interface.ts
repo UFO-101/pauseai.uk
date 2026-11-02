@@ -693,7 +693,7 @@ export const staffCopy = {
     // The heading over the events still to come; those past are under their month or year.
     comingUp: "Coming up",
     // Under an event's name: how many are going (registered, and approved).
-    going: (n: number) => `⁂ ${n} going`,
+    going: (n: number) => `${n} going`,
     online: "Online",
     // An event gone from our Luma calendar, kept for its history.
     removed: "Taken off Luma",
@@ -701,14 +701,14 @@ export const staffCopy = {
     noOwner: "No owner",
     // An event's Google Doc: the link to it, in its column after the owner; with none, in red, with a warning,
     // on one coming up, as for no owner.
-    doc: "⁂ Google Doc",
-    noDoc: "⁂ No doc",
+    doc: "Google Doc",
+    noDoc: "No doc",
     // The button at a row's right, and its name for a screen reader, which opens the form to change its owner and doc.
-    edit: "⁂ Edit",
+    edit: "Edit",
     editLabel: (event: string) => `⁂ Edit ${event}`,
     // The edit form's fields and buttons.
     owner: "Owner",
-    docField: "Event Google Doc",
+    docField: "Event organisation Google Doc",
     // In the empty box: the start of the link it takes (Google Drive's are taken too).
     docPlaceholder: "https://docs.google.com/…",
     save: "Save",

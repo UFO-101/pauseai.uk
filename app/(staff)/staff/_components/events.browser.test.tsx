@@ -30,10 +30,8 @@ describe("EventsOverview", () => {
     await expect.element(row("online training")).toMatchTextContent(`${copy.online} · ${copy.going(18)}`);
     await expect.element(row("Manchester Social")).toMatchTextContent(copy.removed);
     await expect.element(row("Protest at Parliament")).not.toMatchTextContent(copy.removed);
-    // Its owner, by their name, the whole address on hover.
-    await expect
-      .element(row("Protest at Parliament").getByText("joseph", { exact: true }))
-      .toHaveAttribute("title", "joseph@pauseai.uk");
+    // Its owner, by their address.
+    await expect.element(row("Protest at Parliament").getByText("joseph@pauseai.uk", { exact: true })).toBeVisible();
     // With no owner: an error, with its warning, on one coming up, and only said on one past.
     await expect.element(row("AI risk talk").getByText(copy.noOwner)).toHaveClass(/missing/);
     await expect.element(row("Manchester Social").getByText(copy.noOwner)).not.toHaveClass(/missing/);
