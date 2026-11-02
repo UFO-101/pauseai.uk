@@ -108,8 +108,11 @@ const columns: (ListColumn<LetterSummary> & { key: LetterSort })[] = [
       l.repliedAt
         ? staffTime(l.repliedAt)
         : l.autoRepliedAt && (
+            // On a line of its own, so the column is no wider than a written reply's.
             <Muted>
-              {copy.status.auto_reply} {staffTime(l.autoRepliedAt)}
+              {copy.status.auto_reply}
+              <br />
+              {staffTime(l.autoRepliedAt)}
             </Muted>
           ),
   },

@@ -2777,12 +2777,9 @@ describe("LettersTable", () => {
 
   it("says when only an automatic reply came, greyed, with when", async () => {
     await render(<LettersTable letters={[{ ...letter, autoRepliedAt: "2026-10-12T11:00:00Z" }]} />);
-    const cell = page.getByRole("cell", {
-      name: `${staffCopy.letters.status.auto_reply} 12 Oct 2026, 11:00`,
-      exact: true,
-    });
-    await expect.element(cell).toBeInTheDocument();
-    expect(cell.element().querySelector("span")).not.toBeNull();
+    const muted = document.querySelector("tbody tr td:last-child span")!;
+    expect(muted.textContent).toBe(`${staffCopy.letters.status.auto_reply}12 Oct 2026, 11:00`);
+    expect(muted.querySelector("br")).not.toBeNull();
   });
 
   it("says when there are none", async () => {
