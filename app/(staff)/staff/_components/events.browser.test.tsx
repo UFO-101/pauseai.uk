@@ -43,7 +43,7 @@ const cells = (name: string) =>
   [...row(name).element().querySelectorAll("td")].slice(0, -1).map((td) => td.textContent);
 
 describe("EventsTable", () => {
-  it("lists those to come, soonest first, each with its day, name, place, owner, doc, who's going and tags", async () => {
+  it("lists those to come, soonest first, each with its day, name, place, tags, who's going, owner and doc", async () => {
     await renderTable();
     await expect.element(page.getByText(copy.total(2))).toBeVisible();
     expect(names()).toEqual(["PauseAI London: Protest at Parliament", "AI risk talk"]);
@@ -52,20 +52,20 @@ describe("EventsTable", () => {
       copy.columns.when,
       copy.columns.name,
       copy.columns.place,
+      copy.columns.tags,
+      copy.columns.going,
       copy.owner,
       copy.doc,
-      copy.columns.going,
-      copy.columns.tags,
       "",
     ]);
     expect(cells("Protest at Parliament")).toEqual([
       "21 Nov 2026",
       "PauseAI London: Protest at Parliament",
       "London",
+      "Big eventsLondon",
+      "42",
       "joseph@pauseai.uk",
       copy.doc,
-      "42",
-      "Big eventsLondon",
     ]);
     const protest = row("Protest at Parliament");
     await expect
@@ -75,7 +75,7 @@ describe("EventsTable", () => {
       .element(protest.getByRole("link", { name: copy.doc }))
       .toHaveAttribute("href", "https://docs.google.com/document/d/example-protest-plan/edit");
     // To come with no owner or doc: errors.
-    await expect.element(row("AI risk talk").getByRole("cell").nth(3).getByText(copy.noOwner)).toHaveClass(/missing/);
+    await expect.element(row("AI risk talk").getByRole("cell").nth(5).getByText(copy.noOwner)).toHaveClass(/missing/);
     await expect.element(row("AI risk talk").getByText(copy.noDoc)).toHaveClass(/missing/);
     // Sorted by when, soonest first: its heading says so, and leads to the other way; the doc's sorts too.
     const when = th(copy.columns.when);
@@ -105,7 +105,7 @@ describe("EventsTable", () => {
     expect(names()).toEqual(["PauseAI Manchester Social"]);
     await expect.element(row("Manchester Social").getByText(copy.removed)).toBeVisible();
     await expect
-      .element(row("Manchester Social").getByRole("cell").nth(3).getByText(copy.noOwner))
+      .element(row("Manchester Social").getByRole("cell").nth(5).getByText(copy.noOwner))
       .not.toHaveClass(/missing/);
     await expect.element(row("Manchester Social").getByText(copy.noDoc)).not.toHaveClass(/missing/);
   });
@@ -117,7 +117,7 @@ describe("EventsTable", () => {
     await render(
       <EventsTable found={found} search={search} staff={exampleStaff} now={exampleEventsNow} save={noAction} />,
     );
-    await expect.element(row("Protest").getByRole("cell").nth(3).getByText(copy.noOwner)).not.toHaveClass(/missing/);
+    await expect.element(row("Protest").getByRole("cell").nth(5).getByText(copy.noOwner)).not.toHaveClass(/missing/);
     await expect.element(row("Protest").getByText(copy.removed)).toBeVisible();
   });
 
@@ -166,7 +166,7 @@ describe("EventsTable", () => {
     await expect.element(owner).toHaveValue("");
     await expect.element(save).toBeDisabled();
     // The table didn't change.
-    expect(cells("AI risk talk")[3]).toBe(copy.noOwner);
+    expect(cells("AI risk talk")[5]).toBe(copy.noOwner);
   });
 
   it("begins with the owner and doc it has", async () => {
@@ -241,7 +241,7 @@ describe("EventTabs", () => {
 describe("EventFilters", () => {
   const choices = { staff: exampleStaff, tags: ["Big events", "London"], cities: ["London", "Oxford"] };
 
-  it("offers a filter by place, owner, tag, and taken off Luma, each chosen as a chip, keeping the tab", async () => {
+  it("offers a filter by place, tag, owner, and taken off Luma, each chosen as a chip, keeping the tab", async () => {
     const { search } = exampleEventsTab({ when: "past", tag: "London", place: "!online", owner: "none" });
     await render(<EventFilters search={search} choices={choices} />);
     await expect.element(page.getByRole("searchbox", { name: copy.filters.search })).toBeVisible();
@@ -256,7 +256,7 @@ describe("EventFilters", () => {
       .toHaveAttribute("href", "/staff/events?when=past");
     // + Filter offers every one; a tag only those not chosen.
     const offered = document.getElementById("filter-add")!.textContent;
-    for (const label of [copy.filters.place, copy.owner, copy.filters.tag, copy.removed]) {
+    for (const label of [copy.filters.place, copy.filters.tag, copy.owner, copy.removed]) {
       expect(offered).toContain(label);
     }
     expect(offered).toContain("Big events");

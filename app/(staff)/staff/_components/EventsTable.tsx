@@ -98,11 +98,12 @@ function Doc({ doc, needed }: { doc: string | null; needed: boolean }) {
 /**
  * The events list's columns, in the order of a list read by time
  * (docs/style-guide.md, "Lists"): the day it starts; its name, leading to
- * it on Luma, marked when it's been taken off Luma; where it is; its
- * owner; its Google Doc; how many are going; its Luma tags; and its Edit
- * button, which opens a bubble to change its owner and doc. On the Future
- * tab, one on Luma with no owner or no doc is an error. Every column but
- * the tags and Edit sorts; by the doc, those with none come first.
+ * it on Luma, marked when it's been taken off Luma; where it is, and its
+ * Luma tags, which often say where too; how many are going; then what we
+ * add, which its Edit button changes, beside it: its owner and its Google
+ * Doc. On the Future tab, one on Luma with no owner or no doc is an
+ * error. Every column but the tags and Edit sorts; by the doc, those with
+ * none come first.
  */
 function eventColumns(
   search: EventsSearch,
@@ -149,6 +150,24 @@ function eventColumns(
       cell: (event) => event.city ?? copy.online,
     },
     {
+      key: "tags",
+      label: copy.columns.tags,
+      cell: (event) => (
+        <span className={styles.tags}>
+          {event.tags.map((tag) => (
+            <Tag key={tag}>{tag}</Tag>
+          ))}
+        </span>
+      ),
+    },
+    {
+      key: "going",
+      label: copy.columns.going,
+      heading: heading("going", copy.columns.going),
+      short: true,
+      cell: (event) => event.going,
+    },
+    {
       key: "owner",
       label: copy.owner,
       heading: heading("owner", copy.owner),
@@ -160,24 +179,6 @@ function eventColumns(
       heading: heading("doc", copy.doc),
       short: true,
       cell: (event) => <Doc doc={event.doc} needed={needed(event)} />,
-    },
-    {
-      key: "going",
-      label: copy.columns.going,
-      heading: heading("going", copy.columns.going),
-      short: true,
-      cell: (event) => event.going,
-    },
-    {
-      key: "tags",
-      label: copy.columns.tags,
-      cell: (event) => (
-        <span className={styles.tags}>
-          {event.tags.map((tag) => (
-            <Tag key={tag}>{tag}</Tag>
-          ))}
-        </span>
-      ),
     },
     {
       key: "edit",

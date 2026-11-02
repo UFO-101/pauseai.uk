@@ -9,7 +9,7 @@ export type EventChoices = { staff: readonly string[]; tags: string[]; cities: s
 
 /**
  * The events list's filters, in its columns' order: where it is, a city
- * or online; its owner, or none; its tags; and taken off Luma, which
+ * or online; its tags; its owner, or none; and taken off Luma, which
  * finds only those, as the list leaves them out otherwise, as the
  * politicians list does test politicians. All but the last can be chosen
  * more than once.
@@ -24,16 +24,16 @@ function eventFilters({ staff, tags, cities }: EventChoices): Filter[] {
       options: [...cities.map((city) => ({ value: city, label: city })), { value: ONLINE, label: copy.online }],
     },
     {
-      name: "owner",
-      label: copy.owner,
-      repeat: true,
-      options: [{ value: NO_OWNER, label: copy.noOwner }, ...staff.map((email) => ({ value: email, label: email }))],
-    },
-    {
       name: "tag",
       label: copy.filters.tag,
       repeat: true,
       options: tags.map((tag) => ({ value: tag, label: tag })),
+    },
+    {
+      name: "owner",
+      label: copy.owner,
+      repeat: true,
+      options: [{ value: NO_OWNER, label: copy.noOwner }, ...staff.map((email) => ({ value: email, label: email }))],
     },
     {
       name: "removed",
