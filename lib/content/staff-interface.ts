@@ -697,15 +697,19 @@ export const staffCopy = {
     online: "Online",
     // An event gone from our Luma calendar, kept for its history.
     removed: "Taken off Luma",
-    // The owner's select, for a screen reader.
-    ownerLabel: (event: string) => `⁂ Owner of ${event}`,
-    // An event with no owner: the select's first choice, in red on one coming up, as someone must take it.
-    noOwner: "No owner",
-    // An event's Google Doc: the link to it under its name, and the box to set it, under its owner.
+    // No owner: in red, with a warning, on one coming up, as someone must take it; the edit form's select's first choice.
+    noOwner: "⁂ No owner",
+    // An event's Google Doc: the link to it under its name.
     doc: "⁂ Google Doc",
-    docLabel: (event: string) => `⁂ Google Doc for ${event}`,
+    // The button at a row's right, and its name for a screen reader, which opens the form to change its owner and doc.
+    edit: "⁂ Edit",
+    editLabel: (event: string) => `⁂ Edit ${event}`,
+    // The edit form's fields and buttons.
+    owner: "⁂ Owner",
+    docField: "⁂ Google Doc link",
     docPlaceholder: "⁂ Paste a Google Doc link",
-    docSave: "⁂ Save",
+    save: "⁂ Save",
+    cancel: "⁂ Cancel",
     // The email when an event's owner changes: to the new owner, copied to the one before, saying who changed it,
     // from whom and to whom; or, when the import gives events their owners by the rules, to each new owner, listing them.
     ownerEmail: {

@@ -37,26 +37,24 @@ test("Events get their owners by the rules, and one with none is given one", asy
   await page.goto(`${BASE}/staff/events`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.title);
   await expect(page.getByRole("link", { name: copy.intro.link })).toHaveAttribute("href", "/staff/import-data/luma");
-  const owner = page.getByRole("combobox", { name: copy.ownerLabel("AI risk talk") });
-  await expect(owner).toHaveAttribute("aria-invalid", "true");
+  const talk = page.getByRole("listitem").filter({ hasText: "AI risk talk" });
+  await expect(talk.getByText(copy.noOwner)).toBeVisible();
   await frame(page, "the events page: coming up, Joseph's but for Oxford's, with no owner in red; then those past");
 
-  await owner.selectOption("sean@pauseai.uk");
-  await expect(owner).not.toHaveAttribute("aria-invalid");
-  await expect(owner).toHaveValue("sean@pauseai.uk");
-  await frame(page, "Sean chosen as the Oxford talk's owner, saved at once, so no longer in red");
+  await talk.getByRole("button", { name: copy.editLabel("AI risk talk") }).click();
+  const form = page.getByRole("form", { name: copy.editLabel("AI risk talk") });
+  await form.getByLabel(copy.owner).selectOption("sean@pauseai.uk");
+  await form.getByLabel(copy.docField).fill("https://docs.google.com/document/d/oxford-talk-plan/edit");
+  await frame(page, "the Oxford talk opened to edit: Sean chosen as its owner, and its Google Doc pasted");
 
-  const doc = page.getByRole("textbox", { name: copy.docLabel("AI risk talk") });
-  await doc.fill("https://docs.google.com/document/d/oxford-talk-plan/edit");
-  await page
-    .getByRole("listitem")
-    .filter({ hasText: "AI risk talk" })
-    .getByRole("button", { name: copy.docSave })
-    .click();
-  await expect(
-    page.getByRole("listitem").filter({ hasText: "AI risk talk" }).getByRole("link", { name: copy.doc }),
-  ).toHaveAttribute("href", "https://docs.google.com/document/d/oxford-talk-plan/edit");
-  await frame(page, "the talk's Google Doc pasted and saved, linked under its name");
+  await form.getByRole("button", { name: copy.save }).click();
+  await expect(form).not.toBeVisible();
+  await expect(talk.getByText("sean", { exact: true })).toBeVisible();
+  await expect(talk.getByRole("link", { name: copy.doc })).toHaveAttribute(
+    "href",
+    "https://docs.google.com/document/d/oxford-talk-plan/edit",
+  );
+  await frame(page, "saved: Sean owns it, no longer in red, and its Google Doc linked under its name");
 
   // Both viewports' flows email Sean: this one's names its own address.
   const seans = newestEmail((one) => one.To === "sean@pauseai.uk" && one.TextBody.includes(staffEmail()))!;

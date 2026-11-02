@@ -33,27 +33,22 @@ export function statusFrom(form: FormData): StatusForm | undefined {
   return { politicianId, ask, status: (status as AskStatus) || null, note };
 }
 
-export type EventOwnerForm = { eventId: string; owner: string };
-
-/** Giving an event its owner on the events page: which event, by Luma's ID, and whose address; none without both. */
-export function eventOwnerFrom(form: FormData): EventOwnerForm | undefined {
-  const eventId = text(form, "eventId");
-  const owner = text(form, "owner").toLowerCase();
-  if (!eventId || !owner) return undefined;
-  return { eventId, owner };
-}
-
 /** A link to a Google Doc, or to anything else in Google Drive: what an event's doc box takes, as its pattern attribute says it. */
 export const GOOGLE_DOC_PATTERN = "https://(docs|drive)\\.google\\.com/.*";
 
-export type EventDocForm = { eventId: string; url: string | null };
+export type EventForm = { eventId: string; owner: string | null; doc: string | null };
 
-/** Setting an event's Google Doc on the events page: which event, and the link, blank to clear it; none for a link anywhere else. */
-export function eventDocFrom(form: FormData): EventDocForm | undefined {
+/**
+ * An event's edit form on the events page: which event, by Luma's ID; its
+ * owner's address, blank for none chosen; and the link to its Google Doc,
+ * blank to clear it. None without the event, or with a link anywhere else.
+ */
+export function eventFrom(form: FormData): EventForm | undefined {
   const eventId = text(form, "eventId");
-  const url = text(form, "doc");
-  if (!eventId || (url && !new RegExp(`^${GOOGLE_DOC_PATTERN}$`).test(url))) return undefined;
-  return { eventId, url: url || null };
+  const owner = text(form, "owner").toLowerCase();
+  const doc = text(form, "doc");
+  if (!eventId || (doc && !new RegExp(`^${GOOGLE_DOC_PATTERN}$`).test(doc))) return undefined;
+  return { eventId, owner: owner || null, doc: doc || null };
 }
 
 export type UnblockForm = { address: string; note: string };

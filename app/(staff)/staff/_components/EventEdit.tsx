@@ -71,7 +71,7 @@ export default function EventEdit({
               ))}
             </Select>
           </Field>
-          <Field label={copy.doc}>
+          <Field label={copy.docField}>
             <TextInput
               type="url"
               name="doc"

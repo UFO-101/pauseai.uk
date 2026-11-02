@@ -2,8 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 import { staffCopy } from "@/lib/content/staff-interface";
-import EventDoc from "./EventDoc";
-import EventOwner from "./EventOwner";
+import EventEdit from "./EventEdit";
 import EventsOverview, { EventsSource } from "./EventsOverview";
 import { exampleEventGroups, exampleEventsNow, exampleStaff } from "./EventsOverview.examples";
 
@@ -13,15 +12,9 @@ const noAction = async () => {};
 describe("EventsOverview", () => {
   const row = (name: string) => page.getByRole("listitem").filter({ hasText: name });
 
-  it("groups them, coming up and then by month and year, each with when, where, who's going and its owner", async () => {
+  it("groups them, coming up and then by month and year, each with when, its owner, where, who's going and its tags", async () => {
     await render(
-      <EventsOverview
-        groups={exampleEventGroups}
-        staff={exampleStaff}
-        now={exampleEventsNow}
-        setOwner={noAction}
-        setDoc={noAction}
-      />,
+      <EventsOverview groups={exampleEventGroups} staff={exampleStaff} now={exampleEventsNow} save={noAction} />,
     );
     expect(
       page
@@ -36,106 +29,87 @@ describe("EventsOverview", () => {
     await expect.element(row("Protest at Parliament")).toMatchTextContent(`London · ${copy.going(42)}`);
     await expect.element(row("online training")).toMatchTextContent(`${copy.online} · ${copy.going(18)}`);
     await expect.element(row("Manchester Social")).toMatchTextContent(copy.removed);
+    await expect.element(row("Protest at Parliament")).not.toMatchTextContent(copy.removed);
+    // Its owner, by their name, the whole address on hover.
+    await expect
+      .element(row("Protest at Parliament").getByText("joseph", { exact: true }))
+      .toHaveAttribute("title", "joseph@pauseai.uk");
+    // With no owner: an error, with its warning, on one coming up, and only said on one past.
+    await expect.element(row("AI risk talk").getByText(copy.noOwner)).toHaveClass(/noOwner/);
+    await expect.element(row("Manchester Social").getByText(copy.noOwner)).not.toHaveClass(/noOwner/);
     // Its Luma tags, by its name; none where it has none.
     await expect.element(row("Protest at Parliament").getByText("Big events", { exact: true })).toBeVisible();
     await expect.element(row("AI risk talk").getByText("Oxford", { exact: true })).toBeVisible();
     await expect.element(row("Manchester Social").getByText("Big events", { exact: true })).not.toBeInTheDocument();
-    await expect.element(row("Protest at Parliament")).not.toMatchTextContent(copy.removed);
-    await expect
-      .element(page.getByRole("combobox", { name: copy.ownerLabel("PauseAI London: Protest at Parliament") }))
-      .toHaveValue("joseph@pauseai.uk");
-    // With no owner: an error on one coming up, and only said on one past.
-    await expect.element(page.getByRole("combobox", { name: copy.ownerLabel("AI risk talk") })).toBeInvalid();
-    await expect
-      .element(page.getByRole("combobox", { name: copy.ownerLabel("PauseAI Manchester Social") }))
-      .not.toBeInvalid();
-    await expect.element(row("Manchester Social")).toMatchTextContent(copy.noOwner);
-    // A doc, linked by its name, only where there is one; the box for one on every row.
+    // A doc, linked under its name, only where there is one.
     await expect
       .element(row("Protest at Parliament").getByRole("link", { name: copy.doc }))
       .toHaveAttribute("href", "https://docs.google.com/document/d/example-protest-plan/edit");
     await expect.element(row("AI risk talk").getByRole("link", { name: copy.doc })).not.toBeInTheDocument();
-    await expect
-      .element(page.getByRole("textbox", { name: copy.docLabel("PauseAI London: Protest at Parliament") }))
-      .toHaveValue("https://docs.google.com/document/d/example-protest-plan/edit");
+    // No forms, only an Edit button on each.
+    expect(page.getByRole("button", { name: copy.edit }).all()).toHaveLength(5);
+    expect(document.querySelectorAll("form")).toHaveLength(0);
   });
 
   it("doesn't call an event coming up with no owner an error once it's been taken off Luma", async () => {
     const [soon] = exampleEventGroups[0].items;
     const groups = [{ ...exampleEventGroups[0], items: [{ ...soon, owner: null, removed: true }] }];
-    await render(
-      <EventsOverview
-        groups={groups}
-        staff={exampleStaff}
-        now={exampleEventsNow}
-        setOwner={noAction}
-        setDoc={noAction}
-      />,
-    );
-    await expect.element(page.getByRole("combobox", { name: copy.ownerLabel(soon.name) })).not.toBeInvalid();
+    await render(<EventsOverview groups={groups} staff={exampleStaff} now={exampleEventsNow} save={noAction} />);
+    await expect.element(page.getByText(copy.noOwner)).not.toHaveClass(/noOwner/);
     await expect.element(page.getByText(copy.removed)).toBeVisible();
   });
 
   it("says when there are none", async () => {
-    await render(
-      <EventsOverview groups={[]} staff={exampleStaff} now={exampleEventsNow} setOwner={noAction} setDoc={noAction} />,
-    );
+    await render(<EventsOverview groups={[]} staff={exampleStaff} now={exampleEventsNow} save={noAction} />);
     await expect.element(page.getByText(copy.none)).toBeVisible();
   });
 });
 
-describe("EventOwner", () => {
-  it("saves the owner chosen at once, with the event's ID, then shows the owner saved", async () => {
-    const setOwner = vi.fn<(form: FormData) => void>();
-    const { rerender } = await render(
-      <EventOwner
-        event={{ id: "evt-1", name: "AI risk talk", owner: null }}
-        staff={exampleStaff}
-        needed
-        setOwner={setOwner}
-      />,
-    );
-    const select = page.getByRole("combobox", { name: copy.ownerLabel("AI risk talk") });
-    await expect.element(select).toHaveValue("");
+describe("EventEdit", () => {
+  const event = { id: "evt-1", name: "AI risk talk", owner: null, doc: null };
+
+  it("opens a form for its owner and Google Doc, which Cancel closes", async () => {
+    await render(<EventEdit event={event} staff={exampleStaff} save={noAction} />);
+    await page.getByRole("button", { name: copy.editLabel("AI risk talk") }).click();
+    const form = page.getByRole("form", { name: copy.editLabel("AI risk talk") });
+    await expect.element(form.getByLabelText(copy.owner)).toHaveValue("");
+    await expect.element(form.getByLabelText(copy.owner)).toHaveFocus();
     // No owner can't be chosen back.
     await expect.element(page.getByRole("option", { name: copy.noOwner })).toBeDisabled();
-    await select.selectOptions("sean@pauseai.uk");
-    await vi.waitFor(() => expect(setOwner).toHaveBeenCalledOnce());
-    const form = setOwner.mock.calls[0][0];
-    expect([form.get("eventId"), form.get("owner")]).toEqual(["evt-1", "sean@pauseai.uk"]);
-    // As the page has it once saved: the form is reset, and shows the new owner, not the first in the list.
-    await rerender(
-      <EventOwner
-        event={{ id: "evt-1", name: "AI risk talk", owner: "sean@pauseai.uk" }}
-        staff={exampleStaff}
-        needed
-        setOwner={setOwner}
-      />,
-    );
-    await expect.element(select).toHaveValue("sean@pauseai.uk");
-    await expect.element(select).not.toBeInvalid();
+    await expect.element(form.getByLabelText(copy.docField)).toHaveAttribute("placeholder", copy.docPlaceholder);
+    await expect.element(page.getByRole("button", { name: copy.editLabel("AI risk talk") })).not.toBeInTheDocument();
+    await page.getByRole("button", { name: copy.cancel }).click();
+    await expect.element(form).not.toBeInTheDocument();
+    await expect.element(page.getByRole("button", { name: copy.editLabel("AI risk talk") })).toBeVisible();
   });
-});
 
-describe("EventDoc", () => {
-  it("saves the link pasted, only one to Google, then shows the link saved", async () => {
-    const setDoc = vi.fn<(form: FormData) => void>();
-    const event = { id: "evt-1", name: "AI risk talk", doc: null };
-    const { rerender } = await render(<EventDoc event={event} setDoc={setDoc} />);
-    const box = page.getByRole("textbox", { name: copy.docLabel("AI risk talk") });
-    await expect.element(box).toHaveAttribute("placeholder", copy.docPlaceholder);
+  it("saves the owner and doc together, only a link to Google, then closes", async () => {
+    const save = vi.fn<(form: FormData) => void>();
+    await render(<EventEdit event={event} staff={exampleStaff} save={save} />);
+    await page.getByRole("button", { name: copy.editLabel("AI risk talk") }).click();
+    await page.getByLabelText(copy.owner).selectOptions("sean@pauseai.uk");
     // Anywhere else, the browser won't send it.
-    await box.fill("https://example.com/plan");
-    await page.getByRole("button", { name: copy.docSave }).click();
-    expect(setDoc).not.toHaveBeenCalled();
+    await page.getByLabelText(copy.docField).fill("https://example.com/plan");
+    await page.getByRole("button", { name: copy.save }).click();
+    expect(save).not.toHaveBeenCalled();
     const doc = "https://docs.google.com/document/d/abc/edit";
-    await box.fill(doc);
-    await page.getByRole("button", { name: copy.docSave }).click();
-    await vi.waitFor(() => expect(setDoc).toHaveBeenCalledOnce());
-    const form = setDoc.mock.calls[0][0];
-    expect([form.get("eventId"), form.get("doc")]).toEqual(["evt-1", doc]);
-    await rerender(<EventDoc event={{ ...event, doc }} setDoc={setDoc} />);
-    await expect.element(box).toHaveValue(doc);
+    await page.getByLabelText(copy.docField).fill(doc);
+    await page.getByRole("button", { name: copy.save }).click();
+    await vi.waitFor(() => expect(save).toHaveBeenCalledOnce());
+    const form = save.mock.calls[0][0];
+    expect([form.get("eventId"), form.get("owner"), form.get("doc")]).toEqual(["evt-1", "sean@pauseai.uk", doc]);
+    await expect.element(page.getByRole("form")).not.toBeInTheDocument();
+  });
+
+  it("begins with the owner and doc it has", async () => {
+    const doc = "https://docs.google.com/document/d/abc/edit";
+    await render(
+      <EventEdit event={{ ...event, owner: "joseph@pauseai.uk", doc }} staff={exampleStaff} save={noAction} />,
+    );
+    await page.getByRole("button", { name: copy.editLabel("AI risk talk") }).click();
+    await expect.element(page.getByLabelText(copy.owner)).toHaveValue("joseph@pauseai.uk");
+    await expect.element(page.getByLabelText(copy.docField)).toHaveValue(doc);
+    await expect.element(page.getByRole("option", { name: copy.noOwner })).not.toBeInTheDocument();
   });
 });
 

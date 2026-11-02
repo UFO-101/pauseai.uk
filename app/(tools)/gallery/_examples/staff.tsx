@@ -134,8 +134,7 @@ import {
   MailingForExample,
   MailingsOverviewExample,
   EventsOverviewExample,
-  EventOwnerExample,
-  EventDocExample,
+  EventEditExample,
   MailingLetterViewExample,
   SupporterLetterViewExample,
   MailingViewExample,
@@ -1715,28 +1714,25 @@ export const staff: Group = {
       ],
     },
     {
-      name: "EventOwner",
-      file: "app/(staff)/staff/_components/EventOwner.tsx",
+      name: "EventEdit",
+      file: "app/(staff)/staff/_components/EventEdit.tsx",
       variants: [
-        { label: "Owned", render: () => <EventOwnerExample owner="joseph@pauseai.uk" /> },
-        { label: "No owner, on one coming up: an error", render: () => <EventOwnerExample owner={null} /> },
+        { label: "No owner or doc yet: press Edit", render: () => <EventEditExample owner={null} doc={null} /> },
+        {
+          label: "With its owner and doc: press Edit",
+          render: () => (
+            <EventEditExample
+              owner="joseph@pauseai.uk"
+              doc="https://docs.google.com/document/d/example-protest-plan/edit"
+            />
+          ),
+        },
       ],
     },
     {
       name: "EventsSource",
       file: "app/(staff)/staff/_components/EventsOverview.tsx",
       variants: [{ label: "Under the events page's title", render: () => <EventsSource /> }],
-    },
-    {
-      name: "EventDoc",
-      file: "app/(staff)/staff/_components/EventDoc.tsx",
-      variants: [
-        { label: "No doc yet", render: () => <EventDocExample doc={null} /> },
-        {
-          label: "With its doc",
-          render: () => <EventDocExample doc="https://docs.google.com/document/d/example-protest-plan/edit" />,
-        },
-      ],
     },
     {
       name: "MailingsOverview",

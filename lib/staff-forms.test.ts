@@ -2,8 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   askFrom,
   eraseFrom,
-  eventDocFrom,
-  eventOwnerFrom,
+  eventFrom,
   idFrom,
   noteEditFrom,
   noteFrom,
@@ -154,27 +153,29 @@ describe("noteFrom and noteEditFrom", () => {
   });
 });
 
-describe("eventOwnerFrom", () => {
-  it("reads which event and whose address, lowercased, and nothing without both", () => {
-    expect(eventOwnerFrom(form({ eventId: "evt-1", owner: " Jo@PauseAI.uk " }))).toEqual({
+describe("eventFrom", () => {
+  it("reads which event, whose address, lowercased, and a link to Google Docs or Drive; blank for neither", () => {
+    const doc = "https://docs.google.com/document/d/abc/edit";
+    expect(eventFrom(form({ eventId: "evt-1", owner: " Jo@PauseAI.uk ", doc: ` ${doc} ` }))).toEqual({
       eventId: "evt-1",
       owner: "jo@pauseai.uk",
+      doc,
     });
-    expect(eventOwnerFrom(form({ eventId: "evt-1", owner: "" }))).toBeUndefined();
-    expect(eventOwnerFrom(form({ owner: "jo@pauseai.uk" }))).toBeUndefined();
+    expect(eventFrom(form({ eventId: "evt-1", doc: "https://drive.google.com/file/d/abc" }))).toEqual({
+      eventId: "evt-1",
+      owner: null,
+      doc: "https://drive.google.com/file/d/abc",
+    });
+    expect(eventFrom(form({ eventId: "evt-1", owner: "", doc: "" }))).toEqual({
+      eventId: "evt-1",
+      owner: null,
+      doc: null,
+    });
   });
-});
 
-describe("eventDocFrom", () => {
-  it("reads a link to Google Docs or Drive, or blank to clear it, and nothing else", () => {
-    const doc = "https://docs.google.com/document/d/abc/edit";
-    expect(eventDocFrom(form({ eventId: "evt-1", doc: ` ${doc} ` }))).toEqual({ eventId: "evt-1", url: doc });
-    expect(eventDocFrom(form({ eventId: "evt-1", doc: "https://drive.google.com/file/d/abc" }))!.url).toBe(
-      "https://drive.google.com/file/d/abc",
-    );
-    expect(eventDocFrom(form({ eventId: "evt-1", doc: "" }))).toEqual({ eventId: "evt-1", url: null });
-    expect(eventDocFrom(form({ eventId: "evt-1", doc: "https://example.com/docs.google.com/" }))).toBeUndefined();
-    expect(eventDocFrom(form({ eventId: "evt-1", doc: "http://docs.google.com/document/d/abc" }))).toBeUndefined();
-    expect(eventDocFrom(form({ doc }))).toBeUndefined();
+  it("refuses a form with no event, or a link anywhere else", () => {
+    expect(eventFrom(form({ owner: "jo@pauseai.uk" }))).toBeUndefined();
+    expect(eventFrom(form({ eventId: "evt-1", doc: "https://example.com/docs.google.com/" }))).toBeUndefined();
+    expect(eventFrom(form({ eventId: "evt-1", doc: "http://docs.google.com/document/d/abc" }))).toBeUndefined();
   });
 });

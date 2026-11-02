@@ -66,8 +66,7 @@ import MailingView from "@/app/(staff)/staff/_components/MailingView";
 import MailingWriter from "@/app/(staff)/staff/_components/MailingWriter";
 import { exampleWriterData, exampleWrittenMailing } from "@/app/(staff)/staff/_components/MailingWriter.examples";
 import MailingsOverview from "@/app/(staff)/staff/_components/MailingsOverview";
-import EventDoc from "@/app/(staff)/staff/_components/EventDoc";
-import EventOwner from "@/app/(staff)/staff/_components/EventOwner";
+import EventEdit from "@/app/(staff)/staff/_components/EventEdit";
 import EventsOverview from "@/app/(staff)/staff/_components/EventsOverview";
 import {
   exampleEventGroups,
@@ -602,7 +601,7 @@ export function MailingsOverviewExample({ empty = false }: { empty?: boolean }) 
   return <MailingsOverview groups={groups} now={now} />;
 }
 
-/** The events page's list: coming up, one with no owner, then those past; choosing an owner is logged. */
+/** The events page's list: coming up, one with no owner, then those past; saving an event's edit form is logged. */
 export function EventsOverviewExample({ empty = false }: { empty?: boolean }) {
   return (
     <Logged>
@@ -611,32 +610,19 @@ export function EventsOverviewExample({ empty = false }: { empty?: boolean }) {
           groups={empty ? [] : exampleEventGroups}
           staff={exampleStaff}
           now={exampleEventsNow}
-          setOwner={log("setOwner")}
-          setDoc={log("setDoc")}
+          save={log("save")}
         />
       )}
     </Logged>
   );
 }
 
-/** The box for an event's Google Doc: empty, or with the link set; saving is logged. */
-export function EventDocExample({ doc }: { doc: string | null }) {
-  return (
-    <Logged>{(log) => <EventDoc event={{ id: "evt-1", name: "AI risk talk", doc }} setDoc={log("setDoc")} />}</Logged>
-  );
-}
-
-/** An event's owner on its own: one chosen, or none on one coming up, an error. */
-export function EventOwnerExample({ owner }: { owner: string | null }) {
+/** One event's Edit button, which opens its form: with no owner or doc, or with both; saving is logged. */
+export function EventEditExample({ owner, doc }: { owner: string | null; doc: string | null }) {
   return (
     <Logged>
       {(log) => (
-        <EventOwner
-          event={{ id: "evt-1", name: "AI risk talk", owner }}
-          staff={exampleStaff}
-          needed
-          setOwner={log("setOwner")}
-        />
+        <EventEdit event={{ id: "evt-1", name: "AI risk talk", owner, doc }} staff={exampleStaff} save={log("save")} />
       )}
     </Logged>
   );

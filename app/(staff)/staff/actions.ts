@@ -10,8 +10,7 @@ import { staffBack } from "@/lib/staff-search";
 import {
   askFrom,
   eraseFrom,
-  eventDocFrom,
-  eventOwnerFrom,
+  eventFrom,
   idFrom,
   noteEditFrom,
   noteFrom,
@@ -61,20 +60,18 @@ export async function setAskStatus(form: FormData): Promise<void> {
   revalidatePath("/staff/mailings", "layout");
 }
 
-/** The events page: makes a staff member an event's owner, which emails them. Any staff member can. */
-export async function setEventOwnerNow(form: FormData): Promise<void> {
+/**
+ * An event's edit form on the events page: makes the staff member chosen
+ * its owner, which emails them, and sets or clears its Google Doc. Any
+ * staff member can.
+ */
+export async function saveEventNow(form: FormData): Promise<void> {
   const { email } = await requireStaff();
-  const parsed = eventOwnerFrom(form);
+  const parsed = eventFrom(form);
   if (!parsed) return;
-  if (await setEventOwner(parsed.eventId, parsed.owner, email)) revalidatePath("/staff/events");
-}
-
-/** The events page: sets or clears the link to an event's Google Doc. Any staff member can. */
-export async function setEventDocNow(form: FormData): Promise<void> {
-  const { email } = await requireStaff();
-  const parsed = eventDocFrom(form);
-  if (!parsed) return;
-  if (await setEventDoc(parsed.eventId, parsed.url, email)) revalidatePath("/staff/events");
+  const owner = parsed.owner ? await setEventOwner(parsed.eventId, parsed.owner, email) : false;
+  const doc = await setEventDoc(parsed.eventId, parsed.doc, email);
+  if (owner || doc) revalidatePath("/staff/events");
 }
 
 /** The button on the page of a politician gone from Airtable: deletes them, and goes back to the list. */
