@@ -273,7 +273,16 @@ export function NoteEntryExample({ own = true }: { own?: boolean }) {
 export function NoteChangesExample({ editable = true }: { editable?: boolean }) {
   return (
     <Logged>
-      {(log) => <NoteChanges note={exampleNotes[0]} editable={editable} edit={log("edit")} remove={log("delete")} />}
+      {(log) => (
+        <NoteChanges
+          note={exampleNotes[0]}
+          editable={editable}
+          text={<NoteText body={exampleNotes[0].body} />}
+          meta="jo@pauseai.uk"
+          edit={log("edit")}
+          remove={log("delete")}
+        />
+      )}
     </Logged>
   );
 }

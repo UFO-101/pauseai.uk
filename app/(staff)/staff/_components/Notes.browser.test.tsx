@@ -42,14 +42,16 @@ describe("Notes", () => {
     // Not editing: Edit alone, no Delete.
     await expect.element(first.getByRole("button", { name: copy.delete })).not.toBeInTheDocument();
     await first.getByRole("button", { name: copy.edit }).click();
-    // Editing: no Edit; the field, focused, with its text.
+    // Editing: no Edit; the field, focused, with its text, in place of the text.
     await expect.element(first.getByRole("button", { name: copy.edit })).not.toBeInTheDocument();
+    await expect.element(first.getByRole("link")).not.toBeInTheDocument();
     const field = first.getByRole("textbox", { name: copy.note });
     await expect.element(field).toHaveFocus();
     await expect.element(field).toHaveValue(exampleNotes[0].body);
     await field.fill("Never saved");
     await first.getByRole("button", { name: copy.cancel }).click();
     await expect.element(field).not.toBeInTheDocument();
+    await expect.element(first.getByRole("link")).toBeVisible();
     expect(edit).not.toHaveBeenCalled();
     await first.getByRole("button", { name: copy.edit }).click();
     await first.getByRole("textbox", { name: copy.note }).fill("Spoke in Leeds");

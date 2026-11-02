@@ -43,8 +43,9 @@ export function NoteText({ body, className }: { body: string; className?: string
 /**
  * One note: its text; under it `label` if there is one, who wrote it, when
  * (unless `dated` is false, where a history gives the time), and whether
- * it's been edited; then, for whoever may change it, its buttons
- * (NoteChanges).
+ * it's been edited, and at the right of that line, for whoever may change
+ * it, its buttons (NoteChanges), Edit putting the field in place of the
+ * text.
  */
 export function NoteEntry({
   note,
@@ -57,14 +58,31 @@ export function NoteEntry({
 }: Omit<NotesProps, "notes" | "add"> & { note: Note; label?: string; dated?: boolean }) {
   const time = new Date(at);
   const editable = canEditNote(note, reader, time);
-  const meta = [label, note.writtenBy, dated && staffTime(note.createdAt), note.editedAt && copy.edited];
+  const text = <NoteText body={note.body} />;
+  const meta = (
+    <Muted>
+      {[label, note.writtenBy, dated && staffTime(note.createdAt), note.editedAt && copy.edited]
+        .filter(Boolean)
+        .join(" · ")}
+    </Muted>
+  );
+  if (editable || canDeleteNote(note, reader, time)) {
+    return (
+      <NoteChanges
+        key={note.editedAt}
+        note={note}
+        editable={editable}
+        text={text}
+        meta={meta}
+        edit={edit}
+        remove={remove}
+      />
+    );
+  }
   return (
     <div className={styles.note}>
-      <NoteText body={note.body} />
-      <Muted>{meta.filter(Boolean).join(" · ")}</Muted>
-      {(editable || canDeleteNote(note, reader, time)) && (
-        <NoteChanges key={note.editedAt} note={note} editable={editable} edit={edit} remove={remove} />
-      )}
+      {text}
+      <div className={styles.meta}>{meta}</div>
     </div>
   );
 }

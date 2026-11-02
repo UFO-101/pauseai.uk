@@ -31,10 +31,18 @@
   overflow-wrap: anywhere;
 }
 
-/* Editing a note: its field, the note's width, and the buttons under it. */
-.editing {
-  display: grid;
-  gap: var(--space-2);
+/* Who wrote it and when, with its buttons at the right. */
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+  justify-self: stretch;
+}
+
+/* The field, editing, the note's width. */
+.note form {
   justify-self: stretch;
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { TextArea } from "@/components/ui/Controls";
 import { ErrorText } from "@/components/ui/Text";
@@ -14,21 +14,26 @@ const copy = staffCopy.notes;
 type Change = (form: FormData) => boolean | void | Promise<boolean | void>;
 
 /**
- * The buttons under a note. Its writer, while they may change it, has
- * Edit, which opens the field with its text, focused, and under it Save,
- * Cancel and Delete, red, pressed twice; saving or cancelling closes it.
- * Anyone else who may delete it, an admin, has Delete alone. If the server
- * refuses, as it does once the day is up on a page left open, it stays
- * open and says why.
+ * A note that someone may change: `text`, and under it `meta`, who wrote
+ * it and when, with its buttons at the right. Its writer, while they may
+ * change it, has Edit, which puts the field, with its text, focused, in
+ * place of the text, and Save, Cancel and Delete, red, pressed twice, in
+ * place of Edit; saving or cancelling puts the text back. Anyone else who
+ * may delete it, an admin, has Delete alone. If the server refuses, as it
+ * does once the day is up on a page left open, it stays open and says why.
  */
 export default function NoteChanges({
   note,
   editable,
+  text,
+  meta,
   edit,
   remove,
 }: {
   note: { id: number; body: string };
   editable: boolean;
+  text: ReactNode;
+  meta: ReactNode;
   edit: Change;
   remove: Change;
 }) {
@@ -39,38 +44,18 @@ export default function NoteChanges({
   };
   const [pending, startTransition] = useTransition();
   const id = `note-${note.id}-edit`;
+  let buttons: ReactNode;
   if (!editable) {
-    return (
-      <div className={styles.buttons}>
-        <DeleteTwice name="id" value={String(note.id)} label={copy.delete} action={removing} />
-      </div>
+    buttons = <DeleteTwice name="id" value={String(note.id)} label={copy.delete} action={removing} />;
+  } else if (!editing) {
+    buttons = (
+      <Button variant="ghost" size="small" fit type="button" onClick={() => setEditing(true)}>
+        {copy.edit}
+      </Button>
     );
-  }
-  if (!editing) {
-    return (
-      <div className={styles.buttons}>
-        <Button variant="ghost" size="small" fit type="button" onClick={() => setEditing(true)}>
-          {copy.edit}
-        </Button>
-      </div>
-    );
-  }
-  return (
-    <div className={styles.editing}>
-      <form
-        id={id}
-        aria-label={copy.edit}
-        action={(form) =>
-          startTransition(async () => {
-            if ((await edit(form)) === false) setRefused("edit");
-            else setEditing(false);
-          })
-        }
-      >
-        <input type="hidden" name="id" value={note.id} />
-        <TextArea name="body" defaultValue={note.body} required autoFocus aria-label={copy.note} rows={4} />
-      </form>
-      <div className={styles.buttons}>
+  } else {
+    buttons = (
+      <>
         <Button variant="primary" size="small" fit type="submit" form={id} pending={pending}>
           {copy.save}
         </Button>
@@ -87,6 +72,31 @@ export default function NoteChanges({
           {copy.cancel}
         </Button>
         <DeleteTwice name="id" value={String(note.id)} label={copy.delete} action={removing} danger />
+      </>
+    );
+  }
+  return (
+    <div className={styles.note}>
+      {editing ? (
+        <form
+          id={id}
+          aria-label={copy.edit}
+          action={(form) =>
+            startTransition(async () => {
+              if ((await edit(form)) === false) setRefused("edit");
+              else setEditing(false);
+            })
+          }
+        >
+          <input type="hidden" name="id" value={note.id} />
+          <TextArea name="body" defaultValue={note.body} required autoFocus aria-label={copy.note} rows={4} />
+        </form>
+      ) : (
+        text
+      )}
+      <div className={styles.meta}>
+        {meta}
+        <div className={styles.buttons}>{buttons}</div>
       </div>
       {refused && (
         <p role="alert" className={styles.refused}>
