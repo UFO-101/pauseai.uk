@@ -170,7 +170,8 @@ test("A letter bounces: staff are emailed, the address is blocked", async ({ pag
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     staffCopy.letters.oneTitle("Jane Smith", bouncy.name),
   );
-  await expect(page.getByText(sender)).toBeVisible();
+  // Who wrote it, leading to them as a supporter; their address is in its history too.
+  await expect(page.getByRole("link", { name: `Jane Smith <${sender}>` })).toBeVisible();
   await expect(page.getByText(staffCopy.letters.status.bounced).first()).toBeVisible();
   await frame(page, "the letter's page: bounced, in red, the letter as an email, and what happened to it");
   await page.getByRole("list", { name: staffCopy.letters.detail.historyTitle }).getByRole("button").first().click();

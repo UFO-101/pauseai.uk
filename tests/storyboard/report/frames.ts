@@ -32,6 +32,7 @@ export const SECTIONS: { id: string; name: string; part: (typeof PARTS)[number] 
   { id: "mailings", name: "Mailings", part: "Staff pages" },
   { id: "supporters", name: "Supporters", part: "Staff pages" },
   { id: "letters", name: "Letters and bounces", part: "Staff pages" },
+  { id: "replies", name: "Replies to letters", part: "Staff pages" },
   { id: "events", name: "Events and their owners", part: "Staff pages" },
   { id: "imports", name: "Imports", part: "Staff pages" },
   { id: "permissions", name: "Permissions", part: "Staff pages" },
