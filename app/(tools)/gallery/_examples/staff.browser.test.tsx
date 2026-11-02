@@ -8,6 +8,7 @@ import {
   DueTimeFieldsExample,
   HeldSyncExample,
   MailingWriterExample,
+  NoteChangesExample,
   NoteEntryExample,
   NoteFormExample,
   NotesExample,
@@ -45,15 +46,26 @@ describe("the staff examples", () => {
 
   it("shows a note's text with its links", async () => {
     const { unmount } = await render(<NotesExample />);
-    await expect.element(page.getByText(staffCopy.notes.edit, { exact: true })).toBeVisible();
+    await expect.element(page.getByRole("button", { name: staffCopy.notes.edit })).toBeVisible();
     await unmount();
     await render(<NoteTextExample />);
     await expect.element(page.getByRole("link", { name: "www.example.com/rota" })).toBeVisible();
   });
 
+  it("logs a note's edit, and gives an admin Delete alone", async () => {
+    const { unmount } = await render(<NoteChangesExample />);
+    await page.getByRole("button", { name: staffCopy.notes.edit }).click();
+    await page.getByRole("button", { name: staffCopy.notes.save }).click();
+    await expect.poll(() => log().nth(0).query()?.textContent).toMatch(/^edit\(/);
+    await unmount();
+    await render(<NoteChangesExample editable={false} />);
+    await expect.element(page.getByRole("button", { name: staffCopy.notes.delete })).toBeVisible();
+    await expect.element(page.getByRole("button", { name: staffCopy.notes.edit })).not.toBeInTheDocument();
+  });
+
   it("shows a note in a history, its own or another's, and logs the form on a politician", async () => {
     const { unmount } = await render(<NoteEntryExample />);
-    await expect.element(page.getByText(staffCopy.notes.edit, { exact: true })).toBeVisible();
+    await expect.element(page.getByRole("button", { name: staffCopy.notes.edit })).toBeVisible();
     await unmount();
     const other = await render(<NoteEntryExample own={false} />);
     await expect.element(page.getByText(staffCopy.notes.edited, { exact: false })).toBeVisible();
@@ -75,7 +87,10 @@ describe("the staff examples", () => {
 
   it("logs removing a politician's signature on their page", async () => {
     await render(<PoliticianDetailsExample />);
-    await page.getByText(staffCopy.politician.edit, { exact: true }).click();
+    await page
+      .getByRole("region", { name: staffCopy.politician.statusesTitle })
+      .getByText(staffCopy.politician.edit, { exact: true })
+      .click();
     await page.getByLabelText(staffCopy.politician.note).fill("Their office wrote");
     await page.getByRole("button", { name: staffCopy.politicians.unmarkSigned }).click();
     await expect

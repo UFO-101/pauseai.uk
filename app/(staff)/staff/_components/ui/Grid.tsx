@@ -74,7 +74,9 @@ export function Column({ span, children }: { span: Span; children: ReactNode }) 
 /**
  * A card in a `Grid`, or in a `Column`, with no span: the staff pages' one
  * kind of box, its parts spaced down it, looking like what it's for
- * (`look`). A `title` heads it, and names it for a screen reader.
+ * (`look`). A `title` heads it, and names it for a screen reader, with
+ * `action` at its right, such as a button; what the action opens, wider
+ * than the room beside the title, wraps under it, the card's width.
  * `className` is for what it does (a hover, a stretched link), never its
  * look.
  */
@@ -83,6 +85,7 @@ export function Card({
   look = "record",
   as: Tag = "section",
   title,
+  action,
   id,
   className,
   children,
@@ -91,6 +94,7 @@ export function Card({
   look?: CardLook;
   as?: "section" | "div" | "li";
   title?: ReactNode;
+  action?: ReactNode;
   /** The title's id, for the card's name; needed with `title`. */
   id?: string;
   className?: string;
@@ -101,11 +105,19 @@ export function Card({
       className={[styles.card, styles[look], span && SPANS[span], className].filter(Boolean).join(" ")}
       aria-labelledby={title ? id : undefined}
     >
-      {title && (
-        <h2 id={id} className={styles.title}>
-          {title}
-        </h2>
-      )}
+      {title &&
+        (action ? (
+          <div className={styles.head}>
+            <h2 id={id} className={styles.title}>
+              {title}
+            </h2>
+            <div className={styles.action}>{action}</div>
+          </div>
+        ) : (
+          <h2 id={id} className={styles.title}>
+            {title}
+          </h2>
+        ))}
       {children}
     </Tag>
   );

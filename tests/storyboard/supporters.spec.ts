@@ -243,7 +243,7 @@ test("Notes on a supporter: add one with a link, edit it, and an admin deletes a
   const card = page.getByRole("region", { name: staffCopy.notes.title });
   const notes = card.getByRole("listitem");
   await expect(notes).toHaveCount(1);
-  await expect(card.getByText(staffCopy.notes.edit, { exact: true })).toHaveCount(0);
+  await expect(card.getByRole("button", { name: staffCopy.notes.edit })).toHaveCount(0);
   await expect(card.getByRole("button", { name: staffCopy.notes.delete })).toHaveCount(0);
   await frame(page, "Jane's page: a colleague's note from last week, under her letters, and Write a note");
   await card.getByRole("button", { name: staffCopy.notes.write }).click();
@@ -260,12 +260,12 @@ test("Notes on a supporter: add one with a link, edit it, and an admin deletes a
   );
   await frame(page, "added, newest first, its address a link; hers she can edit or delete for a day");
 
-  await notes.first().getByText(staffCopy.notes.edit, { exact: true }).click();
+  await notes.first().getByRole("button", { name: staffCopy.notes.edit }).click();
   await notes
     .first()
     .getByRole("textbox", { name: staffCopy.notes.note })
     .fill("Met her at the Leeds stall in October.");
-  await frame(page, "editing it");
+  await frame(page, "editing it: Save, Cancel, and Delete in red");
   await notes.first().getByRole("button", { name: staffCopy.notes.save }).click();
   await expect(notes.first()).toContainText(`· ${staffCopy.notes.edited}`);
   await expect(notes.first().getByRole("textbox")).toBeHidden();

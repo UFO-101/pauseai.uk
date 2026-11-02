@@ -31,7 +31,8 @@ test("A politician's page: markers, notes, answers and emails", async ({ page, r
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   await openPolitician(page, "Polly Placeholder");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(`Polly Placeholder${copy.importantTarget}`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Polly Placeholder");
+  await expect(page.getByText(copy.importantTarget, { exact: true })).toBeVisible();
   await expect(page.getByText("Met at the example fair.")).toBeVisible();
   const asks = page.getByRole("region", { name: copy.statusesTitle });
   // ControlAI's campaign statement and her answer to the conference, both from Airtable.

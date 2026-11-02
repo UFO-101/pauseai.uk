@@ -13,11 +13,6 @@
   height: 1.5em;
 }
 
-/* Write a note, over a politician's history, a step above it. */
-.addNote {
-  margin-bottom: var(--space-3);
-}
-
 /* An ask in the asks card: the ask, and beside it their answer, in a
    column as wide as the widest; ruled from the one above. */
 .asks {

@@ -148,6 +148,7 @@ import {
   RemoveAccountFormExample,
   UnblockFormExample,
   NotesExample,
+  NoteChangesExample,
   NoteEntryExample,
   NoteFormExample,
   NoteTextExample,
@@ -2475,6 +2476,14 @@ export const staff: Group = {
       variants: [
         { label: "In a history: her own, which she can change", render: () => <NoteEntryExample /> },
         { label: "Someone else's, edited", render: () => <NoteEntryExample own={false} /> },
+      ],
+    },
+    {
+      name: "NoteChanges",
+      file: "app/(staff)/staff/_components/NoteChanges.tsx",
+      variants: [
+        { label: "Its writer's: Edit, which opens Save, Cancel and Delete", render: () => <NoteChangesExample /> },
+        { label: "An admin's, on someone else's: Delete alone", render: () => <NoteChangesExample editable={false} /> },
       ],
     },
     {

@@ -33,6 +33,7 @@ import DeletePolitician from "@/app/(staff)/staff/_components/DeletePolitician";
 import RemoveAccountForm from "@/app/(staff)/staff/_components/RemoveAccountForm";
 import StaffAccountsTable from "@/app/(staff)/staff/_components/StaffAccountsTable";
 import UnblockForm from "@/app/(staff)/staff/_components/UnblockForm";
+import NoteChanges from "@/app/(staff)/staff/_components/NoteChanges";
 import NoteForm from "@/app/(staff)/staff/_components/NoteForm";
 import Notes, { NoteEntry, NoteText } from "@/app/(staff)/staff/_components/Notes";
 import {
@@ -264,6 +265,15 @@ export function NoteEntryExample({ own = true }: { own?: boolean }) {
           dated={false}
         />
       )}
+    </Logged>
+  );
+}
+
+/** A note's buttons, logged: Edit, which opens Save, Cancel and Delete, for its writer; Delete alone for an admin. */
+export function NoteChangesExample({ editable = true }: { editable?: boolean }) {
+  return (
+    <Logged>
+      {(log) => <NoteChanges note={exampleNotes[0]} editable={editable} edit={log("edit")} remove={log("delete")} />}
     </Logged>
   );
 }

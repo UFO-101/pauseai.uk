@@ -31,29 +31,11 @@
   overflow-wrap: anywhere;
 }
 
-/* Edit and Delete on a line; the edit's form, opened, takes the line under them. */
-.changes {
-  display: flex;
-  justify-self: stretch;
-  flex-wrap: wrap;
+/* Editing a note: its field, the note's width, and the buttons under it. */
+.editing {
+  display: grid;
   gap: var(--space-2);
-  align-items: flex-start;
-}
-
-.edit[open] {
-  flex-basis: 100%;
-}
-
-.edit summary {
-  list-style: none;
-}
-
-.edit summary::-webkit-details-marker {
-  display: none;
-}
-
-.edit[open] summary {
-  margin-bottom: var(--space-2);
+  justify-self: stretch;
 }
 
 .none {
@@ -71,7 +53,7 @@
   font-size: var(--text-sm);
 }
 
-/* Add note and Cancel, side by side. */
+/* A form's buttons side by side, each its own width: Add note and Cancel; Save, Cancel and Delete. */
 .buttons {
   display: flex;
   flex-wrap: wrap;

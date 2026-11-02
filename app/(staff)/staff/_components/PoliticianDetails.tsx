@@ -329,7 +329,7 @@ function PoliticianBand({
  * unblock it; then their history, newest first: the letters written to
  * them, the replies, PauseAI's emails, staff's notes, and everything the
  * audit log says about them, the letters' senders only when it's given
- * them, with the form to add a note over it; and beside it the card of
+ * them, with Write a note at its top right; and beside it the card of
  * their answer to each ask, with the button to change one staff record,
  * and under that Airtable's notes on them, which are changed there.
  */
@@ -430,12 +430,13 @@ export default function PoliticianDetails({
       )}
 
       <Grid>
-        <Card span={4} look="log" title={copy.historyTitle} id="history-title">
-          {notes && (
-            <div className={styles.addNote}>
-              <NoteForm target={{ name: "politicianId", value: politician.id }} add={notes.add} />
-            </div>
-          )}
+        <Card
+          span={3}
+          look="log"
+          title={copy.historyTitle}
+          id="history-title"
+          action={notes && <NoteForm target={{ name: "politicianId", value: politician.id }} add={notes.add} />}
+        >
           {entries.length === 0 ? (
             <p className={styles.none}>{copy.noHistory}</p>
           ) : (
@@ -449,7 +450,7 @@ export default function PoliticianDetails({
             </ol>
           )}
         </Card>
-        <Column span={2}>
+        <Column span={3}>
           <Card look="aside" title={copy.statusesTitle} id="asks-title">
             <AskRows>
               {rows.map((ask) => (

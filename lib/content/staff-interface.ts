@@ -1107,7 +1107,7 @@ export const staffCopy = {
       // A letter of one of PauseAI's mailings, by its mailing, and how it was written.
       "pauseai-letter": "Email from PauseAI:",
       // A staff member's note on them, before who wrote it.
-      note: "⁂ Note",
+      note: "Note",
       "add politician": "Added",
       "edit politician": "Details edited",
       "remove politician": "No longer in Airtable",
@@ -1577,13 +1577,14 @@ export const staffCopy = {
     note: "Note",
     // The button that opens the field to write one, and the one that closes it unsent.
     write: "Write a note",
-    cancel: "⁂ Cancel",
+    cancel: "Cancel",
     add: "Add note",
     edit: "Edit",
     save: "Save",
     delete: "Delete",
     // Under the field on a supporter's page: what a note about them should be.
-    guidance: "Only write notes you'd be happy for them to read, avoid writing about health, beliefs or private life.",
+    guidance:
+      "Only write notes you'd be happy for them to read (as they can via GDPR). Avoid writing about health, beliefs or private life.",
   },
   changes: {
     title: "Audit log",

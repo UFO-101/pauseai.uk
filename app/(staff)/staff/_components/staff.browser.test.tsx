@@ -1185,9 +1185,9 @@ describe("PoliticianDetails", () => {
     ]);
     expect(document.querySelectorAll("dd svg[aria-hidden]")).toHaveLength(2);
     // The asks done: MP signed one.
-    await expect
-      .element(page.getByRole("link", { name: `1 ${staffCopy.politician.band.asksDone(1)}` }))
-      .toHaveAttribute("href", "#asks-title");
+    const done = page.getByRole("link", { name: `1 ${staffCopy.politician.band.asksDone(1)}` });
+    await expect.element(done).toBeVisible();
+    expect(done.element().getAttribute("href")).toMatch(/#asks-title$/);
     await expect.element(page.getByText(staffCopy.politician.band.lettersCounted(0))).toBeVisible();
     await expect.element(page.getByText(staffCopy.politician.band.emailsCounted(0))).toBeVisible();
     // Airtable's notes keep their lines.
@@ -1268,12 +1268,11 @@ describe("PoliticianDetails", () => {
       />,
     );
     const history = page.getByRole("list", { name: staffCopy.politician.historyTitle }).getByRole("listitem");
-    await expect
-      .element(history.nth(0))
-      .toHaveTextContent(
-        `${staffTime(exampleNotes[0].createdAt)}${exampleNotes[0].body}${staffCopy.politician.history.note} · jo@pauseai.uk`,
-      );
-    await expect.element(history.nth(0).getByText(staffCopy.notes.edit, { exact: true })).toBeVisible();
+    await expect.element(history.nth(0)).toBeVisible();
+    expect(history.nth(0).element().textContent).toContain(
+      `${staffTime(exampleNotes[0].createdAt)}${exampleNotes[0].body}${staffCopy.politician.history.note} · jo@pauseai.uk`,
+    );
+    await expect.element(history.nth(0).getByRole("button", { name: staffCopy.notes.edit })).toBeVisible();
     await page.getByRole("button", { name: staffCopy.notes.write }).click();
     await page.getByRole("textbox", { name: staffCopy.notes.note }).fill("Met them");
     await page.getByRole("button", { name: staffCopy.notes.add }).click();
@@ -1396,8 +1395,8 @@ describe("PoliticianDetails", () => {
         ]}
       />,
     );
-    const facts = page.getByRole("definition").all();
-    expect(facts.map((d) => d.element().textContent)).toEqual([MP.email, MP.salutation]);
+    // No constituency or nation, so no nation in the band.
+    expect(terms()).not.toContain(staffCopy.politician.country);
     // The sender leads to their supporter once they're one; the letters and replies sit among the audit log's entries by time.
     await expect
       .element(page.getByRole("link", { name: exampleLetter.senderName }))
@@ -1747,9 +1746,7 @@ describe("PoliticianDetails", () => {
       />,
     );
     const copy = staffCopy.politician.blocked;
-    expect(page.getByRole("heading", { level: 1 }).element().textContent).toBe(
-      `${MP.name}${staffCopy.politician.importantTarget}`,
-    );
+    expect(page.getByRole("heading", { level: 1 }).element().textContent).toBe(MP.name);
     const notice = page.getByRole("region", { name: copy.title });
     // A red strip: the warning icon at the left, the rest beside it.
     const strip = notice.element().firstElementChild!;

@@ -1,12 +1,8 @@
-import { buttonClass } from "@/components/ui/Button";
-import { TextArea } from "@/components/ui/Controls";
-import { FormStack } from "@/components/ui/Form";
-import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { canDeleteNote, canEditNote, noteParts, type Note, type NoteReader } from "@/lib/notes";
 import { staffTime } from "@/lib/staff-time";
-import { DeleteTwice } from "./DeleteTwice";
+import NoteChanges from "./NoteChanges";
 import NoteForm from "./NoteForm";
 import styles from "./Notes.module.css";
 
@@ -45,9 +41,8 @@ export function NoteText({ body, className }: { body: string; className?: string
 /**
  * One note: its text; under it `label` if there is one, who wrote it, when
  * (unless `dated` is false, where a history gives the time), and whether
- * it's been edited; then, if its writer may still change it, a fold with the
- * form to edit it, and a button to delete it, which an admin has under
- * every note.
+ * it's been edited; then, for whoever may change it, its buttons
+ * (NoteChanges).
  */
 export function NoteEntry({
   note,
@@ -66,22 +61,7 @@ export function NoteEntry({
       <NoteText body={note.body} />
       <Muted>{meta.filter(Boolean).join(" · ")}</Muted>
       {(editable || canDeleteNote(note, reader, time)) && (
-        <div className={styles.changes}>
-          {editable && (
-            // Keyed on the edit, so saving one closes the fold.
-            <details key={note.editedAt} className={styles.edit}>
-              <summary className={buttonClass({ variant: "ghost", size: "small", fit: true })}>{copy.edit}</summary>
-              <FormStack action={edit} aria-label={copy.edit}>
-                <input type="hidden" name="id" value={note.id} />
-                <TextArea name="body" defaultValue={note.body} required aria-label={copy.note} rows={4} />
-                <SubmitButton variant="primary" size="small" fit>
-                  {copy.save}
-                </SubmitButton>
-              </FormStack>
-            </details>
-          )}
-          <DeleteTwice name="id" value={String(note.id)} label={copy.delete} action={remove} />
-        </div>
+        <NoteChanges key={note.editedAt} note={note} editable={editable} edit={edit} remove={remove} />
       )}
     </div>
   );

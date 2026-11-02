@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
+import { buttonClass } from "@/components/ui/Button";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { staffTime } from "@/lib/staff-time";
 import NoteForm from "./NoteForm";
@@ -21,10 +22,10 @@ describe("Notes", () => {
   it("lists a supporter's notes, newest first, with who wrote each, when, and whether it was edited, their addresses links", async () => {
     await renderNotes();
     await expect.element(page.getByRole("heading", { name: copy.title })).toBeVisible();
-    await expect.element(notes().nth(0)).toHaveTextContent(`jo@pauseai.uk · ${staffTime(exampleNotes[0].createdAt)}`);
-    await expect
-      .element(notes().nth(1))
-      .toHaveTextContent(`sam@pauseai.uk · ${staffTime(exampleNotes[1].createdAt)} · ${copy.edited}`);
+    await expect.element(notes().nth(1)).toBeVisible();
+    const text = (i: number) => notes().nth(i).element().textContent;
+    expect(text(0)).toContain(`jo@pauseai.uk · ${staffTime(exampleNotes[0].createdAt)}`);
+    expect(text(1)).toContain(`sam@pauseai.uk · ${staffTime(exampleNotes[1].createdAt)} · ${copy.edited}`);
     const link = notes().nth(0).getByRole("link", { name: "https://example.org/slides/leeds-2026" });
     await expect.element(link).toHaveAttribute("href", "https://example.org/slides/leeds-2026");
     await expect.element(link).toHaveAttribute("target", "_blank");
@@ -33,17 +34,33 @@ describe("Notes", () => {
       .toHaveAttribute("href", "https://www.example.com/rota");
   });
 
-  it("lets the writer edit or delete only her note still young enough, sending its ID and new text", async () => {
+  it("lets the writer edit only her note still young enough: Save, Cancel, and Delete, red, while editing", async () => {
     const { edit, remove } = await renderNotes();
-    await expect.element(notes().nth(1).getByText(copy.edit, { exact: true })).not.toBeInTheDocument();
-    await expect.element(notes().nth(2).getByRole("button", { name: copy.delete })).not.toBeInTheDocument();
-    await notes().nth(0).getByText(copy.edit, { exact: true }).click();
-    const field = notes().nth(0).getByRole("textbox", { name: copy.note });
+    const first = notes().nth(0);
+    await expect.element(notes().nth(1).getByRole("button", { name: copy.edit })).not.toBeInTheDocument();
+    await expect.element(notes().nth(2).getByRole("button")).not.toBeInTheDocument();
+    // Not editing: Edit alone, no Delete.
+    await expect.element(first.getByRole("button", { name: copy.delete })).not.toBeInTheDocument();
+    await first.getByRole("button", { name: copy.edit }).click();
+    // Editing: no Edit; the field, focused, with its text.
+    await expect.element(first.getByRole("button", { name: copy.edit })).not.toBeInTheDocument();
+    const field = first.getByRole("textbox", { name: copy.note });
+    await expect.element(field).toHaveFocus();
     await expect.element(field).toHaveValue(exampleNotes[0].body);
-    await field.fill("Spoke in Leeds");
-    await notes().nth(0).getByRole("button", { name: copy.save }).click();
+    await field.fill("Never saved");
+    await first.getByRole("button", { name: copy.cancel }).click();
+    await expect.element(field).not.toBeInTheDocument();
+    expect(edit).not.toHaveBeenCalled();
+    await first.getByRole("button", { name: copy.edit }).click();
+    await first.getByRole("textbox", { name: copy.note }).fill("Spoke in Leeds");
+    await first.getByRole("button", { name: copy.save }).click();
     expect(fields(edit.mock.calls[0][0])).toEqual({ id: "3", body: "Spoke in Leeds" });
-    await notes().nth(0).getByRole("button", { name: copy.delete }).click();
+    // Saved, it closes.
+    await expect.element(first.getByRole("button", { name: copy.edit })).toBeVisible();
+    await first.getByRole("button", { name: copy.edit }).click();
+    const del = first.getByRole("button", { name: copy.delete });
+    expect(del.element().className).toBe(buttonClass({ variant: "danger", size: "small", fit: true }));
+    await del.click();
     await page.getByRole("button", { name: staffCopy.deleteIt }).click();
     await vi.waitFor(() => expect(remove).toHaveBeenCalled());
     expect((remove.mock.calls[0][0] as FormData).get("id")).toBe("3");
