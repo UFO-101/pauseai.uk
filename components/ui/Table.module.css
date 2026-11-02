@@ -17,6 +17,15 @@
   background: var(--table-stripe);
 }
 
+/* The row a link led to, by its ID, picked out, a little below the window's top. */
+.table > tbody > tr:target {
+  scroll-margin-top: var(--space-8);
+}
+
+.table > tbody > tr:target > td {
+  background: rgb(var(--pause-orange-rgb) / 0.12);
+}
+
 .table th,
 .table td {
   padding: var(--table-cell-padding);

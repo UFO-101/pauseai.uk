@@ -34,14 +34,19 @@ export type MailingSummary = {
   to: number;
   /** The first of its letters sent, or none yet. */
   sentAt: string | null;
+  /** Letters that arrived: sent, and not bounced. */
   sent: number;
-  /** Recipients it wasn't sent to: unticked, or cancelled. */
-  skipped: number;
-  bounced: number;
+  /** Letters that didn't: skipped, refused by Gmail, or bounced. */
+  failed: number;
+  /** Letters never sent, as the mailing was stopped first. */
+  stopped: number;
   replied: number;
   /** Recipients who have answered its ask. */
   answered: number;
 };
+
+/** Why a mailing skipped a recipient: their address blocked, out of office, or in office with no address. */
+export type SkipReason = "blocked" | "left-office" | "no-email";
 
 export type MailingRecipient = {
   letterId: number;
@@ -59,18 +64,24 @@ export type MailingRecipient = {
   /** Their answer to the mailing's ask, if any. */
   answer: string | null;
   /** Why it wasn't sent, if it was skipped. */
-  skipReason: "blocked" | "left-office" | null;
+  skipReason: SkipReason | null;
 };
 
-/** Which of a mailing's recipients its page lists: everyone, those who replied, bounced, were skipped or answered its ask. */
-export const RECIPIENT_TABS = ["all", "replied", "bounced", "skipped", "answered"] as const;
+/** Which of a mailing's recipients its page lists: everyone, those who replied, whose letter failed or was stopped, or who answered its ask. */
+export const RECIPIENT_TABS = ["all", "replied", "failed", "stopped", "answered"] as const;
 export type RecipientTab = (typeof RECIPIENT_TABS)[number];
+
+/**
+ * A letter that failed: skipped, refused when sent, or bounced, a failure
+ * that only took longer to come. A spam complaint arrived, so it was sent.
+ */
+const FAILED = "('skipped', 'not_sent', 'bounced')";
 
 const TAB_CONDITIONS: Record<RecipientTab, string> = {
   all: "true",
   replied: "l.replied_at IS NOT NULL",
-  bounced: "l.status IN ('bounced', 'spam_complaint')",
-  skipped: "l.status IN ('not_sent', 'cancelled', 'skipped')",
+  failed: `l.status IN ${FAILED}`,
+  stopped: "l.status = 'cancelled'",
   answered: `EXISTS (SELECT 1 FROM ask_statuses s JOIN mailings asked ON asked.id = p.mailing_id
     WHERE s.notable_person_id = n.id AND s.ask = asked.ask)`,
 };
@@ -93,9 +104,9 @@ const SELECT_MAILINGS = `
     m.updated_at AS "updatedAt",
     min(l.sent_at) AS "sentAt",
     count(l.id)::int AS "to",
-    count(l.id) FILTER (WHERE l.status IN ('sent', 'bounced', 'spam_complaint'))::int AS sent,
-    count(l.id) FILTER (WHERE l.status IN ('not_sent', 'cancelled', 'skipped'))::int AS skipped,
-    count(l.id) FILTER (WHERE l.status IN ('bounced', 'spam_complaint'))::int AS bounced,
+    count(l.id) FILTER (WHERE l.status IN ('sent', 'spam_complaint'))::int AS sent,
+    count(l.id) FILTER (WHERE l.status IN ${FAILED})::int AS failed,
+    count(l.id) FILTER (WHERE l.status = 'cancelled')::int AS stopped,
     count(l.replied_at)::int AS replied,
     count(l.id) FILTER (WHERE EXISTS (SELECT 1 FROM ask_statuses s WHERE s.notable_person_id = l.notable_person_id AND s.ask = m.ask))::int AS answered
   FROM mailings m LEFT JOIN asks a ON a.slug = m.ask

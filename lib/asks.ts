@@ -18,6 +18,9 @@ export type Asker = "supporters" | "pauseai" | "controlai";
 /** Each ask's status for one person, keyed by the ask's slug. */
 export type AskStatuses = Partial<Record<string, AskStatus>>;
 
+/** Where an ask's name leads: its row on the asks page, picked out (AsksTable). */
+export const askHref = (slug: string) => `/staff/asks#${slug}`;
+
 /** PauseAI's frontier AI letter to the Prime Minister. */
 export const FRONTIER_AI_LETTER_ASK = "frontier-ai-letter";
 /** PauseAI's 2025 letter to Sir Demis Hassabis of Google DeepMind. */

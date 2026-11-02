@@ -1,6 +1,7 @@
 import StaffLink from "./ui/StaffLink";
 import Tag from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
+import { askHref } from "@/lib/asks";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { MailingGroup } from "@/lib/mailing-groups";
 import { mailingWhen } from "@/lib/mailing-groups";
@@ -15,14 +16,16 @@ import styles from "./MailingsOverview.module.css";
 const copy = staffCopy.mailingPages;
 
 /**
- * How a mailing sent went, in the order it happens: what went out, what
- * didn't arrive, then what came back; the same in the list and on its page.
+ * How a mailing sent went, in the order it happens: what arrived, what
+ * didn't, what was never sent as it was stopped, then what came back; the
+ * same in the list and on its page.
  */
 export function mailingCounts(mailing: MailingSummary) {
   return [
     { key: "sent", n: mailing.sent, label: copy.counts.sent },
-    { key: "skipped", n: mailing.skipped, label: copy.counts.skipped },
-    { key: "bounced", n: mailing.bounced, label: copy.counts.bounced, tone: "red" as const },
+    { key: "failed", n: mailing.failed, label: copy.counts.failed, tone: "red" as const },
+    // Stopped only when it was.
+    ...(mailing.stopped ? [{ key: "stopped", n: mailing.stopped, label: copy.counts.stopped }] : []),
     { key: "replied", n: mailing.replied, label: copy.counts.replied },
     // Answers only when it has an ask.
     ...(mailing.ask
@@ -62,7 +65,7 @@ function Standing({ mailing, href }: { mailing: MailingSummary; href: string }) 
   if (mailing.state === "sending") {
     return (
       <StaffLink href={href} className={styles.bar}>
-        <Progress value={mailing.sent + mailing.skipped} max={mailing.to} tone="blue" label={copy.sentLabel}>
+        <Progress value={mailing.sent + mailing.failed} max={mailing.to} tone="blue" label={copy.sentLabel}>
           {copy.sendingBar(mailing.sent, mailing.to)}
         </Progress>
       </StaffLink>
@@ -92,8 +95,7 @@ function Row({ mailing, year }: { mailing: MailingSummary; year: string }) {
           {mailing.ask && (
             <>
               {from ? " · " : ""}
-              {staffCopy.mailings.columns.ask}{" "}
-              <StaffLink href={`/staff/politicians?ask=${mailing.ask}`}>{mailing.askTitle}</StaffLink>
+              {staffCopy.mailings.columns.ask} <StaffLink href={askHref(mailing.ask)}>{mailing.askTitle}</StaffLink>
             </>
           )}
         </Muted>

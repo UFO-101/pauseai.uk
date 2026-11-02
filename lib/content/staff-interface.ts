@@ -27,6 +27,8 @@ export const staffCopy = {
     failed: "The link you used has expired or has been used already. Please request a new one.",
     elsewhere: "The link you used was made in another browser. Either open it there, or request a new one here.",
   },
+  // Any Delete pressed twice (DeleteTwice), after its first press, asking for a second.
+  deleteIt: "Press again to delete it",
   // The dev login's box under the login card, in a fixture build only.
   devLogin: {
     title: "Development only: sign in now as",
@@ -690,8 +692,6 @@ export const staffCopy = {
       sender: "Sender",
       sentAt: "Sent",
       sent: "Sent to",
-      skipped: "Skipped",
-      bounced: "Bounced",
       replied: "Replied",
       answered: "Answered",
     },
@@ -787,8 +787,8 @@ export const staffCopy = {
     counts: {
       sent: "sent",
       replied: "replied",
-      bounced: "bounced",
-      skipped: "skipped",
+      failed: "failed",
+      stopped: "stopped",
       answered: "answers",
     },
     // A new mailing's page's title, and the mailings page's button that starts one.
@@ -810,8 +810,6 @@ export const staffCopy = {
       conflict: "Not saved because someone else changed the same draft!",
     } as Record<string, string>,
     deleteDraft: "Delete draft",
-    // Delete draft after its first press, asking for a second.
-    deleteIt: "Press again to delete it",
     // The numbered sections of a new mailing.
     sections: {
       who: "Who",
@@ -954,8 +952,8 @@ export const staffCopy = {
     tabs: {
       all: "All",
       replied: "Replied",
-      bounced: "Bounced",
-      skipped: "Skipped",
+      failed: "Failed",
+      stopped: "Stopped",
       answered: "Answered",
     },
     // The list of mailings: when a draft was last saved, and how many a draft or one scheduled goes to.
@@ -980,6 +978,7 @@ export const staffCopy = {
     skipReasons: {
       blocked: "Skipped: address blocked",
       "left-office": "Skipped: left office",
+      "no-email": "⁂ Skipped: no email address",
     } as Record<string, string>,
   },
   // The asks page: each ask, its kind and date, and how many gave each answer.
@@ -1107,8 +1106,6 @@ export const staffCopy = {
     delete: {
       button: "Delete",
       note: "Their record has gone from Airtable and nobody has written to them, so they can be deleted here too.",
-      sure: (name: string) => `Delete ${name}, and their answers to asks, for good?`,
-      confirm: "Delete for good",
     },
     // On an MP from Airtable, after the source, which links to their record there.
     editInAirtable: ", update there.",

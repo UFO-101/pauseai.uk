@@ -275,10 +275,10 @@ test("A politician gone from Airtable is deleted", async ({ page, request, flowD
   await frame(page, "Rita, gone from Airtable: the button to delete her, at the foot");
 
   await page.getByRole("button", { name: copy.delete.button, exact: true }).click();
-  await expect(page.getByText(copy.delete.sure("Rita Retired"))).toBeVisible();
-  await frame(page, "asked to be sure");
+  await expect(page.getByRole("button", { name: staffCopy.deleteIt })).toBeFocused();
+  await frame(page, "Delete, pressed once, asking to be pressed again", { window: true });
 
-  await page.getByRole("button", { name: copy.delete.confirm }).click();
+  await page.getByRole("button", { name: staffCopy.deleteIt }).click();
   await expect(page).toHaveURL(`${BASE}/staff/politicians`);
   await page.goto(`${BASE}/staff/politicians?status=any`);
   await expect(page.getByRole("link", { name: "Rita Retired" })).toHaveCount(0);
@@ -311,12 +311,22 @@ test("Mailings: the list, one mailing's recipients, and back from a politician",
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(invitation);
 });
 
-test("Asks: each answer's count leads to who gave it", async ({ page, request, flowDatabase }) => {
+test("Asks: a mailing's ask leads to it, and each answer's count to who gave it", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
-  await page.goto(`${BASE}/staff/asks`);
+  await page.goto(`${BASE}/staff/mailings`);
+  await page
+    .getByRole("listitem")
+    .filter({ hasText: "Edinburgh Conference Nov 26 Invitation" })
+    .getByRole("link", { name: "Edinburgh conference" })
+    .click();
+  await expect(page).toHaveURL(`${BASE}/staff/asks#edinburgh-conference-2026`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.asks.title);
-  await frame(page, "every ask: the letters signed, the conference answered, Go to Parliament not yet");
+  await frame(page, "from a mailing, its ask: every ask, the conference picked out");
   await page.getByRole("link", { name: staffCopy.asks.count(staffCopy.statuses.going, 1) }).click();
   await expect(page).toHaveURL(/ask=edinburgh-conference-2026&answer=going/);
   await expect(page.getByRole("row").filter({ hasText: "Morag Example" })).toBeVisible();
@@ -361,9 +371,9 @@ test("Add an ask, change it, then delete it", async ({ page, flowDatabase }) => 
   await frame(page, "changed: its title now links to the event's page");
   await page.getByRole("row").filter({ hasText: "Winter reception" }).getByRole("link", { name: asks.edit }).click();
   await page.getByRole("button", { name: asks.delete }).click();
-  await expect(page.getByRole("button", { name: staffCopy.mailingPages.deleteIt })).toBeFocused();
+  await expect(page.getByRole("button", { name: staffCopy.deleteIt })).toBeFocused();
   await frame(page, "Delete, pressed once, asking to be pressed again", { window: true });
-  await page.getByRole("button", { name: staffCopy.mailingPages.deleteIt }).click();
+  await page.getByRole("button", { name: staffCopy.deleteIt }).click();
   await expect(page.getByText(asks.notices.deleted)).toBeVisible();
   await expect(page.getByRole("row").filter({ hasText: "Winter reception" })).toHaveCount(0);
   await frame(page, "deleted");

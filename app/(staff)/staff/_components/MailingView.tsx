@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { buttonClass } from "@/components/ui/Button";
 import Tag, { type TagTone } from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
+import { askHref } from "@/lib/asks";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { answerLabels, POLITICIAN_FIELDS } from "@/lib/mailing-fields";
 import type { Ask } from "@/lib/server/asks";
@@ -45,15 +46,16 @@ function letterLabels(asks: Ask[]): { fields: Record<string, string>; conditions
 }
 
 /**
- * How a recipient's letter went, as a tag: answered its ask, in green; bounced, in red; else grey, as
- * skipped, with why, replied, or its status.
+ * How a recipient's letter went, as a tag: answered its ask, in green;
+ * failed, in red, skipped with why, refused, or bounced, or a spam
+ * complaint; else grey, as replied, or its status.
  */
 function Outcome({ mailing, recipient }: { mailing: Mailing; recipient: MailingRecipient }) {
   if (mailing.ask && recipient.answer) return <Tag tone="green">{staffCopy.mailings.columns.answered}</Tag>;
-  if (recipient.status === "bounced" || recipient.status === "spam_complaint") {
+  if (recipient.skipReason) return <Tag tone="red">{copy.skipReasons[recipient.skipReason]}</Tag>;
+  if (["not_sent", "bounced", "spam_complaint"].includes(recipient.status)) {
     return <Tag tone="red">{staffCopy.letters.status[recipient.status]}</Tag>;
   }
-  if (recipient.skipReason) return <Tag>{copy.skipReasons[recipient.skipReason]}</Tag>;
   if (recipient.repliedAt) return <Tag>{copy.tabs.replied}</Tag>;
   return <Tag>{staffCopy.letters.status[recipient.status] ?? recipient.status}</Tag>;
 }
@@ -150,7 +152,7 @@ function Standing({
         <Card span={6} as="div">
           <div className={styles.standing}>
             <div className={styles.bar}>
-              <Progress value={mailing.sent + mailing.skipped} max={mailing.to} tone="blue" label={copy.sentLabel} big>
+              <Progress value={mailing.sent + mailing.failed} max={mailing.to} tone="blue" label={copy.sentLabel} big>
                 {copy.sendingBar(mailing.sent, mailing.to)}
               </Progress>
             </div>
@@ -251,7 +253,7 @@ export default function MailingView({
           {written ? written.sentFrom : staffCopy.mailings.imported}
         </BandFact>
         <BandFact label={staffCopy.mailings.fields.ask}>
-          {mailing.ask && <StaffLink href={`/staff/politicians?ask=${mailing.ask}`}>{mailing.askTitle}</StaffLink>}
+          {mailing.ask && <StaffLink href={askHref(mailing.ask)}>{mailing.askTitle}</StaffLink>}
         </BandFact>
         <BandFact label={copy.whoLabel} detail={who && staffCopy.mailings.recipientsCount(mailing.to)}>
           {who ?? staffCopy.mailings.recipientsCount(mailing.to)}

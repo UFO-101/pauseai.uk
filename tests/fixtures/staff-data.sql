@@ -553,6 +553,37 @@ SELECT w.id, w.due_at + interval '1 day', 'replied', jsonb_build_object('from', 
   'gmailMessageId', 'gmail-seed-reply')
 FROM seed_written w JOIN notable_people n ON n.id = w.person WHERE w.state = 'sent' AND w.n = 2;
 
+-- A mailing stopped part-way, with no ask, with every way a letter can
+-- fail: one sent; three skipped, as he'd left office, he had no address,
+-- and his address was blocked; one Gmail refused; and one never sent, as
+-- the mailing was stopped first.
+INSERT INTO mailings (title, subject, audience, channel, filter, body, created_by, sent_from, from_name, due_at, state, created_at)
+SELECT 'Briefing on the bill', 'Briefing on the bill', 'politicians', 'email', '{"list": "politicians", "params": {}}', b.body,
+  'jo@pauseai.uk', 'jo@pauseai.uk', 'Jo Seed', now() - interval '4 days', 'cancelled', now() - interval '6 days'
+FROM seed_letter b;
+CREATE TEMP TABLE seed_stopped ON COMMIT DROP AS
+SELECT nextval(pg_get_serial_sequence('letters', 'id')) AS id, n.id AS person, n.salutation, n.name, s.status, s.reason
+FROM (VALUES
+  ('recMo', 'sent', NULL),
+  ('recGone', 'skipped', 'left-office'),
+  ('recSeedWilliam', 'skipped', 'no-email'),
+  ('recSeedDafydd', 'skipped', 'blocked'),
+  ('recSeedSian', 'not_sent', NULL),
+  ('recSeedBaroness', 'cancelled', NULL)
+) s (airtable_id, status, reason) JOIN notable_people n USING (airtable_id);
+INSERT INTO letters (id, kind, notable_person_id, status, created_at, sent_at) OVERRIDING SYSTEM VALUE
+SELECT id, 'pauseai', person, status, now() - interval '6 days', CASE WHEN status = 'sent' THEN now() - interval '4 days' END
+FROM seed_stopped;
+INSERT INTO letters_from_pauseai (id, mailing_id, merge_values, skip_reason)
+SELECT s.id, m.id, json_build_object('values', json_build_object('salutation', s.salutation, 'name', s.name), 'meets', '[]'::json), s.reason
+FROM seed_stopped s JOIN mailings m ON m.title = 'Briefing on the bill';
+INSERT INTO letter_events (letter_id, at, status, details)
+SELECT id, now() - interval '6 days', 'scheduled', '{}' FROM seed_stopped;
+INSERT INTO letter_events (letter_id, at, status, details)
+SELECT id, now() - interval '4 days', CASE status WHEN 'not_sent' THEN 'failed' ELSE status END,
+  CASE WHEN reason IS NULL THEN '{}' ELSE jsonb_build_object('reason', reason) END
+FROM seed_stopped WHERE status <> 'cancelled';
+
 -- A mailing to supporters, by email, to those following the calendar:
 -- one delivered, one that failed, one skipped as they'd unsubscribed since.
 INSERT INTO mailings (title, subject, audience, channel, topic, filter, body, created_by, sent_from, from_name, due_at, state)

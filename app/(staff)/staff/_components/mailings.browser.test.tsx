@@ -111,8 +111,8 @@ describe("DeleteDraft and StopMailing", () => {
       </>,
     );
     await page.getByRole("button", { name: copy.deleteDraft }).click();
-    await expect.element(page.getByRole("button", { name: copy.deleteIt })).toHaveFocus();
-    await page.getByRole("button", { name: copy.deleteIt }).click();
+    await expect.element(page.getByRole("button", { name: staffCopy.deleteIt })).toHaveFocus();
+    await page.getByRole("button", { name: staffCopy.deleteIt }).click();
     await page.getByRole("button", { name: "Stop" }).click();
     await expect.poll(() => forms.map((form) => form.get("id"))).toEqual(["5", "6"]);
   });
@@ -131,13 +131,38 @@ describe("DeleteDraft and StopMailing", () => {
     vi.useFakeTimers();
     try {
       await page.getByRole("button", { name: copy.deleteDraft }).click();
-      await expect.element(page.getByRole("button", { name: copy.deleteIt })).toBeVisible();
+      await expect.element(page.getByRole("button", { name: staffCopy.deleteIt })).toBeVisible();
       await vi.advanceTimersByTimeAsync(5000);
     } finally {
       vi.useRealTimers();
     }
     await expect.element(page.getByRole("button", { name: copy.deleteDraft })).toBeVisible();
     expect(action).not.toHaveBeenCalled();
+  });
+
+  it("stays red and pending while it deletes, though the focus leaves it and the time runs out", async () => {
+    let finish = () => {};
+    const action = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)));
+    await render(
+      <>
+        <DeleteDraft id={5} action={action} />
+        <button type="button">Elsewhere</button>
+      </>,
+    );
+    await page.getByRole("button", { name: copy.deleteDraft }).click();
+    await page.getByRole("button", { name: staffCopy.deleteIt }).click();
+    const pressed = page.getByRole("button", { name: staffCopy.deleteIt });
+    await expect.element(pressed).toHaveAttribute("aria-busy", "true");
+    await page.getByRole("button", { name: "Elsewhere" }).click();
+    vi.useFakeTimers();
+    try {
+      await vi.advanceTimersByTimeAsync(5000);
+    } finally {
+      vi.useRealTimers();
+    }
+    await expect.element(pressed).toHaveAttribute("aria-busy", "true");
+    finish();
+    await expect.element(page.getByRole("button", { name: copy.deleteDraft })).toBeVisible();
   });
 });
 
@@ -193,7 +218,7 @@ describe("MailingsOverview", () => {
       .not.toBeInTheDocument();
     await expect
       .element(page.getByRole("link", { name: "Edinburgh conference" }).first())
-      .toHaveAttribute("href", "/staff/politicians?ask=edinburgh-conference-2026");
+      .toHaveAttribute("href", "/staff/asks#edinburgh-conference-2026");
     // Nothing on it changes a mailing.
     expect(page.getByRole("button").all()).toHaveLength(0);
   });
@@ -251,11 +276,13 @@ describe("MailingView", () => {
     await expect.element(page.getByText(staffCopy.mailings.recipientsCount(12))).toBeVisible();
     // Each count leads to those recipients, sent to them all.
     await expect
-      .element(page.getByRole("link", { name: `1 ${copy.counts.bounced}` }))
-      .toHaveAttribute("href", "/staff/mailings/4?tab=bounced");
+      .element(page.getByRole("link", { name: `2 ${copy.counts.failed}` }))
+      .toHaveAttribute("href", "/staff/mailings/4?tab=failed");
     await expect
-      .element(page.getByRole("link", { name: `11 ${copy.counts.sent}` }))
+      .element(page.getByRole("link", { name: `10 ${copy.counts.sent}` }))
       .toHaveAttribute("href", "/staff/mailings/4");
+    // Stopped only when it was.
+    await expect.element(page.getByText(copy.counts.stopped)).not.toBeInTheDocument();
     // Each recipient: their seat and party, their answer, how it went and their letter.
     await expect.element(recipient("Polly")).toMatchTextContent("Cities of London and Westminster · Labour (Co-op)");
     await expect.element(recipient("Polly")).toMatchTextContent(`✓ ${staffCopy.statuses.going}`);
@@ -310,16 +337,19 @@ describe("MailingView", () => {
     await expect.element(recipient("Dora")).toMatchTextContent("28 Oct 2026");
   });
 
-  it("stopped, said so; sent at no time when nothing's gone", async () => {
+  it("stopped, said so, with how many it never sent; sent at no time when nothing's gone", async () => {
     await view({
-      mailing: { ...mailing, ask: null, askTitle: null, sentAt: null, tab: "bounced", page: 2, pages: 2 },
+      mailing: { ...mailing, ask: null, askTitle: null, sentAt: null, stopped: 3, tab: "stopped", page: 2, pages: 2 },
       written: { ...written, state: "cancelled" },
     });
     await expect.element(page.getByText(copy.states.cancelled, { exact: true })).toBeVisible();
     await expect.element(page.getByText(staffCopy.mailings.notSent)).toBeVisible();
     await expect
+      .element(page.getByRole("link", { name: `3 ${copy.counts.stopped}` }))
+      .toHaveAttribute("href", "/staff/mailings/4?tab=stopped");
+    await expect
       .element(page.getByRole("link", { name: staffCopy.paging.previous }))
-      .toHaveAttribute("href", "/staff/mailings/4?tab=bounced");
+      .toHaveAttribute("href", "/staff/mailings/4?tab=stopped");
   });
 
   it("scheduled: when it sends, Change the time in London's hours, and Stop; no counts yet", async () => {
@@ -330,7 +360,7 @@ describe("MailingView", () => {
     await view({ written: { ...written, state: "scheduled" }, stop: action, reschedule: action });
     await expect.element(page.getByText(copy.sends("Tue 1 Dec at 09:18"))).toBeVisible();
     expect(page.getByText(copy.states.scheduled, { exact: true }).all()).toHaveLength(2);
-    await expect.element(page.getByRole("link", { name: `11 ${copy.counts.sent}` })).not.toBeInTheDocument();
+    await expect.element(page.getByRole("link", { name: `10 ${copy.counts.sent}` })).not.toBeInTheDocument();
     await page.getByRole("button", { name: copy.changeTime }).click();
     await expect.element(page.getByRole("button", { name: copy.day })).toMatchTextContent("Tue 1 Dec 2026");
     await page.getByRole("combobox").selectOptions("10");

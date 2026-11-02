@@ -7,6 +7,7 @@ import { isBlocked } from "./email";
 import { gmailAccount } from "./gmail-accounts";
 import { attachmentsOf, emailFor } from "./mailing-drafts";
 import { mailingChannel, type MailingChannel } from "./mailing-channels";
+import type { SkipReason } from "./mailings";
 
 // Sending the mailings that are due: the send-mailings job starts each
 // scheduled one whose time has come, then sends its letters one at a
@@ -58,7 +59,7 @@ async function nextLetter(mailingId: number): Promise<Letter | undefined> {
   return letter;
 }
 
-async function skip(letterId: number, reason: "blocked" | "left-office"): Promise<void> {
+async function skip(letterId: number, reason: SkipReason): Promise<void> {
   await query("UPDATE letters SET status = 'skipped' WHERE id = $1", [letterId]);
   await query("UPDATE letters_from_pauseai SET skip_reason = $2 WHERE id = $1", [letterId, reason]);
   await query("INSERT INTO letter_events (letter_id, status, details) VALUES ($1, 'skipped', $2)", [
@@ -127,7 +128,7 @@ export async function sendDueLetters({
       const letter = await nextLetter(mailing.id);
       if (!letter) break;
       if (!letter.inOffice || !letter.email || (await isBlocked(letter.email))) {
-        await skip(letter.id, letter.inOffice ? "blocked" : "left-office");
+        await skip(letter.id, !letter.inOffice ? "left-office" : !letter.email ? "no-email" : "blocked");
         run.skipped++;
         continue;
       }
