@@ -48,6 +48,15 @@ async function fillIn(page: Page, email: string) {
 }
 
 /**
+ * The form's top at the top of the window, under the header. Typing in a field
+ * scrolls it into view, which leaves the window a few pixels apart between runs.
+ */
+async function formAtTop(page: Page): Promise<void> {
+  await page.locator("form").evaluate((el) => el.scrollIntoView({ block: "start", behavior: "instant" }));
+  await scrollSettled(page);
+}
+
+/**
  * The form's message, mid-window. A click leaves the window wherever
  * scrolling the button into view put it, which varies between runs.
  */
@@ -69,8 +78,9 @@ test("Register: the form becomes the share card", { tag: "@phone" }, async ({ pa
   await frame(page, "the sign-up page, with the site's footer and no nav");
 
   await fillIn(page, madeUpAddress("Testy McTestface", 43, "example.org"));
+  await formAtTop(page);
   await expect(header(page)).toBeInViewport();
-  await expect(page.getByRole("heading", { name: "Register for the march" })).toBeInViewport();
+  await expect(page.locator("form").getByText(copy.form.head, { exact: true })).toBeInViewport();
   await frame(page, "the form, filled in, under the header that dropped in");
 
   await page.getByRole("button", { name: copy.form.submit, exact: true }).click();

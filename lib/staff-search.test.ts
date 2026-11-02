@@ -4,6 +4,7 @@ import {
   askFormSearch,
   staffBack,
   emailsSearch,
+  eventsSearch,
   letterId,
   mailingId,
   lettersSearch,
@@ -132,6 +133,70 @@ describe("emailsSearch", () => {
   });
 });
 
+describe("eventsSearch", () => {
+  const blank = {
+    when: "",
+    q: "",
+    owner: [],
+    tag: [],
+    place: [],
+    removed: "",
+    sort: "",
+    dir: "",
+    page: "",
+  };
+  const none = {
+    search: undefined,
+    owner: undefined,
+    tag: undefined,
+    place: undefined,
+    removed: false,
+    not: undefined,
+    page: 1,
+  };
+
+  it("is the Future tab, soonest first, with those taken off Luma left out, nothing chosen; and Past, latest first", () => {
+    expect(eventsSearch({})).toEqual({
+      ...blank,
+      filter: { ...none, tab: "future", sort: { key: "start", dir: "asc" } },
+    });
+    expect(eventsSearch({ when: "past" }).filter).toEqual({
+      ...none,
+      tab: "past",
+      sort: { key: "start", dir: "desc" },
+    });
+    expect(eventsSearch({ when: "someday" }).filter.tab).toBe("future");
+    // Only "yes" finds those taken off Luma.
+    expect(eventsSearch({ removed: "no" }).filter.removed).toBe(false);
+  });
+
+  it("reads each filter as typed and as applied, a repeated one as a list, its values marked ! left out", () => {
+    const all = eventsSearch({
+      when: "past",
+      q: " social ",
+      owner: ["none", "!jo@pauseai.uk"],
+      tag: "London",
+      place: ["!online"],
+      removed: "yes",
+      sort: "going",
+      dir: "asc",
+      page: "2",
+    });
+    expect(all.owner).toEqual(["none", "!jo@pauseai.uk"]);
+    expect(all.filter).toEqual({
+      tab: "past",
+      search: "social",
+      owner: ["none"],
+      tag: ["London"],
+      place: undefined,
+      removed: true,
+      not: { owner: ["jo@pauseai.uk"], place: ["online"] },
+      sort: { key: "going", dir: "asc" },
+      page: 2,
+    });
+  });
+});
+
 describe("supportersSearch", () => {
   const blank = {
     q: "",
@@ -221,6 +286,7 @@ describe("accountsSearch", () => {
   it("keeps only the notice it knows", () => {
     expect(accountsSearch({ notice: "last-admin" })).toEqual({ notice: "last-admin" });
     expect(accountsSearch({ notice: "not-pauseai" })).toEqual({ notice: "not-pauseai" });
+    expect(accountsSearch({ notice: "removed" })).toEqual({ notice: "removed" });
     expect(accountsSearch({ notice: "x" })).toEqual({ notice: "" });
     expect(accountsSearch({})).toEqual({ notice: "" });
   });

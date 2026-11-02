@@ -2230,6 +2230,14 @@ export function postsNewestFirst(): BlogPost[] {
   return [...posts].sort((a, b) => b.date.localeCompare(a.date));
 }
 
+/** Where the blog's Atom feed is served. */
+export const BLOG_FEED_PATH = "/blog/feed.xml";
+
+/** The blog's Atom feed, as metadata's `alternates`, so a feed reader finds it from the blog's pages. */
+export const blogFeedLink = {
+  types: { "application/atom+xml": [{ url: BLOG_FEED_PATH, title: "PauseAI UK blog" }] },
+} satisfies Metadata["alternates"];
+
 /** A post's page metadata. */
 export function postMetadata(post: BlogPost): Metadata {
   // A post's cover, or failing that its first image, is its social preview; posts with neither use the site-wide card.
@@ -2251,7 +2259,7 @@ export function postMetadata(post: BlogPost): Metadata {
     twitter: {
       images: [image ? image.src : "/images/open-graph/open-graph-1600-840.jpg"],
     },
-    alternates: { canonical: `/blog/${post.slug}` },
+    alternates: { canonical: `/blog/${post.slug}`, ...blogFeedLink },
   };
 }
 

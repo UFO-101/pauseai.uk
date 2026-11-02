@@ -330,8 +330,9 @@ badge, and its part of erasure.
 ## Events and their owners
 
 Our events are Luma's, as the hourly import copies them (`luma_events`);
-the staff interface's events page (`/staff/events`) lists our own, coming up
-and then past, with how many are going. Each can have one owner on staff
+the staff interface's events page (`/staff/events`) lists our own as a
+table, on a Future tab, soonest first, and a Past tab, latest first, with
+how many are going, sorted and filtered there (`lib/staff-events-list.ts`). Each can have one owner on staff
 (`event_owners`, `lib/server/staff-events.ts`), kept apart from
 `luma_events` as only the import writes that. Any staff member can make
 anyone with a staff account an event's owner, from the page, but can't

@@ -114,25 +114,32 @@ test("First login, then an admin manages accounts", async ({ page, flowDatabase 
   await page.goto(`${BASE}/staff/accounts`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.accounts.title);
   await frame(page, "the accounts page: the seeded admin and this admin");
-  // Added under the last row, at once: an account with no permissions.
+  // Added from Add staff, at the top right, at once: an account with no permissions.
+  await page.getByRole("button", { name: staffCopy.accounts.addStaff }).click();
   await page.getByRole("textbox", { name: staffCopy.accounts.addTitle }).fill(colleague);
-  await page.getByRole("button", { name: staffCopy.accounts.add }).click();
+  await frame(page, "Add staff opened, the colleague's address typed");
+  await page.getByRole("button", { name: staffCopy.accounts.add, exact: true }).click();
   const row = page.getByRole("row").filter({ hasText: colleague });
   await expect(row).toContainText(staffEmail());
-  await expect(page.getByRole("textbox", { name: staffCopy.accounts.addTitle })).toHaveValue("");
   await frame(page, "the colleague added, with no permissions");
 
-  // A box ticked is saved at once: still ticked after a reload.
-  const supporters = row.getByRole("checkbox", { name: staffCopy.accounts.names.supporters });
-  await supporters.check();
-  await expect(supporters).toBeEnabled();
+  // Edit opens a box for each; Save saves those ticked: still there after a reload.
+  await row.getByRole("button", { name: staffCopy.accounts.edit }).click();
+  const permissions = page.getByRole("form", { name: staffCopy.accounts.editLabel(colleague) });
+  await permissions.getByRole("checkbox", { name: staffCopy.accounts.names.supporters }).check();
+  await frame(page, "their permissions opened to edit, Supporters ticked");
+  await permissions.getByRole("button", { name: staffCopy.accounts.save }).click();
+  await expect(permissions).not.toBeVisible();
   await page.reload();
-  await expect(supporters).toBeChecked();
+  await expect(row.getByRole("cell").nth(1)).toContainText(staffCopy.accounts.names.supporters);
   await frame(page, "given the supporters permission");
 
   await row.getByRole("button", { name: staffCopy.accounts.remove }).click();
+  await frame(page, "Remove pressed once: red, asking to confirm");
+  await row.getByRole("button", { name: staffCopy.deleteItShort }).click();
   await expect(page.getByRole("row").filter({ hasText: colleague })).toHaveCount(0);
-  await frame(page, "removed");
+  await expect(page.getByRole("status")).toContainText(staffCopy.accounts.removeNote);
+  await frame(page, "removed, a note over the table saying they can still log in, unless their Gmail goes too");
 
   await page.goto(`${BASE}/staff/audit-log`);
   await expect(page.getByRole("cell", { name: "add staff account" }).first()).toBeVisible();

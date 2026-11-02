@@ -538,8 +538,10 @@ export const staffCopy = {
   // pages, and what each may do.
   accounts: {
     title: "Staff accounts",
-    intro:
-      "Everyone with a @pauseai.uk address gets an account, with no permissions, the first time they log in. Add someone here to give them permissions before then.",
+    // The table's last row: everyone else at pauseai.uk, who can log in with no permissions; and across the rest of
+    // the row, in grey, what that means.
+    everyone: "*@pauseai.uk",
+    everyoneNote: "Anyone with a @pauseai.uk address can log in with no extra permissions.",
     names: {
       admin: "Admin",
       supporters: "Supporters",
@@ -566,12 +568,21 @@ export const staffCopy = {
     // Beside how many sessions a row has open: ends every one; on your own row, it says they're yours, as it logs you out too.
     endSessions: "End all",
     endMySessions: "End all mine",
-    // Under the last row: the field for the address of someone new (its
-    // label, read aloud) and its button, which adds them as a row, saved
-    // with the others.
-    addTitle: "Add email",
+    // At the top right, the button that opens the field for the address of someone new (its label, read aloud) and its
+    // button, which adds them as a row, with no permissions.
+    addStaff: "Add staff",
+    addTitle: "@pauseai.uk email address",
     add: "Add",
+    // In a row's Permissions cell, after the permissions it has: the button that opens a box for each, and the form's
+    // buttons.
+    edit: "Edit",
+    editLabel: (email: string) => `Edit ${email}'s permissions`,
+    save: "Save",
+    cancel: "Cancel",
+    // At a row's right, pressed twice; and just after, over the table till its × closes it, what it leaves them.
     remove: "Remove",
+    removeNote: "They will still be able to log in with basic permissions, unless their Gmail is disabled too.",
+    closeRemoved: "Close",
     // Beside Add, or above the table after a Save, when the address isn't at pauseai.uk.
     notPauseai: "Only addresses @pauseai.uk can have an account.",
     // Beside Add, when the address is in the table already.
@@ -687,13 +698,30 @@ export const staffCopy = {
   // The events page (/staff/events): our events on Luma, as the hourly import has them, and who on staff owns each.
   events: {
     title: "Events",
-    // At the top of the page, in small grey print, "imported hourly" linking to the Luma import's page.
-    intro: { before: "These are ", link: "imported hourly", after: " from Luma." },
+    // At the page's top right, in small grey print, as on a politician's page: where the events come from, linking to
+    // the Luma import's page.
+    source: { label: "Source:", link: "Luma" },
     none: "No events yet.",
-    // The heading over the events still to come; those past are under their month or year.
-    comingUp: "Coming up",
-    // Under an event's name: how many are going (registered, and approved).
-    going: (n: number) => `${n} going`,
+    // The tabs over the list, and their name, for a screen reader: those still to come, soonest first, and those
+    // past, latest first.
+    tabs: { label: "When", future: "Future", past: "Past" },
+    // Over the list: how many the tab and filters find; and what it says when they find none.
+    total: (n: number) => `${n} ${n === 1 ? "event" : "events"}`,
+    noneFound: "No events match.",
+    // Under it, when a search finds none, but would among those taken off Luma, linked to them.
+    removedMatches: (n: number) => `${n} ${n === 1 ? "match" : "matches"} found for events taken off Luma`,
+    // The table's headings; the owner's and Google Doc's are `owner` and `doc` below. Going is how many registered
+    // and were approved.
+    columns: { when: "When", name: "Event", tags: "Tags", place: "Place", going: "Going" },
+    // The list's search box, and its filters but Owner's: each Luma tag; each city, and Online; and taken off Luma
+    // (`removed`), which finds only those, as they're left out otherwise.
+    filters: {
+      search: "Event names",
+      tag: "Tag",
+      place: "Place",
+      removed: { yes: "Yes" } as Record<string, string>,
+    },
+    // Where an event online is, in the Place column and filter.
     online: "Online",
     // An event gone from our Luma calendar, kept for its history.
     removed: "Taken off Luma",

@@ -22,7 +22,7 @@ You don't need the Netlify CLI. The site runs with plain `npm run dev`.
 ## 2. Install
 
 ```bash
-git clone https://github.com/UFO-101/pauseai.uk.git
+git clone https://github.com/PauseAI-UK/pauseai.uk.git
 cd pauseai.uk
 npm install
 ```

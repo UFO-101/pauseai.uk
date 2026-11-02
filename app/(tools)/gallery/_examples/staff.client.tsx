@@ -30,8 +30,8 @@ import Run from "@/app/(staff)/staff/_components/Run";
 import AskRow, { AskRows, OtherAsks } from "@/app/(staff)/staff/_components/AskRow";
 import EraseForm from "@/app/(staff)/staff/_components/EraseForm";
 import DeletePolitician from "@/app/(staff)/staff/_components/DeletePolitician";
-import RemoveAccountForm from "@/app/(staff)/staff/_components/RemoveAccountForm";
-import StaffAccountsTable from "@/app/(staff)/staff/_components/StaffAccountsTable";
+import StaffAccountsTable, { AddStaff } from "@/app/(staff)/staff/_components/StaffAccountsTable";
+import type { StaffAccount } from "@/lib/server/staff-accounts";
 import UnblockForm from "@/app/(staff)/staff/_components/UnblockForm";
 import NoteChanges from "@/app/(staff)/staff/_components/NoteChanges";
 import NoteForm from "@/app/(staff)/staff/_components/NoteForm";
@@ -67,14 +67,9 @@ import MailingView from "@/app/(staff)/staff/_components/MailingView";
 import MailingWriter from "@/app/(staff)/staff/_components/MailingWriter";
 import { exampleWriterData, exampleWrittenMailing } from "@/app/(staff)/staff/_components/MailingWriter.examples";
 import MailingsOverview from "@/app/(staff)/staff/_components/MailingsOverview";
-import EventEdit from "@/app/(staff)/staff/_components/EventEdit";
 import Notice from "@/app/(staff)/staff/_components/ui/Notice";
-import EventsOverview from "@/app/(staff)/staff/_components/EventsOverview";
-import {
-  exampleEventGroups,
-  exampleEventsNow,
-  exampleStaff,
-} from "@/app/(staff)/staff/_components/EventsOverview.examples";
+import EventsTable from "@/app/(staff)/staff/_components/EventsTable";
+import { exampleEventsNow, exampleEventsTab, exampleStaff } from "@/app/(staff)/staff/_components/EventsTable.examples";
 import LetterView from "@/app/(staff)/staff/_components/LetterView";
 import FindInGmail from "@/app/(staff)/staff/_components/FindInGmail";
 import LetterThread, { SupporterLetterThread } from "@/app/(staff)/staff/_components/LetterThread";
@@ -379,6 +374,15 @@ export function JobActionsExample() {
   return <Logged>{(log) => <JobActions action={log("action")} label="Check now" />}</Logged>;
 }
 
+/** Add staff, at the accounts page's top right: its box adds someone, logged; jo@pauseai.uk is there already. */
+export function AddStaffExample() {
+  return (
+    <Logged>
+      {(log) => <AddStaff accounts={[{ email: "jo@pauseai.uk" } as StaffAccount]} add={log("saveStaffAccount")} />}
+    </Logged>
+  );
+}
+
 /** The seeded admin, never logged in; an admin looking, logged in twice; and someone their first login added; each row's forms logged. */
 export function StaffAccountsTableExample() {
   return (
@@ -420,14 +424,6 @@ export function StaffAccountsTableExample() {
           ]}
         />
       )}
-    </Logged>
-  );
-}
-
-export function RemoveAccountFormExample() {
-  return (
-    <Logged>
-      {(log) => <RemoveAccountForm email="samuel.whitlock@pauseai.uk" remove={log("removeStaffAccount")} />}
     </Logged>
   );
 }
@@ -603,45 +599,33 @@ export function MailingsOverviewExample({ empty = false }: { empty?: boolean }) 
   return <MailingsOverview groups={groups} now={now} />;
 }
 
-/** The events page's list: coming up, one with no owner, then those past; saving an event's edit form is logged. */
-export function EventsOverviewExample({ empty = false }: { empty?: boolean }) {
+/**
+ * The events page's table, on a tab, with a search or filters as typed,
+ * (`params`); saving an event's edit form is logged, and with `emailed`,
+ * says it emailed the owner chosen and Joseph, the owner before.
+ */
+export function EventsTableExample({
+  params = {},
+  emailed = false,
+}: {
+  params?: Parameters<typeof exampleEventsTab>[0];
+  emailed?: boolean;
+}) {
+  const { search, found } = exampleEventsTab(params);
   return (
     <Logged>
       {(log) => (
-        <EventsOverview
-          groups={empty ? [] : exampleEventGroups}
+        <EventsTable
+          found={found}
+          search={search}
           staff={exampleStaff}
           now={exampleEventsNow}
           save={async (form) => {
             log("save")(form);
-            return { emailed: [], owner: null };
+            const chosen = String(form.get("owner"));
+            return emailed ? { emailed: [chosen, "joseph@pauseai.uk"], owner: chosen } : { emailed: [], owner: null };
           }}
         />
-      )}
-    </Logged>
-  );
-}
-
-/**
- * One event's Edit button, which opens its form: with no owner or doc, or
- * with both; saving is logged, and says it emailed the owner chosen and
- * Joseph, the owner before.
- */
-export function EventEditExample({ owner, doc }: { owner: string | null; doc: string | null }) {
-  return (
-    <Logged>
-      {(log) => (
-        <EventEdit
-          event={{ id: "evt-1", name: "AI risk talk", owner, doc }}
-          staff={exampleStaff}
-          save={async (form) => {
-            log("save")(form);
-            const chosen = String(form.get("owner"));
-            return { emailed: [chosen, "joseph@pauseai.uk"], owner: chosen };
-          }}
-        >
-          <span>{owner ?? staffCopy.events.noOwner}</span>
-        </EventEdit>
       )}
     </Logged>
   );

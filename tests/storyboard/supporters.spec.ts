@@ -325,7 +325,7 @@ test("A letter writer's page, from the letters list", async ({ page, request, fl
   await page.goto(`${BASE}/staff/letters`);
   await page.getByRole("row").filter({ hasText: sender }).getByRole("link", { name: "Jane Smith" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Jane Smith");
-  await expect(page.getByRole("link", { name: `1 ${copy.detail.lettersCounted(1)}` })).toBeVisible();
+  await expect(page.getByText(`1 ${copy.detail.lettersCounted(1)}`)).toBeVisible();
   await expect(
     page.getByRole("region", { name: copy.detail.lettersTitle }).getByRole("link", { name: "Testy McTestface MP" }),
   ).toBeVisible();

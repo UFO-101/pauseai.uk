@@ -8,6 +8,7 @@ import { campaignBySlug } from "@/lib/email-your-mp";
 import { LETTER_SORTS, type LetterSort } from "@/lib/letter-sort";
 import { POLITICIAN_FLAGS, type PoliticianFlag } from "@/lib/politician-filters";
 import { parseSort, type SortSpec } from "@/lib/staff-sort";
+import { EVENT_SORTS, type EventFilter } from "@/lib/staff-events-list";
 import { isSupporterBadge, NEAR_MILES, SUPPORTER_SORTS, type SupporterFilter } from "@/lib/supporters";
 
 export type LettersSearch = {
@@ -315,9 +316,51 @@ export function supportersSearch(
   };
 }
 
+export type EventsSearch = {
+  /** "past" for the Past tab; blank for Future. */
+  when: string;
+  q: string;
+  /** Staff emails, or NO_OWNER. */
+  owner: string[];
+  tag: string[];
+  /** Cities, or ONLINE. */
+  place: string[];
+  /** "yes" for only those taken off Luma; blank leaves them out. */
+  removed: string;
+  sort: string;
+  dir: string;
+  page: string;
+};
+
+/** The events list's tab, filters and sort, each as typed and as applied. */
+export function eventsSearch(
+  params: Partial<Record<keyof EventsSearch, ParamValue>>,
+): EventsSearch & { filter: EventFilter } {
+  const [when, q, removed, sort, dir, page] = (["when", "q", "removed", "sort", "dir", "page"] as const).map((name) =>
+    firstOf(params[name]),
+  );
+  const [owner, tag, place] = (["owner", "tag", "place"] as const).map((name) => valuesOf(params[name]));
+  const tab = when === "past" ? "past" : "future";
+  const [owners, notOwners] = anyAndNone(owner, (values) => values);
+  const [tags, notTags] = anyAndNone(tag, (values) => values);
+  const [places, notPlaces] = anyAndNone(place, (values) => values);
+  const filter: EventFilter = {
+    tab,
+    search: q.trim() || undefined,
+    owner: owners,
+    tag: tags,
+    place: places,
+    removed: removed === "yes",
+    not: notOf({ owner: notOwners, tag: notTags, place: notPlaces }),
+    sort: parseSort(EVENT_SORTS[tab], "start", sort, dir),
+    page: pageNumber(page),
+  };
+  return { when, q, owner, tag, place, removed, sort, dir, page, filter };
+}
+
 /** The accounts page's notice, after a refused change. */
 export function accountsSearch({ notice = "" }: { notice?: string }): { notice: string } {
-  return { notice: notice === "last-admin" || notice === "not-pauseai" ? notice : "" };
+  return { notice: ["last-admin", "not-pauseai", "removed"].includes(notice) ? notice : "" };
 }
 
 /**

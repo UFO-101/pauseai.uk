@@ -4,7 +4,7 @@ The [pauseai.uk](https://pauseai.uk) website: Next.js 16 and React 19, deployed 
 
 ## Features
 
-- **Public site:** who we are, people's stories, local groups, blog, press, jobs, governance, donations, research.
+- **Public site:** who we are, people's stories, local groups, blog (with an Atom feed, `/blog/feed.xml`), press, jobs, governance, donations, research.
 - **Events:** from our Luma calendar, on `/events`, the home page and local group pages.
 - **March sign-up:** `/protests/march-against-ai-extinction-nov-26` (and `/march`, which redirects there), for the March Against AI Extinction. The hero and the form show how many have registered, from Luma; registering adds the person to the march's Luma event, then the form turns into a card asking them to share it.
 - **Email your MP:** `/campaigns`. Postcode to MP, edit and send a campaign letter; replies come back to the sender and the policy team.

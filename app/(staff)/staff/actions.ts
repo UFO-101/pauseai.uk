@@ -213,7 +213,7 @@ export async function unblockAddress(form: FormData): Promise<void> {
 }
 
 /** Where the accounts page goes after a change: back to itself, saying why if the change was refused. */
-function accountsPage(change: AccountChange): never {
+function accountsPage(change: AccountChange | "removed"): never {
   revalidatePath("/staff/accounts");
   redirect(change === "changed" || change === "unchanged" ? "/staff/accounts" : `/staff/accounts?notice=${change}`);
 }
@@ -231,12 +231,13 @@ export async function saveStaffAccountNow(form: FormData): Promise<void> {
   accountsPage(await saveStaffAccount(parsed.email, parsed.permissions, email));
 }
 
-/** The accounts page: removes an account, ending its sessions. */
+/** The accounts page: removes an account, ending its sessions, and says what that leaves them. */
 export async function removeStaffAccountNow(form: FormData): Promise<void> {
   const { email } = await requireStaff("admin");
   const parsed = permissionsFrom(form);
   if (!parsed) return;
-  accountsPage(await removeStaffAccount(parsed.email, email));
+  const change = await removeStaffAccount(parsed.email, email);
+  accountsPage(change === "changed" ? "removed" : change);
 }
 
 /** The accounts page: ends every session of an account, as the admin; their own included, which logs them out. */

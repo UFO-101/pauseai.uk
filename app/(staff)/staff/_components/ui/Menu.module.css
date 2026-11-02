@@ -13,11 +13,15 @@
   font-size: var(--text-sm);
 }
 
-/* Hung from its button's bottom left, where the browser can anchor it. */
+/* Hung from its button's bottom left, where the browser can anchor it;
+   flipped to the left, or above the button, where there isn't room. */
 @supports (position-area: bottom) {
   .menu {
-    margin: var(--space-2) 0 0;
+    margin: var(--space-2) 0;
     position-area: bottom span-right;
-    position-try-fallbacks: flip-inline;
+    position-try-fallbacks:
+      flip-inline,
+      flip-block,
+      flip-block flip-inline;
   }
 }

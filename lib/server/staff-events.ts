@@ -1,8 +1,8 @@
 import "server-only";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { monthsAndYears, type DatedGroup } from "@/lib/dated-groups";
 import { ruleOwner } from "@/lib/event-owners";
 import { now } from "@/lib/now";
+import { findEvents, type EventFilter, type EventsFound } from "@/lib/staff-events-list";
 import { londonStart } from "@/lib/staff-time";
 import { logChange } from "./audit";
 import { query, transaction, type Queryable } from "./db";
@@ -37,8 +37,6 @@ export type StaffEvent = {
   doc: string | null;
 };
 
-export type EventGroup = DatedGroup<StaffEvent>;
-
 /** What saving an event's edit form did, for the page to say: whom it emailed, and its owner as chosen. */
 export type EventSaved = { emailed: string[]; owner: string | null };
 
@@ -60,27 +58,25 @@ async function listEvents(ids?: string[], db?: Queryable): Promise<StaffEvent[]>
 }
 
 /**
- * The events page: Coming up, soonest first, then those past under their
- * months and years (monthsAndYears); every staff account, whom an event
- * can be given to; and now, as an ISO string.
+ * The events page: the events `filter` finds, a page of them
+ * (findEvents); every staff account, whom an event can be given to and
+ * the Owner filter offers; every tag and city our events have, for the
+ * Tag and Place filters, in alphabetical order; and now, as an ISO string.
  */
-export async function eventsPage(): Promise<{ groups: EventGroup[]; staff: string[]; now: string }> {
-  const at = now();
-  const iso = at.toISOString();
+export async function eventsPage(
+  filter: EventFilter,
+): Promise<EventsFound & { staff: string[]; tags: string[]; cities: string[]; now: string }> {
+  const iso = now().toISOString();
   const events = await listEvents();
-  const coming = events.filter((event) => event.startAt >= iso);
-  const groups: EventGroup[] = coming.length
-    ? [{ key: "coming", heading: staffCopy.events.comingUp, items: coming }]
-    : [];
-  groups.push(
-    ...monthsAndYears(
-      events.filter((event) => event.startAt < iso),
-      (event) => event.startAt,
-      at,
-    ),
-  );
   const staff = await query<{ email: string }>("SELECT email FROM staff_accounts ORDER BY email");
-  return { groups, staff: staff.map((account) => account.email), now: iso };
+  const sorted = (values: string[]) => [...new Set(values)].sort((a, b) => a.localeCompare(b));
+  return {
+    ...findEvents(events, filter, iso),
+    staff: staff.map((account) => account.email),
+    tags: sorted(events.flatMap((event) => event.tags)),
+    cities: sorted(events.flatMap((event) => event.city ?? [])),
+    now: iso,
+  };
 }
 
 /**
