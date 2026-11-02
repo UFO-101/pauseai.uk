@@ -79,14 +79,10 @@ function Missing({ needed, children }: { needed: boolean; children: string }) {
   );
 }
 
-/** Who owns an event, by their address, in bold; on hover too, if it's too long for its column. */
+/** Who owns an event, by their address, in bold. */
 function Owner({ owner, needed }: { owner: string | null; needed: boolean }) {
   if (!owner) return <Missing needed={needed}>{copy.noOwner}</Missing>;
-  return (
-    <strong className={styles.owner} title={owner}>
-      {owner}
-    </strong>
-  );
+  return <strong className={styles.owner}>{owner}</strong>;
 }
 
 /** The link to an event's Google Doc, opening in a new tab. */
@@ -173,7 +169,6 @@ function eventColumns(
       key: "owner",
       label: copy.owner,
       heading: heading("owner", copy.owner),
-      className: styles.ownerCell,
       cell: (event) => (
         <OwnerField event={event} staff={staff}>
           <Owner owner={event.owner} needed={needed(event)} />

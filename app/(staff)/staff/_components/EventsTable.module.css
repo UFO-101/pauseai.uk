@@ -20,16 +20,9 @@
   gap: var(--space-1);
 }
 
-/* The owner's column: as wide as an address, and no wider. */
-.ownerCell {
-  max-width: 16rem;
-}
-
-/* The owner, prominent: bold, on one line, cut short if long. */
+/* The owner, prominent: bold, on one line. */
 .owner {
   display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
