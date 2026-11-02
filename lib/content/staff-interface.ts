@@ -1090,8 +1090,7 @@ export const staffCopy = {
     band: {
       // The asks they signed, are going to, or are meeting our staff at.
       asksDone: (n: number) => (n === 1 ? "ask done" : "asks done"),
-      lettersCounted: (n: number) => (n === 1 ? "letter from a supporter" : "⁂ letters from supporters"),
-      emailsCounted: (n: number) => (n === 1 ? "⁂ email from PauseAI" : "⁂ emails from PauseAI"),
+      lettersCounted: (n: number) => (n === 1 ? "letter from a supporter" : "letters from supporters"),
     },
     historyTitle: "History",
     // A status set or cleared, in the history: around the ask's name.

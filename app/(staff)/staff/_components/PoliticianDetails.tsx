@@ -225,18 +225,16 @@ function asksOf(politician: Politician, asks: Ask[]): Ask[] {
  * their record has gone from Airtable, and under it what they are; at its
  * top right, quietly, where their record came from, an Airtable MP's linked
  * to it there; then their party, whether they're in office, their nation
- * and how to write to them; and how many asks they did (asksDone), leading to the asks, and
- * letters supporters wrote them and emails PauseAI sent, to the history.
+ * and how to write to them; and how many asks they did (asksDone),
+ * leading to the asks, and letters supporters wrote them, to the history.
  */
 function PoliticianBand({
   politician,
   letters,
-  emails,
   airtableTable,
 }: {
   politician: Politician;
   letters: number;
-  emails: number;
   airtableTable: string;
 }) {
   const inOffice = politician.status === "in_office";
@@ -285,7 +283,6 @@ function PoliticianBand({
               href: "#asks-title",
             },
             { key: "letters", n: letters, label: copy.band.lettersCounted(letters), href: "#history-title" },
-            { key: "emails", n: emails, label: copy.band.emailsCounted(emails), href: "#history-title" },
           ]}
         />
       }
@@ -386,12 +383,7 @@ export default function PoliticianDetails({
   const others = asks.filter((ask) => answeredByHand(ask.slug) && !rows.includes(ask));
   return (
     <>
-      <PoliticianBand
-        politician={politician}
-        letters={letters.letters.length}
-        emails={pauseaiLetters.length}
-        airtableTable={airtableTable}
-      />
+      <PoliticianBand politician={politician} letters={letters.letters.length} airtableTable={airtableTable} />
       {block && (
         <section className={styles.blocked} aria-labelledby="blocked-title">
           <Strip tone="red">

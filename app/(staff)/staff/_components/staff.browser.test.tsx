@@ -1193,9 +1193,8 @@ describe("PoliticianDetails", () => {
     await expect
       .element(page.getByRole("link", { name: `0 ${staffCopy.politician.band.lettersCounted(0)}` }))
       .toBeVisible();
-    await expect
-      .element(page.getByRole("link", { name: `0 ${staffCopy.politician.band.emailsCounted(0)}` }))
-      .toBeVisible();
+    // Not PauseAI's emails: they're in the history.
+    expect(page.getByRole("link", { name: /from PauseAI/ }).query()).toBeNull();
     // Airtable's notes keep their lines.
     const airtable = page.getByRole("region", { name: staffCopy.politician.notes });
     expect(getComputedStyle(airtable.getByText(/example fair/).element()).whiteSpace).toBe("pre-line");
