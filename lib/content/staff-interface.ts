@@ -1575,6 +1575,11 @@ export const staffCopy = {
     edited: "edited",
     // The field's name, for a screen reader.
     note: "Note",
+    // Under a note's buttons, when the server wouldn't change it: its writer's day is up.
+    tooLate: {
+      edit: "Notes can only be edited for 24 hours.",
+      delete: "Notes can only be deleted for 24 hours.",
+    },
     // The button that opens the field to write one, and the one that closes it unsent.
     write: "Write a note",
     cancel: "Cancel",

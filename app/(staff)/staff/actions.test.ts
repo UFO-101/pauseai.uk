@@ -110,18 +110,18 @@ describeWithDatabase("staff Server Actions", () => {
     await saveStaffAccount("jo@pauseai.uk", ["supporters"], "a");
     await addNoteNow(form({ supporterId: String(supporterId), body: "Keen" }));
     expect(revalidatePath).toHaveBeenCalledWith(`/staff/supporters/${supporterId}`);
-    await editNoteNow(form({ id: "1", body: "Met them twice" }));
-    await editNoteNow(form({ id: "9", body: "No such note" }));
-    await editNoteNow(form({ id: "1", body: "" }));
+    expect(await editNoteNow(form({ id: "1", body: "Met them twice" }))).toBe(true);
+    expect(await editNoteNow(form({ id: "9", body: "No such note" }))).toBe(false);
+    expect(await editNoteNow(form({ id: "1", body: "" }))).toBe(false);
     expect(await bodies()).toEqual([
       { body: "Met them twice", written_by: "jo@pauseai.uk" },
       { body: "Keen", written_by: "jo@pauseai.uk" },
     ]);
     revalidatePath.mockClear();
-    await deleteNoteNow(form({ id: "x" }));
-    await deleteNoteNow(form({ id: "9" }));
+    expect(await deleteNoteNow(form({ id: "x" }))).toBe(false);
+    expect(await deleteNoteNow(form({ id: "9" }))).toBe(false);
     expect(revalidatePath).not.toHaveBeenCalled();
-    await deleteNoteNow(form({ id: "2" }));
+    expect(await deleteNoteNow(form({ id: "2" }))).toBe(true);
     expect(revalidatePath).toHaveBeenCalledWith(`/staff/supporters/${supporterId}`);
     expect(await bodies()).toEqual([{ body: "Met them twice", written_by: "jo@pauseai.uk" }]);
   });

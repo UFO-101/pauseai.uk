@@ -9,6 +9,8 @@ import styles from "./Notes.module.css";
 const copy = staffCopy.notes;
 
 type Action = (form: FormData) => void | Promise<void>;
+/** Changing a note: false when the server refuses, as after a day. */
+type Change = (form: FormData) => boolean | void | Promise<boolean | void>;
 
 /** What a page's notes need: the notes, who's reading, the server's time, and the forms' actions. */
 export type NotesProps = {
@@ -17,8 +19,8 @@ export type NotesProps = {
   /** The server's time, which says whose notes can still be changed. */
   at: string;
   add: Action;
-  edit: Action;
-  remove: Action;
+  edit: Change;
+  remove: Change;
 };
 
 /** A note's text, its line breaks kept and each address in it a link, opening in a new tab. */

@@ -82,20 +82,22 @@ export async function addNoteNow(form: FormData): Promise<void> {
   if (parsed && (await addNote(parsed.target, parsed.body, staff))) refreshNotes(parsed.target);
 }
 
-/** The form under a note its writer may still change: saves its new text. */
-export async function editNoteNow(form: FormData): Promise<void> {
+/** The form under a note its writer may still change: saves its new text; false if it can't, as after a day. */
+export async function editNoteNow(form: FormData): Promise<boolean> {
   const staff = await requireStaff();
   const parsed = noteEditFrom(form);
   const target = parsed && (await editNote(parsed.id, parsed.body, staff));
   if (target) refreshNotes(target);
+  return Boolean(target);
 }
 
-/** The button under a note its writer may still change, or under any for an admin: deletes it. */
-export async function deleteNoteNow(form: FormData): Promise<void> {
+/** The button under a note its writer may still change, or under any for an admin: deletes it; false if it can't. */
+export async function deleteNoteNow(form: FormData): Promise<boolean> {
   const staff = await requireStaff();
   const id = idFrom(form);
   const target = id && (await deleteNote(id, staff));
   if (target) refreshNotes(target);
+  return Boolean(target);
 }
 
 /** Refreshes the pages that show a job's runs: its own, the overview of every job, and the home page's actions. */

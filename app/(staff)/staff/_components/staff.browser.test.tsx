@@ -1188,8 +1188,12 @@ describe("PoliticianDetails", () => {
     const done = page.getByRole("link", { name: `1 ${staffCopy.politician.band.asksDone(1)}` });
     await expect.element(done).toBeVisible();
     expect(done.element().getAttribute("href")).toMatch(/#asks-title$/);
-    await expect.element(page.getByText(staffCopy.politician.band.lettersCounted(0))).toBeVisible();
-    await expect.element(page.getByText(staffCopy.politician.band.emailsCounted(0))).toBeVisible();
+    await expect
+      .element(page.getByRole("link", { name: `0 ${staffCopy.politician.band.lettersCounted(0)}` }))
+      .toBeVisible();
+    await expect
+      .element(page.getByRole("link", { name: `0 ${staffCopy.politician.band.emailsCounted(0)}` }))
+      .toBeVisible();
     // Airtable's notes keep their lines.
     const airtable = page.getByRole("region", { name: staffCopy.politician.notes });
     expect(getComputedStyle(airtable.getByText(/example fair/).element()).whiteSpace).toBe("pre-line");
@@ -1767,13 +1771,13 @@ describe("PoliticianDetails", () => {
     await expect
       .element(notice.getByRole("link", { name: copy.wrong.link }))
       .toHaveAttribute("href", "/staff/import-data/politicians");
-    // The address is in bold in the strip, and in the facts a link to write to it.
+    // The address is a link to write to it in the band, and under it in bold in the strip.
     expect(
       page
         .getByText(MP.email!, { exact: true })
         .all()
         .map((el) => el.element().tagName),
-    ).toEqual(["STRONG", "A"]);
+    ).toEqual(["A", "STRONG"]);
     await page.getByLabelText(staffCopy.emails.note).fill("Fixed in Airtable");
     await page.getByRole("button", { name: staffCopy.emails.unblock }).click();
     await vi.waitFor(() => expect(sent).toEqual([{ address: MP.email, note: "Fixed in Airtable" }]));

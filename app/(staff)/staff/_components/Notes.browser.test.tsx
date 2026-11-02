@@ -66,6 +66,24 @@ describe("Notes", () => {
     expect((remove.mock.calls[0][0] as FormData).get("id")).toBe("3");
   });
 
+  it("says so, and stays open, when the server won't change it, its day up on a page left open", async () => {
+    const { edit, remove } = await renderNotes();
+    edit.mockResolvedValue(false);
+    remove.mockResolvedValue(false);
+    const first = notes().nth(0);
+    await first.getByRole("button", { name: copy.edit }).click();
+    await first.getByRole("button", { name: copy.save }).click();
+    await expect.element(first.getByRole("alert")).toHaveTextContent(copy.tooLate.edit);
+    await expect.element(first.getByRole("textbox", { name: copy.note })).toBeVisible();
+    await first.getByRole("button", { name: copy.delete }).click();
+    await page.getByRole("button", { name: staffCopy.deleteIt }).click();
+    await expect.element(first.getByRole("alert")).toHaveTextContent(copy.tooLate.delete);
+    // Cancel closes it, and what it said with it.
+    await first.getByRole("button", { name: copy.cancel }).click();
+    await first.getByRole("button", { name: copy.edit }).click();
+    await expect.element(first.getByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("lets an admin delete any note, but edit none of them", async () => {
     await renderNotes(exampleNoteAdmin);
     for (const i of [0, 1, 2]) {
