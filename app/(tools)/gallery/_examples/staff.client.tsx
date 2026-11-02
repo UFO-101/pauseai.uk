@@ -66,6 +66,14 @@ import MailingView from "@/app/(staff)/staff/_components/MailingView";
 import MailingWriter from "@/app/(staff)/staff/_components/MailingWriter";
 import { exampleWriterData, exampleWrittenMailing } from "@/app/(staff)/staff/_components/MailingWriter.examples";
 import MailingsOverview from "@/app/(staff)/staff/_components/MailingsOverview";
+import EventDoc from "@/app/(staff)/staff/_components/EventDoc";
+import EventOwner from "@/app/(staff)/staff/_components/EventOwner";
+import EventsOverview from "@/app/(staff)/staff/_components/EventsOverview";
+import {
+  exampleEventGroups,
+  exampleEventsNow,
+  exampleStaff,
+} from "@/app/(staff)/staff/_components/EventsOverview.examples";
 import LetterView from "@/app/(staff)/staff/_components/LetterView";
 import FindInGmail from "@/app/(staff)/staff/_components/FindInGmail";
 import LetterThread, { SupporterLetterThread } from "@/app/(staff)/staff/_components/LetterThread";
@@ -592,6 +600,46 @@ export function MailingsOverviewExample({ empty = false }: { empty?: boolean }) 
         new Date(now),
       );
   return <MailingsOverview groups={groups} now={now} />;
+}
+
+/** The events page's list: coming up, one with no owner, then those past; choosing an owner is logged. */
+export function EventsOverviewExample({ empty = false }: { empty?: boolean }) {
+  return (
+    <Logged>
+      {(log) => (
+        <EventsOverview
+          groups={empty ? [] : exampleEventGroups}
+          staff={exampleStaff}
+          now={exampleEventsNow}
+          setOwner={log("setOwner")}
+          setDoc={log("setDoc")}
+        />
+      )}
+    </Logged>
+  );
+}
+
+/** The box for an event's Google Doc: empty, or with the link set; saving is logged. */
+export function EventDocExample({ doc }: { doc: string | null }) {
+  return (
+    <Logged>{(log) => <EventDoc event={{ id: "evt-1", name: "AI risk talk", doc }} setDoc={log("setDoc")} />}</Logged>
+  );
+}
+
+/** An event's owner on its own: one chosen, or none on one coming up, an error. */
+export function EventOwnerExample({ owner }: { owner: string | null }) {
+  return (
+    <Logged>
+      {(log) => (
+        <EventOwner
+          event={{ id: "evt-1", name: "AI risk talk", owner }}
+          staff={exampleStaff}
+          needed
+          setOwner={log("setOwner")}
+        />
+      )}
+    </Logged>
+  );
 }
 
 /** One of a mailing's letters, with a reply, to the politician whose answer to its ask is set from it. */

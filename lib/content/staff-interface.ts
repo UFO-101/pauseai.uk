@@ -57,6 +57,7 @@ export const staffCopy = {
     // The sections the pages are in, in the sidebar.
     sections: {
       supporters: "Supporters",
+      events: "Events",
       politicians: "Politicians",
       admin: "Admin",
       // Over your address, which leads to your own page.
@@ -66,6 +67,7 @@ export const staffCopy = {
     politicians: "Politicians",
     asks: "Asks",
     mailings: "Mailings",
+    events: "Events",
     import: "Import data",
     changes: "Audit log",
     letters: "Letters to MPs",
@@ -682,6 +684,48 @@ export const staffCopy = {
     house: "House",
   },
   // The mailings page (/staff/mailings): PauseAI's mails to many politicians, and each one's own page.
+  // The events page (/staff/events): our events on Luma, as the hourly import has them, and who on staff owns each.
+  events: {
+    title: "Events",
+    // At the top of the page, in small grey print, "imported hourly" linking to the Luma import's page.
+    intro: { before: "These are ", link: "imported hourly", after: " from Luma." },
+    none: "No events yet.",
+    // The heading over the events still to come; those past are under their month or year.
+    comingUp: "Coming up",
+    // Under an event's name: how many are going (registered, and approved).
+    going: (n: number) => `⁂ ${n} going`,
+    online: "Online",
+    // An event gone from our Luma calendar, kept for its history.
+    removed: "Taken off Luma",
+    // The owner's select, for a screen reader.
+    ownerLabel: (event: string) => `⁂ Owner of ${event}`,
+    // An event with no owner: the select's first choice, in red on one coming up, as someone must take it.
+    noOwner: "No owner",
+    // An event's Google Doc: the link to it under its name, and the box to set it, under its owner.
+    doc: "⁂ Google Doc",
+    docLabel: (event: string) => `⁂ Google Doc for ${event}`,
+    docPlaceholder: "⁂ Paste a Google Doc link",
+    docSave: "⁂ Save",
+    // The email when an event's owner changes: to the new owner, copied to the one before, saying who changed it,
+    // from whom and to whom; or, when the import gives events their owners by the rules, to each new owner, listing them.
+    ownerEmail: {
+      subject: (n: number, first: string) => (n === 1 ? `⁂ New owner for ${first}` : `⁂ New owner for ${n} events`),
+      body: ({
+        events,
+        owner,
+        previous,
+        by,
+      }: {
+        events: { name: string; when: string; url: string }[];
+        owner: string;
+        previous: string | null;
+        by: string | null;
+      }) =>
+        `⁂ ${by ? `${by} changed the owner of this event${previous ? ` from ${previous}` : ""} to ${owner}` : `By the rules for who owns which events, ${owner} is now the owner of ${events.length === 1 ? "this event" : "these events"}`}:\n\n${events
+          .map((event) => `${event.name}\n${event.when}\n${event.url}`)
+          .join("\n\n")}\n\n⁂ Say what owning an event means.`,
+    },
+  },
   mailings: {
     title: "Mailings",
     intro: "Emails PauseAI has sent to many notable people at once.",
@@ -1625,6 +1669,10 @@ export const staffCopy = {
       permissions: "Permissions",
       pdfUrl: "PDF",
       error: "Error",
+      eventId: "⁂ Event",
+      owner: "⁂ Owner",
+      previous: "⁂ Before",
+      url: "⁂ Google Doc",
     } as Record<string, string>,
     // A held MP import decided, linked to the import's page.
     run: (id: string) => `Import run ${id}`,

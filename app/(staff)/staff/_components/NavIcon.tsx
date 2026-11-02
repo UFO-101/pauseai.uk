@@ -32,6 +32,13 @@ const PATHS: Record<StaffPageId | "home" | "me" | "logout", ReactNode> = {
       <path d="M17.5 3.5l3 3L13 14l-3.5.5.5-3.5z" />
     </>
   ),
+  // A calendar.
+  events: (
+    <>
+      <rect x="4" y="5" width="16" height="15" rx="1" />
+      <path d="M4 10h16M8 3v4M16 3v4" />
+    </>
+  ),
   supporterEmails: BLOCKED,
   // A building with columns.
   politicians: <path d="M3 9.5L12 4l9 5.5M4 20h16M6 10v8M10 10v8M14 10v8M18 10v8" />,

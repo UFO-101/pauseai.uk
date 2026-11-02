@@ -327,6 +327,29 @@ A new source is a table of its own, a column and a widened `CHECK` on
 `supporter_links`, its three views and its arms of the union views, a
 badge, and its part of erasure.
 
+## Events and their owners
+
+Our events are Luma's, as the hourly import copies them (`luma_events`);
+the staff interface's events page (`/staff/events`) lists our own, coming up
+and then past, with how many are going. Each can have one owner on staff
+(`event_owners`, `lib/server/staff-events.ts`), kept apart from
+`luma_events` as only the import writes that. Any staff member can make
+anyone with a staff account an event's owner, from the page, but can't
+take an owner away. One email, to the new owner and copied to the one
+before, says who changed it, from whom and to whom; whoever changed it
+isn't sent it. At the end of each import,
+every event still to come with no owner gets one by the rules in
+`lib/event-owners.ts`, written there for now: by the place in its city or
+Luma tags, or else a default owner. Each owner is emailed once, listing the
+events they were given. Someone the rules name who has no staff account
+gets nothing, and the event stays with no owner, shown on the page as an
+error until someone takes it (not once it's past, or taken off Luma). A staff account removed takes its events
+with it, and the next import gives them their owners by the rules again.
+
+Each event can have a link to its Google Doc too (`event_docs`): any staff
+member can set, change or clear it on the page, a link to Google Docs or
+Drive only. No one is emailed about it, but the audit log keeps who did.
+
 ## Opt-outs
 
 Each time an address opted out of a mailing list, and when it opted back

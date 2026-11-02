@@ -30,6 +30,8 @@ import {
   readGmailNow,
   endStaffSessionsNow,
   setAskStatus,
+  setEventDocNow,
+  setEventOwnerNow,
   removeStaffAccountNow,
   saveStaffAccountNow,
   syncNow,
@@ -88,6 +90,8 @@ describeWithDatabase("staff Server Actions", () => {
       () => addNoteNow(form({ politicianId: String(id), body: "Hi" })),
       () => editNoteNow(form({ id: "1", body: "Hi" })),
       () => deleteNoteNow(form({ id: "1" })),
+      () => setEventOwnerNow(form({ eventId: "evt-1", owner: "jo@pauseai.uk" })),
+      () => setEventDocNow(form({ eventId: "evt-1", doc: "" })),
     ];
     for (const attempt of attempts) expect(await expectRedirect(attempt)).toBe("/staff/login");
     expect(await statusCount()).toBe(0);
@@ -137,6 +141,36 @@ describeWithDatabase("staff Server Actions", () => {
       "/staff/politicians",
     );
     expect(await kept()).toBe(0);
+  });
+
+  it("setEventOwnerNow takes an event as any staff member, refreshing the page only when it changed", async () => {
+    await query(
+      "INSERT INTO luma_events (id, name, url, start_at, access) VALUES ('evt-1', 'Event', 'evt-1', now() + interval '1 day', 'manage')",
+    );
+    await setEventOwnerNow(form({ eventId: "evt-1", owner: "Jo@pauseai.uk" }));
+    expect(await query("SELECT owner, assigned_by FROM event_owners")).toEqual([
+      { owner: "jo@pauseai.uk", assigned_by: "jo@pauseai.uk" },
+    ]);
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/events");
+    revalidatePath.mockClear();
+    await setEventOwnerNow(form({ eventId: "evt-1", owner: "jo@pauseai.uk" }));
+    await setEventOwnerNow(form({ eventId: "evt-1" }));
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("setEventDocNow sets an event's Google Doc as any staff member, refreshing the page only when it changed", async () => {
+    await query(
+      "INSERT INTO luma_events (id, name, url, start_at, access) VALUES ('evt-1', 'Event', 'evt-1', now() + interval '1 day', 'manage')",
+    );
+    const doc = "https://docs.google.com/document/d/abc/edit";
+    await setEventDocNow(form({ eventId: "evt-1", doc }));
+    expect(await query("SELECT url, set_by FROM event_docs")).toEqual([{ url: doc, set_by: "jo@pauseai.uk" }]);
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/events");
+    revalidatePath.mockClear();
+    await setEventDocNow(form({ eventId: "evt-1", doc }));
+    await setEventDocNow(form({ eventId: "evt-1", doc: "https://example.com/" }));
+    expect(revalidatePath).not.toHaveBeenCalled();
+    expect(await query("SELECT url FROM event_docs")).toEqual([{ url: doc }]);
   });
 
   it("setAskStatus marks a politician as signed today, with a note, or not, as the logged-in staff member", async () => {

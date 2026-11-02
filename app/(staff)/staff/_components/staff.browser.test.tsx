@@ -137,8 +137,8 @@ describe("StaffNav", () => {
     expect(nav.querySelector('a[href="/staff/import-data"]')!.textContent).toBe(staffCopy.nav.import);
     expect(nav.querySelector('a[href="/staff/accounts"]')!.textContent).toBe(staffCopy.nav.accounts);
     expect(nav.querySelector('a[href="/staff/politicians/blocked-emails"]')!.textContent).toBe(staffCopy.nav.mpEmails);
-    expect([...nav.querySelectorAll("h2")].map((h) => h.textContent).slice(0, 2)).toEqual(
-      ["politicians", "admin"].map((id) => staffCopy.nav.sections[id]),
+    expect([...nav.querySelectorAll("h2")].map((h) => h.textContent).slice(0, 3)).toEqual(
+      ["events", "politicians", "admin"].map((id) => staffCopy.nav.sections[id]),
     );
     // Without supporters, the Supporters section has no page to show, so it hides.
     expect(nav.querySelector('a[href="/staff/supporters"]')).toBeNull();

@@ -1,0 +1,124 @@
+/* Where the events come from, under the title: small and grey. */
+.source {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+/* The list of events: a heading for each group, its rows ruled apart. */
+.group h2 {
+  margin-bottom: var(--space-1);
+}
+
+.rows {
+  margin: 0 0 var(--space-6);
+  padding: 0;
+  list-style: none;
+}
+
+/* A row: when, its owner, the event, and its Edit button, in columns that
+   line up from row to row, with the form to edit it, when open, across the
+   whole row under them. On a phone, when, then the owner, then the event,
+   one under another. */
+.row {
+  display: grid;
+  grid-template-columns: 10rem 10rem minmax(0, 1fr) auto;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.when {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.ownerCell {
+  min-width: 0;
+}
+
+/* The owner, prominent: bold, at the size of the event's name. */
+.owner {
+  display: block;
+  overflow: hidden;
+  font-size: var(--text-md);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* No owner for an event to come: an error. */
+.noOwner {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+  color: var(--status-red);
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+/* The name, its tags, and under them where and how many are going. */
+.what {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  font-size: var(--text-sm);
+}
+
+.name {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.title {
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.editCell {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* The form to edit it, across the whole row: the owner and the doc side by
+   side, then Save and Cancel. */
+.editor {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 16rem) minmax(0, 1fr);
+  gap: var(--space-3) var(--space-4);
+  align-items: end;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.editorButtons {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: var(--space-2);
+}
+
+@media (max-width: 860px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  /* The date over the owner, a dateline. */
+  .when {
+    grid-column: 1 / -1;
+    margin-bottom: calc(-1 * var(--space-1));
+    font-size: var(--text-xs);
+  }
+
+  .ownerCell {
+    grid-column: 1 / -1;
+  }
+
+  .editor {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

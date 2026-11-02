@@ -1201,6 +1201,29 @@ ALTER TABLE public.email_sends ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY 
 );
 
 --
+-- Name: event_docs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.event_docs (
+    event_id text NOT NULL,
+    url text NOT NULL,
+    set_by text NOT NULL,
+    set_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT event_docs_url_check CHECK ((url ~ '^https://(docs|drive)\.google\.com/'::text))
+);
+
+--
+-- Name: event_owners; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.event_owners (
+    event_id text NOT NULL,
+    owner text NOT NULL,
+    assigned_by text NOT NULL,
+    assigned_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
 -- Name: form_entries_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -1801,6 +1824,20 @@ ALTER TABLE ONLY public.email_sends
     ADD CONSTRAINT email_sends_pkey PRIMARY KEY (id);
 
 --
+-- Name: event_docs event_docs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.event_docs
+    ADD CONSTRAINT event_docs_pkey PRIMARY KEY (event_id);
+
+--
+-- Name: event_owners event_owners_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.event_owners
+    ADD CONSTRAINT event_owners_pkey PRIMARY KEY (event_id);
+
+--
 -- Name: form_entries form_entries_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2215,6 +2252,12 @@ CREATE INDEX email_sends_rfc_message_id ON public.email_sends USING btree (rfc_m
 CREATE INDEX email_sends_sender ON public.email_sends USING btree (sender, at) WHERE (sender IS NOT NULL);
 
 --
+-- Name: event_owners_owner; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX event_owners_owner ON public.event_owners USING btree (owner);
+
+--
 -- Name: form_entries_email; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2435,6 +2478,27 @@ ALTER TABLE ONLY public.email_blocks
 
 ALTER TABLE ONLY public.email_sends
     ADD CONSTRAINT email_sends_letter_id_fkey FOREIGN KEY (letter_id) REFERENCES public.letters(id) ON DELETE SET NULL;
+
+--
+-- Name: event_docs event_docs_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.event_docs
+    ADD CONSTRAINT event_docs_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.luma_events(id) ON DELETE CASCADE;
+
+--
+-- Name: event_owners event_owners_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.event_owners
+    ADD CONSTRAINT event_owners_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.luma_events(id) ON DELETE CASCADE;
+
+--
+-- Name: event_owners event_owners_owner_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.event_owners
+    ADD CONSTRAINT event_owners_owner_fkey FOREIGN KEY (owner) REFERENCES public.staff_accounts(email) ON DELETE CASCADE;
 
 --
 -- Name: form_entry_luma form_entry_luma_entry_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -

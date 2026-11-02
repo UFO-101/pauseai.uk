@@ -6,6 +6,7 @@ import { recordContactsPass } from "./opt-outs";
 import { refreshSupporterFacts, refreshSupportersList } from "./supporter-facts";
 import { lookUpPlaces } from "./supporter-places";
 import { linkSupporters } from "./supporters";
+import { assignRuleOwners, ownerEmails } from "./staff-events";
 import { LumaRateLimited, type LumaPage } from "./outside-services/luma-api";
 import {
   type CalendarEvent,
@@ -19,7 +20,7 @@ import { type EventGuest, listEventGuests } from "./outside-services/luma-guests
 // every public event, the guests who registered for each, and the
 // calendar's contacts, and from them who has left the calendar or come
 // back (recordContactsPass); then where new supporters and events are
-// (supporter-places.ts). Hourly (app/api/cron/import-luma) or when staff
+// (supporter-places.ts), and owners for events with none (staff-events.ts). Hourly (app/api/cron/import-luma) or when staff
 // ask, each run in the import log (import-runs.ts, as "import-luma").
 //
 // A run has about 20 seconds (Netlify's scheduled functions stop at 30) and
@@ -392,7 +393,10 @@ async function importContacts(budget: Budget, db: Queryable): Promise<{ changed:
 export function importLuma(startedBy: string, budgetMs = BUDGET_MS): Promise<LumaImportResult> {
   return keepingFailure(JOB, startedBy, async () => {
     try {
-      return await run(startedBy, budgetMs);
+      const { result, owners } = await run(startedBy, budgetMs);
+      // Once what the run gave them is kept.
+      await ownerEmails(owners);
+      return result;
     } catch (error) {
       if (!(error instanceof ContactsPassFailed)) throw error;
       await saveState("contacts", "", false);
@@ -401,7 +405,11 @@ export function importLuma(startedBy: string, budgetMs = BUDGET_MS): Promise<Lum
   });
 }
 
-function run(startedBy: string, budgetMs: number): Promise<LumaImportResult> {
+/** A run: what it did, and the owners the rules gave events to, to be told. */
+function run(
+  startedBy: string,
+  budgetMs: number,
+): Promise<{ result: LumaImportResult; owners: Map<string, string[]> }> {
   return transaction(async (db) => {
     const result: LumaImportResult = {
       events: 0,
@@ -422,7 +430,7 @@ function run(startedBy: string, budgetMs: number): Promise<LumaImportResult> {
     if (!locked) {
       result.stoppedBy = "running";
       await recordRun(JOB, startedBy, "unchanged", result, db);
-      return result;
+      return { result, owners: new Map() };
     }
     const budget = new Budget(budgetMs);
     result.events = await importEvents(budget, db);
@@ -447,6 +455,8 @@ function run(startedBy: string, budgetMs: number): Promise<LumaImportResult> {
     result.linked = links.linked;
     result.places = await lookUpPlaces(db);
     await refreshSupportersList(db);
+    // New events, and any whose owner's account went, get their owners by the rules.
+    const owners = await assignRuleOwners(db);
     result.requests = budget.requests;
     if (budget.stoppedBy) result.stoppedBy = budget.stoppedBy;
     const changed =
@@ -459,6 +469,6 @@ function run(startedBy: string, budgetMs: number): Promise<LumaImportResult> {
         result.places.towns >
       0;
     await recordRun(JOB, startedBy, changed ? "ok" : "unchanged", result, db);
-    return result;
+    return { result, owners };
   });
 }

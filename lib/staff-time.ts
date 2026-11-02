@@ -93,6 +93,13 @@ export function londonWhenShort(at: string): string {
   return `${day}, ${londonClock(sends)}`;
 }
 
+/** When something starts, in London, for a list's row or an email: "Fri 30 Oct 2026, 19:00". */
+export function londonStart(at: string): string {
+  const part = (options: Intl.DateTimeFormatOptions) =>
+    new Date(at).toLocaleDateString("en-GB", { ...options, timeZone: "Europe/London" });
+  return `${part({ weekday: "short" })} ${part({ day: "numeric", month: "short", year: "numeric" })}, ${londonClock(at)}`;
+}
+
 /** How close to an hour is too close for a mailing to go on it. */
 const TOO_SOON = 5 * 60_000;
 

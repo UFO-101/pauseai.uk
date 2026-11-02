@@ -11,6 +11,7 @@ import type { Permission } from "./staff-permissions";
 export type StaffPageId =
   | "supporters"
   | "letters"
+  | "events"
   | "supporterEmails"
   | "politicians"
   | "asks"
@@ -19,7 +20,7 @@ export type StaffPageId =
   | "import"
   | "accounts"
   | "changes";
-export type StaffSectionId = "supporters" | "politicians" | "admin";
+export type StaffSectionId = "supporters" | "events" | "politicians" | "admin";
 
 /**
  * A page in the navigation: which, where, and the permission it needs. The
@@ -39,6 +40,11 @@ const STAFF_SECTIONS: readonly StaffSection[] = [
       { id: "letters", href: "/staff/letters", permission: "supporters" },
       { id: "supporterEmails", href: "/staff/supporters/blocked-emails", permission: "supporters" },
     ],
+  },
+  {
+    id: "events",
+    // Our events and who owns each: no one's personal details, so open to all staff.
+    pages: [{ id: "events", href: "/staff/events" }],
   },
   {
     id: "politicians",
