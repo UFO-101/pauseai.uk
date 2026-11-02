@@ -85,15 +85,22 @@
 }
 
 /* The form to edit it, in the row, in place of the owner, doc and Edit
-   button, on the row's own columns: the labels on one line, the doc's
-   running on into the Edit button's column; under them the owner and the
-   doc; and Save and Cancel on a line of their own. */
+   button, on the row's own columns and lines: its fields where the owner
+   and doc were, on the line of the date and event; their labels on a line
+   over them, the doc's running on into the Edit button's column; and Save
+   and Cancel on a line under them. */
 .editor {
   display: grid;
+  grid-row: 1 / span 3;
   grid-column: 3 / -1;
+  grid-template-rows: subgrid;
   grid-template-columns: subgrid;
-  gap: var(--space-1) var(--space-4);
   align-items: center;
+}
+
+.row:has(.editor) .when,
+.row:has(.editor) .what {
+  grid-row: 2;
 }
 
 .ownerLabel {
@@ -122,7 +129,6 @@
   display: flex;
   grid-area: 3 / 1 / auto / -1;
   gap: var(--space-2);
-  margin-top: var(--space-1);
 }
 
 @media (max-width: 860px) {
@@ -144,8 +150,16 @@
 
   /* The form under the event, each label over its field, then Save and Cancel. */
   .editor {
+    grid-row: auto;
     grid-column: 1 / -1;
+    grid-template-rows: none;
     grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+
+  .row:has(.editor) .when,
+  .row:has(.editor) .what {
+    grid-row: auto;
   }
 
   .ownerLabel,
