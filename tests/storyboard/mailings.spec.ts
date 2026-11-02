@@ -252,7 +252,8 @@ test("A mailing stopped part-way: why each letter failed, and those never sent",
     flowDatabase,
     "Briefing on the bill",
     "cancelled",
-    ["sent", "skipped:left-office", "skipped:no-email", "skipped", "not_sent", "cancelled"],
+    // By name: Gordon, who left office; Lord Seedling, with no address; Mo; Morag; Dora; Polly.
+    ["skipped:left-office", "skipped:no-email", "sent", "skipped", "not_sent", "cancelled"],
     true,
   );
   await page.goto(`${BASE}/staff/mailings`);
