@@ -43,29 +43,29 @@ const cells = (name: string) =>
   [...row(name).element().querySelectorAll("td")].slice(0, -1).map((td) => td.textContent);
 
 describe("EventsTable", () => {
-  it("lists those to come, soonest first, each with its name, tags, place, owner, doc, who's going and the day", async () => {
+  it("lists those to come, soonest first, each with its day, name, place, owner, doc, who's going and tags", async () => {
     await renderTable();
     await expect.element(page.getByText(copy.total(2))).toBeVisible();
     expect(names()).toEqual(["PauseAI London: Protest at Parliament", "AI risk talk"]);
     const headings = [...document.querySelectorAll("thead th")].map((th) => th.textContent!.replace(/[▲▼ ]+$/, ""));
     expect(headings).toEqual([
+      copy.columns.when,
       copy.columns.name,
-      copy.columns.tags,
       copy.columns.place,
       copy.owner,
       copy.doc,
       copy.columns.going,
-      copy.columns.when,
+      copy.columns.tags,
       "",
     ]);
     expect(cells("Protest at Parliament")).toEqual([
+      "21 Nov 2026",
       "PauseAI London: Protest at Parliament",
-      "Big eventsLondon",
       "London",
       "joseph@pauseai.uk",
       copy.doc,
       "42",
-      "21 Nov 2026",
+      "Big eventsLondon",
     ]);
     const protest = row("Protest at Parliament");
     await expect
@@ -241,7 +241,7 @@ describe("EventTabs", () => {
 describe("EventFilters", () => {
   const choices = { staff: exampleStaff, tags: ["Big events", "London"], cities: ["London", "Oxford"] };
 
-  it("offers a filter by tag, place, owner, and taken off Luma, each chosen as a chip, keeping the tab", async () => {
+  it("offers a filter by place, owner, tag, and taken off Luma, each chosen as a chip, keeping the tab", async () => {
     const { search } = exampleEventsTab({ when: "past", tag: "London", place: "!online", owner: "none" });
     await render(<EventFilters search={search} choices={choices} />);
     await expect.element(page.getByRole("searchbox", { name: copy.filters.search })).toBeVisible();
@@ -256,7 +256,7 @@ describe("EventFilters", () => {
       .toHaveAttribute("href", "/staff/events?when=past");
     // + Filter offers every one; a tag only those not chosen.
     const offered = document.getElementById("filter-add")!.textContent;
-    for (const label of [copy.filters.tag, copy.filters.place, copy.owner, copy.removed]) {
+    for (const label of [copy.filters.place, copy.owner, copy.filters.tag, copy.removed]) {
       expect(offered).toContain(label);
     }
     expect(offered).toContain("Big events");

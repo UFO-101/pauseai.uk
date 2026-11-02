@@ -419,8 +419,13 @@ letter's sent and replied, can sit beside it instead, read with it. Where a row 
 first column leads to it, so there's one place to click to open it: a
 supporter's or politician's name. A row with no name, such as a letter,
 starts with what leads to it instead, its status, before who it's from
-and to. A log, read by time, newest first, starts with when instead: the
-audit log, an import's runs, a history.
+and to. A list read by time starts with when instead. In a log, newest
+first, when is all there is to it: the audit log, an import's runs, a
+history. Something that happens on a day, such as an event, is named by
+its date as much as its name, so its name comes straight after, still
+leading to it: when, what, where, then how it stands and counts as
+usual. If people say the date when they mean the thing, the date goes
+first; otherwise it goes last.
 
 **Filters** (`ui/FilterBar`). Every list's filters are the same bar
 above it, and a list's own filters component only says what its filters

@@ -96,13 +96,13 @@ function Doc({ doc, needed }: { doc: string | null; needed: boolean }) {
 }
 
 /**
- * The events list's columns, in every list's order (docs/style-guide.md,
- * "Lists"): its name, leading to it on Luma, marked when it's been taken
- * off Luma; its Luma tags; where it is; its owner; its Google Doc; how
- * many are going; the day it starts; and its Edit button, which
- * opens a bubble to change its owner and doc. On the Future tab,
- * one on Luma with no owner or no doc is an error. Every column but the
- * tags and Edit sorts; by the doc, those with none come first.
+ * The events list's columns, in the order of a list read by time
+ * (docs/style-guide.md, "Lists"): the day it starts; its name, leading to
+ * it on Luma, marked when it's been taken off Luma; where it is; its
+ * owner; its Google Doc; how many are going; its Luma tags; and its Edit
+ * button, which opens a bubble to change its owner and doc. On the Future
+ * tab, one on Luma with no owner or no doc is an error. Every column but
+ * the tags and Edit sorts; by the doc, those with none come first.
  */
 function eventColumns(
   search: EventsSearch,
@@ -124,6 +124,13 @@ function eventColumns(
   const needed = (event: StaffEvent) => event.startAt >= now && !event.removed;
   return [
     {
+      key: "start",
+      label: copy.columns.when,
+      heading: heading("start", copy.columns.when),
+      short: true,
+      cell: (event) => londonDate(event.startAt),
+    },
+    {
       key: "name",
       label: copy.columns.name,
       heading: heading("name", copy.columns.name),
@@ -131,17 +138,6 @@ function eventColumns(
         <span className={styles.name}>
           <a href={event.url}>{event.name}</a>
           {event.removed && <Tag>{copy.removed}</Tag>}
-        </span>
-      ),
-    },
-    {
-      key: "tags",
-      label: copy.columns.tags,
-      cell: (event) => (
-        <span className={styles.tags}>
-          {event.tags.map((tag) => (
-            <Tag key={tag}>{tag}</Tag>
-          ))}
         </span>
       ),
     },
@@ -173,11 +169,15 @@ function eventColumns(
       cell: (event) => event.going,
     },
     {
-      key: "start",
-      label: copy.columns.when,
-      heading: heading("start", copy.columns.when),
-      short: true,
-      cell: (event) => londonDate(event.startAt),
+      key: "tags",
+      label: copy.columns.tags,
+      cell: (event) => (
+        <span className={styles.tags}>
+          {event.tags.map((tag) => (
+            <Tag key={tag}>{tag}</Tag>
+          ))}
+        </span>
+      ),
     },
     {
       key: "edit",
