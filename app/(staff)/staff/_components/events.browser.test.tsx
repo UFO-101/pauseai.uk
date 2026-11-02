@@ -47,7 +47,7 @@ describe("EventsOverview", () => {
       .toHaveAttribute("href", "https://docs.google.com/document/d/example-protest-plan/edit");
     await expect.element(row("AI risk talk").getByRole("link", { name: copy.doc })).not.toBeInTheDocument();
     // No forms, only an Edit button on each.
-    expect(page.getByRole("button", { name: copy.edit }).all()).toHaveLength(5);
+    expect(page.getByRole("button", { name: new RegExp(`^${copy.edit} `) }).all()).toHaveLength(5);
     expect(document.querySelectorAll("form")).toHaveLength(0);
   });
 
@@ -72,11 +72,13 @@ describe("EventEdit", () => {
     await render(<EventEdit event={event} staff={exampleStaff} save={noAction} />);
     await page.getByRole("button", { name: copy.editLabel("AI risk talk") }).click();
     const form = page.getByRole("form", { name: copy.editLabel("AI risk talk") });
-    await expect.element(form.getByLabelText(copy.owner)).toHaveValue("");
-    await expect.element(form.getByLabelText(copy.owner)).toHaveFocus();
+    await expect.element(form.getByText(copy.owner, { exact: true })).toBeVisible();
+    await expect.element(form.getByText(copy.docField, { exact: true })).toBeVisible();
+    await expect.element(form.getByRole("combobox")).toHaveValue("");
+    await expect.element(form.getByRole("combobox")).toHaveFocus();
     // No owner can't be chosen back.
     await expect.element(page.getByRole("option", { name: copy.noOwner })).toBeDisabled();
-    await expect.element(form.getByLabelText(copy.docField)).toHaveAttribute("placeholder", copy.docPlaceholder);
+    await expect.element(form.getByRole("textbox")).toHaveAttribute("placeholder", copy.docPlaceholder);
     await expect.element(page.getByRole("button", { name: copy.editLabel("AI risk talk") })).not.toBeInTheDocument();
     await page.getByRole("button", { name: copy.cancel }).click();
     await expect.element(form).not.toBeInTheDocument();
@@ -87,13 +89,13 @@ describe("EventEdit", () => {
     const save = vi.fn<(form: FormData) => void>();
     await render(<EventEdit event={event} staff={exampleStaff} save={save} />);
     await page.getByRole("button", { name: copy.editLabel("AI risk talk") }).click();
-    await page.getByLabelText(copy.owner).selectOptions("sean@pauseai.uk");
+    await page.getByRole("combobox").selectOptions("sean@pauseai.uk");
     // Anywhere else, the browser won't send it.
-    await page.getByLabelText(copy.docField).fill("https://example.com/plan");
+    await page.getByRole("textbox").fill("https://example.com/plan");
     await page.getByRole("button", { name: copy.save }).click();
     expect(save).not.toHaveBeenCalled();
     const doc = "https://docs.google.com/document/d/abc/edit";
-    await page.getByLabelText(copy.docField).fill(doc);
+    await page.getByRole("textbox").fill(doc);
     await page.getByRole("button", { name: copy.save }).click();
     await vi.waitFor(() => expect(save).toHaveBeenCalledOnce());
     const form = save.mock.calls[0][0];
@@ -107,8 +109,8 @@ describe("EventEdit", () => {
       <EventEdit event={{ ...event, owner: "joseph@pauseai.uk", doc }} staff={exampleStaff} save={noAction} />,
     );
     await page.getByRole("button", { name: copy.editLabel("AI risk talk") }).click();
-    await expect.element(page.getByLabelText(copy.owner)).toHaveValue("joseph@pauseai.uk");
-    await expect.element(page.getByLabelText(copy.docField)).toHaveValue(doc);
+    await expect.element(page.getByRole("combobox")).toHaveValue("joseph@pauseai.uk");
+    await expect.element(page.getByRole("textbox")).toHaveValue(doc);
     await expect.element(page.getByRole("option", { name: copy.noOwner })).not.toBeInTheDocument();
   });
 });
