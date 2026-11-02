@@ -42,11 +42,6 @@ const STAFF_SECTIONS: readonly StaffSection[] = [
     ],
   },
   {
-    id: "events",
-    // Our events and who owns each: no one's personal details, so open to all staff.
-    pages: [{ id: "events", href: "/staff/events" }],
-  },
-  {
     id: "politicians",
     pages: [
       { id: "politicians", href: "/staff/politicians" },
@@ -54,6 +49,11 @@ const STAFF_SECTIONS: readonly StaffSection[] = [
       { id: "mailings", href: "/staff/mailings" },
       { id: "mpEmails", href: "/staff/politicians/blocked-emails" },
     ],
+  },
+  {
+    id: "events",
+    // Our events and who owns each: no one's personal details, so open to all staff.
+    pages: [{ id: "events", href: "/staff/events" }],
   },
   {
     id: "admin",

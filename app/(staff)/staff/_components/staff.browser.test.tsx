@@ -142,7 +142,7 @@ describe("StaffNav", () => {
     expect(nav.querySelector('a[href="/staff/accounts"]')!.textContent).toBe(staffCopy.nav.accounts);
     expect(nav.querySelector('a[href="/staff/politicians/blocked-emails"]')!.textContent).toBe(staffCopy.nav.mpEmails);
     expect([...nav.querySelectorAll("h2")].map((h) => h.textContent).slice(0, 3)).toEqual(
-      ["events", "politicians", "admin"].map((id) => staffCopy.nav.sections[id]),
+      ["politicians", "events", "admin"].map((id) => staffCopy.nav.sections[id]),
     );
     // Without supporters, the Supporters section has no page to show, so it hides.
     expect(nav.querySelector('a[href="/staff/supporters"]')).toBeNull();
@@ -650,16 +650,20 @@ describe("StaffAccountsTable", () => {
     const cell = page.getByRole("cell", { name: "22 Oct 2026, 08:00", exact: true });
     await expect.element(cell).toBeVisible();
     expect(getComputedStyle(cell.element()).verticalAlign).toBe("middle");
+    // Each account's permissions by name, then Edit; none, a dash. Its bubble is shut.
     const permissions = (email: string) =>
-      page.getByRole("row").filter({ hasText: email }).getByRole("cell").nth(1).element().textContent;
-    expect(permissions("admin@pauseai.uk")).toBe(`${copy.names.admin}${copy.edit}`);
-    expect(permissions("jo@pauseai.uk")).toBe(`${copy.names.supporters}${copy.edit}`);
-    // None: a dash.
-    expect(permissions("samuel.whitlock@pauseai.uk")).toBe(`–${copy.edit}`);
-    expect(page.getByRole("checkbox").all()).toHaveLength(0);
-    // Under the table, what removing does; then under its heading, what each permission opens, a row each: its
-    // name in bold, then what it opens.
-    await expect.element(page.getByText(copy.removeNote)).toBeVisible();
+      page.getByRole("row").filter({ hasText: email }).getByRole("cell").nth(1).element().firstElementChild!.firstChild!
+        .textContent;
+    expect(permissions("admin@pauseai.uk")).toBe(copy.names.admin);
+    expect(permissions("jo@pauseai.uk")).toBe(copy.names.supporters);
+    expect(permissions("samuel.whitlock@pauseai.uk")).toBe("–");
+    for (const box of page.getByRole("checkbox", { includeHidden: true }).all()) {
+      await expect.element(box).not.toBeVisible();
+    }
+    // The last row: everyone else at pauseai.uk, who can log in with no permissions.
+    const last = [...document.querySelectorAll("tfoot td")].map((td) => td.textContent);
+    expect(last).toEqual([copy.everyone, "–", copy.everyoneNote]);
+    // Under its heading, what each permission opens, a row each: its name in bold, then what it opens.
     await expect.element(page.getByRole("heading", { level: 2, name: copy.permissionsKey })).toBeVisible();
     const opens = [...document.querySelectorAll("dl > div")].map((row) => [
       row.querySelector("dt")!.textContent,
@@ -680,10 +684,10 @@ describe("StaffAccountsTable", () => {
     expect(remove.sent[0]).toEqual({ email: "jo@pauseai.uk" });
   });
 
-  it("edits an account's permissions: Edit opens a box for each, Cancel closes them, Save sends whose and every one ticked", async () => {
+  it("edits an account's permissions in a bubble: a box for each, Cancel closes it as it was, Save sends whose and every one ticked", async () => {
     const { save } = await renderTable();
     const copy = staffCopy.accounts;
-    const edit = page.getByRole("button", { name: copy.editLabel("jo@pauseai.uk") });
+    const edit = page.getByRole("row").filter({ hasText: "jo@pauseai.uk" }).getByRole("button", { name: copy.edit });
     await edit.click();
     const form = page.getByRole("form", { name: copy.editLabel("jo@pauseai.uk") });
     expect(
@@ -696,10 +700,17 @@ describe("StaffAccountsTable", () => {
     const admin = form.getByRole("checkbox", { name: copy.names.admin });
     await expect.element(supporters).toBeChecked();
     await expect.element(admin).not.toBeChecked();
+    // Save is off till a box differs from what's saved, and off again once it's back.
+    const saveButton = form.getByRole("button", { name: copy.save });
+    await expect.element(saveButton).toBeDisabled();
+    await admin.click();
+    await expect.element(saveButton).toBeEnabled();
+    await admin.click();
+    await expect.element(saveButton).toBeDisabled();
     // A tick isn't saved till Save; Cancel forgets it.
     await admin.click();
     await form.getByRole("button", { name: copy.cancel }).click();
-    await expect.element(form).not.toBeInTheDocument();
+    await expect.element(form).not.toBeVisible();
     expect(save.sent).toHaveLength(0);
     await edit.click();
     await expect.element(admin).not.toBeChecked();
@@ -708,7 +719,7 @@ describe("StaffAccountsTable", () => {
     await form.getByRole("button", { name: copy.save }).click();
     await vi.waitFor(() => expect(save.sent).toHaveLength(1));
     expect(save.sent[0]).toEqual({ email: "jo@pauseai.uk", "permission:admin": "on" });
-    await expect.element(form).not.toBeInTheDocument();
+    await expect.element(form).not.toBeVisible();
   });
 });
 
@@ -753,6 +764,14 @@ describe("AccountsNotice", () => {
     await expect.element(page.getByRole("alert")).toHaveTextContent(staffCopy.accounts.notPauseai);
     await rerender(<AccountsNotice notice="" />);
     expect(page.getByRole("alert").all()).toHaveLength(0);
+    expect(document.querySelector("[role=status]")!.textContent).toBe("");
+  });
+
+  it("says what removing an account leaves them, till its × closes it", async () => {
+    await render(<AccountsNotice notice="removed" />);
+    await expect.element(page.getByRole("status")).toHaveTextContent(staffCopy.accounts.removeNote);
+    await page.getByRole("button", { name: staffCopy.accounts.closeRemoved }).click();
+    expect(document.querySelector("[role=status]")!.textContent).toBe("");
   });
 });
 

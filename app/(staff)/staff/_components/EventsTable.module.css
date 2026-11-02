@@ -36,15 +36,18 @@
   white-space: nowrap;
 }
 
-/* The Google Doc's box, while it's edited: wide enough to see a link's start. */
-.docField input {
-  min-width: 10rem;
+/* The edit bubble's form: each label over its field, then Save and Cancel. */
+.editor {
+  display: grid;
+  gap: var(--space-2);
+  width: 20rem;
+  max-width: 100%;
 }
 
-/* Save over Cancel, where the Edit button was, so the row keeps its width. */
 .editorButtons {
-  display: grid;
-  gap: var(--space-1);
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
 }
 
 /* The note of whom a save emailed, over the table; taking no room while it's empty. */

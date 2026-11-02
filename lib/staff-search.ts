@@ -8,7 +8,7 @@ import { campaignBySlug } from "@/lib/email-your-mp";
 import { LETTER_SORTS, type LetterSort } from "@/lib/letter-sort";
 import { POLITICIAN_FLAGS, type PoliticianFlag } from "@/lib/politician-filters";
 import { parseSort, type SortSpec } from "@/lib/staff-sort";
-import { EVENT_MISSING, EVENT_SORTS, type EventFilter } from "@/lib/staff-events-list";
+import { EVENT_SORTS, type EventFilter } from "@/lib/staff-events-list";
 import { isSupporterBadge, NEAR_MILES, SUPPORTER_SORTS, type SupporterFilter } from "@/lib/supporters";
 
 export type LettersSearch = {
@@ -325,9 +325,7 @@ export type EventsSearch = {
   tag: string[];
   /** Cities, or ONLINE. */
   place: string[];
-  /** As EVENT_MISSING. */
-  missing: string[];
-  /** "yes" or "no". */
+  /** "yes" for only those taken off Luma; blank leaves them out. */
   removed: string;
   sort: string;
   dir: string;
@@ -341,32 +339,28 @@ export function eventsSearch(
   const [when, q, removed, sort, dir, page] = (["when", "q", "removed", "sort", "dir", "page"] as const).map((name) =>
     firstOf(params[name]),
   );
-  const [owner, tag, place, missing] = (["owner", "tag", "place", "missing"] as const).map((name) =>
-    valuesOf(params[name]),
-  );
+  const [owner, tag, place] = (["owner", "tag", "place"] as const).map((name) => valuesOf(params[name]));
   const tab = when === "past" ? "past" : "future";
   const [owners, notOwners] = anyAndNone(owner, (values) => values);
   const [tags, notTags] = anyAndNone(tag, (values) => values);
   const [places, notPlaces] = anyAndNone(place, (values) => values);
-  const [lacking, notLacking] = anyAndNone(missing, (values) => among(values, EVENT_MISSING));
   const filter: EventFilter = {
     tab,
     search: q.trim() || undefined,
     owner: owners,
     tag: tags,
     place: places,
-    missing: lacking,
-    removed: yesOrNo(removed),
-    not: notOf({ owner: notOwners, tag: notTags, place: notPlaces, missing: notLacking }),
+    removed: removed === "yes",
+    not: notOf({ owner: notOwners, tag: notTags, place: notPlaces }),
     sort: parseSort(EVENT_SORTS[tab], "start", sort, dir),
     page: pageNumber(page),
   };
-  return { when, q, owner, tag, place, missing, removed, sort, dir, page, filter };
+  return { when, q, owner, tag, place, removed, sort, dir, page, filter };
 }
 
 /** The accounts page's notice, after a refused change. */
 export function accountsSearch({ notice = "" }: { notice?: string }): { notice: string } {
-  return { notice: notice === "last-admin" || notice === "not-pauseai" ? notice : "" };
+  return { notice: ["last-admin", "not-pauseai", "removed"].includes(notice) ? notice : "" };
 }
 
 /**

@@ -20,7 +20,6 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
       <PageTitle action={<AddStaff accounts={accounts} add={saveStaffAccountNow} />}>
         {staffCopy.accounts.title}
       </PageTitle>
-      <p>{staffCopy.accounts.intro}</p>
       <AccountsNotice notice={notice} />
       <StaffAccountsTable
         accounts={accounts}

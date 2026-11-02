@@ -124,11 +124,12 @@ test("First login, then an admin manages accounts", async ({ page, flowDatabase 
   await frame(page, "the colleague added, with no permissions");
 
   // Edit opens a box for each; Save saves those ticked: still there after a reload.
-  await row.getByRole("button", { name: staffCopy.accounts.editLabel(colleague) }).click();
-  await row.getByRole("checkbox", { name: staffCopy.accounts.names.supporters }).check();
+  await row.getByRole("button", { name: staffCopy.accounts.edit }).click();
+  const permissions = page.getByRole("form", { name: staffCopy.accounts.editLabel(colleague) });
+  await permissions.getByRole("checkbox", { name: staffCopy.accounts.names.supporters }).check();
   await frame(page, "their permissions opened to edit, Supporters ticked");
-  await row.getByRole("button", { name: staffCopy.accounts.save }).click();
-  await expect(row.getByRole("checkbox")).toHaveCount(0);
+  await permissions.getByRole("button", { name: staffCopy.accounts.save }).click();
+  await expect(permissions).not.toBeVisible();
   await page.reload();
   await expect(row.getByRole("cell").nth(1)).toContainText(staffCopy.accounts.names.supporters);
   await frame(page, "given the supporters permission");
@@ -137,7 +138,8 @@ test("First login, then an admin manages accounts", async ({ page, flowDatabase 
   await frame(page, "Remove pressed once: red, asking to confirm");
   await row.getByRole("button", { name: staffCopy.deleteItShort }).click();
   await expect(page.getByRole("row").filter({ hasText: colleague })).toHaveCount(0);
-  await frame(page, "removed");
+  await expect(page.getByRole("status")).toContainText(staffCopy.accounts.removeNote);
+  await frame(page, "removed, a note over the table saying they can still log in, unless their Gmail goes too");
 
   await page.goto(`${BASE}/staff/audit-log`);
   await expect(page.getByRole("cell", { name: "add staff account" }).first()).toBeVisible();

@@ -27,13 +27,15 @@ const events = [
     tags: ["Oxford"],
   }),
   event("b", { name: "alpha talk", startAt: "2026-11-10T18:00:00.000Z", city: null, going: 9, owner: "jo@pauseai.uk" }),
-  event("c", { startAt: "2026-11-10T18:00:00.000Z", doc: "https://docs.google.com/d", removed: true, tags: ["Big"] }),
+  event("c", { startAt: "2026-11-10T18:00:00.000Z", doc: "https://docs.google.com/d", tags: ["Big"] }),
+  event("d", { name: "Cancelled picnic", removed: true }),
   event("old", { startAt: "2025-01-01T18:00:00.000Z" }),
   event("recent", { startAt: "2026-10-01T18:00:00.000Z", owner: "sean@pauseai.uk" }),
 ];
 
 const future = (more: Partial<EventFilter> = {}): EventFilter => ({
   tab: "future",
+  removed: false,
   sort: { key: "start", dir: "asc" },
   page: 1,
   ...more,
@@ -44,28 +46,40 @@ const ids = (filter: EventFilter) => findEvents(events, filter, NOW).events.map(
 describe("findEvents", () => {
   it("finds those to come on Future, soonest first, a tie by ID; and those past on Past, latest first", () => {
     expect(ids(future())).toEqual(["b", "c", "a"]);
-    expect(ids({ tab: "past", sort: { key: "start", dir: "desc" }, page: 1 })).toEqual(["recent", "old"]);
-    expect(findEvents(events, future(), NOW)).toMatchObject({ total: 3, pages: 1 });
+    expect(ids({ tab: "past", removed: false, sort: { key: "start", dir: "desc" }, page: 1 })).toEqual([
+      "recent",
+      "old",
+    ]);
+    expect(findEvents(events, future(), NOW)).toMatchObject({ total: 3, pages: 1, removed: 0 });
   });
 
   it("searches names, whatever their case", () => {
     expect(ids(future({ search: "ALPHA" }))).toEqual(["b"]);
   });
 
-  it("finds those taken off Luma, or those still on it", () => {
-    expect(ids(future({ removed: true }))).toEqual(["c"]);
-    expect(ids(future({ removed: false }))).toEqual(["b", "a"]);
+  it("finds only those taken off Luma, or only those still on it", () => {
+    expect(ids(future({ removed: true }))).toEqual(["d"]);
+    expect(ids(future())).not.toContain("d");
   });
 
-  it("finds those with any of an owner, a tag, a place or what they lack; and leaves out those with any", () => {
+  it("counts, for a search that finds none, those it would find taken off Luma", () => {
+    expect(findEvents(events, future({ search: "picnic" }), NOW)).toMatchObject({ total: 0, removed: 1 });
+    // Not when it finds some, nor when it's of those taken off Luma, nor with no search.
+    expect(findEvents(events, future({ search: "alpha" }), NOW).removed).toBe(0);
+    expect(findEvents(events, future({ search: "picnic", removed: true }), NOW)).toMatchObject({
+      total: 1,
+      removed: 0,
+    });
+    expect(findEvents(events, future({ search: "nothing" }), NOW).removed).toBe(0);
+    expect(findEvents(events, future({ owner: ["nobody@pauseai.uk"] }), NOW).removed).toBe(0);
+  });
+
+  it("finds those with any of an owner, a tag or a place; and leaves out those with any", () => {
     expect(ids(future({ owner: ["none"] }))).toEqual(["c", "a"]);
     expect(ids(future({ owner: ["jo@pauseai.uk"] }))).toEqual(["b"]);
     expect(ids(future({ tag: ["Oxford", "Big"] }))).toEqual(["c", "a"]);
     expect(ids(future({ place: ["online"] }))).toEqual(["b"]);
     expect(ids(future({ place: ["London", "Oxford"] }))).toEqual(["c", "a"]);
-    expect(ids(future({ missing: ["owner"] }))).toEqual(["c", "a"]);
-    expect(ids(future({ missing: ["doc"] }))).toEqual(["b", "a"]);
-    expect(ids(future({ not: { missing: ["doc"] } }))).toEqual(["c"]);
     expect(ids(future({ not: { owner: ["none"], tag: ["Oxford"] } }))).toEqual(["b"]);
   });
 
@@ -78,8 +92,13 @@ describe("findEvents", () => {
     expect(by("going", "desc")).toEqual(["b", "a", "c"]);
     // No owner first; those with none, by when.
     expect(by("owner", "asc")).toEqual(["c", "a", "b"]);
+    // No doc first, either way.
+    expect(by("doc", "asc")).toEqual(["b", "a", "c"]);
+    expect(by("doc", "desc")).toEqual(["c", "b", "a"]);
     expect(
-      findEvents(events, { tab: "past", sort: { key: "going", dir: "desc" }, page: 1 }, NOW).events.map((e) => e.id),
+      findEvents(events, { tab: "past", removed: false, sort: { key: "going", dir: "desc" }, page: 1 }, NOW).events.map(
+        (e) => e.id,
+      ),
     ).toEqual(["recent", "old"]);
   });
 
@@ -88,6 +107,6 @@ describe("findEvents", () => {
     const second = findEvents(many, future({ page: 2 }), NOW);
     expect(second).toMatchObject({ total: EVENTS_PAGE_SIZE + 2, pages: 2 });
     expect(second.events.map((e) => e.id)).toEqual(["e100", "e101"]);
-    expect(findEvents([], future(), NOW)).toEqual({ events: [], total: 0, pages: 1 });
+    expect(findEvents([], future(), NOW)).toEqual({ events: [], total: 0, pages: 1, removed: 0 });
   });
 });

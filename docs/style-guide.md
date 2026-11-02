@@ -271,9 +271,10 @@ to, so there are four places, one for each kind of adding:
   "Add files" is in the attachments' box, where the files then show. The
   letter's "+ Only for those who…" is beside the letter, with the fields,
   the other things put into it.
-- **A row of a short table kept in place: under its last row.** Staff
-  accounts' add row is a form in the table: type the address, press
-  Add, and the row is there, with no page to go to.
+- **A row of a short table kept in place: the page's main button, its
+  form in a bubble.** Staff accounts' Add staff, at the title's right,
+  opens the address field: type it, press Add, and the row is there, with
+  no page to go to.
 
 "+" marks a small control that adds to something already on the screen,
 a filter or a part of the letter, never a button that makes a new thing.
@@ -489,6 +490,13 @@ what they'd want to check against. A browser too old to anchor one shows
 it in the middle as a fallback; that's the only place it goes there. A
 choice that needs confirming is confirmed in place, as Delete draft is
 pressed twice.
+
+**A row of a table is edited in a bubble.** A row's Edit opens its form
+in a bubble hung from the button, over the table, with Save and Cancel
+(the events' owner and doc, an account's permissions). The row never
+turns into its form: the cells would change size, and the whole table
+jump. A small form that's always in its row, such as Unblock, moves
+nothing and stays there.
 
 **JSON from the database is shown in words** (`Logged.tsx`). A column of
 details stored as JSON, as the audit log's and a letter's history are,

@@ -6,12 +6,10 @@
   align-items: center;
 }
 
-/* The form that edits them: the boxes, then Save and Cancel, side by side. */
+/* The edit bubble's form: the boxes, then Save and Cancel, side by side under them. */
 .editor {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   gap: var(--space-3);
-  align-items: center;
 }
 
 .buttons {
@@ -47,11 +45,6 @@
 .add input {
   width: 20rem;
   max-width: 100%;
-}
-
-/* Under the table, what removing an account does, small. */
-.note {
-  font-size: var(--text-sm);
 }
 
 /* What each permission opens, under its heading: its name in bold, and

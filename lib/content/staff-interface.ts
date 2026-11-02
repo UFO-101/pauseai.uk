@@ -538,8 +538,10 @@ export const staffCopy = {
   // pages, and what each may do.
   accounts: {
     title: "Staff accounts",
-    intro:
-      "Everyone with a @pauseai.uk address gets an account, with no permissions, the first time they log in. Add someone here to give them permissions before then.",
+    // The table's last row: everyone else at pauseai.uk, who can log in with no permissions; and across the rest of
+    // the row, in grey, what that means.
+    everyone: "*@pauseai.uk",
+    everyoneNote: "Anyone with a @pauseai.uk address can log in with no extra permissions.",
     names: {
       admin: "Admin",
       supporters: "Supporters",
@@ -569,17 +571,18 @@ export const staffCopy = {
     // At the top right, the button that opens the field for the address of someone new (its label, read aloud) and its
     // button, which adds them as a row, with no permissions.
     addStaff: "Add staff",
-    addTitle: "Add email",
+    addTitle: "@pauseai.uk email address",
     add: "Add",
     // In a row's Permissions cell, after the permissions it has: the button that opens a box for each, and the form's
     // buttons.
     edit: "Edit",
-    editLabel: (email: string) => `⁂ Edit ${email}'s permissions`,
+    editLabel: (email: string) => `Edit ${email}'s permissions`,
     save: "Save",
     cancel: "Cancel",
-    // At a row's right, pressed twice; and under the table, what it does.
+    // At a row's right, pressed twice; and just after, over the table till its × closes it, what it leaves them.
     remove: "Remove",
     removeNote: "They will still be able to log in with basic permissions, unless their Gmail is disabled too.",
+    closeRemoved: "Close",
     // Beside Add, or above the table after a Save, when the address isn't at pauseai.uk.
     notPauseai: "Only addresses @pauseai.uk can have an account.",
     // Beside Add, when the address is in the table already.
@@ -701,22 +704,22 @@ export const staffCopy = {
     none: "No events yet.",
     // The tabs over the list, and their name, for a screen reader: those still to come, soonest first, and those
     // past, latest first.
-    tabs: { label: "⁂ When", future: "Future", past: "Past" },
+    tabs: { label: "When", future: "Future", past: "Past" },
     // Over the list: how many the tab and filters find; and what it says when they find none.
-    total: (n: number) => `⁂ ${n} ${n === 1 ? "event" : "events"}`,
-    noneFound: "⁂ No events match.",
+    total: (n: number) => `${n} ${n === 1 ? "event" : "events"}`,
+    noneFound: "No events match.",
+    // Under it, when a search finds none, but would among those taken off Luma, linked to them.
+    removedMatches: (n: number) => `⁂ ${n} ${n === 1 ? "match" : "matches"} found for events taken off Luma`,
     // The table's headings; the owner's and Google Doc's are `owner` and `doc` below. Going is how many registered
     // and were approved.
-    columns: { when: "⁂ When", name: "⁂ Event", tags: "⁂ Tags", place: "⁂ Place", going: "⁂ Going" },
-    // The list's search box, and its filters but Owner's: each Luma tag; each city, and Online; what it lacks; and
-    // whether it's been taken off Luma (`removed`).
+    columns: { when: "When", name: "Event", tags: "Tags", place: "Place", going: "Going" },
+    // The list's search box, and its filters but Owner's: each Luma tag; each city, and Online; and taken off Luma
+    // (`removed`), which finds only those, as they're left out otherwise.
     filters: {
-      search: "⁂ Search event names",
-      tag: "⁂ Tag",
-      place: "⁂ Place",
-      missing: "⁂ Missing",
-      missingWhat: { owner: "⁂ Owner", doc: "⁂ Google Doc" } as Record<string, string>,
-      removed: { yes: "⁂ Yes", no: "⁂ No" } as Record<string, string>,
+      search: "Event names",
+      tag: "Tag",
+      place: "Place",
+      removed: { yes: "Yes" } as Record<string, string>,
     },
     // Where an event online is, in the Place column and filter.
     online: "Online",

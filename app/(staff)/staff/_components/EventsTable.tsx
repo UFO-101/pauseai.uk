@@ -12,9 +12,9 @@ import {
 } from "@/lib/staff-events-list";
 import { filtersPath, pageParam, type EventsSearch, type Params } from "@/lib/staff-search";
 import { parseSort, sortHref } from "@/lib/staff-sort";
-import { londonStart } from "@/lib/staff-time";
+import { londonDate } from "@/lib/staff-time";
 import AlertIcon from "./AlertIcon";
-import { DocField, EventEditButtons, EventsEditing, OwnerField, type SaveEvent } from "./EventEdit";
+import { EventEdit, EventsEditing, type SaveEvent } from "./EventEdit";
 import SortHeading from "./SortHeading";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
 import StaffLink from "./ui/StaffLink";
@@ -96,12 +96,13 @@ function Doc({ doc, needed }: { doc: string | null; needed: boolean }) {
 }
 
 /**
- * The events list's columns: when it starts; its name, leading to it on
- * Luma, marked when it's been taken off Luma; its Luma tags; where it is;
- * how many are going; its owner; its Google Doc; and its Edit button, which
- * puts the fields for its owner and doc in their cells. On the Future tab,
+ * The events list's columns, in every list's order (docs/style-guide.md,
+ * "Lists"): its name, leading to it on Luma, marked when it's been taken
+ * off Luma; its Luma tags; where it is; its owner; its Google Doc; how
+ * many are going; the day it starts; and its Edit button, which
+ * opens a bubble to change its owner and doc. On the Future tab,
  * one on Luma with no owner or no doc is an error. Every column but the
- * tags, the doc and Edit sorts.
+ * tags and Edit sorts; by the doc, those with none come first.
  */
 function eventColumns(
   search: EventsSearch,
@@ -122,13 +123,6 @@ function eventColumns(
   // Still to come and on Luma, so an owner and a doc are needed.
   const needed = (event: StaffEvent) => event.startAt >= now && !event.removed;
   return [
-    {
-      key: "start",
-      label: copy.columns.when,
-      heading: heading("start", copy.columns.when),
-      short: true,
-      cell: (event) => londonStart(event.startAt),
-    },
     {
       key: "name",
       label: copy.columns.name,
@@ -159,6 +153,19 @@ function eventColumns(
       cell: (event) => event.city ?? copy.online,
     },
     {
+      key: "owner",
+      label: copy.owner,
+      heading: heading("owner", copy.owner),
+      cell: (event) => <Owner owner={event.owner} needed={needed(event)} />,
+    },
+    {
+      key: "doc",
+      label: copy.doc,
+      heading: heading("doc", copy.doc),
+      short: true,
+      cell: (event) => <Doc doc={event.doc} needed={needed(event)} />,
+    },
+    {
       key: "going",
       label: copy.columns.going,
       heading: heading("going", copy.columns.going),
@@ -166,38 +173,26 @@ function eventColumns(
       cell: (event) => event.going,
     },
     {
-      key: "owner",
-      label: copy.owner,
-      heading: heading("owner", copy.owner),
-      cell: (event) => (
-        <OwnerField event={event} staff={staff}>
-          <Owner owner={event.owner} needed={needed(event)} />
-        </OwnerField>
-      ),
-    },
-    {
-      key: "doc",
-      label: copy.doc,
+      key: "start",
+      label: copy.columns.when,
+      heading: heading("start", copy.columns.when),
       short: true,
-      cell: (event) => (
-        <DocField event={event}>
-          <Doc doc={event.doc} needed={needed(event)} />
-        </DocField>
-      ),
+      cell: (event) => londonDate(event.startAt),
     },
     {
       key: "edit",
       label: "",
       end: true,
-      cell: (event) => <EventEditButtons event={event} save={save} />,
+      cell: (event) => <EventEdit event={event} staff={staff} save={save} />,
     },
   ];
 }
 
 /**
  * The events the tab and filters find, in the list frame: a row each, in
- * the order chosen, and the way through the pages. Any staff member can
- * change an event's owner and doc, from its Edit button.
+ * the order chosen, and the way through the pages; when a search finds
+ * none, but would among those taken off Luma, a link to them. Any staff
+ * member can change an event's owner and doc, from its Edit button.
  */
 export default function EventsTable({
   found,
@@ -228,6 +223,13 @@ export default function EventsTable({
         rowKey={(event) => event.id}
         empty={<Muted>{copy.noneFound}</Muted>}
       />
+      {found.removed > 0 && (
+        <p>
+          <StaffLink href={filtersPath(PATH, filters, { removed: "yes" })}>
+            {copy.removedMatches(found.removed)}
+          </StaffLink>
+        </p>
+      )}
     </EventsEditing>
   );
 }

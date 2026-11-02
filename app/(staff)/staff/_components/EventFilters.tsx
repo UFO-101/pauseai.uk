@@ -1,5 +1,5 @@
 import { staffCopy } from "@/lib/content/staff-interface";
-import { EVENT_MISSING, NO_OWNER, ONLINE } from "@/lib/staff-events-list";
+import { NO_OWNER, ONLINE } from "@/lib/staff-events-list";
 import type { EventsSearch } from "@/lib/staff-search";
 import { eventFiltersOf } from "./EventsTable";
 import FilterBar, { filterWords, type Filter } from "./ui/FilterBar";
@@ -9,8 +9,10 @@ export type EventChoices = { staff: readonly string[]; tags: string[]; cities: s
 
 /**
  * The events list's filters, in its columns' order: its tags; where it
- * is, a city or online; its owner, or none; what it lacks; and whether
- * it's been taken off Luma. All but the last can be chosen more than once.
+ * is, a city or online; its owner, or none; and taken off Luma, which
+ * finds only those, as the list leaves them out otherwise, as the
+ * politicians list does test politicians. All but the last can be chosen
+ * more than once.
  */
 function eventFilters({ staff, tags, cities }: EventChoices): Filter[] {
   const copy = staffCopy.events;
@@ -32,12 +34,6 @@ function eventFilters({ staff, tags, cities }: EventChoices): Filter[] {
       label: copy.owner,
       repeat: true,
       options: [{ value: NO_OWNER, label: copy.noOwner }, ...staff.map((email) => ({ value: email, label: email }))],
-    },
-    {
-      name: "missing",
-      label: copy.filters.missing,
-      repeat: true,
-      options: EVENT_MISSING.map((what) => ({ value: what, label: copy.filters.missingWhat[what] })),
     },
     {
       name: "removed",

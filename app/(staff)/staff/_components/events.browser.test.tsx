@@ -24,33 +24,47 @@ const th = (label: string) =>
 const status = () => document.querySelector("[role=status]")!;
 const names = () => [...document.querySelectorAll("tbody tr")].map((tr) => tr.querySelector("a")!.textContent);
 
+/** An event's edit bubble's form, and its fields and buttons. */
+const bubble = (name: string) => {
+  const form = page.getByRole("form", { name: copy.editLabel(name) });
+  return {
+    form,
+    owner: form.getByLabelText(copy.owner),
+    doc: form.getByLabelText(copy.docField),
+    save: form.getByRole("button", { name: copy.save }),
+    cancel: form.getByRole("button", { name: copy.cancel }),
+  };
+};
+/** The text of a row's cells, but its Edit's, whose bubble holds a form. */
+const cells = (name: string) =>
+  [...row(name).element().querySelectorAll("td")].slice(0, -1).map((td) => td.textContent);
+
 describe("EventsTable", () => {
-  it("lists those to come, soonest first, each with when, its name, tags, place, who's going, owner and doc", async () => {
+  it("lists those to come, soonest first, each with its name, tags, place, owner, doc, who's going and the day", async () => {
     await renderTable();
     await expect.element(page.getByText(copy.total(2))).toBeVisible();
     expect(names()).toEqual(["PauseAI London: Protest at Parliament", "AI risk talk"]);
     const headings = [...document.querySelectorAll("thead th")].map((th) => th.textContent!.replace(/[▲▼ ]+$/, ""));
     expect(headings).toEqual([
-      copy.columns.when,
       copy.columns.name,
       copy.columns.tags,
       copy.columns.place,
-      copy.columns.going,
       copy.owner,
       copy.doc,
+      copy.columns.going,
+      copy.columns.when,
       "",
     ]);
-    const protest = row("Protest at Parliament");
-    expect([...protest.element().querySelectorAll("td")].map((td) => td.textContent)).toEqual([
-      "Sat 21 Nov 2026, 13:00",
+    expect(cells("Protest at Parliament")).toEqual([
       "PauseAI London: Protest at Parliament",
       "Big eventsLondon",
       "London",
-      "42",
       "joseph@pauseai.uk",
       copy.doc,
-      copy.edit,
+      "42",
+      "21 Nov 2026",
     ]);
+    const protest = row("Protest at Parliament");
     await expect
       .element(protest.getByRole("link", { name: "PauseAI London: Protest at Parliament" }))
       .toHaveAttribute("href", "https://luma.com/evt-protest");
@@ -58,50 +72,53 @@ describe("EventsTable", () => {
       .element(protest.getByRole("link", { name: copy.doc }))
       .toHaveAttribute("href", "https://docs.google.com/document/d/example-protest-plan/edit");
     // To come with no owner or doc: errors.
-    await expect.element(row("AI risk talk").getByText(copy.noOwner)).toHaveClass(/missing/);
+    await expect.element(row("AI risk talk").getByText(copy.noOwner, { exact: true })).toHaveClass(/missing/);
     await expect.element(row("AI risk talk").getByText(copy.noDoc)).toHaveClass(/missing/);
-    // Sorted by when, soonest first: its heading says so, and leads to the other way.
+    // Sorted by when, soonest first: its heading says so, and leads to the other way; the doc's sorts too.
     const when = th(copy.columns.when);
     expect(when.getAttribute("aria-sort")).toBe("ascending");
     expect(when.querySelector("a")!.getAttribute("href")).toBe("/staff/events?sort=start&dir=desc");
     expect(th(copy.columns.going).querySelector("a")!.getAttribute("href")).toBe("/staff/events?sort=going&dir=desc");
-    // No forms, only an Edit button on each.
-    expect(page.getByRole("button", { name: new RegExp(`^${copy.editLabel("")}`) }).all()).toHaveLength(2);
-    expect(document.querySelectorAll("form")).toHaveLength(0);
+    expect(th(copy.doc).querySelector("a")!.getAttribute("href")).toBe("/staff/events?sort=doc&dir=asc");
+    expect(th(copy.columns.tags).querySelector("a")).toBeNull();
+    // Only Edit on each; its bubble shut.
+    expect(page.getByRole("button", { name: copy.edit, exact: true }).all()).toHaveLength(2);
+    await expect.element(bubble("AI risk talk").form).not.toBeVisible();
   });
 
-  it("lists those past, latest first, what they lack only said, and one taken off Luma marked", async () => {
+  it("lists those past, latest first, what they lack only said, and leaves out those taken off Luma", async () => {
     await renderTable({ when: "past" });
-    expect(names()).toEqual([
-      "Lobbying your MP (online training)",
-      "PauseAI Manchester Social",
-      "PauseAI London March",
-    ]);
-    expect(row("online training").element().querySelectorAll("td")[3].textContent).toBe(copy.online);
-    await expect.element(row("Manchester Social").getByText(copy.noOwner)).not.toHaveClass(/missing/);
-    await expect.element(row("Manchester Social").getByText(copy.noDoc)).not.toHaveClass(/missing/);
-    await expect.element(row("Manchester Social").getByText(copy.removed)).toBeVisible();
-    await expect.element(row("London March").getByText(copy.removed)).not.toBeInTheDocument();
+    expect(names()).toEqual(["Lobbying your MP (online training)", "PauseAI London March"]);
+    expect(cells("online training")[2]).toBe(copy.online);
+    await expect.element(row("London March").getByText(copy.noDoc)).not.toHaveClass(/missing/);
     const when = th(copy.columns.when);
     expect(when.getAttribute("aria-sort")).toBe("descending");
     // Its links keep the tab.
     expect(when.querySelector("a")!.getAttribute("href")).toBe("/staff/events?when=past&sort=start&dir=asc");
   });
 
+  it("lists only those taken off Luma, when asked, marked, what they lack only said", async () => {
+    await renderTable({ when: "past", removed: "yes" });
+    expect(names()).toEqual(["PauseAI Manchester Social"]);
+    await expect.element(row("Manchester Social").getByText(copy.removed)).toBeVisible();
+    await expect.element(row("Manchester Social").getByText(copy.noOwner, { exact: true })).not.toHaveClass(/missing/);
+    await expect.element(row("Manchester Social").getByText(copy.noDoc)).not.toHaveClass(/missing/);
+  });
+
   it("doesn't call one to come with no owner an error once it's been taken off Luma", async () => {
     const [soon] = exampleEvents;
-    const found = { events: [{ ...soon, owner: null, removed: true }], total: 1, pages: 1 };
-    const { search } = exampleEventsTab();
+    const found = { events: [{ ...soon, owner: null, removed: true }], total: 1, pages: 1, removed: 0 };
+    const { search } = exampleEventsTab({ removed: "yes" });
     await render(
       <EventsTable found={found} search={search} staff={exampleStaff} now={exampleEventsNow} save={noAction} />,
     );
-    await expect.element(page.getByText(copy.noOwner)).not.toHaveClass(/missing/);
-    await expect.element(page.getByText(copy.removed)).toBeVisible();
+    await expect.element(row("Protest").getByText(copy.noOwner, { exact: true })).not.toHaveClass(/missing/);
+    await expect.element(row("Protest").getByText(copy.removed)).toBeVisible();
   });
 
   it("leads to its other pages, keeping the tab and filters", async () => {
     const { search } = exampleEventsTab({ when: "past", tag: "London" });
-    const found = { events: exampleEvents, total: 150, pages: 2 };
+    const found = { events: exampleEvents, total: 150, pages: 2, removed: 0 };
     await render(
       <EventsTable found={found} search={search} staff={exampleStaff} now={exampleEventsNow} save={noAction} />,
     );
@@ -110,55 +127,65 @@ describe("EventsTable", () => {
       .toHaveAttribute("href", "/staff/events?when=past&tag=London&page=2");
   });
 
-  it("says when the filters find none", async () => {
+  it("says when the filters find none, and leads to a search's matches among those taken off Luma", async () => {
     await renderTable({ q: "nothing like this" });
     await expect.element(page.getByText(copy.noneFound)).toBeVisible();
+    expect(page.getByRole("link", { name: copy.removedMatches(1) }).all()).toHaveLength(0);
+    await renderTable({ when: "past", q: "social" });
+    await expect
+      .element(page.getByRole("link", { name: copy.removedMatches(1) }))
+      .toHaveAttribute("href", "/staff/events?when=past&q=social&removed=yes");
   });
 
-  it("puts an event's owner and doc fields in their cells, which Cancel takes away", async () => {
+  it("opens a bubble from Edit with its owner and doc, Save off till one changes, Cancel closing it as it was", async () => {
     await renderTable();
-    await page.getByRole("button", { name: copy.editLabel("AI risk talk") }).click();
-    const talk = row("AI risk talk");
-    const owner = talk.getByRole("combobox", { name: copy.owner });
+    await row("AI risk talk").getByRole("button", { name: copy.edit }).click();
+    const { form, owner, doc, save, cancel } = bubble("AI risk talk");
+    await expect.element(form).toBeVisible();
     await expect.element(owner).toHaveValue("");
-    await expect.element(owner).toHaveFocus();
     // No owner can't be chosen back.
-    await expect.element(talk.getByRole("option", { name: copy.noOwner })).toBeDisabled();
-    await expect
-      .element(talk.getByRole("textbox", { name: copy.docField }))
-      .toHaveAttribute("placeholder", copy.docPlaceholder);
-    // In their columns, in place of what they show.
-    const cells = talk.element().querySelectorAll("td");
-    expect(cells[5].querySelector("select")).not.toBeNull();
-    expect(cells[6].querySelector("input")).not.toBeNull();
-    expect(cells[5].querySelector("[class*=missing]")).toBeNull();
-    // Only one at a time: another's Edit closes this.
-    await page.getByRole("button", { name: copy.editLabel("PauseAI London: Protest at Parliament") }).click();
-    await expect.element(owner).not.toBeInTheDocument();
-    await expect
-      .element(row("Protest at Parliament").getByRole("combobox", { name: copy.owner }))
-      .toHaveValue("joseph@pauseai.uk");
-    await expect
-      .element(row("Protest at Parliament").getByRole("textbox", { name: copy.docField }))
-      .toHaveValue("https://docs.google.com/document/d/example-protest-plan/edit");
-    await expect.element(page.getByRole("option", { name: copy.noOwner })).not.toBeInTheDocument();
-    await page.getByRole("button", { name: copy.cancel }).click();
-    await expect.element(page.getByRole("form")).not.toBeInTheDocument();
-    await expect.element(row("Protest at Parliament").getByText("joseph@pauseai.uk")).toBeVisible();
+    await expect.element(form.getByRole("option", { name: copy.noOwner })).toBeDisabled();
+    await expect.element(doc).toHaveAttribute("placeholder", copy.docPlaceholder);
+    await expect.element(save).toBeDisabled();
+    await doc.fill("https://docs.google.com/document/d/abc/edit");
+    await expect.element(save).toBeEnabled();
+    // Back as it was, off again.
+    await doc.fill("");
+    await expect.element(save).toBeDisabled();
+    await owner.selectOptions("sean@pauseai.uk");
+    await expect.element(save).toBeEnabled();
+    await cancel.click();
+    await expect.element(form).not.toBeVisible();
+    // Opened again, as it was.
+    await row("AI risk talk").getByRole("button", { name: copy.edit }).click();
+    await expect.element(owner).toHaveValue("");
+    await expect.element(save).toBeDisabled();
+    // The table didn't change.
+    expect(cells("AI risk talk")[3]).toBe(copy.noOwner);
+  });
+
+  it("begins with the owner and doc it has", async () => {
+    await renderTable();
+    await row("Protest at Parliament").getByRole("button", { name: copy.edit }).click();
+    const { form, owner, doc } = bubble("PauseAI London: Protest at Parliament");
+    await expect.element(owner).toHaveValue("joseph@pauseai.uk");
+    await expect.element(doc).toHaveValue("https://docs.google.com/document/d/example-protest-plan/edit");
+    await expect.element(form.getByRole("option", { name: copy.noOwner })).not.toBeInTheDocument();
   });
 
   it("saves the owner and doc together, only a link to Google, then closes", async () => {
     const save = vi.fn(async (form: FormData) => ({ emailed: [], owner: form.get("owner") as string }));
     await renderTable({}, save);
-    await page.getByRole("button", { name: copy.editLabel("AI risk talk") }).click();
-    await page.getByRole("combobox").selectOptions("sean@pauseai.uk");
+    await row("AI risk talk").getByRole("button", { name: copy.edit }).click();
+    const fields = bubble("AI risk talk");
+    await fields.owner.selectOptions("sean@pauseai.uk");
     // Anywhere else, the browser won't send it.
-    await page.getByRole("textbox").fill("https://example.com/plan");
-    await page.getByRole("button", { name: copy.save }).click();
+    await fields.doc.fill("https://example.com/plan");
+    await fields.save.click();
     expect(save).not.toHaveBeenCalled();
     const doc = "https://docs.google.com/document/d/abc/edit";
-    await page.getByRole("textbox").fill(doc);
-    await page.getByRole("button", { name: copy.save }).click();
+    await fields.doc.fill(doc);
+    await fields.save.click();
     await vi.waitFor(() => expect(save).toHaveBeenCalledOnce());
     const form = save.mock.calls[0][0];
     expect([form.get("eventId"), form.get("owner"), form.get("doc")]).toEqual([
@@ -166,7 +193,7 @@ describe("EventsTable", () => {
       "sean@pauseai.uk",
       doc,
     ]);
-    await expect.element(page.getByRole("form")).not.toBeInTheDocument();
+    await expect.element(fields.form).not.toBeVisible();
     // Emailing no one, it says nothing.
     expect(status().textContent).toBe("");
   });
@@ -174,9 +201,10 @@ describe("EventsTable", () => {
   it("says whom a save emailed, over the table, till its × closes it", async () => {
     const save = async () => ({ emailed: ["sean@pauseai.uk", "joseph@pauseai.uk"], owner: "sean@pauseai.uk" });
     await renderTable({}, save);
-    await page.getByRole("button", { name: copy.editLabel("AI risk talk") }).click();
-    await page.getByRole("combobox").selectOptions("sean@pauseai.uk");
-    await page.getByRole("button", { name: copy.save }).click();
+    await row("AI risk talk").getByRole("button", { name: copy.edit }).click();
+    const fields = bubble("AI risk talk");
+    await fields.owner.selectOptions("sean@pauseai.uk");
+    await fields.save.click();
     await vi.waitFor(() =>
       expect(status().textContent).toContain(copy.emailed(["sean@pauseai.uk", "joseph@pauseai.uk"], "sean@pauseai.uk")),
     );
@@ -208,7 +236,7 @@ describe("EventTabs", () => {
 describe("EventFilters", () => {
   const choices = { staff: exampleStaff, tags: ["Big events", "London"], cities: ["London", "Oxford"] };
 
-  it("offers a filter by tag, place, owner, what it lacks, and taken off Luma, each chosen as a chip, keeping the tab", async () => {
+  it("offers a filter by tag, place, owner, and taken off Luma, each chosen as a chip, keeping the tab", async () => {
     const { search } = exampleEventsTab({ when: "past", tag: "London", place: "!online", owner: "none" });
     await render(<EventFilters search={search} choices={choices} />);
     await expect.element(page.getByRole("searchbox", { name: copy.filters.search })).toBeVisible();
@@ -223,17 +251,17 @@ describe("EventFilters", () => {
       .toHaveAttribute("href", "/staff/events?when=past");
     // + Filter offers every one; a tag only those not chosen.
     const offered = document.getElementById("filter-add")!.textContent;
-    for (const label of [copy.filters.tag, copy.filters.place, copy.owner, copy.filters.missing, copy.removed]) {
+    for (const label of [copy.filters.tag, copy.filters.place, copy.owner, copy.removed]) {
       expect(offered).toContain(label);
     }
     expect(offered).toContain("Big events");
   });
 
   it("says the search and filters that are on, in words", () => {
-    const { search } = exampleEventsTab({ q: "talk", missing: "doc", removed: "yes" });
+    const { search } = exampleEventsTab({ q: "talk", owner: "none", removed: "yes" });
     expect(eventWords(search, choices)).toEqual([
       `${staffCopy.search} talk`,
-      `${copy.filters.missing} ${copy.filters.missingWhat.doc}`,
+      `${copy.owner} ${copy.noOwner}`,
       `${copy.removed} ${copy.filters.removed.yes}`,
     ]);
   });

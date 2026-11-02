@@ -1774,7 +1774,7 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/EventEdit.tsx",
       variants: [
         {
-          label: "In the events table: press an event's Edit, and its owner and doc cells become its form's fields",
+          label: "In the events table: press an event's Edit for the bubble to change its owner and doc",
           render: () => (
             <StaffPage as="div">
               <EventsTableExample emailed />
@@ -1784,39 +1784,11 @@ export const staff: Group = {
       ],
     },
     {
-      name: "OwnerField",
+      name: "EventEdit",
       file: "app/(staff)/staff/_components/EventEdit.tsx",
       variants: [
         {
-          label: "In the events table: press an event's Edit, and its owner and doc cells become its form's fields",
-          render: () => (
-            <StaffPage as="div">
-              <EventsTableExample emailed />
-            </StaffPage>
-          ),
-        },
-      ],
-    },
-    {
-      name: "DocField",
-      file: "app/(staff)/staff/_components/EventEdit.tsx",
-      variants: [
-        {
-          label: "In the events table: press an event's Edit, and its owner and doc cells become its form's fields",
-          render: () => (
-            <StaffPage as="div">
-              <EventsTableExample emailed />
-            </StaffPage>
-          ),
-        },
-      ],
-    },
-    {
-      name: "EventEditButtons",
-      file: "app/(staff)/staff/_components/EventEdit.tsx",
-      variants: [
-        {
-          label: "In the events table: press an event's Edit, and its owner and doc cells become its form's fields",
+          label: "In the events table: press an event's Edit for the bubble to change its owner and doc",
           render: () => (
             <StaffPage as="div">
               <EventsTableExample emailed />

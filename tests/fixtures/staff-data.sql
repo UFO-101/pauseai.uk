@@ -164,7 +164,8 @@ FROM (VALUES
 
 -- ----------------------------------------------------------------- luma
 
--- The fixture calendar's ten events, past and future, and two more.
+-- The fixture calendar's ten events, past and future, and three more, one of
+-- them taken off Luma, cancelled.
 INSERT INTO luma_events (id, name, url, start_at, access, city, latitude, longitude, first_seen_at, changed_at, guests_synced_at, guests_error) VALUES
   ('evt-fixture-past-glasgow-stall', 'Glasgow street stall', 'fixture-past-glasgow-stall', now() - interval '270 days', 'manage', 'Glasgow', 55.8617, -4.2583, now() - interval '30 days', now() - interval '30 days', now() - interval '1 hour', NULL),
   ('evt-fixture-past-london-march', 'PauseAI London March', 'fixture-past-london-march', now() - interval '250 days', 'manage', 'London', 51.5045, -0.1262, now() - interval '30 days', now() - interval '30 days', now() - interval '1 hour', NULL),
@@ -177,6 +178,7 @@ INSERT INTO luma_events (id, name, url, start_at, access, city, latitude, longit
   ('evt-fixture-oxford-talk', 'AI risk talk', 'fixture-oxford-talk', now() + interval '30 days', 'manage', 'Oxford', 51.7548, -1.2544, now() - interval '30 days', now() - interval '5 days', NULL, NULL),
   ('evt-fixture-bristol-leafleting', 'Leafleting in Bristol', 'fixture-bristol-leafleting', now() + interval '32 days', 'manage', 'Bristol', 51.4545, -2.5879, now() - interval '30 days', now() - interval '5 days', NULL, NULL),
   ('evt-fixture-leicester-meetup', 'PauseAI Leicester meetup', 'fixture-leicester-meetup', now() + interval '36 days', 'manage', 'Leicester', 52.6369, -1.1398, now() - interval '30 days', now() - interval '5 days', NULL, NULL),
+  ('evt-seed-cancelled-picnic', 'PauseAI Cambridge picnic', 'seed-cancelled-picnic', now() + interval '10 days', 'manage', 'Cambridge', 52.2053, 0.1218, now() - interval '30 days', now() - interval '3 days', now() - interval '3 days', NULL),
   ('evt-seed-view-only', 'A partner''s event we can only view', 'seed-view-only', now() + interval '15 days', 'view', 'Leeds', 53.8008, -1.5491, now() - interval '30 days', now() - interval '5 days', now() - interval '1 hour', 'Luma answered 403: guests are not shared with viewers');
 
 -- The fixture's six people and fourteen more. Those with contact_since
@@ -326,6 +328,8 @@ UPDATE luma_events SET tags = '{Manchester}' WHERE id IN ('evt-seed-manchester-t
 UPDATE luma_events SET tags = '{Oxford}' WHERE id = 'evt-fixture-oxford-talk';
 UPDATE luma_events SET tags = '{West of England}' WHERE id = 'evt-fixture-bristol-leafleting';
 UPDATE luma_events SET tags = '{Leicester}' WHERE id = 'evt-fixture-leicester-meetup';
+-- Taken off Luma: the import found it gone from the calendar.
+UPDATE luma_events SET removed_at = now() - interval '3 days' WHERE id = 'evt-seed-cancelled-picnic';
 
 -- Owners for some of our events, past and to come; the rest coming up have
 -- none, so the events page shows them as needing one. One has its Google Doc.

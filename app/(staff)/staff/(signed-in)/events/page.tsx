@@ -22,13 +22,19 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 export default async function EventsPage({ searchParams }: Props) {
   await requireStaff();
   const { filter, ...search } = eventsSearch(await searchParams);
-  const { events, total, pages, staff, tags, cities, now } = await eventsPage(filter);
+  const { events, total, pages, removed, staff, tags, cities, now } = await eventsPage(filter);
   return (
     <>
       <PageTitle action={<EventsSource />}>{staffCopy.events.title}</PageTitle>
       <EventTabs search={search} />
       <EventFilters search={search} choices={{ staff, tags, cities }} />
-      <EventsTable found={{ events, total, pages }} search={search} staff={staff} now={now} save={saveEventNow} />
+      <EventsTable
+        found={{ events, total, pages, removed }}
+        search={search}
+        staff={staff}
+        now={now}
+        save={saveEventNow}
+      />
     </>
   );
 }

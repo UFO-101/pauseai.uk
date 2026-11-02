@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useRef, useState } from "react";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { Checkbox, TextInput } from "@/components/ui/Controls";
 import { FieldError } from "@/components/ui/Field";
@@ -26,64 +26,70 @@ function accountForm(email: string, permissions: readonly Permission[]): FormDat
 }
 
 /**
- * An account's permissions, by name, and beside them, Edit, which puts in
- * their place a form with a box for each, ticked for those it has, and
- * Save, which saves them, and Cancel. One refused (the last admin) stays
- * as it was saved, and the page says why.
+ * An account's permissions, by name, and beside them, Edit, which opens a
+ * bubble under it, over the table, so the row doesn't move: a box for
+ * each, ticked for those it has; Save, off till they differ from what's
+ * saved, saves them and closes it, and Cancel closes it as it was. One refused (the last admin) stays as it was saved,
+ * and the page says why.
  */
 function Permissions({ account, save }: { account: StaffAccount; save: Action }) {
   const copy = staffCopy.accounts;
-  const [open, setOpen] = useState(false);
   const [ticked, setTicked] = useState<readonly Permission[]>(account.permissions);
-  if (!open) {
-    return (
-      <span className={styles.permissionsCell}>
-        {account.permissions.length ? account.permissions.map((p) => copy.names[p]).join(", ") : <Muted>–</Muted>}
-        <Button
-          variant="ghost"
-          size="small"
-          fit
-          type="button"
+  const form = useRef<HTMLFormElement>(null);
+  const close = () => form.current!.closest<HTMLElement>("[popover]")!.hidePopover();
+  return (
+    <span className={styles.permissionsCell}>
+      {account.permissions.length ? account.permissions.map((p) => copy.names[p]).join(", ") : <Muted>–</Muted>}
+      <Menu
+        id={`permissions-${account.email.replace(/\W/g, "-")}`}
+        trigger={buttonClass({ variant: "ghost", size: "small", fit: true })}
+        label={copy.edit}
+      >
+        <form
+          ref={form}
+          className={styles.editor}
           aria-label={copy.editLabel(account.email)}
-          onClick={() => {
-            setTicked(account.permissions);
-            setOpen(true);
+          action={async () => {
+            await save(accountForm(account.email, ticked));
+            close();
           }}
         >
-          {copy.edit}
-        </Button>
-      </span>
-    );
-  }
-  return (
-    <form
-      className={styles.editor}
-      aria-label={copy.editLabel(account.email)}
-      action={async () => {
-        await save(accountForm(account.email, ticked));
-        setOpen(false);
-      }}
-    >
-      <div className={styles.boxes}>
-        {PERMISSIONS.map((permission) => (
-          <Checkbox
-            key={permission}
-            checked={ticked.includes(permission)}
-            onChange={(on) => setTicked(PERMISSIONS.filter((p) => (p === permission ? on : ticked.includes(p))))}
-          >
-            {copy.names[permission]}
-          </Checkbox>
-        ))}
-      </div>
-      <span className={styles.buttons}>
-        <SubmitButton variant="primary" size="small" fit>
-          {copy.save}
-        </SubmitButton>
-        <Button variant="ghost" size="small" fit type="button" onClick={() => setOpen(false)}>
-          {copy.cancel}
-        </Button>
-      </span>
-    </form>
+          <div className={styles.boxes}>
+            {PERMISSIONS.map((permission) => (
+              <Checkbox
+                key={permission}
+                checked={ticked.includes(permission)}
+                onChange={(on) => setTicked(PERMISSIONS.filter((p) => (p === permission ? on : ticked.includes(p))))}
+              >
+                {copy.names[permission]}
+              </Checkbox>
+            ))}
+          </div>
+          <span className={styles.buttons}>
+            <SubmitButton
+              variant="primary"
+              size="small"
+              fit
+              disabled={PERMISSIONS.every((p) => ticked.includes(p) === account.permissions.includes(p))}
+            >
+              {copy.save}
+            </SubmitButton>
+            <Button
+              variant="ghost"
+              size="small"
+              fit
+              type="button"
+              onClick={() => {
+                setTicked(account.permissions);
+                close();
+              }}
+            >
+              {copy.cancel}
+            </Button>
+          </span>
+        </form>
+      </Menu>
+    </span>
   );
 }
 
@@ -154,8 +160,9 @@ export function AddStaff({ accounts, add }: { accounts: StaffAccount[]; add: Act
  * Every account: its permissions, and Edit to change them; when and by
  * whom it was added; when it last logged in and was seen; its sessions
  * open; and at the right, a button to end those sessions and one to remove
- * it, pressed twice. Under the table, what removing does; then, under its
- * own heading, what each permission opens.
+ * it, pressed twice. Its last row is everyone else at pauseai.uk, who can
+ * log in with no permissions, said across the row from Added on. Then, under its own heading, what each
+ * permission opens.
  */
 export default function StaffAccountsTable({
   accounts,
@@ -213,10 +220,18 @@ export default function StaffAccountsTable({
             </tr>
           ))}
         </tbody>
+        <tfoot>
+          <tr>
+            <td>{copy.everyone}</td>
+            <td>
+              <Muted>–</Muted>
+            </td>
+            <td colSpan={5}>
+              <Muted>{copy.everyoneNote}</Muted>
+            </td>
+          </tr>
+        </tfoot>
       </Table>
-      <p className={styles.note}>
-        <Muted>{copy.removeNote}</Muted>
-      </p>
       <h2>{copy.permissionsKey}</h2>
       <dl className={styles.permissions}>
         {PERMISSIONS.map((permission) => (

@@ -93,7 +93,17 @@ export function londonWhenShort(at: string): string {
   return `${day}, ${londonClock(sends)}`;
 }
 
-/** When something starts, in London, for a list's row or an email: "Fri 30 Oct 2026, 19:00". */
+/** The day something happens in London, for the staff pages: "27 Oct 2026". */
+export function londonDate(at: string): string {
+  return new Date(at).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "Europe/London",
+  });
+}
+
+/** When something starts, in London, for an email: "Fri 30 Oct 2026, 19:00". */
 export function londonStart(at: string): string {
   const part = (options: Intl.DateTimeFormatOptions) =>
     new Date(at).toLocaleDateString("en-GB", { ...options, timeZone: "Europe/London" });

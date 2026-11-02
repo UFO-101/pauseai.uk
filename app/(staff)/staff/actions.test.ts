@@ -232,8 +232,15 @@ describeWithDatabase("staff Server Actions", () => {
     expect(await expectRedirect(() => saveStaffAccountNow(form({ email: "jo@pauseai.uk" })))).toBe(
       "/staff/accounts?notice=last-admin",
     );
+    // Removed, the page says what that leaves them; one that isn't there, nothing; the last admin, why not.
+    expect(await expectRedirect(() => removeStaffAccountNow(form({ email: "samuel.whitlock@pauseai.uk" })))).toBe(
+      "/staff/accounts?notice=removed",
+    );
     expect(await expectRedirect(() => removeStaffAccountNow(form({ email: "samuel.whitlock@pauseai.uk" })))).toBe(
       "/staff/accounts",
+    );
+    expect(await expectRedirect(() => removeStaffAccountNow(form({ email: "jo@pauseai.uk" })))).toBe(
+      "/staff/accounts?notice=last-admin",
     );
     expect(await query("SELECT count(*)::int AS n FROM staff_accounts")).toEqual([{ n: 1 }]);
     // An address not at pauseai.uk is refused, and the page says so.

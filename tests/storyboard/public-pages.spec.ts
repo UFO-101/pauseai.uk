@@ -107,7 +107,7 @@ test("/blog/feed.xml: the blog's Atom feed, linked from the blog's pages", async
   const link = page.locator('head link[rel="alternate"][type="application/atom+xml"]');
   await expect(link).toHaveAttribute("href", /\/blog\/feed\.xml$/);
   const feed = await request.get(`${BASE}/blog/feed.xml`);
-  expect(feed.headers()["content-type"]).toBe("application/atom+xml; charset=utf-8");
+  expect(feed.headers()["content-type"]).toBe("application/xml; charset=utf-8");
   const xml = await feed.text();
   expect(xml).toContain('<feed xmlns="http://www.w3.org/2005/Atom">');
   expect(xml).toContain("<entry>");

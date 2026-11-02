@@ -140,7 +140,6 @@ describe("eventsSearch", () => {
     owner: [],
     tag: [],
     place: [],
-    missing: [],
     removed: "",
     sort: "",
     dir: "",
@@ -151,13 +150,12 @@ describe("eventsSearch", () => {
     owner: undefined,
     tag: undefined,
     place: undefined,
-    missing: undefined,
-    removed: undefined,
+    removed: false,
     not: undefined,
     page: 1,
   };
 
-  it("is the Future tab, soonest first, with nothing chosen; and Past, latest first", () => {
+  it("is the Future tab, soonest first, with those taken off Luma left out, nothing chosen; and Past, latest first", () => {
     expect(eventsSearch({})).toEqual({
       ...blank,
       filter: { ...none, tab: "future", sort: { key: "start", dir: "asc" } },
@@ -168,6 +166,8 @@ describe("eventsSearch", () => {
       sort: { key: "start", dir: "desc" },
     });
     expect(eventsSearch({ when: "someday" }).filter.tab).toBe("future");
+    // Only "yes" finds those taken off Luma.
+    expect(eventsSearch({ removed: "no" }).filter.removed).toBe(false);
   });
 
   it("reads each filter as typed and as applied, a repeated one as a list, its values marked ! left out", () => {
@@ -177,8 +177,7 @@ describe("eventsSearch", () => {
       owner: ["none", "!jo@pauseai.uk"],
       tag: "London",
       place: ["!online"],
-      missing: ["doc", "!owner", "nothing"],
-      removed: "no",
+      removed: "yes",
       sort: "going",
       dir: "asc",
       page: "2",
@@ -190,9 +189,8 @@ describe("eventsSearch", () => {
       owner: ["none"],
       tag: ["London"],
       place: undefined,
-      missing: ["doc"],
-      removed: false,
-      not: { owner: ["jo@pauseai.uk"], place: ["online"], missing: ["owner"] },
+      removed: true,
+      not: { owner: ["jo@pauseai.uk"], place: ["online"] },
       sort: { key: "going", dir: "asc" },
       page: 2,
     });
@@ -288,6 +286,7 @@ describe("accountsSearch", () => {
   it("keeps only the notice it knows", () => {
     expect(accountsSearch({ notice: "last-admin" })).toEqual({ notice: "last-admin" });
     expect(accountsSearch({ notice: "not-pauseai" })).toEqual({ notice: "not-pauseai" });
+    expect(accountsSearch({ notice: "removed" })).toEqual({ notice: "removed" });
     expect(accountsSearch({ notice: "x" })).toEqual({ notice: "" });
     expect(accountsSearch({})).toEqual({ notice: "" });
   });

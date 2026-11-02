@@ -96,21 +96,31 @@ describe("the staff examples", () => {
 
   it("logs an event's save in the table", async () => {
     await render(<EventsTableExample />);
-    await page.getByRole("button", { name: staffCopy.events.editLabel("AI risk talk") }).click();
-    await page.getByRole("combobox").selectOptions("sean@pauseai.uk");
-    await page.getByRole("button", { name: staffCopy.events.save }).click();
+    await page
+      .getByRole("row")
+      .filter({ hasText: "AI risk talk" })
+      .getByRole("button", { name: staffCopy.events.edit })
+      .click();
+    const form = page.getByRole("form", { name: staffCopy.events.editLabel("AI risk talk") });
+    await form.getByLabelText(staffCopy.events.owner).selectOptions("sean@pauseai.uk");
+    await form.getByRole("button", { name: staffCopy.events.save }).click();
     await expect.poll(() => log().nth(0).query()?.textContent).toMatch(/^save\(/);
     expect(document.querySelector("[role=status]")!.textContent).toBe("");
   });
 
   it("logs an event's save, and says whom it emailed", async () => {
     await render(<EventsTableExample emailed />);
-    await page.getByRole("button", { name: staffCopy.events.editLabel("AI risk talk") }).click();
-    await page.getByRole("combobox").selectOptions("sean@pauseai.uk");
-    await page.getByRole("button", { name: staffCopy.events.save }).click();
+    await page
+      .getByRole("row")
+      .filter({ hasText: "AI risk talk" })
+      .getByRole("button", { name: staffCopy.events.edit })
+      .click();
+    const form = page.getByRole("form", { name: staffCopy.events.editLabel("AI risk talk") });
+    await form.getByLabelText(staffCopy.events.owner).selectOptions("sean@pauseai.uk");
+    await form.getByRole("button", { name: staffCopy.events.save }).click();
     await expect.poll(() => log().nth(0).query()?.textContent).toMatch(/^save\(/);
     await expect
-      .poll(() => page.getByRole("status").query()?.textContent)
+      .poll(() => document.querySelector("[role=status]")?.textContent)
       .toContain(staffCopy.events.emailed(["sean@pauseai.uk", "joseph@pauseai.uk"], "sean@pauseai.uk"));
   });
 

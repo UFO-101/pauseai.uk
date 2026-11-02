@@ -44,13 +44,14 @@ test("Events get their owners by the rules, and one with none is given one", asy
     "the events page, on Future, soonest first: Joseph's but for Oxford's, with no owner in red, and none with a doc",
   );
 
-  await talk.getByRole("button", { name: copy.editLabel("AI risk talk") }).click();
+  await talk.getByRole("button", { name: copy.edit }).click();
   const form = page.getByRole("form", { name: copy.editLabel("AI risk talk") });
-  await talk.getByLabel(copy.owner).selectOption("sean@pauseai.uk");
-  await talk.getByLabel(copy.docField).fill("https://docs.google.com/document/d/oxford-talk-plan/edit");
+  await expect(form.getByRole("button", { name: copy.save })).toBeDisabled();
+  await form.getByLabel(copy.owner).selectOption("sean@pauseai.uk");
+  await form.getByLabel(copy.docField).fill("https://docs.google.com/document/d/oxford-talk-plan/edit");
   await frame(
     page,
-    "the Oxford talk opened to edit, in its own cells: Sean chosen as its owner, and its Google Doc pasted",
+    "the Oxford talk's Edit bubble, over the table: Sean chosen as its owner, and its Google Doc pasted",
   );
 
   await form.getByRole("button", { name: copy.save }).click();
@@ -78,7 +79,7 @@ test("Past events, latest first, sorted and filtered", async ({ page, request, f
   await page.goto(`${BASE}/staff/events`);
   await page.getByRole("link", { name: copy.tabs.past }).click();
   await expect(page).toHaveURL(`${BASE}/staff/events?when=past`);
-  const names = page.locator("tbody tr td:nth-child(2) a");
+  const names = page.locator("tbody tr td:nth-child(1) a");
   await expect(names).toHaveText(["PauseAI London March", "Glasgow street stall"]);
   await frame(page, "the Past tab, latest first: what they lacked only said, not in red");
 
