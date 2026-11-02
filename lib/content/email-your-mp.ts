@@ -231,11 +231,14 @@ export const copy = {
     // Opened without having just sent one.
     none: "No letter has been sent recently.",
   },
-  // The note on a copy of an MP's reply, sent to the shared inbox and the sender.
+  // The note on a copy of an MP's reply: to the sender, and to the shared inbox.
   forwardedReply: {
-    subject: (subject: string) => `Response: ${subject}`,
-    note: (mpName: string, senderName: string) =>
+    toSender: (mpName: string) => `You've got a reply from ${mpName}. Here it is:`,
+    toInbox: (mpName: string, senderName: string) =>
       `${mpName} replied to the letter that ${senderName} sent. Here is the response:`,
+    // The sender wrote back to their MP, copying the letter's address.
+    followUp: (senderName: string, mpName: string) =>
+      `${senderName} wrote back to ${mpName} about their letter. Here is what they sent:`,
   },
   // The bill's page, for an MP who signed ControlAI's letter to the PM
   // backing it (lib/controlai-letter.ts): the note above the form, and the
