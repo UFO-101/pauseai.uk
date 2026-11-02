@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
-import IconButton from "@/components/ui/IconButton";
+import Notice from "./Notice";
 import styles from "./CopyButton.module.css";
 
 /** How long the button says it copied, in milliseconds; the note stays. */
@@ -12,10 +12,9 @@ const SAYS_COPIED = 4000;
  * A small button that copies `text` to the clipboard, then for a few
  * seconds says `copied` in place of its label, with a tick, popping in;
  * and a moment later `note`, what to do with it, opens in the page under
- * it, lit as it opens, so the eye goes from one to the other. The note
- * stays, as it may take a while to act on, till its × closes it, and
- * opens afresh at each copy; a screen reader hears it too. `close` names
- * the ×. If the browser refuses the clipboard,
+ * it, a Notice, so the eye goes from one to the other. The note stays, as
+ * it may take a while to act on, till its × closes it, and opens afresh at
+ * each copy; a screen reader hears it too. `close` names the ×. If the browser refuses the clipboard,
  * nothing changes.
  */
 export default function CopyButton({
@@ -72,18 +71,9 @@ export default function CopyButton({
       </Button>
       <span role="status" className={styles.status}>
         {open && note && (
-          <span key={copies} className={styles.note}>
+          <Notice key={copies} close={close} onClose={() => setOpen(false)}>
             {note}
-            <IconButton
-              look="outline"
-              size={22}
-              className={styles.close}
-              aria-label={close}
-              onClick={() => setOpen(false)}
-            >
-              ×
-            </IconButton>
-          </span>
+          </Notice>
         )}
       </span>
     </span>

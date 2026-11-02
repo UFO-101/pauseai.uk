@@ -57,6 +57,7 @@ export const staffCopy = {
     // The sections the pages are in, in the sidebar.
     sections: {
       supporters: "Supporters",
+      events: "Events",
       politicians: "Politicians",
       admin: "Admin",
       // Over your address, which leads to your own page.
@@ -66,6 +67,7 @@ export const staffCopy = {
     politicians: "Politicians",
     asks: "Asks",
     mailings: "Mailings",
+    events: "Events",
     import: "Import data",
     changes: "Audit log",
     letters: "Letters to MPs",
@@ -682,6 +684,63 @@ export const staffCopy = {
     house: "House",
   },
   // The mailings page (/staff/mailings): PauseAI's mails to many politicians, and each one's own page.
+  // The events page (/staff/events): our events on Luma, as the hourly import has them, and who on staff owns each.
+  events: {
+    title: "Events",
+    // At the top of the page, in small grey print, "imported hourly" linking to the Luma import's page.
+    intro: { before: "These are ", link: "imported hourly", after: " from Luma." },
+    none: "No events yet.",
+    // The heading over the events still to come; those past are under their month or year.
+    comingUp: "Coming up",
+    // Under an event's name: how many are going (registered, and approved).
+    going: (n: number) => `${n} going`,
+    online: "Online",
+    // An event gone from our Luma calendar, kept for its history.
+    removed: "Taken off Luma",
+    // No owner: in red, with a warning, on one coming up, as someone must take it; the edit form's select's first choice.
+    noOwner: "No owner",
+    // An event's Google Doc: the link to it, in its column after the owner; with none, in red, with a warning,
+    // on one coming up, as for no owner.
+    doc: "Google Doc",
+    noDoc: "No doc",
+    // The button at a row's right, and its name for a screen reader, which opens the form to change its owner and doc.
+    edit: "Edit",
+    editLabel: (event: string) => `Edit ${event}`,
+    // The edit form's fields and buttons.
+    owner: "Owner",
+    docField: "Google Doc",
+    // In the empty box: the start of the link it takes (Google Drive's are taken too).
+    docPlaceholder: "https://docs.google.com/…",
+    save: "Save",
+    // After a save that emailed anyone, in a note under the event: whom, and why. Its × closes it.
+    emailed: (to: string[], owner: string) =>
+      `Emailed ${to.join(" and ")} to let them know ${owner} now owns this event.`,
+    closeEmailed: "Close",
+    cancel: "Cancel",
+    // The email when an event's owner changes: to the new owner, whoever chose them, copied to the one before, saying who
+    // gave it to them and from whom; or, when the import gives events their owners by the rules, to each new owner,
+    // listing them.
+    ownerEmail: {
+      subject: (n: number, first: string, owner: string) =>
+        n === 1 ? `You're now owner for ${first}, ${owner}` : `You're now owner for ${n} events, ${owner}`,
+      body: ({
+        events,
+        owner,
+        previous,
+        by,
+      }: {
+        events: { name: string; when: string; url: string }[];
+        owner: string;
+        previous: string | null;
+        by: string | null;
+      }) =>
+        `${by ? `You're now the owner of this event, ${owner}. ${by === owner ? "You took it on" : `${by} gave it to you`}${previous ? `, from ${previous}` : ""}.` : `You're now the owner of ${events.length === 1 ? "this event" : "these events"}, ${owner}, by the rules for who owns which events.`}\n\n${events
+          .map((event) => `${event.name}\n${event.when}\n${event.url}`)
+          .join(
+            "\n\n",
+          )}\n\nAs the owner, you make sure the event is exceptional:\n- Be chronically early: arrive before anyone else to get everything ready, and leave last\n- Spot early what could go wrong, like an entrance that's hard to find\n- Make sure enough people come\n- Have everyone leave feeling it was better than they expected`,
+    },
+  },
   mailings: {
     title: "Mailings",
     intro: "Emails PauseAI has sent to many notable people at once.",
@@ -1625,6 +1684,10 @@ export const staffCopy = {
       permissions: "Permissions",
       pdfUrl: "PDF",
       error: "Error",
+      eventId: "Event",
+      owner: "Owner",
+      previous: "Before",
+      url: "Google Doc",
     } as Record<string, string>,
     // A held MP import decided, linked to the import's page.
     run: (id: string) => `Import run ${id}`,

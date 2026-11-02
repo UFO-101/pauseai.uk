@@ -10,6 +10,7 @@ import { staffBack } from "@/lib/staff-search";
 import {
   askFrom,
   eraseFrom,
+  eventFrom,
   idFrom,
   noteEditFrom,
   noteFrom,
@@ -33,6 +34,7 @@ import { importWebFormLetters } from "@/lib/server/web-form-import";
 import { addNote, deleteNote, editNote, type NoteTarget } from "@/lib/server/notes";
 import { deletePolitician, setStatus } from "@/lib/server/politicians";
 import { requireStaff } from "@/lib/server/staff-auth";
+import { type EventSaved, setEventDoc, setEventOwner } from "@/lib/server/staff-events";
 import {
   type AccountChange,
   endStaffSessions,
@@ -56,6 +58,22 @@ export async function setAskStatus(form: FormData): Promise<void> {
   revalidatePath(`/staff/politicians/${parsed.politicianId}`);
   // A mailing's counts, and its letters' pages, where the answer can be set too.
   revalidatePath("/staff/mailings", "layout");
+}
+
+/**
+ * An event's edit form on the events page: makes the staff member chosen
+ * its owner, which emails them and the owner before, and sets or clears its
+ * Google Doc. Any staff member can. Returns whom it emailed, and the new
+ * owner, for the page to say so.
+ */
+export async function saveEventNow(form: FormData): Promise<EventSaved> {
+  const { email } = await requireStaff();
+  const parsed = eventFrom(form);
+  if (!parsed) return { emailed: [], owner: null };
+  const emailed = parsed.owner ? await setEventOwner(parsed.eventId, parsed.owner, email) : undefined;
+  const doc = await setEventDoc(parsed.eventId, parsed.doc, email);
+  if (emailed || doc) revalidatePath("/staff/events");
+  return { emailed: emailed ?? [], owner: parsed.owner };
 }
 
 /** The button on the page of a politician gone from Airtable: deletes them, and goes back to the list. */

@@ -6,6 +6,8 @@ import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.exam
 import {
   ChangeTimeFormExample,
   DueTimeFieldsExample,
+  EventEditExample,
+  EventsOverviewExample,
   HeldSyncExample,
   MailingWriterExample,
   NoteChangesExample,
@@ -14,6 +16,7 @@ import {
   NoteHistoryExample,
   NotesExample,
   NoteTextExample,
+  NoticeExample,
   PoliticianDetailsExample,
   PoliticianTableEmptyExample,
   PoliticianTableExample,
@@ -90,6 +93,31 @@ describe("the staff examples", () => {
     await page.getByRole("textbox", { name: staffCopy.notes.note }).fill("Met them");
     await page.getByRole("button", { name: staffCopy.notes.add }).click();
     await expect.element(log().nth(0)).toHaveTextContent('add({"politicianId":"1","body":"Met them"})');
+  });
+
+  it("logs an event's save in the list", async () => {
+    await render(<EventsOverviewExample />);
+    await page.getByRole("button", { name: staffCopy.events.editLabel("AI risk talk") }).click();
+    await page.getByRole("button", { name: staffCopy.events.save }).click();
+    await expect.poll(() => log().nth(0).query()?.textContent).toMatch(/^save\(/);
+  });
+
+  it("logs an event's save, and says whom it emailed", async () => {
+    await render(<EventEditExample owner="joseph@pauseai.uk" doc={null} />);
+    await page.getByRole("button", { name: staffCopy.events.editLabel("AI risk talk") }).click();
+    await page.getByRole("combobox").selectOptions("sean@pauseai.uk");
+    await page.getByRole("button", { name: staffCopy.events.save }).click();
+    await expect.poll(() => log().nth(0).query()?.textContent).toMatch(/^save\(/);
+    await expect
+      .poll(() => page.getByRole("status").query()?.textContent)
+      .toContain(staffCopy.events.emailed(["sean@pauseai.uk", "joseph@pauseai.uk"], "sean@pauseai.uk"));
+  });
+
+  it("closes a Notice with its ×, and opens it again", async () => {
+    await render(<NoticeExample />);
+    await page.getByRole("button", { name: "Close" }).click();
+    await page.getByRole("button", { name: "Open it again" }).click();
+    await expect.element(page.getByRole("button", { name: "Close" })).toBeVisible();
   });
 
   it("logs a held sync's apply and discard", async () => {

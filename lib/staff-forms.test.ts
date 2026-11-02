@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   askFrom,
   eraseFrom,
+  eventFrom,
   idFrom,
   noteEditFrom,
   noteFrom,
@@ -149,5 +150,32 @@ describe("noteFrom and noteEditFrom", () => {
     expect(noteFrom(form({ supporterId: "3", body: "  " }))).toBeUndefined();
     expect(noteEditFrom(form({ id: "x", body: "Fixed" }))).toBeUndefined();
     expect(noteEditFrom(form({ id: "5", body: "" }))).toBeUndefined();
+  });
+});
+
+describe("eventFrom", () => {
+  it("reads which event, whose address, lowercased, and a link to Google Docs or Drive; blank for neither", () => {
+    const doc = "https://docs.google.com/document/d/abc/edit";
+    expect(eventFrom(form({ eventId: "evt-1", owner: " Jo@PauseAI.uk ", doc: ` ${doc} ` }))).toEqual({
+      eventId: "evt-1",
+      owner: "jo@pauseai.uk",
+      doc,
+    });
+    expect(eventFrom(form({ eventId: "evt-1", doc: "https://drive.google.com/file/d/abc" }))).toEqual({
+      eventId: "evt-1",
+      owner: null,
+      doc: "https://drive.google.com/file/d/abc",
+    });
+    expect(eventFrom(form({ eventId: "evt-1", owner: "", doc: "" }))).toEqual({
+      eventId: "evt-1",
+      owner: null,
+      doc: null,
+    });
+  });
+
+  it("refuses a form with no event, or a link anywhere else", () => {
+    expect(eventFrom(form({ owner: "jo@pauseai.uk" }))).toBeUndefined();
+    expect(eventFrom(form({ eventId: "evt-1", doc: "https://example.com/docs.google.com/" }))).toBeUndefined();
+    expect(eventFrom(form({ eventId: "evt-1", doc: "http://docs.google.com/document/d/abc" }))).toBeUndefined();
   });
 });

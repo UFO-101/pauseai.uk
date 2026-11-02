@@ -47,6 +47,7 @@ import { exampleFailedRun, exampleHeldSync, exampleRun } from "@/app/(staff)/sta
 import type { JSONContent } from "@tiptap/react";
 import { useId, useState } from "react";
 import MailingEditor from "@/app/(staff)/staff/_components/MailingEditor";
+import { Button } from "@/components/ui/Button";
 import ButtonRow from "@/components/ui/ButtonRow";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { ChangeTimeForm, DueTimeFields } from "@/app/(staff)/staff/_components/DueTime";
@@ -66,6 +67,14 @@ import MailingView from "@/app/(staff)/staff/_components/MailingView";
 import MailingWriter from "@/app/(staff)/staff/_components/MailingWriter";
 import { exampleWriterData, exampleWrittenMailing } from "@/app/(staff)/staff/_components/MailingWriter.examples";
 import MailingsOverview from "@/app/(staff)/staff/_components/MailingsOverview";
+import EventEdit from "@/app/(staff)/staff/_components/EventEdit";
+import Notice from "@/app/(staff)/staff/_components/ui/Notice";
+import EventsOverview from "@/app/(staff)/staff/_components/EventsOverview";
+import {
+  exampleEventGroups,
+  exampleEventsNow,
+  exampleStaff,
+} from "@/app/(staff)/staff/_components/EventsOverview.examples";
 import LetterView from "@/app/(staff)/staff/_components/LetterView";
 import FindInGmail from "@/app/(staff)/staff/_components/FindInGmail";
 import LetterThread, { SupporterLetterThread } from "@/app/(staff)/staff/_components/LetterThread";
@@ -592,6 +601,68 @@ export function MailingsOverviewExample({ empty = false }: { empty?: boolean }) 
         new Date(now),
       );
   return <MailingsOverview groups={groups} now={now} />;
+}
+
+/** The events page's list: coming up, one with no owner, then those past; saving an event's edit form is logged. */
+export function EventsOverviewExample({ empty = false }: { empty?: boolean }) {
+  return (
+    <Logged>
+      {(log) => (
+        <EventsOverview
+          groups={empty ? [] : exampleEventGroups}
+          staff={exampleStaff}
+          now={exampleEventsNow}
+          save={async (form) => {
+            log("save")(form);
+            return { emailed: [], owner: null };
+          }}
+        />
+      )}
+    </Logged>
+  );
+}
+
+/**
+ * One event's Edit button, which opens its form: with no owner or doc, or
+ * with both; saving is logged, and says it emailed the owner chosen and
+ * Joseph, the owner before.
+ */
+export function EventEditExample({ owner, doc }: { owner: string | null; doc: string | null }) {
+  return (
+    <Logged>
+      {(log) => (
+        <EventEdit
+          event={{ id: "evt-1", name: "AI risk talk", owner, doc }}
+          staff={exampleStaff}
+          save={async (form) => {
+            log("save")(form);
+            const chosen = String(form.get("owner"));
+            return { emailed: [chosen, "joseph@pauseai.uk"], owner: chosen };
+          }}
+        >
+          <span>{owner ?? staffCopy.events.noOwner}</span>
+        </EventEdit>
+      )}
+    </Logged>
+  );
+}
+
+/** A note, open, that its × closes, and opens again. */
+export function NoticeExample() {
+  const [open, setOpen] = useState(true);
+  return (
+    <span role="status">
+      {open ? (
+        <Notice close="Close" onClose={() => setOpen(false)}>
+          Emailed sean@pauseai.uk and joseph@pauseai.uk to let them know sean@pauseai.uk now owns this event.
+        </Notice>
+      ) : (
+        <Button variant="ghost" size="small" fit onClick={() => setOpen(true)}>
+          Open it again
+        </Button>
+      )}
+    </span>
+  );
 }
 
 /** One of a mailing's letters, with a reply, to the politician whose answer to its ask is set from it. */

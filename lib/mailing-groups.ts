@@ -1,4 +1,5 @@
 import { staffCopy } from "@/lib/content/staff-interface";
+import { monthsAndYears } from "@/lib/dated-groups";
 import type { MailingSummary } from "@/lib/server/mailings";
 
 /** A heading of the mailings page, and its mailings in order. */
@@ -16,9 +17,7 @@ export function mailingWhen(mailing: MailingSummary): string {
 /**
  * The mailings page's groups: Coming up, of those sending, then those
  * scheduled, soonest first, then the drafts, newest edited first; then
- * the rest, newest first, under their month for the twelve months to
- * `now`'s, and under their year before that. A month or year with none
- * has no heading.
+ * the rest under their months and years (monthsAndYears).
  */
 export function mailingGroups(
   { drafts, comingUp, sent }: { drafts: MailingSummary[]; comingUp: MailingSummary[]; sent: MailingSummary[] },
@@ -29,18 +28,8 @@ export function mailingGroups(
   if (coming.length + drafts.length > 0) {
     groups.push({ key: "coming", heading: staffCopy.mailingPages.comingUp, mailings: [...coming, ...drafts] });
   }
-  // The first of the month eleven months before now's, in UTC, as staffDate reads days.
-  const months = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1)).toISOString();
-  for (const mailing of [...sent].sort((a, b) => mailingWhen(b).localeCompare(mailingWhen(a)))) {
-    const when = mailingWhen(mailing);
-    const byMonth = when >= months;
-    const key = when.slice(0, byMonth ? 7 : 4);
-    const heading = byMonth
-      ? new Date(when).toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" })
-      : key;
-    const last = groups[groups.length - 1];
-    if (last?.key === key) last.mailings.push(mailing);
-    else groups.push({ key, heading, mailings: [mailing] });
+  for (const { key, heading, items } of monthsAndYears(sent, mailingWhen, now)) {
+    groups.push({ key, heading, mailings: items });
   }
   return groups;
 }

@@ -3,6 +3,7 @@
 // politicians, letters, runs and changes. Their links go to /staff pages,
 // which send anyone without a session to the login page.
 import { Button, ButtonLink } from "@/components/ui/Button";
+import { EventsSource } from "@/app/(staff)/staff/_components/EventsOverview";
 import ChangesTable from "@/app/(staff)/staff/_components/ChangesTable";
 import EmailBlockFilters from "@/app/(staff)/staff/_components/EmailBlockFilters";
 import FilterBar from "@/app/(staff)/staff/_components/ui/FilterBar";
@@ -132,6 +133,9 @@ import {
   MailingFilesExample,
   MailingForExample,
   MailingsOverviewExample,
+  EventsOverviewExample,
+  EventEditExample,
+  NoticeExample,
   MailingLetterViewExample,
   SupporterLetterViewExample,
   MailingViewExample,
@@ -234,6 +238,7 @@ const PAGES: Record<StaffPageName, true> = {
   me: true,
   supporters: true,
   letters: true,
+  events: true,
   supporterEmails: true,
   politicians: true,
   asks: true,
@@ -1684,6 +1689,56 @@ export const staff: Group = {
           ),
         },
       ],
+    },
+    {
+      name: "EventsOverview",
+      file: "app/(staff)/staff/_components/EventsOverview.tsx",
+      variants: [
+        {
+          label:
+            "Coming up, one with its Google Doc and one with no owner, an error; then October and 2025, one taken off Luma",
+          render: () => (
+            <StaffPage as="div">
+              <EventsSource />
+              <EventsOverviewExample />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "No events at all",
+          render: () => (
+            <StaffPage as="div">
+              <EventsOverviewExample empty />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "EventEdit",
+      file: "app/(staff)/staff/_components/EventEdit.tsx",
+      variants: [
+        { label: "No owner or doc yet: press Edit", render: () => <EventEditExample owner={null} doc={null} /> },
+        {
+          label: "With its owner and doc: press Edit",
+          render: () => (
+            <EventEditExample
+              owner="joseph@pauseai.uk"
+              doc="https://docs.google.com/document/d/example-protest-plan/edit"
+            />
+          ),
+        },
+      ],
+    },
+    {
+      name: "Notice",
+      file: "app/(staff)/staff/_components/ui/Notice.tsx",
+      variants: [{ label: "Open, lit as it opens; its × closes it", render: () => <NoticeExample /> }],
+    },
+    {
+      name: "EventsSource",
+      file: "app/(staff)/staff/_components/EventsOverview.tsx",
+      variants: [{ label: "Under the events page's title", render: () => <EventsSource /> }],
     },
     {
       name: "MailingsOverview",

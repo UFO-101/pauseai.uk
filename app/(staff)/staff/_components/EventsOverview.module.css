@@ -1,0 +1,230 @@
+/* Where the events come from, under the title: small and grey. */
+.source {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+/* The list of events: a heading for each group, its rows ruled apart. */
+.group h2 {
+  margin-bottom: var(--space-1);
+}
+
+/* The rows' layout follows the list's own width, not the window's, as the
+   sidebar may be open or folded. */
+.rows {
+  margin: 0 0 var(--space-6);
+  padding: 0;
+  list-style: none;
+  container: events / inline-size;
+}
+
+/* A row: when, the event, its owner, its doc, and its Edit button, in
+   columns that line up from row to row, the one being edited too. Narrower,
+   the owner over the doc in one column (below); narrower still, one under
+   another, as on a phone. */
+.row {
+  display: grid;
+  grid-template-columns: 10rem minmax(0, 1fr) 14rem 9rem 4rem;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.when {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.ownerCell {
+  min-width: 0;
+}
+
+/* The owner, prominent: bold, at the size of the event's name. */
+.owner {
+  display: block;
+  overflow: hidden;
+  font-size: var(--text-md);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.docCell {
+  min-width: 0;
+  font-size: var(--text-sm);
+}
+
+/* No owner, or no doc, for an event to come: an error. */
+.missing {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+  color: var(--status-red);
+  font-weight: 600;
+}
+
+/* The name, its tags, and under them where and how many are going. */
+.what {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  font-size: var(--text-sm);
+}
+
+.name {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.title {
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.editCell {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* The form to edit it, in the row, in place of the owner, doc and Edit
+   button, on the row's own columns and lines: its fields where the owner
+   and doc were, on the line of the date and event; their labels on a line
+   over them, the doc's running on into the Edit button's column; and Save
+   and Cancel on a line under them. */
+.editor {
+  display: grid;
+  grid-row: 1 / span 3;
+  grid-column: 3 / -1;
+  grid-template-rows: subgrid;
+  grid-template-columns: subgrid;
+  align-items: center;
+}
+
+.row:has(.editor) .when,
+.row:has(.editor) .what {
+  grid-row: 2;
+}
+
+.ownerLabel {
+  grid-area: 1 / 1;
+}
+
+.docLabel {
+  grid-area: 1 / 2 / auto / -1;
+  white-space: nowrap;
+}
+
+/* The owner's select only as wide as the longest address in it. */
+.ownerField {
+  grid-area: 2 / 1;
+  width: fit-content;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.docField {
+  grid-area: 2 / 2 / auto / -1;
+  min-width: 0;
+}
+
+.editorButtons {
+  display: flex;
+  grid-area: 3 / 1 / auto / -1;
+  gap: var(--space-2);
+}
+
+/* The note of whom a save emailed, under the event, the whole row; taking
+   no room while it's empty. */
+.emailed {
+  grid-column: 1 / -1;
+}
+
+.emailed:empty {
+  display: none;
+}
+
+/* Narrower: the date over two lines, and the owner over the doc, so the
+   event keeps its room; the form, when open, in their column, each label
+   over its field. */
+@container events (width < 64rem) {
+  .row {
+    grid-template-columns: 7rem minmax(0, 1fr) 13rem 4rem;
+  }
+
+  .when,
+  .row:has(.editor) .when {
+    grid-area: 1 / 1 / span 2;
+  }
+
+  .what,
+  .row:has(.editor) .what {
+    grid-area: 1 / 2 / span 2;
+  }
+
+  .ownerCell {
+    grid-area: 1 / 3;
+    align-self: end;
+  }
+
+  .docCell {
+    grid-area: 2 / 3;
+    align-self: start;
+  }
+
+  .editCell {
+    grid-area: 1 / 4 / span 2;
+  }
+
+  .editor {
+    grid-area: 1 / 3 / span 2 / -1;
+    grid-template-rows: none;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+
+  .ownerLabel,
+  .docLabel,
+  .ownerField,
+  .docField,
+  .editorButtons {
+    grid-area: auto;
+  }
+}
+
+/* Narrowest, as on a phone: when, then the event, across the row; under
+   them the owner, the doc and the Edit button, side by side; the form under
+   the event, each label over its field, then Save and Cancel. */
+@container events (width < 40rem) {
+  .row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .when,
+  .row:has(.editor) .when {
+    grid-area: auto;
+    grid-column: 1 / -1;
+    margin-bottom: calc(-1 * var(--space-1));
+    font-size: var(--text-xs);
+  }
+
+  .what,
+  .row:has(.editor) .what {
+    grid-area: auto;
+    grid-column: 1 / -1;
+  }
+
+  .ownerCell,
+  .docCell,
+  .editCell {
+    grid-area: auto;
+    align-self: auto;
+  }
+
+  .editor {
+    grid-area: auto;
+    grid-column: 1 / -1;
+  }
+}

@@ -382,6 +382,32 @@ describeWithDatabase("importLuma", () => {
     expect((await runs()).at(-1)).toMatchObject({ status: "unchanged" });
   });
 
+  it("gives new events their owners by the rules, and emails each owner once the run is kept", async () => {
+    vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token");
+    const sent: { To: string; Subject: string }[] = [];
+    server.use(
+      http.post("https://api.postmarkapp.com/email", async ({ request }) => {
+        sent.push((await request.json()) as { To: string; Subject: string });
+        return HttpResponse.json({ ErrorCode: 0, MessageID: "m-1" });
+      }),
+    );
+    for (const email of ["joseph@pauseai.uk", "sean@pauseai.uk"]) {
+      await query("INSERT INTO staff_accounts (email, added_by) VALUES ($1, 'admin@pauseai.uk')", [email]);
+    }
+    fakeLuma({
+      events: [
+        event("evt-london", days(3)),
+        event("evt-oxford", days(4), { geo_address_json: { city: "Oxford", address: "Somewhere" } }),
+      ],
+    });
+    await importLuma("jo@pauseai.uk");
+    expect(await query("SELECT event_id, owner FROM event_owners ORDER BY event_id")).toEqual([
+      { event_id: "evt-london", owner: "joseph@pauseai.uk" },
+      { event_id: "evt-oxford", owner: "sean@pauseai.uk" },
+    ]);
+    expect(sent.map((email) => email.To)).toEqual(["joseph@pauseai.uk", "sean@pauseai.uk"]);
+  });
+
   it("records a run started while another holds the lock, and stops", async () => {
     fakeLuma({ events: [event("evt-1", days(1))] });
     const result = await transaction(async (db) => {

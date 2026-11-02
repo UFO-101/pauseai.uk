@@ -166,18 +166,18 @@ FROM (VALUES
 
 -- The fixture calendar's ten events, past and future, and two more.
 INSERT INTO luma_events (id, name, url, start_at, access, city, latitude, longitude, first_seen_at, changed_at, guests_synced_at, guests_error) VALUES
-  ('evt-fixture-past-glasgow-stall', 'Glasgow street stall', 'https://luma.com/fixture-past-glasgow-stall', now() - interval '270 days', 'manage', 'Glasgow', 55.8617, -4.2583, now() - interval '30 days', now() - interval '30 days', now() - interval '1 hour', NULL),
-  ('evt-fixture-past-london-march', 'PauseAI London March', 'https://luma.com/fixture-past-london-march', now() - interval '250 days', 'manage', 'London', 51.5045, -0.1262, now() - interval '30 days', now() - interval '30 days', now() - interval '1 hour', NULL),
-  ('evt-seed-manchester-talk', 'AI and jobs: a talk in Manchester', 'https://luma.com/seed-manchester-talk', now() - interval '12 days', 'manage', 'Manchester', 53.4794, -2.2453, now() - interval '30 days', now() - interval '12 days', now() - interval '1 hour', NULL),
-  ('evt-seed-online-training', 'Lobbying your MP (online training)', 'https://luma.com/seed-online-training', now() - interval '4 days', 'manage', NULL, NULL, NULL, now() - interval '30 days', now() - interval '4 days', now() - interval '1 hour', NULL),
-  ('evt-fixture-london-protest', 'PauseAI London: Protest at Parliament', 'https://luma.com/fixture-london-protest', now() + interval '20 days', 'manage', 'London', 51.5007, -0.1268, now() - interval '30 days', now() - interval '1 day', now() - interval '1 hour', NULL),
-  ('evt-fixture-online-intro', 'Introduction to PauseAI UK (online)', 'https://luma.com/fixture-online-intro', now() + interval '22 days', 'manage', NULL, NULL, NULL, now() - interval '30 days', now() - interval '5 days', now() - interval '1 hour', NULL),
-  ('evt-fixture-manchester-social', 'PauseAI Manchester Social', 'https://luma.com/fixture-manchester-social', now() + interval '25 days', 'manage', 'Manchester', 53.4794, -2.2453, now() - interval '30 days', now() - interval '5 days', now() - interval '1 hour', NULL),
-  ('evt-fixture-scotland-meeting', 'PauseAI Scotland Meeting', 'https://luma.com/fixture-scotland-meeting', now() + interval '28 days', 'manage', NULL, NULL, NULL, now() - interval '30 days', now() - interval '5 days', NULL, NULL),
-  ('evt-fixture-oxford-talk', 'AI risk talk', 'https://luma.com/fixture-oxford-talk', now() + interval '30 days', 'manage', 'Oxford', 51.7548, -1.2544, now() - interval '30 days', now() - interval '5 days', NULL, NULL),
-  ('evt-fixture-bristol-leafleting', 'Leafleting in Bristol', 'https://luma.com/fixture-bristol-leafleting', now() + interval '32 days', 'manage', 'Bristol', 51.4545, -2.5879, now() - interval '30 days', now() - interval '5 days', NULL, NULL),
-  ('evt-fixture-leicester-meetup', 'PauseAI Leicester meetup', 'https://luma.com/fixture-leicester-meetup', now() + interval '36 days', 'manage', 'Leicester', 52.6369, -1.1398, now() - interval '30 days', now() - interval '5 days', NULL, NULL),
-  ('evt-seed-view-only', 'A partner''s event we can only view', 'https://luma.com/seed-view-only', now() + interval '15 days', 'view', 'Leeds', 53.8008, -1.5491, now() - interval '30 days', now() - interval '5 days', now() - interval '1 hour', 'Luma answered 403: guests are not shared with viewers');
+  ('evt-fixture-past-glasgow-stall', 'Glasgow street stall', 'fixture-past-glasgow-stall', now() - interval '270 days', 'manage', 'Glasgow', 55.8617, -4.2583, now() - interval '30 days', now() - interval '30 days', now() - interval '1 hour', NULL),
+  ('evt-fixture-past-london-march', 'PauseAI London March', 'fixture-past-london-march', now() - interval '250 days', 'manage', 'London', 51.5045, -0.1262, now() - interval '30 days', now() - interval '30 days', now() - interval '1 hour', NULL),
+  ('evt-seed-manchester-talk', 'AI and jobs: a talk in Manchester', 'seed-manchester-talk', now() - interval '12 days', 'manage', 'Manchester', 53.4794, -2.2453, now() - interval '30 days', now() - interval '12 days', now() - interval '1 hour', NULL),
+  ('evt-seed-online-training', 'Lobbying your MP (online training)', 'seed-online-training', now() - interval '4 days', 'manage', NULL, NULL, NULL, now() - interval '30 days', now() - interval '4 days', now() - interval '1 hour', NULL),
+  ('evt-fixture-london-protest', 'PauseAI London: Protest at Parliament', 'fixture-london-protest', now() + interval '20 days', 'manage', 'London', 51.5007, -0.1268, now() - interval '30 days', now() - interval '1 day', now() - interval '1 hour', NULL),
+  ('evt-fixture-online-intro', 'Introduction to PauseAI UK (online)', 'fixture-online-intro', now() + interval '22 days', 'manage', NULL, NULL, NULL, now() - interval '30 days', now() - interval '5 days', now() - interval '1 hour', NULL),
+  ('evt-fixture-manchester-social', 'PauseAI Manchester Social', 'fixture-manchester-social', now() + interval '25 days', 'manage', 'Manchester', 53.4794, -2.2453, now() - interval '30 days', now() - interval '5 days', now() - interval '1 hour', NULL),
+  ('evt-fixture-scotland-meeting', 'PauseAI Scotland Meeting', 'fixture-scotland-meeting', now() + interval '28 days', 'manage', NULL, NULL, NULL, now() - interval '30 days', now() - interval '5 days', NULL, NULL),
+  ('evt-fixture-oxford-talk', 'AI risk talk', 'fixture-oxford-talk', now() + interval '30 days', 'manage', 'Oxford', 51.7548, -1.2544, now() - interval '30 days', now() - interval '5 days', NULL, NULL),
+  ('evt-fixture-bristol-leafleting', 'Leafleting in Bristol', 'fixture-bristol-leafleting', now() + interval '32 days', 'manage', 'Bristol', 51.4545, -2.5879, now() - interval '30 days', now() - interval '5 days', NULL, NULL),
+  ('evt-fixture-leicester-meetup', 'PauseAI Leicester meetup', 'fixture-leicester-meetup', now() + interval '36 days', 'manage', 'Leicester', 52.6369, -1.1398, now() - interval '30 days', now() - interval '5 days', NULL, NULL),
+  ('evt-seed-view-only', 'A partner''s event we can only view', 'seed-view-only', now() + interval '15 days', 'view', 'Leeds', 53.8008, -1.5491, now() - interval '30 days', now() - interval '5 days', now() - interval '1 hour', 'Luma answered 403: guests are not shared with viewers');
 
 -- The fixture's six people and fourteen more. Those with contact_since
 -- follow the calendar's emails; one of them is also erased (luma_erased), so
@@ -326,6 +326,16 @@ UPDATE luma_events SET tags = '{Manchester}' WHERE id IN ('evt-seed-manchester-t
 UPDATE luma_events SET tags = '{Oxford}' WHERE id = 'evt-fixture-oxford-talk';
 UPDATE luma_events SET tags = '{West of England}' WHERE id = 'evt-fixture-bristol-leafleting';
 UPDATE luma_events SET tags = '{Leicester}' WHERE id = 'evt-fixture-leicester-meetup';
+
+-- Owners for some of our events, past and to come; the rest coming up have
+-- none, so the events page shows them as needing one. One has its Google Doc.
+INSERT INTO event_owners (event_id, owner, assigned_by, assigned_at) VALUES
+  ('evt-fixture-past-london-march', 'jo@pauseai.uk', 'jo@pauseai.uk', now() - interval '260 days'),
+  ('evt-seed-manchester-talk', 'samuel.whitlock@pauseai.uk', 'sync', now() - interval '20 days'),
+  ('evt-fixture-london-protest', 'jo@pauseai.uk', 'sync', now() - interval '25 days'),
+  ('evt-fixture-online-intro', 'samuel.whitlock@pauseai.uk', 'jo@pauseai.uk', now() - interval '6 days');
+INSERT INTO event_docs (event_id, url, set_by, set_at) VALUES
+  ('evt-fixture-london-protest', 'https://docs.google.com/document/d/fixture-protest-plan/edit', 'jo@pauseai.uk', now() - interval '10 days');
 
 -- -------------------------------------------------------------- letters
 

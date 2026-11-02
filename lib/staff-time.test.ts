@@ -5,6 +5,7 @@ import {
   hourNotTooSoon,
   londonDayHour,
   londonClock,
+  londonStart,
   londonWhen,
   londonWhenShort,
   sendsAt,
@@ -83,4 +84,9 @@ describe("the first hour a mailing can go", () => {
     expect(hourNotTooSoon("2026-07-01", 14, earliest)).toBe(14);
     expect(hourNotTooSoon("2026-07-02", 9, earliest)).toBe(9);
   });
+});
+
+it("says when something starts, in London, with its year", () => {
+  expect(londonStart("2026-11-10T18:00:00Z")).toBe("Tue 10 Nov 2026, 18:00");
+  expect(londonStart("2026-07-02T18:00:00Z")).toBe("Thu 2 Jul 2026, 19:00");
 });
