@@ -95,12 +95,14 @@ describe("the staff examples", () => {
     await expect.element(log().nth(0)).toHaveTextContent('add({"politicianId":"1","body":"Met them"})');
   });
 
-  it("logs an event's save, and says whom it emailed", async () => {
-    const { unmount } = await render(<EventsOverviewExample />);
+  it("logs an event's save in the list", async () => {
+    await render(<EventsOverviewExample />);
     await page.getByRole("button", { name: staffCopy.events.editLabel("AI risk talk") }).click();
     await page.getByRole("button", { name: staffCopy.events.save }).click();
     await expect.poll(() => log().nth(0).query()?.textContent).toMatch(/^save\(/);
-    unmount();
+  });
+
+  it("logs an event's save, and says whom it emailed", async () => {
     await render(<EventEditExample owner="joseph@pauseai.uk" doc={null} />);
     await page.getByRole("button", { name: staffCopy.events.editLabel("AI risk talk") }).click();
     await page.getByRole("combobox").selectOptions("sean@pauseai.uk");
