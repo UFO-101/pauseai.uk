@@ -1,6 +1,7 @@
 "use client";
 
-import { type FormEvent, useOptimistic, useState, useTransition } from "react";
+import { type FormEvent, useState } from "react";
+import { Button, buttonClass } from "@/components/ui/Button";
 import { Checkbox, TextInput } from "@/components/ui/Controls";
 import { FieldError } from "@/components/ui/Field";
 import Table from "@/components/ui/Table";
@@ -10,7 +11,8 @@ import type { StaffAccount } from "@/lib/server/staff-accounts";
 import { staffTime } from "@/lib/staff-time";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Muted } from "@/components/ui/Text";
-import RemoveAccountForm from "./RemoveAccountForm";
+import { DeleteTwice } from "./DeleteTwice";
+import Menu from "./ui/Menu";
 import styles from "./StaffAccountsTable.module.css";
 
 type Action = (form: FormData) => void | Promise<void>;
@@ -24,33 +26,64 @@ function accountForm(email: string, permissions: readonly Permission[]): FormDat
 }
 
 /**
- * An account's checkboxes, a box per permission. A tick is saved at once:
- * the boxes show it straight away, and are off until it's saved. One
- * refused (the last admin) goes back to what's saved, and the page says why.
+ * An account's permissions, by name, and beside them, Edit, which puts in
+ * their place a form with a box for each, ticked for those it has, and
+ * Save, which saves them, and Cancel. One refused (the last admin) stays
+ * as it was saved, and the page says why.
  */
-function PermissionBoxes({ account, save }: { account: StaffAccount; save: Action }) {
-  const [saving, startSaving] = useTransition();
-  const [shown, show] = useOptimistic(account.permissions);
-  const tick = (permission: Permission, on: boolean) => {
-    const next = PERMISSIONS.filter((p) => (p === permission ? on : shown.includes(p)));
-    startSaving(async () => {
-      show(next);
-      await save(accountForm(account.email, next));
-    });
-  };
-  return (
-    <div className={styles.boxes} role="group" aria-label={account.email} aria-busy={saving}>
-      {PERMISSIONS.map((permission) => (
-        <Checkbox
-          key={permission}
-          checked={shown.includes(permission)}
-          disabled={saving}
-          onChange={(on) => tick(permission, on)}
+function Permissions({ account, save }: { account: StaffAccount; save: Action }) {
+  const copy = staffCopy.accounts;
+  const [open, setOpen] = useState(false);
+  const [ticked, setTicked] = useState<readonly Permission[]>(account.permissions);
+  if (!open) {
+    return (
+      <span className={styles.permissionsCell}>
+        {account.permissions.length ? account.permissions.map((p) => copy.names[p]).join(", ") : <Muted>–</Muted>}
+        <Button
+          variant="ghost"
+          size="small"
+          fit
+          type="button"
+          aria-label={copy.editLabel(account.email)}
+          onClick={() => {
+            setTicked(account.permissions);
+            setOpen(true);
+          }}
         >
-          {staffCopy.accounts.names[permission]}
-        </Checkbox>
-      ))}
-    </div>
+          {copy.edit}
+        </Button>
+      </span>
+    );
+  }
+  return (
+    <form
+      className={styles.editor}
+      aria-label={copy.editLabel(account.email)}
+      action={async () => {
+        await save(accountForm(account.email, ticked));
+        setOpen(false);
+      }}
+    >
+      <div className={styles.boxes}>
+        {PERMISSIONS.map((permission) => (
+          <Checkbox
+            key={permission}
+            checked={ticked.includes(permission)}
+            onChange={(on) => setTicked(PERMISSIONS.filter((p) => (p === permission ? on : ticked.includes(p))))}
+          >
+            {copy.names[permission]}
+          </Checkbox>
+        ))}
+      </div>
+      <span className={styles.buttons}>
+        <SubmitButton variant="primary" size="small" fit>
+          {copy.save}
+        </SubmitButton>
+        <Button variant="ghost" size="small" fit type="button" onClick={() => setOpen(false)}>
+          {copy.cancel}
+        </Button>
+      </span>
+    </form>
   );
 }
 
@@ -78,11 +111,12 @@ const when = (at: string | null) => (at ? staffTime(at) : staffCopy.accounts.nev
 type AddProblem = "not-pauseai" | "exists";
 
 /**
- * Under the last row: the address of someone to add, and Add, which gives
- * them an account at once, with no permissions; their row then sets more.
- * An address not at pauseai.uk, or in the table already, is refused here.
+ * The page's main button, Add staff, which opens a box with the address of
+ * someone to add, and Add, which gives them an account at once, with no
+ * permissions; their row then sets more. An address not at pauseai.uk, or
+ * in the table already, is refused here.
  */
-function AddRow({ accounts, add }: { accounts: StaffAccount[]; add: Action }) {
+export function AddStaff({ accounts, add }: { accounts: StaffAccount[]; add: Action }) {
   const [problem, setProblem] = useState<AddProblem>();
   const copy = staffCopy.accounts;
   const address = (form: FormData) => String(form.get("email")).trim().toLowerCase();
@@ -95,35 +129,33 @@ function AddRow({ accounts, add }: { accounts: StaffAccount[]; add: Action }) {
   };
   const submit = (form: FormData) => add(accountForm(address(form), []));
   return (
-    <tr>
-      <td colSpan={7}>
-        <form action={submit} onSubmit={check} aria-label={copy.addTitle} className={styles.add}>
-          <TextInput
-            name="email"
-            type="email"
-            required
-            aria-label={copy.addTitle}
-            placeholder={copy.addTitle}
-            aria-invalid={problem !== undefined}
-          />
-          <SubmitButton variant="ghost" size="small" fit>
-            {copy.add}
-          </SubmitButton>
-          {problem && (
-            <FieldError announce="alert">{problem === "exists" ? copy.alreadyThere : copy.notPauseai}</FieldError>
-          )}
-        </form>
-      </td>
-    </tr>
+    <Menu id="add-staff" trigger={buttonClass({ variant: "primary", fit: true })} label={copy.addStaff}>
+      <form action={submit} onSubmit={check} aria-label={copy.addTitle} className={styles.add}>
+        <TextInput
+          name="email"
+          type="email"
+          required
+          aria-label={copy.addTitle}
+          placeholder={copy.addTitle}
+          aria-invalid={problem !== undefined}
+        />
+        <SubmitButton variant="ghost" size="small" fit>
+          {copy.add}
+        </SubmitButton>
+        {problem && (
+          <FieldError announce="alert">{problem === "exists" ? copy.alreadyThere : copy.notPauseai}</FieldError>
+        )}
+      </form>
+    </Menu>
   );
 }
 
 /**
- * Every account: a checkbox per permission in its row, each tick saved at
- * once; when and by whom it was added; when it last logged in and was
- * seen; its sessions open; and at the right, a button to end those
- * sessions and one to remove it. Under the last row, a field to add
- * someone. Then, under its own heading, what each permission opens.
+ * Every account: its permissions, and Edit to change them; when and by
+ * whom it was added; when it last logged in and was seen; its sessions
+ * open; and at the right, a button to end those sessions and one to remove
+ * it, pressed twice. Under the table, what removing does; then, under its
+ * own heading, what each permission opens.
  */
 export default function StaffAccountsTable({
   accounts,
@@ -161,7 +193,7 @@ export default function StaffAccountsTable({
             <tr key={account.email}>
               <td>{account.email}</td>
               <td>
-                <PermissionBoxes account={account} save={save} />
+                <Permissions account={account} save={save} />
               </td>
               <td>
                 {staffTime(account.addedAt)}{" "}
@@ -176,15 +208,15 @@ export default function StaffAccountsTable({
                 </span>
               </td>
               <td>
-                <RemoveAccountForm email={account.email} remove={remove} />
+                <DeleteTwice name="email" value={account.email} label={copy.remove} short action={remove} />
               </td>
             </tr>
           ))}
         </tbody>
-        <tfoot>
-          <AddRow accounts={accounts} add={save} />
-        </tfoot>
       </Table>
+      <p className={styles.note}>
+        <Muted>{copy.removeNote}</Muted>
+      </p>
       <h2>{copy.permissionsKey}</h2>
       <dl className={styles.permissions}>
         {PERMISSIONS.map((permission) => (

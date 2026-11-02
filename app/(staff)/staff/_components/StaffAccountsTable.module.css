@@ -1,4 +1,25 @@
-/* A row's checkboxes, one above the other, so the column is as wide as the
+/* A row's permissions, by name, and its Edit button beside them. */
+.permissionsCell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+}
+
+/* The form that edits them: the boxes, then Save and Cancel, side by side. */
+.editor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.buttons {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* The form's checkboxes, one above the other, so the column is as wide as the
    longest name: boxes that wrap would leave it as wide as both side by side. */
 .boxes {
   display: grid;
@@ -14,7 +35,7 @@
   white-space: nowrap;
 }
 
-/* Under the last row: the address of someone to add, Add, and why it
+/* In Add staff's box: the address of someone to add, Add, and why it
    can't be, on one line. */
 .add {
   display: flex;
@@ -26,6 +47,11 @@
 .add input {
   width: 20rem;
   max-width: 100%;
+}
+
+/* Under the table, what removing an account does, small. */
+.note {
+  font-size: var(--text-sm);
 }
 
 /* What each permission opens, under its heading: its name in bold, and

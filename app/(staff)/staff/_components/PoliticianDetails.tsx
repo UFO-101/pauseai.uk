@@ -280,9 +280,8 @@ function PoliticianBand({
               key: "asks",
               n: asksDone(politician.statuses),
               label: copy.band.asksDone(asksDone(politician.statuses)),
-              href: "#asks-title",
             },
-            { key: "letters", n: letters, label: copy.band.lettersCounted(letters), href: "#history-title" },
+            { key: "letters", n: letters, label: copy.band.lettersCounted(letters) },
           ]}
         />
       }

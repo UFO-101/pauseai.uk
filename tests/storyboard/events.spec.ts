@@ -3,8 +3,8 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { addStaffAccount, importLuma, logInAsStaff, newestEmail } from "../steps";
 import { BASE, emailFrame, expect, frame, test } from "./fixtures";
 
-// The events page: our Luma events, coming up and past, and who on staff
-// owns each. The Luma import gives events their owners by the rules, and
+// The events page: our Luma events, to come and past, a table each, and
+// who on staff owns each. The Luma import gives events their owners by the rules, and
 // emails them; one whose owner by the rules has no account has none, an
 // error, until someone is chosen for it, who's emailed too; and an event's
 // Google Doc linked.
@@ -36,19 +36,22 @@ test("Events get their owners by the rules, and one with none is given one", asy
   await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/events`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.title);
-  await expect(page.getByRole("link", { name: copy.intro.link })).toHaveAttribute("href", "/staff/import-data/luma");
-  const talk = page.getByRole("listitem").filter({ hasText: "AI risk talk" });
+  await expect(page.getByRole("link", { name: copy.source.link })).toHaveAttribute("href", "/staff/import-data/luma");
+  const talk = page.getByRole("row").filter({ hasText: "AI risk talk" });
   await expect(talk.getByText(copy.noOwner)).toBeVisible();
   await frame(
     page,
-    "the events page: coming up, Joseph's but for Oxford's, with no owner in red, and none with a doc; then those past",
+    "the events page, on Future, soonest first: Joseph's but for Oxford's, with no owner in red, and none with a doc",
   );
 
   await talk.getByRole("button", { name: copy.editLabel("AI risk talk") }).click();
   const form = page.getByRole("form", { name: copy.editLabel("AI risk talk") });
-  await form.getByLabel(copy.owner).selectOption("sean@pauseai.uk");
-  await form.getByLabel(copy.docField).fill("https://docs.google.com/document/d/oxford-talk-plan/edit");
-  await frame(page, "the Oxford talk opened to edit: Sean chosen as its owner, and its Google Doc pasted");
+  await talk.getByLabel(copy.owner).selectOption("sean@pauseai.uk");
+  await talk.getByLabel(copy.docField).fill("https://docs.google.com/document/d/oxford-talk-plan/edit");
+  await frame(
+    page,
+    "the Oxford talk opened to edit, in its own cells: Sean chosen as its owner, and its Google Doc pasted",
+  );
 
   await form.getByRole("button", { name: copy.save }).click();
   await expect(form).not.toBeVisible();
@@ -57,14 +60,35 @@ test("Events get their owners by the rules, and one with none is given one", asy
     "href",
     "https://docs.google.com/document/d/oxford-talk-plan/edit",
   );
-  await expect(talk.getByRole("status")).toContainText(copy.emailed(["sean@pauseai.uk"], "sean@pauseai.uk"));
+  await expect(page.getByRole("status")).toContainText(copy.emailed(["sean@pauseai.uk"], "sean@pauseai.uk"));
   await frame(
     page,
-    "saved: Sean owns it, and its Google Doc is linked, so neither is in red; a note under it says Sean was emailed",
+    "saved: Sean owns it, and its Google Doc is linked, so neither is in red; a note over the table says Sean was emailed",
   );
 
   // Both viewports' flows email Sean: this one's names its own address.
   const seans = newestEmail((one) => one.To === "sean@pauseai.uk" && one.TextBody.includes(staffEmail()))!;
   expect(seans.TextBody).toContain("AI risk talk");
   await emailFrame(page, seans, "the email telling Sean they own it, and who chose them");
+});
+
+test("Past events, latest first, sorted and filtered", async ({ page, request, flowDatabase }) => {
+  await importLuma(request, BASE);
+  await logIn(page, flowDatabase);
+  await page.goto(`${BASE}/staff/events`);
+  await page.getByRole("link", { name: copy.tabs.past }).click();
+  await expect(page).toHaveURL(`${BASE}/staff/events?when=past`);
+  const names = page.locator("tbody tr td:nth-child(2) a");
+  await expect(names).toHaveText(["PauseAI London March", "Glasgow street stall"]);
+  await frame(page, "the Past tab, latest first: what they lacked only said, not in red");
+
+  await page.locator("thead th").filter({ hasText: copy.columns.going }).getByRole("link").click();
+  await expect(page).toHaveURL(`${BASE}/staff/events?when=past&sort=going&dir=desc`);
+  await frame(page, "sorted by how many went, most first");
+
+  await page.getByRole("searchbox", { name: copy.filters.search }).fill("Glasgow");
+  await page.getByRole("searchbox", { name: copy.filters.search }).press("Enter");
+  await expect(names).toHaveText(["Glasgow street stall"]);
+  await expect(page).toHaveURL(/when=past/);
+  await frame(page, "searched for Glasgow, still on Past");
 });

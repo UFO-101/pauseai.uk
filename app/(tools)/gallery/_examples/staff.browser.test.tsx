@@ -6,8 +6,7 @@ import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.exam
 import {
   ChangeTimeFormExample,
   DueTimeFieldsExample,
-  EventEditExample,
-  EventsOverviewExample,
+  EventsTableExample,
   HeldSyncExample,
   MailingWriterExample,
   NoteChangesExample,
@@ -95,15 +94,17 @@ describe("the staff examples", () => {
     await expect.element(log().nth(0)).toHaveTextContent('add({"politicianId":"1","body":"Met them"})');
   });
 
-  it("logs an event's save in the list", async () => {
-    await render(<EventsOverviewExample />);
+  it("logs an event's save in the table", async () => {
+    await render(<EventsTableExample />);
     await page.getByRole("button", { name: staffCopy.events.editLabel("AI risk talk") }).click();
+    await page.getByRole("combobox").selectOptions("sean@pauseai.uk");
     await page.getByRole("button", { name: staffCopy.events.save }).click();
     await expect.poll(() => log().nth(0).query()?.textContent).toMatch(/^save\(/);
+    expect(document.querySelector("[role=status]")!.textContent).toBe("");
   });
 
   it("logs an event's save, and says whom it emailed", async () => {
-    await render(<EventEditExample owner="joseph@pauseai.uk" doc={null} />);
+    await render(<EventsTableExample emailed />);
     await page.getByRole("button", { name: staffCopy.events.editLabel("AI risk talk") }).click();
     await page.getByRole("combobox").selectOptions("sean@pauseai.uk");
     await page.getByRole("button", { name: staffCopy.events.save }).click();

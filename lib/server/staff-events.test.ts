@@ -6,6 +6,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query, transaction } from "./db";
 import { recordProblem } from "./email";
+import { eventsSearch } from "@/lib/staff-search";
 import { assignRuleOwners, eventsPage, ownerEmails, setEventDoc, setEventOwner } from "./staff-events";
 
 type Sent = { From: string; To: string; Cc?: string; Subject: string; TextBody: string; Tag: string };
@@ -74,12 +75,11 @@ afterEach(() => vi.unstubAllEnvs());
 describeWithDatabase("staff events", () => {
   useTestDatabase();
 
-  it("lists our events coming up, soonest first, then those past by month and year, with who's going and their owners", async () => {
+  it("lists our events to come, soonest first, or those past, latest first, with who's going, their owners and docs", async () => {
     await addStaff("jo@pauseai.uk", "sean@pauseai.uk");
     await addEvent("evt-soon", "2026-11-10T18:00:00Z", { tags: ["London"] });
     await addEvent("evt-later", "2026-12-01T18:00:00Z", { city: null, removed: true });
-    await addEvent("evt-october", "2026-10-20T18:00:00Z");
-    await addEvent("evt-october-early", "2026-10-02T18:00:00Z");
+    await addEvent("evt-october", "2026-10-20T18:00:00Z", { city: "Oxford", tags: ["Oxford", "Big events"] });
     await addEvent("evt-old", "2025-03-01T18:00:00Z");
     await addEvent("evt-theirs", "2026-11-12T18:00:00Z", { access: "view" });
     await addGuest("gst-1", "evt-soon");
@@ -93,15 +93,14 @@ describeWithDatabase("staff events", () => {
       "INSERT INTO event_docs (event_id, url, set_by) VALUES ('evt-soon', 'https://docs.google.com/document/d/soon', 'jo@pauseai.uk')",
     );
 
-    const page = await eventsPage();
-    expect(page.now).toBe(NOW);
-    expect(page.staff).toEqual(["jo@pauseai.uk", "sean@pauseai.uk"]);
-    expect(page.groups.map((g) => [g.heading, g.items.map((e) => e.id)])).toEqual([
-      [staffCopy.events.comingUp, ["evt-soon", "evt-later"]],
-      ["October 2026", ["evt-october", "evt-october-early"]],
-      ["2025", ["evt-old"]],
-    ]);
-    expect(page.groups[0].items).toEqual([
+    const future = await eventsPage(eventsSearch({}).filter);
+    expect(future.now).toBe(NOW);
+    expect(future.staff).toEqual(["jo@pauseai.uk", "sean@pauseai.uk"]);
+    // Every tag and city of our events, of either tab, for the filters.
+    expect(future.tags).toEqual(["Big events", "London", "Oxford"]);
+    expect(future.cities).toEqual(["London", "Oxford"]);
+    expect([future.total, future.pages]).toEqual([2, 1]);
+    expect(future.events).toEqual([
       {
         id: "evt-soon",
         name: "Event evt-soon",
@@ -116,13 +115,15 @@ describeWithDatabase("staff events", () => {
       },
       expect.objectContaining({ id: "evt-later", city: null, removed: true, going: 0 }),
     ]);
-    expect(page.groups[1].items[0].owner).toBe("jo@pauseai.uk");
+    const past = await eventsPage(eventsSearch({ when: "past" }).filter);
+    expect(past.events.map((event) => [event.id, event.owner])).toEqual([
+      ["evt-october", "jo@pauseai.uk"],
+      ["evt-old", null],
+    ]);
   });
 
-  it("has no groups with no events, and none Coming up with none to come", async () => {
-    expect((await eventsPage()).groups).toEqual([]);
-    await addEvent("evt-past", "2026-10-20T18:00:00Z");
-    expect((await eventsPage()).groups.map((g) => g.key)).toEqual(["2026-10"]);
+  it("finds none with no events", async () => {
+    expect(await eventsPage(eventsSearch({}).filter)).toMatchObject({ events: [], total: 0, tags: [], cities: [] });
   });
 
   it("changes an event's owner, logs it, and emails the new owner, whoever chose them, copied to the one before", async () => {

@@ -171,7 +171,10 @@ describe("postMetadata", () => {
         type: "article",
       },
       twitter: { images: ["/images/c.jpg"] },
-      alternates: { canonical: "/blog/my-post" },
+      alternates: {
+        canonical: "/blog/my-post",
+        types: { "application/atom+xml": [{ url: "/blog/feed.xml", title: "PauseAI UK blog" }] },
+      },
     });
   });
 

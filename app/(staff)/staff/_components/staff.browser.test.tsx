@@ -79,9 +79,8 @@ import ImportCard, { ImportCards } from "./ImportCard";
 import ImportIcon from "./ImportIcon";
 import DevLogin from "./DevLogin";
 import KeepSignedIn from "./KeepSignedIn";
-import RemoveAccountForm from "./RemoveAccountForm";
 import SortHeading from "./SortHeading";
-import StaffAccountsTable from "./StaffAccountsTable";
+import StaffAccountsTable, { AddStaff } from "./StaffAccountsTable";
 import EraseForm from "./EraseForm";
 import ErasedNotice from "./ErasedNotice";
 import SubscriptionBadges, { subscriptionWords } from "./SubscriptionBadges";
@@ -645,78 +644,82 @@ describe("StaffAccountsTable", () => {
     await vi.waitFor(() => expect(end.sent).toEqual([{ email: "samuel.whitlock@pauseai.uk" }]));
   });
 
-  it("lists every account, centred in its row, with its boxes, a Remove at the right, and a key to the permissions", async () => {
+  it("lists every account, centred in its row, with its permissions by name, Remove at the right, and a key to the permissions", async () => {
     const { remove } = await renderTable();
+    const copy = staffCopy.accounts;
     const cell = page.getByRole("cell", { name: "22 Oct 2026, 08:00", exact: true });
     await expect.element(cell).toBeVisible();
     expect(getComputedStyle(cell.element()).verticalAlign).toBe("middle");
-    const jo = page.getByRole("group", { name: "jo@pauseai.uk" });
-    expect(
-      jo
-        .getByRole("checkbox")
-        .all()
-        .map((box) => box.element().parentElement!.textContent),
-    ).toEqual([staffCopy.accounts.names.supporters, staffCopy.accounts.names.admin]);
-    await expect.element(jo.getByRole("checkbox", { name: staffCopy.accounts.names.supporters })).toBeChecked();
-    // Under its heading, what each permission opens, a row each: its name in bold, then what it opens.
-    await expect
-      .element(page.getByRole("heading", { level: 2, name: staffCopy.accounts.permissionsKey }))
-      .toBeVisible();
+    const permissions = (email: string) =>
+      page.getByRole("row").filter({ hasText: email }).getByRole("cell").nth(1).element().textContent;
+    expect(permissions("admin@pauseai.uk")).toBe(`${copy.names.admin}${copy.edit}`);
+    expect(permissions("jo@pauseai.uk")).toBe(`${copy.names.supporters}${copy.edit}`);
+    // None: a dash.
+    expect(permissions("samuel.whitlock@pauseai.uk")).toBe(`–${copy.edit}`);
+    expect(page.getByRole("checkbox").all()).toHaveLength(0);
+    // Under the table, what removing does; then under its heading, what each permission opens, a row each: its
+    // name in bold, then what it opens.
+    await expect.element(page.getByText(copy.removeNote)).toBeVisible();
+    await expect.element(page.getByRole("heading", { level: 2, name: copy.permissionsKey })).toBeVisible();
     const opens = [...document.querySelectorAll("dl > div")].map((row) => [
       row.querySelector("dt")!.textContent,
       row.querySelector("dd")!.textContent,
     ]);
     expect(opens).toEqual([
-      [staffCopy.accounts.names.supporters, staffCopy.accounts.opens.supporters],
-      [staffCopy.accounts.names.admin, staffCopy.accounts.opens.admin],
+      [copy.names.supporters, copy.opens.supporters],
+      [copy.names.admin, copy.opens.admin],
     ]);
     expect(Number(getComputedStyle(document.querySelector("dt")!).fontWeight)).toBeGreaterThanOrEqual(600);
 
-    await page
-      .getByRole("form", { name: `${staffCopy.accounts.remove}: jo@pauseai.uk` })
-      .getByRole("button")
-      .click();
+    // Remove, pressed twice.
+    const jo = page.getByRole("row").filter({ hasText: "jo@pauseai.uk" });
+    await jo.getByRole("button", { name: copy.remove }).click();
+    expect(remove.sent).toHaveLength(0);
+    await jo.getByRole("button", { name: staffCopy.deleteItShort }).click();
     await vi.waitFor(() => expect(remove.sent).toHaveLength(1));
     expect(remove.sent[0]).toEqual({ email: "jo@pauseai.uk" });
   });
 
-  it("saves a tick at once: whose, and every permission now ticked in the row", async () => {
+  it("edits an account's permissions: Edit opens a box for each, Cancel closes them, Save sends whose and every one ticked", async () => {
     const { save } = await renderTable();
-    const jo = page.getByRole("group", { name: "jo@pauseai.uk" });
-    await jo.getByRole("checkbox", { name: staffCopy.accounts.names.admin }).click();
-    await vi.waitFor(() => expect(save.sent).toHaveLength(1));
-    expect(save.sent[0]).toEqual({ email: "jo@pauseai.uk", "permission:supporters": "on", "permission:admin": "on" });
-    await jo.getByRole("checkbox", { name: staffCopy.accounts.names.supporters }).click();
-    await vi.waitFor(() => expect(save.sent).toHaveLength(2));
-    expect(save.sent[1]).toEqual({ email: "jo@pauseai.uk" });
-  });
-
-  it("shows a tick straight away, its row's boxes off until it's saved, then what's saved", async () => {
-    let done = () => {};
-    const save = vi.fn(() => new Promise<void>((resolve) => (done = resolve)));
-    await render(
-      <StaffAccountsTable save={save} remove={vi.fn()} endSessions={vi.fn()} accounts={accounts} you="jo@pauseai.uk" />,
-    );
-    const jo = page.getByRole("group", { name: "jo@pauseai.uk" });
-    const admin = jo.getByRole("checkbox", { name: staffCopy.accounts.names.admin });
-    await admin.click();
-    await expect.element(admin).toBeChecked();
-    await expect.element(admin).toBeDisabled();
-    await expect.element(jo).toHaveAttribute("aria-busy", "true");
-    // Another row isn't held up.
-    await expect
-      .element(page.getByRole("group", { name: "admin@pauseai.uk" }).getByRole("checkbox").first())
-      .toBeEnabled();
-    // Saved, or refused, the row shows what the page was given: here, unchanged.
-    done();
-    await expect.element(admin).toBeEnabled();
+    const copy = staffCopy.accounts;
+    const edit = page.getByRole("button", { name: copy.editLabel("jo@pauseai.uk") });
+    await edit.click();
+    const form = page.getByRole("form", { name: copy.editLabel("jo@pauseai.uk") });
+    expect(
+      form
+        .getByRole("checkbox")
+        .all()
+        .map((box) => box.element().parentElement!.textContent),
+    ).toEqual([copy.names.supporters, copy.names.admin]);
+    const supporters = form.getByRole("checkbox", { name: copy.names.supporters });
+    const admin = form.getByRole("checkbox", { name: copy.names.admin });
+    await expect.element(supporters).toBeChecked();
     await expect.element(admin).not.toBeChecked();
+    // A tick isn't saved till Save; Cancel forgets it.
+    await admin.click();
+    await form.getByRole("button", { name: copy.cancel }).click();
+    await expect.element(form).not.toBeInTheDocument();
+    expect(save.sent).toHaveLength(0);
+    await edit.click();
+    await expect.element(admin).not.toBeChecked();
+    await admin.click();
+    await supporters.click();
+    await form.getByRole("button", { name: copy.save }).click();
+    await vi.waitFor(() => expect(save.sent).toHaveLength(1));
+    expect(save.sent[0]).toEqual({ email: "jo@pauseai.uk", "permission:admin": "on" });
+    await expect.element(form).not.toBeInTheDocument();
   });
+});
 
-  it("adds someone at once, refusing an address not at pauseai.uk or in the table already, and keeping it to put right", async () => {
-    const { save } = await renderTable();
+describe("AddStaff", () => {
+  it("adds someone at once, from its box, refusing an address not at pauseai.uk or in the table already, and keeping it to put right", async () => {
+    const save = action();
+    await render(<AddStaff accounts={[{ email: "jo@pauseai.uk" } as StaffAccount]} add={save.fn} />);
+    await page.getByRole("button", { name: staffCopy.accounts.addStaff }).click();
     const field = page.getByRole("textbox", { name: staffCopy.accounts.addTitle });
-    const addButton = page.getByRole("button", { name: staffCopy.accounts.add });
+    await expect.element(field).toBeVisible();
+    const addButton = page.getByRole("button", { name: staffCopy.accounts.add, exact: true });
 
     await field.fill("sam@example.com");
     await addButton.click();
@@ -736,16 +739,6 @@ describe("StaffAccountsTable", () => {
     await expect.element(field).toHaveValue("");
     await expect.element(page.getByRole("alert")).not.toBeInTheDocument();
     await expect.element(field).toHaveAttribute("aria-invalid", "false");
-  });
-});
-
-describe("RemoveAccountForm", () => {
-  it("sends whose", async () => {
-    const { fn, sent } = action();
-    await render(<RemoveAccountForm email="jo@pauseai.uk" remove={fn} />);
-    await page.getByRole("button", { name: staffCopy.accounts.remove }).click();
-    await vi.waitFor(() => expect(sent).toHaveLength(1));
-    expect(sent[0]).toEqual({ email: "jo@pauseai.uk" });
   });
 });
 
@@ -1192,12 +1185,12 @@ describe("PoliticianDetails", () => {
       .toBeVisible();
     expect(document.querySelectorAll("dd svg[aria-hidden]")).toHaveLength(2);
     // The asks done: MP signed one.
-    const done = page.getByRole("link", { name: `1 ${staffCopy.politician.band.asksDone(1)}` });
-    await expect.element(done).toBeVisible();
-    expect(done.element().getAttribute("href")).toMatch(/#asks-title$/);
-    await expect
-      .element(page.getByRole("link", { name: `0 ${staffCopy.politician.band.lettersCounted(0)}` }))
-      .toBeVisible();
+    const counts = document.querySelector("[class*=counts]")!;
+    expect(counts.querySelector("a")).toBeNull();
+    expect([...counts.children].map((count) => count.textContent)).toEqual([
+      `1 ${staffCopy.politician.band.asksDone(1)}`,
+      `0 ${staffCopy.politician.band.lettersCounted(0)}`,
+    ]);
     // Not PauseAI's emails: they're in the history.
     expect(page.getByRole("link", { name: /from PauseAI/ }).query()).toBeNull();
     // Airtable's notes keep their lines.
@@ -3340,7 +3333,7 @@ describe("SupporterDetails", () => {
     const first = await render(<SupporterDetails supporter={exampleSupporterDetails} />);
     await expect.element(page.getByRole("heading", { level: 1, name: "Jane Example" })).toBeVisible();
     // In the band over the card: where she is, from her postcode, on a map; her MP; when she was active, and
-    // how she first came; and how many events and letters, each linked to its table.
+    // how she first came; and how many events and letters, as plain numbers, the tables being just below.
     const band = page.getByText(copy.detail.theirMp).element().closest("[class^=_band_]")!;
     expect(band.querySelector("svg circle")).not.toBeNull();
     await expect.element(page.getByText("Manchester, England", { exact: true })).toBeVisible();
@@ -3348,10 +3341,11 @@ describe("SupporterDetails", () => {
     expect(band.querySelector("a[href='/staff/politicians/1']")!.textContent).toBe("Polly Placeholder");
     expect(band.textContent).toContain("Manchester Central · Labour (Co-op)");
     expect(band.textContent).toContain(copy.detail.firstVia(copy.sources.luma));
-    const counts = [...band.querySelectorAll("[class*=counts] a")];
-    expect(counts.map((a) => [a.getAttribute("href"), a.textContent])).toEqual([
-      ["#events", `1 ${copy.detail.eventsCounted(1)}`],
-      ["#letters", `1 ${copy.detail.lettersCounted(1)}`],
+    const counts = band.querySelector("[class*=counts]")!;
+    expect(counts.querySelector("a")).toBeNull();
+    expect([...counts.children].map((count) => count.textContent)).toEqual([
+      `1 ${copy.detail.eventsCounted(1)}`,
+      `1 ${copy.detail.lettersCounted(1)}`,
     ]);
     // Everything we hold, folded at the foot: each value as a source gave it, what it is, from where, and when.
     openHistory();
@@ -3698,7 +3692,9 @@ describe("SupporterDetails", () => {
     await expect.element(page.getByText("Somewhere", { exact: true })).toBeVisible();
     expect(document.body.textContent).not.toContain(copy.detail.firstVia(copy.sources.luma));
     // Nothing counted is a nought, so the box keeps its shape.
-    await expect.element(page.getByRole("link", { name: `0 ${copy.detail.eventsCounted(0)}` })).toBeVisible();
+    expect(document.querySelector("[class*=counts]")!.firstElementChild!.textContent).toBe(
+      `0 ${copy.detail.eventsCounted(0)}`,
+    );
   });
 
   it("says when there are no events or letters", async () => {

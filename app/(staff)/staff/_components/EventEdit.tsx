@@ -1,116 +1,43 @@
 "use client";
 
-import { useId, useState, type ReactNode } from "react";
+import { createContext, use, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { Select, TextInput } from "@/components/ui/Controls";
-import { Label } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { EventSaved } from "@/lib/server/staff-events";
 import { GOOGLE_DOC_PATTERN } from "@/lib/staff-forms";
 import Notice from "./ui/Notice";
-import styles from "./EventsOverview.module.css";
+import styles from "./EventsTable.module.css";
 
 const copy = staffCopy.events;
 
 /** The Server Action that saves an event's owner and Google Doc, saying whom it emailed. */
 export type SaveEvent = (form: FormData) => Promise<EventSaved>;
 
+/** The event being edited, if any, and what the last save emailed, shared by its row's cells. */
+type Editing = {
+  open: string | null;
+  setOpen: (id: string | null) => void;
+  setSaved: (saved: EventSaved) => void;
+};
+
+// Always given by EventsEditing, round the table.
+const EditingContext = createContext<Editing | null>(null);
+
+/** The ID of an event's edit form, which its fields in other cells belong to. */
+const formId = (id: string) => `event-edit-${id}`;
+
 /**
- * An event's owner and doc cells (`children`) and its Edit button, at its
- * row's right, which puts in their place, in the row, a form, its labels on
- * one line and its fields under them, in the same columns: its owner,
- * any staff account, and the link to its Google Doc, only to Google Docs
- * or Drive, blank to clear it; saved together, which closes it. With no
- * owner, that's the select's first choice, which can't be chosen back.
- * A save that emailed anyone says so in a Notice under the event, till its
- * × closes it.
+ * The events table (`children`), one of whose events can be edited at a
+ * time, its fields in its own cells; over it, a save that emailed anyone
+ * says so in a Notice, till its × closes it.
  */
-export default function EventEdit({
-  event,
-  staff,
-  save,
-  children,
-}: {
-  event: { id: string; name: string; owner: string | null; doc: string | null };
-  staff: readonly string[];
-  save: SaveEvent;
-  children: ReactNode;
-}) {
-  const [open, setOpen] = useState(false);
-  // What the last save emailed, for the note under the event, till its × closes it.
+export function EventsEditing({ children }: { children: ReactNode }) {
+  const [open, setOpen] = useState<string | null>(null);
   const [saved, setSaved] = useState<EventSaved>();
-  const ownerId = useId();
-  const docId = useId();
   return (
-    <>
-      {!open && (
-        <>
-          {children}
-          <span className={styles.editCell}>
-            <Button
-              variant="ghost"
-              size="small"
-              fit
-              type="button"
-              aria-label={copy.editLabel(event.name)}
-              onClick={() => setOpen(true)}
-            >
-              {copy.edit}
-            </Button>
-          </span>
-        </>
-      )}
-      {open && (
-        <form
-          className={styles.editor}
-          aria-label={copy.editLabel(event.name)}
-          action={async (form) => {
-            setSaved(await save(form));
-            setOpen(false);
-          }}
-        >
-          <input type="hidden" name="eventId" value={event.id} />
-          <span className={styles.ownerLabel}>
-            <Label htmlFor={ownerId}>{copy.owner}</Label>
-          </span>
-          <span className={styles.ownerField}>
-            <Select id={ownerId} name="owner" defaultValue={event.owner ?? ""} autoFocus>
-              {!event.owner && (
-                <option value="" disabled>
-                  {copy.noOwner}
-                </option>
-              )}
-              {staff.map((email) => (
-                <option key={email} value={email}>
-                  {email}
-                </option>
-              ))}
-            </Select>
-          </span>
-          <span className={styles.docLabel}>
-            <Label htmlFor={docId}>{copy.docField}</Label>
-          </span>
-          <span className={styles.docField}>
-            <TextInput
-              id={docId}
-              type="url"
-              name="doc"
-              defaultValue={event.doc ?? ""}
-              pattern={GOOGLE_DOC_PATTERN}
-              placeholder={copy.docPlaceholder}
-            />
-          </span>
-          <span className={styles.editorButtons}>
-            <SubmitButton variant="primary" size="small" fit>
-              {copy.save}
-            </SubmitButton>
-            <Button variant="ghost" size="small" fit type="button" onClick={() => setOpen(false)}>
-              {copy.cancel}
-            </Button>
-          </span>
-        </form>
-      )}
+    <EditingContext value={{ open, setOpen, setSaved }}>
       <span role="status" className={styles.emailed}>
         {saved?.owner && saved.emailed.length > 0 && (
           <Notice close={copy.closeEmailed} onClose={() => setSaved(undefined)}>
@@ -118,6 +45,102 @@ export default function EventEdit({
           </Notice>
         )}
       </span>
-    </>
+      {children}
+    </EditingContext>
+  );
+}
+
+/**
+ * An event's owner cell: who owns it (`children`); while it's being
+ * edited, a select of every staff account in its place, part of its edit
+ * form. With no owner, that's the select's first choice, which can't be
+ * chosen back.
+ */
+export function OwnerField({
+  event,
+  staff,
+  children,
+}: {
+  event: { id: string; owner: string | null };
+  staff: readonly string[];
+  children: ReactNode;
+}) {
+  if (use(EditingContext)!.open !== event.id) return children;
+  return (
+    <Select form={formId(event.id)} name="owner" aria-label={copy.owner} defaultValue={event.owner ?? ""} autoFocus>
+      {!event.owner && (
+        <option value="" disabled>
+          {copy.noOwner}
+        </option>
+      )}
+      {staff.map((email) => (
+        <option key={email} value={email}>
+          {email}
+        </option>
+      ))}
+    </Select>
+  );
+}
+
+/**
+ * An event's Google Doc cell: its link (`children`); while it's being
+ * edited, a box for it, only a link to Google Docs or Drive, blank to
+ * clear it, part of its edit form.
+ */
+export function DocField({ event, children }: { event: { id: string; doc: string | null }; children: ReactNode }) {
+  if (use(EditingContext)!.open !== event.id) return children;
+  return (
+    <TextInput
+      form={formId(event.id)}
+      type="url"
+      name="doc"
+      aria-label={copy.docField}
+      defaultValue={event.doc ?? ""}
+      pattern={GOOGLE_DOC_PATTERN}
+      placeholder={copy.docPlaceholder}
+    />
+  );
+}
+
+/**
+ * An event's Edit button, at its row's right, which puts its owner and
+ * doc fields in their cells; while they're open, its edit form there
+ * instead, with Save, which saves them together and closes them, and
+ * Cancel. Opening one closes any other.
+ */
+export function EventEditButtons({ event, save }: { event: { id: string; name: string }; save: SaveEvent }) {
+  const { open, setOpen, setSaved } = use(EditingContext)!;
+  if (open !== event.id) {
+    return (
+      <Button
+        variant="ghost"
+        size="small"
+        fit
+        type="button"
+        aria-label={copy.editLabel(event.name)}
+        onClick={() => setOpen(event.id)}
+      >
+        {copy.edit}
+      </Button>
+    );
+  }
+  return (
+    <form
+      id={formId(event.id)}
+      className={styles.editorButtons}
+      aria-label={copy.editLabel(event.name)}
+      action={async (form) => {
+        setSaved(await save(form));
+        setOpen(null);
+      }}
+    >
+      <input type="hidden" name="eventId" value={event.id} />
+      <SubmitButton variant="primary" size="small" fit>
+        {copy.save}
+      </SubmitButton>
+      <Button variant="ghost" size="small" fit type="button" onClick={() => setOpen(null)}>
+        {copy.cancel}
+      </Button>
+    </form>
   );
 }

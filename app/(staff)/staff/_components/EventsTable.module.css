@@ -1,0 +1,61 @@
+/* Where the events come from, at the title's right: small and grey, as a politician's page's source. */
+.source {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+/* An event's name, and its mark when it's been taken off Luma. */
+.name {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  font-weight: 600;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+/* The owner's column: as wide as an address, and no wider. */
+.ownerCell {
+  max-width: 16rem;
+}
+
+/* The owner, prominent: bold, on one line, cut short if long. */
+.owner {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* No owner, or no doc, for an event to come: an error. */
+.missing {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+  color: var(--status-red);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Save and Cancel, side by side, where the Edit button was. */
+.editorButtons {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+/* The note of whom a save emailed, over the table; taking no room while it's empty. */
+.emailed {
+  display: block;
+  margin-bottom: var(--space-3);
+}
+
+.emailed:empty {
+  display: none;
+}

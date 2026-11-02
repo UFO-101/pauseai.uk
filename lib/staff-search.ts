@@ -8,6 +8,7 @@ import { campaignBySlug } from "@/lib/email-your-mp";
 import { LETTER_SORTS, type LetterSort } from "@/lib/letter-sort";
 import { POLITICIAN_FLAGS, type PoliticianFlag } from "@/lib/politician-filters";
 import { parseSort, type SortSpec } from "@/lib/staff-sort";
+import { EVENT_MISSING, EVENT_SORTS, type EventFilter } from "@/lib/staff-events-list";
 import { isSupporterBadge, NEAR_MILES, SUPPORTER_SORTS, type SupporterFilter } from "@/lib/supporters";
 
 export type LettersSearch = {
@@ -313,6 +314,54 @@ export function supportersSearch(
     erased,
     filter,
   };
+}
+
+export type EventsSearch = {
+  /** "past" for the Past tab; blank for Future. */
+  when: string;
+  q: string;
+  /** Staff emails, or NO_OWNER. */
+  owner: string[];
+  tag: string[];
+  /** Cities, or ONLINE. */
+  place: string[];
+  /** As EVENT_MISSING. */
+  missing: string[];
+  /** "yes" or "no". */
+  removed: string;
+  sort: string;
+  dir: string;
+  page: string;
+};
+
+/** The events list's tab, filters and sort, each as typed and as applied. */
+export function eventsSearch(
+  params: Partial<Record<keyof EventsSearch, ParamValue>>,
+): EventsSearch & { filter: EventFilter } {
+  const [when, q, removed, sort, dir, page] = (["when", "q", "removed", "sort", "dir", "page"] as const).map((name) =>
+    firstOf(params[name]),
+  );
+  const [owner, tag, place, missing] = (["owner", "tag", "place", "missing"] as const).map((name) =>
+    valuesOf(params[name]),
+  );
+  const tab = when === "past" ? "past" : "future";
+  const [owners, notOwners] = anyAndNone(owner, (values) => values);
+  const [tags, notTags] = anyAndNone(tag, (values) => values);
+  const [places, notPlaces] = anyAndNone(place, (values) => values);
+  const [lacking, notLacking] = anyAndNone(missing, (values) => among(values, EVENT_MISSING));
+  const filter: EventFilter = {
+    tab,
+    search: q.trim() || undefined,
+    owner: owners,
+    tag: tags,
+    place: places,
+    missing: lacking,
+    removed: yesOrNo(removed),
+    not: notOf({ owner: notOwners, tag: notTags, place: notPlaces, missing: notLacking }),
+    sort: parseSort(EVENT_SORTS[tab], "start", sort, dir),
+    page: pageNumber(page),
+  };
+  return { when, q, owner, tag, place, missing, removed, sort, dir, page, filter };
 }
 
 /** The accounts page's notice, after a refused change. */

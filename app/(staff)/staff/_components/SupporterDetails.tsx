@@ -195,8 +195,8 @@ function SupporterBand({ supporter, events, letters }: { supporter: Details; eve
       aside={
         <Counts
           counts={[
-            { key: "events", n: events, label: copy.detail.eventsCounted(events), href: "#events" },
-            { key: "letters", n: letters, label: copy.detail.lettersCounted(letters), href: "#letters" },
+            { key: "events", n: events, label: copy.detail.eventsCounted(events) },
+            { key: "letters", n: letters, label: copy.detail.lettersCounted(letters) },
           ]}
         />
       }

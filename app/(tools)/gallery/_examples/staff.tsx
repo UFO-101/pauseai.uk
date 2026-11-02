@@ -3,7 +3,9 @@
 // politicians, letters, runs and changes. Their links go to /staff pages,
 // which send anyone without a session to the login page.
 import { Button, ButtonLink } from "@/components/ui/Button";
-import { EventsSource } from "@/app/(staff)/staff/_components/EventsOverview";
+import EventFilters from "@/app/(staff)/staff/_components/EventFilters";
+import { EventsSource, EventTabs } from "@/app/(staff)/staff/_components/EventsTable";
+import { exampleEventsTab, exampleStaff } from "@/app/(staff)/staff/_components/EventsTable.examples";
 import ChangesTable from "@/app/(staff)/staff/_components/ChangesTable";
 import EmailBlockFilters from "@/app/(staff)/staff/_components/EmailBlockFilters";
 import FilterBar from "@/app/(staff)/staff/_components/ui/FilterBar";
@@ -135,8 +137,7 @@ import {
   MailingFilesExample,
   MailingForExample,
   MailingsOverviewExample,
-  EventsOverviewExample,
-  EventEditExample,
+  EventsTableExample,
   NoticeExample,
   MailingLetterViewExample,
   SupporterLetterViewExample,
@@ -151,7 +152,7 @@ import {
   DeletePoliticianExample,
   EraseFormExample,
   StaffAccountsTableExample,
-  RemoveAccountFormExample,
+  AddStaffExample,
   UnblockFormExample,
   NotesExample,
   NoteChangesExample,
@@ -1389,7 +1390,7 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/StaffAccountsTable.tsx",
       variants: [
         {
-          label: "Three accounts, and the field to add someone under them",
+          label: "Three accounts, each's permissions by name with Edit, Remove pressed twice, and what removing does",
           render: () => (
             <StaffPage as="div">
               <StaffAccountsTableExample />
@@ -1399,14 +1400,14 @@ export const staff: Group = {
       ],
     },
     {
-      name: "RemoveAccountForm",
-      file: "app/(staff)/staff/_components/RemoveAccountForm.tsx",
+      name: "AddStaff",
+      file: "app/(staff)/staff/_components/StaffAccountsTable.tsx",
       variants: [
         {
-          label: "The button at the right of a row",
+          label: "At the page's top right: press it for the box to add someone",
           render: () => (
             <StaffPage as="div">
-              <RemoveAccountFormExample />
+              <AddStaffExample />
             </StaffPage>
           ),
         },
@@ -1693,41 +1694,133 @@ export const staff: Group = {
       ],
     },
     {
-      name: "EventsOverview",
-      file: "app/(staff)/staff/_components/EventsOverview.tsx",
+      name: "EventsTable",
+      file: "app/(staff)/staff/_components/EventsTable.tsx",
       variants: [
         {
-          label:
-            "Coming up, one with its Google Doc and one with no owner, an error; then October and 2025, one taken off Luma",
+          label: "Future: one with its Google Doc, one with no owner or doc, in red",
           render: () => (
             <StaffPage as="div">
-              <EventsSource />
-              <EventsOverviewExample />
+              <EventsTableExample />
             </StaffPage>
           ),
         },
         {
-          label: "No events at all",
+          label: "Past, latest first: one with no owner or doc, said only, and one taken off Luma",
           render: () => (
             <StaffPage as="div">
-              <EventsOverviewExample empty />
+              <EventsTableExample params={{ when: "past" }} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Past, sorted by how many are going",
+          render: () => (
+            <StaffPage as="div">
+              <EventsTableExample params={{ when: "past", sort: "going", dir: "desc" }} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Filters that find none",
+          render: () => (
+            <StaffPage as="div">
+              <EventsTableExample params={{ q: "nothing like this" }} />
             </StaffPage>
           ),
         },
       ],
     },
     {
-      name: "EventEdit",
+      name: "EventTabs",
+      file: "app/(staff)/staff/_components/EventsTable.tsx",
+      variants: [
+        {
+          label: "On Past, with a filter on, which each tab keeps",
+          render: () => (
+            <StaffPage as="div">
+              <EventTabs search={exampleEventsTab({ when: "past", tag: "London" }).search} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "EventFilters",
+      file: "app/(staff)/staff/_components/EventFilters.tsx",
+      variants: [
+        {
+          label: "A search typed, a tag, not online, with no owner, and taken off Luma",
+          render: () => (
+            <StaffPage as="div">
+              <EventFilters
+                search={
+                  exampleEventsTab({ q: "social", tag: "Big events", place: "!online", owner: "none", removed: "yes" })
+                    .search
+                }
+                choices={{
+                  staff: exampleStaff,
+                  tags: ["Big events", "London", "Online"],
+                  cities: ["London", "Oxford"],
+                }}
+              />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "EventsEditing",
       file: "app/(staff)/staff/_components/EventEdit.tsx",
       variants: [
-        { label: "No owner or doc yet: press Edit", render: () => <EventEditExample owner={null} doc={null} /> },
         {
-          label: "With its owner and doc: press Edit",
+          label: "In the events table: press an event's Edit, and its owner and doc cells become its form's fields",
           render: () => (
-            <EventEditExample
-              owner="joseph@pauseai.uk"
-              doc="https://docs.google.com/document/d/example-protest-plan/edit"
-            />
+            <StaffPage as="div">
+              <EventsTableExample emailed />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "OwnerField",
+      file: "app/(staff)/staff/_components/EventEdit.tsx",
+      variants: [
+        {
+          label: "In the events table: press an event's Edit, and its owner and doc cells become its form's fields",
+          render: () => (
+            <StaffPage as="div">
+              <EventsTableExample emailed />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "DocField",
+      file: "app/(staff)/staff/_components/EventEdit.tsx",
+      variants: [
+        {
+          label: "In the events table: press an event's Edit, and its owner and doc cells become its form's fields",
+          render: () => (
+            <StaffPage as="div">
+              <EventsTableExample emailed />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "EventEditButtons",
+      file: "app/(staff)/staff/_components/EventEdit.tsx",
+      variants: [
+        {
+          label: "In the events table: press an event's Edit, and its owner and doc cells become its form's fields",
+          render: () => (
+            <StaffPage as="div">
+              <EventsTableExample emailed />
+            </StaffPage>
           ),
         },
       ],
@@ -1739,8 +1832,17 @@ export const staff: Group = {
     },
     {
       name: "EventsSource",
-      file: "app/(staff)/staff/_components/EventsOverview.tsx",
-      variants: [{ label: "Under the events page's title", render: () => <EventsSource /> }],
+      file: "app/(staff)/staff/_components/EventsTable.tsx",
+      variants: [
+        {
+          label: "At the events page's title's right",
+          render: () => (
+            <StaffPage as="div">
+              <PageTitle action={<EventsSource />}>Events</PageTitle>
+            </StaffPage>
+          ),
+        },
+      ],
     },
     {
       name: "MailingsOverview",

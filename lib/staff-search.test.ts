@@ -4,6 +4,7 @@ import {
   askFormSearch,
   staffBack,
   emailsSearch,
+  eventsSearch,
   letterId,
   mailingId,
   lettersSearch,
@@ -129,6 +130,72 @@ describe("emailsSearch", () => {
   it("searches the addresses for what was typed, trimmed", () => {
     expect(emailsSearch({ q: " bob@ " })).toEqual({ q: " bob@ ", kind: "", filter: { search: "bob@" } });
     expect(emailsSearch({ q: "  " }).filter).toEqual({});
+  });
+});
+
+describe("eventsSearch", () => {
+  const blank = {
+    when: "",
+    q: "",
+    owner: [],
+    tag: [],
+    place: [],
+    missing: [],
+    removed: "",
+    sort: "",
+    dir: "",
+    page: "",
+  };
+  const none = {
+    search: undefined,
+    owner: undefined,
+    tag: undefined,
+    place: undefined,
+    missing: undefined,
+    removed: undefined,
+    not: undefined,
+    page: 1,
+  };
+
+  it("is the Future tab, soonest first, with nothing chosen; and Past, latest first", () => {
+    expect(eventsSearch({})).toEqual({
+      ...blank,
+      filter: { ...none, tab: "future", sort: { key: "start", dir: "asc" } },
+    });
+    expect(eventsSearch({ when: "past" }).filter).toEqual({
+      ...none,
+      tab: "past",
+      sort: { key: "start", dir: "desc" },
+    });
+    expect(eventsSearch({ when: "someday" }).filter.tab).toBe("future");
+  });
+
+  it("reads each filter as typed and as applied, a repeated one as a list, its values marked ! left out", () => {
+    const all = eventsSearch({
+      when: "past",
+      q: " social ",
+      owner: ["none", "!jo@pauseai.uk"],
+      tag: "London",
+      place: ["!online"],
+      missing: ["doc", "!owner", "nothing"],
+      removed: "no",
+      sort: "going",
+      dir: "asc",
+      page: "2",
+    });
+    expect(all.owner).toEqual(["none", "!jo@pauseai.uk"]);
+    expect(all.filter).toEqual({
+      tab: "past",
+      search: "social",
+      owner: ["none"],
+      tag: ["London"],
+      place: undefined,
+      missing: ["doc"],
+      removed: false,
+      not: { owner: ["jo@pauseai.uk"], place: ["online"], missing: ["owner"] },
+      sort: { key: "going", dir: "asc" },
+      page: 2,
+    });
   });
 });
 

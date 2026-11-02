@@ -1,14 +1,16 @@
 import { pageMetadata } from "@/lib/metadata";
-import { postsNewestFirst } from "@/lib/content/blog";
+import { blogFeedLink, postsNewestFirst } from "@/lib/content/blog";
 import { site } from "@/lib/content/site";
 import PostList from "./_components/PostList";
 import PageHero from "@/components/ui/PageHero";
 
-export const metadata = pageMetadata({
+const page = pageMetadata({
   title: "Blog",
   description: "Writing from the PauseAI UK community on AI risk and what you can do about it.",
   path: "/blog",
 });
+
+export const metadata = { ...page, alternates: { ...page.alternates, ...blogFeedLink } };
 
 export default function BlogIndexPage() {
   return (
