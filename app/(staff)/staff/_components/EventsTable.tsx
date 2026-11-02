@@ -2,7 +2,7 @@ import Tag from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { importPath } from "@/lib/import-runs";
-import type { StaffEvent } from "@/lib/server/staff-events";
+import type { EventHost, StaffEvent } from "@/lib/server/staff-events";
 import {
   EVENT_SORTS,
   EVENTS_PAGE_SIZE,
@@ -85,6 +85,22 @@ function Owner({ owner, needed }: { owner: string | null; needed: boolean }) {
   return <strong className={styles.owner}>{owner}</strong>;
 }
 
+/** An event's hosts, by name, each leading to their supporter's page once linked; never their email. */
+function Hosts({ hosts }: { hosts: EventHost[] }) {
+  return (
+    <span className={styles.hosts}>
+      {hosts.map((host, i) => {
+        const name = host.name || <Muted>{copy.noHostName}</Muted>;
+        return (
+          <span key={i}>
+            {host.supporterId ? <StaffLink href={`/staff/supporters/${host.supporterId}`}>{name}</StaffLink> : name}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
 /** The link to an event's Google Doc, opening in a new tab. */
 function Doc({ doc, needed }: { doc: string | null; needed: boolean }) {
   if (!doc) return <Missing needed={needed}>{copy.noDoc}</Missing>;
@@ -99,15 +115,16 @@ function Doc({ doc, needed }: { doc: string | null; needed: boolean }) {
  * The events list's columns, in the order of a list read by time
  * (docs/style-guide.md, "Lists"): the day it starts; its name, leading to
  * it on Luma, marked when it's been taken off Luma; where it is, and its
- * Luma tags, which often say where too; how many are going; then what we
- * add, which its Edit button changes, beside it: its owner and its Google
- * Doc. On the Future tab, one on Luma with no owner or no doc is an
- * error. Every column but the tags and Edit sorts; by the doc, those with
+ * Luma tags, which often say where too; how many are going; its hosts on
+ * Luma, for staff who see supporters (`hosts`); then what we add, which
+ * its Edit button changes, beside it: its owner and its Google Doc. On the
+ * Future tab, one on Luma with no owner or no doc is an error. Every
+ * column but the tags, the hosts and Edit sorts; by the doc, those with
  * none come first.
  */
 function eventColumns(
   search: EventsSearch,
-  { staff, now, save }: { staff: readonly string[]; now: string; save: SaveEvent },
+  { staff, now, save, hosts }: { staff: readonly string[]; now: string; save: SaveEvent; hosts: boolean },
 ): ListColumn<StaffEvent>[] {
   const tab = eventTab(search);
   const sort = parseSort(EVENT_SORTS[tab], "start", search.sort, search.dir);
@@ -167,6 +184,9 @@ function eventColumns(
       short: true,
       cell: (event) => event.going,
     },
+    ...(hosts
+      ? [{ key: "hosts", label: copy.columns.hosts, cell: (event: StaffEvent) => <Hosts hosts={event.hosts} /> }]
+      : []),
     {
       key: "owner",
       label: copy.owner,
@@ -193,7 +213,8 @@ function eventColumns(
  * The events the tab and filters find, in the list frame: a row each, in
  * the order chosen, and the way through the pages; when a search finds
  * none, but would among those taken off Luma, a link to them. Any staff
- * member can change an event's owner and doc, from its Edit button.
+ * member can change an event's owner and doc, from its Edit button. Its
+ * hosts are a column only for staff who see supporters (`hosts`).
  */
 export default function EventsTable({
   found,
@@ -201,12 +222,14 @@ export default function EventsTable({
   staff,
   now,
   save,
+  hosts,
 }: {
   found: EventsFound;
   search: EventsSearch;
   staff: readonly string[];
   now: string;
   save: SaveEvent;
+  hosts: boolean;
 }) {
   const filters = eventFiltersOf(search);
   return (
@@ -219,7 +242,7 @@ export default function EventsTable({
         pageSize={EVENTS_PAGE_SIZE}
         href={(n) => filtersPath(PATH, filters, pageParam(n))}
         align="middle"
-        columns={eventColumns(search, { staff, now, save })}
+        columns={eventColumns(search, { staff, now, save, hosts })}
         rows={found.events}
         rowKey={(event) => event.id}
         empty={<Muted>{copy.noneFound}</Muted>}

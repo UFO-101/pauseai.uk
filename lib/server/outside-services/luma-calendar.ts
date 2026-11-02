@@ -15,6 +15,8 @@ type ApiEvent = {
   url?: string;
   name?: string;
   start_at?: string;
+  /** When it was made on Luma. */
+  created_at?: string;
   timezone?: string;
   cover_url?: string;
   location_type?: string;
@@ -117,6 +119,8 @@ export type CalendarEvent = LumaEvent & {
   /** 'manage' for our own events; 'view' for one another calendar runs, whose guests Luma doesn't show us. */
   access: "manage" | "view";
   tags: string[];
+  /** When it was made on Luma, if Luma says. */
+  createdAt: string | null;
 };
 
 /**
@@ -146,6 +150,7 @@ export async function listCalendarEvents(cursor?: string): Promise<LumaPage<Cale
           id,
           access: event.access === "view" ? "view" : "manage",
           tags: (event.tags ?? []).flatMap((tag) => (tag?.name ? [tag.name] : [])),
+          createdAt: event.created_at ?? null,
         },
       ];
     }),

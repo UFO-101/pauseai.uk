@@ -330,6 +330,16 @@ UPDATE luma_events SET tags = '{West of England}' WHERE id = 'evt-fixture-bristo
 UPDATE luma_events SET tags = '{Leicester}' WHERE id = 'evt-fixture-leicester-meetup';
 -- Taken off Luma: the import found it gone from the calendar.
 UPDATE luma_events SET removed_at = now() - interval '3 days' WHERE id = 'evt-seed-cancelled-picnic';
+-- Each made on Luma six weeks before it starts.
+UPDATE luma_events SET created_at = start_at - interval '42 days';
+-- Hosts the import has read: the past London march's, Jane, who registered
+-- for it too, so it's two rows on her page and one event in her count, and
+-- the Manchester talk's, Omar. Both are over, so they're never read again.
+INSERT INTO luma_event_hosts (event_id, user_id) VALUES
+  ('evt-fixture-past-london-march', 'usr-fixture-1'),
+  ('evt-seed-manchester-talk', 'usr-seed-7');
+UPDATE luma_events SET hosts_synced_at = now() - interval '200 days'
+  WHERE id IN ('evt-fixture-past-london-march', 'evt-seed-manchester-talk');
 
 -- Owners for some of our events, past and to come; the rest coming up have
 -- none, so the events page shows them as needing one. One has its Google Doc.

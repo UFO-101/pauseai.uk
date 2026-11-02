@@ -96,6 +96,27 @@ const LUMA_PRIVATE_EVENT = {
   coordinate: null,
 };
 
+/** The fixture's hosts, as Luma's event details list them. */
+const LUMA_HOST = {
+  jane: { id: "usr-fixture-1", email: "Jane.Fixture@example.com", name: "Jane Fixture", avatar_url: null },
+  sam: { id: "usr-fixture-2", email: "sam.fixture@example.com", name: "Sam Fixture", avatar_url: null },
+  alex: { id: "usr-fixture-3", email: "alex.fixture@example.com", name: "Alex Fixture", avatar_url: null },
+  // A host Luma has no name for.
+  noName: { id: "usr-fixture-7", email: "host.fixture@example.com", name: null, avatar_url: null },
+  // Erased (luma_erased in staff-data.sql), so the import skips them.
+  erased: { id: "usr-seed-20", email: "erased.seed@example.com", name: "Erin Erased", avatar_url: null },
+};
+
+/**
+ * Each event's hosts, where they aren't Alex alone: the London protest's
+ * three, Jane, who registered for it too, Sam and one with no name; and
+ * Leicester's, one of them erased.
+ */
+const LUMA_HOSTS: Record<string, object[]> = {
+  "evt-fixture-london-protest": [LUMA_HOST.sam, LUMA_HOST.noName, LUMA_HOST.jane],
+  "evt-fixture-leicester-meetup": [LUMA_HOST.erased, LUMA_HOST.alex],
+};
+
 /** A list as Luma pages it: the first `size` entries, then, from cursor "page-2", the rest. */
 function pageOf<T>(entries: T[], cursor: string | null, size: number) {
   if (cursor === "page-2") return { entries: entries.slice(size), has_more: false };
@@ -120,12 +141,14 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
     return json(pageOf(guests, searchParams.get("pagination_cursor"), 3));
   }
   if (hostname === "public-api.luma.com" && pathname === "/v1/events/get") {
-    // Any event's details, as far as the site reads them: its guest counts,
-    // which Luma gives for an event our calendar manages.
+    // Any event's details, as far as the site reads them: its guest counts
+    // and its hosts, which Luma gives for an event our calendar manages.
     const status = (guests: number) => ({ guests, tickets: guests });
+    const eventId = searchParams.get("event_id") ?? "";
     return json({
-      id: searchParams.get("event_id"),
+      id: eventId,
       access: "manage",
+      hosts: LUMA_HOSTS[eventId] ?? [LUMA_HOST.alex],
       guest_counts: {
         approved: status(1234),
         pending_approval: status(0),

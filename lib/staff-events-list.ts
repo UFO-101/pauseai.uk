@@ -1,7 +1,7 @@
 // The staff events list's tabs, filters and sorts, applied to our events
 // as lib/server/staff-events.ts lists them. There are few enough events
 // to filter and sort them all here, rather than in SQL.
-import type { StaffEvent } from "@/lib/server/staff-events";
+import type { SearchedEvent, StaffEvent } from "@/lib/server/staff-events";
 import type { SortColumns, SortSpec } from "@/lib/staff-sort";
 
 /** The list's tabs: events still to come, and those past. */
@@ -31,7 +31,7 @@ type NegatableEventFilter = "owner" | "tag" | "place";
 /** Which events the list shows. A filter that repeats finds those with any of its values. */
 export type EventFilter = {
   tab: EventTab;
-  /** Over the event's name. */
+  /** Over the event's name, its hosts' names and emails, and its owner's email. */
   search?: string;
   /** Staff emails, or NO_OWNER. */
   owner?: string[];
@@ -86,18 +86,29 @@ function sortValue(event: StaffEvent, key: EventSort): string | number {
   return event.startAt;
 }
 
+/** Whether a search finds an event: in its name, its hosts' names or emails, or its owner's email. */
+function searchFinds(event: SearchedEvent, search: string): boolean {
+  return [event.name, ...event.hosts.map((host) => host.name), ...event.hostEmails, event.owner ?? ""].some((text) =>
+    text.toLowerCase().includes(search),
+  );
+}
+
 /**
  * The events `filter` finds of `events`, its tab's, to come or past at
  * `now`, sorted, one page of them; any tie, by when it starts, in the
  * tab's own direction, then by ID.
  */
-export function findEvents(events: readonly StaffEvent[], filter: EventFilter, now: string): EventsFound {
+export function findEvents<E extends SearchedEvent>(
+  events: readonly E[],
+  filter: EventFilter,
+  now: string,
+): Omit<EventsFound, "events"> & { events: E[] } {
   const search = filter.search?.toLowerCase();
   const matching = (removed: boolean) =>
     events.filter(
       (event) =>
         event.startAt >= now === (filter.tab === "future") &&
-        (!search || event.name.toLowerCase().includes(search)) &&
+        (!search || searchFinds(event, search)) &&
         event.removed === removed &&
         passes(event, filter),
     );

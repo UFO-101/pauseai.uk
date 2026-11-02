@@ -284,6 +284,15 @@ CREATE TABLE public.letters_from_supporters (
 );
 
 --
+-- Name: luma_event_hosts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.luma_event_hosts (
+    event_id text NOT NULL,
+    user_id text NOT NULL
+);
+
+--
 -- Name: luma_events; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -302,6 +311,9 @@ CREATE TABLE public.luma_events (
     guests_error text,
     removed_at timestamp with time zone,
     tags text[] DEFAULT '{}'::text[] NOT NULL,
+    created_at timestamp with time zone,
+    hosts_synced_at timestamp with time zone,
+    hosts_error text,
     CONSTRAINT luma_events_access_check CHECK ((access = ANY (ARRAY['manage'::text, 'view'::text]))),
     CONSTRAINT luma_events_check CHECK (((latitude IS NULL) = (longitude IS NULL)))
 );
@@ -587,7 +599,19 @@ UNION ALL
     a.href,
     a.status
    FROM (public.supporter_activity_member a
-     JOIN public.supporter_links k ON ((k.member_id = a.source_id)));
+     JOIN public.supporter_links k ON ((k.member_id = a.source_id)))
+UNION ALL
+ SELECT k.supporter_id,
+    'luma'::text AS source,
+    COALESCE(e.created_at, e.first_seen_at) AS at,
+    'luma-hosted'::text AS kind,
+    e.name AS title,
+    NULL::text AS detail,
+    ('https://luma.com/'::text || e.url) AS href,
+    NULL::text AS status
+   FROM ((public.luma_event_hosts h
+     JOIN public.luma_events e ON ((e.id = h.event_id)))
+     JOIN public.supporter_links k ON ((k.luma_user_id = h.user_id)));
 
 --
 -- Name: supporter_contact_form; Type: VIEW; Schema: public; Owner: -
@@ -820,7 +844,7 @@ CREATE VIEW public.supporters_summary AS
          SELECT supporter_activity.supporter_id,
             bool_or((supporter_activity.kind = 'luma-contact'::text)) AS luma_contact,
             max(supporter_activity.at) AS last_active_at,
-            (count(*) FILTER (WHERE ((supporter_activity.kind = 'luma-registered'::text) AND (supporter_activity.detail <> 'declined'::text))))::integer AS events,
+            (count(DISTINCT supporter_activity.href) FILTER (WHERE (((supporter_activity.kind = 'luma-registered'::text) AND (supporter_activity.detail <> 'declined'::text)) OR (supporter_activity.kind = 'luma-hosted'::text))))::integer AS events,
             (count(*) FILTER (WHERE (supporter_activity.kind = 'letter'::text)))::integer AS letters
            FROM public.supporter_activity
           GROUP BY supporter_activity.supporter_id
@@ -1950,6 +1974,13 @@ ALTER TABLE ONLY public.luma_erased
     ADD CONSTRAINT luma_erased_pkey PRIMARY KEY (user_id);
 
 --
+-- Name: luma_event_hosts luma_event_hosts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.luma_event_hosts
+    ADD CONSTRAINT luma_event_hosts_pkey PRIMARY KEY (event_id, user_id);
+
+--
 -- Name: luma_events luma_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2300,6 +2331,12 @@ CREATE INDEX letters_from_pauseai_mailing ON public.letters_from_pauseai USING b
 CREATE INDEX letters_notable_person ON public.letters USING btree (notable_person_id);
 
 --
+-- Name: luma_event_hosts_user; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX luma_event_hosts_user ON public.luma_event_hosts USING btree (user_id);
+
+--
 -- Name: luma_events_start; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2562,6 +2599,20 @@ ALTER TABLE ONLY public.letters_from_supporters
 
 ALTER TABLE ONLY public.letters
     ADD CONSTRAINT letters_notable_person_id_fkey FOREIGN KEY (notable_person_id) REFERENCES public.notable_people(id);
+
+--
+-- Name: luma_event_hosts luma_event_hosts_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.luma_event_hosts
+    ADD CONSTRAINT luma_event_hosts_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.luma_events(id) ON DELETE CASCADE;
+
+--
+-- Name: luma_event_hosts luma_event_hosts_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.luma_event_hosts
+    ADD CONSTRAINT luma_event_hosts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.luma_people(user_id) ON DELETE CASCADE;
 
 --
 -- Name: luma_guests luma_guests_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -

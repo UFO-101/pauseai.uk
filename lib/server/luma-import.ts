@@ -14,12 +14,13 @@ import {
   listCalendarEvents,
   type CalendarContact,
 } from "./outside-services/luma-calendar";
+import { getEventHosts, type EventHost } from "./outside-services/luma-event";
 import { type EventGuest, listEventGuests } from "./outside-services/luma-guests";
 
-// Copies our Luma calendar into luma_events, luma_people and luma_guests:
-// every public event, the guests who registered for each, and the
-// calendar's contacts, and from them who has left the calendar or come
-// back (recordContactsPass); then where new supporters and events are
+// Copies our Luma calendar into luma_events, luma_people, luma_guests and
+// luma_event_hosts: every public event, the guests who registered for each,
+// our own events' hosts, and the calendar's contacts, and from them who has
+// left the calendar or come back (recordContactsPass); then where new supporters and events are
 // (supporter-places.ts), and owners for events with none (staff-events.ts). Hourly (app/api/cron/import-luma) or when staff
 // ask, each run in the import log (import-runs.ts, as "import-luma").
 //
@@ -111,13 +112,13 @@ async function saveState(list: ImportList, cursor: string, finished: boolean, db
 /** Upserts an event, listed again if it was removed; returns whether anything was new or different. */
 async function upsertEvent(event: CalendarEvent, db: Queryable): Promise<boolean> {
   const rows = await query(
-    `INSERT INTO luma_events (id, name, url, start_at, access, city, latitude, longitude, tags)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `INSERT INTO luma_events (id, name, url, start_at, access, city, latitude, longitude, tags, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, url = EXCLUDED.url, start_at = EXCLUDED.start_at,
        access = EXCLUDED.access, city = EXCLUDED.city, latitude = EXCLUDED.latitude, longitude = EXCLUDED.longitude,
-       tags = EXCLUDED.tags, removed_at = NULL, changed_at = now()
-     WHERE (luma_events.name, luma_events.url, luma_events.start_at, luma_events.access, luma_events.city, luma_events.latitude, luma_events.longitude, luma_events.tags, luma_events.removed_at)
-       IS DISTINCT FROM (EXCLUDED.name, EXCLUDED.url, EXCLUDED.start_at, EXCLUDED.access, EXCLUDED.city, EXCLUDED.latitude, EXCLUDED.longitude, EXCLUDED.tags, NULL)
+       tags = EXCLUDED.tags, created_at = EXCLUDED.created_at, removed_at = NULL, changed_at = now()
+     WHERE (luma_events.name, luma_events.url, luma_events.start_at, luma_events.access, luma_events.city, luma_events.latitude, luma_events.longitude, luma_events.tags, luma_events.created_at, luma_events.removed_at)
+       IS DISTINCT FROM (EXCLUDED.name, EXCLUDED.url, EXCLUDED.start_at, EXCLUDED.access, EXCLUDED.city, EXCLUDED.latitude, EXCLUDED.longitude, EXCLUDED.tags, EXCLUDED.created_at, NULL)
      RETURNING id`,
     [
       event.id,
@@ -129,6 +130,7 @@ async function upsertEvent(event: CalendarEvent, db: Queryable): Promise<boolean
       event.place?.latitude ?? null,
       event.place?.longitude ?? null,
       event.tags,
+      event.createdAt,
     ],
     db,
   );
@@ -196,8 +198,8 @@ async function eventsDueGuests(db: Queryable): Promise<string[]> {
   return rows.map((row) => row.id);
 }
 
-/** Upserts the people behind a page of guests; returns how many were new or different. */
-async function upsertPeople(guests: EventGuest[], db: Queryable): Promise<number> {
+/** Upserts the people behind a page of guests, or an event's hosts; returns how many were new or different. */
+async function upsertPeople(guests: Pick<EventGuest, "userId" | "email" | "name">[], db: Queryable): Promise<number> {
   const people = new Map(guests.map((guest) => [guest.userId, guest]));
   const rows = await query(
     `INSERT INTO luma_people (user_id, email, name)
@@ -287,6 +289,64 @@ async function importGuests(eventId: string, budget: Budget, db: Queryable): Pro
   counts.guests += removed.length;
   await query("UPDATE luma_events SET guests_synced_at = now(), guests_error = NULL WHERE id = $1", [eventId], db);
   return counts;
+}
+
+/**
+ * The events whose hosts are due a read, first first: our own still on the
+ * calendar whose hosts have never been read, which reads every past one
+ * once, or whose London day hasn't ended and whose hosts weren't read in
+ * the last hour. Once its day is over and they've been read, they're never
+ * read again. Those still to come first, then those never read, newest
+ * first; one whose last read failed goes to the back.
+ */
+async function eventsDueHosts(db: Queryable): Promise<string[]> {
+  const rows = await query<{ id: string }>(
+    `SELECT id FROM (
+       SELECT id, start_at, hosts_synced_at, hosts_error,
+         (start_at AT TIME ZONE 'Europe/London')::date >= (now() AT TIME ZONE 'Europe/London')::date AS live
+       FROM luma_events WHERE access = 'manage' AND removed_at IS NULL) e
+     WHERE hosts_synced_at IS NULL OR (live AND hosts_synced_at < now() - interval '1 hour')
+     ORDER BY hosts_error IS NOT NULL, CASE WHEN live THEN 0 WHEN hosts_synced_at IS NULL THEN 1 ELSE 2 END, start_at DESC`,
+    [],
+    db,
+  );
+  return rows.map((row) => row.id);
+}
+
+type HostCounts = { hosts: number; people: number };
+
+/**
+ * One event's hosts: the people behind them, skipping anyone erased, then
+ * the event's host rows, deleting those Luma no longer lists, and the event
+ * marked read. A failure is kept on the event instead. Undefined when the
+ * budget ran out first.
+ */
+async function importHosts(eventId: string, budget: Budget, db: Queryable): Promise<HostCounts | undefined> {
+  let hosts: EventHost[];
+  try {
+    const page = await budget.page(() => getEventHosts(eventId));
+    if (!page) return undefined;
+    hosts = [...new Map(page.entries.map((host) => [host.userId, host])).values()];
+  } catch (error) {
+    await query("UPDATE luma_events SET hosts_error = $2 WHERE id = $1", [eventId, String(error)], db);
+    return { hosts: 0, people: 0 };
+  }
+  const people = await upsertPeople(hosts, db);
+  const ids = hosts.map((host) => host.userId);
+  const added = await query(
+    `INSERT INTO luma_event_hosts (event_id, user_id)
+     SELECT $1, user_id FROM unnest($2::text[]) AS h(user_id) WHERE user_id IN (SELECT user_id FROM luma_people)
+     ON CONFLICT DO NOTHING RETURNING user_id`,
+    [eventId, ids],
+    db,
+  );
+  const removed = await query(
+    "DELETE FROM luma_event_hosts WHERE event_id = $1 AND NOT (user_id = ANY($2::text[])) RETURNING user_id",
+    [eventId, ids],
+    db,
+  );
+  await query("UPDATE luma_events SET hosts_synced_at = now(), hosts_error = NULL WHERE id = $1", [eventId], db);
+  return { hosts: added.length + removed.length, people };
 }
 
 /** Sets when each contact joined the calendar, and that they're listed now; returns how many the join was news for. */
@@ -416,6 +476,7 @@ function run(
       eventsSynced: 0,
       eventsLeft: 0,
       guestsChanged: 0,
+      hostsChanged: 0,
       people: 0,
       contacts: 0,
       supportersAdded: 0,
@@ -443,6 +504,12 @@ function run(
       result.people += counts.people;
     }
     result.eventsLeft = due.length - result.eventsSynced;
+    for (const eventId of await eventsDueHosts(db)) {
+      const counts = await importHosts(eventId, budget, db);
+      if (!counts) break;
+      result.hostsChanged! += counts.hosts;
+      result.people += counts.people;
+    }
     const contacts = await importContacts(budget, db);
     result.contacts = contacts.changed;
     result.contactPages = contacts.pages;
@@ -462,6 +529,7 @@ function run(
     const changed =
       result.events +
         result.guestsChanged +
+        result.hostsChanged! +
         result.people +
         result.contacts +
         result.linked +

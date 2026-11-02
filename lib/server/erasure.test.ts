@@ -59,6 +59,10 @@ describeWithDatabase("eraseSupporter", () => {
   it("deletes what each source holds, keeps what stops us mailing the address, blocks the Luma user from coming back, and logs it", async () => {
     const mp = await addTestMp();
     const id = await janeWithEverything(mp);
+    // She hosts the London protest.
+    expect(await query("SELECT event_id FROM luma_event_hosts WHERE user_id = 'usr-fixture-1'")).toEqual([
+      { event_id: "evt-fixture-london-protest" },
+    ]);
     // A mailing that went to her.
     await query(
       `WITH m AS (
@@ -79,6 +83,8 @@ describeWithDatabase("eraseSupporter", () => {
     expect(await query("SELECT 1 FROM supporters WHERE id = $1", [id])).toEqual([]);
     expect(await query("SELECT 1 FROM luma_people WHERE user_id = 'usr-fixture-1'")).toEqual([]);
     expect(await query("SELECT 1 FROM luma_guests WHERE user_id = 'usr-fixture-1'")).toEqual([]);
+    // Her event has one host fewer.
+    expect(await query("SELECT 1 FROM luma_event_hosts WHERE user_id = 'usr-fixture-1'")).toEqual([]);
     expect(await query("SELECT 1 FROM form_entries WHERE email = 'jane.fixture@example.com'")).toEqual([]);
     expect(await query("SELECT 1 FROM letters_from_supporters")).toEqual([]);
     expect(await query("SELECT 1 FROM form_entry_luma")).toEqual([]);
@@ -107,13 +113,14 @@ describeWithDatabase("eraseSupporter", () => {
       },
     ]);
     // Everyone else is still there, and the next import doesn't bring Jane back.
-    expect(await query("SELECT count(*)::int AS n FROM supporters")).toEqual([{ n: 12 }]);
-    await query("UPDATE luma_events SET guests_synced_at = NULL");
+    expect(await query("SELECT count(*)::int AS n FROM supporters")).toEqual([{ n: 13 }]);
+    await query("UPDATE luma_events SET guests_synced_at = NULL, hosts_synced_at = NULL");
     await importLuma("test");
     await importMembers("test");
     expect(await query("SELECT 1 FROM luma_people WHERE user_id = 'usr-fixture-1'")).toEqual([]);
+    expect(await query("SELECT 1 FROM luma_event_hosts WHERE user_id = 'usr-fixture-1'")).toEqual([]);
     expect(await query("SELECT 1 FROM members WHERE id = 'recMemberJane'")).toEqual([]);
-    expect(await query("SELECT count(*)::int AS n FROM supporters")).toEqual([{ n: 12 }]);
+    expect(await query("SELECT count(*)::int AS n FROM supporters")).toEqual([{ n: 13 }]);
   });
 
   it("does nothing for a supporter that doesn't exist", async () => {

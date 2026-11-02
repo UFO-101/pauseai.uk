@@ -16,6 +16,8 @@ type Guest = Record<string, unknown>;
 type FakeLuma = {
   events: Record<string, unknown>[];
   guests: Record<string, Guest[]>;
+  /** Each event's hosts, as its details list them. */
+  hosts: Record<string, unknown[]>;
   contacts: Record<string, unknown>[];
   pageSize: number;
   remaining?: number;
@@ -23,10 +25,13 @@ type FakeLuma = {
   failGuests: string[];
   /** Events whose guest list answers 429. */
   rateLimitGuests: string[];
+  /** Events whose details answer 500, and 429. */
+  failHosts: string[];
+  rateLimitHosts: string[];
   failEvents: boolean;
   /** A contacts cursor that answers 500. */
   failContactsCursor?: string;
-  /** "events", "guests:evt-1" or "contacts", with the cursor if any. */
+  /** "events", "guests:evt-1", "hosts:evt-1" or "contacts", with the cursor if any. */
   requests: string[];
 };
 
@@ -46,10 +51,13 @@ function fakeLuma(fake: Partial<FakeLuma> = {}): FakeLuma {
   const luma: FakeLuma = {
     events: [],
     guests: {},
+    hosts: {},
     contacts: [],
     pageSize: 50,
     failGuests: [],
     rateLimitGuests: [],
+    failHosts: [],
+    rateLimitHosts: [],
     failEvents: false,
     requests: [],
     ...fake,
@@ -70,6 +78,15 @@ function fakeLuma(fake: Partial<FakeLuma> = {}): FakeLuma {
       if (luma.failGuests.includes(id)) return new HttpResponse(null, { status: 500 });
       if (luma.rateLimitGuests.includes(id)) return new HttpResponse(null, { status: 429 });
       return page(luma, luma.guests[id] ?? [], cursor);
+    }),
+    http.get(`${API}/events/get`, ({ request }) => {
+      const id = new URL(request.url).searchParams.get("event_id")!;
+      note(`hosts:${id}`, null);
+      if (luma.failHosts.includes(id)) return new HttpResponse(null, { status: 500 });
+      if (luma.rateLimitHosts.includes(id)) return new HttpResponse(null, { status: 429 });
+      const headers: Record<string, string> =
+        luma.remaining === undefined ? {} : { "x-ratelimit-remaining": String(luma.remaining) };
+      return HttpResponse.json({ hosts: luma.hosts[id] ?? [] }, { headers });
     }),
     http.get(`${API}/calendars/contacts/list`, ({ request }) => {
       const cursor = new URL(request.url).searchParams.get("pagination_cursor");
@@ -173,16 +190,24 @@ describeWithDatabase("importLuma", () => {
       eventsSynced: 2,
       eventsLeft: 0,
       guestsChanged: 4,
+      hostsChanged: 0,
       people: 3,
       contacts: 2,
       contactPages: 1,
       supportersAdded: 4,
       linked: 4,
       places: { postcodes: 1, towns: 1, failed: false },
-      requests: 4,
+      requests: 6,
     });
     expect(await query("SELECT count(*)::int AS n FROM supporter_links")).toEqual([{ n: 4 }]);
-    expect(luma.requests).toEqual(["events", "guests:evt-live", "guests:evt-old", "contacts"]);
+    expect(luma.requests).toEqual([
+      "events",
+      "guests:evt-live",
+      "guests:evt-old",
+      "hosts:evt-live",
+      "hosts:evt-old",
+      "contacts",
+    ]);
     expect(await query("SELECT id, name, city, latitude FROM luma_events ORDER BY id")).toEqual([
       { id: "evt-live", name: "Event evt-live", city: "London", latitude: 51.5 },
       { id: "evt-old", name: "Event evt-old", city: null, latitude: null },
@@ -214,13 +239,14 @@ describeWithDatabase("importLuma", () => {
     expect((await eventRows()).map((e) => e.guests_synced_at !== null)).toEqual([true, true]);
     expect((await runs())[0]).toMatchObject({ status: "ok", result: { events: 2 } });
 
-    // An hour later: the live event's guests aren't due again, nor the old one's, and nothing's new.
+    // At once: neither event's guests nor hosts are due again, and nothing's new.
     const again = await importLuma("jo@pauseai.uk");
     expect(again).toEqual({
       events: 0,
       eventsSynced: 0,
       eventsLeft: 0,
       guestsChanged: 0,
+      hostsChanged: 0,
       people: 0,
       contacts: 0,
       contactPages: 1,
@@ -343,6 +369,103 @@ describeWithDatabase("importLuma", () => {
     expect((await query("SELECT user_id FROM luma_people")).map((p) => p.user_id)).toEqual(["usr-2"]);
   });
 
+  it("reads our events' hosts when due: never read, or still to come and not read in the hour; still to come first, then never read, newest first, failed last", async () => {
+    const luma = fakeLuma({
+      events: [
+        event("evt-soon", days(1)),
+        event("evt-later", days(5)),
+        event("evt-recent", days(3)),
+        event("evt-past-read", days(-30)),
+        event("evt-past-new", days(-20)),
+        event("evt-past-old", days(-90)),
+        event("evt-gone", days(4)),
+        event("evt-failed", days(2)),
+        event("evt-view", days(1), { access: "view" }),
+      ],
+      failHosts: ["evt-failed"],
+    });
+    await importLuma("jo@pauseai.uk");
+    expect(await query("SELECT hosts_error FROM luma_events WHERE id = 'evt-failed'")).toEqual([
+      { hosts_error: "Error: Luma answered 500 for /v1/events/get" },
+    ]);
+    const hostsRead = (interval: string | null, ids: string[]) =>
+      query(
+        `UPDATE luma_events SET hosts_synced_at = CASE WHEN $1::text IS NULL THEN NULL ELSE now() - $1::interval END
+         WHERE id = ANY($2)`,
+        [interval, ids],
+      );
+    await hostsRead("2 hours", ["evt-soon", "evt-later", "evt-past-read", "evt-gone"]);
+    await hostsRead("10 minutes", ["evt-recent"]);
+    await hostsRead(null, ["evt-past-new", "evt-past-old"]);
+    // Taken off the calendar.
+    luma.events = luma.events.filter((e) => e.id !== "evt-gone");
+    await query("UPDATE luma_events SET removed_at = now() WHERE id = 'evt-gone'");
+    luma.requests.length = 0;
+    luma.failHosts = [];
+    await importLuma("jo@pauseai.uk");
+    expect(luma.requests.filter((r) => r.startsWith("hosts:"))).toEqual([
+      "hosts:evt-later",
+      "hosts:evt-soon",
+      "hosts:evt-past-new",
+      "hosts:evt-past-old",
+      "hosts:evt-failed",
+    ]);
+    expect(await query("SELECT hosts_error FROM luma_events WHERE id = 'evt-failed'")).toEqual([{ hosts_error: null }]);
+  });
+
+  it("adds an event's hosts as people, takes off those no longer listed, and never brings back an erased one", async () => {
+    await query("INSERT INTO luma_erased (user_id) VALUES ('usr-9')");
+    const host = (n: number, name: string | null = `Person ${n}`) => ({
+      id: `usr-${n}`,
+      email: ` Person${n}@Example.com `,
+      name,
+    });
+    const luma = fakeLuma({
+      events: [event("evt-1", days(1))],
+      guests: { "evt-1": [guest(1)] },
+      hosts: { "evt-1": [host(1), host(2, null), host(9), host(2, null)] },
+    });
+    expect(await importLuma("jo@pauseai.uk")).toMatchObject({ hostsChanged: 2, people: 2 });
+    const hosts = () => query("SELECT event_id, user_id FROM luma_event_hosts ORDER BY user_id");
+    expect(await hosts()).toEqual([
+      { event_id: "evt-1", user_id: "usr-1" },
+      { event_id: "evt-1", user_id: "usr-2" },
+    ]);
+    expect(await query("SELECT user_id, email, name FROM luma_people ORDER BY user_id")).toEqual([
+      { user_id: "usr-1", email: "person1@example.com", name: "Person 1" },
+      { user_id: "usr-2", email: "person2@example.com", name: "" },
+    ]);
+    expect(await query("SELECT hosts_synced_at IS NOT NULL AS read FROM luma_events")).toEqual([{ read: true }]);
+
+    // Two hours on: one host gone, another named, and one new.
+    luma.hosts["evt-1"] = [host(2), host(3)];
+    await query("UPDATE luma_events SET hosts_synced_at = now() - interval '2 hours'");
+    expect(await importLuma("jo@pauseai.uk")).toMatchObject({ hostsChanged: 2, people: 2 });
+    expect((await hosts()).map((h) => h.user_id)).toEqual(["usr-2", "usr-3"]);
+
+    // The same again changes nothing.
+    await query("UPDATE luma_events SET hosts_synced_at = now() - interval '2 hours'");
+    expect(await importLuma("jo@pauseai.uk")).toMatchObject({ hostsChanged: 0, people: 0 });
+  });
+
+  it("stops reading hosts when Luma's rate limit is reached, leaving the rest for the next run", async () => {
+    const luma = fakeLuma({ events: [event("evt-1", days(1)), event("evt-2", days(2))], rateLimitHosts: ["evt-2"] });
+    expect(await importLuma("jo@pauseai.uk")).toMatchObject({ hostsChanged: 0, stoppedBy: "rate-limit" });
+    expect(luma.requests.filter((r) => r.startsWith("hosts:"))).toEqual(["hosts:evt-2"]);
+    expect(await query("SELECT count(*)::int AS n FROM luma_events WHERE hosts_synced_at IS NULL")).toEqual([{ n: 2 }]);
+  });
+
+  it("copies when each event was made on Luma, and counts a change to it as a change to the event", async () => {
+    const luma = fakeLuma({ events: [event("evt-1", days(1))] });
+    await importLuma("jo@pauseai.uk");
+    expect(await query("SELECT created_at FROM luma_events")).toEqual([{ created_at: null }]);
+    luma.events[0] = event("evt-1", days(1), { created_at: "2026-09-01T10:00:00.000Z" });
+    expect(await importLuma("jo@pauseai.uk")).toMatchObject({ events: 1 });
+    expect(await query("SELECT created_at FROM luma_events")).toEqual([
+      { created_at: new Date("2026-09-01T10:00:00.000Z") },
+    ]);
+  });
+
   it("stops choosing work when Luma's rate limit is near, or reached, or its time is up, and says so", async () => {
     const luma = fakeLuma({ events: [event("evt-1", days(1)), event("evt-2", days(2))], remaining: 10 });
     expect(await importLuma("jo@pauseai.uk")).toMatchObject({
@@ -369,6 +492,7 @@ describeWithDatabase("importLuma", () => {
       eventsSynced: 0,
       eventsLeft: 2,
       guestsChanged: 0,
+      hostsChanged: 0,
       people: 0,
       contacts: 0,
       // A pass over the contacts begins, and none of it read.

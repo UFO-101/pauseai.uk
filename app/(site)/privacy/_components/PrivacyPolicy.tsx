@@ -106,6 +106,10 @@ export default function PrivacyPolicy() {
         postcode you type on our home page to see events near you goes to postcodes.io and is kept only in your browser,
         not by us.
       </p>
+      <p>
+        ⁂ If you host one of our events on Luma, we also copy your name and email address as its host, every hour, so
+        the people who run PauseAI UK can see who runs each event and connect it to your record.
+      </p>
 
       <h2>Supporters and political opinions</h2>
       <p>

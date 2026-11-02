@@ -10,10 +10,12 @@ import { exampleEvents, exampleEventsNow, exampleEventsTab, exampleStaff } from 
 const copy = staffCopy.events;
 const noAction: SaveEvent = async () => ({ emailed: [], owner: null });
 
-/** The events table on a tab, with filters as typed (`params`), saving with `save`. */
-function renderTable(params: Parameters<typeof exampleEventsTab>[0] = {}, save: SaveEvent = noAction) {
+/** The events table on a tab, with filters as typed (`params`), saving with `save`, its hosts shown only with `hosts`. */
+function renderTable(params: Parameters<typeof exampleEventsTab>[0] = {}, save: SaveEvent = noAction, hosts = false) {
   const { search, found } = exampleEventsTab(params);
-  return render(<EventsTable found={found} search={search} staff={exampleStaff} now={exampleEventsNow} save={save} />);
+  return render(
+    <EventsTable found={found} search={search} staff={exampleStaff} now={exampleEventsNow} save={save} hosts={hosts} />,
+  );
 }
 
 const row = (name: string) => page.getByRole("row").filter({ hasText: name });
@@ -115,17 +117,55 @@ describe("EventsTable", () => {
     const found = { events: [{ ...soon, owner: null, removed: true }], total: 1, pages: 1, removed: 0 };
     const { search } = exampleEventsTab({ removed: "yes" });
     await render(
-      <EventsTable found={found} search={search} staff={exampleStaff} now={exampleEventsNow} save={noAction} />,
+      <EventsTable
+        found={found}
+        search={search}
+        staff={exampleStaff}
+        now={exampleEventsNow}
+        save={noAction}
+        hosts={false}
+      />,
     );
     await expect.element(row("Protest").getByRole("cell").nth(5).getByText(copy.noOwner)).not.toHaveClass(/missing/);
     await expect.element(row("Protest").getByText(copy.removed)).toBeVisible();
+  });
+
+  it("shows each event's hosts before its owner, for staff who see supporters, each linked to their supporter once linked, never by email", async () => {
+    await renderTable({}, noAction, true);
+    const headings = [...document.querySelectorAll("thead th")].map((th) => th.textContent!.replace(/[▲▼ ]+$/, ""));
+    expect(headings.slice(5, 7)).toEqual([copy.columns.hosts, copy.owner]);
+    const hosts = row("Protest at Parliament").getByRole("cell").nth(5);
+    expect(hosts.element().textContent).toBe(`Jane SmithJohn Smith${copy.noHostName}`);
+    await expect
+      .element(hosts.getByRole("link", { name: "Jane Smith" }))
+      .toHaveAttribute("href", "/staff/supporters/12");
+    expect(hosts.getByRole("link", { name: "John Smith" }).query()).toBeNull();
+    await expect
+      .element(hosts.getByRole("link", { name: copy.noHostName }))
+      .toHaveAttribute("href", "/staff/supporters/14");
+    expect(document.body.textContent).not.toContain("@example.com");
+    // Its heading doesn't sort.
+    expect(th(copy.columns.hosts).querySelector("a")).toBeNull();
+  });
+
+  it("has no hosts column for staff who don't see supporters", async () => {
+    await renderTable();
+    expect(th(copy.columns.hosts)).toBeUndefined();
+    expect(document.body.textContent).not.toContain("Jane Smith");
   });
 
   it("leads to its other pages, keeping the tab and filters", async () => {
     const { search } = exampleEventsTab({ when: "past", tag: "London" });
     const found = { events: exampleEvents, total: 150, pages: 2, removed: 0 };
     await render(
-      <EventsTable found={found} search={search} staff={exampleStaff} now={exampleEventsNow} save={noAction} />,
+      <EventsTable
+        found={found}
+        search={search}
+        staff={exampleStaff}
+        now={exampleEventsNow}
+        save={noAction}
+        hosts={false}
+      />,
     );
     await expect
       .element(page.getByRole("link", { name: staffCopy.paging.next }))

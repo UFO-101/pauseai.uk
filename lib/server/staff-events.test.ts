@@ -93,7 +93,7 @@ describeWithDatabase("staff events", () => {
       "INSERT INTO event_docs (event_id, url, set_by) VALUES ('evt-soon', 'https://docs.google.com/document/d/soon', 'jo@pauseai.uk')",
     );
 
-    const future = await eventsPage(eventsSearch({}).filter);
+    const future = await eventsPage(eventsSearch({}).filter, false);
     expect(future.now).toBe(NOW);
     expect(future.staff).toEqual(["jo@pauseai.uk", "sean@pauseai.uk"]);
     // Every tag and city of our events, of either tab, for the filters.
@@ -113,12 +113,13 @@ describeWithDatabase("staff events", () => {
         going: 2,
         owner: null,
         doc: "https://docs.google.com/document/d/soon",
+        hosts: [],
       },
     ]);
-    expect((await eventsPage(eventsSearch({ removed: "yes" }).filter)).events).toEqual([
+    expect((await eventsPage(eventsSearch({ removed: "yes" }).filter, false)).events).toEqual([
       expect.objectContaining({ id: "evt-later", city: null, removed: true, going: 0 }),
     ]);
-    const past = await eventsPage(eventsSearch({ when: "past" }).filter);
+    const past = await eventsPage(eventsSearch({ when: "past" }).filter, false);
     expect(past.events.map((event) => [event.id, event.owner])).toEqual([
       ["evt-october", "jo@pauseai.uk"],
       ["evt-old", null],
@@ -126,7 +127,50 @@ describeWithDatabase("staff events", () => {
   });
 
   it("finds none with no events", async () => {
-    expect(await eventsPage(eventsSearch({}).filter)).toMatchObject({ events: [], total: 0, tags: [], cities: [] });
+    expect(await eventsPage(eventsSearch({}).filter, true)).toMatchObject({
+      events: [],
+      total: 0,
+      tags: [],
+      cities: [],
+    });
+  });
+
+  it("gives each event's hosts by name, those with none last, each with their supporter once linked, and searches their emails, but only for staff who see supporters, and never gives the emails", async () => {
+    await addEvent("evt-1", "2026-11-10T18:00:00Z");
+    await addEvent("evt-2", "2026-11-11T18:00:00Z");
+    await query(
+      `INSERT INTO luma_people (user_id, email, name) VALUES
+         ('usr-b', 'bea@example.com', 'bea Brown'), ('usr-a', 'al@example.com', 'Al Adams'), ('usr-n', 'nameless@example.com', '')`,
+    );
+    await query(
+      "INSERT INTO luma_event_hosts (event_id, user_id) VALUES ('evt-1', 'usr-n'), ('evt-1', 'usr-b'), ('evt-1', 'usr-a')",
+    );
+    const [{ id }] = await query<{ id: number }>("INSERT INTO supporters DEFAULT VALUES RETURNING id::int");
+    await query(
+      `INSERT INTO supporter_links (supporter_id, luma_user_id, matched_by, matched_value)
+       VALUES ($1, 'usr-a', 'email', 'al@example.com')`,
+      [id],
+    );
+    const page = await eventsPage(eventsSearch({}).filter, true);
+    expect(page.events.map((event) => [event.id, event.hosts])).toEqual([
+      [
+        "evt-1",
+        [
+          { name: "Al Adams", supporterId: id },
+          { name: "bea Brown", supporterId: null },
+          { name: "", supporterId: null },
+        ],
+      ],
+      ["evt-2", []],
+    ]);
+    expect(JSON.stringify(page)).not.toContain("@example.com");
+    expect((await eventsPage(eventsSearch({ q: "nameless@" }).filter, true)).events.map((e) => e.id)).toEqual([
+      "evt-1",
+    ]);
+    // Without the permission: no hosts, and no finding them.
+    const hidden = await eventsPage(eventsSearch({}).filter, false);
+    expect(hidden.events.map((event) => event.hosts)).toEqual([[], []]);
+    expect((await eventsPage(eventsSearch({ q: "Al Adams" }).filter, false)).total).toBe(0);
   });
 
   it("changes an event's owner, logs it, and emails the new owner, whoever chose them, copied to the one before", async () => {

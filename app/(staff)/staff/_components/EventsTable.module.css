@@ -20,6 +20,12 @@
   gap: var(--space-1);
 }
 
+/* The hosts, one to a line. */
+.hosts {
+  display: flex;
+  flex-direction: column;
+}
+
 /* The owner, prominent: bold, on one line. */
 .owner {
   display: block;

@@ -1,21 +1,22 @@
 import type { Page } from "@playwright/test";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { runSql } from "@/scripts/fresh-database.mjs";
 import { addStaffAccount, importLuma, logInAsStaff, newestEmail } from "../steps";
 import { BASE, emailFrame, expect, frame, test } from "./fixtures";
 
 // The events page: our Luma events, to come and past, a table each, and
 // who on staff owns each. The Luma import gives events their owners by the rules, and
 // emails them; one whose owner by the rules has no account has none, an
-// error, until someone is chosen for it, who's emailed too; and an event's
-// Google Doc linked.
+// error, until someone is chosen for it, who's emailed too; an event's
+// Google Doc linked; and, for staff who see supporters, each event's hosts.
 
 const copy = staffCopy.events;
 
 /** This flow's own staff address: flows run alongside each other, and share the outbox. */
 const staffEmail = () => `events-${test.info().testId.replace(/\W/g, "").slice(-8)}@pauseai.uk`;
 
-async function logIn(page: Page, database: string) {
-  addStaffAccount(database, staffEmail());
+async function logIn(page: Page, database: string, permissions: string[] = []) {
+  addStaffAccount(database, staffEmail(), permissions);
   return logInAsStaff(page, BASE, staffEmail());
 }
 
@@ -92,4 +93,49 @@ test("Past events, latest first, sorted and filtered", async ({ page, request, f
   await expect(names).toHaveText(["Glasgow street stall"]);
   await expect(page).toHaveURL(/when=past/);
   await frame(page, "searched for Glasgow, still on Past");
+});
+
+test("Hosts: on the events page, searched by name, and a host's supporter page", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  await importLuma(request, BASE);
+  await logIn(page, flowDatabase, ["supporters"]);
+  await page.goto(`${BASE}/staff/events`);
+  const protest = page.getByRole("row").filter({ hasText: "Protest at Parliament" });
+  const hosts = protest.getByRole("cell").nth(5);
+  await expect(hosts).toHaveText(`Jane FixtureSam Fixture${copy.noHostName}`);
+  // Leicester's other host was erased, so the import left them out.
+  await expect(page.getByRole("row").filter({ hasText: "Leicester" }).getByRole("cell").nth(5)).toHaveText(
+    "Alex Fixture",
+  );
+  await frame(page, "the Hosts column, before the owner: the protest's three, one with no name; Alex for the rest");
+
+  const search = page.getByRole("searchbox", { name: copy.filters.search });
+  await search.fill("Sam Fixture");
+  await search.press("Enter");
+  await expect(page.locator("tbody tr")).toHaveCount(1);
+  await expect(protest).toBeVisible();
+  await frame(page, "searched for a host's name: only the event they host");
+
+  await hosts.getByRole("link", { name: "Jane Fixture" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Jane Fixture" })).toBeVisible();
+  const events = page.getByRole("region", { name: staffCopy.supporters.detail.eventsTitle, exact: false });
+  await expect(events.getByRole("row").filter({ hasText: staffCopy.supporters.detail.host })).toHaveCount(2);
+  // The events she registered for, not declined, or hosts, each once.
+  const [count] = runSql(
+    flowDatabase,
+    `SELECT count(DISTINCT event_id) FROM (
+       SELECT g.event_id FROM luma_guests g WHERE g.user_id = 'usr-fixture-1' AND g.removed_at IS NULL AND g.approval_status <> 'declined'
+       UNION SELECT h.event_id FROM luma_event_hosts h WHERE h.user_id = 'usr-fixture-1') e`,
+  );
+  const n = Number(count);
+  await expect(page.locator("[class*=counts]").first()).toContainText(
+    `${n} ${staffCopy.supporters.detail.eventsCounted(n)}`,
+  );
+  await frame(
+    page,
+    "Jane's page: a row for each event she hosts, beside those she registered for, and each event counted once",
+  );
 });

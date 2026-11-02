@@ -255,10 +255,10 @@ function GoToParliamentRun({ run, open }: { run: GoToParliamentImport; open?: bo
   );
 }
 
-/** A copy of the Luma calendar: the counts, the places looked up, and why it stopped early if it did. */
+/** A copy of the Luma calendar: the counts, the hosts changed, the places looked up, and why it stopped early if it did. */
 function LumaRun({ run, open }: { run: LumaImport; open?: boolean }) {
   if (run.status === "failed") return <RunBox run={run} summary={null} open={open} />;
-  const { stoppedBy, contactPages, places } = run.result;
+  const { stoppedBy, hostsChanged, contactPages, places } = run.result;
   return (
     <RunBox
       run={run}
@@ -266,6 +266,7 @@ function LumaRun({ run, open }: { run: LumaImport; open?: boolean }) {
       summary={
         <>
           {staffCopy.luma.result(run.result)}
+          {hostsChanged !== undefined && <> {staffCopy.luma.hostsChanged(hostsChanged)}</>}
           {contactPages !== undefined && <> {staffCopy.luma.contactPages(contactPages)}</>}
           {places && <> {staffCopy.luma.places(places)}</>}
           {places?.failed && <> {staffCopy.luma.placesFailed}</>}

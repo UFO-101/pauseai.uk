@@ -2691,13 +2691,16 @@ describe("RunList", () => {
     await expect.element(page.getByText(exampleDisconnectedGmail.error!, { exact: false })).not.toBeInTheDocument();
   });
 
-  it("says how many pages of contacts a Luma run read", async () => {
+  it("says how many hosts a Luma run changed and how many pages of contacts it read", async () => {
     await render(
-      <RunList runs={[ran("import-luma", { ...exampleLumaResult, contactPages: 10 }, { id: 1 })]} none="None" />,
+      <RunList
+        runs={[ran("import-luma", { ...exampleLumaResult, hostsChanged: 3, contactPages: 10 }, { id: 1 })]}
+        none="None"
+      />,
     );
     const [run] = page.getByRole("status").all();
     expect(run.element().textContent).toContain(
-      `${staffCopy.luma.result(exampleLumaResult)} ${staffCopy.luma.contactPages(10)}`,
+      `${staffCopy.luma.result(exampleLumaResult)} ${staffCopy.luma.hostsChanged(3)} ${staffCopy.luma.contactPages(10)}`,
     );
     expect(run.element().textContent).toMatch(new RegExp(`^${staffCopy.runs.status.ok} `));
   });
@@ -3428,10 +3431,14 @@ describe("SupporterDetails", () => {
     );
     await expect.element(page.getByRole("link", { name: "+447700900001" })).not.toBeInTheDocument();
     // Beside the profile, her events and her letters, a table each.
+    // The event she registered for and hosts is two rows, one event in the band.
     const events = page.getByRole("region", { name: copy.detail.eventsTitle, exact: false });
     await expect
-      .element(events.getByRole("link", { name: "PauseAI Manchester Social" }))
+      .element(events.getByRole("link", { name: "PauseAI Manchester Social" }).first())
       .toHaveAttribute("href", "https://luma.com/fixture-manchester-social");
+    expect(
+      [...events.element().querySelectorAll("tbody tr")].map((tr) => (tr as HTMLTableRowElement).cells[2].textContent),
+    ).toEqual([copy.detail.registered, copy.detail.host]);
     const letters = page.getByRole("region", { name: copy.detail.lettersTitle });
     await expect
       .element(letters.getByRole("link", { name: "Polly Placeholder" }))
@@ -3452,8 +3459,9 @@ describe("SupporterDetails", () => {
     // The history, folded until opened: what, linked, with a status only when it isn't approved.
     const history = page.getByRole("list", { name: copy.detail.activityTitle });
     await expect
-      .element(history.getByRole("link", { name: "PauseAI Manchester Social" }))
+      .element(history.getByRole("link", { name: "PauseAI Manchester Social" }).first())
       .toHaveAttribute("href", "https://luma.com/fixture-manchester-social");
+    expect(history.element().textContent).toContain(`${copy.detail.kinds["luma-hosted"]} PauseAI Manchester Social`);
     expect(history.element().textContent).not.toContain("approved");
     // A letter: the MP links to their page, the campaign to its public page, and the letter's status follows.
     await expect

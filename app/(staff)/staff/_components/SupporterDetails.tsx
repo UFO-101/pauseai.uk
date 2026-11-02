@@ -6,7 +6,7 @@ import { displayPostcode } from "@/lib/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { staffDate, staffTime } from "@/lib/staff-time";
 import { UK_MAP_HEIGHT, UK_MAP_WIDTH, ukMapPoint, ukOutline } from "@/lib/uk-map";
-import { registrationStatus } from "@/lib/supporters";
+import { eventsCounted, eventsOf, registrationStatus } from "@/lib/supporters";
 import type {
   SupporterActivity,
   SupporterDetails as Details,
@@ -88,7 +88,7 @@ const heldColumns: ListColumn<Held>[] = [
 
 /** What an activity was about: the event, the MP and campaign, the form, or the list. `letters` lists the supporter's letters. */
 function Subject({ item, letters }: { item: SupporterActivity; letters: string }) {
-  if (item.kind === "luma-registered") {
+  if (item.kind === "luma-registered" || item.kind === "luma-hosted") {
     const status = copy.detail.statuses[item.detail ?? ""];
     return (
       <>
@@ -216,7 +216,7 @@ function SupporterBand({ supporter, events, letters }: { supporter: Details; eve
   );
 }
 
-/** The events they registered for, newest first: when, which, and how it stands. */
+/** The events they registered for or hosted, newest first: when, which, and how it stands, or that they hosted it. */
 const eventColumns: ListColumn<SupporterActivity>[] = [
   { key: "at", label: copy.detail.columns.date, short: true, cell: (a) => staffDate(a.at) },
   {
@@ -228,7 +228,7 @@ const eventColumns: ListColumn<SupporterActivity>[] = [
     key: "status",
     label: copy.detail.columns.status,
     short: true,
-    cell: (a) => registrationStatus(a.detail),
+    cell: (a) => (a.kind === "luma-hosted" ? copy.detail.host : registrationStatus(a.detail)),
   },
 ];
 
@@ -281,11 +281,11 @@ export default function SupporterDetails({
   const { summary, activity, permissions, letters } = supporter;
   const usable = new Set(permissions.filter((p) => p.channel === "phone" && p.send !== "no").map((p) => p.address));
   const holding = held(supporter, usable);
-  const events = activity.filter((a) => a.kind === "luma-registered");
+  const events = eventsOf(activity);
   const lettersPage = `/staff/letters/supporter/${summary.id}`;
   return (
     <>
-      <SupporterBand supporter={supporter} events={events.length} letters={letters.length} />
+      <SupporterBand supporter={supporter} events={eventsCounted(activity)} letters={letters.length} />
 
       <Grid>
         <Card span={2} title={copy.detail.listsTitle} id="subscriptions">
@@ -295,7 +295,7 @@ export default function SupporterDetails({
           <section aria-labelledby="events">
             <h2 id="events">{copy.detail.eventsTitle}</h2>
             {events.length ? (
-              <ListTable columns={eventColumns} rows={events} rowKey={(a) => `${a.at}${a.title}`} />
+              <ListTable columns={eventColumns} rows={events} rowKey={(a) => `${a.kind}${a.at}${a.title}`} />
             ) : (
               <p className={styles.none}>{copy.detail.noEvents}</p>
             )}

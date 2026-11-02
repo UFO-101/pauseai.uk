@@ -609,15 +609,18 @@ export function MailingsOverviewExample({ empty = false }: { empty?: boolean }) 
 
 /**
  * The events page's table, on a tab, with a search or filters as typed,
- * (`params`); saving an event's edit form is logged, and with `emailed`,
- * says it emailed the owner chosen and Joseph, the owner before.
+ * (`params`), and its hosts, but without `hosts`, as staff who don't see
+ * supporters have it; saving an event's edit form is logged, and with
+ * `emailed`, says it emailed the owner chosen and Joseph, the owner before.
  */
 export function EventsTableExample({
   params = {},
   emailed = false,
+  hosts = true,
 }: {
   params?: Parameters<typeof exampleEventsTab>[0];
   emailed?: boolean;
+  hosts?: boolean;
 }) {
   const { search, found } = exampleEventsTab(params);
   return (
@@ -628,6 +631,7 @@ export function EventsTableExample({
           search={search}
           staff={exampleStaff}
           now={exampleEventsNow}
+          hosts={hosts}
           save={async (form) => {
             log("save")(form);
             const chosen = String(form.get("owner"));

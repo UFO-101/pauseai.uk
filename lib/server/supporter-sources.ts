@@ -9,7 +9,7 @@ import type { SupporterLinkSource } from "@/lib/supporters";
 // href, status) for the history, and supporter_contact_<name> (source_id, at,
 // phone, postcode, latitude, longitude, city) for contact details and places.
 // supporter_identity, supporter_activity and supporter_contact union them
-// all, by supporter. Luma's activity is two arms of supporter_activity
+// all, by supporter. Luma's activity is three arms of supporter_activity
 // itself, with no view of its own, as Postgres can't narrow a union inside a
 // join to one supporter. A new source adds itself here, a column and a widened
 // CHECK to supporter_links, its views, and its arms of the union views.

@@ -26,11 +26,11 @@ export class LumaRateLimited extends Error {
 }
 
 /**
- * Fetches one page of `path` with `params`, uncached, as raw entries. Throws
- * LumaRateLimited on a 429, and an Error for a missing key or any other
- * answer that isn't ok.
+ * Fetches `path` with `params`, uncached: its JSON, and the requests left
+ * in this minute when Luma says. Throws LumaRateLimited on a 429, and an
+ * Error for a missing key or any other answer that isn't ok.
  */
-export async function lumaList<T>(path: string, params: URLSearchParams): Promise<LumaPage<T>> {
+export async function lumaGet<T>(path: string, params: URLSearchParams): Promise<{ data: T; remaining?: number }> {
   const key = process.env.LUMA_API_KEY;
   if (!key) throw new Error("LUMA_API_KEY is not set");
   const res = await outsideFetch(`https://public-api.luma.com${path}?${params}`, {
@@ -39,11 +39,16 @@ export async function lumaList<T>(path: string, params: URLSearchParams): Promis
   });
   if (res.status === 429) throw new LumaRateLimited(Number(res.headers.get("retry-after")) || 60);
   if (!res.ok) throw new Error(`Luma answered ${res.status} for ${path}`);
-  const data = await res.json();
   const remaining = res.headers.get("x-ratelimit-remaining");
+  return { data: (await res.json()) as T, remaining: remaining === null ? undefined : Number(remaining) };
+}
+
+/** Fetches one page of `path` with `params`, as lumaGet does, as raw entries. */
+export async function lumaList<T>(path: string, params: URLSearchParams): Promise<LumaPage<T>> {
+  const { data, remaining } = await lumaGet<{ entries?: T[]; has_more?: boolean; next_cursor?: string }>(path, params);
   return {
     entries: data.entries ?? [],
     nextCursor: data.has_more && data.next_cursor ? data.next_cursor : undefined,
-    remaining: remaining === null ? undefined : Number(remaining),
+    remaining,
   };
 }

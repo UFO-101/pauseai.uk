@@ -116,6 +116,18 @@ export const exampleSupporterDetails: SupporterDetails = {
       href: "https://luma.com/fixture-manchester-social",
       status: null,
     },
+    // She hosts it too, made on Luma before she registered: a row of its own, one event in her count.
+    {
+      source: "luma",
+      at: "2026-08-10T10:00:00Z",
+      kind: "luma-hosted",
+      title: "PauseAI Manchester Social",
+      campaignTitle: null,
+      campaignUrl: null,
+      detail: null,
+      href: "https://luma.com/fixture-manchester-social",
+      status: null,
+    },
     {
       source: "luma",
       at: "2026-03-01T10:00:00Z",
