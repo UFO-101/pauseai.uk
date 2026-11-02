@@ -18,7 +18,7 @@ Two one-off imports also read that base
 | --------------------------------------------------------- | ------------------------------------------------- |
 | Name, body, constituency, party, country, email, status   | The official sources, every night                 |
 | Salutation                                                | Staff, with a new politician's made from the name |
-| Notes, Recommended                                        | Kept as last synced; staff add notes on the site  |
+| Notes, Recommended                                        | A note in their history, from Airtable            |
 | Important target, Personal connection                     | Staff                                             |
 | Signed Frontier AI Letter, Edinburgh conference           | Staff                                             |
 | Signed DeepMind Letter                                    | Nothing; the letter was in 2025, so it's kept     |
@@ -89,7 +89,10 @@ All four give each member's name, party, constituency and email.
    letter.
 6. Switch off Airtable: remove the syncs, the one-off imports, their
    rows on the Import page and the base's token. Politicians keep their
-   `airtable_id`.
+   `airtable_id`. Each politician's Airtable notes, with a line saying
+   Recommended if it was ticked, become one note in their history,
+   written by "Airtable" and dated the day it's switched off; then
+   `notable_people.notes` and the Notes from Airtable card go.
 
 ## Open questions
 
