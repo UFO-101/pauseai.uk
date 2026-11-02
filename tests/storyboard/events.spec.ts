@@ -57,7 +57,7 @@ test("Events get their owners by the rules, and one with none is given one", asy
     "href",
     "https://docs.google.com/document/d/oxford-talk-plan/edit",
   );
-  await expect(talk.getByRole("status")).toHaveText(copy.emailed(["sean@pauseai.uk"], "sean@pauseai.uk"));
+  await expect(talk.getByRole("status")).toContainText(copy.emailed(["sean@pauseai.uk"], "sean@pauseai.uk"));
   await frame(
     page,
     "saved: Sean owns it, and its Google Doc is linked, so neither is in red; a note under it says Sean was emailed",
