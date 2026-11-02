@@ -194,7 +194,7 @@ describeWithDatabase("staff Server Actions", () => {
     await setAskStatus(form({ politicianId: String(id), ask: PM, status: "", note: "Kept" }));
     expect(await statusCount()).toBe(0);
     expect(await query("SELECT details->>'note' AS note FROM audit_log ORDER BY id DESC LIMIT 1")).toEqual([
-      { note: "" },
+      { note: "Kept" },
     ]);
   });
 

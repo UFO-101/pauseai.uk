@@ -124,7 +124,8 @@ test("A letter a politician declined, recorded from the button under their asks,
   await row.getByRole("button", { name: copy.save }).click();
   await expect(asks.getByRole("group", { name: PM_LETTER })).toHaveCount(0);
   await expect(page.getByRole("region", { name: copy.historyTitle })).toContainText(copy.statusCleared.before);
-  await frame(page, "cleared: the row gone, back under the button, and the history says so");
+  await expect(page.getByRole("region", { name: copy.historyTitle })).toContainText("Entered by mistake");
+  await frame(page, "cleared: the row gone, back under the button, and the history says so, with its note");
 });
 
 test("A peer, an MSP, and an MP who left office", async ({ page, request, flowDatabase }) => {
