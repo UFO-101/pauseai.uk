@@ -26,19 +26,21 @@ export type ListColumn<Row> = DownloadColumn<Row> & {
 /**
  * Rows as a striped table, a column each; `align="middle"` when its rows
  * hold buttons (docs/style-guide.md, "Tables"). With `rowId`, each row has
- * that ID, so a link can lead to it, picking it out.
+ * that ID, so a link can lead to it; the row `picked` says is tinted.
  */
 export function ListTable<Row>({
   columns,
   rows,
   rowKey,
   rowId,
+  picked,
   align,
 }: {
   columns: ListColumn<Row>[];
   rows: Row[];
   rowKey: (row: Row) => string | number;
   rowId?: (row: Row) => string;
+  picked?: (row: Row) => boolean;
   align?: "top" | "middle";
 }) {
   const cellClass = (column: ListColumn<Row>) =>
@@ -50,7 +52,12 @@ export function ListTable<Row>({
       </thead>
       <tbody>
         {rows.map((row) => (
-          <tr key={rowKey(row)} id={rowId?.(row)}>
+          <tr
+            key={rowKey(row)}
+            id={rowId?.(row)}
+            className={picked?.(row) ? styles.picked : undefined}
+            aria-current={picked?.(row) || undefined}
+          >
             {columns.map((column) => (
               <td key={column.key} className={cellClass(column)}>
                 {column.cell(row)}
@@ -133,8 +140,9 @@ type Props<Row> = {
   columns: ListColumn<Row>[];
   rows: Row[];
   rowKey: (row: Row) => string | number;
-  /** Each row's ID, for a link to lead to it (ListTable). */
+  /** Each row's ID, for a link to lead to it, and the row it picked out (ListTable). */
   rowId?: (row: Row) => string;
+  picked?: (row: Row) => boolean;
   /** What a list with nothing in it says instead. */
   empty: ReactNode;
 };
@@ -160,6 +168,7 @@ export default function ListFrame<Row>({
   rows,
   rowKey,
   rowId,
+  picked,
   empty,
   align,
 }: Props<Row>) {
@@ -179,7 +188,7 @@ export default function ListFrame<Row>({
           {download && <DownloadMenu download={download} formats={formats} />}
         </div>
       </div>
-      <ListTable columns={columns} rows={rows} rowKey={rowKey} rowId={rowId} align={align} />
+      <ListTable columns={columns} rows={rows} rowKey={rowKey} rowId={rowId} picked={picked} align={align} />
       {pages > 1 && href && (
         <div className={styles.under}>
           <Muted>{staffCopy.paging.range(from, to, total)}</Muted>

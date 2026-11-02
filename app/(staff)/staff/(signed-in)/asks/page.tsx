@@ -3,7 +3,7 @@ import { buttonClass } from "@/components/ui/Button";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { asksWithCounts } from "@/lib/server/asks";
 import { requireStaff } from "@/lib/server/staff-auth";
-import { askFormSearch, type ParamValue } from "@/lib/staff-search";
+import { askFormSearch, firstOf, type ParamValue } from "@/lib/staff-search";
 import AsksTable from "../../_components/AsksTable";
 import PageTitle from "../../_components/ui/PageTitle";
 import StaffLink from "../../_components/ui/StaffLink";
@@ -12,7 +12,8 @@ export const metadata: Metadata = { title: staffCopy.asks.title };
 
 export default async function AsksPage({ searchParams }: { searchParams: Promise<Record<string, ParamValue>> }) {
   await requireStaff();
-  const { notice } = askFormSearch(await searchParams);
+  const params = await searchParams;
+  const { notice } = askFormSearch(params);
   const asks = await asksWithCounts();
   return (
     <>
@@ -26,7 +27,7 @@ export default async function AsksPage({ searchParams }: { searchParams: Promise
         {staffCopy.asks.title}
       </PageTitle>
       <p>{staffCopy.asks.intro}</p>
-      <AsksTable asks={asks} notice={notice} />
+      <AsksTable asks={asks} notice={notice} picked={firstOf(params.ask)} />
     </>
   );
 }

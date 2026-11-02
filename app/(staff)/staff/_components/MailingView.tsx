@@ -46,16 +46,17 @@ function letterLabels(asks: Ask[]): { fields: Record<string, string>; conditions
 }
 
 /**
- * How a recipient's letter went, as a tag: answered its ask, in green;
- * failed, in red, skipped with why, refused, or bounced, or a spam
- * complaint; else grey, as replied, or its status.
+ * How a recipient's letter went, as a tag: failed, in red, skipped with
+ * why, refused, or bounced, or a spam complaint, though they answered its
+ * ask some other way; answered its ask, in green; else grey, as replied,
+ * or its status.
  */
 function Outcome({ mailing, recipient }: { mailing: Mailing; recipient: MailingRecipient }) {
-  if (mailing.ask && recipient.answer) return <Tag tone="green">{staffCopy.mailings.columns.answered}</Tag>;
   if (recipient.skipReason) return <Tag tone="red">{copy.skipReasons[recipient.skipReason]}</Tag>;
   if (["not_sent", "bounced", "spam_complaint"].includes(recipient.status)) {
     return <Tag tone="red">{staffCopy.letters.status[recipient.status]}</Tag>;
   }
+  if (mailing.ask && recipient.answer) return <Tag tone="green">{staffCopy.mailings.columns.answered}</Tag>;
   if (recipient.repliedAt) return <Tag>{copy.tabs.replied}</Tag>;
   return <Tag>{staffCopy.letters.status[recipient.status] ?? recipient.status}</Tag>;
 }

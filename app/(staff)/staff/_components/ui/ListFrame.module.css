@@ -118,3 +118,12 @@
     display: inline;
   }
 }
+
+/* The row a link picked out, tinted, and scrolled to a little below the window's top. */
+.picked {
+  scroll-margin-top: var(--space-8);
+}
+
+.picked > td {
+  background: rgb(var(--pause-orange-rgb) / 0.12);
+}

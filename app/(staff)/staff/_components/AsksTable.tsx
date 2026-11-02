@@ -86,9 +86,18 @@ const editColumn: ListColumn<AskWithCounts> = {
 /**
  * Every ask, newest first, in the list frame: how many, their downloads, a
  * row each with Edit, whose ID is its slug, so a link to the ask leads to
- * it (askHref); over them, `notice`, how the last save or delete went.
+ * it (askHref), the one `picked` tinted; over them, `notice`, how the last
+ * save or delete went.
  */
-export default function AsksTable({ asks, notice = "" }: { asks: AskWithCounts[]; notice?: string }) {
+export default function AsksTable({
+  asks,
+  notice = "",
+  picked = "",
+}: {
+  asks: AskWithCounts[];
+  notice?: string;
+  picked?: string;
+}) {
   return (
     <>
       {copy.notices[notice] && (
@@ -109,6 +118,7 @@ export default function AsksTable({ asks, notice = "" }: { asks: AskWithCounts[]
         rows={asks}
         rowKey={(a) => a.slug}
         rowId={(a) => a.slug}
+        picked={(a) => a.slug === picked}
         empty={copy.none}
         align="middle"
       />

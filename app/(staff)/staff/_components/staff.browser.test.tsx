@@ -2035,6 +2035,13 @@ describe("PoliticianTable headings", () => {
 });
 
 describe("AsksTable", () => {
+  it("picks out the ask a link led to: its row, by its slug, tinted and current", async () => {
+    await render(<AsksTable asks={exampleAsksWithCounts} picked={exampleAsks[1].slug} />);
+    const current = document.querySelectorAll("tr[aria-current=true]");
+    expect([...current].map((row) => row.id)).toEqual([exampleAsks[1].slug]);
+    expect(document.getElementById(exampleAsks[0].slug)!.hasAttribute("aria-current")).toBe(false);
+  });
+
   it("lists each ask: its kind, title linked to the letter or event, date, who asks it, and each answer's count, linked to who gave it", async () => {
     await render(<AsksTable asks={exampleAsksWithCounts} />);
     const row = (title: string) => page.getByRole("row").filter({ hasText: title });

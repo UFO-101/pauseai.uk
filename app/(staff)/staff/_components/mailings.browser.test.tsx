@@ -218,7 +218,7 @@ describe("MailingsOverview", () => {
       .not.toBeInTheDocument();
     await expect
       .element(page.getByRole("link", { name: "Edinburgh conference" }).first())
-      .toHaveAttribute("href", "/staff/asks#edinburgh-conference-2026");
+      .toHaveAttribute("href", "/staff/asks?ask=edinburgh-conference-2026#edinburgh-conference-2026");
     // Nothing on it changes a mailing.
     expect(page.getByRole("button").all()).toHaveLength(0);
   });

@@ -324,8 +324,9 @@ test("Asks: a mailing's ask leads to it, and each answer's count to who gave it"
     .filter({ hasText: "Edinburgh Conference Nov 26 Invitation" })
     .getByRole("link", { name: "Edinburgh conference", exact: true })
     .click();
-  await expect(page).toHaveURL(`${BASE}/staff/asks#edinburgh-conference-2026`);
+  await expect(page).toHaveURL(`${BASE}/staff/asks?ask=edinburgh-conference-2026#edinburgh-conference-2026`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.asks.title);
+  await expect(page.locator("tr[aria-current=true]")).toContainText("Edinburgh conference");
   await frame(page, "from a mailing, its ask: every ask, the conference picked out");
   await page.getByRole("link", { name: staffCopy.asks.count(staffCopy.statuses.going, 1) }).click();
   await expect(page).toHaveURL(/ask=edinburgh-conference-2026&answer=going/);
