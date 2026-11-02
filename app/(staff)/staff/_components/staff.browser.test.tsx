@@ -386,7 +386,7 @@ describe("StaffDashboard", () => {
     expect(page.getByRole("img").all()).toHaveLength(2);
     // The whole tile is the link; a tile with no page isn't one.
     const tileLink = (text: string) => page.getByText(text).element().closest("a");
-    expect(tileLink(copy.metrics.lettersReplied(3))?.getAttribute("href")).toBe("/staff/letters?status=replied");
+    expect(tileLink(copy.metrics.lettersReplied(3))?.getAttribute("href")).toBe("/staff/letters?answered=yes");
     expect(tileLink(copy.metrics.supportersAdded(176))?.getAttribute("href")).toBe("/staff/supporters");
     expect(tileLink(copy.metrics.eventsHeld(9))).toBeNull();
 
@@ -2734,6 +2734,7 @@ describe("LettersTable", () => {
             contactConsent: false,
             sentAt: null,
             repliedAt: "2026-10-13T09:00:00Z",
+            autoRepliedAt: "2026-10-12T10:00:00Z",
             events: [{ at: letter.createdAt, status: "strange", details: {} }],
           },
         ]}
@@ -2770,6 +2771,15 @@ describe("LettersTable", () => {
     await expect.element(page.getByRole("cell", { name: "–", exact: true })).toBeInTheDocument();
     expect(page.getByText(staffCopy.politicians.flags.test).all()).toHaveLength(1);
     await expect.element(page.getByRole("cell", { name: "13 Oct 2026, 09:00", exact: true })).toBeInTheDocument();
+    // The written reply's, though an automatic one came first.
+    expect(document.body.textContent).not.toContain("12 Oct 2026, 10:00");
+  });
+
+  it("says when only an automatic reply came, greyed, with when", async () => {
+    await render(<LettersTable letters={[{ ...letter, autoRepliedAt: "2026-10-12T11:00:00Z" }]} />);
+    const muted = document.querySelector("tbody tr td:last-child span")!;
+    expect(muted.textContent).toBe(`${staffCopy.letters.status.auto_reply}12 Oct 2026, 11:00`);
+    expect(muted.querySelector("br")).not.toBeNull();
   });
 
   it("says when there are none", async () => {
@@ -3876,6 +3886,14 @@ describe("each list's download values and contact cards", () => {
       "Gone",
     );
     expect(typeof row.history).toBe("string");
+    // When the MP replied, or failing that, when an automatic reply came, said so.
+    expect(row.replied).toBeNull();
+    expect(values(letterDownloadColumns, { ...exampleLetter, repliedAt: "2026-10-13T09:00:00Z" }).replied).toBe(
+      "2026-10-13T09:00:00Z",
+    );
+    expect(values(letterDownloadColumns, { ...exampleLetter, autoRepliedAt: "2026-10-12T11:00:00Z" }).replied).toBe(
+      `${staffCopy.letters.status.auto_reply} 2026-10-12T11:00:00Z`,
+    );
   });
 
   it("politicians: every column, and as cards, with what they have", async () => {

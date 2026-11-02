@@ -2661,7 +2661,8 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/LettersTable.tsx",
       variants: [
         {
-          label: "A bounced letter to a test MP, a replied one, and one not sent as the MP's address was blocked",
+          label:
+            "A bounced letter to a test MP, a replied one, one with only an automatic reply, and one not sent as the MP's address was blocked",
           render: () => (
             <StaffPage as="div">
               <LettersTable
@@ -2670,7 +2671,7 @@ export const staff: Group = {
                   {
                     ...exampleLetter,
                     id: 2,
-                    status: "replied",
+                    status: "sent",
                     senderName: "Example Sender",
                     senderEmail: "sender@example.org",
                     contactConsent: false,
@@ -2680,6 +2681,21 @@ export const staff: Group = {
                     events: [
                       { at: "2026-10-12T09:00:00Z", status: "sending", details: {} },
                       { at: "2026-10-12T09:05:00Z", status: "sent", details: {} },
+                    ],
+                  },
+                  {
+                    ...exampleLetter,
+                    id: 4,
+                    status: "sent",
+                    senderName: "Sam Jones",
+                    senderEmail: "sam@example.org",
+                    mpName: "Polly Placeholder",
+                    isTest: false,
+                    autoRepliedAt: "2026-10-12T09:06:00Z",
+                    events: [
+                      { at: "2026-10-12T09:06:00Z", status: "auto_reply", details: {} },
+                      { at: "2026-10-12T09:05:00Z", status: "sent", details: {} },
+                      { at: "2026-10-12T09:00:00Z", status: "sending", details: {} },
                     ],
                   },
                   {

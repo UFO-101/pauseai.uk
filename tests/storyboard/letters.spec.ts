@@ -1,11 +1,12 @@
 import { campaigns, copy } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { addFilter, fakeTurnstile, lookUpTestMp, newestEmail, openLookup } from "../steps";
+import { addFilter, changeFilter, fakeTurnstile, lookUpTestMp, newestEmail, openLookup } from "../steps";
 import { BASE, emailFrame, expect, madeUpAddress, frame, test } from "./fixtures";
 import { TEST_MPS } from "@/lib/test-mps";
-import { logIn, STAFF_INBOX, bouncy, BOUNCY_ADDRESS, postBounce, sentLetterId } from "./staff-steps";
+import { logIn, STAFF_INBOX, bouncy, BOUNCY_ADDRESS, postBounce, postReply, sentLetterId } from "./staff-steps";
 
-// Supporters' letters to MPs: the list filtered, and a letter that bounces,
+// Supporters' letters to MPs: the list filtered, by status and by what came
+// back to a letter, and a letter that bounces,
 // emailing staff and blocking the address until staff unblock it. Each flow
 // on its own database.
 
@@ -55,6 +56,57 @@ test("Filter letters by status and campaigns, reset, then sort by sender", async
   await expect(page).toHaveURL(/sort=from&dir=asc/);
   await expect(page.getByRole("row").nth(1)).toContainText(jane);
   await frame(page, "sorted by sender, A to Z");
+});
+
+test("A letter's automatic reply in the Replied column, and the letters filtered by what came back", async ({
+  page,
+  request,
+  flowDatabase,
+}) => {
+  const copy = staffCopy.letters;
+  const jane = madeUpAddress("Jane Smith", 15);
+  const sam = madeUpAddress("Sam Smith", 16);
+  const janesLetter = await sentLetterId(page, flowDatabase, jane);
+  const samsLetter = await sentLetterId(page, flowDatabase, sam, undefined, "Sam Smith");
+  await postReply(request, flowDatabase, janesLetter, true);
+  await postReply(request, flowDatabase, samsLetter);
+
+  await page.reload();
+  const janes = page.getByRole("row").filter({ hasText: jane });
+  const sams = page.getByRole("row").filter({ hasText: sam });
+  // Both still sent: the status says whether it was delivered, not what came back.
+  await expect(janes.getByRole("link", { name: copy.status.sent, exact: true })).toBeVisible();
+  await expect(sams.getByRole("link", { name: copy.status.sent, exact: true })).toBeVisible();
+  await expect(janes).toContainText(copy.status.auto_reply);
+  await expect(sams).not.toContainText(copy.status.auto_reply);
+  await frame(page, "the letters list: Jane's letter got only an automatic reply, greyed; Sam's a written one");
+
+  // The Status filter offers only whether a letter was delivered.
+  await page.getByRole("button", { name: staffCopy.filters.add }).click();
+  const status = page
+    .locator("[popover]:popover-open details")
+    .filter({ has: page.locator("summary", { hasText: new RegExp(`^${copy.columns.status}$`) }) });
+  await status.locator("summary").click();
+  await expect(status.getByRole("link", { name: copy.status.sent, exact: true })).toBeVisible();
+  await expect(status.getByRole("link", { name: copy.status.auto_reply, exact: true })).toHaveCount(0);
+  await frame(page, "the Status filter: only whether it was delivered", { window: true });
+  await page.keyboard.press("Escape");
+
+  await addFilter(page, copy.columns.replied, copy.answered.auto);
+  await expect(page).toHaveURL(/answered=auto/);
+  await expect(janes).toBeVisible();
+  await expect(sams).toHaveCount(0);
+  await frame(page, "filtered to only an automatic reply: Jane's letter");
+
+  await changeFilter(page, `${copy.columns.replied}: ${copy.answered.auto}`, copy.answered.yes);
+  await expect(page).toHaveURL(/answered=yes/);
+  await expect(sams).toBeVisible();
+  await expect(janes).toHaveCount(0);
+  await frame(page, "a written reply: Sam's letter");
+
+  await changeFilter(page, `${copy.columns.replied}: ${copy.answered.yes}`, copy.answered.no);
+  await expect(page.getByText(copy.none)).toBeVisible();
+  await frame(page, "no reply: no letters");
 });
 
 test("A supporter's letter: the letter as an email, Copy Gmail search, and the MP's answer set from it", async ({

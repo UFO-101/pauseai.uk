@@ -8,7 +8,7 @@ import {
   sentNearSearch,
   type GmailFind,
 } from "@/lib/letter-links";
-import { LETTER_COLUMNS } from "@/lib/letter-sort";
+import { AUTO_REPLIED_AT, LETTER_COLUMNS } from "@/lib/letter-sort";
 import type { PoliticianFlag } from "@/lib/politician-filters";
 import { query } from "./db";
 import { FLAG_CONDITIONS } from "./politicians";
@@ -38,6 +38,8 @@ export type LetterSummary = {
   sentAt: string | null;
   /** When a reply from anyone but the sender first reached us. */
   repliedAt: string | null;
+  /** When an automatic reply, such as an office's acknowledgement, first did. */
+  autoRepliedAt: string | null;
   /** The supporter the sender is, once linked. */
   supporterId: number | null;
   events: LetterEvent[];
@@ -110,17 +112,18 @@ async function letterRows({
   return query<LetterSummary & { total: number }>(
     `SELECT l.id::int AS id, s.campaign, c.title AS "campaignTitle", c.url AS "campaignUrl", l.status, f.name AS "senderName", f.email AS "senderEmail",
        f.contact_consent AS "contactConsent", n.name AS "mpName", n.id::int AS "politicianId", p.is_test AS "isTest", ${BACKEND} AS backend, l.created_at AS "createdAt", l.sent_at AS "sentAt", l.replied_at AS "repliedAt",
+       ${AUTO_REPLIED_AT} AS "autoRepliedAt",
        (SELECT k.supporter_id::int FROM supporter_links k WHERE k.form_entry_id = s.entry_id) AS "supporterId",
        coalesce((SELECT json_agg(json_build_object('at', e.at, 'status', e.status, 'details', e.details) ORDER BY e.at DESC, e.id DESC)
                  FROM letter_events e WHERE e.letter_id = l.id), '[]') AS events,
        count(*) OVER ()::int AS total
      FROM letters_from_supporters s JOIN letters l ON l.id = s.id JOIN form_entries f ON f.id = s.entry_id
        JOIN campaigns c ON c.slug = s.campaign JOIN notable_people n ON n.id = l.notable_person_id JOIN politicians p ON p.id = n.id
-     WHERE ($1::text IS NULL OR l.status = $1 OR ($1 = 'replied' AND l.replied_at IS NOT NULL)
-       OR ($1 = 'auto_reply' AND EXISTS (SELECT 1 FROM letter_events e WHERE e.letter_id = l.id AND e.status = 'auto_reply')))
+     WHERE ($1::text IS NULL OR l.status = $1)
        AND ($3::bigint IS NULL OR l.notable_person_id = $3)
        AND ($4::text IS NULL OR f.name ILIKE $4 OR f.email ILIKE $4 OR n.name ILIKE $4)
-       AND ($5::boolean IS NULL OR (l.replied_at IS NOT NULL) = $5)
+       AND ($5::text IS NULL OR CASE WHEN l.replied_at IS NOT NULL THEN 'yes'
+         WHEN ${AUTO_REPLIED_AT} IS NOT NULL THEN 'auto' ELSE 'no' END = $5)
        AND ($6::bigint IS NULL OR EXISTS (SELECT 1 FROM supporter_links k WHERE k.form_entry_id = s.entry_id AND k.supporter_id = $6))
        AND ($7::bigint IS NULL OR l.id = $7)
        AND ($8::text[] IS NULL OR s.campaign = ANY($8))

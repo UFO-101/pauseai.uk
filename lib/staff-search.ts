@@ -13,7 +13,7 @@ import { isSupporterBadge, NEAR_MILES, SUPPORTER_SORTS, type SupporterFilter } f
 export type LettersSearch = {
   status: string;
   q: string;
-  /** "yes" or "no". */
+  /** As LETTER_REPLIES. */
   answered: string;
   /** Campaigns' slugs. */
   campaign: string[];
@@ -35,17 +35,27 @@ export type LettersSearch = {
 export const LETTER_BACKENDS = ["airtable", "postmark", "gmail"] as const;
 export type LetterBackend = (typeof LETTER_BACKENDS)[number];
 
+/** Whether a letter was delivered: the statuses a supporter's letter can have. */
+export const LETTER_STATUSES = ["sending", "sent", "not_sent", "bounced", "spam_complaint"] as const;
+
+/**
+ * What came back to a letter: a written reply, only an automatic one (an
+ * office's acknowledgement or out-of-office), or neither.
+ */
+export const LETTER_REPLIES = ["yes", "auto", "no"] as const;
+export type LetterReply = (typeof LETTER_REPLIES)[number];
+
 /** The filters of the letters list that repeat, which can leave out as well as find. */
 type NegatableLetterFilter = "campaign" | "flags" | "backend";
 
 /** Which letters the letters page lists (recentLetters in lib/server/letters.ts). */
 export type LetterFilter = {
-  /** A letter's status, or "replied" (a person replied) or "auto_reply" (a machine did). */
+  /** A letter's status, as LETTER_STATUSES. */
   status?: string;
   /** Over the sender's name and email, and the MP's name. */
   search?: string;
-  /** Whether the MP replied. */
-  answered?: boolean;
+  /** What came back to it. */
+  answered?: LetterReply;
   /** In any of these campaigns, by slug. */
   campaign?: string[];
   /** To an MP with any of these markers. */
@@ -89,9 +99,9 @@ export function lettersSearch(
   const [backends, notBackends] = anyAndNone(backend, (values) => among(values, LETTER_BACKENDS));
   const sorting = parseSort(LETTER_SORTS, "created", sort, dir);
   const filter: LetterFilter = {
-    status: Object.hasOwn(staffCopy.letters.status, status) ? status : undefined,
+    status: among([status], LETTER_STATUSES)[0],
     search: q.trim() || undefined,
-    answered: yesOrNo(answered),
+    answered: among([answered], LETTER_REPLIES)[0],
     campaign: campaigns,
     flags,
     backend: backends,
