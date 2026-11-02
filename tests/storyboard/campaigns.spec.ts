@@ -74,7 +74,7 @@ test(
     // The letter's own address, whatever its shape (lib/server/mp-letters.test.ts checks that), so main gets this far too.
     const address = letter.From.match(/<([^>]+@letters\.pauseai\.uk)>/)![1];
     expect(letter.From).toBe(`"Jane Smith via PauseAI" <${address}>`);
-    expect(letter.Bcc).toBe("replies@example.org");
+    expect(letter.Bcc).toBe("policy@example.org");
     expect(letter.Cc).toBe(`"Jane Smith" <${sender}>`);
     expect(letter.ReplyTo).toBeUndefined();
     expect(letter.TextBody).toMatch(/Jane Smith\n\n1 High Street, Testville\nZZ9 9ZZ$/);

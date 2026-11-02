@@ -90,8 +90,8 @@ export const loadingLine = (page: Page) =>
     return line.content !== "none" && line.opacity === "1";
   });
 
-/** The shared inbox in a fixture build (tests/fixture-env.mjs), where staff alerts go. */
-export const STAFF_INBOX = "replies@example.org";
+/** The policy inbox in a fixture build (tests/fixture-env.mjs), where staff alerts and forwarded replies go. */
+export const POLICY_INBOX = "policy@example.org";
 
 /** Bouncy McTestface MP, whose address doesn't exist. */
 export const bouncy = TEST_MPS.find((mp) => mp.postcode === "ZZ99ZH")!;

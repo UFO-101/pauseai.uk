@@ -3,7 +3,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { addFilter, changeFilter, fakeTurnstile, lookUpTestMp, newestEmail, openLookup } from "../steps";
 import { BASE, emailFrame, expect, madeUpAddress, frame, test } from "./fixtures";
 import { TEST_MPS } from "@/lib/test-mps";
-import { logIn, STAFF_INBOX, bouncy, BOUNCY_ADDRESS, postBounce, postReply, sentLetterId } from "./staff-steps";
+import { bouncy, BOUNCY_ADDRESS, logIn, POLICY_INBOX, postBounce, postReply, sentLetterId } from "./staff-steps";
 
 // Supporters' letters to MPs: the list filtered, by status and by what came
 // back to a letter, and a letter that bounces,
@@ -153,7 +153,7 @@ test("A letter bounces: staff are emailed, the address is blocked", async ({ pag
   await postBounce(request, messageId);
 
   const alert = newestEmail(
-    (email) => email.To === STAFF_INBOX && email.Subject === staffCopy.alert.subject(bouncy.name),
+    (email) => email.To === POLICY_INBOX && email.Subject === staffCopy.alert.subject(bouncy.name),
   );
   expect(alert?.TextBody).toContain(`${BASE}/staff/politicians/blocked-emails`);
   await emailFrame(page, alert!, "the email staff get about it");

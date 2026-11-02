@@ -5,7 +5,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { runSql } from "@/scripts/fresh-database.mjs";
 import { newestEmail, newestEmailTo, WEBHOOK_AUTH } from "../steps";
 import { BASE, emailFrame, expect, frame, madeUpAddress, test } from "./fixtures";
-import { sentLetterId, STAFF_INBOX } from "./staff-steps";
+import { POLICY_INBOX, sentLetterId } from "./staff-steps";
 
 // Replies to a supporter's letter to their MP, and the letter's history
 // after each: who every email was from, to and copied to, and for each
@@ -106,7 +106,7 @@ test("The MP replies and the sender writes back: each forwarded, and the letter'
   await emailFrame(page, forwarded, "the MP's reply, forwarded to Jane");
   entries = await openLetter(page, letter);
   await expect(entries.first()).toContainText(`${history.fields.to}${letter.address}`);
-  await expect(entries.first()).toContainText(`${STAFF_INBOX} · `);
+  await expect(entries.first()).toContainText(`${POLICY_INBOX} · `);
   await expect(entries.first()).toContainText(history.handlingReasons.policy_inbox);
   await expect(entries.first()).toContainText(history.handlingReasons.sender);
   await frame(page, "replied: to the letter's address only, so forwarded to the shared inbox and to Jane, and why");
@@ -125,12 +125,12 @@ test("The MP replies and the sender writes back: each forwarded, and the letter'
   ).toBe(1);
   // Nothing goes back to Jane: her newest email is still the MP's reply.
   expect(newestEmailTo(sender)!.TextBody).toContain(MP_REPLY);
-  const kept = newestEmail((one) => one.To === STAFF_INBOX && one.TextBody.includes("glad to meet"))!;
+  const kept = newestEmail((one) => one.To === POLICY_INBOX && one.TextBody.includes("glad to meet"))!;
   expect(kept.TextBody).toContain(copy.forwardedReply.followUp("Jane Smith", MP.Name));
   expect(kept.ReplyTo).toBe(`${sender}, ${letter.address}`);
   await emailFrame(page, kept, "Jane's answer, copied to the shared inbox");
   entries = await openLetter(page, letter);
-  await expect(entries.first()).toContainText(`${history.handling.forwarded}${STAFF_INBOX}`);
+  await expect(entries.first()).toContainText(`${history.handling.forwarded}${POLICY_INBOX}`);
   await expect(entries.first()).toContainText(`${history.handling.not_forwarded}${sender}`);
   await expect(entries.first()).toContainText(history.handlingReasons.own_follow_up);
   await frame(
@@ -170,7 +170,7 @@ test("Automatic replies: one to the letter's address, forwarded; one to the boun
   await bounce(request, { ID: 7, Type: "AutoResponder", MessageID: messageId, Email: MP.Email, Inactive: false });
   entries = await openLetter(page, letter);
   await expect(entries.first()).toContainText(`${history.handling.nowhere}${history.handlingReasons.bounce_address}`);
-  await frame(page, "an auto-reply to the bounce address: noted, not forwarded, as Postmark keeps only that it came");
+  await frame(page, "an auto-reply to the bounce address: noted, not forwarded");
 });
 
 test("A reply-all that copies the sender, then a reply after the sender's address bounced", async ({
