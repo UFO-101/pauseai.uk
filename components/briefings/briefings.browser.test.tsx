@@ -43,7 +43,7 @@ describe("BudgetChart", () => {
     expect(rows.map((row) => row.querySelector("th")!.firstChild!.textContent)).toEqual(["Lab", "Prize", "Shield"]);
     expect(rows.map((row) => row.querySelector("td")!.textContent)).toEqual(["30", "20", "10"]);
     await expect.element(page.getByRole("columnheader", { name: "For" })).toBeVisible();
-    await expect.element(page.getByRole("cell", { name: "Tests things" })).toBeVisible();
+    expect(rows[0].querySelector("td:last-child")!.textContent).toBe("Tests things");
     // The largest item's bar is the longest.
     const bars = rows.map((row) => row.querySelector("td span")!.getBoundingClientRect().width);
     expect(bars[0]).toBeGreaterThan(bars[1]);
@@ -72,7 +72,7 @@ describe("SignatoriesChart", () => {
       "201 Feblatest",
       "1 Mar meeting15 countries",
     ]);
-    const bars = [...container.querySelectorAll("li > span:nth-child(2)")].slice(0, 2);
+    const bars = [...container.querySelectorAll("li > span:first-child > span:nth-child(2)")];
     expect(bars[1].getBoundingClientRect().height).toBeGreaterThan(bars[0].getBoundingClientRect().height * 1.8);
     await expect.element(page.getByText("Not signed")).toBeVisible();
     expect(container.querySelector("sup")?.textContent).toBe("1");

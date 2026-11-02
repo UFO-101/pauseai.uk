@@ -1,6 +1,7 @@
 /* A budget split into groups of items (BudgetChart): a bar of the whole,
    a key, then a bar per item. Each group has a colour and a hatching at its
-   own angle, so the groups differ without colour too. */
+   own angle, so the groups differ without colour too. Its text and lists
+   are styled under .chart, to outrank a post body's (PostBody). */
 
 .chart {
   margin: 28px 0;
@@ -50,7 +51,7 @@
   white-space: nowrap;
   overflow: hidden;
 }
-.total {
+.chart .total {
   margin: 6px 0 12px;
   font-size: 13px;
   font-weight: 600;
@@ -58,7 +59,7 @@
 }
 
 /* The key */
-.legend {
+.chart .legend {
   display: flex;
   flex-wrap: wrap;
   gap: 6px 18px;
@@ -66,7 +67,7 @@
   padding: 0;
   list-style: none;
 }
-.legend li {
+.chart .legend li {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -106,7 +107,7 @@
   color: var(--muted);
   padding-bottom: 6px;
 }
-.name {
+.items .name {
   width: 36%;
   padding-right: 10px;
   text-align: right;
@@ -126,7 +127,7 @@
   height: 15px;
   border-radius: 0 4px 4px 0;
 }
-.purpose {
+.items .purpose {
   width: 34%;
   padding-left: 12px;
   font-style: italic;
@@ -136,7 +137,7 @@
   display: none;
 }
 
-.chart figcaption {
+.chart .caption {
   margin-top: 14px;
   font-size: 13px;
   line-height: 1.5;
@@ -148,7 +149,7 @@
   .chart {
     padding: 16px 14px;
   }
-  .name {
+  .items .name {
     width: 58%;
     text-align: left;
   }

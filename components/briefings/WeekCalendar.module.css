@@ -1,6 +1,7 @@
-/* A working week (WeekCalendar): a row of days, the busy ones ringed. */
+/* A working week (WeekCalendar): a row of days, the busy ones ringed. Its
+   lists are styled under .calendar, to outrank a post body's (PostBody). */
 
-.week {
+.calendar .week {
   display: grid;
   grid-auto-columns: minmax(0, 1fr);
   grid-auto-flow: column;
@@ -12,7 +13,7 @@
   border-radius: 10px;
   overflow: hidden;
 }
-.week > li {
+.calendar .week > li {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -21,7 +22,7 @@
   padding: 0 6px 10px;
   border-left: 1px solid var(--border);
 }
-.week > li:first-child {
+.calendar .week > li:first-child {
   border-left: 0;
 }
 .week time {
@@ -53,13 +54,13 @@
 .busy .date {
   border-color: var(--pause-orange);
 }
-.events {
+.calendar .events {
   align-self: stretch;
   margin: 0;
   padding: 0;
   list-style: none;
 }
-.events li {
+.calendar .events li {
   margin: 0 0 3px;
   padding: 0;
   font-size: 12px;
@@ -70,10 +71,10 @@
 
 /* On a phone: a list of the busy days, each date beside what's on. */
 @media (max-width: 600px) {
-  .week {
+  .calendar .week {
     grid-auto-flow: row;
   }
-  .week > li {
+  .calendar .week > li {
     display: grid;
     grid-template-columns: 44px 40px minmax(0, 1fr);
     align-items: center;
@@ -85,7 +86,7 @@
   .busy ~ .busy {
     border-top: 1px solid var(--border);
   }
-  .week > li.free {
+  .calendar .week > li.free {
     display: none;
   }
   .weekday {
@@ -99,7 +100,7 @@
     margin: 0;
     font-size: 17px;
   }
-  .events li {
+  .calendar .events li {
     margin: 2px 0;
     font-size: 13.5px;
     text-align: left;

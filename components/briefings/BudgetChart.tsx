@@ -89,7 +89,7 @@ export default function BudgetChart({
           ))}
         </tbody>
       </table>
-      <figcaption>{caption}</figcaption>
+      <figcaption className={styles.caption}>{caption}</figcaption>
     </figure>
   );
 }

@@ -1,5 +1,6 @@
 /* Counts of signatories over time (SignatoriesChart): bars standing on a
-   line of dates, the line ending in an event, and a callout. */
+   line of dates, the line ending in an event, and a callout. Its text and
+   lists are styled under .chart, to outrank a post body's (PostBody). */
 
 .chart {
   margin: 28px 0;
@@ -8,7 +9,7 @@
   border: 1px solid var(--border);
   border-radius: 10px;
 }
-.title {
+.chart .title {
   margin: 0 0 14px;
   font-size: 14px;
   font-weight: 700;
@@ -17,29 +18,39 @@
 .plot {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   gap: 16px 28px;
 }
 
-/* The bars, on the line of dates */
-.counts {
-  display: grid;
-  grid-auto-columns: 88px;
-  grid-auto-flow: column;
-  align-items: end;
+/* The bars above the line of dates, their dates below it. */
+.chart .counts {
+  display: flex;
   margin: 0;
   padding: 0;
   list-style: none;
-  background: linear-gradient(var(--text-secondary), var(--text-secondary)) 0 calc(100% - 38px) / 100% 2px no-repeat;
 }
-.counts li {
+.chart .counts > li {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  min-width: 88px;
   margin: 0;
   padding: 0;
   font-size: 12.5px;
   line-height: 1.3;
+  text-align: center;
+}
+.above {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 112px;
+}
+.below {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 8px 0;
+  border-top: 2px solid var(--text-secondary);
 }
 .value {
   font-size: 26px;
@@ -50,8 +61,9 @@
 .bar {
   width: 36px;
   height: calc(70px * var(--share));
-  margin: 4px 0 8px;
+  margin-top: 4px;
   border: 1.5px solid var(--chart-green);
+  border-bottom: 0;
   border-radius: 4px 4px 0 0;
   background: repeating-linear-gradient(
     45deg,
@@ -59,35 +71,33 @@
     transparent 2px 6px
   );
 }
-.date,
-.eventDate {
+.date {
   font-weight: 700;
   color: var(--text-secondary);
+  white-space: nowrap;
 }
 .note {
   font-style: italic;
   color: var(--muted);
 }
 
-/* The event, a ring on the line */
+/* The event: a ring on the line, its words in the darker green, as small text. */
 .dot {
   width: 16px;
   height: 16px;
-  margin-bottom: 4px;
+  margin-bottom: -9px;
   border: 2px solid var(--chart-green);
   border-radius: 50%;
   background: var(--surface);
 }
-/* In the darker green, as small text. */
-.eventDate,
-.eventNote {
-  color: var(--status-green);
+.event .date,
+.event .note {
+  font-style: normal;
   font-weight: 700;
-  text-align: center;
+  color: var(--status-green);
 }
 
-.callout {
-  align-self: center;
+.chart .callout {
   margin: 0;
   padding: 6px 10px;
   border: 1.5px dashed var(--status-red);
@@ -95,9 +105,10 @@
   background: var(--status-red-bg);
   font-size: 13px;
   font-weight: 700;
+  line-height: 1.4;
   color: var(--status-red);
 }
-.cite {
+.chart .cite {
   margin: 8px 0 0;
   font-size: 12.5px;
   text-align: right;

@@ -14,22 +14,24 @@ const weekday = (iso: string) =>
  */
 export default function WeekCalendar({ days }: { days: CalendarDay[] }) {
   return (
-    <ol className={styles.week}>
-      {days.map((day) => (
-        <li key={day.date} className={day.events.length > 0 ? styles.busy : styles.free}>
-          <time dateTime={day.date} title={formatPostDate(day.date)}>
-            <span className={styles.weekday}>{weekday(day.date)}</span>
-            <span className={styles.date}>{Number(day.date.slice(8))}</span>
-          </time>
-          {day.events.length > 0 && (
-            <ul className={styles.events}>
-              {day.events.map((event) => (
-                <li key={event}>{event}</li>
-              ))}
-            </ul>
-          )}
-        </li>
-      ))}
-    </ol>
+    <div className={styles.calendar}>
+      <ol className={styles.week}>
+        {days.map((day) => (
+          <li key={day.date} className={day.events.length > 0 ? styles.busy : styles.free}>
+            <time dateTime={day.date} title={formatPostDate(day.date)}>
+              <span className={styles.weekday}>{weekday(day.date)}</span>
+              <span className={styles.date}>{Number(day.date.slice(8))}</span>
+            </time>
+            {day.events.length > 0 && (
+              <ul className={styles.events}>
+                {day.events.map((event) => (
+                  <li key={event}>{event}</li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }

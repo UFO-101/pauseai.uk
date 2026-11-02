@@ -5,9 +5,9 @@ import styles from "./SignatoriesChart.module.css";
 export type Count = { value: number; date: string; note: string };
 
 /**
- * How many have signed something, over time: a bar for each count, along a
- * line of dates that ends with a later event, and a callout beside them,
- * such as who hasn't signed.
+ * How many have signed something, over time: a bar for each count, standing
+ * on a line of dates that ends with a later event, and a callout beside
+ * them, such as who hasn't signed.
  */
 export default function SignatoriesChart({
   title,
@@ -31,17 +31,25 @@ export default function SignatoriesChart({
       <div className={styles.plot}>
         <ol className={styles.counts}>
           {counts.map((count) => (
-            <li key={count.date} style={{ "--share": count.value / largest } as CSSProperties}>
-              <span className={styles.value}>{count.value}</span>
-              <span className={styles.bar} />
-              <span className={styles.date}>{count.date}</span>
-              <span className={styles.note}>{count.note}</span>
+            <li key={count.date}>
+              <span className={styles.above}>
+                <span className={styles.value}>{count.value}</span>
+                <span className={styles.bar} style={{ "--share": count.value / largest } as CSSProperties} />
+              </span>
+              <span className={styles.below}>
+                <span className={styles.date}>{count.date}</span>
+                <span className={styles.note}>{count.note}</span>
+              </span>
             </li>
           ))}
           <li className={styles.event}>
-            <span className={styles.dot} />
-            <span className={styles.eventDate}>{event.date}</span>
-            <span className={styles.eventNote}>{event.note}</span>
+            <span className={styles.above}>
+              <span className={styles.dot} />
+            </span>
+            <span className={styles.below}>
+              <span className={styles.date}>{event.date}</span>
+              <span className={styles.note}>{event.note}</span>
+            </span>
           </li>
         </ol>
         <p className={styles.callout}>{callout}</p>
