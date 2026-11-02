@@ -8,18 +8,22 @@ export interface TableRule {
   timestamp?: string;
   /** The newest row must be at most this old when the backup is taken. */
   newWithinHours?: number;
-  /** Rows are only ever added, so fewer than last time means data was lost. */
+  /** Rows are hardly ever deleted, so fewer than last time is probably data lost. */
   neverShrinks?: boolean;
   minRows?: number;
 }
 
 export const RULES: Record<string, TableRule> = {
   // The nightly MP sync records a run every night, even when nothing
-  // changed, so a backup without last night's run is missing data.
-  import_runs: { timestamp: "at", newWithinHours: 36, neverShrinks: true },
+  // changed, so a backup without last night's run is missing data. The daily
+  // tidying (lib/server/log-retention.ts) deletes old runs, and old audit log
+  // entries, so neither table only grows.
+  import_runs: { timestamp: "at", newWithinHours: 36 },
+  // A letter goes, with its events, only when a scheduled mailing is
+  // stopped, a letter to an MP fails to send, or a supporter is erased.
   letters: { timestamp: "created_at", neverShrinks: true },
   letter_events: { timestamp: "at", neverShrinks: true },
-  audit_log: { timestamp: "at", neverShrinks: true },
+  audit_log: { timestamp: "at" },
   // The House of Commons has 650 seats.
   politicians: { minRows: 600 },
 };

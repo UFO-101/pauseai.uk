@@ -35,8 +35,10 @@ checks the manifest against the rules in `worker/checks.ts`, and against
 the backup before:
 
 - the dump hasn't shrunk by more than 20%
-- tables that only grow (letters, letter events, the audit log, import
-  runs) have no fewer rows than last time
+- letters and letter events have no fewer rows than last time. They're
+  deleted only when a scheduled mailing is stopped, a letter to an MP
+  fails to send, or a supporter is erased, so fewer usually means data was
+  lost.
 - `import_runs` has a row from the last 36 hours. The nightly MP sync records
   a run every night, even when nothing changed, so this shows the backup
   has last night's data.
