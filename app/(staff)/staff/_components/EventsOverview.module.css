@@ -15,13 +15,13 @@
   list-style: none;
 }
 
-/* A row: when, its owner, the event, and its Edit button, in columns that
-   line up from row to row, with the form to edit it, when open, across the
-   whole row under them. On a phone, when, then the owner, then the event,
-   one under another. */
+/* A row: when, its owner, its doc, the event, and its Edit button, in
+   columns that line up from row to row, with the form to edit it, when
+   open, across the whole row under them. On a phone, when, then the owner
+   and doc side by side, then the event. */
 .row {
   display: grid;
-  grid-template-columns: 10rem 10rem minmax(0, 1fr) auto;
+  grid-template-columns: 10rem 14rem 7rem minmax(0, 1fr) auto;
   gap: var(--space-2) var(--space-4);
   align-items: center;
   padding: var(--space-3) 0;
@@ -47,13 +47,17 @@
   white-space: nowrap;
 }
 
-/* No owner for an event to come: an error. */
-.noOwner {
+.docCell {
+  min-width: 0;
+  font-size: var(--text-sm);
+}
+
+/* No owner, or no doc, for an event to come: an error. */
+.missing {
   display: flex;
   gap: var(--space-1);
   align-items: center;
   color: var(--status-red);
-  font-size: var(--text-md);
   font-weight: 600;
 }
 
@@ -103,19 +107,24 @@
 }
 
 @media (max-width: 860px) {
+  /* When, across the row; the owner and the doc under it, side by side;
+     then the event, and its Edit button at the right. */
   .row {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
   }
 
-  /* The date over the owner, a dateline. */
   .when {
     grid-column: 1 / -1;
     margin-bottom: calc(-1 * var(--space-1));
     font-size: var(--text-xs);
   }
 
-  .ownerCell {
-    grid-column: 1 / -1;
+  .docCell {
+    grid-column: 2 / -1;
+  }
+
+  .what {
+    grid-column: 1 / 3;
   }
 
   .editor {

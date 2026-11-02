@@ -35,13 +35,15 @@ describe("EventsOverview", () => {
       .element(row("Protest at Parliament").getByText("joseph", { exact: true }))
       .toHaveAttribute("title", "joseph@pauseai.uk");
     // With no owner: an error, with its warning, on one coming up, and only said on one past.
-    await expect.element(row("AI risk talk").getByText(copy.noOwner)).toHaveClass(/noOwner/);
-    await expect.element(row("Manchester Social").getByText(copy.noOwner)).not.toHaveClass(/noOwner/);
+    await expect.element(row("AI risk talk").getByText(copy.noOwner)).toHaveClass(/missing/);
+    await expect.element(row("Manchester Social").getByText(copy.noOwner)).not.toHaveClass(/missing/);
     // Its Luma tags, by its name; none where it has none.
     await expect.element(row("Protest at Parliament").getByText("Big events", { exact: true })).toBeVisible();
     await expect.element(row("AI risk talk").getByText("Oxford", { exact: true })).toBeVisible();
     await expect.element(row("Manchester Social").getByText("Big events", { exact: true })).not.toBeInTheDocument();
-    // A doc, linked under its name, only where there is one.
+    // A doc, linked in its column; with none, an error on one coming up, and only said on one past.
+    await expect.element(row("AI risk talk").getByText(copy.noDoc)).toHaveClass(/missing/);
+    await expect.element(row("Manchester Social").getByText(copy.noDoc)).not.toHaveClass(/missing/);
     await expect
       .element(row("Protest at Parliament").getByRole("link", { name: copy.doc }))
       .toHaveAttribute("href", "https://docs.google.com/document/d/example-protest-plan/edit");
@@ -55,8 +57,9 @@ describe("EventsOverview", () => {
     const [soon] = exampleEventGroups[0].items;
     const groups = [{ ...exampleEventGroups[0], items: [{ ...soon, owner: null, removed: true }] }];
     await render(<EventsOverview groups={groups} staff={exampleStaff} now={exampleEventsNow} save={noAction} />);
-    await expect.element(page.getByText(copy.noOwner)).not.toHaveClass(/noOwner/);
+    await expect.element(page.getByText(copy.noOwner)).not.toHaveClass(/missing/);
     await expect.element(page.getByText(copy.removed)).toBeVisible();
+    await expect.element(page.getByRole("link", { name: copy.doc })).toBeVisible();
   });
 
   it("says when there are none", async () => {

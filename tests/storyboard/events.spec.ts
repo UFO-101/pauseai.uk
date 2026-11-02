@@ -39,7 +39,10 @@ test("Events get their owners by the rules, and one with none is given one", asy
   await expect(page.getByRole("link", { name: copy.intro.link })).toHaveAttribute("href", "/staff/import-data/luma");
   const talk = page.getByRole("listitem").filter({ hasText: "AI risk talk" });
   await expect(talk.getByText(copy.noOwner)).toBeVisible();
-  await frame(page, "the events page: coming up, Joseph's but for Oxford's, with no owner in red; then those past");
+  await frame(
+    page,
+    "the events page: coming up, Joseph's but for Oxford's, with no owner in red, and none with a doc; then those past",
+  );
 
   await talk.getByRole("button", { name: copy.editLabel("AI risk talk") }).click();
   const form = page.getByRole("form", { name: copy.editLabel("AI risk talk") });
@@ -49,12 +52,12 @@ test("Events get their owners by the rules, and one with none is given one", asy
 
   await form.getByRole("button", { name: copy.save }).click();
   await expect(form).not.toBeVisible();
-  await expect(talk.getByText("sean", { exact: true })).toBeVisible();
+  await expect(talk.getByText("sean@pauseai.uk", { exact: true })).toBeVisible();
   await expect(talk.getByRole("link", { name: copy.doc })).toHaveAttribute(
     "href",
     "https://docs.google.com/document/d/oxford-talk-plan/edit",
   );
-  await frame(page, "saved: Sean owns it, no longer in red, and its Google Doc linked under its name");
+  await frame(page, "saved: Sean owns it, and its Google Doc is linked, so neither is in red");
 
   // Both viewports' flows email Sean: this one's names its own address.
   const seans = newestEmail((one) => one.To === "sean@pauseai.uk" && one.TextBody.includes(staffEmail()))!;

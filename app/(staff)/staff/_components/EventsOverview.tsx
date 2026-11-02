@@ -24,34 +24,40 @@ export function EventsSource() {
 }
 
 /**
- * Who owns an event, in bold, by the name in their address (every staff
- * account is at pauseai.uk), the whole address on hover. With no owner, an
- * error in red, with a warning, when it's still to come and on Luma, as
- * someone must take it; otherwise only said, in grey.
+ * What an event lacks, said: an error, in red, with a warning, when it's
+ * still to come and on Luma (`needed`), as someone must see to it;
+ * otherwise only said, in grey.
  */
+function Missing({ needed, children }: { needed: boolean; children: string }) {
+  if (!needed) return <Muted>{children}</Muted>;
+  return (
+    <span className={styles.missing}>
+      <AlertIcon tone="red" />
+      {children}
+    </span>
+  );
+}
+
+/** Who owns an event, by their address, in bold; on hover too, if it's too long for its column. */
 function Owner({ owner, needed }: { owner: string | null; needed: boolean }) {
-  if (owner) {
-    return (
-      <strong className={styles.owner} title={owner}>
-        {owner.split("@")[0]}
-      </strong>
-    );
-  }
-  if (needed) {
-    return (
-      <span className={styles.noOwner}>
-        <AlertIcon tone="red" />
-        {copy.noOwner}
-      </span>
-    );
-  }
-  return <Muted>{copy.noOwner}</Muted>;
+  if (!owner) return <Missing needed={needed}>{copy.noOwner}</Missing>;
+  return (
+    <strong className={styles.owner} title={owner}>
+      {owner}
+    </strong>
+  );
+}
+
+/** The link to an event's Google Doc. */
+function Doc({ doc, needed }: { doc: string | null; needed: boolean }) {
+  if (!doc) return <Missing needed={needed}>{copy.noDoc}</Missing>;
+  return <a href={doc}>{copy.doc}</a>;
 }
 
 /**
- * One event, a row: when it starts; its owner; its name, leading to it on
- * Luma, and its Luma tags, over where, how many are going and its Google
- * Doc; and its Edit button, which opens the form for its owner and doc
+ * One event, a row: when it starts; its owner; its Google Doc; its name,
+ * leading to it on Luma, and its Luma tags, over where and how many are
+ * going; and its Edit button, which opens the form for its owner and doc
  * under it.
  */
 function Row({
@@ -65,11 +71,16 @@ function Row({
   now: string;
   save: SaveEvent;
 }) {
+  // Still to come and on Luma, so an owner and a doc are needed.
+  const needed = event.startAt >= now && !event.removed;
   return (
     <li className={styles.row}>
       <span className={styles.when}>{londonStart(event.startAt)}</span>
       <span className={styles.ownerCell}>
-        <Owner owner={event.owner} needed={event.startAt >= now && !event.removed} />
+        <Owner owner={event.owner} needed={needed} />
+      </span>
+      <span className={styles.docCell}>
+        <Doc doc={event.doc} needed={needed} />
       </span>
       <span className={styles.what}>
         <span className={styles.name}>
@@ -83,12 +94,6 @@ function Row({
         </span>
         <Muted>
           {event.city ?? copy.online} · {copy.going(event.going)}
-          {event.doc && (
-            <>
-              {" · "}
-              <a href={event.doc}>{copy.doc}</a>
-            </>
-          )}
         </Muted>
       </span>
       <EventEdit event={event} staff={staff} save={save} />
@@ -100,7 +105,7 @@ function Row({
  * The list of our events, in their groups: Coming up, then the months and
  * years of those past, each a row with its owner, which any staff member
  * can change, with its Google Doc, from its Edit button. An event coming up
- * with no owner is an error, unless it's been taken off Luma. It's as wide
+ * with no owner or no doc is an error, unless it's been taken off Luma. It's as wide
  * as the grid, not the window.
  */
 export default function EventsOverview({
