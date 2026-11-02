@@ -19,6 +19,9 @@
   .menu {
     margin: var(--space-2) 0;
     position-area: bottom span-right;
-    position-try-fallbacks: flip-inline, flip-block, flip-block flip-inline;
+    position-try-fallbacks:
+      flip-inline,
+      flip-block,
+      flip-block flip-inline;
   }
 }
