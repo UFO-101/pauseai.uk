@@ -67,8 +67,8 @@ export type MailingRecipient = {
   skipReason: SkipReason | null;
 };
 
-/** Which of a mailing's recipients its page lists: everyone, those who replied, whose letter failed or was stopped, or who answered its ask. */
-export const RECIPIENT_TABS = ["all", "replied", "failed", "stopped", "answered"] as const;
+/** Which of a mailing's recipients its page lists: everyone, those whose letter arrived, failed or was stopped, who replied, or who answered its ask. */
+export const RECIPIENT_TABS = ["all", "sent", "failed", "stopped", "replied", "answered"] as const;
 export type RecipientTab = (typeof RECIPIENT_TABS)[number];
 
 /**
@@ -76,10 +76,13 @@ export type RecipientTab = (typeof RECIPIENT_TABS)[number];
  * that only took longer to come. A spam complaint arrived, so it was sent.
  */
 const FAILED = "('skipped', 'not_sent', 'bounced')";
+/** A letter that arrived: sent, and not bounced, though perhaps complained of as spam. */
+const SENT = "('sent', 'spam_complaint')";
 
 const TAB_CONDITIONS: Record<RecipientTab, string> = {
   all: "true",
   replied: "l.replied_at IS NOT NULL",
+  sent: `l.status IN ${SENT}`,
   failed: `l.status IN ${FAILED}`,
   stopped: "l.status = 'cancelled'",
   answered: `EXISTS (SELECT 1 FROM ask_statuses s JOIN mailings asked ON asked.id = p.mailing_id
@@ -104,7 +107,7 @@ const SELECT_MAILINGS = `
     m.updated_at AS "updatedAt",
     min(l.sent_at) AS "sentAt",
     count(l.id)::int AS "to",
-    count(l.id) FILTER (WHERE l.status IN ('sent', 'spam_complaint'))::int AS sent,
+    count(l.id) FILTER (WHERE l.status IN ${SENT})::int AS sent,
     count(l.id) FILTER (WHERE l.status IN ${FAILED})::int AS failed,
     count(l.id) FILTER (WHERE l.status = 'cancelled')::int AS stopped,
     count(l.replied_at)::int AS replied,

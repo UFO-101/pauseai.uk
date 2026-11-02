@@ -348,8 +348,11 @@ meaning: orange for what you can press, the status colours for state.
 supporter, a mailing) starts with a tinted band: its title and a tag, its
 facts (`BandFact`), each with a quiet line under it, and at their right
 its numbers in one white box (`ui/Counts`), each a link (`StaffLink`,
-below) to what it counts. The same white box, small, is a row's in a list of such records
-(the mailings), the whole box leading to the record.
+below) to what it counts. When the list under them is a record's own,
+as a mailing's recipients are, each count is a filter that toggles: it
+shows only those it counts, underlined, and pressed again, everyone, with
+"Show everyone" as its tooltip. The same white box, small, is a row's in a
+list of such records (the mailings), the whole box leading to the record.
 
 **Progress** (`ui/Progress`). How far something has got is a sentence
 over a thin bar: blue while it's going out, green for answers. In its

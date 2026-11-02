@@ -270,6 +270,16 @@ test("A mailing stopped part-way: why each letter failed, and those never sent",
   await page.getByRole("link", { name: `1 ${copy.counts.stopped}` }).click();
   await expect(page.getByRole("row")).toHaveCount(2);
   await frame(page, "the one never sent, as the mailing was stopped first");
+
+  // Pressed again, the count shows everyone.
+  await page.getByRole("link", { name: `1 ${copy.counts.stopped}` }).click();
+  await expect(page).toHaveURL(/\/staff\/mailings\/\d+$/);
+  await expect(page.getByRole("row")).toHaveCount(7);
+  await frame(page, "stopped pressed again: everyone, none of the counts chosen");
+
+  await page.getByRole("link", { name: `1 ${copy.counts.sent}` }).click();
+  await expect(page.getByRole("row")).toHaveCount(2);
+  await frame(page, "sent: only the one that arrived");
 });
 
 test("Send a mailing from a connected Gmail: schedule it, and the hourly job sends it", async ({

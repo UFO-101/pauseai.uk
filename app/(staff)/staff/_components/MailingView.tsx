@@ -227,12 +227,16 @@ export default function MailingView({
   reschedule: FormAction;
 }) {
   const path = `/staff/mailings/${mailing.id}`;
-  const tabHref = (key: string) => filtersPath(path, { tab: key === "sent" ? "" : key });
-  const counts = mailingCounts(mailing).map((count) => ({
-    ...count,
-    href: tabHref(count.key),
-    current: count.key === mailing.tab,
-  }));
+  // Each count shows those it counts; pressed again, it shows everyone.
+  const counts = mailingCounts(mailing).map((count) => {
+    const current = count.key === mailing.tab;
+    return {
+      ...count,
+      href: filtersPath(path, { tab: current ? "" : count.key }),
+      current,
+      title: current ? copy.showEveryone : undefined,
+    };
+  });
   const state = written?.state;
   // A mailing with a bar under its band says how it stands there, not in a tag.
   const barred = state === "sending" || (state !== "scheduled" && mailing.ask);

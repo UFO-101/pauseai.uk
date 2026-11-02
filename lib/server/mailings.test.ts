@@ -121,8 +121,9 @@ describeWithDatabase("mailings", () => {
       [polly],
     );
     const [{ id }] = await query<{ id: number }>("SELECT id::int AS id FROM mailings WHERE title = $1", [EDINBURGH]);
-    const names = async (tab: "replied" | "failed" | "stopped" | "answered") =>
+    const names = async (tab: "sent" | "replied" | "failed" | "stopped" | "answered") =>
       (await getMailing(id, 1, tab))!.recipients.map((r) => [r.name, r.answer, r.skipReason]);
+    expect(await names("sent")).toEqual([["Polly Placeholder", "going", null]]);
     expect(await names("replied")).toEqual([["Polly Placeholder", "going", null]]);
     expect(await names("failed")).toEqual([
       ["Dora Dummy", null, null],

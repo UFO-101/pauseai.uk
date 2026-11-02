@@ -274,13 +274,14 @@ describe("MailingView", () => {
     await expect.element(page.getByText("jo@pauseai.uk", { exact: true })).toBeVisible();
     await expect.element(page.getByText("who")).toBeVisible();
     await expect.element(page.getByText(staffCopy.mailings.recipientsCount(12))).toBeVisible();
-    // Each count leads to those recipients, sent to them all.
+    // Each count leads to those recipients, none chosen.
     await expect
       .element(page.getByRole("link", { name: `2 ${copy.counts.failed}` }))
       .toHaveAttribute("href", "/staff/mailings/4?tab=failed");
     await expect
       .element(page.getByRole("link", { name: `10 ${copy.counts.sent}` }))
-      .toHaveAttribute("href", "/staff/mailings/4");
+      .toHaveAttribute("href", "/staff/mailings/4?tab=sent");
+    expect(document.querySelectorAll("a[aria-current]")).toHaveLength(0);
     // Stopped only when it was.
     await expect.element(page.getByText(copy.counts.stopped)).not.toBeInTheDocument();
     // Each recipient: their seat and party, their answer, how it went and their letter.
@@ -323,9 +324,12 @@ describe("MailingView", () => {
     await expect
       .element(page.getByRole("link", { name: copy.showEveryone }))
       .toHaveAttribute("href", "/staff/mailings/4");
-    await expect
-      .element(page.getByRole("link", { name: `2 ${copy.counts.replied}` }))
-      .toHaveAttribute("aria-current", "true");
+    // The count chosen, pressed again, shows everyone, as its tooltip says.
+    const chosen = page.getByRole("link", { name: `2 ${copy.counts.replied}` });
+    await expect.element(chosen).toHaveAttribute("aria-current", "true");
+    await expect.element(chosen).toHaveAttribute("href", "/staff/mailings/4");
+    await expect.element(chosen).toHaveAttribute("title", copy.showEveryone);
+    await expect.element(page.getByRole("link", { name: `10 ${copy.counts.sent}` })).not.toHaveAttribute("title");
     // With no ask, no answers.
     await expect.element(page.getByText(copy.counts.answered)).not.toBeInTheDocument();
     await expect.element(recipient("Polly")).toMatchTextContent(copy.tabs.replied);
@@ -348,7 +352,7 @@ describe("MailingView", () => {
     await expect.element(page.getByText(staffCopy.mailings.notSent)).toBeVisible();
     await expect
       .element(page.getByRole("link", { name: `3 ${copy.counts.stopped}` }))
-      .toHaveAttribute("href", "/staff/mailings/4?tab=stopped");
+      .toHaveAttribute("href", "/staff/mailings/4");
     await expect
       .element(page.getByRole("link", { name: staffCopy.paging.previous }))
       .toHaveAttribute("href", "/staff/mailings/4?tab=stopped");

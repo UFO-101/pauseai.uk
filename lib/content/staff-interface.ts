@@ -951,6 +951,7 @@ export const staffCopy = {
     sentLabel: "Sent",
     tabs: {
       all: "All",
+      sent: "Sent",
       replied: "Replied",
       failed: "Failed",
       stopped: "Stopped",
