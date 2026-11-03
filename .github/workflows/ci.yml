@@ -113,6 +113,30 @@ jobs:
         id: playwright
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
 
+      # Postgres's own package source, added by hand as its instructions give
+      # (https://wiki.postgresql.org/wiki/Apt) rather than with its script, which
+      # runs an apt-get update of its own: the one update is Playwright's, below.
+      # apt keeps what it downloads in ~/apt-archives, cached for each runner
+      # image and Playwright version, so a job with the cache downloads none.
+      - name: Set up apt's sources and downloads
+        id: apt
+        timeout-minutes: 2
+        run: |
+          echo "image=$ImageOS-$ImageVersion" >> "$GITHUB_OUTPUT"
+          mkdir -p ~/apt-archives/partial
+          echo "Dir::Cache::Archives \"$HOME/apt-archives\";" | sudo tee /etc/apt/apt.conf.d/81-archives
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl --fail --silent --show-error --retry 3 --max-time 30 -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          . /etc/os-release
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $VERSION_CODENAME-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+
+      - name: Cache apt's downloads
+        uses: actions/cache@v6
+        with:
+          path: ~/apt-archives
+          key: apt-${{ runner.os }}-${{ steps.apt.outputs.image }}-${{ steps.playwright.outputs.version }}
+          restore-keys: apt-${{ runner.os }}-
+
       - name: Cache Playwright browser
         id: playwright-cache
         uses: actions/cache@v6
@@ -122,12 +146,11 @@ jobs:
 
       - name: Install Playwright browser
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        # A stall that gets past apt's own retries fails here, not at the job's limit.
+        # A stalled download fails here, not at the job's limit.
         timeout-minutes: 5
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Install Playwright system dependencies
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
         # A mirror that trickles rather than stalls gets past apt's retries,
         # so each attempt has two minutes and is tried again, three times in
         # all. Timeout stops npx but not the apt-get it started under sudo,
@@ -149,9 +172,9 @@ jobs:
       - name: Install the Postgres 18 client
         timeout-minutes: 4
         run: |
-          sudo apt-get install -y postgresql-common
-          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
-          sudo apt-get install -y postgresql-client-18
+          sudo apt-get install -y --no-install-recommends postgresql-client-18
+          # apt's lock and part-downloads are root's, which the cache can't save.
+          sudo chown -R "$USER" ~/apt-archives
 
       # Both Vitest projects (node and browser), gated on coverage.
       - name: Test with coverage
@@ -265,6 +288,26 @@ jobs:
         id: playwright
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
 
+      # As the Test job does: Postgres's package source, and apt's downloads cached.
+      - name: Set up apt's sources and downloads
+        id: apt
+        timeout-minutes: 2
+        run: |
+          echo "image=$ImageOS-$ImageVersion" >> "$GITHUB_OUTPUT"
+          mkdir -p ~/apt-archives/partial
+          echo "Dir::Cache::Archives \"$HOME/apt-archives\";" | sudo tee /etc/apt/apt.conf.d/81-archives
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl --fail --silent --show-error --retry 3 --max-time 30 -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          . /etc/os-release
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $VERSION_CODENAME-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+
+      - name: Cache apt's downloads
+        uses: actions/cache@v6
+        with:
+          path: ~/apt-archives
+          key: apt-${{ runner.os }}-${{ steps.apt.outputs.image }}-${{ steps.playwright.outputs.version }}
+          restore-keys: apt-${{ runner.os }}-
+
       - name: Cache Playwright browser
         id: playwright-cache
         uses: actions/cache@v6
@@ -276,15 +319,12 @@ jobs:
       # downloading the rest costs more than it proves.
       - name: Install Playwright browser
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        # A stall that gets past apt's own retries fails here, not at the job's limit.
+        # A stalled download fails here, not at the job's limit.
         timeout-minutes: 5
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
-      # The cache holds the browser but not the apt packages it links against,
-      # which live outside ~/.cache/ms-playwright — so a cache hit still needs
-      # the system libraries installing.
+      # The libraries the browser links against, outside the browser's cache.
       - name: Install Playwright system dependencies
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
         # A mirror that trickles rather than stalls gets past apt's retries,
         # so each attempt has two minutes and is tried again, three times in
         # all. Timeout stops npx but not the apt-get it started under sudo,
@@ -306,9 +346,9 @@ jobs:
       - name: Install the Postgres 18 client
         timeout-minutes: 4
         run: |
-          sudo apt-get install -y postgresql-common
-          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
-          sudo apt-get install -y postgresql-client-18
+          sudo apt-get install -y --no-install-recommends postgresql-client-18
+          # apt's lock and part-downloads are root's, which the cache can't save.
+          sudo chown -R "$USER" ~/apt-archives
 
       # As the Build job does, for the fixture build: kept apart, as its
       # settings differ.
