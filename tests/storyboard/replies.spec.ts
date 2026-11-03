@@ -394,7 +394,8 @@ test("Jane adds her own words and cuts a sentence: the letter's page shows only 
   await letter.getByRole("button", { name: words.asSent }).click();
   await expect(letter).not.toContainText("arrange a short meeting");
   await expect(letter.locator("ins")).toHaveCount(0);
-  await frame(page, "Show as sent: the letter as the MP got it");
+  await expect(letter.getByRole("button", { name: words.showChanges })).toBeVisible();
+  await frame(page, "Show as sent: the letter as the MP got it, with Show changes to go back");
 });
 
 /** Postmark's inbound webhook, as it posts an email to an old letter's own address; gives how many it was forwarded to. */

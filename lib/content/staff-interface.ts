@@ -1387,8 +1387,9 @@ export const staffCopy = {
     unchanged: "⁂ Sent as the campaign drafted it.",
     // Toggles to the letter as the MP got it, and back.
     asSent: "⁂ Show as sent",
+    showChanges: "⁂ Show changes",
     // In place of paragraphs left as they were; a click unfolds them.
-    folded: (n: number) => (n === 1 ? "⁂ 1 paragraph unchanged" : `⁂ ${n} paragraphs unchanged`),
+    folded: (n: number) => (n === 1 ? "1 paragraph unchanged" : `${n} paragraphs unchanged`),
   },
   // The letters inbox, which supporters' letters to MPs go from (lib/server/letters-inbox-reading.ts).
   lettersInbox: {

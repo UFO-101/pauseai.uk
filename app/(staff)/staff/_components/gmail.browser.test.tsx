@@ -397,12 +397,11 @@ describe("LetterChanges", () => {
 
   it("shows the letter as sent, and back", async () => {
     const { container } = await render(<LetterChanges sent={sent} draft={draft} approximate={false} />);
-    const asSent = page.getByRole("button", { name: words.asSent });
-    await asSent.click();
-    await expect.element(asSent).toHaveAttribute("aria-pressed", "true");
+    await page.getByRole("button", { name: words.asSent }).click();
     expect(container.querySelector("ins")).toBeNull();
     await expect.element(page.getByText(sent)).toBeVisible();
-    await asSent.click();
+    await page.getByRole("button", { name: words.showChanges }).click();
+    await expect.element(page.getByRole("button", { name: words.asSent })).toBeVisible();
     expect(container.querySelector("ins")).not.toBeNull();
   });
 
