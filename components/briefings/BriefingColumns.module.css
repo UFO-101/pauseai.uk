@@ -5,10 +5,6 @@
   display: grid;
   gap: var(--space-5);
   align-items: start;
-  margin-bottom: var(--space-2);
-}
-.columns:last-child {
-  margin-bottom: 0;
 }
 .aside {
   grid-template-columns: minmax(0, 1fr) minmax(0, 36%);

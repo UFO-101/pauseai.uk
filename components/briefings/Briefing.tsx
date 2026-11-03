@@ -19,7 +19,7 @@ export default function Briefing({ briefing, section }: { briefing: BriefingData
         <Link href={`${section.path}/`}>{section.backLink}</Link>
       </div>
       <BriefingSheet>
-        <BriefingMasthead briefing={briefing} section={section} />
+        <BriefingMasthead briefing={briefing} />
         <BriefingBox title="Key stories this week" tone="headline">
           <KeyStories stories={briefing.keyStories} />
         </BriefingBox>

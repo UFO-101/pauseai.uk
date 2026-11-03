@@ -5,7 +5,7 @@
 }
 
 .subhead {
-  margin: 0 0 4px;
+  margin: 0;
   font-weight: 700;
   color: var(--tone, var(--text));
 }
@@ -24,7 +24,7 @@
 }
 
 .aside {
-  margin: 6px 0 0;
+  margin: 0;
   padding-top: 6px;
   border-top: 1px dashed var(--border-strong);
 }

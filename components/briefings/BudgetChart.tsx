@@ -86,6 +86,11 @@ export default function BudgetChart({
       </ul>
       <p className={styles.totalUnder}>{totalLabel}</p>
       <table className={styles.items} style={scale}>
+        <colgroup>
+          <col className={styles.nameColumn} />
+          <col />
+          <col className={styles.purposeColumn} />
+        </colgroup>
         <thead>
           <tr>
             <td />

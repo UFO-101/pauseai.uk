@@ -8,21 +8,20 @@ import KeyStories from "./KeyStories";
 import styles from "./BriefingCard.module.css";
 
 /**
- * A briefing in the list of them: the top of its sheet, its masthead and the
- * headlines of its key stories, and a link to read the rest.
+ * A briefing in the list of them, the whole card a link to it: the top of
+ * its sheet, its masthead and the headlines of its key stories, and a word
+ * to read the rest.
  */
 export default function BriefingCard({ briefing, section }: { briefing: Briefing; section: PostSection }) {
   return (
-    <BriefingSheet as="div">
-      <BriefingMasthead briefing={briefing} section={section} linked />
-      <BriefingBox title="Key stories this week" tone="headline">
-        <KeyStories stories={briefing.keyStories} leads />
-      </BriefingBox>
-      <p className={styles.read}>
-        <Link href={`${section.path}/${briefing.slug}/`} aria-label={`Read ${briefing.title}`}>
-          Read the briefing →
-        </Link>
-      </p>
-    </BriefingSheet>
+    <Link href={`${section.path}/${briefing.slug}/`} className={styles.card}>
+      <BriefingSheet as="div">
+        <BriefingMasthead briefing={briefing} card />
+        <BriefingBox title="Key stories this week" tone="headline">
+          <KeyStories stories={briefing.keyStories} leads />
+        </BriefingBox>
+        <p className={styles.read}>Read the briefing →</p>
+      </BriefingSheet>
+    </Link>
   );
 }

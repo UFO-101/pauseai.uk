@@ -20,17 +20,18 @@
 }
 
 :where(.sheet) p {
-  margin: 0 0 var(--space-2);
+  margin: 0;
 }
 :where(.sheet) ul {
-  margin: 0 0 var(--space-2);
+  margin: 0;
   padding-left: var(--space-5);
 }
-:where(.sheet) :is(p, ul):last-child {
-  margin-bottom: 0;
+/* A box spaces what's in it (BriefingBox); text in a column, here. */
+:where(.sheet) div > :is(p, ul) + :is(p, ul) {
+  margin-top: var(--space-2);
 }
-:where(.sheet) li {
-  margin-bottom: 6px;
+:where(.sheet) li + li {
+  margin-top: 6px;
 }
 :where(.sheet) li::marker {
   color: var(--tone, var(--text));
@@ -42,7 +43,7 @@
   line-height: 1.35;
 }
 :where(.sheet) * + h3 {
-  margin-top: var(--space-3);
+  margin-top: var(--space-1);
 }
 :where(.sheet) strong {
   font-weight: 700;

@@ -31,9 +31,8 @@ components/               React components used by more than one route
   ui/                     the design system: Button, fields, tables, tags, cards
   events/                 EventList, LocalGroupEvents
   people/                 PersonCard, StoryShareForm
-  posts/                  the blog's and the briefings' index, cards, header
-                          and body
-  briefings/              the briefings' charts and calendar
+  posts/                  the blog's index, cards, header and body
+  briefings/              the weekly briefings' sheet, boxes, charts and calendar
   local-groups/           LocalGroupPage, which renders every group's page
   tools/                  the tools index's cards, and the kit the
                           collateral maker and QR tool share
@@ -404,6 +403,30 @@ only a variant. The look itself (colours, type, buttons, cards) is in
   it selects with `:global()` inside its own root class. So before
   deleting or renaming a class as unused, search the whole repo, not only
   `app/` and `components/`.
+
+### The weekly briefings
+
+`/campaigns/briefings` follows its designer's A4 layout, made as an HTML
+page each week: a white sheet on the page, a masthead (logo, byline,
+the week's calendar, title, an orange rule), then boxes ruled in a topic's
+colour with the heading on a tab, and its own charts. Its sizes are the
+design's, scaled so the text is 16px. It follows the rules above, with these
+particulars:
+
+- **A briefing is data and its kit.** `lib/content/briefings.tsx` gives each
+  briefing's week and key stories as data (its summary is the key stories'
+  headlines), and writes the rest with `components/briefings/`: `BriefingBox`,
+  `BriefingColumns`, `BriefingQuote`, `BriefingText`'s pieces, the charts,
+  `BriefingSources`. A new week's briefing is the design's HTML page
+  rewritten with those, a new chart a new component there.
+- **Colours by topic.** The `--briefing-*` tokens are the design's palette, one a
+  topic. A box sets `--tone` on itself (`toneStyle` in `tone.ts`), and what's
+  in it, its list markers, quote rules, headings' accents and charts, draws
+  in it.
+- **Plain elements styled by the sheet.** `BriefingSheet` styles the
+  paragraphs, lists, headings and source marks a briefing is written in,
+  inside `:where()`, so any piece's own class outranks them. A box spaces
+  what's in it with its `gap`.
 
 ### The march sign-up
 

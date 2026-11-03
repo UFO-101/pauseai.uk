@@ -114,11 +114,11 @@ export const briefingsKit: Group = {
       variants: [
         {
           label: "On the briefing's page",
-          render: () => onSheet(<BriefingMasthead briefing={BRIEFING} section={BRIEFINGS} />),
+          render: () => onSheet(<BriefingMasthead briefing={BRIEFING} />),
         },
         {
-          label: "In the list, linked",
-          render: () => onSheet(<BriefingMasthead briefing={BRIEFING} section={BRIEFINGS} linked />),
+          label: "On a card, nothing linked",
+          render: () => onSheet(<BriefingMasthead briefing={BRIEFING} card />),
         },
       ],
     },

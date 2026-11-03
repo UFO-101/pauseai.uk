@@ -6,7 +6,7 @@
    ones (BriefingSheet). */
 
 .chart {
-  margin: var(--space-2) 0 0;
+  margin: 0;
 }
 
 .partBar,
@@ -26,14 +26,17 @@
   display: flex;
   gap: 4px;
 }
+/* A part is never narrower than its total; its names don't widen it
+   (contain), running on past it instead. */
 .part {
   display: flex;
   flex: var(--share) 1 0%;
   flex-direction: column;
-  min-width: 0;
+  min-width: min-content;
 }
 .partName,
 .partUnder {
+  contain: inline-size;
   min-height: 1.5em;
   font-size: 13px;
   line-height: 1.5;
@@ -45,8 +48,10 @@
   text-transform: uppercase;
   color: var(--tone);
 }
+/* The last group's name ends at its part's right edge, running on to the left. */
 .partNameUnder {
-  text-align: right;
+  display: flex;
+  justify-content: flex-end;
 }
 .partUnder {
   font-weight: 700;
@@ -101,8 +106,14 @@
   text-align: left;
   color: var(--muted);
 }
-.items .name {
+/* The columns' widths, set on the columns, as a fixed table takes them from its first row, which is a heading. */
+.nameColumn {
   width: 32%;
+}
+.purposeColumn {
+  width: 36%;
+}
+.items .name {
   padding-right: 10px;
   text-align: right;
   font-weight: 400;
@@ -146,7 +157,6 @@
   border-bottom: 1.5px dotted var(--border-strong);
 }
 .items .purpose {
-  width: 36%;
   padding-left: 8px;
   font-size: 13px;
   font-style: italic;
@@ -218,8 +228,13 @@
     font-size: 13px;
     font-weight: 700;
   }
+  .nameColumn {
+    width: 58%;
+  }
+  .purposeColumn {
+    width: 0;
+  }
   .items .name {
-    width: 55%;
     text-align: left;
   }
   .items .purpose {
