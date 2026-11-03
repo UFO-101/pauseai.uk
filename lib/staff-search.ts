@@ -37,7 +37,7 @@ export const LETTER_BACKENDS = ["airtable", "postmark", "gmail"] as const;
 export type LetterBackend = (typeof LETTER_BACKENDS)[number];
 
 /** Whether a letter was delivered: the statuses a supporter's letter can have. */
-export const LETTER_STATUSES = ["sending", "sent", "not_sent", "bounced", "spam_complaint"] as const;
+export const LETTER_STATUSES = ["queued", "sending", "sent", "not_sent", "bounced", "spam_complaint"] as const;
 
 /**
  * What came back to a letter: a written reply, only an automatic one (an
