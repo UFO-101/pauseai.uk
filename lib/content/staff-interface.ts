@@ -1421,7 +1421,7 @@ export const staffCopy = {
       subject: (count: number, inbox: string) =>
         `${count} ${count === 1 ? "message" : "messages"} in ${inbox} for a person to look at`,
       body: (inbox: string, lines: string[], runUrl: string) =>
-        `Reading ${inbox} found mail it didn't relay, as it couldn't tell what to do with it. Each is left unread there, with why beside it below. Open each, and pass it on by hand, fix what stopped it (an MP's new address, say), or leave it:\n\n${lines.join("\n")}\n\nThe run: ${runUrl}`,
+        `There's mail in ${inbox} that we don't know how to handle. Check each message by hand, and resolve it:\n\n${lines.join("\n")}\n\nThe run: ${runUrl}`,
     },
   },
   // The hourly read of the connected Gmail accounts for replies to our
