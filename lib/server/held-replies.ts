@@ -16,7 +16,7 @@ import { mpName, nameLine, proxyLine } from "./proxies";
 // bounced, and why, to see whether the form should check addresses harder.
 
 /** How long a reply to a supporter is held before their MP's office is told it can't be passed on. */
-export const HELD_DAYS = 1;
+const HELD_DAYS = 1;
 
 /** The subject of an answer to `subject`: "Re: " before it, unless it has one. */
 const answering = (subject: string) => (/^re:/i.test(subject) ? subject : `Re: ${subject}`);
