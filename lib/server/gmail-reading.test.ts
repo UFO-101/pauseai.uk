@@ -101,6 +101,8 @@ function mailbox({
       const message = messages[id];
       const format = new URL(request.url).searchParams.get("format");
       fetched.push(`${id}:${format}`);
+      // One the history listed that's gone since.
+      if (!message) return new HttpResponse(null, { status: 404 });
       if (format === "raw")
         return HttpResponse.json({ raw: Buffer.from(message.raw ?? "", "latin1").toString("base64url") });
       return HttpResponse.json({
@@ -245,6 +247,17 @@ describeWithDatabase("reading Gmail", () => {
       ["x1", one],
       ["x2", two],
     ]);
+  });
+
+  it("skips a message deleted between the history listing it and its fetch, and reads the rest", async () => {
+    await connectTestGmail(JO);
+    await sentLetter();
+    mailbox({
+      history: ["gone", "x1"],
+      messages: { x1: { headers: { From: "polly@example.org" }, threadId: "t1", raw: "a" } },
+    });
+    expect(await read()).toMatchObject([{ account: JO, replies: 1 }]);
+    expect((await read())[0].error).toBeUndefined();
   });
 
   it("leaves alone the letter itself, in Sent, and notes an automatic reply once", async () => {

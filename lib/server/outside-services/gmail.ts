@@ -214,6 +214,16 @@ export async function labelGmailMessage(
   });
 }
 
+/**
+ * For a .catch() on fetching a message: undefined if Gmail no longer has it
+ * (404), as when it was deleted between the history listing it and the
+ * fetch; any other failure thrown on.
+ */
+export function unlessGone(error: unknown): undefined {
+  if (error instanceof GmailError && error.status === 404) return undefined;
+  throw error;
+}
+
 /** Moves a message to Trash, which Gmail empties after 30 days. One already gone is no matter. */
 export async function trashGmailMessage(accessToken: string, id: string): Promise<void> {
   try {

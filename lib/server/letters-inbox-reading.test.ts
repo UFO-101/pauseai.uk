@@ -1,4 +1,6 @@
 import { gunzipSync } from "node:zlib";
+import { http, HttpResponse } from "msw";
+import { server } from "@/tests/fixtures/msw";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { copy } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -128,6 +130,20 @@ describeWithDatabase("reading the letters inbox", () => {
         .at(-1)!,
     );
   const { labels } = staffCopy.lettersInbox;
+
+  it("skips a message deleted between the history listing it and its fetch", async () => {
+    await write();
+    deliver({ from: MP, to: JANES_PROXY });
+    const gone = lettersMailbox().messages.at(-1)!.id;
+    server.use(
+      http.get(
+        `https://gmail.googleapis.com/gmail/v1/users/me/messages/${gone}`,
+        () => new HttpResponse(null, { status: 404 }),
+      ),
+    );
+    expect(await read()).toMatchObject({ replies: 0, relayed: 0, notUnderstood: [] });
+    expect((await read()).error).toBeUndefined();
+  });
 
   const events = async (letterId: number) =>
     query<{ status: string; details: Record<string, unknown> }>(

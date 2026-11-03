@@ -27,6 +27,7 @@ import {
   gmailMessageHeaders,
   gmailProfile,
   gmailRawMessage,
+  unlessGone,
   gmailSendName,
   GmailError,
   searchGmail,
@@ -273,9 +274,10 @@ async function recordBounce(
   return bounce.addresses.length;
 }
 
-/** Reads one message: a bounce, a reply to a letter, or something else, left alone. */
+/** Reads one message: a bounce, a reply to a letter, or something else, left alone; one gone since, skipped. */
 async function readMessage(account: string, token: string, id: string, read: GmailRead, request: Request | undefined) {
-  const message = await gmailMessageHeaders(token, id, HEADERS);
+  const message = await gmailMessageHeaders(token, id, HEADERS).catch(unlessGone);
+  if (!message) return;
   const from = fromAddress(message.headers.get("from")).address;
   if (isBounceSender(from)) {
     read.bounces += await recordBounce(account, token, message, request);
