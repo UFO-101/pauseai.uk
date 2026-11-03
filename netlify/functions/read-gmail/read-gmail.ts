@@ -13,6 +13,6 @@ export default async function readGmail(): Promise<Response> {
   return new Response(body);
 }
 
-// Every hour from 06:20 to 23:20 UTC, sharing the Luma import's wake of the
+// Every hour at 20 minutes past, sharing the Luma import's wake of the
 // database (import-luma.ts).
-export const config = { schedule: "20 6-23 * * *" };
+export const config = { schedule: "20 * * * *" };

@@ -1,6 +1,7 @@
 import "server-only";
 import { checkMailingDoc, type MailingRecipientValues } from "@/lib/mailing-doc";
 import { now } from "@/lib/now";
+import { SENDING } from "@/lib/staff-time";
 import { logChange } from "./audit";
 import { query } from "./db";
 import { isBlocked } from "./email";
@@ -22,8 +23,13 @@ const JOB = "send-mailings";
 /** The gap between two sends from one account: Gmail takes 60 a minute. */
 const SEND_GAP_MS = 1000;
 
-/** Starts every scheduled mailing that's due. Returns their IDs. */
+/**
+ * Starts every scheduled mailing that's due, but none overnight, before
+ * SENDING.firstHour (lib/staff-time.ts), though the job runs every hour:
+ * one due then starts with the morning's first run. Returns their IDs.
+ */
 export async function startDueMailings(): Promise<number[]> {
+  if (now().getUTCHours() < SENDING.firstHour) return [];
   const started = await query<{ id: number }>(
     `UPDATE mailings SET state = 'sending', updated_at = now()
      WHERE state = 'scheduled' AND due_at <= $1 RETURNING id::int AS id`,
