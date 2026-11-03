@@ -247,6 +247,10 @@ export const copy = {
       `Your message hasn't reached ${mpName}. Their office's email address isn't working. We're looking into it, and will send it again once it works.`,
     // It went again once the address worked.
     resent: (mpName: string) => `Your message has now been sent to ${mpName}.`,
+    // To the MP's office, from the sender's proxy, in the thread of their reply, once it's waited a day:
+    // the sender's address bounces, so we can't pass their reply on.
+    office: (senderName: string) =>
+      `We couldn't pass your reply on to ${senderName}. Their email address isn't working. If they get in touch with a working one, we'll send it to them then.`,
   },
   // The note on a copy of an MP's reply: to the sender, and to the shared inbox.
   forwardedReply: {

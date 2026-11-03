@@ -211,8 +211,11 @@ written to and kept.
   in their copy's thread; once staff unblock the address, or the MP's
   address changes, what bounced goes again and the supporter is told
   (`resendAfterFix`). The supporter's copy, or a relay to them, bouncing
-  blocks their address, and later relays to them are held. A soft bounce
-  is only noted.
+  blocks their address, and later relays to them are held, in case staff
+  unblock it; a day on, if one still is, the MP's office is told once,
+  from the supporter's proxy in the thread of their reply, that it can't
+  be passed on (`lib/server/held-replies.ts`). A soft bounce is only
+  noted.
 
 ### Mailings to politicians
 
@@ -535,8 +538,8 @@ for the purpose's topic as it checks `email_blocks`.
 
 Everything the site sends, to anyone (`lib/server/email.ts`). Every email
 goes through `send()` with its purpose: `letter`, `letter-copy`, `relay`,
-`supporter-notice`, `forwarded-reply`, `staff-login`, `staff-alert`,
-`mailing` or `mailing-test`. Each try is
+`supporter-notice`, `office-notice`, `forwarded-reply`, `staff-login`,
+`staff-alert`, `staff-report`, `mailing` or `mailing-test`. Each try is
 logged (`email_sends`): when, why, to whom, whether it went, and which
 backend sent it, Postmark or a connected Gmail, a staff member's or the
 letters inbox ("Mailings to politicians" and "Letters through the letters
@@ -560,7 +563,11 @@ each time it happens, with a link to where to deal with it:
 - the MP import held, when none was (`lib/server/politician-sync.ts`);
 - Google disconnecting a Gmail account (`lib/server/gmail-accounts.ts`);
 - letters to MPs waiting over three hours to go, until those it named
-  have gone (`LATE_HOURS` in `lib/server/letter-sending.ts`).
+  have gone (`LATE_HOURS` in `lib/server/letter-sending.ts`);
+- once a day at most, a report of the supporters' copies that bounced
+  since the last, each address's domain and what its server said, and
+  how many replies to them are held (`lib/server/held-replies.ts`), to
+  see whether the form should check addresses harder.
 
 The backup Worker emails its own problems, to its `ALERT_TO` (`backup/README.md`).
 

@@ -9,6 +9,7 @@ import { isBlocked, send, sentBy, type Backend, type Purpose } from "./email";
 import { gmailAccount, sentToday } from "./gmail-accounts";
 import { LETTERS_DAILY_LIMIT, lettersInbox } from "./letters-inbox";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { reportSupporterBounces, tellOfficesOfHeldReplies } from "./held-replies";
 import { notifyStaff, staffLink } from "./notifications";
 import { mpName, nameLine, proxyLine } from "./proxies";
 import { resendAfterFix, sendRelay, uncertainRelays } from "./relays";
@@ -276,7 +277,7 @@ async function drain(ids: number[], until: number, room: number, send: (id: numb
 }
 
 /** How long a letter to an MP waits to go before the notification inbox is told. */
-export const LATE_HOURS = 3;
+const LATE_HOURS = 3;
 
 /** The letters waiting to go, oldest first, but those whose MP's address is blocked, which wait for staff. */
 const SENDABLE = `SELECT l.id::int AS id FROM letters l JOIN letters_from_supporters s USING (id) JOIN notable_people n ON n.id = l.notable_person_id
@@ -317,7 +318,9 @@ export type LetterQueueRun = { sent: number; left: number };
  * behind new letters; then letters, oldest first; then copies. A letter
  * whose MP's address is still blocked is passed over. Stops when the
  * letters inbox can't send. Then tells the notification inbox if letters
- * have waited too long (tellOfLateLetters), linking from `request`'s site.
+ * have waited too long (tellOfLateLetters), linking from `request`'s site;
+ * tells MPs' offices of replies held a day for a supporter's bouncing
+ * address; and, once a day, reports how often that happens (held-replies.ts).
  */
 export async function sendLetterQueue(until: number, request?: Request): Promise<LetterQueueRun> {
   await uncertainRelays();
@@ -337,5 +340,7 @@ export async function sendLetterQueue(until: number, request?: Request): Promise
        + (SELECT count(*) FROM letters_from_supporters s JOIN letters l USING (id) WHERE s.copy_state = 'queued' AND l.status = 'sent') AS left`,
   );
   await tellOfLateLetters(request);
+  await tellOfficesOfHeldReplies();
+  await reportSupporterBounces(request);
   return { sent, left: Number(left) };
 }

@@ -85,12 +85,14 @@ test("Jane writes to her MP", async ({ page, flowDatabase }) => {
   expect(copied.ReplyTo).toBe(copied.To);
   await emailFrame(page, copied, "Jane's copy of her letter");
   story(
-    "Staff open the letter. Its history says Gmail sent it, then her copy. Jane didn't change the campaign's letter, so it's folded.",
+    "Staff open the letter. Its history says Gmail sent it, with her copy under it. Jane didn't change the campaign's letter, so it's folded.",
   );
   const entries = await openLetter(page, id);
+  // Sent, by Gmail, with her copy under it.
+  await expect(entries).toHaveCount(1);
+  await expect(entries.first()).toContainText(staffCopy.letters.backends.gmail);
+  await expect(entries.first()).toContainText(`${history.fields.to}${OFFICE_ADDRESS}`);
   await expect(entries.first()).toContainText(staffCopy.letters.status.copy_sent);
-  await expect(entries.nth(1)).toContainText(staffCopy.letters.backends.gmail);
-  await expect(entries.nth(1)).toContainText(`${history.fields.to}${OFFICE_ADDRESS}`);
   await expect(page.getByRole("article").getByRole("button", { name: /unchanged/ })).toBeVisible();
   await frame(page, "The letter's page");
 });
@@ -315,7 +317,7 @@ test("The letter bounces", async ({ page, request, flowDatabase }) => {
 
 test("Jane's address bounces", async ({ page, request, flowDatabase }) => {
   story(
-    "Jane's copy of her letter bounces, so her address is blocked. When the MP replies, the reply is kept but not sent to her, and the letter's history says why.",
+    "Jane's copy of her letter bounces, so her address is blocked. When the MP replies, the reply is kept but not sent to her, in case staff unblock her address, and the letter's history says why.",
   );
   const sender = madeUpAddress("Jane Smith", 37);
   const id = await writeLetter(page, flowDatabase, sender);
@@ -329,6 +331,29 @@ test("Jane's address bounces", async ({ page, request, flowDatabase }) => {
   await expect(entries.first()).toContainText(history.reasons.blocked);
   await expect(page.getByText(staffCopy.letters.status.copy_bounced)).toBeVisible();
   await frame(page, "The letter's history");
+
+  story(
+    "Within the hour, the notification inbox gets the day's report of supporters' addresses that bounced, with each one's domain and what its server said, to see whether the form should check addresses harder.",
+  );
+  await runQueue(request);
+  const bounces = staffCopy.notifications.supporterBounces;
+  const report = newestEmail((email) => email.To === NOTIFICATION_INBOX && email.Subject === bounces.subject(1))!;
+  await emailFrame(page, report, "The report to the notification inbox");
+
+  story(
+    "A day on, the reply is still held, as nobody has unblocked her address. The MP's office is told, once, from Jane's proxy, in the thread of their reply, as a bounce would have told them.",
+  );
+  runSql(flowDatabase, `UPDATE letter_relays SET created_at = now() - interval '25 hours' WHERE letter_id = ${id}`);
+  await runQueue(request);
+  const notice = sentEmail(flowDatabase, id, "office-notice");
+  expect(notice.To).toBe(`"Testy McTestface MP" <${OFFICE_ADDRESS}>`);
+  expect(notice.TextBody).toBe(copy.notices.office("Jane Smith"));
+  await emailFrame(page, notice, "The email the MP's office gets");
+
+  story("The letter's history says the office was told.");
+  const later = await openLetter(page, id);
+  await expect(later.first()).toContainText(staffCopy.letters.status.office_told);
+  await frame(page, "The letter's history, the office told");
 });
 
 test("The daily limit", async ({ page, request, flowDatabase }) => {
@@ -504,7 +529,7 @@ test("A reply to an older letter", async ({ page, request, flowDatabase }) => {
   const entries = await openLetter(page, id);
   await expect(entries.first()).toContainText(history.handlingReasons.sender);
   await expect(entries.first()).toContainText(`${POLICY_INBOX} · `);
-  await expect(entries.first().getByText(staffCopy.letters.backends.postmark)).toBeVisible();
-  await expect(entries.last().getByText(staffCopy.letters.backends.postmark)).toBeVisible();
+  await expect(entries.first().getByText(staffCopy.letters.backends.postmark, { exact: true })).toBeVisible();
+  await expect(entries.last().getByText(staffCopy.letters.backends.postmark, { exact: true })).toBeVisible();
   await frame(page, "The letter's history");
 });

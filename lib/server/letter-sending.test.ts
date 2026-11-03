@@ -280,6 +280,88 @@ describeWithDatabase("the letters inbox's queue", () => {
     expect(await query("SELECT status FROM letter_relays")).toEqual([{ status: "sent" }]);
   });
 
+  describe("a reply held for the supporter's bouncing address", () => {
+    const officeNotices = () =>
+      query<{ letterId: number }>(
+        `SELECT letter_id::int AS "letterId" FROM email_sends WHERE purpose = 'office-notice' AND outcome = 'sent'`,
+      );
+    const aDayHeld = () => query("UPDATE letter_relays SET created_at = now() - interval '25 hours'");
+
+    it("tells the MP's office once, a day on, from her proxy, in the thread of their reply", async () => {
+      await block(JANE);
+      const id = await replied();
+      const sent = recordGmail();
+      await sendLetterQueue(Date.now() + 10_000);
+      expect(await officeNotices()).toEqual([]);
+      await aDayHeld();
+      // Not while the letters inbox can't send.
+      await disconnect();
+      await sendLetterQueue(Date.now() + 10_000);
+      expect(await officeNotices()).toEqual([]);
+      await connectTestGmail(LETTERS_INBOX);
+      await sendLetterQueue(Date.now() + 10_000);
+      await sendLetterQueue(Date.now() + 10_000);
+      expect(await officeNotices()).toEqual([{ letterId: id }]);
+      const [notice] = sent;
+      expect(notice.headers.get("from")).toBe(`"Jane Smith (via PauseAI)" <${testProxy("jane.smith")}>`);
+      expect(notice.headers.get("to")).toBe(`"Testy McTestface MP" <${MP}>`);
+      // The reply's subject has its Re: already.
+      expect(notice.headers.get("subject")).toBe("Re: Request to co-sign letter on frontier AI risks");
+      expect(notice.headers.get("in-reply-to")).toMatch(/^<.+>$/);
+      expect(notice.text).toBe(copy.notices.office("Jane Smith"));
+      expect((await events()).at(-1)).toMatchObject({ status: "office_told", details: { to: MP, backend: "gmail" } });
+    });
+
+    it("answers a reply with no Re: or Message-ID, and passes over an MP with no address now", async () => {
+      await block(JANE);
+      await replied();
+      await query("UPDATE letter_replies SET subject = 'Thanks', rfc_message_id = NULL");
+      await aDayHeld();
+      const sent = recordGmail();
+      await query("UPDATE notable_people SET email = NULL");
+      await sendLetterQueue(Date.now() + 10_000);
+      expect(sent).toEqual([]);
+      await query(`UPDATE notable_people SET email = '${MP}'`);
+      // Gmail failing: tried again the next hour.
+      recordGmail(() => new HttpResponse(null, { status: 503 }));
+      await sendLetterQueue(Date.now() + 10_000);
+      expect(await officeNotices()).toEqual([]);
+      const sent2 = recordGmail();
+      await sendLetterQueue(Date.now() + 10_000);
+      expect(sent2[0].headers.get("subject")).toBe("Re: Thanks");
+      expect(sent2[0].headers.get("in-reply-to")).toBeUndefined();
+    });
+
+    it("reports to the notification inbox, once a day at most, the supporters' copies that bounced since, and why", async () => {
+      const reports = notifications();
+      await block(JANE);
+      const id = await replied();
+      // None bounced: no report.
+      await sendLetterQueue(Date.now() + 10_000);
+      expect(reports).toEqual([]);
+      const bounce = (email: string, reason: string) =>
+        query("INSERT INTO letter_events (letter_id, status, details) VALUES ($1, 'copy_bounced', $2)", [
+          id,
+          JSON.stringify({ email, reason }),
+        ]);
+      await bounce("jane@exampel.com", "No such domain");
+      await sendLetterQueue(Date.now() + 10_000);
+      await bounce("jo@example.org", "Mailbox full");
+      // Within the day: nothing more.
+      await sendLetterQueue(Date.now() + 10_000);
+      const words = staffCopy.notifications.supporterBounces;
+      const link = "https://pauseai.uk/staff/supporters/blocked-emails";
+      expect(reports.map((r) => [r.Subject, r.TextBody])).toEqual([
+        [words.subject(1), words.body(1, 1, ["- exampel.com: No such domain"], link)],
+      ]);
+      // A day on, the one since.
+      await query("UPDATE email_sends SET at = at - interval '25 hours' WHERE purpose = 'staff-report'");
+      await query("UPDATE letter_events SET at = at - interval '25 hours' WHERE details->>'reason' = 'No such domain'");
+      await sendLetterQueue(Date.now() + 10_000);
+      expect(reports.at(-1)!.TextBody).toBe(words.body(1, 1, ["- example.org: Mailbox full"], link));
+    });
+  });
+
   it("queues a relay the letters inbox can't send yet, saying why once, and sends it before new letters", async () => {
     recordGmail(() => undefined);
     await submitLetter(FORM);

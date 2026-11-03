@@ -1218,7 +1218,7 @@ CREATE TABLE public.email_sends (
     CONSTRAINT email_sends_check CHECK (((outcome = 'sent'::text) = (message_id IS NOT NULL))),
     CONSTRAINT email_sends_gmail_sender CHECK (((backend = 'postmark'::text) OR (sender IS NOT NULL))),
     CONSTRAINT email_sends_outcome_check CHECK ((outcome = ANY (ARRAY['sent'::text, 'refused'::text, 'failed'::text]))),
-    CONSTRAINT email_sends_purpose_check CHECK ((purpose = ANY (ARRAY['letter'::text, 'forwarded-reply'::text, 'staff-login'::text, 'staff-alert'::text, 'mailing'::text, 'mailing-test'::text, 'letter-copy'::text, 'relay'::text, 'supporter-notice'::text]))),
+    CONSTRAINT email_sends_purpose_check CHECK ((purpose = ANY (ARRAY['letter'::text, 'forwarded-reply'::text, 'staff-login'::text, 'staff-alert'::text, 'mailing'::text, 'mailing-test'::text, 'letter-copy'::text, 'relay'::text, 'supporter-notice'::text, 'office-notice'::text, 'staff-report'::text]))),
     CONSTRAINT email_sends_sender_check CHECK ((sender = lower(sender)))
 );
 

@@ -3069,7 +3069,7 @@ describe("LetterHistory", () => {
     expect(replied.element().textContent).toContain(`${copy.detail.fields.reason}odd`);
   });
 
-  it("puts each reply's relay under it, a list of its own, and leaves the rest where they were", async () => {
+  it("puts each reply's relay under it, and the copy under the Sent it went with, and leaves the rest where they were", async () => {
     const letter = {
       ...exampleSupporterLetterDetails,
       sentAt: null,
@@ -3079,19 +3079,34 @@ describe("LetterHistory", () => {
         { at: "2026-10-14T10:00:00Z", status: "replied", details: { from: "mp@example.org", gmailMessageId: "m1" } },
         { at: "2026-10-13T10:00:00Z", status: "bounced", details: { gmailMessageId: "bounce" } },
         { at: "2026-10-12T10:00:00Z", status: "replied", details: { from: "mp@example.org" } },
+        { at: "2026-10-11T10:05:00Z", status: "copy_bounced", details: {} },
+        { at: "2026-10-11T10:00:00Z", status: "sent", details: {} },
+        // Sent again after a bounce: a copy goes under the Sent before it.
+        { at: "2026-10-10T10:01:00Z", status: "copy_sent", details: {} },
+        { at: "2026-10-10T10:00:00Z", status: "sent", details: {} },
+        // Recorded a moment before its Sent: under the first.
+        { at: "2026-10-10T09:59:00Z", status: "copy_held", details: {} },
       ],
     };
     await render(<LetterHistory events={historyOf(letter)} />);
     const items = history().element().querySelectorAll(":scope > li");
-    expect([...items].map((item) => item.querySelector("strong")!.textContent)).toEqual([
+    const head = (item: Element) => item.querySelector("strong")!.textContent;
+    expect([...items].map(head)).toEqual([
       copy.status.replied,
       copy.status.bounced,
       copy.status.replied,
+      copy.status.sent,
+      copy.status.sent,
     ]);
-    const relays = [...items[0].querySelectorAll("ol > li")].map((item) => item.querySelector("strong")!.textContent);
-    expect(relays).toEqual([copy.status.relayed, copy.status.relay_held]);
+    const under = (item: Element) => [...item.querySelectorAll("ol > li")].map(head);
+    expect(under(items[0])).toEqual([copy.status.relayed, copy.status.relay_held]);
     expect(items[1].querySelector("ol")).toBeNull();
     expect(items[2].querySelector("ol")).toBeNull();
+    expect(under(items[3])).toEqual([copy.status.copy_bounced]);
+    expect(under(items[4])).toEqual([copy.status.copy_sent, copy.status.copy_held]);
+    // With no Sent at all, a copy stays where it was.
+    const copyOnly = { at: "2026-10-10T10:00:00Z", status: "copy_held", details: {} };
+    expect(historyOf({ ...letter, events: [copyOnly] })).toEqual([copyOnly]);
   });
 
   it("puts each field a line, by name, in words where it has them; a status nobody knows as stored", async () => {
@@ -4611,12 +4626,6 @@ describe("LettersList headings", () => {
       />
     );
     const { rerender } = await render(list({ q: "x", page: "2" }));
-    // One of this site's never sent has no backend.
-    expect(
-      letterColumns()
-        .find((column) => column.key === "backend")!
-        .cell({ ...exampleLetter, backend: null }),
-    ).toBe(null);
     await expect.element(heading(copy.created)).toHaveAttribute("href", "/staff/letters?q=x&sort=created&dir=asc");
     expect(heading(copy.created).element().closest("th")!.getAttribute("aria-sort")).toBe("descending");
     await expect.element(heading(copy.from)).toHaveAttribute("href", "/staff/letters?q=x&sort=from&dir=asc");

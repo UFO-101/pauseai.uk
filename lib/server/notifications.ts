@@ -1,6 +1,6 @@
 import "server-only";
 import { siteUrl } from "@/lib/site-url";
-import { send } from "./email";
+import { send, type Purpose } from "./email";
 import { notifyDomain } from "./outside-services/postmark";
 
 // Emails to the notification inbox (NOTIFICATION_INBOX): something on the
@@ -24,10 +24,16 @@ export function staffLink(path: string, request: Request | undefined): string {
 }
 
 /**
- * Emails the notification inbox `subject` and `text`, as a staff alert,
- * logged against `letterId` if it's about one letter. Says whether it went.
+ * Emails the notification inbox `subject` and `text`, as a staff alert or
+ * report (`purpose`), logged against `letterId` if it's about one letter.
+ * Says whether it went.
  */
-export async function notifyStaff(subject: string, text: string, letterId: number | null = null): Promise<boolean> {
+export async function notifyStaff(
+  subject: string,
+  text: string,
+  letterId: number | null = null,
+  purpose: Extract<Purpose, "staff-alert" | "staff-report"> = "staff-alert",
+): Promise<boolean> {
   const inbox = process.env.NOTIFICATION_INBOX;
   if (!inbox) return false;
   const result = await send(
@@ -36,9 +42,9 @@ export async function notifyStaff(subject: string, text: string, letterId: numbe
       To: inbox,
       Subject: subject,
       TextBody: text,
-      Tag: "staff-alert",
+      Tag: purpose,
     },
-    "staff-alert",
+    purpose,
     letterId,
   );
   return result.sent;

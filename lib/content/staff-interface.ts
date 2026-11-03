@@ -193,7 +193,7 @@ export const staffCopy = {
         lettersInboxDetail: (at: string) =>
           `Open each in Gmail and deal with it by hand: forward it, answer it, or leave it. Found ${at}.`,
         // Its button, to the run's page, which lists each with why it wasn't relayed and a link to it in Gmail.
-        lettersInboxButton: "⁂ See emails",
+        lettersInboxButton: "See emails",
       },
       // The window: its length in days, each a link but the one shown.
       window: (days: number) => `${days} days`,
@@ -1435,28 +1435,35 @@ export const staffCopy = {
   notifications: {
     // An import's run failed, after one that didn't: its title, its error, its page.
     importFailed: {
-      subject: (job: string) => `⁂ The import '${job}' failed`,
+      subject: (job: string) => `The import '${job}' failed`,
       body: (job: string, error: string, link: string) =>
-        `⁂ The import '${job}' failed with the error: "${error}". It will try again at its next run, and you won't be emailed again until it has worked.\n\nIts runs: ${link}`,
+        `The import '${job}' failed with the error: "${error}". It will try again at its next run, and you won't be emailed again until it has worked.\n\nIts runs: ${link}`,
     },
     // The MP import is held, as it would change too much: how many MPs, and its page.
     syncHeld: {
-      subject: (changes: number) => `⁂ MP import would change ${changes} MPs`,
+      subject: (changes: number) => `MP import would change ${changes} MPs`,
       body: (changes: number, link: string) =>
-        `⁂ The MP import would change ${changes} MPs, so it's held until someone checks it. Review it, then apply or discard it, and fix any problems in Airtable:\n\n${link}`,
+        `The MP import would change ${changes} MPs, so it's held until someone checks it. Review it, then apply or discard it, and fix any problems in Airtable:\n\n${link}`,
     },
     // Google stopped our access to a connected Gmail: whose, what stops, and where to connect it again.
     gmailDisconnected: {
-      subject: (account: string) => `⁂ ${account}'s Gmail is disconnected`,
+      subject: (account: string) => `${account}'s Gmail is disconnected`,
       body: (account: string, lettersInbox: boolean, link: string) =>
-        `⁂ Google stopped our access to ${account}'s Gmail. ${lettersInbox ? "Letters to MPs, and the replies to them, wait until it's connected again." : "Its replies aren't read, and its mailings wait, until it's connected again."} Log in as ${account} and connect it on its account page:\n\n${link}`,
+        `Google stopped our access to ${account}'s Gmail. ${lettersInbox ? "Letters to MPs, and the replies to them, wait until it's connected again." : "Mailings sent using that mailbox, and replies, will be paused until it's connected again."} Log in as ${account} and connect it on its account page:\n\n${link}`,
+    },
+    // Once a day at most: the supporters' copies that bounced since the last, so their MP's replies can't be
+    // passed on; how many replies are held; each address's domain and what its server said.
+    supporterBounces: {
+      subject: (count: number) => `${count} supporters' ${count === 1 ? "address" : "addresses"} bounced`,
+      body: (count: number, held: number, lines: string[], link: string) =>
+        `${count} supporters' copies of their letters bounced since the last report, so their MPs' replies can't be passed on to them. ${held} ${held === 1 ? "reply is" : "replies are"} held. Each address's domain, and what its server said:\n\n${lines.join("\n")}\n\nSupporters' blocked emails: ${link}`,
     },
     // Letters to MPs have waited LATE_HOURS to go: how many, why, and the queued letters.
     lettersWaiting: {
       subject: (count: number, hours: number) =>
-        `⁂ ${count} ${count === 1 ? "letter" : "letters"} to MPs waiting over ${hours} hours`,
+        `${count} ${count === 1 ? "letter" : "letters"} to MPs waiting over ${hours} hours`,
       body: (count: number, hours: number, why: string, link: string) =>
-        `⁂ ${count === 1 ? "A letter" : `${count} letters`} to MPs ${count === 1 ? "has" : "have"} waited over ${hours} hours to go. Why: ${why}.\n\nThe letters waiting: ${link}`,
+        `${count === 1 ? "A letter" : `${count} letters`} to MPs ${count === 1 ? "has" : "have"} waited over ${hours} hours to go. Why: ${why}.\n\nThe letters waiting: ${link}`,
     },
   },
   // The hourly read of the connected Gmail accounts for replies to our
@@ -1737,6 +1744,7 @@ export const staffCopy = {
       relay_uncertain: "Relay uncertain",
       not_relayed: "Not relayed",
       notice: "Supporter told",
+      office_told: "MP's office told",
     } as Record<string, string>,
     columns: {
       created: "Written",

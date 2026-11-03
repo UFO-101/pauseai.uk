@@ -22,9 +22,11 @@ export type Purpose =
   | "letter-copy"
   | "relay"
   | "supporter-notice"
+  | "office-notice"
   | "forwarded-reply"
   | "staff-login"
   | "staff-alert"
+  | "staff-report"
   | "mailing"
   | "mailing-test";
 

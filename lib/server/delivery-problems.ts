@@ -114,10 +114,13 @@ const HOOKS: Record<Purpose, Hook> = {
   "letter-copy": copyProblem,
   relay: relayProblem,
   "supporter-notice": nothing,
+  // An MP's address bouncing it is blocked, as any is; the letter's own bounce has told everyone else.
+  "office-notice": nothing,
   mailing: mailingProblem,
   "forwarded-reply": nothing,
   "staff-login": nothing,
   "staff-alert": nothing,
+  "staff-report": nothing,
   "mailing-test": nothing,
 };
 
