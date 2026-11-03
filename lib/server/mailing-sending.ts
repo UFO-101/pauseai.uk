@@ -4,7 +4,7 @@ import { now } from "@/lib/now";
 import { SENDING } from "@/lib/staff-time";
 import { logChange } from "./audit";
 import { query } from "./db";
-import { isBlocked } from "./email";
+import { isBlocked, sentBy } from "./email";
 import { gmailAccount } from "./gmail-accounts";
 import { attachmentsOf, emailFor } from "./mailing-drafts";
 import { mailingChannel, type MailingChannel } from "./mailing-channels";
@@ -159,6 +159,8 @@ export async function sendDueLetters({
             to: letter.email,
             messageId: result.messageId,
             threadId: result.threadId,
+            // A mailing's letter goes from its mailing's Gmail.
+            ...sentBy({ name: "gmail", account: mailing.sentFrom }),
           }),
         ]);
         run.sent++;

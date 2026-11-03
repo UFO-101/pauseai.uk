@@ -5,7 +5,7 @@ import { copy } from "@/lib/content/email-your-mp";
 import { campaignBySlug } from "@/lib/email-your-mp";
 import { checkDoc, toHtml, toText } from "@/lib/letter-format";
 import { query } from "./db";
-import { isBlocked, send, type Backend, type Purpose } from "./email";
+import { isBlocked, send, sentBy, type Backend, type Purpose } from "./email";
 import { gmailAccount, sentToday } from "./gmail-accounts";
 import { LETTERS_DAILY_LIMIT, lettersInbox } from "./letters-inbox";
 import { mpName, proxyLine } from "./proxies";
@@ -162,7 +162,7 @@ async function sendTaken(id: number): Promise<{ sent: true } | { sent: false; re
   // A block found only as it went is one the next try finds first.
   if (!result.sent) return requeue(id, "failed");
   await query("UPDATE letters SET status = 'sent', sent_at = now() WHERE id = $1", [id]);
-  await letterEvent(id, "sent", { from, to: letter.mpEmail, messageId: result.messageId });
+  await letterEvent(id, "sent", { from, to: letter.mpEmail, messageId: result.messageId, ...sentBy(result.backend) });
   await sendCopy(id);
   return { sent: true };
 }
@@ -210,7 +210,13 @@ export async function sendCopy(id: number): Promise<void> {
   );
   if (!result.sent) return void (await state("queued"));
   await state("sent");
-  await letterEvent(id, "copy_sent", { from, to, bcc: letter.senderEmail, messageId: result.messageId });
+  await letterEvent(id, "copy_sent", {
+    from,
+    to,
+    bcc: letter.senderEmail,
+    messageId: result.messageId,
+    ...sentBy(result.backend),
+  });
 }
 
 /**
@@ -233,7 +239,7 @@ export async function noticeToSender(letterId: number, notice: "bounced" | "rese
     letterId,
     { backend: lettersBackend() },
   );
-  if (result.sent) await letterEvent(letterId, "notice", { to: letter.senderEmail, notice });
+  if (result.sent) await letterEvent(letterId, "notice", { to: letter.senderEmail, notice, ...sentBy(result.backend) });
   return result.sent;
 }
 

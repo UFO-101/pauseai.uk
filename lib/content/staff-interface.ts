@@ -1418,9 +1418,10 @@ export const staffCopy = {
     openInGmail: "Open in Gmail",
     // The email to the policy inbox after a run with any.
     alert: {
-      subject: (count: number, inbox: string) => `${count} mysterious messages in the ${inbox} inbox`,
+      subject: (count: number, inbox: string) =>
+        `${count} ${count === 1 ? "message" : "messages"} in ${inbox} for a person to look at`,
       body: (inbox: string, lines: string[], runUrl: string) =>
-        `There's mail in the ${inbox} letters inbox which isn't clearly to an MP or a constituent. Investigate what it is:\n\n${lines.join("\n")}\n\nThe run: ${runUrl}`,
+        `Reading ${inbox} found mail it didn't relay, as it couldn't tell what to do with it. Each is left unread there, with why beside it below. Open each, and pass it on by hand, fix what stopped it (an MP's new address, say), or leave it:\n\n${lines.join("\n")}\n\nThe run: ${runUrl}`,
     },
   },
   // The hourly read of the connected Gmail accounts for replies to our
@@ -1689,7 +1690,7 @@ export const staffCopy = {
       skipped: "Skipped",
       // A supporter's letter from the letters inbox, waiting to go, and what's done with it and the messages both ways.
       queued: "Queued",
-      copy_sent: "Copy sent to the supporter",
+      copy_sent: "Copy sent to supporter",
       copy_held: "Copy held",
       copy_bounced: "Copy bounced",
       copy_delayed: "Copy delayed",

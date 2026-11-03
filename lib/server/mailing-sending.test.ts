@@ -124,7 +124,18 @@ describeWithDatabase("sending mailings", () => {
       { name: "Polly Placeholder", status: "sent", skipReason: null, sentAt: true },
     ]);
     expect(await query("SELECT status, details FROM letter_events ORDER BY id LIMIT 1")).toEqual([
-      { status: "sent", details: { from: JO, to: "dora@example.org", messageId: "m@pauseai.uk", threadId: "t" } },
+      {
+        status: "sent",
+        details: {
+          from: JO,
+          to: "dora@example.org",
+          messageId: "m@pauseai.uk",
+          threadId: "t",
+          // What sent it, kept with it.
+          backend: "gmail",
+          account: JO,
+        },
+      },
     ]);
     expect(await state(id)).toBe("sent");
   });

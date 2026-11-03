@@ -46,6 +46,12 @@ describe("staff interface copy", () => {
     expect(staffCopy.mailingPages.useThese(4)).toBe("Use these 4 for the draft");
   });
 
+  it("says how many messages in the letters inbox need a person, one or more", () => {
+    const { subject } = staffCopy.lettersInbox.alert;
+    expect(subject(1, "letters@pauseai.uk")).toBe("1 message in letters@pauseai.uk for a person to look at");
+    expect(subject(2, "letters@pauseai.uk")).toBe("2 messages in letters@pauseai.uk for a person to look at");
+  });
+
   it("names the ask being edited", () => {
     expect(staffCopy.asks.editTitle("Winter reception")).toContain("Winter reception");
   });

@@ -185,6 +185,8 @@ describeWithDatabase("reading the letters inbox", () => {
           to: JANE,
           messageId: expect.any(String),
           gmailMessageId: expect.any(String),
+          backend: "gmail",
+          account: LETTERS_INBOX,
         },
       },
     ]);

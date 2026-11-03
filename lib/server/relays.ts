@@ -1,7 +1,7 @@
 import "server-only";
 import { gunzipSync } from "node:zlib";
 import { query } from "./db";
-import { isBlocked, send } from "./email";
+import { isBlocked, send, sentBy } from "./email";
 import {
   cannotSend,
   letterEvent,
@@ -122,7 +122,7 @@ export async function sendRelay(relayId: number): Promise<{ sent: boolean; reaso
     "UPDATE letter_relays SET status = 'sent', reason = NULL, sent_at = now(), rfc_message_id = $2 WHERE id = $1",
     [relayId, result.messageId],
   );
-  await relayEvent(relayId, "relayed", { from, to, messageId: result.messageId });
+  await relayEvent(relayId, "relayed", { from, to, messageId: result.messageId, ...sentBy(result.backend) });
   return { sent: true };
 }
 

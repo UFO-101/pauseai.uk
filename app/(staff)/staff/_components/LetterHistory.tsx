@@ -53,15 +53,27 @@ function withHandling(events: HistoryEntry[], forwards: LetterForward[]): Histor
 }
 
 /**
- * A letter's history, newest first: each change recorded, Sent tagged with
- * what sent it, and each reply with what was done with it. One that went with no send recorded, as one copied from
+ * A letter's history, newest first: each change recorded, each email tagged
+ * with what sent it, as its event recorded or, for Sent, as the letter's
+ * send did, and each reply with what was done with it. One that went with no send recorded, as one copied from
  * Airtable, was sent when the letter says; and, with nothing recorded,
  * written then too, if earlier.
  */
 export function historyOf(letter: Details): HistoryEntry[] {
   const tag = letter.backend ? copy.backends[letter.backend] : undefined;
+  // An email's own record of what sent it, which every send keeps (sentBy in lib/server/email.ts); for a Sent
+  // recorded before they did, the letter's.
+  const tagOf = (event: LetterEvent) =>
+    typeof event.details.backend === "string"
+      ? (copy.backends as Record<string, string>)[event.details.backend]
+      : wasSent(event)
+        ? tag
+        : undefined;
   const events = withHandling(
-    letter.events.map((event) => (wasSent(event) && tag ? { ...event, tag } : event)),
+    letter.events.map((event) => {
+      const own = tagOf(event);
+      return own ? { ...event, tag: own } : event;
+    }),
     letter.kind === "supporter" ? letter.forwards : [],
   );
   if (!letter.sentAt || letter.events.some(wasSent)) return events;
@@ -100,7 +112,7 @@ function EventValue({ name, value }: { name: string; value: unknown }) {
  * reading, in the {} bubble, not the list; and what was done with a reply,
  * which has a list of its own (Handling).
  */
-const IDS = ["messageId", "threadId", "gmailMessageId", "bounceId", "handling"];
+const IDS = ["messageId", "threadId", "gmailMessageId", "bounceId", "handling", "backend", "account"];
 
 /** Who an email was from and to, in an email's order, first: the database keeps a record's fields in an order of its own. */
 const ADDRESSES = ["from", "name", "to", "cc", "bcc", "replyTo"];

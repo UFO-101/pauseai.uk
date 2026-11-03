@@ -3187,6 +3187,21 @@ describe("historyOf", () => {
   const airtable = { ...exampleSupporterLetterDetails, backend: "airtable" as const, events: [] };
   const sentByGmail = { at: "2026-10-01T12:00:00Z", status: "sent", details: {} };
 
+  it("tags each email with what its own event recorded sent it, whatever sent the letter", () => {
+    const events = [
+      { at: "2026-10-14T10:00:00Z", status: "relayed", details: { to: "jane@example.com", backend: "gmail" } },
+      { at: "2026-10-13T10:00:00Z", status: "notice", details: { to: "jane@example.com", backend: "postmark" } },
+      { at: "2026-10-12T10:00:00Z", status: "replied", details: {} },
+    ];
+    expect(historyOf({ ...exampleSupporterLetterDetails, backend: "gmail", events }).map((e) => e.tag)).toEqual([
+      copy.backends.gmail,
+      copy.backends.postmark,
+      undefined,
+      // And Sent, from the letter's own send, as it has no event of its own.
+      copy.backends.gmail,
+    ]);
+  });
+
   it("is the changes recorded, Sent tagged with what sent it; nothing more for one never sent", () => {
     const [bounced, sent, sending] = exampleSupporterLetterDetails.events;
     expect(historyOf(exampleSupporterLetterDetails)).toEqual([

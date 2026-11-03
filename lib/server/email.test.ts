@@ -58,7 +58,13 @@ describeWithDatabase("send", () => {
 
   it("sends the email, and logs it with what it was for", async () => {
     server.use(http.post(POSTMARK, () => HttpResponse.json({ ErrorCode: 0, MessageID: "msg-1" })));
-    expect(await send(EMAIL, "staff-login")).toEqual({ sent: true, id: "msg-1", messageId: null, threadId: null });
+    expect(await send(EMAIL, "staff-login")).toEqual({
+      sent: true,
+      id: "msg-1",
+      messageId: null,
+      threadId: null,
+      backend: { name: "postmark" },
+    });
     expect(await sends()).toEqual([
       { purpose: "staff-login", letterId: null, address: "jo@example.org", outcome: "sent", messageId: "msg-1" },
     ]);
@@ -135,6 +141,7 @@ describeWithDatabase("send", () => {
       id: "msg-2",
       messageId: "m@pauseai.uk",
       threadId: null,
+      backend: { name: "postmark" },
     });
     expect(headers).toEqual([{ Name: "Message-ID", Value: "<m@pauseai.uk>" }]);
     expect(await query("SELECT backend, sender, rfc_message_id FROM email_sends")).toEqual([
@@ -158,7 +165,13 @@ describeWithDatabase("send by Gmail", () => {
       }),
     );
     const sent = await send({ ...EMAIL, Tag: "mailing" }, "mailing", null, { backend: GMAIL });
-    expect(sent).toEqual({ sent: true, id: "g1", messageId: expect.stringMatching(/@pauseai\.uk$/), threadId: "t1" });
+    expect(sent).toEqual({
+      sent: true,
+      id: "g1",
+      messageId: expect.stringMatching(/@pauseai\.uk$/),
+      threadId: "t1",
+      backend: { name: "gmail", account: expect.any(String) },
+    });
     expect(auth).toBe("Bearer fixture-access:jo@pauseai.uk");
     expect(await query("SELECT backend, sender, message_id, rfc_message_id, gmail_thread_id FROM email_sends")).toEqual(
       [

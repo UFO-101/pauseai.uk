@@ -46,8 +46,17 @@ export type SendOptions = {
 };
 
 export type SendResult =
-  | { sent: true; id: string; messageId: string | null; threadId: string | null }
+  | { sent: true; id: string; messageId: string | null; threadId: string | null; backend: Backend }
   | { sent: false; reason: "blocked" | "failed" };
+
+/**
+ * What sent an email, as the event about it in a letter's history records
+ * it: the backend, and for Gmail the account. Kept with the event, so each
+ * says what sent its own email, however emails are sent later.
+ */
+export function sentBy(backend: Backend): { backend: Backend["name"]; account?: string } {
+  return backend.name === "gmail" ? { backend: "gmail", account: backend.account } : { backend: backend.name };
+}
 
 /** A bounce or spam complaint, as any provider reports it. */
 export type DeliveryProblem = {
@@ -151,7 +160,7 @@ export async function send(
     return { sent: false, reason: "failed" };
   }
   await log("sent", id, threadId);
-  return { sent: true, id, messageId: rfcId, threadId };
+  return { sent: true, id, messageId: rfcId, threadId, backend };
 }
 
 /**
