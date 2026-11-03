@@ -15,6 +15,16 @@ export const MAIN_URL = process.env.MAIN_URL ?? "http://localhost:3001";
 export const TEST_MP_EMAIL = "test-mp@parliament.example";
 
 /**
+ * The letters inbox in a fixture build, and the tests (LETTERS_INBOX,
+ * lib/server/letters-inbox.ts): made up, as the real one's address isn't
+ * in the repo, but at pauseai.uk, as it has a staff account.
+ */
+export const LETTERS_INBOX = "fixture-letters@pauseai.uk";
+
+/** Where a fixture build emails when something needs a person (NOTIFICATION_INBOX, lib/server/notifications.ts). */
+export const NOTIFICATION_INBOX = "fixture-notifications@pauseai.uk";
+
+/**
  * The moment a fixture build thinks it is: the server (lib/now.ts and the
  * database's now(), tests/storyboard/global-setup.ts) and every page's clock
  * (tests/storyboard/fixtures.ts). After both flyering trackers' races, before
@@ -30,10 +40,13 @@ export const FIXTURE_NOW = "2026-10-16T12:00:00.000Z";
 export const FLOW_DATABASE_COOKIE = "storyboard_database";
 export const FLOW_DATABASE_PREFIX = "pauseai_sb_";
 
-/** @param {{ outboxDir: string }} options */
-export function fixtureEnv({ outboxDir }) {
+/** @param {{ outboxDir: string, origin?: string }} options */
+export function fixtureEnv({ outboxDir, origin = "" }) {
   return {
     DATA_FIXTURES: "1",
+    // The address the build is served at, which its links and redirects use, as the live site's do its own
+    // (SITE_ORIGIN, next.config.ts).
+    FIXTURE_ORIGIN: origin,
     FIXTURE_NOW,
     // Analytics loads only on the live site (lib/analytics.ts). The
     // storyboard turns it on to drive the cookie consent flow, and blocks
@@ -57,7 +70,13 @@ export function fixtureEnv({ outboxDir }) {
     POSTMARK_WEBHOOK_USER: "postmark",
     POSTMARK_WEBHOOK_PASSWORD: "fixture-webhook-password",
     POLICY_INBOX: "policy@example.org",
+    NOTIFICATION_INBOX,
     // Each email sent is also written here (tests/fixtures/outbox.ts).
     OUTBOX_DIR: outboxDir,
+    LETTERS_INBOX,
+    // Mail to the letters inbox that a flow writes, for the fake Gmail to pick up (tests/fixtures/letters-inbox.ts).
+    LETTERS_INBOX_DIR: `${outboxDir}/letters-inbox`,
+    // The outside services a flow has made fail for itself (tests/fixtures/failing-services.ts).
+    FAILING_DIR: `${outboxDir}/failing`,
   };
 }

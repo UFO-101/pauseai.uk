@@ -5,7 +5,7 @@ import type { OutboxEmail } from "../fixtures/outbox";
 import { LOCAL_URL } from "../fixture-env.mjs";
 
 /**
- * A frame of the storyboard: a caption, and, when the run takes screenshots
+ * A frame of the storyboard: a caption, saying what the picture shows, and, when the run takes screenshots
  * (STORYBOARD_SHOTS=1, set by scripts/storyboard.mjs), a screenshot of the
  * page as it is now. The gate takes none, so a frame costs it nothing. Put one
  * after each thing a person would see; the checks go between them.
@@ -22,12 +22,13 @@ import { LOCAL_URL } from "../fixture-env.mjs";
  * `of` pictures one element, exactly (the component gallery's variants), with
  * the page at the top so the sticky header is never over it. `window`
  * pictures only the window, for a page too long to picture whole (the
- * gallery itself).
+ * gallery itself). `hover` puts the pointer over an element, and keeps it
+ * there for the picture, in place of moving it out of the way.
  */
 export async function frame(
   page: Page,
   caption: string,
-  { of, window: windowOnly = false }: { of?: Locator; window?: boolean } = {},
+  { of, window: windowOnly = false, hover }: { of?: Locator; window?: boolean; hover?: Locator } = {},
 ): Promise<void> {
   const info = test.info();
   const index = info.annotations.filter((a) => a.type === "frame").length + 1;
@@ -37,7 +38,7 @@ export async function frame(
   // The pointer is wherever the last click left it, which, as the page
   // changes under it, is sometimes over a link or a select and sometimes
   // not: a hover style that differs between runs. Out of the way first.
-  await page.mouse.move(0, 0).catch(() => {});
+  await (hover ? hover.hover() : page.mouse.move(0, 0).catch(() => {}));
 
   // Images below the fold load first, and the fonts, so the picture is of the
   // finished page; and any smooth scroll (a field scrolled into view, an
@@ -88,6 +89,17 @@ export async function frame(
   }
   const body = inWindow || windowOnly ? await page.screenshot(SHOT) : await wholePage(page);
   await info.attach(`frame ${index}: ${caption}`, { body, contentType: "image/png" });
+}
+
+/**
+ * A line of the flow's story, told around its frames: what the person does
+ * next, and why, as anyone who has used the site would say it. The review
+ * page shows it above the next frame; a line after the last frame ends the
+ * flow. The captions say only what's on the screen, and the flow's title
+ * only names it, so the story is where the flow is explained.
+ */
+export function story(text: string): void {
+  test.info().annotations.push({ type: "story", description: text });
 }
 
 /**

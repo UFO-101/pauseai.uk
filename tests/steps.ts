@@ -183,9 +183,9 @@ export function newestEmail(matches: (email: OutboxEmail) => boolean): OutboxEma
   return readOutbox(OUTBOX_DIR).filter(matches).at(-1);
 }
 
-/** The newest email sent to `to`. */
+/** The newest email sent to `to`, an address, with a name or without. */
 export function newestEmailTo(to: string): OutboxEmail | undefined {
-  return newestEmail((email) => email.To === to);
+  return newestEmail((email) => email.To === to || email.To.endsWith(`<${to}>`));
 }
 
 /** The login link in the newest email to `email`, if it got one. */

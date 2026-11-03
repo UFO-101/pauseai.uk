@@ -6,6 +6,7 @@ import { query, transaction } from "./db";
 import { isBlocked, send, type DeliveryProblem } from "./email";
 import type { HandlingReason, ReplyHandling } from "./letters";
 import { lettersDomain, notifyDomain, type Attachment } from "./outside-services/postmark";
+import { nameLine } from "./proxies";
 
 // What Postmark tells us: bounces and spam complaints, and replies to
 // letters. Postmark doesn't sign webhooks, so each webhook URL carries a
@@ -133,6 +134,8 @@ async function recordReply(letter: { id: number; senderEmail: string }, email: I
     cc: addresses(email.CcFull),
     replyTo: email.ReplyTo || undefined,
     messageId: email.MessageID ?? null,
+    // What received it, as every email's event says (sentBy in email.ts).
+    backend: "postmark",
   };
   return transaction(async (db) => {
     await query("SELECT 1 FROM letters WHERE id = $1 FOR UPDATE", [letter.id], db);
@@ -227,10 +230,10 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
     mailbox: string;
   }>(
     `SELECT l.id::int AS id, f.name AS "senderName", f.email AS "senderEmail", p.name AS "mpName",
-       s.reply_hash AS mailbox
+       s.postmark_mailbox AS mailbox
      FROM letters_from_supporters s JOIN letters l ON l.id = s.id JOIN form_entries f ON f.id = s.entry_id
        JOIN notable_people p ON p.id = l.notable_person_id
-     WHERE s.reply_hash = ANY($1) ORDER BY array_position($1, s.reply_hash) LIMIT 1`,
+     WHERE s.postmark_mailbox = ANY($1) ORDER BY array_position($1, s.postmark_mailbox) LIMIT 1`,
     [mailboxes],
   );
   if (!letter) return [];
@@ -298,7 +301,7 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
     const result = await send(
       {
         From: `PauseAI UK <noreply@${notifyDomain()}>`,
-        To: to,
+        To: to === letter.senderEmail ? nameLine(letter.senderName, to) : to,
         // Answering it reaches whoever wrote, and the letter's address, so it's kept with the letter.
         ReplyTo: [from, `${letter.mailbox}@${lettersDomain()}`].filter(Boolean).join(", "),
         Subject: email.Subject ?? "",

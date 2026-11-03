@@ -98,8 +98,12 @@ const nextConfig: NextConfig = {
     DEPLOY_CONTEXT: process.env.CONTEXT ?? "local",
     // This deploy's own address, from Netlify: in production the site's main
     // domain, pauseai.uk. Read only by siteUrl() (lib/site-url.ts), for every
-    // link in an email and every redirect. Empty for a local build.
-    SITE_ORIGIN: (process.env.CONTEXT === "production" ? process.env.URL : process.env.DEPLOY_PRIME_URL) ?? "",
+    // link in an email and every redirect. A fixture build is told the
+    // address it's served at (FIXTURE_ORIGIN, tests/fixture-env.mjs), so its
+    // links are whole as the live site's are; any other local build has none.
+    SITE_ORIGIN:
+      process.env.FIXTURE_ORIGIN ||
+      ((process.env.CONTEXT === "production" ? process.env.URL : process.env.DEPLOY_PRIME_URL) ?? ""),
   },
   experimental: {
     // A file attached to a mailing comes in a Server Action's request, up to

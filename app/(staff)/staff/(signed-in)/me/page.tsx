@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { gmailAccount } from "@/lib/server/gmail-accounts";
+import { isLettersInboxAddress } from "@/lib/server/letters-inbox";
 import { listSessions, requireStaff } from "@/lib/server/staff-auth";
 import { firstOf, type ParamValue } from "@/lib/staff-search";
 import { disconnectMyGmail } from "../../actions";
@@ -22,6 +23,7 @@ export default async function MePage({ searchParams }: { searchParams: Promise<R
       <StaffSessions sessions={sessions} />
       <MyGmail
         me={email}
+        lettersInbox={isLettersInboxAddress(email)}
         account={account}
         outcome={firstOf((await searchParams).gmail)}
         disconnect={disconnectMyGmail}

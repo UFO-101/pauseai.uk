@@ -2,7 +2,11 @@ import { copy } from "@/lib/content/email-your-mp";
 import type { Mp } from "@/lib/email-your-mp";
 import styles from "./MpCard.module.css";
 
-/** The sender's MP, as a card like the campaign's documents: who, where, then their email. */
+/**
+ * The sender's MP, as a card like the campaign's documents: who, where,
+ * then their email; or, when it bounced, that it isn't working, though a
+ * letter can still be written, to go once it does.
+ */
 export default function MpCard({ mp }: { mp: Mp }) {
   return (
     <div className={styles.mp}>
@@ -11,10 +15,10 @@ export default function MpCard({ mp }: { mp: Mp }) {
       <p className={styles.constituency}>{copy.lookup.mpOf(mp.constituency)}</p>
       {/* data-mp-email: the visual diff masks it, as the test MP's inbox differs between hosts. */}
       <p data-mp-email>
-        {mp.email ? (
-          <a href={`mailto:${mp.email}`}>{mp.email}</a>
-        ) : mp.unreachable ? (
+        {mp.unreachable ? (
           copy.lookup.unreachable
+        ) : mp.email ? (
+          <a href={`mailto:${mp.email}`}>{mp.email}</a>
         ) : (
           copy.lookup.noEmail
         )}

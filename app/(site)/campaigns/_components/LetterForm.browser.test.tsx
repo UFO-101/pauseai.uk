@@ -74,6 +74,8 @@ describe("LetterForm", () => {
       address: "1 High St",
       subject: "My subject",
       letter: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "My letter" }] }] },
+      // The draft it began with, the campaign's, not what was written over it.
+      draftHash: expect.stringMatching(/^[0-9a-f]{8}$/),
       nickname: "",
     });
   });
@@ -150,6 +152,7 @@ describe("LetterForm", () => {
       address: "1 High St",
       subject: "Kept subject",
       letter: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Kept letter" }] }] },
+      draftHash: "0badcafe",
       nickname: "",
     };
     await render(<LetterForm {...PROPS} draft={draft} />);

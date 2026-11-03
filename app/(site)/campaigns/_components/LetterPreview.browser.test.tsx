@@ -97,6 +97,7 @@ describe("LetterPreview", () => {
         email: "jane@example.com",
         subject: "My subject",
         letter: DRAFT.letter,
+        draftHash: "0badcafe",
         consent: true,
         nickname: "bot",
         turnstileToken: "",
@@ -108,6 +109,23 @@ describe("LetterPreview", () => {
     // Still sending while the next page loads, so it can't be sent twice.
     await expect.element(send()).toBeDisabled();
     await expect.element(send()).toHaveAttribute("aria-busy", "true");
+  });
+
+  it("says on the sent page a letter that's queued will go soon, or once its MP's address works", async () => {
+    respond = async () => Response.json({ ok: true, queued: "daily_limit" });
+    saveDraft(DRAFT);
+    await render(<LetterPreview campaignSlug={letterToPm.slug} />);
+    await send().click();
+    await vi.waitFor(() =>
+      expect(readSent(letterToPm.slug)).toEqual({ campaign: letterToPm.slug, mpName: MP.name, queued: "soon" }),
+    );
+    respond = async () => Response.json({ ok: true, queued: "blocked" });
+    saveDraft(DRAFT);
+    await render(<LetterPreview campaignSlug={letterToPm.slug} />);
+    await page.getByRole("button", { name: copy.preview.send }).last().click();
+    await vi.waitFor(() =>
+      expect(readSent(letterToPm.slug)).toEqual({ campaign: letterToPm.slug, mpName: MP.name, queued: "blocked" }),
+    );
   });
 
   it("adds to an existing dataLayer", async () => {

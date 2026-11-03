@@ -45,7 +45,7 @@ async function sentLetter(mailbox = "jane.smith.482913"): Promise<string> {
     senderName: "Jane Smith",
     senderEmail: "Jane@Example.com",
     contactConsent: true,
-    replyHash: mailbox,
+    postmarkMailbox: mailbox,
   });
   return mailbox;
 }
@@ -153,7 +153,7 @@ describeWithDatabase("forwardReply", () => {
       ),
     ).toEqual(["replies@pauseai.uk", "Jane@Example.com"]);
 
-    expect(sent.map((e) => e.To)).toEqual(["replies@pauseai.uk", "Jane@Example.com"]);
+    expect(sent.map((e) => e.To)).toEqual(["replies@pauseai.uk", `"Jane Smith" <Jane@Example.com>`]);
     expect(sent[0]).toMatchObject({
       From: "PauseAI UK <noreply@notify.pauseai.uk>",
       ReplyTo: "test-mp@parliament.example, jane.smith.482913@letters.pauseai.uk",
@@ -180,6 +180,7 @@ describeWithDatabase("forwardReply", () => {
           name: "Testy McTestface MP",
           to: `${mailbox}@letters.pauseai.uk`,
           messageId: "inbound-1",
+          backend: "postmark",
           handling: [
             { outcome: "forwarded", to: "replies@pauseai.uk", reason: "policy_inbox", at: expect.any(String) },
             { outcome: "forwarded", to: "Jane@Example.com", reason: "sender", at: expect.any(String) },
@@ -264,6 +265,7 @@ describeWithDatabase("forwardReply", () => {
           name: "Jane Smith",
           to: `test-mp@parliament.example, ${mailbox}@letters.pauseai.uk`,
           messageId: "inbound-1",
+          backend: "postmark",
           handling: [
             { outcome: "forwarded", to: "replies@pauseai.uk", reason: "policy_inbox", at: expect.any(String) },
             { outcome: "not_forwarded", to: "Jane@Example.com", reason: "own_follow_up" },
@@ -326,6 +328,7 @@ describeWithDatabase("forwardReply", () => {
           from: "",
           name: "",
           messageId: null,
+          backend: "postmark",
           handling: [{ outcome: "forwarded", to: "Jane@Example.com", reason: "sender", at: expect.any(String) }],
         },
       },
@@ -389,7 +392,7 @@ describeWithDatabase("forwardReply", () => {
     const [{ politicianId }] = await query<{ politicianId: number }>(
       `SELECT notable_person_id::int AS "politicianId" FROM letters`,
     );
-    const sam = [{ id: await addTestLetter({ politicianId, senderName: "Sam", replyHash: "sam.000001" }) }];
+    const sam = [{ id: await addTestLetter({ politicianId, senderName: "Sam", postmarkMailbox: "sam.000001" }) }];
     postmark();
     const both = reply("jane.smith.482913", {
       OriginalRecipient: "sam.000001@letters.pauseai.uk",

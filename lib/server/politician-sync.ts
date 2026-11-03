@@ -1,6 +1,7 @@
 import "server-only";
 import { changedFields } from "@/lib/field-changes";
-import type { PoliticianSyncResult, StatusCounts } from "@/lib/import-runs";
+import { staffCopy } from "@/lib/content/staff-interface";
+import { importPath, type PoliticianSyncResult, type StatusCounts } from "@/lib/import-runs";
 import type { AirtableMp } from "@/lib/mp-check";
 import {
   changeCount,
@@ -17,6 +18,7 @@ import { AIRTABLE_ASKS, airtableToken, fetchPoliticians } from "./outside-servic
 import { logChange } from "./audit";
 import { query, transaction, type Queryable } from "./db";
 import { keepingFailure, recordRun } from "./import-runs";
+import { notifyStaff, staffLink } from "./notifications";
 import { addPolitician } from "./politicians";
 
 // Copies every politician from Airtable's UK Parliamentarians into the
@@ -235,7 +237,9 @@ export function syncPoliticians(startedBy: string): Promise<SyncResult> {
   return keepingFailure(JOB, startedBy, async () => {
     const records = await fetchPoliticians(airtableToken());
     const fetched = records.map((record) => record.politician);
-    return transaction(async (db) => {
+    // Whether this run holds a sync when none was held before, to email about once it's kept.
+    let newlyHeld = false;
+    const result = await transaction(async (db): Promise<SyncResult> => {
       await ensureTestMps(db);
       const before = await syncedPoliticians(db);
       const changes = comparePoliticians(before, fetched, await goneRecords(db));
@@ -248,6 +252,8 @@ export function syncPoliticians(startedBy: string): Promise<SyncResult> {
       const changedStatuses = statuses.added + statuses.changed + statuses.removed;
       const status = held ? "held" : count + changedStatuses > 0 ? "applied" : "unchanged";
       const result: PoliticianSyncResult = { changes, renamed, statuses, ...(held ? { records } : {}) };
+      const [heldBefore] = await query("SELECT 1 FROM import_runs WHERE job = $1 AND status = 'held'", [JOB], db);
+      newlyHeld = held && !heldBefore;
       await recordRun(JOB, startedBy, status, result, db);
       if (count > 0) {
         await logChange(
@@ -259,6 +265,12 @@ export function syncPoliticians(startedBy: string): Promise<SyncResult> {
       }
       return { status, changes, renamed, statuses };
     });
+    if (newlyHeld) {
+      const words = staffCopy.notifications.syncHeld;
+      const count = changeCount(result.changes);
+      await notifyStaff(words.subject(count), words.body(count, staffLink(importPath(JOB), undefined)));
+    }
+    return result;
   });
 }
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isCronRequest } from "@/lib/server/cron";
+import { sendLetterQueue } from "@/lib/server/letter-sending";
 import { sendDueLetters, startDueMailings } from "@/lib/server/mailing-sending";
 
 /**
@@ -10,12 +11,16 @@ import { sendDueLetters, startDueMailings } from "@/lib/server/mailing-sending";
 const SENDING_MS = 8_000;
 
 /**
- * Starts the mailings that are due and sends their letters for a few
- * seconds, called by netlify/functions/send-mailings and
- * send-mailings-background. Says what it sent and how many letters are left.
+ * Works through the letters inbox's queue (lib/server/letter-sending.ts),
+ * then starts the mailings that are due and sends their letters, for a
+ * few seconds in all, called by netlify/functions/send-mailings and
+ * send-mailings-background. Says what it sent and how many letters are
+ * left: the mailings', and the queue's as `queue`.
  */
 export async function POST(request: Request) {
   if (!isCronRequest(request)) return NextResponse.json({ error: "Not allowed" }, { status: 401 });
+  const until = Date.now() + SENDING_MS;
+  const queue = await sendLetterQueue(until, request);
   const started = await startDueMailings();
-  return NextResponse.json({ started, ...(await sendDueLetters({ until: Date.now() + SENDING_MS })) });
+  return NextResponse.json({ started, ...(await sendDueLetters({ until })), queue });
 }

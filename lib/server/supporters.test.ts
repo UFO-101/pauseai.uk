@@ -53,7 +53,7 @@ async function letter(email: string, name: string, mp: number, more: Record<stri
     senderEmail: email,
     senderPostcode: (more.postcode as string | undefined) ?? "ZZ9 9ZZ",
     contactConsent: true,
-    replyHash: `h-${email}-${Math.random()}`,
+    postmarkMailbox: `h-${email}-${Math.random()}`,
     createdAt: (more.createdAt as string | undefined) ?? "2026-10-05T09:00:00Z",
     repliedAt: (more.repliedAt as string | undefined) ?? null,
   });

@@ -10,78 +10,24 @@ Two aims:
    supporters' letters, PauseAI's mailings, and volunteers' own emails to
    their MP.
 
-The plan is in order: what to do now, the choice of how letters are sent,
-then what to build.
+The plan is in order: what to watch now, changes to the letter, then
+what to build.
 
 ## Where things stand
 
 ### The ways letters reach MPs
 
-| Route | From | Copied | Reply-To | Who the office's reply reaches |
-| --- | --- | --- | --- | --- |
-| The site's form | "Jane Smith via PauseAI" <jane.smith.482913@letters.pauseai.uk>, the letter's own address | The sender on Cc, policy@ on Bcc | None | The letter's address, which forwards it to the sender and policy@; the sender too, on a reply-all |
-| A volunteer's own email | The volunteer | policy@ on Cc, often because Joseph asked them to | None | The volunteer, and policy@ if the office replies to all or the volunteer forwards it |
-| PauseAI's mailings | A staff member's connected Gmail | None | None | That Gmail, read hourly |
+| Route | From | Copied | Who the office's reply reaches |
+| --- | --- | --- | --- |
+| The site's form | The supporter's proxy on the letters inbox | Nobody; the supporter gets a copy of their own | The letters inbox, which relays it to the supporter and keeps it (`docs/domain-concepts.md`, "Letters through the letters inbox") |
+| A volunteer's own email | The volunteer | policy@ on Cc, often because Joseph asked them to | The volunteer, and policy@ if the office replies to all or the volunteer forwards it |
+| PauseAI's mailings | A staff member's connected Gmail | None | That Gmail, read hourly |
 
-pauseai.info's old form, now retired, sent from policy@ with the sender on
-Cc. Its letters' replies went to policy@ alone.
-
-### How the site handles them
-
-**PauseAI's letters** (mailings) go from a staff member's connected Gmail
-(`lib/server/mailing-channels.ts`). Every hour, `lib/server/gmail-reading.ts`
-reads each connected account's history since the last run. It fetches
-only the threading headers, and keeps a message whole (in Blobs, with a
-row in `letter_replies`) only if it answers one of our letters, by
-Message-ID or Gmail thread. Automatic replies and bounces are noted on the
-letter. The letter's page shows the thread (`lib/server/letter-threads.ts`).
-
-**Supporters' letters** (`lib/server/mp-letters.ts`) go by Postmark from
-the letter's own address:
-
-- To the MP, Cc the sender, Bcc `POLICY_INBOX`, which holds the only copy
-  of the text. With no Reply-To, a reply goes to the letter's address.
-- Automatic replies sent to Postmark's Return-Path come back as bounces of
-  type AutoResponder and add an `auto_reply` event to the letter
-  (`recordAutoResponder` in `lib/server/postmark-webhooks.ts`).
-- Mail to the letter's address comes in through Postmark's inbound webhook
-  (`forwardReply`). That adds a `replied` or `auto_reply` event, keeping
-  who and when but not the text, and forwards it from noreply@ to
-  `POLICY_INBOX` and the sender, unless they're already in its To or Cc.
-  Mail from the sender themselves, writing back to their MP with the
-  letter's address copied, goes to `POLICY_INBOX` only.
-  Inbound needs Postmark's Pro plan or above: on Basic, Postmark still
-  accepts the mail but drops it, with no bounce and no webhook.
-- The letter's page has "Copy Gmail search" for the Bcc'd copy
-  (`getSupporterLetter` in `lib/server/letters.ts`).
-
-### What's known about getting through
-
-- **No site letter has had a reply or an automatic reply that we've
-  seen,** from 35 sent to MPs between 16 and 29 October 2026. That proves
-  little: Postmark dropped all mail to the letters' addresses from 15 to
-  30 October, while the account was on the Basic plan, and automatic
-  replies go there. Mimecast, Parliament's mail filter, accepts the
-  letters, often after a first `451` (greylisting a sender it doesn't
-  know), but what happens next can't be seen from outside.
-- **Letters sent from policy@ get answers.** Of pauseai.info's 24 letters
-  on 15 October, 2 had automatic replies within minutes; of its 40 on
-  4 October, 2 had casework replies, within weeks. Volunteers' own emails
-  get answers too.
-- **The site's letters authenticate cleanly:** SPF, DKIM for
-  letters.pauseai.uk and DMARC all pass. The domain is new, the sender
-  address random-looking, and every letter has the same text, in HTML,
-  with two PDFs attached.
-- **WriteToThem** (github.com/mysociety/writetothem: `perllib/FYR/Queue.pm`,
-  `bin/handlemail`, `perllib/FYR/AbuseChecks.pm`) sends from the
-  constituent's name at a per-message address on its own domain, which is
-  also the Return-Path; Reply-To the constituent alone; to the MP only;
-  plain text, no attachments, subject "Letter from your constituent
-  <name>". It forwards whatever reaches the per-message address to the
-  constituent and holds near-identical messages for a moderator. It has
-  twenty years of reputation and allow-listing, and doesn't try to see
-  replies, so its per-message address gets only bounces and automatic
-  replies.
+Letters sent through the form before the letters inbox went by Postmark
+from their own address on `letters.pauseai.uk`, with the sender on Cc and
+policy@ on Bcc, and their replies are still forwarded
+(`forwardReply`); their text isn't kept. pauseai.info's old form, now
+retired, sent from policy@ with the sender on Cc.
 
 ### What's known about replies
 
@@ -93,12 +39,12 @@ the letter's own address:
   thread by Message-ID. What they do have: the MP's address,
   `Re: <the letter's subject>`, the Case Ref, and often the letter quoted
   with its From, Sent, To and Cc lines.
-- **A forwarded reply is our own email quoting the MP's.** Re-sending the
-  office's message from our server would break its SPF and DKIM. So the
-  constituent gets mail from PauseAI, not their MP. Its Reply-To is the
-  MP's address and the letter's, so answering it reaches the office and
-  is kept with the letter, and it names the letter's Message-ID, so it
-  sits in the letter's thread.
+- **Letters sent from policy@ got answers.** Of pauseai.info's 24 letters
+  on 15 October 2026, 2 had automatic replies within minutes; of its 40
+  on 4 October, 2 had casework replies, within weeks. None of the 35 sent
+  by Postmark from `letters.pauseai.uk` between 16 and 29 October was
+  seen to get one, though Postmark dropped mail to those addresses until
+  30 October.
 - **People forward replies by hand.** Supporters forward their MP's reply
   to policy@, and policy@ forwards replies on to supporters.
 
@@ -118,104 +64,52 @@ emails with us on Cc.
   <postmarkId@mtasv.net>` and, in the group's archive,
   `List-ID: <policy.pauseai.uk>`.
 
-## 1. Now: find out whether letters get through
+## 1. Now: see whether letters through the letters inbox get answered
 
-1. **Watch for automatic replies.** Mail to the letters' addresses has
-   reached the site since 30 October 2026, so for the first time an
-   office's acknowledgement adds an `auto_reply` event to its letter.
-   pauseai.info's letters got about 2 in 24. If none have come after
-   about 30 letters, the letters are probably being filtered.
-2. **Ask.**
-   - A few senders of past letters: did they get a reply or an
-     acknowledgement, and from which address?
-   - A friendly MP's office: is anything from `@letters.pauseai.uk` in
-     its junk or in Mimecast's held mail, and what would let it through?
-   - DearMP's team, who send letters to MPs too: what gets through
-     Parliament's filter?
+Watch the letters' histories for automatic replies and casework replies,
+now that they go from a Gmail account and every reply is kept. If none
+come after about 30 letters, ask a friendly MP's office whether they're
+held by Mimecast, Parliament's mail filter, and ask DearMP's team what
+gets through.
 
-## 2. Next: decide how letters are sent
-
-What the first part finds decides this. If letters get through as they
-are, keep the current route and take what's cheap from the list of
-changes below. If they don't, change the route.
-
-### Routes
-
-- **As now, from the letter's own address through Postmark.** Replies to
-  the From are forwarded to the constituent and policy@, and kept.
-- **As WriteToThem does:** Reply-To the constituent alone, policy@ on Bcc.
-  Offices' replies go to the constituent, so we'd see them only when the
-  constituent copies or forwards them to policy@ (the confirmation asks
-  them to). Their per-message address catches automatic replies and
-  bounces.
-- **From a Gmail account of our own,** such as letters@pauseai.uk,
-  through the Gmail API, at a plus address per letter
-  (letters+jane.smith@pauseai.uk), which reaches the same mailbox. Mail
-  from Google's servers on our own domain may fare better than Postmark's.
-  Replies are read hourly as mailings' are, and forwarded to the
-  constituent. Joseph's preferred stopgap if the current route is
-  filtered. To check: whether Gmail sends with a plus address as the From,
-  or needs it set up as a "Send mail as" alias; and volume, as some days
-  could need over 2,000 letters, Workspace's daily limit per account
-  (https://support.google.com/a/answer/166852). The queue already sends
-  from a cron, so letters can spread over days, or over more accounts.
-- **From policy@, with the constituent on Cc**, as the old form did.
-  Offices answer policy@, so we see every reply, and forward it.
-- **From the constituent's own email**, prefilled, with policy@ on Cc, as
-  volunteers do: by a `mailto:` link, or sent through their account by
-  OAuth with the big providers. This is the route known to get replies, at
-  the cost of people dropping out before sending.
-- **A message box:** the MP's reply stays with us, and the constituent
-  gets an email saying they have a message from their MP, with a link to
-  read it and reply on the site. People are used to services that work
-  like this, but it puts PauseAI between them and their MP.
-
-### Changes worth making on any route
+## 2. Changes still worth making to the letter
 
 - **Plain text with no HTML, and links to the campaign's documents**
   instead of PDFs attached.
 - **The campaign gives points, which the form asks the person to put in
-  their own words**, so offices don't get one text many times over.
+  their own words**, so offices don't get one text many times over. The
+  letter's page already shows what each supporter changed, and how much
+  is their own (`own_words`).
 - **A subject that says it's from a constituent.**
-- **A less random letter address:** the sender's name, with digits only
-  when it's taken. Guessable addresses mean anyone could use one to reach
-  a constituent through us, so forwarding to the constituent is then
-  limited to mail from their MP's domain.
-- **policy@ on Cc rather than Bcc,** so the office sees we're copied and a
-  reply-all includes us. A choice about what the MP sees, not a technical
-  one.
 
-## 3. Then: keep replies to supporters' letters
+## 3. Then: keep the replies to old supporters' letters
 
-Policy@ is connected like a staff member's Gmail and read hourly with the
-others. `letterAnswered` also matches supporters' letters:
+Letters sent through the letters inbox are kept whole, with their
+replies. Those sent before it, from
+`…@letters.pauseai.uk` through Postmark, have no text kept. For them,
+policy@ is connected like a staff member's Gmail and read hourly with the
+others, and `letterAnswered` also matches supporters' letters:
 
 - **The Bcc'd copy** is the letter. It's matched by its Message-ID,
   `<postmarkId@mtasv.net>` (Postmark's `MessageID`, already in
   `email_sends.message_id`), and kept whole as the letter's first message,
-  so the letter page can show its text. The site keeps no text of a
-  supporter's letter today, so this needs the data-protection change
-  below.
+  so the letter page can show its text.
 - **A reply that threads** (In-Reply-To or References naming that
   Message-ID) is kept in `letter_replies`. Casework systems' replies don't
   thread, so most are joined by the rule for them (part 4, "Joining a
   conversation to a letter").
-- **A reply that reaches the letter's own address** comes in through
-  Postmark's webhook, which keeps it whole too: Blobs and
-  `letter_replies`, with `account` `letters.pauseai.uk` and a nullable
-  `gmail_message_id`. It's forwarded to policy@ and the constituent as
-  now. The forwarded copy, read again from policy@ (from noreply@, Tag
-  `forwarded-reply`), is skipped.
+- **A reply to the letter's own address** comes in through Postmark's
+  webhook, which keeps it whole too: Blobs and `letter_replies`, with
+  `account` `letters.pauseai.uk` and a nullable `gmail_message_id`. It's
+  forwarded to policy@ and the constituent as now. The forwarded copy,
+  read again from policy@ (from noreply@, Tag `forwarded-reply`), is
+  skipped.
 - **A reply a constituent forwards or copies to policy@** is a message
   from a supporter quoting the MP's, joined by the same rule as a casework
   reply.
 
-The thread page then works for both kinds of letter.
 `LetterThread`/`letter-threads.ts` takes the letter's first message from
 the kept copy when the letter has no mailing to rebuild it from.
-
-If letters move to a Gmail account of our own (part 2), that account is
-read the same way, and the Postmark parts drop out.
 
 ## 4. Then: keep every conversation with a politician
 
@@ -308,8 +202,9 @@ Join only when the match is certain.
   names a letter's: a mailing's Gmail send (`email_sends.rfc_message_id`),
   or a supporter's letter sent through the site (`<postmarkId@mtasv.net>`).
   This covers both the Bcc'd copy and a reply that threads.
-- **By the letter's own address.** Any message to a supporter's letter's
-  `…@letters.pauseai.uk` address, threaded or not.
+- **By the letter's own address.** Any message to an old supporter's
+  letter's `…@letters.pauseai.uk` address, threaded or not. Letters sent
+  through the letters inbox are joined to their replies there already.
 - **By Gmail thread,** in the mailbox a mailing was sent from, as now.
 
 **Casework replies, and replies forwarded by a constituent,** don't
@@ -389,8 +284,9 @@ staff pages above.
 Parts 3 and 4 touch personal data, so `docs/data-protection.md`, the
 privacy policy and erasure change before they're built:
 
-- **Letters to MPs:** the letter's text and the MP's replies are kept (in
-  Blobs, backed up by the backup Worker), not only in Gmail.
+- **Old letters to MPs:** the letter's text and the MP's replies are kept
+  (in Blobs, backed up by the backup Worker), not only in Gmail, as new
+  letters' are.
 - **A new row, conversations copied to us:** a volunteer's own emails with
   their MP, with their text. Their sources are the volunteer Cc'ing us,
   and the group's archive read from a member's mailbox. Lawful basis as

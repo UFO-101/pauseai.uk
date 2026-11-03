@@ -1,13 +1,19 @@
 import "server-only";
 import { logChange } from "./audit";
 import { query, transaction } from "./db";
+import { gmailAccess } from "./gmail-accounts";
+import { lettersInbox } from "./letters-inbox";
+import { deleteLetterReply } from "./outside-services/blobs";
+import { trashGmailMessage } from "./outside-services/gmail";
 import { refreshSupportersList } from "./supporter-facts";
 
 // Erasing a supporter, when they ask to be forgotten: for each source,
 // what that source holds about them goes. A form entry goes with its letter,
 // the letter's events and the copies of replies forwarded to the sender; a
-// Luma user goes with
-// their registrations and contact, and their Luma ID is kept in
+// letter from the letters inbox with its sender's proxy, its draft, every
+// message kept both ways and their blobs, and its mail there goes to
+// Trash; a Luma user goes with their registrations and contact, and their
+// Luma ID is kept in
 // luma_erased so the import never copies them back; a member's record goes
 // the same way, its ID kept in members_erased; a message of a mailing
 // sent to them loses its address and merge values; staff's notes on them
@@ -18,7 +24,15 @@ import { refreshSupportersList } from "./supporter-facts";
 // for a person to deal with, as is Stichting PauseAI's of a member
 // (docs/data-protection.md).
 
-export type ErasureResult = { lumaUsers: number; formEntries: number; letters: number; members: number };
+export type ErasureResult = {
+  lumaUsers: number;
+  formEntries: number;
+  letters: number;
+  members: number;
+  /** Their proxies on the letters inbox, and the messages of their letters there, trashed. */
+  proxies: number;
+  messages: number;
+};
 
 /** Erases supporter `id`, as `by`, under the request's `reference`. Undefined if there's no such supporter. */
 export async function eraseSupporter(id: number, reference: string, by: string): Promise<ErasureResult | undefined> {
@@ -46,12 +60,37 @@ export async function eraseSupporter(id: number, reference: string, by: string):
         db,
       )
     ).map((row) => row.id);
+    const proxyIds = (
+      await query<{ id: number }>(
+        `SELECT DISTINCT proxy_id::int AS id FROM letters_from_supporters WHERE entry_id = ANY($1::bigint[]) AND proxy_id IS NOT NULL`,
+        [entries],
+        db,
+      )
+    ).map((row) => row.id);
+    // The letters inbox's mail of their letters, every message both ways and what we sent, to trash after.
+    const mail = await query<{ blobKey: string | null; gmailId: string }>(
+      `SELECT r.blob_key AS "blobKey", r.gmail_message_id AS "gmailId" FROM letter_replies r
+         JOIN letters_from_supporters s ON s.id = r.letter_id
+       WHERE s.entry_id = ANY($1::bigint[]) AND s.proxy_id IS NOT NULL
+       UNION ALL SELECT NULL, e.message_id FROM email_sends e JOIN letters_from_supporters s ON s.id = e.letter_id
+       WHERE s.entry_id = ANY($1::bigint[]) AND s.proxy_id IS NOT NULL AND e.outcome = 'sent' AND e.backend = 'gmail'`,
+      [entries],
+      db,
+    );
+    await query(
+      `DELETE FROM email_sends WHERE purpose IN ('letter-copy', 'relay', 'supporter-notice')
+       AND letter_id IN (SELECT id FROM letters_from_supporters WHERE entry_id = ANY($1::bigint[]))`,
+      [entries],
+      db,
+    );
     const letters = await query<{ id: number }>(
       `DELETE FROM letters WHERE id IN (SELECT id FROM letters_from_supporters WHERE entry_id = ANY($1::bigint[])) RETURNING id::int AS id`,
       [entries],
       db,
     );
     await query("DELETE FROM form_entries WHERE id = ANY($1::bigint[])", [entries], db);
+    // Their proxies: mail to one now is not understood.
+    const proxies = await query("DELETE FROM proxies WHERE id = ANY($1::bigint[]) RETURNING id", [proxyIds], db);
     await query(
       `DELETE FROM email_sends WHERE purpose = 'forwarded-reply' AND letter_id IS NULL
        AND address IN (SELECT lower(matched_value) FROM supporter_links WHERE supporter_id = $1)`,
@@ -76,8 +115,31 @@ export async function eraseSupporter(id: number, reference: string, by: string):
       formEntries: entries.length,
       letters: letters.length,
       members: members.length,
+      proxies: proxies.length,
+      messages: mail.length,
     };
     await logChange(by, "erase supporter", { id, reference, ...result }, db);
-    return result;
+    return { result, mail };
+  }).then(async (erased) => {
+    if (!erased) return undefined;
+    await clearMail(erased.mail);
+    return erased.result;
   });
+}
+
+/**
+ * Deletes the kept messages of erased letters from Netlify Blobs, and
+ * moves them and what we sent in the letters inbox to Trash, which Gmail
+ * empties after 30 days. A failure is logged, not thrown: the erasure
+ * itself is done, and Trash empties itself.
+ */
+async function clearMail(mail: { blobKey: string | null; gmailId: string }[]): Promise<void> {
+  if (!mail.length) return;
+  try {
+    for (const { blobKey } of mail) if (blobKey) await deleteLetterReply(blobKey);
+    const token = await gmailAccess(lettersInbox()!);
+    for (const { gmailId } of mail) await trashGmailMessage(token, gmailId);
+  } catch (error) {
+    console.error("Couldn't clear an erased supporter's mail:", error);
+  }
 }

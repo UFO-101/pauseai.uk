@@ -24,9 +24,10 @@ export default async function sendMailings(): Promise<Response> {
   return new Response(body);
 }
 
-// Every hour from 06:18 to 23:18 UTC, a minute after the Luma import wakes
-// the database (import-luma.ts). A mailing due overnight goes at 06:18.
-// The staff pages say so (SENDING in lib/staff-time.ts), so a change here
-// is a change there. Netlify reads the schedule without running the code,
-// so it's written out, not built from SENDING.
-export const config = { schedule: "18 6-23 * * *" };
+// Every hour at 18 minutes past, a minute after the Luma import wakes the
+// database (import-luma.ts), overnight too, for the letters inbox's queue.
+// A mailing due overnight still starts at 06:18 (startDueMailings). The
+// staff pages say so (SENDING in lib/staff-time.ts), so a change here is a
+// change there. Netlify reads the schedule without running the code, so
+// it's written out, not built from SENDING.
+export const config = { schedule: "18 * * * *" };

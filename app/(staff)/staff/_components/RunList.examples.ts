@@ -190,6 +190,21 @@ export const exampleDisconnectedGmail: GmailRead = {
   disconnected: true,
 };
 
+/** The letters inbox in a read of Gmail: replies relayed, spam counted, and two messages it couldn't account for. */
+export const exampleLettersInboxRead: GmailRead = {
+  account: "fixture-letters@pauseai.uk",
+  replies: 3,
+  autoReplies: 1,
+  bounces: 0,
+  relayed: 4,
+  spam: 2,
+  uncertain: 1,
+  notUnderstood: [
+    { gmailMessageId: "18c0ffee00000001", from: "someone@example.com", subject: "Hello", reason: "stranger" },
+    { gmailMessageId: "18c0ffee00000002", from: "office@parliament.uk", subject: "Re: Pause", reason: "not_verified" },
+  ],
+};
+
 /** What a read of ControlAI's letter found, with every name placed. */
 export const exampleControlAiResult: ControlAiImportResult = {
   pdfUrl: "https://images.controlai.com/letter.pdf",

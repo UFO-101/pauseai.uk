@@ -17,7 +17,7 @@ import { fixtureEnv, TEST_MP_EMAIL } from "../tests/fixture-env.mjs";
 const at = process.argv.indexOf("--port");
 const port = at === -1 ? "3100" : process.argv[at + 1];
 
-const env = { ...process.env, ...fixtureEnv({ outboxDir: OUTBOX_DIR }) };
+const env = { ...process.env, ...fixtureEnv({ outboxDir: OUTBOX_DIR, origin: `http://localhost:${port}` }) };
 env.NETLIFY_DB_URL = execFileSync("node", ["scripts/fresh-database.mjs", SERVER_DATABASE, "--test-mp", TEST_MP_EMAIL], {
   encoding: "utf8",
 }).trim();

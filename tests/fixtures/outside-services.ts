@@ -25,6 +25,8 @@ import parliamentMembers from "./parliament-members.json";
 import controlaiLetter from "./controlai-letter.json";
 import stripeCheckoutSessions from "./stripe-checkout-sessions.json";
 import stripePaymentIntents from "./stripe-payment-intents.json";
+import { failingResponse } from "./failing-services";
+import { historyIdOf, keepSent, lettersInboxResponse, lettersMailbox } from "./letters-inbox";
 
 /** A UUID-shaped id that depends only on `text`. */
 function fixtureUuid(text: string): string {
@@ -116,8 +118,16 @@ function pageOf<T>(entries: T[], cursor: string | null, size: number) {
   return { entries: entries.slice(0, size), has_more: entries.length > size, next_cursor: "page-2" };
 }
 
-export function fixtureResponse(url: string, init?: RequestInit): Response | undefined {
+/**
+ * The canned response to a request, if there is one. `scope` is the
+ * storyboard flow's database, for the services that keep what they're
+ * sent (the letters inbox, letters-inbox.ts), and those a flow has made
+ * fail (failing-services.ts).
+ */
+export function fixtureResponse(url: string, init?: RequestInit, scope?: string): Response | undefined {
   const { hostname, pathname, searchParams } = new URL(url);
+  const failing = failingResponse(hostname, scope);
+  if (failing) return failing;
   if (hostname === "public-api.luma.com" && pathname === "/v1/calendars/events/list") {
     // lib/server/outside-services/luma-calendar.ts asks for past events with
     // "before", upcoming with "after"; the import asks for every event, and
@@ -275,7 +285,7 @@ export function fixtureResponse(url: string, init?: RequestInit): Response | und
       Suppressions: Suppressions.map(({ EmailAddress }) => ({ EmailAddress, Status: "Deleted", Message: null })),
     });
   }
-  const google = googleResponse(hostname, pathname, init);
+  const google = googleResponse(hostname, pathname, searchParams, init, scope);
   if (google) return google;
   if (hostname === "blobs.fixture.invalid") return blobResponse(pathname, init);
   if (hostname === "challenges.cloudflare.com" && pathname === "/turnstile/v0/siteverify") {
@@ -291,7 +301,13 @@ const SENT_GMAIL = ((globalThis as { fixtureSentGmail?: Map<string, string> }).f
 // (lib/server/outside-services/gmail.ts makes the code "fixture:<account>"),
 // so the profile says whose it is. A mailbox has no messages: the tests
 // that read one give their own.
-function googleResponse(hostname: string, pathname: string, init?: RequestInit): Response | undefined {
+function googleResponse(
+  hostname: string,
+  pathname: string,
+  params: URLSearchParams,
+  init?: RequestInit,
+  scope?: string,
+): Response | undefined {
   if (hostname === "oauth2.googleapis.com" && pathname === "/token") {
     const form = new URLSearchParams(String(init!.body));
     const account = (form.get("code") ?? form.get("refresh_token")!).replace(/^fixture(-refresh)?:/, "");
@@ -304,7 +320,13 @@ function googleResponse(hostname: string, pathname: string, init?: RequestInit):
   if (hostname === "oauth2.googleapis.com" && pathname === "/revoke") return json({});
   if (hostname !== "gmail.googleapis.com") return undefined;
   const account = new Headers(init!.headers).get("authorization")!.replace(/^Bearer fixture-access:/, "");
-  if (pathname.endsWith("/profile")) return json({ emailAddress: account, historyId: "1000" });
+  const letters = account === process.env.LETTERS_INBOX?.toLowerCase();
+  const path = pathname.replace(/^\/gmail\/v1\/users\/me/, "");
+  const inbox = letters && lettersInboxResponse(path, params, init, scope);
+  if (inbox) return inbox;
+  if (pathname.endsWith("/profile")) {
+    return json({ emailAddress: account, historyId: String(letters ? historyIdOf(lettersMailbox(scope)) : 1000) });
+  }
   // The account's name: its address's words, capitalised, as a person would set it.
   if (pathname.endsWith("/settings/sendAs")) {
     const name = account
@@ -318,6 +340,8 @@ function googleResponse(hostname: string, pathname: string, init?: RequestInit):
     const id = fixtureUuid(String(init!.body)).replace(/-/g, "").slice(0, 16);
     const raw = Buffer.from((JSON.parse(String(init!.body)) as { raw: string }).raw, "base64url").toString();
     SENT_GMAIL.set(id, /^Message-ID: *(.+)$/im.exec(raw)?.[1].trim() ?? "");
+    // The letters inbox keeps what it sent; mail to one of its own addresses, as the supporter's copy is, comes back to it.
+    if (letters) keepSent(raw, id, toLettersInbox(raw), scope);
     return json({ id, threadId: id, labelIds: ["SENT"] });
   }
   // An email it sent, by its headers: the Message-ID it was sent with, kept as it was.
@@ -336,6 +360,18 @@ function googleResponse(hostname: string, pathname: string, init?: RequestInit):
   return new Response(JSON.stringify({ error: { code: 404 } }), { status: 404 });
 }
 
+/** Whether a message is to one of the letters inbox's addresses (LETTERS_INBOX), its own or a proxy, in its To, Cc or Bcc. */
+function toLettersInbox(raw: string): boolean {
+  const [local, domain] = process.env.LETTERS_INBOX!.toLowerCase().split("@");
+  const head = raw.slice(0, raw.search(/\r?\n\r?\n/));
+  return [...head.matchAll(/^(?:To|Cc|Bcc):(.*)$/gim)].some(([, line]) =>
+    [...line.toLowerCase().matchAll(/[^\s<>",]+@[^\s<>",]+/g)].some(([address]) => {
+      const [user, host] = address.split("@");
+      return host === domain && user.split("+")[0] === local;
+    }),
+  );
+}
+
 // Netlify Blobs, kept for the life of the process, shared by every bundle
 // of the server. A key under fixture/ that wasn't stored is read from
 // tests/fixtures/letter-replies/, gzipped, so a fixture database can name
@@ -347,6 +383,10 @@ function blobResponse(pathname: string, init?: RequestInit): Response {
   if (init?.method?.toUpperCase() === "PUT") {
     BLOBS.set(key, new Uint8Array(init.body as ArrayBuffer));
     return new Response(null, { status: 200 });
+  }
+  if (init?.method?.toUpperCase() === "DELETE") {
+    BLOBS.delete(key);
+    return new Response(null, { status: 204 });
   }
   const stored = BLOBS.get(key) ?? fixtureReply(key);
   return stored ? new Response(stored as BodyInit) : new Response(null, { status: 404 });

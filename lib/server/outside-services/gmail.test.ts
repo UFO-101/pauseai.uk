@@ -17,8 +17,12 @@ import {
   gmailSendName,
   gmailRawMessage,
   revokeGmail,
+  gmailLabel,
+  labelGmailMessage,
   searchGmail,
   sendGmail,
+  sendRawGmail,
+  trashGmailMessage,
 } from "./gmail";
 
 const API = "https://gmail.googleapis.com/gmail/v1/users/me";
@@ -56,6 +60,11 @@ describe("consent", () => {
       login_hint: "jo@pauseai.uk",
       state: "st",
     });
+  });
+
+  it("asks the letters inbox for labelling and trashing too", () => {
+    const url = new URL(gmailConsentUrl("letters@pauseai.uk", "https://pauseai.uk/cb", "st", true));
+    expect(url.searchParams.get("scope")!.split(" ")).toContain("https://www.googleapis.com/auth/gmail.modify");
   });
 
   it("with fixtures, comes straight back with a code naming the account, and needs no client", () => {
@@ -286,5 +295,63 @@ describe("the Gmail API", () => {
     );
     expect(await searchGmail("tok", "newer_than:3d", 500)).toEqual(["a", "b"]);
     expect(asked).toBe("?q=newer_than%3A3d&maxResults=500");
+  });
+
+  it("sends a whole message as it is, in base64url, and with fixtures writes it to the outbox as it went", async () => {
+    let raw = "";
+    server.use(
+      http.post(`${API}/messages/send`, async ({ request }) => {
+        raw = Buffer.from(((await request.json()) as { raw: string }).raw, "base64url").toString("latin1");
+        return HttpResponse.json({ id: "g2", threadId: "t2" });
+      }),
+    );
+    const message = Buffer.from("From: a@example.org\r\nTo: b@example.org\r\nSubject: Hi\r\n\r\nCaf\xe9", "latin1");
+    expect(await sendRawGmail("tok", message)).toEqual({ id: "g2", threadId: "t2" });
+    expect(raw).toBe(message.toString("latin1"));
+    const dir = mkdtempSync(join(tmpdir(), "outbox-"));
+    try {
+      vi.stubEnv("DATA_FIXTURES", "1");
+      vi.stubEnv("OUTBOX_DIR", dir);
+      await sendRawGmail("fixture-access:jo@pauseai.uk", message);
+      expect(readOutbox(dir)).toMatchObject([{ To: "b@example.org", Subject: "Hi" }]);
+      vi.stubEnv("OUTBOX_DIR", "");
+      await sendRawGmail("fixture-access:jo@pauseai.uk", message);
+      expect(readOutbox(dir)).toHaveLength(1);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("finds a label by name, making it the first time, and labels, archives and trashes messages", async () => {
+    const asked: { method: string; path: string; body: unknown }[] = [];
+    let labels = [{ id: "INBOX", name: "Relayed", type: "system" }];
+    server.use(
+      http.all(`${API}/*`, async ({ request }) => {
+        const path = new URL(request.url).pathname.replace("/gmail/v1/users/me", "");
+        const body = request.method === "POST" ? await request.text() : "";
+        asked.push({ method: request.method, path, body: body && JSON.parse(body) });
+        if (path === "/labels" && request.method === "GET") return HttpResponse.json({ labels });
+        if (path === "/labels") return HttpResponse.json({ id: "Label_9" });
+        if (path === "/messages/gone/trash") return HttpResponse.json({}, { status: 404 });
+        if (path === "/messages/broken/trash") return HttpResponse.json({}, { status: 500 });
+        return HttpResponse.json({});
+      }),
+    );
+    // A system label of the same name isn't the account's own.
+    expect(await gmailLabel("tok", "Relayed")).toBe("Label_9");
+    expect(asked.at(-1)).toMatchObject({ method: "POST", path: "/labels", body: { name: "Relayed" } });
+    labels = [{ id: "Label_9", name: "Relayed", type: "user" }];
+    expect(await gmailLabel("tok", "Relayed")).toBe("Label_9");
+    server.use(http.get(`${API}/labels`, () => HttpResponse.json({})));
+    expect(await gmailLabel("tok", "Noted")).toBe("Label_9");
+    await labelGmailMessage("tok", "m1", ["Label_9"], ["INBOX", "UNREAD"]);
+    expect(asked.at(-1)).toEqual({
+      method: "POST",
+      path: "/messages/m1/modify",
+      body: { addLabelIds: ["Label_9"], removeLabelIds: ["INBOX", "UNREAD"] },
+    });
+    await trashGmailMessage("tok", "m1");
+    await trashGmailMessage("tok", "gone");
+    await expect(trashGmailMessage("tok", "broken")).rejects.toThrow(GmailError);
   });
 });

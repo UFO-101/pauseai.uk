@@ -1,4 +1,6 @@
 import { campaigns } from "@/lib/content/email-your-mp";
+import { draftLetter } from "@/lib/email-your-mp";
+import { toText } from "@/lib/letter-format";
 import type { LetterSummary, PauseaiLetterDetails, SupporterLetterDetails } from "@/lib/server/letters";
 import type { LettersSearch } from "@/lib/staff-search";
 
@@ -52,6 +54,118 @@ export const exampleSupporterLetterDetails: SupporterLetterDetails = {
     inPolicyGroup: true,
   },
   forwards: [],
+  sent: null,
+};
+
+const LETTERS_INBOX = "fixture-letters@pauseai.uk";
+
+/** The campaign's whole letter, as the form drafts it for Jane to the test MP. */
+const PROXIED_DRAFT = toText(
+  draftLetter(pm, { salutation: "Mr McTestface", constituency: "Testshire", senderName: "Jane Smith", statuses: {} }, [
+    "1 High Street",
+    "Testville",
+    "ZZ9 9ZZ",
+  ]),
+);
+
+/** What Jane sent: the request for a meeting cut, a paragraph of her own added, and a word changed. */
+const PROXIED_SENT = PROXIED_DRAFT.replace(
+  "I would also like you to arrange a short meeting with me to discuss this important matter.\n\n",
+  "",
+)
+  .replace("I am very concerned", "I am deeply concerned")
+  .replace(
+    "Thank you for your consideration,",
+    "My children ask me about AI every week, and I don't know what to tell them. I'd like to be able to tell them their MP is doing something about it.\n\nThank you for your consideration,",
+  );
+
+/**
+ * A supporter's letter from the letters inbox: Jane added a paragraph of
+ * her own and cut a sentence of the campaign's draft; the letter went from
+ * her proxy and her copy from it to the MP's; the MP's office replied to
+ * her proxy, relayed to her, and she answered, relayed to the office.
+ */
+export const exampleProxiedLetterDetails: SupporterLetterDetails = {
+  ...exampleSupporterLetterDetails,
+  status: "sent",
+  backend: "gmail",
+  repliedAt: "2026-10-13T09:00:00Z",
+  gmail: { mailbox: LETTERS_INBOX, search: "rfc822msgid:letter-1@pauseai.uk" },
+  events: [
+    {
+      at: "2026-10-13T10:00:00Z",
+      status: "relayed",
+      details: {
+        from: `"Jane Smith (via PauseAI)" <fixture-letters+jane.smith@pauseai.uk>`,
+        to: "testy.mctestface.mp@parliament.uk",
+      },
+    },
+    {
+      at: "2026-10-13T10:00:00Z",
+      status: "replied",
+      details: { from: "jane@example.com", name: "Jane Smith", to: "fixture-letters+testy.mctestface.mp@pauseai.uk" },
+    },
+    {
+      at: "2026-10-13T09:00:00Z",
+      status: "relayed",
+      details: {
+        from: `"Testy McTestface MP (via PauseAI)" <fixture-letters+testy.mctestface.mp@pauseai.uk>`,
+        to: "jane@example.com",
+      },
+    },
+    {
+      at: "2026-10-13T09:00:00Z",
+      status: "replied",
+      details: {
+        from: "testy.mctestface.mp@parliament.uk",
+        name: "Testy McTestface MP",
+        to: "fixture-letters+jane.smith@pauseai.uk",
+      },
+    },
+    {
+      at: "2026-10-12T09:05:00Z",
+      status: "copy_sent",
+      details: {
+        from: `"Jane Smith (via PauseAI)" <fixture-letters+jane.smith@pauseai.uk>`,
+        to: `"Testy McTestface MP (via PauseAI)" <fixture-letters+testy.mctestface.mp@pauseai.uk>`,
+        bcc: "jane@example.com",
+      },
+    },
+    {
+      at: "2026-10-12T09:05:00Z",
+      status: "sent",
+      details: {
+        from: `"Jane Smith (via PauseAI)" <fixture-letters+jane.smith@pauseai.uk>`,
+        to: "testy.mctestface.mp@parliament.uk",
+      },
+    },
+  ],
+  sent: {
+    text: PROXIED_SENT,
+    draft: PROXIED_DRAFT,
+    messages: [
+      {
+        id: 1,
+        at: "2026-10-13T09:00:00Z",
+        fromName: "Testy McTestface MP",
+        fromAddress: "testy.mctestface.mp@parliament.uk",
+        fromUs: false,
+        fromSupporter: false,
+        subject: "Re: Please back a pause on frontier AI",
+        text: "Dear Jane,\n\nThank you for writing to me.\n\nTesty",
+      },
+      {
+        id: 2,
+        at: "2026-10-13T10:00:00Z",
+        fromName: "Jane Smith",
+        fromAddress: "jane@example.com",
+        fromUs: false,
+        fromSupporter: true,
+        subject: "Re: Please back a pause on frontier AI",
+        text: "Dear Mr McTestface,\n\nThank you. Could we meet?\n\nJane",
+      },
+    ],
+  },
 };
 
 const LETTER_ADDRESS = "jane.smith.482913@letters.pauseai.uk";

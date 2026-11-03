@@ -39,11 +39,17 @@ export type Draft = {
   address: string;
   subject: string;
   letter: LetterDoc;
+  /** The hash of the draft the form began with (lib/letter-changes.ts), so the server can tell it rebuilt the same one. */
+  draftHash: string;
   /** The hidden field only a bot fills in, passed on for the server to check. */
   nickname: string;
 };
 
-export type Sent = { campaign: string; mpName: string };
+/**
+ * The letter just sent: to whom, and whether it waits in the queue, for a
+ * while ("soon") or until the MP's address works ("blocked").
+ */
+export type Sent = { campaign: string; mpName: string; queued?: "soon" | "blocked" };
 
 function save(key: string, value: unknown): boolean {
   try {

@@ -53,7 +53,10 @@ export type FlowRun = {
   status: FlowStatus;
   /** The failure's first line, if it failed. */
   error?: string;
-  frames: { caption: string; png?: string }[];
+  /** Each with the lines of the flow's story that come before it (frame.ts's `story`). */
+  frames: { caption: string; png?: string; story?: string[] }[];
+  /** The story's lines after the last frame. */
+  end?: string[];
   /** When the run that shot it started: a partial run carries the flows it didn't run from the last one. */
   shotAt?: string;
 };
@@ -69,6 +72,8 @@ export type Frame = {
   /** Its place in the flow, from 1. */
   index: number;
   caption: string;
+  /** The lines of the flow's story before it. */
+  story?: string[];
   /** PNG paths, relative to the storyboard directory. */
   branch?: string;
   main?: string;
@@ -92,6 +97,8 @@ export type Flow = {
   mainStatus?: FlowStatus;
   frames: number;
   changed: number;
+  /** The story's lines after the last frame (FlowRun's). */
+  end?: string[];
   /** When the run that shot it started (FlowRun's). */
   shotAt?: string;
 };
@@ -166,6 +173,7 @@ export async function pairRuns(
         viewport: run.viewport,
         index: i + 1,
         caption: f.caption,
+        ...(f.story ? { story: f.story } : {}),
         branch: f.png,
         main: paired?.png,
         changed: false,
@@ -211,6 +219,7 @@ export async function pairRuns(
         mainStatus: mainRun?.status,
         frames: flowFrames.length,
         changed: 0,
+        ...(run.end ? { end: run.end } : {}),
         shotAt: run.shotAt,
       },
       frames: flowFrames,

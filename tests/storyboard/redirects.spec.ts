@@ -1,4 +1,4 @@
-import { BASE, expect, test } from "./fixtures";
+import { BASE, expect, story, test } from "./fixtures";
 
 // Every redirect in next.config.ts exists because a link that other people
 // control was already broken once: story permalinks shared before the /stories
@@ -72,12 +72,14 @@ for (const { name, from, to, permanent = true } of REDIRECTS) {
   });
 }
 
-test("The march's short link keeps its utm_source", async ({ request }) => {
+test("The march's short link, with a source", async ({ request }) => {
+  story("A /march link that says where it was shared still says so when it reaches the march page.");
   const res = await request.get(`${BASE}/march?utm_source=in`, { maxRedirects: 0 });
   expect(res.headers()["location"]).toBe("/protests/march-against-ai-extinction-nov-26?utm_source=in");
 });
 
-test("Every redirect's destination loads", async ({ request }) => {
+test("Every redirect, followed through", async ({ request }) => {
+  story("Each redirect, followed to the end, opens a page that's there, not a missing page.");
   // A redirect pointing at a 404 is no better than the broken link it
   // replaced, so follow each one to the end.
   for (const { from, to } of REDIRECTS) {

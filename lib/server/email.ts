@@ -3,8 +3,9 @@ import { logChange } from "./audit";
 import { query, transaction } from "./db";
 import { gmailAccess } from "./gmail-accounts";
 import { newMessageId } from "./mime";
-import { GmailError, gmailMessageId, sendGmail } from "./outside-services/gmail";
+import { GmailError, gmailMessageId, sendGmail, sendRawGmail } from "./outside-services/gmail";
 import { PostmarkError, sendEmail, unsuppress, type Email } from "./outside-services/postmark";
+import { resendAfterFix } from "./relays";
 import { now } from "@/lib/now";
 
 // Every email the site sends goes through send(), whatever it's for. A bounce
@@ -16,7 +17,18 @@ import { now } from "@/lib/now";
 // (gmail-reading.ts).
 
 /** What an email is for. Each has its own way of handling a bounce (delivery-problems.ts). */
-export type Purpose = "letter" | "forwarded-reply" | "staff-login" | "staff-alert" | "mailing" | "mailing-test";
+export type Purpose =
+  | "letter"
+  | "letter-copy"
+  | "relay"
+  | "supporter-notice"
+  | "office-notice"
+  | "forwarded-reply"
+  | "staff-login"
+  | "staff-alert"
+  | "staff-report"
+  | "mailing"
+  | "mailing-test";
 
 /** What sends an email: Postmark, or a staff member's connected Gmail, as that account. */
 export type Backend = { name: "postmark" } | { name: "gmail"; account: string };
@@ -27,11 +39,26 @@ export type SendOptions = {
   sender?: string;
   /** The Message-ID to send it with, so replies can be matched to it; Gmail's sends always have one. */
   messageId?: string;
+  /**
+   * By Gmail, the whole message to send in place of one made from the
+   * email's fields, given the Message-ID and date it goes with: a relay
+   * (lib/server/relays.ts). The email's To still says whom it's to.
+   */
+  raw?: (messageId: string, date: Date) => Buffer;
 };
 
 export type SendResult =
-  | { sent: true; id: string; messageId: string | null; threadId: string | null }
+  | { sent: true; id: string; messageId: string | null; threadId: string | null; backend: Backend }
   | { sent: false; reason: "blocked" | "failed" };
+
+/**
+ * What sent an email, as the event about it in a letter's history records
+ * it: the backend, and for Gmail the account. Kept with the event, so each
+ * says what sent its own email, however emails are sent later.
+ */
+export function sentBy(backend: Backend): { backend: Backend["name"]; account?: string } {
+  return backend.name === "gmail" ? { backend: "gmail", account: backend.account } : { backend: backend.name };
+}
 
 /** A bounce or spam complaint, as any provider reports it. */
 export type DeliveryProblem = {
@@ -81,7 +108,7 @@ export async function send(
   email: Email,
   purpose: Purpose,
   letterId: number | null = null,
-  { backend = { name: "postmark" }, sender, messageId }: SendOptions = {},
+  { backend = { name: "postmark" }, sender, messageId, raw }: SendOptions = {},
 ): Promise<SendResult> {
   const address = bareAddress(email.To);
   const from = backend.name === "gmail" ? backend.account : (sender ?? null);
@@ -101,7 +128,9 @@ export async function send(
   try {
     if (backend.name === "gmail") {
       const token = await gmailAccess(backend.account);
-      const sent = await sendGmail(token, { ...email, MessageId: rfcId!, Date: now() });
+      const sent = raw
+        ? await sendRawGmail(token, raw(rfcId!, now()))
+        : await sendGmail(token, { ...email, MessageId: rfcId!, Date: now() });
       id = sent.id;
       threadId = sent.threadId;
       // The Message-ID it went with, which replies and bounces name, if Gmail gave it one of its own.
@@ -133,7 +162,7 @@ export async function send(
     return { sent: false, reason: "failed" };
   }
   await log("sent", id, threadId);
-  return { sent: true, id, messageId: rfcId, threadId };
+  return { sent: true, id, messageId: rfcId, threadId, backend };
 }
 
 /**
@@ -175,9 +204,10 @@ export async function recordProblem(problem: DeliveryProblem): Promise<boolean> 
 
 /**
  * Unblocks an address: asks the provider to send to it again, then deletes
- * its block, and logs who did it and why. Refused without a note of why
- * (the audit log refuses one too), and for a complaint, which only the
- * person can undo. Returns whether it was unblocked.
+ * its block, and logs who did it and why; then whatever the letters inbox
+ * held for it goes (resendAfterFix). Refused without a note of why (the
+ * audit log refuses one too), and for a complaint, which only the person
+ * can undo. Returns whether it was unblocked.
  */
 export async function unblock(address: string, staff: string, note: string): Promise<boolean> {
   if (!note.trim()) return false;
@@ -187,11 +217,13 @@ export async function unblock(address: string, staff: string, note: string): Pro
   );
   if (!block?.canReset) return false;
   await unsuppress(address);
-  return transaction(async (db) => {
+  const unblocked = await transaction(async (db) => {
     const deleted = await query("DELETE FROM email_blocks WHERE address = $1 RETURNING address", [address], db);
     if (deleted.length) await logChange(staff, "unblock address", { address, note }, db);
     return deleted.length > 0;
   });
+  if (unblocked) await resendAfterFix({ address });
+  return unblocked;
 }
 
 /** A blocked address, for the staff interface. */

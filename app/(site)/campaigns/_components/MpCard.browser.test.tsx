@@ -20,4 +20,10 @@ describe("MpCard", () => {
     await expect.element(page.getByText(copy.lookup.noEmail)).toBeVisible();
     await expect.element(page.getByRole("link")).not.toBeInTheDocument();
   });
+
+  it("says when their address isn't working, in place of it, as the letter waits until it does", async () => {
+    await render(<MpCard mp={{ ...MP, unreachable: true }} />);
+    await expect.element(page.getByText(copy.lookup.unreachable)).toBeVisible();
+    await expect.element(page.getByRole("link")).not.toBeInTheDocument();
+  });
 });

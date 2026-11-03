@@ -45,7 +45,7 @@ describeWithDatabase("POST /api/email-your-mp/lookup", () => {
     });
     expect(await (await lookup({ postcode: "SW1A 1AA" })).json()).toMatchObject({
       ok: true,
-      mp: { email: null, unreachable: true },
+      mp: { email: "polly.placeholder.mp@parliament.uk", unreachable: true },
     });
   });
 

@@ -77,6 +77,15 @@ describeWithDatabase("sending mailings", () => {
     ]);
   });
 
+  it("starts none overnight, though one is due: the morning's first run starts it", async () => {
+    await addTestPolitician();
+    const due = await scheduled("2026-11-01T10:00:00Z");
+    vi.setSystemTime(new Date("2026-11-02T05:18:00Z"));
+    expect(await startDueMailings()).toEqual([]);
+    vi.setSystemTime(new Date("2026-11-02T06:18:00Z"));
+    expect(await startDueMailings()).toEqual([due]);
+  });
+
   it("sends each letter from the sender's Gmail in their name, filled in for each, then marks the mailing sent", async () => {
     await addTestPolitician({
       airtableId: null,
@@ -115,7 +124,18 @@ describeWithDatabase("sending mailings", () => {
       { name: "Polly Placeholder", status: "sent", skipReason: null, sentAt: true },
     ]);
     expect(await query("SELECT status, details FROM letter_events ORDER BY id LIMIT 1")).toEqual([
-      { status: "sent", details: { from: JO, to: "dora@example.org", messageId: "m@pauseai.uk", threadId: "t" } },
+      {
+        status: "sent",
+        details: {
+          from: JO,
+          to: "dora@example.org",
+          messageId: "m@pauseai.uk",
+          threadId: "t",
+          // What sent it, kept with it.
+          backend: "gmail",
+          account: JO,
+        },
+      },
     ]);
     expect(await state(id)).toBe("sent");
   });

@@ -9,18 +9,21 @@ const copy = staffCopy.gmail;
 
 /**
  * Your Gmail, on your own page, under a heading saying whether it's
- * connected: how connecting ended, if Google has just sent you back; then,
+ * connected, and for the letters inbox, that it sends supporters' letters: how connecting ended, if Google has just sent you back; then,
  * connected, since when and today's sends, with Disconnect; or what
  * connecting means, and the button.
  */
 export default function MyGmail({
   me,
+  lettersInbox = false,
   account,
   outcome,
   disconnect,
 }: {
   /** Who's logged in. */
   me: string;
+  /** Whether that's the letters inbox. */
+  lettersInbox?: boolean;
   account: GmailAccount | undefined;
   /** How connecting ended, if Google has just sent you back. */
   outcome: string;
@@ -28,13 +31,22 @@ export default function MyGmail({
 }) {
   return (
     <>
-      <h2 id="gmail">{account ? copy.connectedTitle : copy.title}</h2>
+      <h2 id="gmail">
+        {lettersInbox
+          ? account
+            ? copy.lettersInboxConnectedTitle
+            : copy.lettersInboxTitle
+          : account
+            ? copy.connectedTitle
+            : copy.title}
+      </h2>
       <div className={styles.body}>
-        <GmailOutcome outcome={outcome} me={me} />
+        <GmailOutcome outcome={outcome} me={me} lettersInbox={lettersInbox} />
         {account ? (
           <>
             <p>
-              {copy.connected(staffDate(account.connectedAt))} <SentToday sent={account.sentToday} />
+              {copy.connected(staffDate(account.connectedAt))}{" "}
+              <SentToday sent={account.sentToday} lettersInbox={lettersInbox} />
             </p>
             <form action={disconnect}>
               <SubmitButton variant="ghost" size="small" fit>
@@ -43,7 +55,7 @@ export default function MyGmail({
             </form>
           </>
         ) : (
-          <GmailConnect back="/staff/me" />
+          <GmailConnect back="/staff/me" lettersInbox={lettersInbox} />
         )}
       </div>
     </>

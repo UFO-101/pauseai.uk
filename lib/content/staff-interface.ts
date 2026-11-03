@@ -33,6 +33,9 @@ export const staffCopy = {
   deleteItShort: "Confirm?",
   // The dev login's box under the login card, in a fixture build only.
   devLogin: {
+    // Before what a shared inbox's address is, in the dev login.
+    lettersInbox: "Letters inbox",
+    policyInbox: "Policy inbox",
     title: "Development only: sign in now as",
     hint: "This appears when DATA_FIXTURES=1 and never in production.",
     // Beside each address: what it may do.
@@ -112,6 +115,9 @@ export const staffCopy = {
     title: "Let staff send mailings from your Gmail",
     // The heading once it's connected.
     connectedTitle: "Staff can send mailings from your Gmail",
+    // The same two, logged in as the letters inbox, which sends supporters' letters to MPs and nothing else.
+    lettersInboxTitle: "Send supporters' letters to MPs from this Gmail",
+    lettersInboxConnectedTitle: "Supporters' letters to MPs go from this Gmail",
     // What connecting it means, said before it goes to Google: a line, then a bullet each.
     intro: "Usually this is a shared account rather than a person's own: log in here as it, then connect it.",
     explain: [
@@ -119,6 +125,13 @@ export const staffCopy = {
       "The site reads only those replies and bounces, and never deletes or changes anything.",
     ],
     limit: (limit: string) => `At most ${limit} a day, leaving room for the account's other email.`,
+    // The same, logged in as the letters inbox, which sends supporters' letters to MPs and nothing else.
+    lettersInboxExplain: [
+      "Supporters' letters to MPs go from proxy addresses on it, and the MPs' replies come back to it, to be relayed to the supporters, and their answers back.",
+      "The site reads all of its mail, labels and archives what it has handled, and moves an erased supporter's mail to Trash.",
+    ],
+    lettersInboxLimit: (limit: string) =>
+      `At most ${limit} a day, letters, copies and relays together, under Google's 2,000.`,
     connect: "Connect Gmail",
     disconnect: "Disconnect Gmail",
     connected: (when: string) => `Connected ${when}.`,
@@ -127,6 +140,9 @@ export const staffCopy = {
     // After coming back from Google, or disconnecting.
     outcomes: {
       connected: "Your Gmail is connected. All staff will be able to send mailings from it now.",
+      // The same, for the letters inbox, which sends supporters' letters and nothing else.
+      connectedLettersInbox:
+        "The letters inbox is connected. Supporters' letters to MPs go from it now, and replies are relayed through it every hour.",
       refused: "Gmail wasn't connected, as you didn't allow it.",
       failed: "Gmail couldn't be connected. Try again.",
       disconnected: "Your Gmail is disconnected.",
@@ -173,6 +189,11 @@ export const staffCopy = {
         failedImport: (job: string) => `Import '${job}' failed`,
         failedImportDetail: (error: string, at: string) => `Error: "${error}" · ${at}`,
         seeRun: "See failed run",
+        // The newest read of Gmail found mail in the letters inbox it couldn't handle: when, and where it waits.
+        lettersInboxDetail: (at: string) =>
+          `Open each in Gmail and deal with it by hand: forward it, answer it, or leave it. Found ${at}.`,
+        // Its button, to the run's page, which lists each with why it wasn't relayed and a link to it in Gmail.
+        lettersInboxButton: "See emails",
       },
       // The window: its length in days, each a link but the one shown.
       window: (days: number) => `${days} days`,
@@ -987,7 +1008,7 @@ export const staffCopy = {
     testFromName: "PauseAI UK mailing test",
     day: "Day",
     hour: "Hour",
-    // An hour overnight, when nothing is sent, that a mailing was due at already: the hour, and when it goes.
+    // An hour overnight, when no mailing starts, that a mailing was due at already: the hour, and when it goes.
     goesAt: (hour: string, sends: string) => `${hour} (goes at ${sends})`,
     summary: (n: number, from: string | null, when: string | null) =>
       `${n} ${n === 1 ? "email" : "emails"}, from ${from ? `${from}'s Gmail` : "no one yet"}, ${when ? `on ${when}` : "at a time not yet chosen"}.`,
@@ -1369,6 +1390,82 @@ export const staffCopy = {
       running: "Another run was already going.",
     } as Record<string, string>,
   },
+  // A supporter's letter on its page: what they changed in the draft the campaign gave them.
+  letterChanges: {
+    // Toggles to the letter as the MP got it, and back.
+    asSent: "Show as sent",
+    showChanges: "Show changes",
+    // In place of paragraphs left as they were; a click unfolds them.
+    folded: (n: number) => (n === 1 ? "1 paragraph unchanged" : `${n} paragraphs unchanged`),
+  },
+  // The letters inbox, which supporters' letters to MPs go from (lib/server/letters-inbox-reading.ts).
+  lettersInbox: {
+    // The labels reading puts on each message in Gmail, by what it made of it.
+    labels: {
+      relayed: "Relayed",
+      noted: "Noted",
+      spam: "Spam",
+      notUnderstood: "Not understood",
+    },
+    // After the account's line in a run.
+    result: (a: { relayed: number; spam: number; uncertain: number }) =>
+      `${a.relayed} relayed, ${a.spam} spam, ${a.uncertain} matched to a letter only as its latest.`,
+    // Each message not understood, a line each, with a link to it in Gmail.
+    notUnderstood: "Not understood:",
+    reasons: {
+      unknown_proxy: "to a proxy we don't have",
+      no_proxy: "to none of our proxies",
+      stranger: "from neither the supporter nor their MP's office",
+      not_verified: "failed authentication",
+      over_cap: "over its letter's limit on relays",
+      bounce: "a bounce of nothing we sent",
+    } as Record<string, string>,
+    openInGmail: "Open in Gmail",
+    // The email to the policy inbox after a run with any.
+    alert: {
+      subject: (count: number, inbox: string) =>
+        `${count} MP ${count === 1 ? "email" : "emails"} in ${inbox} not relayed`,
+      body: (inbox: string, lines: string[], runUrl: string) =>
+        `Open each in Gmail and deal with it by hand: forward it, answer it, or leave it.\n\n${lines.join("\n")}\n\nThe run: ${runUrl}`,
+    },
+  },
+  // The emails to the notification inbox (lib/server/notifications.ts) that
+  // aren't above (alert, lettersInbox.alert): each a subject, and a body with
+  // a link to where a person can deal with it.
+  notifications: {
+    // An import's run failed, after one that didn't: its title, its error, its page.
+    importFailed: {
+      subject: (job: string) => `The import '${job}' failed`,
+      body: (job: string, error: string, link: string) =>
+        `The import '${job}' failed with the error: "${error}". It will try again at its next run, and you won't be emailed again until it has worked.\n\nIts runs: ${link}`,
+    },
+    // The MP import is held, as it would change too much: how many MPs, and its page.
+    syncHeld: {
+      subject: (changes: number) => `MP import would change ${changes} MPs`,
+      body: (changes: number, link: string) =>
+        `The MP import would change ${changes} MPs, so it's held until someone checks it. Review it, then apply or discard it, and fix any problems in Airtable:\n\n${link}`,
+    },
+    // Google stopped our access to a connected Gmail: whose, what stops, and where to connect it again.
+    gmailDisconnected: {
+      subject: (account: string) => `${account}'s Gmail is disconnected`,
+      body: (account: string, lettersInbox: boolean, link: string) =>
+        `Google stopped our access to ${account}'s Gmail. ${lettersInbox ? "Letters to MPs, and the replies to them, wait until it's connected again." : "Mailings sent using that mailbox, and replies, will be paused until it's connected again."} Log in as ${account} and connect it on its account page:\n\n${link}`,
+    },
+    // Once a day at most: the supporters' copies that bounced since the last, so their MP's replies can't be
+    // passed on; how many replies are held; each address's domain and what its server said.
+    supporterBounces: {
+      subject: (count: number) => `${count} supporters' ${count === 1 ? "address" : "addresses"} bounced`,
+      body: (count: number, held: number, lines: string[], link: string) =>
+        `${count} supporters' copies of their letters bounced since the last report, so their MPs' replies can't be passed on to them. ${held} ${held === 1 ? "reply is" : "replies are"} held. Each address's domain, and what its server said:\n\n${lines.join("\n")}\n\nSupporters' blocked emails: ${link}`,
+    },
+    // Letters to MPs have waited LATE_HOURS to go: how many, why, and the queued letters.
+    lettersWaiting: {
+      subject: (count: number, hours: number) =>
+        `${count} ${count === 1 ? "letter" : "letters"} to MPs waiting over ${hours} hours`,
+      body: (count: number, hours: number, why: string, link: string) =>
+        `${count === 1 ? "A letter" : `${count} letters`} to MPs ${count === 1 ? "has" : "have"} waited over ${hours} hours to go. Why: ${why}.\n\nThe letters waiting: ${link}`,
+    },
+  },
   // The hourly read of the connected Gmail accounts for replies to our
   // letters and bounces (lib/server/gmail-reading.ts), on the import page.
   gmailReading: {
@@ -1382,7 +1479,7 @@ export const staffCopy = {
     never: "Not read yet.",
     // The run's totals, over every account, then a line for each.
     result: (accounts: { replies: number; autoReplies: number; bounces: number }[]) =>
-      `${accounts.length} accounts read: ${accounts.reduce((n, a) => n + a.replies, 0)} replies, ${accounts.reduce((n, a) => n + a.autoReplies, 0)} automatic replies, ${accounts.reduce((n, a) => n + a.bounces, 0)} bounces.`,
+      `${accounts.length} ${accounts.length === 1 ? "account" : "accounts"} read: ${accounts.reduce((n, a) => n + a.replies, 0)} replies, ${accounts.reduce((n, a) => n + a.autoReplies, 0)} automatic replies, ${accounts.reduce((n, a) => n + a.bounces, 0)} bounces.`,
     account: (a: { account: string; replies: number; autoReplies: number; bounces: number }) =>
       `${a.account}: ${a.replies} replies, ${a.autoReplies} automatic replies, ${a.bounces} bounces.`,
     // After an account's line: its history had gone, so the last few days were searched instead.
@@ -1584,7 +1681,23 @@ export const staffCopy = {
         name: "Name",
         account: "Gmail",
         status: "Code",
+        bcc: "Bcc",
+        notice: "Notice",
+        uncertain: "Which letter",
       } as Record<string, string>,
+      // The value of uncertain: the reply named none of the supporter's letters to the MP, so it was put with the newest.
+      uncertainLetter: "A guess: their newest to this MP, as the reply didn't say which it answers",
+      // A reason, recorded as a word, in words: why a letter, copy or relay waits or wasn't relayed.
+      reasons: {
+        not_connected: "The letters inbox isn't connected",
+        daily_limit: "The letters inbox reached its daily limit",
+        failed: "Gmail refused it or couldn't be reached; it'll try again in every hour",
+        blocked: "The address is blocked, as it bounced",
+        not_verified: "It failed authentication, so may be forged",
+        over_cap: "Over the letter's limit on relays, in case of a loop",
+      } as Record<string, string>,
+      // What a notice to the supporter said.
+      notices: { bounced: "Their message hasn't reached the MP", resent: "It has now gone" } as Record<string, string>,
       // Under a reply, what was done with it: each line's name, before who to; "Not forwarded" when it went to no one.
       handling: {
         forwarded: "Forwarded to",
@@ -1617,6 +1730,21 @@ export const staffCopy = {
       scheduled: "Scheduled",
       cancelled: "Stopped",
       skipped: "Skipped",
+      // A supporter's letter from the letters inbox, waiting to go, and what's done with it and the messages both ways.
+      queued: "Queued",
+      copy_sent: "Copy sent to supporter",
+      copy_held: "Copy held",
+      copy_bounced: "Copy bounced",
+      copy_delayed: "Copy delayed",
+      relayed: "Relayed",
+      relay_queued: "Relay queued",
+      relay_held: "Relay held",
+      relay_bounced: "Relay bounced",
+      relay_delayed: "Relay delayed",
+      relay_uncertain: "Relay uncertain",
+      not_relayed: "Not relayed",
+      notice: "Supporter told",
+      office_told: "MP's office told",
     } as Record<string, string>,
     columns: {
       created: "Written",
@@ -1758,6 +1886,8 @@ export const staffCopy = {
       formEntries: (n: number) => (n === 1 ? "form entry" : "form entries"),
       letters: (n: number) => (n === 1 ? "letter" : "letters"),
       members: (n: number) => (n === 1 ? "member record" : "member records"),
+      proxies: (n: number) => (n === 1 ? "proxy" : "proxies"),
+      messages: (n: number) => (n === 1 ? "message in the letters inbox" : "messages in the letters inbox"),
       sessions: (n: number) => (n === 1 ? "session" : "sessions"),
     } as Record<string, (n: number) => string>,
   },

@@ -53,6 +53,7 @@ When you give one in a reply, write it as plain Markdown, not quoted with `>` or
 `tests/storyboard/` is one Playwright suite that drives every flow on fixture data (`docs/testing.md`, "The storyboard"). A spec file is a section, a test a flow, and each `await frame(page, "caption")` a frame: a caption and, in the review, a screenshot (the whole page at the top, the window once scrolled or while a menu or dialog is open). `docs/testing.md`, "What the storyboard covers", lists what each section drives; a new spec file or route handler needs a line there.
 
 - Every new interactive behaviour goes in a flow, existing or new, with a frame after each thing a person would see. A PR without it isn't done.
+- A flow is told in words anyone who has used the site would follow: its title just names it ("The letter bounces"), each caption says what its frame shows ("The email staff get"), and `story("…")` lines, at the start and between the frames, say what happens and why (`docs/testing.md`, "How a flow is told").
 - Flows stay small: one thing a person does, about ten frames at most. Every flow stands alone: its own database (the `flowDatabase` fixture), a fixed clock, unique identifiers.
 - Before saying a change is done, run the review and look at every changed frame on both viewports. It never fails on a difference, so it proves nothing until you've looked. Say in the commit or PR what changed. Make that full review, after the last change, the latest run, for a person to open and check too, and say which run it is.
 

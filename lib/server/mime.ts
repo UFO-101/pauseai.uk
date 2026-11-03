@@ -23,6 +23,8 @@ export type MimeEmail = {
   /** Without its angle brackets. */
   MessageId: string;
   Date: Date;
+  /** Others, such as In-Reply-To and References, as they're written. */
+  Headers?: { Name: string; Value: string }[];
 };
 
 /** A Message-ID for an email we send, without its angle brackets. */
@@ -77,6 +79,7 @@ export function toMime(email: MimeEmail): string {
     ["Subject", encodeWord(email.Subject)],
     ["Date", email.Date.toUTCString()],
     ["Message-ID", `<${email.MessageId}>`],
+    ...(email.Headers ?? []).map((h) => [h.Name, h.Value]),
     ["MIME-Version", "1.0"],
   ].filter((h): h is [string, string] => Boolean(h[1]));
   const bodies = [text("plain", email.TextBody), ...(email.HtmlBody ? [text("html", email.HtmlBody)] : [])];
@@ -94,6 +97,42 @@ export function toMime(email: MimeEmail): string {
     ? multipart("mixed", [multipart("alternative", bodies), ...attachments])
     : multipart("alternative", bodies);
   return headers.map(([name, value]) => `${name}: ${value}`).join(CRLF) + CRLF + body + CRLF;
+}
+
+/**
+ * The headers of a message that a relay of it keeps, as they came: what
+ * says how its body is written, its subject, and the marks of an automatic
+ * reply, so responders that follow RFC 3834 don't answer it.
+ */
+const RELAYED_HEADERS = [
+  "mime-version",
+  "content-type",
+  "content-transfer-encoding",
+  "content-disposition",
+  "content-language",
+  "subject",
+  "auto-submitted",
+  "precedence",
+  "x-autoreply",
+  "x-autorespond",
+];
+
+/**
+ * A message to send on as it is, byte for byte, but for the headers:
+ * `headers` (From, To, Message-ID, threading), then those of the original
+ * a relay keeps, folded lines and all; every other header of the original,
+ * its Cc included, is left out.
+ */
+export function relayMime(raw: Buffer, headers: [string, string][]): Buffer {
+  const text = raw.toString("latin1");
+  const split = /\r?\n\r?\n/.exec(text);
+  const head = split ? text.slice(0, split.index) : text;
+  const body = split ? text.slice(split.index + split[0].length) : "";
+  const kept = head
+    .split(/\r?\n(?![ \t])/)
+    .filter((line) => RELAYED_HEADERS.includes(line.slice(0, line.indexOf(":")).trim().toLowerCase()));
+  const ours = headers.map(([name, value]) => `${name}: ${encodeAddresses(value)}`);
+  return Buffer.from([...ours, ...kept].join(CRLF) + CRLF + CRLF + body, "latin1");
 }
 
 /** A part of a message read back: its headers, by lowercased name, and its body, decoded. */

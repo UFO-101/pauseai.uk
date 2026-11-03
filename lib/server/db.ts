@@ -1,6 +1,6 @@
 import "server-only";
 import { Pool, type PoolClient, type QueryResultRow } from "pg";
-import { FLOW_DATABASE_COOKIE, FLOW_DATABASE_PREFIX } from "@/tests/fixture-env.mjs";
+import { flowDatabase } from "./flow-database";
 import { migrationsBehindMessage } from "./migrations-check";
 
 // The only file that connects to the database (an ESLint rule bans "pg"
@@ -14,7 +14,6 @@ let pool: Pool | undefined;
 // database, closed once its connections have gone idle. Production never
 // looks at the cookie.
 const flowPools = new Map<string, Pool>();
-const FLOW_DATABASE = new RegExp(`^${FLOW_DATABASE_PREFIX}\\w+$`);
 
 async function getPool(): Promise<Pool> {
   const connectionString = process.env.NETLIFY_DB_URL;
@@ -34,18 +33,6 @@ async function getPool(): Promise<Pool> {
   // Netlify's own databases are migrated on deploy, so only in development.
   if (process.env.NODE_ENV === "development") void warnIfBehind(pool);
   return pool;
-}
-
-/** The database this request's storyboard cookie names, if it's one a flow may use. */
-async function flowDatabase(): Promise<string | undefined> {
-  try {
-    const { cookies } = await import("next/headers");
-    const value = (await cookies()).get(FLOW_DATABASE_COOKIE)?.value;
-    return value && FLOW_DATABASE.test(value) ? value : undefined;
-  } catch {
-    // Outside a request: a unit test, or the build.
-    return undefined;
-  }
 }
 
 function flowPool(connectionString: string, name: string): Pool {

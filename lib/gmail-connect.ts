@@ -15,6 +15,15 @@ export const DEFAULT_SENDER = "policy@pauseai.uk";
 
 export const GMAIL_DAILY_LIMIT = 1800;
 
+/**
+ * The most the letters inbox sends in a day, counting letters, copies,
+ * relays and notices alike: under Google's 2,000, as going over can stop it
+ * sending for up to a day. Nobody else sends from it, so it's higher than
+ * GMAIL_DAILY_LIMIT; the few spare cover any difference between our count
+ * and Google's.
+ */
+export const LETTERS_DAILY_LIMIT = 1950;
+
 const GMAIL_CONNECT_PATH = "/staff/api/gmail/connect";
 export const GMAIL_CALLBACK_PATH = "/staff/api/gmail/callback";
 

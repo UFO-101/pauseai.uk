@@ -1,8 +1,10 @@
 import type { Page } from "@playwright/test";
 import { campaigns, copy } from "@/lib/content/email-your-mp";
 import { site } from "@/lib/content/site";
-import { fakeTurnstile, fillLetter, lookUpTestMp, newestEmail, openLookup, sendLetter, WEBHOOK_AUTH } from "../steps";
-import { BASE, emailFrame, expect, madeUpAddress, frame, test } from "./fixtures";
+import { fakeTurnstile, fillLetter, lookUpTestMp, openLookup, sendLetter, WEBHOOK_AUTH } from "../steps";
+import { BASE, emailFrame, expect, madeUpAddress, frame, story, test } from "./fixtures";
+import { caretAt, editor, newParagraphAboveSignOff, paste, toolbar } from "./editor-steps";
+import { letterIdOf, sentEmail, MPS_PROXY } from "./letters-inbox-steps";
 import { wholePage } from "./settle";
 
 // Email your MP, end to end on fixture data. ZZ99ZZ finds the test
@@ -31,61 +33,67 @@ async function fillAndPreview(page: Page, email: string) {
   await expect(page).toHaveURL(`${PAGE}/preview`);
 }
 
-test(
-  "Write to your MP (ZZ99ZZ): postcode, letter, preview, send, the letter the MP gets",
-  { tag: "@phone" },
-  async ({ page }) => {
-    // Each flow writes as its own sender, so its letter is its own in the outbox.
-    const sender = madeUpAddress("Jane Smith", 21);
-    await openLookup(page, BASE);
-    await frame(page, "the postcode form, filled in");
-    await lookUp(page);
-    await expect(page.getByLabel(copy.form.subjectLabel)).toHaveValue(campaigns[0].subject);
-    await frame(page, "the test MP found, with the letter drafted");
-    await fillAndPreview(page, sender);
+test("Jane writes to her MP (ZZ99ZZ)", { tag: "@phone" }, async ({ page, flowDatabase }) => {
+  story("Jane fills in her name, address and postcode to find her MP. ZZ9 9ZZ is the test MP's postcode.");
+  // Each flow writes as its own sender, so its letter is its own in the outbox.
+  const sender = madeUpAddress("Jane Smith", 21);
+  await openLookup(page, BASE);
+  await frame(page, "The form to find your MP");
+  story("Find my MP finds the test MP, and drafts the campaign's letter to them.");
+  await lookUp(page);
+  await expect(page.getByLabel(copy.form.subjectLabel)).toHaveValue(campaigns[0].subject);
+  await frame(page, "The letter, drafted");
+  story("She adds her email and checks her letter. It's shown as it will go, signed with her name and address.");
+  await fillAndPreview(page, sender);
 
-    // The preview has the letter as it will go: the name ends the letter, the address follows.
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.preview.title);
-    await expect(page.locator("article")).toContainText("Dear Mr McTestface");
-    await expect(page.locator("article p").nth(-2)).toHaveText("Jane Smith");
-    await expect(page.locator("article p").last()).toHaveText(/^1 High Street, Testville\s*ZZ9 9ZZ$/);
-    await frame(page, "the preview");
-    await sendLetter(page);
+  // The preview has the letter as it will go: the name ends the letter, the address follows.
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.preview.title);
+  await expect(page.locator("article")).toContainText("Dear Mr McTestface");
+  await expect(page.locator("article p").nth(-2)).toHaveText("Jane Smith");
+  await expect(page.locator("article p").last()).toHaveText(/^1 High Street, Testville\s*ZZ9 9ZZ$/);
+  await frame(page, "The preview");
+  story("She sends it. The thank-you page shows PauseAI events near her, and one online.");
+  await sendLetter(page);
 
-    // The sent page, from its top: nothing of the form or the preview is left.
-    await expect(page).toHaveURL(`${PAGE}/sent`);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.sent.title);
-    expect(await page.evaluate(() => window.scrollY)).toBe(0);
-    expect(await adsEvents(page)).toBe(1);
-    // Then events near the test MP's postcode (Westminster), from the Luma
-    // fixture: London's, and the next online one, but not Manchester's.
-    const events = page.locator("#events");
-    await expect(events.getByRole("heading", { name: "Upcoming events" })).toBeVisible();
-    await expect(events.getByText("PauseAI London: Protest at Parliament")).toBeVisible();
-    await expect(events.getByText("Introduction to PauseAI UK (online)")).toBeVisible();
-    await expect(events.getByText("PauseAI Manchester Social")).toHaveCount(0);
-    await frame(page, "sent, with events nearby");
-    // A reload still thanks them, and doesn't count the letter again.
-    await page.reload();
-    await expect(page.getByRole("status")).toHaveText(copy.sent.body("Testy McTestface MP"));
-    expect(await adsEvents(page)).toBe(0);
+  // The sent page, from its top: nothing of the form or the preview is left.
+  await expect(page).toHaveURL(`${PAGE}/sent`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.sent.title);
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  expect(await adsEvents(page)).toBe(1);
+  // Then events near the test MP's postcode (Westminster), from the Luma
+  // fixture: London's, and the next online one, but not Manchester's.
+  const events = page.locator("#events");
+  await expect(events.getByRole("heading", { name: "Upcoming events" })).toBeVisible();
+  await expect(events.getByText("PauseAI London: Protest at Parliament")).toBeVisible();
+  await expect(events.getByText("Introduction to PauseAI UK (online)")).toBeVisible();
+  await expect(events.getByText("PauseAI Manchester Social")).toHaveCount(0);
+  await frame(page, "The thank-you page");
+  story("The MP gets her letter from a proxy address of hers on the letters inbox, with the campaign's attachments.");
+  // A reload still thanks them, and doesn't count the letter again.
+  await page.reload();
+  await expect(page.getByRole("status")).toHaveText(copy.sent.body("Testy McTestface MP"));
+  expect(await adsEvents(page)).toBe(0);
 
-    const letter = newestEmail(
-      (email) => email.To.includes("test-mp@parliament.example") && !!email.Cc?.includes(sender),
-    )!;
-    // The letter's own address, whatever its shape (lib/server/mp-letters.test.ts checks that), so main gets this far too.
-    const address = letter.From.match(/<([^>]+@letters\.pauseai\.uk)>/)![1];
-    expect(letter.From).toBe(`"Jane Smith via PauseAI" <${address}>`);
-    expect(letter.Bcc).toBe("policy@example.org");
-    expect(letter.Cc).toBe(`"Jane Smith" <${sender}>`);
-    expect(letter.ReplyTo).toBeUndefined();
-    expect(letter.TextBody).toMatch(/Jane Smith\n\n1 High Street, Testville\nZZ9 9ZZ$/);
-    expect(letter.Attachments!.map((a) => a.Name)).toEqual(campaigns[0].attachments.map((a) => a.file));
-    await emailFrame(page, letter, "the letter the MP gets");
-  },
-);
+  // From Jane's proxy on the letters inbox, to the MP alone; then her copy, from it to the MP's.
+  const id = letterIdOf(flowDatabase, sender);
+  const letter = sentEmail(flowDatabase, id, "letter");
+  expect(letter.From).toMatch(/^"Jane Smith \(via PauseAI\)" <\S+\+jane\.smith@pauseai\.uk>$/);
+  expect(letter.To).toBe('"Testy McTestface MP" <test-mp@parliament.example>');
+  expect(letter.Cc).toBeUndefined();
+  expect(letter.Bcc).toBeUndefined();
+  expect(letter.TextBody).toMatch(/Jane Smith\n\n1 High Street, Testville\nZZ9 9ZZ$/);
+  expect(letter.Attachments!.map((a) => a.Name)).toEqual(campaigns[0].attachments.map((a) => a.file));
+  await emailFrame(page, letter, "The letter the MP gets");
+  story("Jane gets a copy, from her proxy address to the MP's, so a reply to it reaches the MP.");
+  const copied = sentEmail(flowDatabase, id, "letter-copy");
+  expect(copied.Bcc).toBe(`"Jane Smith" <${sender}>`);
+  expect(copied.To).toBe(`"Testy McTestface MP (via PauseAI)" <${MPS_PROXY}>`);
+  expect(copied.TextBody).toContain(copy.letterCopy("Testy McTestface MP"));
+  await emailFrame(page, copied, "Jane's copy");
+});
 
-test("Find your MP, then go back: the form is as you left it", async ({ page }) => {
+test("Going back to the form", async ({ page }) => {
+  story("Jane finds her MP, then goes back. The form is as she filled it in.");
   await lookUp(page);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.write.title);
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
@@ -97,92 +105,11 @@ test("Find your MP, then go back: the form is as you left it", async ({ page }) 
   await expect(page.getByLabel(copy.lookup.postcodeLabel)).toHaveValue("ZZ9 9ZZ");
   // Going back puts the window about where it was, a little differently each run.
   await wholePage(page);
-  await frame(page, "back at the form, as it was");
+  await frame(page, "The form, as she left it");
 });
 
-/** The letter's editor: the text box Tiptap draws, labelled by the form's "Message". */
-const editor = (page: Page) => page.getByRole("textbox", { name: copy.form.letterLabel, exact: true });
-
-/** The editor's element: Tiptap puts the editor on it, and so where it has the caret. */
-type TiptapElement = HTMLElement & {
-  editor: {
-    state: { selection: { $to: { parentOffset: number; parent: { textContent: string; content: { size: number } } } } };
-  };
-};
-
-/**
- * Waits for the editor to have the caret at the start or end of the
- * paragraph that reads `text`. It reads where the caret went a moment after
- * a click or an arrow key, and a key pressed before then lands where the
- * caret was. No person types that fast.
- */
-async function caretSettled(page: Page, text: string, at?: "start" | "end") {
-  await expect
-    .poll(() =>
-      editor(page).evaluate(
-        (el, { text, at }) => {
-          const { $to } = (el as TiptapElement).editor.state.selection;
-          const offset = at === undefined || $to.parentOffset === (at === "start" ? 0 : $to.parent.content.size);
-          return $to.parent.textContent === text && offset;
-        },
-        { text, at },
-      ),
-    )
-    .toBe(true);
-}
-
-/**
- * Gives the editor focus, and waits out what ProseMirror does then: 20ms
- * later, it puts its own caret back unless it has seen where the browser's
- * went (prosemirror-view's handlers.focus). On a busy machine, a click that
- * focuses the editor can lose its caret to that, and land at the letter's
- * start. A timer due after ProseMirror's runs after it.
- */
-async function focusEditor(page: Page) {
-  await editor(page).focus();
-  await editor(page).evaluate(() => new Promise((done) => setTimeout(done, 25)));
-}
-
-/**
- * Puts the caret at the start or end of the letter's paragraph that reads
- * `text`: a click in it, and once the caret is there, Home or End.
- */
-async function caretAt(page: Page, text: string, at: "start" | "end") {
-  await focusEditor(page);
-  await editor(page).getByText(text, { exact: true }).click();
-  await caretSettled(page, text);
-  await page.keyboard.press(at === "start" ? "Home" : "End");
-  await caretSettled(page, text, at);
-}
-
-/** Opens a new paragraph above the sign-off, as someone adding to the letter would, with the caret in it. */
-async function newParagraphAboveSignOff(page: Page) {
-  await caretAt(page, "Thank you for your consideration,", "start");
-  await page.keyboard.press("Enter");
-  await page.keyboard.press("ArrowUp");
-  await caretSettled(page, "", "start");
-}
-
-/** Clicks a toolbar button, then waits for the editor to take focus back, a frame later, as Tiptap gives it. */
-async function toolbar(page: Page, name: string) {
-  await page.getByRole("button", { name, exact: true }).click();
-  await expect(editor(page)).toBeFocused();
-}
-
-/** Pastes `html` into the editor, as a browser does from another app's clipboard. */
-async function paste(page: Page, html: string, text: string) {
-  await editor(page).evaluate(
-    (el, { html, text }) => {
-      const data = new DataTransfer();
-      data.setData("text/html", html);
-      data.setData("text/plain", text);
-      el.dispatchEvent(new ClipboardEvent("paste", { clipboardData: data, bubbles: true, cancelable: true }));
-    },
-    { html, text },
-  );
-}
-
-test("Format the letter and paste into it: the preview is what the MP gets", async ({ page }) => {
+test("Formatting the letter", async ({ page, flowDatabase }) => {
+  story("Jane adds a line in bold and a bulleted list, from the toolbar.");
   const sender = madeUpAddress("Jane Smith", 22);
   await lookUp(page);
   const letter = editor(page);
@@ -202,7 +129,10 @@ test("Format the letter and paste into it: the preview is what the MP gets", asy
   await expect(letter.locator("strong", { hasText: "Please reply." })).toBeVisible();
   await expect(letter.locator("ul li")).toHaveText(["First reason", "Second reason"]);
   await wholePage(page);
-  await frame(page, "a bold line and a bullet list, typed with the toolbar");
+  await frame(page, "A bold line and a list");
+  story(
+    "She pastes from another app. The link stays. A heading, a colour and a numbered list don't: their words become plain paragraphs, and the list bullets.",
+  );
   await caretAt(page, "Second reason", "end");
 
   // Out of the list, then a paste of a link and of what a letter may not
@@ -221,7 +151,8 @@ test("Format the letter and paste into it: the preview is what the MP gets", asy
   await expect(letter.locator('a[href="https://example.com/"]')).toHaveText("this report");
   await expect(letter.locator("ul").last().locator("li")).toHaveText(["Numbered one"]);
   await wholePage(page);
-  await frame(page, "pasted from another app: its link kept, the rest as plain paragraphs");
+  await frame(page, "The pasted text");
+  story("The preview shows the letter formatted as she wrote it.");
 
   await fillAndPreview(page, sender);
   const preview = page.locator("article");
@@ -234,10 +165,11 @@ test("Format the letter and paste into it: the preview is what the MP gets", asy
   ]);
   await expect(preview).toContainText("See this report and red words.");
   await expect(preview.locator('a[href="https://example.com/"]')).toHaveText("this report");
-  await frame(page, "the preview, formatted as written");
+  await frame(page, "The preview");
+  story("She sends it, and the MP gets it formatted the same way.");
   await sendLetter(page);
 
-  const sent = newestEmail((email) => email.To.includes("test-mp@parliament.example") && !!email.Cc?.includes(sender))!;
+  const sent = sentEmail(flowDatabase, letterIdOf(flowDatabase, sender), "letter");
   expect(sent.HtmlBody).toContain("<strong>Please reply.</strong>");
   expect(sent.HtmlBody).toMatch(/<ul>\s*<li><p>First reason<\/p><\/li>\s*<li><p>Second reason<\/p><\/li>\s*<\/ul>/);
   expect(sent.HtmlBody).toContain('See <a href="https://example.com/">this report</a> and red words.');
@@ -247,21 +179,23 @@ test("Format the letter and paste into it: the preview is what the MP gets", asy
     `<a href="mailto:${site.policyEmail}">`,
     '<a href="https://example.com/">',
   ]);
-  await emailFrame(page, sent, "the letter as the MP gets it, formatted");
+  await emailFrame(page, sent, "The letter the MP gets");
   // All of it above the sign-off, which is as it was drafted.
   expect(sent.TextBody).toMatch(
     /Please reply\.\n\n- First reason\n- Second reason\n\nPasted heading\n\nSee this report \(https:\/\/example\.com\/\) and red words\.\n\n- Numbered one\n\nThank you for your consideration,\n\nJane Smith\n\n1 High Street, Testville\nZZ9 9ZZ$/,
   );
 });
 
-test("Your letter is kept through Edit, Back and reload, until a new postcode", async ({ page }) => {
+test("The letter is kept", async ({ page }) => {
+  story("Jane writes some words of her own, and her own subject.");
   await lookUp(page);
   const letter = editor(page);
   await newParagraphAboveSignOff(page);
   await page.keyboard.type("My own words.");
   await page.getByLabel(copy.form.subjectLabel).fill("My own subject");
   await wholePage(page);
-  await frame(page, "the letter, in their own words");
+  await frame(page, "Jane's letter");
+  story("She checks it, then Edit brings her back to it, as she wrote it.");
   await fillAndPreview(page, "jane@example.com");
   await expect(page.locator("article")).toContainText("My own words.");
 
@@ -269,7 +203,8 @@ test("Your letter is kept through Edit, Back and reload, until a new postcode", 
   await expect(page).toHaveURL(`${PAGE}/write`);
   await expect(letter).toContainText("My own words.");
   await expect(page.getByLabel(copy.form.subjectLabel)).toHaveValue("My own subject");
-  await frame(page, "back from the preview with Edit, as written");
+  await frame(page, "Back from the preview");
+  story("Going back from the preview, and reloading the page, keep it too.");
 
   await page.getByRole("button", { name: copy.form.preview }).click();
   await expect(page).toHaveURL(`${PAGE}/preview`);
@@ -281,7 +216,8 @@ test("Your letter is kept through Edit, Back and reload, until a new postcode", 
   // The browser puts the window back about where it was, a few pixels either way.
   await wholePage(page);
   await expect(page.getByLabel(copy.form.emailLabel)).toHaveValue("jane@example.com");
-  await frame(page, "after the back button and a reload, still as written");
+  await frame(page, "After going back and a reload");
+  story("Sam Jones finds the MP on the same browser, and gets a fresh letter, signed with Sam's name.");
 
   // Someone else finding the MP on the same browser starts a fresh letter, signed with their name.
   await openLookup(page, BASE);
@@ -294,10 +230,11 @@ test("Your letter is kept through Edit, Back and reload, until a new postcode", 
   await expect(letter).not.toContainText("My own words.");
   await expect(page.getByLabel(copy.form.subjectLabel)).toHaveValue(campaigns[0].subject);
   await expect(page.getByLabel(copy.form.emailLabel)).toHaveValue("");
-  await frame(page, "a new lookup by someone else, a new letter signed by them");
+  await frame(page, "Sam's letter");
 });
 
-test("The server refuses the letter: no Ads event, and you can edit it", async ({ page }) => {
+test("A letter refused", async ({ page }) => {
+  story("Jane clears the letter and tries to send it. It's refused, and she's told every field is needed.");
   await lookUp(page);
   // A blank letter: only the server checks for that.
   await page.getByRole("textbox", { name: copy.form.letterLabel, exact: true }).fill("");
@@ -306,24 +243,31 @@ test("The server refuses the letter: no Ads event, and you can edit it", async (
 
   await expect(page.getByText(copy.errors.missingFields)).toBeVisible();
   expect(await adsEvents(page)).toBe(0);
-  await frame(page, "the server refused a blank letter");
+  await frame(page, "The letter refused");
+  story("Edit takes her back to the form, with what she filled in.");
 
   await page.getByRole("link", { name: copy.preview.edit }).click();
   await expect(page).toHaveURL(`${PAGE}/write`);
   await expect(page.getByLabel(copy.form.emailLabel)).toHaveValue("jane@example.com");
-  await frame(page, "back to editing, as it was");
+  await frame(page, "Back to the letter");
 });
 
-test("Open a later step directly: it links back to the start", async ({ page }) => {
+test("A later step, opened from a link", async ({ page }) => {
+  story(
+    "Opened from a link, with no letter in this browser, the write, preview and sent pages have nothing to show. Each links back to the campaign.",
+  );
   for (const step of ["write", "preview", "sent"]) {
     await page.goto(`${PAGE}/${step}`);
-    await frame(page, `/${step} with nothing to show`);
+    await frame(page, `/${step}, with nothing to show`);
     await page.getByRole("link", { name: copy.preview.backToForm }).click();
     await expect(page).toHaveURL(`${PAGE}#email-your-mp`);
   }
 });
 
-test("Postmark webhooks refuse calls without our credentials", async ({ request }) => {
+test("Bounces and replies only from Postmark", async ({ request }) => {
+  story(
+    "Postmark tells the site of bounces and replies. Anyone else is turned away, and a bounce for an email that isn't a letter changes nothing.",
+  );
   const wrong = `Basic ${Buffer.from("postmark:guess").toString("base64")}`;
   for (const path of ["/api/postmark/bounce", "/api/postmark/inbound"]) {
     expect((await request.post(`${BASE}${path}`, { data: {} })).status(), path).toBe(401);
@@ -338,7 +282,10 @@ test("Postmark webhooks refuse calls without our credentials", async ({ request 
   expect(await bounce.json()).toEqual({ recorded: false });
 });
 
-test("An MP who has signed (ZZ99ZS): sent on to the bill's letter", async ({ page }) => {
+test("An MP who has signed (ZZ99ZS)", async ({ page }) => {
+  story(
+    "Jane's MP has already signed the letter to the PM. Find my MP takes her to the bill's campaign instead, which says why, with her details filled in.",
+  );
   await openLookup(page, BASE, "ZZ9 9ZS");
   await expect(page.locator("summary", { hasText: "ZZ9 9ZZ" })).toBeVisible();
   await page.getByRole("button", { name: copy.lookup.button }).click();
@@ -348,16 +295,20 @@ test("An MP who has signed (ZZ99ZS): sent on to the bill's letter", async ({ pag
   await expect(page.getByLabel(copy.lookup.nameLabel)).toHaveValue("Jane Smith");
   await expect(page.getByLabel(copy.lookup.addressLabel)).toHaveValue("1 High Street, Testville");
   await expect(page.getByLabel(copy.lookup.postcodeLabel)).toHaveValue("ZZ9 9ZS");
-  await frame(page, "moved on to the bill's page");
+  await frame(page, "The bill's campaign");
+  story("Find my MP there drafts the bill's letter to Signy McTestface MP.");
   await page.getByRole("button", { name: copy.lookup.button }).click();
 
   await expect(page).toHaveURL(`${BASE}/campaigns/${campaigns[1].slug}/write`);
   await expect(page.getByRole("heading", { name: "Signy McTestface MP" })).toBeVisible();
   await expect(page.getByLabel(copy.form.subjectLabel)).toHaveValue(campaigns[1].subject);
-  await frame(page, "the bill's letter to Signy McTestface MP");
+  await frame(page, "The bill's letter");
 });
 
-test("An MP who backs the bill (ZZ99ZB): the letter thanks them", async ({ page }) => {
+test("An MP who backs the bill (ZZ99ZB)", async ({ page }) => {
+  story(
+    "Jane's MP signed ControlAI's letter in support of the bill. The page says so, and the drafted letter thanks them for it.",
+  );
   await openLookup(page, BASE, "ZZ9 9ZB", `/campaigns/${campaigns[1].slug}`);
   await page.getByRole("button", { name: copy.lookup.button }).click();
 
@@ -365,10 +316,11 @@ test("An MP who backs the bill (ZZ99ZB): the letter thanks them", async ({ page 
   await expect(page.getByRole("heading", { name: "Backy McTestface MP" })).toBeVisible();
   await expect(page.getByRole("link", { name: copy.sobelBill.signedNote.link })).toBeVisible();
   await expect(page.getByText(copy.sobelBill.letterThanks)).toBeVisible();
-  await frame(page, "the bill's letter thanks Backy McTestface MP");
+  await frame(page, "The bill's letter, with thanks");
 });
 
-test("An MP with no email (ZZ99ZN): no letter to write", async ({ page }) => {
+test("An MP with no email (ZZ99ZN)", async ({ page }) => {
+  story("There's no email address for Jane's MP, so there's no letter to write, and the page says so.");
   await openLookup(page, BASE, "ZZ9 9ZN");
   await page.getByRole("button", { name: copy.lookup.button }).click();
 
@@ -377,10 +329,13 @@ test("An MP with no email (ZZ99ZN): no letter to write", async ({ page }) => {
   await expect(page).toHaveURL(`${BASE}/campaigns/${campaigns[0].slug}`);
   // The click scrolled the button into view, and where that leaves the window varies.
   await wholePage(page);
-  await frame(page, "an MP with no email");
+  await frame(page, "No email found");
 });
 
-test("Each campaign's page; /campaigns opens the first; an unknown one is a 404", async ({ page, request }) => {
+test("Each campaign, and /campaigns", async ({ page, request }) => {
+  story(
+    "Each campaign has a page, with the form to find your MP. /campaigns opens the first, and a campaign that doesn't exist is not found.",
+  );
   for (const campaign of campaigns) {
     await page.goto(`${BASE}/campaigns/${campaign.slug}`);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -394,7 +349,8 @@ test("Each campaign's page; /campaigns opens the first; an unknown one is a 404"
   expect((await request.get(`${BASE}/campaigns/no-such-campaign`)).status()).toBe(404);
 });
 
-test("The Campaigns menu links every campaign", { tag: "@desktop-only" }, async ({ page }) => {
+test("The Campaigns menu", { tag: "@desktop-only" }, async ({ page }) => {
+  story("The Campaigns menu in the header lists both campaigns.");
   await page.goto(`${BASE}/campaigns/${campaigns[0].slug}`);
   const trigger = page.getByRole("link", { name: "Campaigns", exact: true });
   const menu = trigger.locator("..");
@@ -404,16 +360,20 @@ test("The Campaigns menu links every campaign", { tag: "@desktop-only" }, async 
   const bill = menu.getByRole("menuitem", { name: "Support the Artificial Superintelligence Bill" });
   await expect(menu.getByRole("menuitem", { name: "Regulate AI developers now" })).toBeVisible();
   await expect(bill).toBeVisible();
-  await frame(page, "the Campaigns menu, with both campaigns");
+  await frame(page, "The Campaigns menu");
+  story("Choosing the bill's campaign opens its page, and the menu closes.");
   await bill.click();
   await expect(page).toHaveURL(`${BASE}/campaigns/${campaigns[1].slug}`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Support the Artificial Superintelligence Bill");
   // Shut behind the choice, though the pointer is still over it.
   await expect(bill).toBeHidden();
-  await frame(page, "the bill's page, from the menu");
+  await frame(page, "The bill's campaign");
 });
 
-test("Campaign pages are in search; old /campaigns-v2 links redirect", async ({ page, request }) => {
+test("Search, and old /campaigns-v2 links", async ({ page, request }) => {
+  story(
+    "Search engines may list the campaign pages, but not the pages for writing a letter. Old links to /campaigns-v2 go to the campaign pages.",
+  );
   const sitemap = await (await request.get(`${BASE}/sitemap.xml`)).text();
   for (const campaign of campaigns) {
     expect(sitemap).toContain(`/campaigns/${campaign.slug}<`);
@@ -429,5 +389,5 @@ test("Campaign pages are in search; old /campaigns-v2 links redirect", async ({ 
   await expect(page).toHaveURL(`${BASE}/campaigns/${campaigns[0].slug}`);
   await page.goto(`${BASE}/campaigns-v2/${campaigns[1].slug}`);
   await expect(page).toHaveURL(`${BASE}/campaigns/${campaigns[1].slug}`);
-  await frame(page, "/campaigns-v2/support-sobel-bill, redirected");
+  await frame(page, "The bill's campaign, from an old link");
 });

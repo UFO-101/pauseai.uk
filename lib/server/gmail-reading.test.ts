@@ -207,6 +207,9 @@ describeWithDatabase("reading Gmail", () => {
           replyTo: "caseworker@example.org",
           handling: [{ outcome: "not_forwarded", reason: "gmail" }],
           gmailMessageId: "r1",
+          // What received it.
+          backend: "gmail",
+          account: JO,
         },
       },
     ]);

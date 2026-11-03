@@ -55,6 +55,7 @@ import {
   exampleLumaResult,
   exampleDisconnectedGmail,
   exampleGmailResult,
+  exampleLettersInboxRead,
   exampleMembersResult,
   exampleRun,
   exampleSyncedMp,
@@ -300,6 +301,7 @@ describe("StaffDashboard", () => {
       `${copy.actions.heldSync(24)}${copy.actions.heldSyncDetail}${copy.actions.decide}`,
       `${copy.actions.blockedMp("Bouncy McTestface MP")}${copy.actions.blockedMpDetail}${copy.actions.openMp}`,
       `${copy.actions.failedImport(jobTitles["import-controlai"])}${copy.actions.failedImportDetail("No PDF linked", "21 Oct 2026, 02:00")}${copy.actions.seeRun}`,
+      `${staffCopy.lettersInbox.alert.subject(2, "fixture-letters@pauseai.uk")}${copy.actions.lettersInboxDetail("21 Oct 2026, 03:20")}${copy.actions.lettersInboxButton}`,
     ]);
     await expect
       .element(page.getByRole("link", { name: copy.actions.decide }))
@@ -310,11 +312,14 @@ describe("StaffDashboard", () => {
     await expect
       .element(page.getByRole("link", { name: copy.actions.seeRun }))
       .toHaveAttribute("href", "/staff/import-data/controlai");
+    await expect
+      .element(page.getByRole("link", { name: copy.actions.lettersInboxButton }))
+      .toHaveAttribute("href", "/staff/import-data/gmail");
     // No heading: the strips speak for themselves. Each its icon first; the held import amber, the rest red.
     expect(page.getByRole("heading", { name: copy.actionsTitle }).all()).toHaveLength(0);
     const strips = items.map((item) => item.element().firstElementChild!);
-    expect(strips.map((strip) => strip.firstElementChild!.tagName.toLowerCase())).toEqual(["svg", "svg", "svg"]);
-    expect(strips.map((strip) => strip.className.match(/amber|red/)?.[0])).toEqual(["amber", "red", "red"]);
+    expect(strips.map((strip) => strip.firstElementChild!.tagName.toLowerCase())).toEqual(["svg", "svg", "svg", "svg"]);
+    expect(strips.map((strip) => strip.className.match(/amber|red/)?.[0])).toEqual(["amber", "red", "red", "red"]);
     expect(getComputedStyle(strips[0]).borderLeftWidth).toBe("0px");
     // Each title stands out from its detail; the buttons are the small light ones, all alike.
     const [title, detail] = [...strips[0].querySelector("div")!.children].map((el) => getComputedStyle(el));
@@ -1411,7 +1416,7 @@ describe("PoliticianDetails", () => {
               campaign: "old-campaign",
               campaignTitle: "Old campaign, from pauseai.info",
               campaignUrl: null,
-              status: "queued",
+              status: "mislaid",
               createdAt: "2026-07-01T08:00:00Z",
               repliedAt: null,
             },
@@ -1495,7 +1500,7 @@ describe("PoliticianDetails", () => {
       "1 Aug 2026, 10:00strange  · x",
       `20 Jul 2026, 10:00${copy["edit politician"]} Polly Placeholder · ${staffCopy.fields.party} Labour → Labour (Co-op) · sync`,
       `15 Jul 2026, 10:00${copy["add politician"]} Polly Placeholder · import`,
-      `1 Jul 2026, 08:00${copy.letter} Old Writer · Old campaign, from pauseai.info · queued`,
+      `1 Jul 2026, 08:00${copy.letter} Old Writer · Old campaign, from pauseai.info · mislaid`,
       `1 Jun 2026, 08:00${copy["pauseai-letter"]} Example Mailing · made-up`,
     ]);
     // An answer leads to everyone who gave it, the ask to the letter as in the asks card, PauseAI's email to its
@@ -1567,7 +1572,7 @@ describe("PoliticianDetails", () => {
               campaign: "old-campaign",
               campaignTitle: "Old campaign, from pauseai.info",
               campaignUrl: "https://example.org/old-campaign.pdf",
-              status: "queued",
+              status: "mislaid",
               createdAt: "2026-07-01T08:00:00Z",
               repliedAt: null,
             },
@@ -1585,7 +1590,7 @@ describe("PoliticianDetails", () => {
     ).toEqual([
       `15 Oct 2026, 09:00${copy["unsigned-letter-replied"]} · ${pm.title}`,
       `13 Oct 2026, 08:00${copy.unsignedLetter} · ${pm.title} · ${staffCopy.letters.status.sent}`,
-      `1 Jul 2026, 08:00${copy.unsignedLetter} · Old campaign, from pauseai.info · queued`,
+      `1 Jul 2026, 08:00${copy.unsignedLetter} · Old campaign, from pauseai.info · mislaid`,
       `1 Jun 2026, 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.letters.status.sent}`,
       `1 May 2026, 08:00${copy["pauseai-letter"]} Example Mailing · made-up`,
     ]);
@@ -2743,6 +2748,29 @@ describe("RunList", () => {
     await expect.element(page.getByText(exampleDisconnectedGmail.error!, { exact: false })).not.toBeInTheDocument();
   });
 
+  it("says a Gmail read failed that found mail in the letters inbox it couldn't account for, listing each with a link", async () => {
+    await render(
+      <RunList runs={[ran("read-gmail", { accounts: [exampleLettersInboxRead] }, { id: 1 })]} none="None" />,
+    );
+    await expect.element(page.getByText(staffCopy.runs.status.failed, { exact: true })).toBeVisible();
+    await expect
+      .element(page.getByText(staffCopy.lettersInbox.result({ relayed: 4, spam: 2, uncertain: 1 }), { exact: false }))
+      .toBeVisible();
+    const links = page.getByRole("link", { name: staffCopy.lettersInbox.openInGmail });
+    expect(links.all()).toHaveLength(2);
+    await expect
+      .element(links.first())
+      .toHaveAttribute(
+        "href",
+        "https://mail.google.com/mail/?authuser=fixture-letters%40pauseai.uk#all/18c0ffee00000001",
+      );
+    await expect
+      .element(
+        page.getByText(`someone@example.com, “Hello”: ${staffCopy.lettersInbox.reasons.stranger}.`, { exact: false }),
+      )
+      .toBeVisible();
+  });
+
   it("says how many hosts a Luma run changed and how many pages of contacts it read", async () => {
     await render(
       <RunList
@@ -3024,6 +3052,89 @@ describe("LetterHistory", () => {
     await expect.element(page.getByText('"type": "HardBounce"', { exact: false })).toBeVisible();
   });
 
+  it("puts a reason, a notice and an uncertain match in words, and a reason it doesn't know as recorded", async () => {
+    await render(
+      <LetterHistory
+        events={[
+          { at: "2026-10-14T10:00:00Z", status: "queued", details: { reason: "daily_limit" } },
+          { at: "2026-10-13T10:00:00Z", status: "notice", details: { notice: "bounced", to: "jane@example.com" } },
+          { at: "2026-10-12T10:00:00Z", status: "replied", details: { uncertain: true, reason: "odd", notice: "odd" } },
+        ]}
+      />,
+    );
+    const [queued, notice, replied] = history().getByRole("listitem").all();
+    expect(queued.element().textContent).toContain(`${copy.detail.fields.reason}${copy.detail.reasons.daily_limit}`);
+    expect(notice.element().textContent).toContain(`${copy.detail.fields.notice}${copy.detail.notices.bounced}`);
+    expect(replied.element().textContent).toContain(`${copy.detail.fields.uncertain}${copy.detail.uncertainLetter}`);
+    expect(replied.element().textContent).toContain(`${copy.detail.fields.reason}odd`);
+  });
+
+  it("puts each reply's relay under it, and the copy under the Sent it went with, and leaves the rest where they were", async () => {
+    const letter = {
+      ...exampleSupporterLetterDetails,
+      sentAt: null,
+      events: [
+        { at: "2026-10-14T11:00:00Z", status: "relayed", details: { to: "jane@example.com", gmailMessageId: "m1" } },
+        { at: "2026-10-14T10:30:00Z", status: "relay_held", details: { reason: "blocked", gmailMessageId: "m1" } },
+        { at: "2026-10-14T10:00:00Z", status: "replied", details: { from: "mp@example.org", gmailMessageId: "m1" } },
+        { at: "2026-10-13T10:00:00Z", status: "bounced", details: { gmailMessageId: "bounce" } },
+        { at: "2026-10-12T10:00:00Z", status: "replied", details: { from: "mp@example.org" } },
+        { at: "2026-10-11T10:05:00Z", status: "copy_bounced", details: {} },
+        { at: "2026-10-11T10:00:00Z", status: "sent", details: {} },
+        // Sent again after a bounce: a copy goes under the Sent before it.
+        { at: "2026-10-10T10:01:00Z", status: "copy_sent", details: {} },
+        { at: "2026-10-10T10:00:00Z", status: "sent", details: {} },
+        // Recorded a moment before its Sent: under the first.
+        { at: "2026-10-10T09:59:00Z", status: "copy_held", details: {} },
+      ],
+    };
+    await render(<LetterHistory events={historyOf(letter)} />);
+    const items = history().element().querySelectorAll(":scope > li");
+    const head = (item: Element) => item.querySelector("strong")!.textContent;
+    expect([...items].map(head)).toEqual([
+      copy.status.replied,
+      copy.status.bounced,
+      copy.status.replied,
+      copy.status.sent,
+      copy.status.sent,
+    ]);
+    const under = (item: Element) => [...item.querySelectorAll("ol > li")].map(head);
+    expect(under(items[0])).toEqual([copy.status.relayed, copy.status.relay_held]);
+    expect(items[1].querySelector("ol")).toBeNull();
+    expect(items[2].querySelector("ol")).toBeNull();
+    expect(under(items[3])).toEqual([copy.status.copy_bounced]);
+    expect(under(items[4])).toEqual([copy.status.copy_sent, copy.status.copy_held]);
+    // A notice to the supporter under what it tells of: the letter's bounce, a relay's (beside it, under its
+    // reply), the letter or a relay gone again; one of nothing before it, or of something else, stays.
+    const notice = (at: string, kind: string) => ({ at, status: "notice", details: { notice: kind } });
+    const told = historyOf({
+      ...letter,
+      events: [
+        notice("2026-10-16T10:01:00Z", "resent"),
+        { at: "2026-10-16T10:00:00Z", status: "relayed", details: { gmailMessageId: "m2" } },
+        notice("2026-10-15T10:01:00Z", "bounced"),
+        { at: "2026-10-15T10:00:00Z", status: "relay_bounced", details: { gmailMessageId: "m2" } },
+        { at: "2026-10-14T10:00:00Z", status: "replied", details: { gmailMessageId: "m2" } },
+        notice("2026-10-13T10:01:00Z", "resent"),
+        { at: "2026-10-13T10:00:00Z", status: "sent", details: {} },
+        notice("2026-10-12T10:01:00Z", "bounced"),
+        { at: "2026-10-12T10:00:00Z", status: "bounced", details: {} },
+        notice("2026-10-11T10:00:00Z", "odd"),
+        notice("2026-10-10T10:00:00Z", "bounced"),
+      ],
+    });
+    expect(told.map((e) => [e.status, e.under?.map((u) => `${u.status} ${u.details.notice ?? ""}`.trim())])).toEqual([
+      ["replied", ["notice resent", "relayed", "notice bounced", "relay_bounced"]],
+      ["sent", ["notice resent"]],
+      ["bounced", ["notice bounced"]],
+      ["notice", undefined],
+      ["notice", undefined],
+    ]);
+    // With no Sent at all, a copy stays where it was.
+    const copyOnly = { at: "2026-10-10T10:00:00Z", status: "copy_held", details: {} };
+    expect(historyOf({ ...letter, events: [copyOnly] })).toEqual([copyOnly]);
+  });
+
   it("puts each field a line, by name, in words where it has them; a status nobody knows as stored", async () => {
     await render(
       <LetterHistory
@@ -3145,6 +3256,28 @@ describe("historyOf", () => {
   const copy = staffCopy.letters;
   const airtable = { ...exampleSupporterLetterDetails, backend: "airtable" as const, events: [] };
   const sentByGmail = { at: "2026-10-01T12:00:00Z", status: "sent", details: {} };
+
+  it("tags each email with what its own event recorded sent it, whatever sent the letter", () => {
+    const events = [
+      { at: "2026-10-14T10:00:00Z", status: "relayed", details: { to: "jane@example.com", backend: "gmail" } },
+      { at: "2026-10-13T10:00:00Z", status: "notice", details: { to: "jane@example.com", backend: "postmark" } },
+      { at: "2026-10-12T10:00:00Z", status: "replied", details: { backend: "postmark" } },
+      // A reply recorded before replies said what brought them: what the letter went by, which they came back through.
+      { at: "2026-10-11T10:00:00Z", status: "auto_reply", details: {} },
+      { at: "2026-10-10T10:00:00Z", status: "bounced", details: {} },
+    ];
+    expect(historyOf({ ...exampleSupporterLetterDetails, backend: "gmail", events }).map((e) => e.tag)).toEqual([
+      copy.backends.gmail,
+      copy.backends.postmark,
+      copy.backends.postmark,
+      copy.backends.gmail,
+      // And Sent, from the letter's own send, as it has no event of its own, in its place.
+      copy.backends.gmail,
+      undefined,
+    ]);
+    // One Airtable sent heard nothing back through it: an old reply says nothing of what brought it.
+    expect(historyOf({ ...airtable, sentAt: null, events: [events[3]] }).map((e) => e.tag)).toEqual([undefined]);
+  });
 
   it("is the changes recorded, Sent tagged with what sent it; nothing more for one never sent", () => {
     const [bounced, sent, sending] = exampleSupporterLetterDetails.events;
@@ -3544,7 +3677,7 @@ describe("SupporterDetails", () => {
               campaignUrl: null,
               detail: "Gone MP",
               href: null,
-              status: "queued",
+              status: "mislaid",
             },
           ],
         }}
@@ -3553,7 +3686,7 @@ describe("SupporterDetails", () => {
     openHistory();
     const old = page.getByRole("list", { name: copy.detail.activityTitle });
     expect(old.element().textContent).toContain(
-      `${copy.detail.kinds.letter} Gone MP ${copy.detail.about} Old campaign, from pauseai.info · queued`,
+      `${copy.detail.kinds.letter} Gone MP ${copy.detail.about} Old campaign, from pauseai.info · mislaid`,
     );
     // Only the status links, to the supporter's letters.
     expect(
@@ -4290,6 +4423,14 @@ describe("each list's download values and contact cards", () => {
   });
 });
 
+describe("LettersTable, a letter nothing has sent yet", () => {
+  it("shows a dash for its backend, as for when it was sent", async () => {
+    await render(<LettersTable letters={[{ ...exampleLetter, status: "queued", backend: null, sentAt: null }]} />);
+    const row = page.getByRole("row").nth(1);
+    expect(row.getByText("–").all()).toHaveLength(2);
+  });
+});
+
 describe("LettersTable, a sender not yet a supporter", () => {
   it("shows the name without a link", async () => {
     await render(<LettersTable letters={[{ ...exampleLetter, supporterId: null }]} />);
@@ -4511,12 +4652,6 @@ describe("LettersList headings", () => {
       />
     );
     const { rerender } = await render(list({ q: "x", page: "2" }));
-    // One of this site's never sent has no backend.
-    expect(
-      letterColumns()
-        .find((column) => column.key === "backend")!
-        .cell({ ...exampleLetter, backend: null }),
-    ).toBe(null);
     await expect.element(heading(copy.created)).toHaveAttribute("href", "/staff/letters?q=x&sort=created&dir=asc");
     expect(heading(copy.created).element().closest("th")!.getAttribute("aria-sort")).toBe("descending");
     await expect.element(heading(copy.from)).toHaveAttribute("href", "/staff/letters?q=x&sort=from&dir=asc");

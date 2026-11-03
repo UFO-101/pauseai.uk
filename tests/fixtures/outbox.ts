@@ -22,9 +22,17 @@ export type OutboxEmail = {
   TextBody: string;
   HtmlBody?: string;
   Attachments: { Name: string; ContentType: string; Content: string }[];
+  /** Its own Message-ID and those it answers, with their angle brackets, where it has them. */
+  MessageId?: string;
+  InReplyTo?: string;
+  References?: string;
+  /** Marks of an automatic reply, kept on a relay of one. */
+  AutoSubmitted?: string;
 };
 
-type PostmarkEmail = Partial<Omit<OutboxEmail, "Attachments" | "Date">> & {
+type PostmarkEmail = Partial<Omit<OutboxEmail, "Attachments" | "Date" | "MessageId">> & {
+  /** As a Gmail send has it, without its angle brackets. */
+  MessageId?: string;
   Tag?: string;
   MessageStream?: string;
   Metadata?: Record<string, string>;
@@ -42,6 +50,17 @@ export function saveToOutbox(dir: string, email: PostmarkEmail): string {
   // Sortable by when they were sent.
   const file = join(dir, `${Date.now()}-${String(++count).padStart(4, "0")}.eml`);
   writeFileSync(file, toEml(email));
+  return file;
+}
+
+/**
+ * Saves a whole message as it was sent, a relay of another's, in the outbox
+ * `dir`. Returns the file's path.
+ */
+export function saveRawToOutbox(dir: string, raw: Buffer): string {
+  mkdirSync(dir, { recursive: true });
+  const file = join(dir, `${Date.now()}-${String(++count).padStart(4, "0")}.eml`);
+  writeFileSync(file, raw);
   return file;
 }
 
@@ -71,6 +90,7 @@ export function toEml(email: PostmarkEmail): string {
     ["Reply-To", email.ReplyTo],
     ["Subject", email.Subject],
     ["Date", now().toUTCString()],
+    ["Message-ID", email.MessageId && `<${email.MessageId}>`],
     ["X-PM-Tag", email.Tag],
     ["X-PM-Message-Stream", email.MessageStream],
     ...Object.entries(email.Metadata ?? {}).map(([name, value]) => [`X-PM-Metadata-${name}`, value]),
@@ -127,6 +147,10 @@ export function fromEml(eml: string): OutboxEmail {
     ReplyTo: header("Reply-To"),
     Subject: header("Subject") ?? "",
     Date: header("Date") ?? "",
+    MessageId: header("Message-ID"),
+    InReplyTo: header("In-Reply-To"),
+    References: header("References"),
+    AutoSubmitted: header("Auto-Submitted"),
     TextBody: body("plain") ?? "",
     HtmlBody: body("html"),
     Attachments: all
@@ -152,8 +176,14 @@ function leaves(raw: string): Part[] {
     const colon = line.indexOf(":");
     headers.set(line.slice(0, colon).toLowerCase(), line.slice(colon + 1).trim());
   }
-  const part = { headers, body: raw.slice(split + 4) };
-  const boundary = headers.get("content-type")?.match(/boundary="([^"]+)"/)?.[1];
+  const encoded = raw.slice(split + 4);
+  // A relay keeps the body as the sender wrote it, which may be in base64.
+  const body =
+    /base64/i.test(headers.get("content-transfer-encoding") ?? "") && !headers.has("content-disposition")
+      ? Buffer.from(encoded.replace(/\s+/g, ""), "base64").toString("utf8")
+      : encoded;
+  const part = { headers, body };
+  const boundary = headers.get("content-type")?.match(/boundary="?([^";]+)"?/)?.[1];
   if (!boundary) return [part];
   const inner = part.body
     .split(`--${boundary}`)

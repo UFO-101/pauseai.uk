@@ -57,7 +57,7 @@ async function letter(mp: number, email: string, consent: boolean, at: string) {
     politicianId: mp,
     senderEmail: email,
     contactConsent: consent,
-    replyHash: `${email}-${at}`,
+    postmarkMailbox: `${email}-${at}`,
     createdAt: at,
   });
 }

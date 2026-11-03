@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { BASE, expect, frame, test } from "./fixtures";
+import { BASE, expect, frame, story, test } from "./fixtures";
 import { hydrated } from "./settle";
 
 // The burger menu is the only navigation below 1024px, so a regression here
@@ -29,17 +29,19 @@ const item = (page: Page, i: number) => trigger(page, i).locator("..");
 const bodyHasLock = (page: Page) => page.evaluate(() => getComputedStyle(document.body).overflow === "hidden");
 
 test.describe("mobile nav", { tag: "@phone-only" }, () => {
-  test("Starts closed", async ({ page }) => {
+  test("The menu, closed", async ({ page }) => {
+    story("On a phone, the site's links are behind the Menu button. When a page opens, the menu is closed.");
     await openPage(page);
 
     await expect(burger(page)).toBeVisible();
     await expect(nav(page)).toBeHidden();
     await expect(burger(page)).toHaveAttribute("aria-expanded", "false");
     expect(await bodyHasLock(page)).toBe(false);
-    await frame(page, "the menu closed");
+    await frame(page, "The menu, closed");
   });
 
-  test("Open the menu: the page behind can't scroll", async ({ page }) => {
+  test("Opening the menu", async ({ page }) => {
+    story("Tapping Menu opens the menu. The page behind it can't be scrolled while it's open.");
     await openPage(page);
 
     await burger(page).click();
@@ -47,10 +49,11 @@ test.describe("mobile nav", { tag: "@phone-only" }, () => {
     await expect(nav(page)).toBeVisible();
     await expect(burger(page)).toHaveAttribute("aria-expanded", "true");
     expect(await bodyHasLock(page)).toBe(true);
-    await frame(page, "the menu open");
+    await frame(page, "The menu, open");
   });
 
-  test("Close the menu", async ({ page }) => {
+  test("Closing the menu", async ({ page }) => {
+    story("Tapping Menu again closes it, and the page scrolls again.");
     await openPage(page);
 
     await burger(page).click();
@@ -63,7 +66,8 @@ test.describe("mobile nav", { tag: "@phone-only" }, () => {
     expect(await bodyHasLock(page)).toBe(false);
   });
 
-  test("The menu sits below the header", async ({ page }) => {
+  test("Where the menu opens", async ({ page }) => {
+    story("The open menu starts right at the foot of the header, with no gap and no overlap.");
     await openPage(page);
 
     await burger(page).click();
@@ -80,7 +84,8 @@ test.describe("mobile nav", { tag: "@phone-only" }, () => {
     expect(Math.abs(navTop - headerBottom)).toBeLessThan(2);
   });
 
-  test("Tap a link: the menu closes and the page opens", async ({ page }) => {
+  test("Following a link", async ({ page }) => {
+    story("Tapping Blog in the menu opens the blog, with the menu closed.");
     await openPage(page);
 
     await burger(page).click();
@@ -91,10 +96,11 @@ test.describe("mobile nav", { tag: "@phone-only" }, () => {
     await expect.poll(() => page.url(), { timeout: 15_000 }).toMatch(/\/blog\/?$/);
     await expect(nav(page)).toBeHidden();
     await expect(burger(page)).toHaveAttribute("aria-expanded", "false");
-    await frame(page, "after tapping Blog in the menu");
+    await frame(page, "The blog");
   });
 
-  test("After following a link, the page scrolls again", async ({ page }) => {
+  test("Scrolling after following a link", async ({ page }) => {
+    story("The page a link in the menu opens can be scrolled. The menu doesn't leave it stuck.");
     // The header stays mounted across pages, and the new page starts with the
     // menu closed. If that regresses, the page you land on cannot be scrolled.
     await openPage(page);
@@ -110,7 +116,8 @@ test.describe("mobile nav", { tag: "@phone-only" }, () => {
     expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
   });
 
-  test("Tap a dropdown: its submenu opens", async ({ page }) => {
+  test("Opening a submenu", async ({ page }) => {
+    story("Tapping About in the menu opens its list of pages, such as Track record, without leaving the page.");
     await openPage(page);
     const urlBefore = page.url();
 
@@ -120,10 +127,11 @@ test.describe("mobile nav", { tag: "@phone-only" }, () => {
     await expect(trigger(page, 0)).toHaveAttribute("aria-expanded", "true");
     await expect(item(page, 0).getByRole("menuitem", { name: "Track record" })).toBeVisible();
     expect(page.url()).toBe(urlBefore);
-    await frame(page, "the About dropdown open");
+    await frame(page, "About, open");
   });
 
-  test("Open a second dropdown: the first closes", async ({ page }) => {
+  test("Opening another submenu", async ({ page }) => {
+    story("With About open, tapping Local groups opens that list and closes About.");
     await openPage(page);
 
     await burger(page).click();
@@ -136,10 +144,11 @@ test.describe("mobile nav", { tag: "@phone-only" }, () => {
     await expect(item(page, 1).getByRole("menuitem").first()).toBeVisible();
     await expect(trigger(page, 0)).toHaveAttribute("aria-expanded", "false");
     await expect(item(page, 0).getByRole("menuitem").first()).toBeHidden();
-    await frame(page, "the Local groups dropdown open, About closed");
+    await frame(page, "Local groups, open");
   });
 
-  test("Tap an open dropdown: it closes", async ({ page }) => {
+  test("Closing a submenu", async ({ page }) => {
+    story("Tapping About again closes its list.");
     await openPage(page);
 
     await burger(page).click();

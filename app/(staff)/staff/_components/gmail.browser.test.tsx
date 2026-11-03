@@ -7,8 +7,9 @@ import AskForm from "./AskForm";
 import BounceReason from "./BounceReason";
 import { GmailConnect, GmailOutcome, SentToday } from "./GmailConnect";
 import AccountTitle from "./AccountTitle";
+import LetterChanges from "./LetterChanges";
 import LetterThread, { SupporterLetterThread } from "./LetterThread";
-import { exampleSupporterLetterDetails } from "./LettersTable.examples";
+import { exampleProxiedLetterDetails, exampleSupporterLetterDetails } from "./LettersTable.examples";
 import { exampleEditableAsk, exampleGmailAccount, exampleImportedThread, exampleThread } from "./LetterThread.examples";
 import { DeleteTwice } from "./DeleteTwice";
 import MyGmail from "./MyGmail";
@@ -24,6 +25,15 @@ describe("GmailConnect, SentToday and GmailOutcome", () => {
     await expect
       .element(page.getByRole("link", { name: gmail.connect }))
       .toHaveAttribute("href", "/staff/api/gmail/connect?back=%2Fstaff%2Fme");
+  });
+
+  it("for the letters inbox: what connecting it means for supporters' letters, and its own limit", async () => {
+    await render(<GmailConnect back="/staff/me" lettersInbox />);
+    await expect.element(page.getByText(gmail.intro)).not.toBeInTheDocument();
+    for (const line of gmail.lettersInboxExplain) await expect.element(page.getByText(line)).toBeVisible();
+    await expect.element(page.getByText(gmail.lettersInboxLimit("1,950"))).toBeVisible();
+    await render(<SentToday sent={3} lettersInbox />);
+    await expect.element(page.getByText(gmail.sentToday(3, "1,950"))).toBeVisible();
   });
 
   it("is pending from its click until the page shows again, as after the browser's Back", async () => {
@@ -49,6 +59,10 @@ describe("GmailConnect, SentToday and GmailOutcome", () => {
   it("says how connecting ended, green if it did, amber if refused, red for an error, and nothing for an outcome it doesn't know", async () => {
     const { rerender } = await render(<GmailOutcome outcome="connected" me="jo@pauseai.uk" />);
     await expect.element(page.getByRole("status")).toHaveTextContent(gmail.outcomes.connected);
+    await rerender(<GmailOutcome outcome="connected" me="letters@pauseai.uk" lettersInbox />);
+    await expect.element(page.getByRole("status")).toHaveTextContent(gmail.outcomes.connectedLettersInbox);
+    await rerender(<GmailOutcome outcome="refused" me="letters@pauseai.uk" lettersInbox />);
+    await expect.element(page.getByRole("status")).toHaveTextContent(gmail.outcomes.refused);
     await rerender(<GmailOutcome outcome="refused" me="jo@pauseai.uk" />);
     await expect.element(page.getByRole("status")).toHaveTextContent(gmail.outcomes.refused);
     await rerender(<GmailOutcome outcome="other-account" me="jo@pauseai.uk" />);
@@ -77,6 +91,24 @@ describe("MyGmail", () => {
     await expect
       .element(page.getByRole("link", { name: gmail.connect }))
       .toHaveAttribute("href", "/staff/api/gmail/connect?back=%2Fstaff%2Fme");
+  });
+
+  it("the letters inbox's: headed as sending supporters' letters, connected or not, told so when it connects", async () => {
+    const { rerender } = await render(
+      <MyGmail me="letters@pauseai.uk" lettersInbox account={undefined} outcome="" disconnect={vi.fn()} />,
+    );
+    await expect.element(page.getByRole("heading", { level: 2, name: gmail.lettersInboxTitle })).toBeVisible();
+    await rerender(
+      <MyGmail
+        me="letters@pauseai.uk"
+        lettersInbox
+        account={exampleGmailAccount}
+        outcome="connected"
+        disconnect={vi.fn()}
+      />,
+    );
+    await expect.element(page.getByRole("heading", { level: 2, name: gmail.lettersInboxConnectedTitle })).toBeVisible();
+    await expect.element(page.getByRole("status")).toHaveTextContent(gmail.outcomes.connectedLettersInbox);
   });
 });
 
@@ -185,6 +217,33 @@ describe("SupporterLetterThread", () => {
       .element(page.getByRole("link", { name: "Jane Smith <jane@example.com>" }))
       .toHaveAttribute("href", "/staff/supporters/7");
     await expect.element(page.getByText(copy.supporterNoText)).toBeVisible();
+  });
+
+  it("one from the letters inbox: its changes to the draft, then each message both ways, with Gmail at the heading", async () => {
+    await render(<SupporterLetterThread letter={exampleProxiedLetterDetails} link={<a href="#gmail">Gmail</a>} />);
+    // The way to it in Gmail at the heading, not in the letter's place.
+    await expect
+      .element(page.getByRole("article").first().getByRole("link", { name: "Gmail" }))
+      .not.toBeInTheDocument();
+    await expect.element(page.getByRole("link", { name: "Gmail" })).toBeVisible();
+    const [, reply, answer] = page.getByRole("article").all();
+    await expect.element(reply.getByText("Thank you for writing to me.", { exact: false })).toBeVisible();
+    // The office's reply is to Jane; her answer, to the MP.
+    expect(reply.element().textContent).toContain(`${copy.headers.to}Jane Smith <jane@example.com>`);
+    expect(answer.element().textContent).toContain(
+      `${copy.headers.to}Testy McTestface MP <testy.mctestface.mp@parliament.uk>`,
+    );
+    await expect.element(page.getByRole("button", { name: staffCopy.letterChanges.asSent })).toBeVisible();
+  });
+
+  it("a message whose text can't be read says so", async () => {
+    const sent = exampleProxiedLetterDetails.sent!;
+    await render(
+      <SupporterLetterThread
+        letter={{ ...exampleProxiedLetterDetails, sent: { ...sent, messages: [{ ...sent.messages[0], text: null }] } }}
+      />,
+    );
+    await expect.element(page.getByText(copy.unreadable)).toBeVisible();
   });
 
   it("one not yet a supporter's, never sent, with no subject: unlinked, undated, by its campaign", async () => {
@@ -324,5 +383,48 @@ describe("AskForm", () => {
     expect(page.getByRole("button", { name: copy.delete }).query()).toBeNull();
     expect(page.getByText(copy.kindFixed).query()).toBeNull();
     expect(page.getByText(copy.notDeletable).query()).toBeNull();
+  });
+});
+
+describe("LetterChanges", () => {
+  const words = staffCopy.letterChanges;
+  const EMAIL = { from: "Jane", to: "Testy", at: null, subject: "Please back a pause" };
+  const draft = "Dear MP,\n\nOne.\n\nPlease act now on this.\n\nTwo.\n\nThree.\n\nJane";
+  const sent = "Dear MP,\n\nOne.\n\nPlease act on this. I live here.\n\nTwo.\n\nThree.\n\nJane";
+
+  it("shows only what changed, the paragraphs left alone folded, a click unfolding them", async () => {
+    const { container } = await render(<LetterChanges {...EMAIL} sent={sent} draft={draft} />);
+    expect([...container.querySelectorAll("ins")].map((e) => e.textContent)).toEqual(["I live here."]);
+    expect([...container.querySelectorAll("del")].map((e) => e.textContent)).toEqual(["now "]);
+    await expect.element(page.getByRole("button", { name: words.folded(2) })).toBeVisible();
+    await expect.element(page.getByText("Two.", { exact: false })).not.toBeInTheDocument();
+    await page.getByRole("button", { name: words.folded(3) }).click();
+    await expect.element(page.getByText("Two.\n\nThree.\n\nJane")).toBeVisible();
+    await expect.element(page.getByRole("button", { name: words.folded(3) })).not.toBeInTheDocument();
+    await expect.element(page.getByRole("button", { name: words.folded(1) })).not.toBeInTheDocument();
+  });
+
+  it("shows the letter as sent, and back, from the subject's line", async () => {
+    const { container } = await render(<LetterChanges {...EMAIL} sent={sent} draft={draft} />);
+    const subject = page.getByRole("definition").filter({ hasText: EMAIL.subject });
+    await subject.getByRole("button", { name: words.asSent }).click();
+    expect(container.querySelector("ins")).toBeNull();
+    await expect.element(page.getByText(sent)).toBeVisible();
+    await page.getByRole("button", { name: words.showChanges }).click();
+    await expect.element(page.getByRole("button", { name: words.asSent })).toBeVisible();
+    expect(container.querySelector("ins")).not.toBeNull();
+    // Unfolded, then as sent and back: folded again.
+    await page.getByRole("button", { name: words.folded(2) }).click();
+    await page.getByRole("button", { name: words.asSent }).click();
+    await page.getByRole("button", { name: words.showChanges }).click();
+    await expect.element(page.getByRole("button", { name: words.folded(2) })).toBeVisible();
+  });
+
+  it("folds a letter sent as drafted whole, and with no draft kept shows the letter alone", async () => {
+    await render(<LetterChanges {...EMAIL} sent={draft} draft={draft} />);
+    await expect.element(page.getByRole("button", { name: words.folded(6) })).toBeVisible();
+    const { container } = await render(<LetterChanges {...EMAIL} sent={sent} draft={null} />);
+    expect(container.querySelector("article > div")!.textContent).toBe(sent);
+    expect(container.querySelector("button")).toBeNull();
   });
 });

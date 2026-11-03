@@ -33,7 +33,11 @@ export default function LetterSent({ campaignSlug }: { campaignSlug: string }) {
   return (
     <>
       <p className={styles.success} role="status">
-        {copy.sent.body(sent.mpName)}
+        {sent.queued === "blocked"
+          ? copy.sent.waiting(sent.mpName)
+          : sent.queued
+            ? copy.sent.queued(sent.mpName)
+            : copy.sent.body(sent.mpName)}
       </p>
       <p className={styles.sentMore}>{copy.sent.more}</p>
     </>

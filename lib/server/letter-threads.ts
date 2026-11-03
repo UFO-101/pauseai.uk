@@ -21,6 +21,8 @@ export type ThreadMessage = {
   fromAddress: string;
   /** Our answer, rather than their reply. */
   fromUs: boolean;
+  /** For a supporter's letter, the supporter's own message through their MP's proxy, rather than the office's. */
+  fromSupporter: boolean;
   subject: string;
   /** Its plain text, or its HTML's text, without the mail it quotes; null if the kept message can't be read. */
   text: string | null;
@@ -109,21 +111,24 @@ export async function letterThread(mailingId: number, letterId: number): Promise
     [mailingId, letterId],
   );
   if (!row) return undefined;
-  const replies = await query<Omit<ThreadMessage, "text"> & { blobKey: string }>(
-    `SELECT id::int AS id, at, from_name AS "fromName", from_address AS "fromAddress", from_us AS "fromUs", subject,
-       blob_key AS "blobKey"
-     FROM letter_replies WHERE letter_id = $1 ORDER BY at, id`,
-    [letterId],
-  );
   const { body: stored, mergeValues, ...thread } = row;
   const body = checkMailingDoc(stored);
   return {
     ...thread,
     letter: body && mergeValues ? letterFor(body, mergeValues) : null,
-    messages: await Promise.all(
-      replies.map(async ({ blobKey, ...reply }) => ({ ...reply, text: await messageText(blobKey) })),
-    ),
+    messages: await threadMessages(letterId),
   };
+}
+
+/** Each message kept in a letter's thread, oldest first, with its text. */
+export async function threadMessages(letterId: number): Promise<ThreadMessage[]> {
+  const replies = await query<Omit<ThreadMessage, "text"> & { blobKey: string }>(
+    `SELECT id::int AS id, at, from_name AS "fromName", from_address AS "fromAddress", from_us AS "fromUs",
+       from_supporter AS "fromSupporter", subject, blob_key AS "blobKey"
+     FROM letter_replies WHERE letter_id = $1 ORDER BY at, id`,
+    [letterId],
+  );
+  return Promise.all(replies.map(async ({ blobKey, ...reply }) => ({ ...reply, text: await messageText(blobKey) })));
 }
 
 /** The kept messages after `after`, by ID, as many as `limit`, for the backup: each one's ID and key. */

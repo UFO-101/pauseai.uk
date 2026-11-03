@@ -66,7 +66,8 @@ export const METRIC_LINKS: Record<DashboardMetric, { href?: string; permission?:
 export type DashboardAction =
   | { kind: "held-sync"; at: string; added: number; removed: number; changed: number }
   | { kind: "blocked-mp"; politicianId: number; name: string; at: string }
-  | { kind: "failed-import"; job: ImportJob; at: string; error: string };
+  | { kind: "failed-import"; job: ImportJob; at: string; error: string }
+  | { kind: "letters-inbox"; inbox: string; count: number; at: string };
 
 export type Dashboard = {
   /** The window's length in days. */

@@ -1,6 +1,8 @@
 import "server-only";
-import type { AnyImportRun, ImportJob, ImportRunStatus } from "@/lib/import-runs";
+import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
+import { importPath, type AnyImportRun, type ImportJob, type ImportRunStatus } from "@/lib/import-runs";
 import { query, type Queryable } from "./db";
+import { notifyStaff, staffLink } from "./notifications";
 
 // One log of every run of every import and check: the MPs and the
 // signatories from Airtable, the check against Parliament, and ControlAI's
@@ -29,13 +31,27 @@ export async function recordRun(
   return id;
 }
 
-/** Keeps a run that failed, with why. */
+/**
+ * Keeps a run that failed, with why; and, unless its run before failed too,
+ * emails the notification inbox, so a job failing every hour says so once.
+ */
 export async function recordFailure(job: ImportJob, startedBy: string, error: unknown): Promise<void> {
+  const why = String(error).replace(/^Error: /, "");
+  const [before] = await query<{ status: string }>(
+    "SELECT status FROM import_runs WHERE job = $1 ORDER BY at DESC, id DESC LIMIT 1",
+    [job],
+  );
   await query("INSERT INTO import_runs (job, started_by, status, error) VALUES ($1, $2, 'failed', $3)", [
     job,
     startedBy,
-    String(error).replace(/^Error: /, ""),
+    why,
   ]);
+  if (before?.status === "failed") return;
+  const words = staffCopy.notifications.importFailed;
+  await notifyStaff(
+    words.subject(jobTitles[job]),
+    words.body(jobTitles[job], why, staffLink(importPath(job), undefined)),
+  );
 }
 
 /**

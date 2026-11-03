@@ -28,10 +28,10 @@ function site(run: object, background = 202) {
 }
 
 describe("the hourly sending function", () => {
-  it("runs hourly from 06:18 to 23:18 UTC, and hands on to the background function only while there's more to send", async () => {
-    expect(config.schedule).toBe("18 6-23 * * *");
+  it("runs every hour, night and day, and hands on to the background function only while there's more to send", async () => {
+    expect(config.schedule).toBe("18 * * * *");
     // What the staff pages say of when a mailing goes.
-    expect(config.schedule).toBe(`${SENDING.minute} ${SENDING.firstHour}-23 * * *`);
+    expect(config.schedule).toBe(`${SENDING.minute} * * * *`);
     expect(site(RUN).length).toBe(0);
     expect(await (await sendMailings()).json()).toEqual(RUN);
     const calls = site({ ...RUN, sent: 7, left: 3 });

@@ -1,3 +1,4 @@
+import { LETTERS_INBOX } from "@/tests/gmail-sends";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { addTestPolitician, connectTestGmail, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { server } from "@/tests/fixtures/msw";
@@ -325,6 +326,10 @@ describeWithDatabase("mailing drafts", () => {
 });
 
 describe("mailingChangesFrom", () => {
+  it("refuses the letters inbox as a mailing's sender, which sends supporters' letters and nothing else", () => {
+    expect(mailingChangesFrom({ sentFrom: LETTERS_INBOX })).toBeUndefined();
+  });
+
   it("takes each change the editor makes, a sender's address lowercased and blanks as none", () => {
     expect(
       mailingChangesFrom({

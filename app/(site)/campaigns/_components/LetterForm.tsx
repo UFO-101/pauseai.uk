@@ -15,6 +15,8 @@ import {
   type Mp,
   type MpStatuses,
 } from "@/lib/email-your-mp";
+import { draftHash } from "@/lib/letter-changes";
+import { toText } from "@/lib/letter-format";
 import AttachmentChips from "./AttachmentChips";
 import { saveDraft, type Draft } from "./draft";
 import LetterEditor from "./LetterEditor";
@@ -40,15 +42,17 @@ export default function LetterForm({ campaign, mp, statuses, senderName, address
   const letterTips = useId();
   const [email, setEmail] = useState(draft?.email ?? "");
   const [subject, setSubject] = useState(draft?.subject ?? campaign.subject);
-  const [letter, setLetter] = useState(
-    () =>
-      draft?.letter ??
-      draftLetter(
-        campaign,
-        { salutation: mp.salutation, constituency: mp.constituency, senderName, statuses },
-        signatureAddress(address, postcode),
-      ),
-  );
+  // The draft the form begins with, and its hash, kept with the letter as it's edited.
+  const [start] = useState(() => {
+    if (draft) return { letter: draft.letter, hash: draft.draftHash };
+    const letter = draftLetter(
+      campaign,
+      { salutation: mp.salutation, constituency: mp.constituency, senderName, statuses },
+      signatureAddress(address, postcode),
+    );
+    return { letter, hash: draftHash(toText(letter)) };
+  });
+  const [letter, setLetter] = useState(start.letter);
   const [nickname, setNickname] = useState(draft?.nickname ?? "");
   const [error, setError] = useState("");
 
@@ -65,6 +69,7 @@ export default function LetterForm({ campaign, mp, statuses, senderName, address
       address,
       subject,
       letter,
+      draftHash: start.hash,
       nickname,
     });
     if (!saved) return setError(copy.form.storageFailed);

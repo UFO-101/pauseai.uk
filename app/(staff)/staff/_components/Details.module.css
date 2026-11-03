@@ -255,6 +255,28 @@
   overflow-wrap: anywhere;
 }
 
+/* What belongs under an entry (a reply's relay, Sent's copy): set in a little, a size smaller, ruled at its left like the fields. */
+.under {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0 0 0 var(--space-3);
+  border-left: 2px solid var(--border);
+  list-style: none;
+  font-size: var(--text-sm);
+}
+
+.under li {
+  padding-block: var(--space-2);
+}
+
+.under li:first-child {
+  padding-top: 0;
+}
+
+.under li:last-child {
+  padding-bottom: 0;
+}
+
 /* A card with nothing in it yet. */
 .none {
   margin: 0;

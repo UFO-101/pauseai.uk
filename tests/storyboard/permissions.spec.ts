@@ -16,7 +16,7 @@ import {
   syncPoliticians,
   WEBHOOK_AUTH,
 } from "../steps";
-import { BASE, expect, flowStorageState, madeUpAddress, frame, test } from "./fixtures";
+import { BASE, expect, flowStorageState, madeUpAddress, frame, story, test } from "./fixtures";
 
 // Who sees what: supporter data only with `supporters`, wherever it would
 // show; and the sessions an account has, which an admin, or its owner, can
@@ -62,7 +62,10 @@ async function postBounce(request: APIRequestContext, address: string) {
 const politicianId = (database: string, name: string) =>
   runSql(database, `SELECT id FROM notable_people WHERE name = '${name}'`)[0];
 
-test("No permissions: no page shows a supporter's name or email", async ({ page, request, flowDatabase }) => {
+test("No permissions", async ({ page, request, flowDatabase }) => {
+  story(
+    "Supporters have registered for events, joined as members and written to their MP, and one supporter's address has bounced. A staff member with no permissions logs in.",
+  );
   await syncPoliticians(request, BASE);
   await importLuma(request, BASE);
   await importMembers(request, BASE);
@@ -78,7 +81,8 @@ test("No permissions: no page shows a supporter's name or email", async ({ page,
   expect(secrets).toContain("Jane Fixture");
 
   await logIn(page, flowDatabase);
-  await frame(page, "the staff home with no permissions: no Supporters section");
+  await frame(page, "The dashboard");
+  story("No staff page they can open shows any supporter's name or email address.");
   const testyId = politicianId(flowDatabase, testy.name);
   const letterId = runSql(flowDatabase, "SELECT id FROM letters")[0];
   const supporterId = runSql(flowDatabase, "SELECT id FROM supporters ORDER BY id")[0];
@@ -115,16 +119,16 @@ test("No permissions: no page shows a supporter's name or email", async ({ page,
     }
   }
 
+  story("The MP's page lists the letter written to them, without who wrote it.");
   await page.goto(`${BASE}/staff/politicians/${testyId}`);
   await expect(page.getByText(staffCopy.politician.history.unsignedLetter, { exact: false })).toBeVisible();
-  await frame(page, "an MP's page with no permissions: the letter, without who wrote it");
+  await frame(page, "The MP's page");
 });
 
-test("Without Supporters: letters and supporters' blocked emails are closed", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("Blocked emails without Supporters", async ({ page, request, flowDatabase }) => {
+  story(
+    "Jane writes to an MP whose address bounces her letter. Staff without the Supporters permission can't open Letters to MPs or Supporters' blocked emails.",
+  );
   await syncPoliticians(request, BASE);
   const bouncy = TEST_MPS.find((mp) => mp.postcode === "ZZ99ZH")!;
   await fakeTurnstile(page);
@@ -154,13 +158,15 @@ test("Without Supporters: letters and supporters' blocked emails are closed", as
     await page.goto(`${BASE}${closed}`);
     await expect(page).toHaveURL(`${BASE}/staff`);
   }
+  story("Politicians' blocked emails names the letter that bounced, but doesn't link to it.");
   await page.goto(`${BASE}/staff/politicians/blocked-emails`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.emails.titles.mps);
   const blocked = page.getByRole("table").first().getByRole("row").filter({ hasText: "no-such-mailbox@pauseai.uk" });
   await expect(blocked.getByText(`${staffCopy.emails.letterTo} ${bouncy.name}`)).toBeVisible();
   await expect(page.locator('a[href^="/staff/letters"]')).toHaveCount(0);
-  await frame(page, "Politicians' blocked emails without supporters: the letter named, not linked");
+  await frame(page, "Politicians' blocked emails");
 
+  story("Given the Supporters permission, they can follow it to the letter.");
   // With supporters, the same page links to the letter.
   addStaffAccount(flowDatabase, staffEmail(), ["supporters"]);
   await page.reload();
@@ -168,10 +174,13 @@ test("Without Supporters: letters and supporters' blocked emails are closed", as
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     staffCopy.letters.oneTitle("Jane Smith", bouncy.name),
   );
-  await frame(page, "with supporters, the letter it names opens");
+  await frame(page, "Jane's letter");
 });
 
-test("Unblock a supporter's bounced address", async ({ page, request, flowDatabase }) => {
+test("Unblocking a supporter's address", async ({ page, request, flowDatabase }) => {
+  story(
+    "An email to Jane Fixture bounces, so her address is blocked. It's a supporter's, so Politicians' blocked emails has nothing.",
+  );
   await syncPoliticians(request, BASE);
   await importLuma(request, BASE);
   await postBounce(request, "jane.fixture@example.com");
@@ -179,18 +188,20 @@ test("Unblock a supporter's bounced address", async ({ page, request, flowDataba
 
   await page.goto(`${BASE}/staff/politicians/blocked-emails`);
   await expect(page.getByText(staffCopy.emails.noBlocks)).toBeVisible();
-  await frame(page, "Politicians' blocked emails: nothing, as no MP's address bounced");
+  await frame(page, "Politicians' blocked emails");
 
+  story("Supporters' blocked emails lists her address.");
   await page.goto(`${BASE}/staff/supporters/blocked-emails`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.emails.titles.supporters);
   const row = page.getByRole("table").first().getByRole("row").filter({ hasText: "jane.fixture@example.com" });
   await expect(row).toContainText(staffCopy.emails.kinds.hard);
-  await frame(page, "Supporters' blocked emails: Jane's address, bounced");
+  await frame(page, "Supporters' blocked emails");
 
+  story("Staff unblock it, with a note.");
   await row.getByLabel(staffCopy.emails.note).fill("She gave us a new one");
   await row.getByRole("button", { name: staffCopy.emails.unblock }).click();
   await expect(page.getByText(staffCopy.emails.noBlocks)).toBeVisible();
-  await frame(page, "unblocked");
+  await frame(page, "Supporters' blocked emails, empty");
 });
 
 /** Logs `email` in in a browser of its own, on the flow's database, and returns its page. */
@@ -201,30 +212,36 @@ async function otherBrowser(browser: Browser, database: string, email: string): 
   return page;
 }
 
-test("Logged in on two browsers: log out of both", async ({ page, browser, flowDatabase }) => {
+test("Logging out everywhere", async ({ page, browser, flowDatabase }) => {
+  story("A staff member is logged in on two browsers. Their address, under Your account, leads to their own page.");
   const other = await otherBrowser(browser, flowDatabase, staffEmail());
   await logIn(page, flowDatabase);
   // Your address in the sidebar leads to your own page (on a phone, inside the bar's menu).
   const link = page.locator('nav a[href="/staff/me"]').filter({ visible: true });
   if ((await link.count()) === 0) await page.locator("summary").click();
   await expect(link).toBeVisible();
-  await frame(page, "the home: your address under Your account leads to where you're logged in");
+  await frame(page, "The dashboard");
 
+  story("Their page lists where they're logged in, and marks this browser.");
   await link.click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.me.title);
   await expect(page.getByRole("row")).toHaveCount(3);
   await expect(page.getByRole("row").filter({ hasText: staffCopy.sessions.thisBrowser })).toHaveCount(1);
-  await frame(page, "your sessions: this browser's and the other one");
+  await frame(page, "Where you're logged in");
 
+  story("Log out of all of them logs the other browser out too.");
   await page.getByRole("button", { name: staffCopy.sessions.logOutEverywhere }).click();
   await expect(page).toHaveURL(`${BASE}/staff/login`);
   await other.goto(`${BASE}/staff`);
   await expect(other).toHaveURL(`${BASE}/staff/login`);
-  await frame(other, "the other browser, logged out too");
+  await frame(other, "The other browser");
   await other.context().close();
 });
 
-test("An admin logs a colleague out everywhere", async ({ page, browser, flowDatabase }, testInfo) => {
+test("Logging a colleague out", async ({ page, browser, flowDatabase }, testInfo) => {
+  story(
+    "An admin opens the accounts page. It shows how each account was added, when it last logged in, and its sessions. Their own row warns that ending its sessions logs them out.",
+  );
   const colleague = `colleague-${testInfo.testId.replace(/\W/g, "").slice(-8)}@pauseai.uk`;
   const theirs = await otherBrowser(browser, flowDatabase, colleague);
   await logIn(page, flowDatabase, ["admin"]);
@@ -237,17 +254,19 @@ test("An admin logs a colleague out everywhere", async ({ page, browser, flowDat
     .filter({ has: page.getByRole("cell", { name: "admin@pauseai.uk", exact: true }) });
   await expect(seeded).toContainText(staffCopy.accounts.never);
   await expect(page.getByRole("row").filter({ hasText: staffEmail() })).toContainText(staffCopy.accounts.endMySessions);
-  await frame(page, "the accounts page: added by login, last login and seen, and sessions open");
+  await frame(page, "The accounts page");
 
+  story("They end all of a colleague's sessions, and the colleague is logged out.");
   await row.getByRole("button", { name: staffCopy.accounts.endSessions }).click();
   await expect(row.getByRole("button", { name: staffCopy.accounts.endSessions })).toHaveCount(0);
   await expect(row.getByRole("cell").nth(5)).toHaveText("0");
-  await frame(page, "the colleague logged out everywhere");
+  await frame(page, "The accounts page, the colleague logged out");
+  story("The audit log says who ended whose sessions.");
   await theirs.goto(`${BASE}/staff`);
   await expect(theirs).toHaveURL(`${BASE}/staff/login`);
 
   await page.goto(`${BASE}/staff/audit-log`);
   await expect(page.getByRole("cell", { name: "end staff sessions" })).toBeVisible();
-  await frame(page, "the audit log: who ended whose sessions");
+  await frame(page, "The audit log");
   await theirs.context().close();
 });

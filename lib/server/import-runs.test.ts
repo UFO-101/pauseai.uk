@@ -1,9 +1,26 @@
-import { expect, it } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
+import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { notifications } from "@/tests/notifications";
 import { keepingFailure, latestRun, listRuns, recordFailure, recordRun } from "./import-runs";
 
 describeWithDatabase("the import log", () => {
   useTestDatabase();
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("emails the notification inbox when a job fails, once, until a run of it hasn't", async () => {
+    const sent = notifications();
+    await recordFailure("import-luma", "nightly", new Error("Luma is down"));
+    await recordFailure("import-luma", "nightly", new Error("Luma is down"));
+    await recordRun("import-luma", "nightly", "unchanged", {});
+    await recordFailure("import-luma", "nightly", new Error("Luma is down again"));
+    const words = staffCopy.notifications.importFailed;
+    const luma = jobTitles["import-luma"];
+    expect(sent.map((email) => [email.Subject, email.TextBody])).toEqual([
+      [words.subject(luma), words.body(luma, "Luma is down", "https://pauseai.uk/staff/import-data/luma")],
+      [words.subject(luma), words.body(luma, "Luma is down again", "https://pauseai.uk/staff/import-data/luma")],
+    ]);
+  });
 
   it("keeps each run with who started it and what it found, newest first, a job at a time", async () => {
     const id = await recordRun("check-mps", "nightly", "ok", { problems: [] });

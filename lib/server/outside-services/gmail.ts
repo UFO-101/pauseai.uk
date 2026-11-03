@@ -1,5 +1,5 @@
 import "server-only";
-import { saveToOutbox } from "@/tests/fixtures/outbox";
+import { saveRawToOutbox, saveToOutbox } from "@/tests/fixtures/outbox";
 import { messageIds, toMime, type MimeEmail } from "../mime";
 import { outsideFetch } from "./outside-fetch";
 
@@ -26,6 +26,14 @@ const GMAIL_SCOPES = [
   // The account's name, for when its address sends as none of its own.
   "https://www.googleapis.com/auth/userinfo.profile",
 ];
+
+/**
+ * What the letters inbox asks for besides: to label, archive and trash its
+ * messages (https://developers.google.com/gmail/api/auth/scopes), which
+ * reading sorts and erasure clears. Not to delete them at once, which would
+ * need full access to the mailbox.
+ */
+const LETTERS_INBOX_SCOPES = ["https://www.googleapis.com/auth/gmail.modify"];
 
 export class GmailError extends Error {
   /** Google no longer accepts the refresh token: it was revoked, or the account's access removed. */
@@ -54,7 +62,7 @@ function client(): { id: string; secret: string } {
  * code and `state`. With fixtures, straight back, with a code naming the
  * account.
  */
-export function gmailConsentUrl(account: string, redirectUri: string, state: string): string {
+export function gmailConsentUrl(account: string, redirectUri: string, state: string, lettersInbox = false): string {
   if (process.env.DATA_FIXTURES === "1") {
     return `${redirectUri}?${new URLSearchParams({ code: `fixture:${account}`, state })}`;
   }
@@ -62,7 +70,7 @@ export function gmailConsentUrl(account: string, redirectUri: string, state: str
     client_id: client().id,
     redirect_uri: redirectUri,
     response_type: "code",
-    scope: GMAIL_SCOPES.join(" "),
+    scope: [...GMAIL_SCOPES, ...(lettersInbox ? LETTERS_INBOX_SCOPES : [])].join(" "),
     // A refresh token, every time, so connecting again replaces a lost one.
     access_type: "offline",
     prompt: "consent",
@@ -157,6 +165,62 @@ export async function sendGmail(accessToken: string, email: MimeEmail): Promise<
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ raw: Buffer.from(toMime(email), "utf8").toString("base64url") }),
   });
+}
+
+/**
+ * Sends a whole MIME message as the account, as it is: a relay, whose body
+ * is another's, byte for byte (lib/server/mime.ts, relayMime). With
+ * fixtures, it's written to the outbox too. Returns Gmail's IDs for it.
+ */
+export async function sendRawGmail(accessToken: string, raw: Buffer): Promise<{ id: string; threadId: string }> {
+  const outbox = process.env.OUTBOX_DIR;
+  if (process.env.DATA_FIXTURES === "1" && outbox) saveRawToOutbox(outbox, raw);
+  return api(accessToken, "/messages/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ raw: raw.toString("base64url") }),
+  });
+}
+
+/** The account's labels of its own, by name, with their IDs. */
+async function userLabels(accessToken: string): Promise<Map<string, string>> {
+  const { labels } = await api<{ labels?: { id: string; name: string; type?: string }[] }>(accessToken, "/labels");
+  return new Map((labels ?? []).filter((l) => l.type !== "system").map((l) => [l.name, l.id]));
+}
+
+/** The ID of the account's label `name`, made if it has none yet. */
+export async function gmailLabel(accessToken: string, name: string): Promise<string> {
+  const existing = (await userLabels(accessToken)).get(name);
+  if (existing) return existing;
+  const made = await api<{ id: string }>(accessToken, "/labels", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, labelListVisibility: "labelShow", messageListVisibility: "show" }),
+  });
+  return made.id;
+}
+
+/** Adds and takes away a message's labels: INBOX to archive it, UNREAD to mark it read. */
+export async function labelGmailMessage(
+  accessToken: string,
+  id: string,
+  add: string[],
+  remove: string[],
+): Promise<void> {
+  await api(accessToken, `/messages/${id}/modify`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ addLabelIds: add, removeLabelIds: remove }),
+  });
+}
+
+/** Moves a message to Trash, which Gmail empties after 30 days. One already gone is no matter. */
+export async function trashGmailMessage(accessToken: string, id: string): Promise<void> {
+  try {
+    await api(accessToken, `/messages/${id}/trash`, { method: "POST" });
+  } catch (error) {
+    if (!(error instanceof GmailError && error.status === 404)) throw error;
+  }
 }
 
 type HistoryPage = {

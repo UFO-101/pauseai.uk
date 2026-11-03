@@ -1,11 +1,14 @@
-import { BASE, expect, frame, test } from "./fixtures";
+import { BASE, expect, frame, story, test } from "./fixtures";
 import { hydrated } from "./settle";
 
 // The onboarding form embed on the home page
 // (app/(site)/_components/OnboardingFormEmbed.tsx): the two things about it
 // that only a real build in a real browser can show.
 
-test("The sign-up form shows even when the page is slow", async ({ page }) => {
+test("A slow page", async ({ page }) => {
+  story(
+    "The home page's sign-up form comes from PauseAI's global site. If it loads before the page is ready, it still shows, without its loading placeholder or the link to open it in a new tab.",
+  );
   // The embed is covered with a skeleton until it posts its height. It only
   // posts when its height changes: a burst while it loads, then nothing. The
   // iframe is in the server-rendered HTML, so it can finish that burst before
@@ -33,10 +36,13 @@ test("The sign-up form shows even when the page is slow", async ({ page }) => {
     timeout: HYDRATION_DELAY_MS + 15_000,
   });
   await expect(page.getByText("Open it in a new tab")).toHaveCount(0);
-  await frame(page, "the home page, hydrated late, with the form showing");
+  await frame(page, "The home page, with the form");
 });
 
-test("The sign-up form ignores messages from other sites", async ({ page }) => {
+test("Messages from other sites", async ({ page }) => {
+  story(
+    "The sign-up form tells the home page how tall it is. A message from anywhere else, claiming a height, doesn't change it.",
+  );
   // The embed resizes its iframe from postMessage events, and guards them
   // with a single line:
   //

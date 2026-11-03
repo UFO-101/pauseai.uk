@@ -88,13 +88,14 @@ export default function PrivacyPolicy() {
       <h2>Email your MP</h2>
       <p>
         When you write to your MP through this site, we keep your name, email address, postal address and postcode,
-        which campaign and MP you wrote to, the subject, and what happened to the letter (sent, bounced, replied to),
-        along with whether you ticked the box to hear about events and ways to help. Your postcode goes to postcodes.io
-        to find your constituency, and the form is protected by Cloudflare Turnstile. Postmark sends the letter from an
-        address of ours, so that your MP&apos;s reply comes back to us and is forwarded to you; we keep that a reply
-        came and who from, not the reply. We don&apos;t keep the letter&apos;s text here; a copy of your letter, and of
-        your MP&apos;s reply, is emailed to our policy team&apos;s inbox in Gmail. If an email to you or to your MP
-        bounces or is marked as spam, we keep a record of that against the address so we don&apos;t send to it again.
+        which campaign and MP you wrote to, the letter you sent and the draft you started from, and whether you ticked
+        the box to hear about events and ways to help. Your postcode goes to postcodes.io to find your constituency, and
+        the form is protected by Cloudflare Turnstile. We send your letter from a Gmail inbox of ours, under an address
+        made for you, so your MP&apos;s office never sees your own email address; their replies come to us and we pass
+        them on to you, unchanged, and pass your answers back to them. We keep every message both ways. If an email to
+        you or to your MP bounces or is marked as spam, we keep a record of that against the address so we don&apos;t
+        send to it again. When we erase your data, your letters, the messages and the address made for you go, and the
+        copies in our Gmail inbox are deleted within 30 days.
       </p>
 
       <h2>Events and Luma</h2>
@@ -138,8 +139,8 @@ export default function PrivacyPolicy() {
         <li>postcodes.io: looking up postcodes; it keeps nothing.</li>
         <li>Airtable: our records of MPs and of members, and letters sent through our earlier form.</li>
         <li>
-          Google (Gmail): our email, where copies of letters to politicians, their replies, and the letters we send them
-          are kept.
+          Google (Gmail): our email, which sends your letters to your MP and passes on their replies, and where copies
+          of letters to politicians, their replies, and the letters we send them are kept.
         </li>
       </ul>
 

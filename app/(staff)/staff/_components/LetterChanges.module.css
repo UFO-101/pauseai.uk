@@ -1,0 +1,55 @@
+/* Each block of the letter, a step apart. */
+.changes {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* A letter's text as it was written: its line breaks kept. */
+.text,
+.changed {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* What the supporter added: tinted, as a highlighter would. */
+.changed ins {
+  background: var(--status-green-bg);
+  color: var(--status-green);
+  text-decoration: none;
+}
+
+/* What they cut: struck through, and tinted. */
+.changed del {
+  background: var(--status-red-bg);
+  color: var(--status-red);
+}
+
+/* Paragraphs left as they were, folded: a dashed line across the letter
+   saying how many, which unfolds them. */
+.fold {
+  padding: var(--space-1) var(--space-2);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.fold:hover {
+  color: var(--text);
+}
+
+/* Show as sent, or Show changes, on the subject's line: a quiet button, as a link. */
+.toggle {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-strong);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-decoration: underline;
+  cursor: pointer;
+}

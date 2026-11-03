@@ -21,10 +21,16 @@ export function letterTitle(letter: Details): string {
 /**
  * A line of a letter's history: a change of its status as recorded, or one
  * its dates give where nothing was, with `label` in place of the status's
- * words and `tag` beside it, saying what sent it; and for a reply, what was
- * done with it.
+ * words and `tag` beside it, saying what sent it; for a reply, what was
+ * done with it; and the changes that belong under it.
  */
-export type HistoryEntry = LetterEvent & { label?: string; tag?: string; handling?: ReplyHandling[] };
+export type HistoryEntry = LetterEvent & {
+  label?: string;
+  tag?: string;
+  handling?: ReplyHandling[];
+  /** What happened to a reply's relay, or for Sent, to the supporter's copy, newest first. */
+  under?: HistoryEntry[];
+};
 
 const wasSent = (event: LetterEvent) => event.status === "sent";
 const isReply = (event: LetterEvent) => event.status === "replied" || event.status === "auto_reply";
@@ -52,25 +58,79 @@ function withHandling(events: HistoryEntry[], forwards: LetterForward[]): Histor
   });
 }
 
+const isCopy = (event: LetterEvent) => event.status.startsWith("copy_");
+
+/** What a notice to the supporter says happened: the email bounced, or went again. */
+const NOTICE_OF: Record<string, (event: LetterEvent) => boolean> = {
+  bounced: (event) => event.status === "bounced" || event.status === "relay_bounced",
+  // The letter, or a relay to the MP, gone again.
+  resent: (event) => wasSent(event) || event.status === "relayed",
+};
+
 /**
- * A letter's history, newest first: each change recorded, Sent tagged with
- * what sent it, and each reply with what was done with it. One that went with no send recorded, as one copied from
+ * Each change that belongs to another, under it, taken from among the rest:
+ * a reply's relay (every other change that names the reply's message in
+ * Gmail: relayed, held, waiting, bounced, not relayed, the office told);
+ * the supporter's copy (sent, held, bounced) under the Sent it went with,
+ * the last before it, or the first if none was; and a notice to the
+ * supporter under what it tells of, the last bounce or Sent before it, or
+ * that one's own place, as a relay's bounce is under its reply.
+ */
+function nested(events: HistoryEntry[]): HistoryEntry[] {
+  const sents = events.filter(wasSent);
+  const parentOf = (event: HistoryEntry): HistoryEntry | undefined => {
+    const message = event.details.gmailMessageId;
+    if (isCopy(event)) return sents.find((sent) => time(sent.at) <= time(event.at)) ?? sents.at(-1);
+    if (isReply(event) || message === undefined) return undefined;
+    return events.find((reply) => isReply(reply) && reply.details.gmailMessageId === message);
+  };
+  const parents = new Map(events.map((event) => [event, parentOf(event)]));
+  for (const notice of events.filter((event) => event.status === "notice")) {
+    const tells = NOTICE_OF[String(notice.details.notice)];
+    const of = tells && events.find((event) => event !== notice && time(event.at) <= time(notice.at) && tells(event));
+    if (of) parents.set(notice, parents.get(of) ?? of);
+  }
+  return events
+    .filter((event) => !parents.get(event))
+    .map((event) => {
+      const under = events.filter((other) => parents.get(other) === event);
+      return under.length ? { ...event, under } : event;
+    });
+}
+
+/**
+ * A letter's history, newest first: each change recorded, each email tagged
+ * with what sent it, as its event recorded or, for Sent, as the letter's
+ * send did, and each reply with what was done with it. One that went with no send recorded, as one copied from
  * Airtable, was sent when the letter says; and, with nothing recorded,
- * written then too, if earlier.
+ * written then too, if earlier. A reply's relay goes under it, and the
+ * supporter's copy under Sent (nested).
  */
 export function historyOf(letter: Details): HistoryEntry[] {
   const tag = letter.backend ? copy.backends[letter.backend] : undefined;
+  // An email's own record of what sent or received it, which every send and reply keeps (sentBy in
+  // lib/server/email.ts). For a Sent recorded before they did, the letter's; for a reply, what the letter went
+  // by, which is what its replies came back through, but for one from Airtable, which sent it and heard nothing.
+  const tagOf = (event: LetterEvent) =>
+    typeof event.details.backend === "string"
+      ? (copy.backends as Record<string, string>)[event.details.backend]
+      : wasSent(event) || (isReply(event) && letter.backend !== "airtable")
+        ? tag
+        : undefined;
   const events = withHandling(
-    letter.events.map((event) => (wasSent(event) && tag ? { ...event, tag } : event)),
+    letter.events.map((event) => {
+      const own = tagOf(event);
+      return own ? { ...event, tag: own } : event;
+    }),
     letter.kind === "supporter" ? letter.forwards : [],
   );
-  if (!letter.sentAt || letter.events.some(wasSent)) return events;
+  if (!letter.sentAt || letter.events.some(wasSent)) return nested(events);
   const sent: HistoryEntry = { at: letter.sentAt, status: "sent", details: {}, tag };
   const written: HistoryEntry[] =
     events.length === 0 && Date.parse(letter.createdAt) < Date.parse(letter.sentAt)
       ? [{ at: letter.createdAt, status: "created", label: copy.columns.created, details: {} }]
       : [];
-  return [...events, sent, ...written].sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+  return nested([...events, sent, ...written].sort((a, b) => Date.parse(b.at) - Date.parse(a.at)));
 }
 
 /** The kind of bounce or complaint Postmark gave that each status already says, so the history leaves it out. */
@@ -85,6 +145,11 @@ function postmarkWords(type: string): string {
 /** One field a change recorded, its value in words: Postmark's kind of bounce; the address, leading to it among the blocked emails; the rest as recorded. */
 function EventValue({ name, value }: { name: string; value: unknown }) {
   if (name === "type" && typeof value === "string") return <>{postmarkWords(value)}</>;
+  if (name === "reason" && typeof value === "string" && copy.detail.reasons[value])
+    return <>{copy.detail.reasons[value]}</>;
+  if (name === "notice" && typeof value === "string" && copy.detail.notices[value])
+    return <>{copy.detail.notices[value]}</>;
+  if (name === "uncertain") return <>{copy.detail.uncertainLetter}</>;
   if (name === "email" && typeof value === "string")
     return <StaffLink href={`/staff/politicians/blocked-emails?q=${encodeURIComponent(value)}`}>{value}</StaffLink>;
   return <>{typeof value === "string" ? value : JSON.stringify(value)}</>;
@@ -95,10 +160,10 @@ function EventValue({ name, value }: { name: string; value: unknown }) {
  * reading, in the {} bubble, not the list; and what was done with a reply,
  * which has a list of its own (Handling).
  */
-const IDS = ["messageId", "threadId", "gmailMessageId", "bounceId", "handling"];
+const IDS = ["messageId", "threadId", "gmailMessageId", "bounceId", "handling", "backend", "account"];
 
 /** Who an email was from and to, in an email's order, first: the database keeps a record's fields in an order of its own. */
-const ADDRESSES = ["from", "name", "to", "cc", "replyTo"];
+const ADDRESSES = ["from", "name", "to", "cc", "bcc", "replyTo"];
 const place = (name: string) => (ADDRESSES.includes(name) ? ADDRESSES.indexOf(name) : ADDRESSES.length);
 
 /**
@@ -147,29 +212,42 @@ function Handling({ handling }: { handling: ReplyHandling[] }) {
   );
 }
 
+/** One entry of a letter's history, and what belongs under it (a reply's relay, Sent's copy) in a list, a size smaller. */
+function Entry({ event, id }: { event: HistoryEntry; id: string }) {
+  return (
+    <li>
+      <p className={styles.eventHead}>
+        <strong>{event.label ?? statusOf(event.status)}</strong>
+        {event.tag && <Tag>{event.tag}</Tag>}
+        <span className={styles.eventWhen}>{staffTime(event.at)}</span>
+      </p>
+      <span>{Object.keys(event.details).length > 0 && <LoggedJson id={id} details={event.details} />}</span>
+      <EventFields event={event} />
+      {event.handling && <Handling handling={event.handling} />}
+      {event.under && (
+        <ol className={`${styles.events} ${styles.under}`}>
+          {event.under.map((under, j) => (
+            <Entry key={j} event={under} id={`${id}-${j}`} />
+          ))}
+        </ol>
+      )}
+    </li>
+  );
+}
+
 /**
  * A letter's history (historyOf), newest first: the status and its time on
  * a line, with its tag, and a {} button at its right that opens what it
  * recorded as recorded, as the audit log has; under them every field, a
- * line each, in words, and for a reply, what was done with it.
+ * line each, in words, and for a reply, what was done with it; under a
+ * reply its relay, and under Sent the supporter's copy.
  */
 export function LetterHistory({ events }: { events: HistoryEntry[] }) {
   if (events.length === 0) return <p className={styles.none}>{copy.detail.noHistory}</p>;
   return (
     <ol className={`${styles.history} ${styles.events}`} aria-label={copy.detail.historyTitle}>
       {events.map((event, i) => (
-        <li key={i}>
-          <p className={styles.eventHead}>
-            <strong>{event.label ?? statusOf(event.status)}</strong>
-            {event.tag && <Tag>{event.tag}</Tag>}
-            <span className={styles.eventWhen}>{staffTime(event.at)}</span>
-          </p>
-          <span>
-            {Object.keys(event.details).length > 0 && <LoggedJson id={`event-${i}`} details={event.details} />}
-          </span>
-          <EventFields event={event} />
-          {event.handling && <Handling handling={event.handling} />}
-        </li>
+        <Entry key={i} event={event} id={`event-${i}`} />
       ))}
     </ol>
   );

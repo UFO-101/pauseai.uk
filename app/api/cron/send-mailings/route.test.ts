@@ -19,6 +19,7 @@ describeWithDatabase("POST /api/cron/send-mailings", () => {
       failed: 0,
       left: 0,
       waiting: [],
+      queue: { sent: 0, left: 0 },
     });
   });
 

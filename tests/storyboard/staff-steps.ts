@@ -15,6 +15,7 @@ import {
   WEBHOOK_AUTH,
 } from "../steps";
 import { BASE, expect, test } from "./fixtures";
+import { bounceOf, deliver, letterIdOf, OFFICE, readInbox, sentIds, testProxy } from "./letters-inbox-steps";
 
 // What the staff sections' flows share (staff-login, staff-navigation,
 // imports, letters): each flow's own staff address and logging it in, and
@@ -90,8 +91,11 @@ export const loadingLine = (page: Page) =>
     return line.content !== "none" && line.opacity === "1";
   });
 
-/** The policy inbox in a fixture build (tests/fixture-env.mjs), where staff alerts and forwarded replies go. */
+/** The policy inbox in a fixture build (tests/fixture-env.mjs), where replies to letters sent before the letters inbox go. */
 export const POLICY_INBOX = "policy@example.org";
+
+/** Where a fixture build emails when something needs a person (tests/fixture-env.mjs). */
+export { NOTIFICATION_INBOX } from "../fixture-env.mjs";
 
 /** Bouncy McTestface MP, whose address doesn't exist. */
 export const bouncy = TEST_MPS.find((mp) => mp.postcode === "ZZ99ZH")!;
@@ -119,36 +123,34 @@ export async function postBounce(request: APIRequestContext, messageId?: string)
 }
 
 /**
- * Postmark's inbound webhook, as it posts the MP's office's answer to the
- * letter Postmark sent as `messageId`, at the letter's own address: written,
- * or with `auto`, an acknowledgement marked only by its subject, as
- * Parliament's Outlook sends them.
+ * The MP's office answers a letter, at its sender's proxy: written, or with
+ * `auto`, an acknowledgement marked only by its subject, as Parliament's
+ * Outlook sends them; then the hourly read relays it.
  */
-export async function postReply(request: APIRequestContext, database: string, messageId: string, auto = false) {
-  const [mailbox] = runSql(
+export async function postReply(request: APIRequestContext, database: string, letterId: string, auto = false) {
+  const [tag] = runSql(
     database,
-    `SELECT s.reply_hash FROM email_sends e JOIN letters_from_supporters s ON s.id = e.letter_id WHERE e.message_id = '${messageId}'`,
+    `SELECT p.tag FROM letters_from_supporters s JOIN proxies p ON p.id = s.proxy_id WHERE s.id = ${letterId}`,
   );
-  const address = `${mailbox}@letters.pauseai.uk`;
-  const reply = await request.post(`${BASE}/api/postmark/inbound`, {
-    headers: { Authorization: WEBHOOK_AUTH },
-    data: {
-      OriginalRecipient: address,
-      MailboxHash: "",
-      FromFull: { Email: "test-mp@parliament.example", Name: "Testy McTestface MP" },
-      ToFull: [{ Email: address, Name: "" }],
-      CcFull: [],
-      Subject: auto ? "Automatic reply: Please back a pause" : "Re: Please back a pause",
-      Date: "Fri, 16 Oct 2026 13:00:00 +0100",
-      TextBody: auto
-        ? "Thank you for contacting me. Please take this reply as confirmation that your email has been received."
-        : "Dear constituent,\n\nThank you for writing to me.",
-    },
+  deliver(database, {
+    from: OFFICE,
+    to: testProxy(tag),
+    subject: auto ? "Automatic reply: Please back a pause" : "Re: Please back a pause",
+    text: auto
+      ? "Thank you for contacting me. Please take this reply as confirmation that your email has been received.\r\n"
+      : "Dear constituent,\r\n\r\nThank you for writing to me.\r\n",
   });
-  expect(reply.ok()).toBe(true);
+  await readInbox(request);
 }
 
-/** Writes to `mp` as `sender`, signed `name`, then, logged in, sees it sent, and gives its Postmark MessageID. */
+/** The letter bounces: its MP's mail server refuses it, and the hourly read finds the bounce in the letters inbox. */
+export async function bounceLetter(request: APIRequestContext, database: string, letterId: string, address: string) {
+  const [messageId] = sentIds(database, letterId, "letter");
+  deliver(database, bounceOf(messageId, address));
+  await readInbox(request);
+}
+
+/** Writes to `mp` as `sender`, signed `name`, then, logged in, sees it sent, and gives the letter's ID. */
 export async function sentLetterId(
   page: Page,
   database: string,
@@ -165,11 +167,7 @@ export async function sentLetterId(
   await page.goto(`${BASE}/staff/letters`);
   const row = page.getByRole("row").filter({ hasText: sender });
   await expect(row).toContainText(staffCopy.letters.status.sent);
-  const [id] = runSql(
-    database,
-    "SELECT message_id FROM email_sends WHERE purpose = 'letter' AND outcome = 'sent' ORDER BY id DESC LIMIT 1",
-  );
-  return id;
+  return letterIdOf(database, sender);
 }
 
 /**

@@ -28,6 +28,7 @@ import {
   exampleLetterCampaigns,
   examplePauseaiLetterDetails,
   exampleOlderRepliedLetterDetails,
+  exampleProxiedLetterDetails,
   exampleRepliedLetterDetails,
   exampleSupporterLetterDetails,
 } from "@/app/(staff)/staff/_components/LettersTable.examples";
@@ -54,6 +55,7 @@ import {
   exampleLumaResult,
   exampleDisconnectedGmail,
   exampleGmailResult,
+  exampleLettersInboxRead,
   exampleMembersResult,
   exampleRun,
   exampleSyncedMp,
@@ -122,6 +124,8 @@ import BounceReason from "@/app/(staff)/staff/_components/BounceReason";
 import { GmailConnect, GmailOutcome, SentToday } from "@/app/(staff)/staff/_components/GmailConnect";
 import AccountTitle from "@/app/(staff)/staff/_components/AccountTitle";
 import { AskLead, AskPreview, AskTitle } from "@/app/(staff)/staff/_components/AskLine";
+import LetterChanges from "@/app/(staff)/staff/_components/LetterChanges";
+import ThreadEmail from "@/app/(staff)/staff/_components/ThreadEmail";
 import LetterThread, { SupporterLetterThread } from "@/app/(staff)/staff/_components/LetterThread";
 import { exampleImportedThread, exampleThread } from "@/app/(staff)/staff/_components/LetterThread.examples";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -331,10 +335,12 @@ const RUNS: Record<ImportJob, Variant> = {
     ),
   },
   "read-gmail": {
-    label: "A read of Gmail, one account unread, and one that disconnected an account",
+    label:
+      "A read of Gmail, one account unread; one that disconnected an account; one with mail in the letters inbox not understood",
     render: () => (
       <StaffPage as="div">
         <Run run={exampleRun("read-gmail", exampleGmailResult)} open />
+        <Run run={exampleRun("read-gmail", { accounts: [exampleLettersInboxRead] }, { id: 4 })} open />
         <Run
           run={exampleRun(
             "read-gmail",
@@ -377,6 +383,14 @@ const RUNS: Record<ImportJob, Variant> = {
       </StaffPage>
     ),
   },
+};
+
+/** Who a letter in the examples is from and to, when, and its subject. */
+const EXAMPLE_EMAIL = {
+  from: "Jane Smith <jane@example.com>",
+  to: "Testy McTestface MP <testy.mctestface.mp@parliament.uk>",
+  at: "2026-10-12T09:05:00Z",
+  subject: "Please back a pause on frontier AI",
 };
 
 export const staff: Group = {
@@ -1281,6 +1295,14 @@ export const staff: Group = {
             </StaffPage>
           ),
         },
+        {
+          label: "The same for the letters inbox: what it does with supporters' letters, and its own limit",
+          render: () => (
+            <StaffPage as="div">
+              <GmailConnect back="/staff/me" lettersInbox />
+            </StaffPage>
+          ),
+        },
       ],
     },
     {
@@ -1341,6 +1363,68 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <SupporterLetterThread letter={exampleSupporterLetterDetails} />
+            </StaffPage>
+          ),
+        },
+        {
+          label:
+            "A letter from the letters inbox: its changes to the draft, then the office's reply and the supporter's answer",
+          render: () => (
+            <StaffPage as="div">
+              <SupporterLetterThread letter={exampleProxiedLetterDetails} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "ThreadEmail",
+      file: "app/(staff)/staff/_components/ThreadEmail.tsx",
+      variants: [
+        {
+          label: "A message of a thread: who from and to, when, its subject with an action at its right, over its text",
+          render: () => (
+            <StaffPage as="div">
+              <ThreadEmail {...EXAMPLE_EMAIL} action={<a href="#">An action</a>}>
+                Dear Mr McTestface, thank you.
+              </ThreadEmail>
+            </StaffPage>
+          ),
+        },
+        {
+          label: "One whose text isn't kept: no date, and a tinted body for the note in its place",
+          render: () => (
+            <StaffPage as="div">
+              <ThreadEmail {...EXAMPLE_EMAIL} at={null} missing>
+                {"The letter's text isn't kept."}
+              </ThreadEmail>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "LetterChanges",
+      file: "app/(staff)/staff/_components/LetterChanges.tsx",
+      variants: [
+        {
+          label:
+            "Only what the supporter changed in a long letter, the paragraphs they left alone folded; Show as sent above",
+          render: () => (
+            <StaffPage as="div">
+              <LetterChanges
+                {...EXAMPLE_EMAIL}
+                sent={exampleProxiedLetterDetails.sent!.text}
+                draft={exampleProxiedLetterDetails.sent!.draft}
+              />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "No draft kept: the letter alone",
+          render: () => (
+            <StaffPage as="div">
+              <LetterChanges {...EXAMPLE_EMAIL} sent={exampleProxiedLetterDetails.sent!.text} draft={null} />
             </StaffPage>
           ),
         },

@@ -217,7 +217,7 @@ export const campaignsLetter: Group = {
           render: () => (
             <div className="container">
               <Column>
-                <MpCard mp={{ ...exampleMp, email: null, unreachable: true }} />
+                <MpCard mp={{ ...exampleMp, unreachable: true }} />
               </Column>
             </div>
           ),

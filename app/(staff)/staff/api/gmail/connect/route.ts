@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { backPath, GMAIL_CALLBACK_PATH, GMAIL_STATE_COOKIE } from "@/lib/gmail-connect";
+import { lettersInbox } from "@/lib/server/letters-inbox";
 import { gmailConsentUrl } from "@/lib/server/outside-services/gmail";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { siteUrl } from "@/lib/site-url";
@@ -15,7 +16,8 @@ export async function GET(request: NextRequest) {
   const state = randomBytes(24).toString("base64url");
   const back = backPath(request.nextUrl.searchParams.get("back"));
   const response = NextResponse.redirect(
-    gmailConsentUrl(email, siteUrl(GMAIL_CALLBACK_PATH, request).href, state),
+    // The letters inbox asks to label and trash its mail too (lib/server/letters-inbox-reading.ts, erasure).
+    gmailConsentUrl(email, siteUrl(GMAIL_CALLBACK_PATH, request).href, state, email === lettersInbox()),
     303,
   );
   response.cookies.set({

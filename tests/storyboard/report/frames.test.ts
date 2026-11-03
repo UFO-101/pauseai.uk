@@ -53,6 +53,15 @@ describe("pairRuns", () => {
     expect(board.summary).toEqual({ flows: 2, failed: 0, frames: 5, changed: 3 });
   });
 
+  it("keeps the story told before each frame, and after the last", async () => {
+    const told = run("login", ["form", "sent"]);
+    told.frames[1].story = ["She asks for a link."];
+    told.end = ["The link works once."];
+    const board = await pairRuns({ frames: [told] }, undefined, same);
+    expect(board.frames.map((f) => f.story)).toEqual([undefined, ["She asks for a link."]]);
+    expect(board.flows[0].end).toEqual(["The link works once."]);
+  });
+
   it("without a run of main, nothing is changed and nothing is compared", async () => {
     const board = await pairRuns({ frames: [run("login", ["form"])] }, undefined, async () => {
       throw new Error("not called");

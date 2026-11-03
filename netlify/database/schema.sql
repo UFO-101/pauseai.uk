@@ -264,7 +264,7 @@ CREATE TABLE public.letters (
     replied_at timestamp with time zone,
     kind text NOT NULL,
     CONSTRAINT letters_kind_check CHECK ((kind = ANY (ARRAY['supporter'::text, 'pauseai'::text]))),
-    CONSTRAINT letters_status_check CHECK (((status = ANY (ARRAY['sending'::text, 'sent'::text, 'not_sent'::text, 'bounced'::text, 'spam_complaint'::text])) OR ((kind = 'pauseai'::text) AND (status = ANY (ARRAY['scheduled'::text, 'cancelled'::text, 'skipped'::text])))))
+    CONSTRAINT letters_status_check CHECK (((status = ANY (ARRAY['sending'::text, 'sent'::text, 'not_sent'::text, 'bounced'::text, 'spam_complaint'::text])) OR ((kind = 'pauseai'::text) AND (status = ANY (ARRAY['scheduled'::text, 'cancelled'::text, 'skipped'::text]))) OR ((kind = 'supporter'::text) AND (status = 'queued'::text))))
 );
 
 --
@@ -276,11 +276,21 @@ CREATE TABLE public.letters_from_supporters (
     kind text DEFAULT 'supporter'::text NOT NULL,
     campaign text NOT NULL,
     subject text NOT NULL,
-    reply_hash text,
+    postmark_mailbox text,
     airtable_id text,
     entry_id bigint NOT NULL,
+    proxy_id bigint,
+    letter jsonb,
+    draft text,
+    draft_approximate boolean,
+    own_words real,
+    copy_state text,
+    CONSTRAINT letters_from_supporters_copy_state_check CHECK ((copy_state = ANY (ARRAY['queued'::text, 'sending'::text, 'sent'::text, 'held'::text]))),
+    CONSTRAINT letters_from_supporters_draft CHECK ((((draft IS NULL) = (draft_approximate IS NULL)) AND ((draft IS NULL) = (own_words IS NULL)) AND ((draft IS NULL) OR (proxy_id IS NOT NULL)))),
     CONSTRAINT letters_from_supporters_kind_check CHECK ((kind = 'supporter'::text)),
-    CONSTRAINT letters_from_supporters_reply_hash_check CHECK (((reply_hash IS NULL) = (airtable_id IS NOT NULL)))
+    CONSTRAINT letters_from_supporters_letter CHECK ((((proxy_id IS NULL) = (letter IS NULL)) AND ((proxy_id IS NULL) = (copy_state IS NULL)))),
+    CONSTRAINT letters_from_supporters_own_words_check CHECK (((own_words >= (0)::double precision) AND (own_words <= (1)::double precision))),
+    CONSTRAINT letters_from_supporters_sent_by CHECK ((num_nonnulls(postmark_mailbox, airtable_id, proxy_id) = 1))
 );
 
 --
@@ -1208,7 +1218,7 @@ CREATE TABLE public.email_sends (
     CONSTRAINT email_sends_check CHECK (((outcome = 'sent'::text) = (message_id IS NOT NULL))),
     CONSTRAINT email_sends_gmail_sender CHECK (((backend = 'postmark'::text) OR (sender IS NOT NULL))),
     CONSTRAINT email_sends_outcome_check CHECK ((outcome = ANY (ARRAY['sent'::text, 'refused'::text, 'failed'::text]))),
-    CONSTRAINT email_sends_purpose_check CHECK ((purpose = ANY (ARRAY['letter'::text, 'forwarded-reply'::text, 'staff-login'::text, 'staff-alert'::text, 'mailing'::text, 'mailing-test'::text]))),
+    CONSTRAINT email_sends_purpose_check CHECK ((purpose = ANY (ARRAY['letter'::text, 'forwarded-reply'::text, 'staff-login'::text, 'staff-alert'::text, 'mailing'::text, 'mailing-test'::text, 'letter-copy'::text, 'relay'::text, 'supporter-notice'::text, 'office-notice'::text, 'staff-report'::text]))),
     CONSTRAINT email_sends_sender_check CHECK ((sender = lower(sender)))
 );
 
@@ -1319,6 +1329,37 @@ ALTER TABLE public.letter_events ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTIT
 );
 
 --
+-- Name: letter_relays; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.letter_relays (
+    id bigint NOT NULL,
+    letter_id bigint NOT NULL,
+    reply_id bigint NOT NULL,
+    to_supporter boolean NOT NULL,
+    status text NOT NULL,
+    reason text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    sent_at timestamp with time zone,
+    rfc_message_id text,
+    CONSTRAINT letter_relays_check CHECK (((status <> ALL (ARRAY['sent'::text, 'bounced'::text])) OR (sent_at IS NOT NULL))),
+    CONSTRAINT letter_relays_status_check CHECK ((status = ANY (ARRAY['queued'::text, 'sending'::text, 'sent'::text, 'held'::text, 'bounced'::text, 'uncertain'::text])))
+);
+
+--
+-- Name: letter_relays_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.letter_relays ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.letter_relays_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
 -- Name: letter_replies; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1336,6 +1377,7 @@ CREATE TABLE public.letter_replies (
     from_us boolean NOT NULL,
     blob_key text NOT NULL,
     size integer NOT NULL,
+    from_supporter boolean DEFAULT false NOT NULL,
     CONSTRAINT letter_replies_account_check CHECK ((account = lower(account))),
     CONSTRAINT letter_replies_from_address_check CHECK ((from_address = lower(from_address))),
     CONSTRAINT letter_replies_size_check CHECK ((size >= 0))
@@ -1627,6 +1669,34 @@ CREATE TABLE public.politicians (
 );
 
 --
+-- Name: proxies; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.proxies (
+    id bigint NOT NULL,
+    tag text NOT NULL,
+    supporter_email text,
+    notable_person_id bigint,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT proxies_check CHECK ((num_nonnulls(supporter_email, notable_person_id) = 1)),
+    CONSTRAINT proxies_supporter_email_check CHECK ((supporter_email = lower(btrim(supporter_email)))),
+    CONSTRAINT proxies_tag_check CHECK ((tag ~ '^[a-z0-9]+(\.[a-z0-9]+)*$'::text))
+);
+
+--
+-- Name: proxies_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.proxies ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.proxies_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
 -- Name: staff_accounts; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1891,6 +1961,20 @@ ALTER TABLE ONLY public.letter_events
     ADD CONSTRAINT letter_events_pkey PRIMARY KEY (id);
 
 --
+-- Name: letter_relays letter_relays_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.letter_relays
+    ADD CONSTRAINT letter_relays_pkey PRIMARY KEY (id);
+
+--
+-- Name: letter_relays letter_relays_reply_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.letter_relays
+    ADD CONSTRAINT letter_relays_reply_id_key UNIQUE (reply_id);
+
+--
 -- Name: letter_replies letter_replies_account_gmail_message_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1947,11 +2031,11 @@ ALTER TABLE ONLY public.letters_from_supporters
     ADD CONSTRAINT letters_from_supporters_pkey PRIMARY KEY (id);
 
 --
--- Name: letters_from_supporters letters_from_supporters_reply_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: letters_from_supporters letters_from_supporters_postmark_mailbox_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.letters_from_supporters
-    ADD CONSTRAINT letters_from_supporters_reply_hash_key UNIQUE (reply_hash);
+    ADD CONSTRAINT letters_from_supporters_postmark_mailbox_key UNIQUE (postmark_mailbox);
 
 --
 -- Name: letters letters_id_kind_key; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2143,6 +2227,34 @@ ALTER TABLE ONLY public.postcode_places
     ADD CONSTRAINT postcode_places_pkey PRIMARY KEY (postcode);
 
 --
+-- Name: proxies proxies_notable_person_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.proxies
+    ADD CONSTRAINT proxies_notable_person_id_key UNIQUE (notable_person_id);
+
+--
+-- Name: proxies proxies_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.proxies
+    ADD CONSTRAINT proxies_pkey PRIMARY KEY (id);
+
+--
+-- Name: proxies proxies_supporter_email_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.proxies
+    ADD CONSTRAINT proxies_supporter_email_key UNIQUE (supporter_email);
+
+--
+-- Name: proxies proxies_tag_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.proxies
+    ADD CONSTRAINT proxies_tag_key UNIQUE (tag);
+
+--
 -- Name: staff_accounts staff_accounts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2314,6 +2426,18 @@ CREATE INDEX import_runs_job_at ON public.import_runs USING btree (job, at DESC,
 CREATE INDEX letter_events_letter_id ON public.letter_events USING btree (letter_id, at);
 
 --
+-- Name: letter_relays_letter; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX letter_relays_letter ON public.letter_relays USING btree (letter_id, created_at);
+
+--
+-- Name: letter_relays_waiting; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX letter_relays_waiting ON public.letter_relays USING btree (created_at) WHERE (status = 'queued'::text);
+
+--
 -- Name: letter_replies_letter; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2324,6 +2448,12 @@ CREATE INDEX letter_replies_letter ON public.letter_replies USING btree (letter_
 --
 
 CREATE INDEX letters_from_pauseai_mailing ON public.letters_from_pauseai USING btree (mailing_id);
+
+--
+-- Name: letters_from_supporters_proxy; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX letters_from_supporters_proxy ON public.letters_from_supporters USING btree (proxy_id);
 
 --
 -- Name: letters_notable_person; Type: INDEX; Schema: public; Owner: -
@@ -2553,6 +2683,20 @@ ALTER TABLE ONLY public.letter_events
     ADD CONSTRAINT letter_events_letter_id_fkey FOREIGN KEY (letter_id) REFERENCES public.letters(id) ON DELETE CASCADE;
 
 --
+-- Name: letter_relays letter_relays_letter_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.letter_relays
+    ADD CONSTRAINT letter_relays_letter_id_fkey FOREIGN KEY (letter_id) REFERENCES public.letters(id) ON DELETE CASCADE;
+
+--
+-- Name: letter_relays letter_relays_reply_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.letter_relays
+    ADD CONSTRAINT letter_relays_reply_id_fkey FOREIGN KEY (reply_id) REFERENCES public.letter_replies(id) ON DELETE CASCADE;
+
+--
 -- Name: letter_replies letter_replies_letter_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2593,6 +2737,13 @@ ALTER TABLE ONLY public.letters_from_supporters
 
 ALTER TABLE ONLY public.letters_from_supporters
     ADD CONSTRAINT letters_from_supporters_letter_fkey FOREIGN KEY (id, kind) REFERENCES public.letters(id, kind) ON DELETE CASCADE;
+
+--
+-- Name: letters_from_supporters letters_from_supporters_proxy_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.letters_from_supporters
+    ADD CONSTRAINT letters_from_supporters_proxy_id_fkey FOREIGN KEY (proxy_id) REFERENCES public.proxies(id);
 
 --
 -- Name: letters letters_notable_person_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2684,6 +2835,13 @@ ALTER TABLE ONLY public.notes
 
 ALTER TABLE ONLY public.politicians
     ADD CONSTRAINT politicians_notable_person_fkey FOREIGN KEY (id, kind) REFERENCES public.notable_people(id, kind) ON DELETE CASCADE;
+
+--
+-- Name: proxies proxies_notable_person_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.proxies
+    ADD CONSTRAINT proxies_notable_person_id_fkey FOREIGN KEY (notable_person_id) REFERENCES public.notable_people(id) ON DELETE CASCADE;
 
 --
 -- Name: supporter_links supporter_links_form_entry_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
