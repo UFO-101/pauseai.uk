@@ -70,6 +70,7 @@ describe("authenticated", () => {
     ).toBe(false);
     expect(authenticated(head(["mx.google.com; spf=fail smtp.mailfrom=example.org"]), "a@example.org")).toBe(false);
     expect(authenticated(head(["mx.google.com; spf=pass"]), "a@example.org")).toBe(false);
+    expect(authenticated(head(["mx.google.com; dkim=pass"]), "a@example.org")).toBe(false);
   });
 
   it("ignores any other server's results, which could be forged, and a message with none", () => {
@@ -117,8 +118,13 @@ describeWithDatabase("reading the letters inbox", () => {
   /** Reads Gmail as the hourly job does; gives the letters inbox's line of the run. */
   const read = async () => (await readGmail(NIGHTLY, REQUEST)).accounts.find((a) => a.account === LETTERS_INBOX)!;
 
-  /** The labels of the newest message in the letters inbox, by name. */
-  const labelsOfNewest = () => labelNames(lettersMailbox().messages.at(-1)!);
+  /** The labels, by name, of the newest message in the letters inbox but those it sent elsewhere, which are only in Sent. */
+  const labelsOfNewest = () =>
+    labelNames(
+      lettersMailbox()
+        .messages.filter((m) => labelNames(m).join() !== "SENT")
+        .at(-1)!,
+    );
   const { labels } = staffCopy.lettersInbox;
 
   const events = async (letterId: number) =>
@@ -237,8 +243,8 @@ describeWithDatabase("reading the letters inbox", () => {
   it("notes its own mail, and the supporter's copy coming back to the MP's proxy, without relaying either", async () => {
     await write();
     const sent = recordGmail();
-    // The copy is in the mailbox already, sent to the MP's proxy.
-    expect(lettersMailbox().messages).toHaveLength(1);
+    // The letter is in Sent, and the copy, sent to the MP's proxy, in the Inbox too.
+    expect(lettersMailbox().messages).toHaveLength(2);
     expect(await read()).toMatchObject({ replies: 0, relayed: 0, notUnderstood: [] });
     expect(sent).toEqual([]);
     expect(labelsOfNewest()).toEqual(["SENT", labels.noted].sort());
@@ -279,6 +285,82 @@ describeWithDatabase("reading the letters inbox", () => {
     expect(labelsOfNewest()).toEqual(["INBOX", labels.notUnderstood, "UNREAD"].sort());
     const [run] = await query<GmailReading>("SELECT job, status, result FROM import_runs ORDER BY id DESC LIMIT 1");
     expect(runStatus(run)).toBe("failed");
+  });
+
+  it("doesn't understand a stranger answering one of our emails at the plain address, or writing to the MP's proxy", async () => {
+    const letter = await write();
+    deliver({
+      from: "someone@example.com",
+      to: LETTERS_INBOX,
+      subject: "Re: Please back a pause",
+      inReplyTo: letter.letter!,
+    });
+    deliver({ from: "someone@example.com", to: MPS_PROXY, subject: "Hello MP" });
+    expect((await read()).notUnderstood!.map((m) => m.reason)).toEqual(["stranger", "stranger"]);
+  });
+
+  it("keeps and relays a message with no subject or Message-ID of its own", async () => {
+    await write();
+    deliverToLettersInbox(
+      [
+        "Authentication-Results: mx.google.com; dmarc=pass header.from=parliament.example",
+        `From: ${MP}`,
+        `To: ${JANES_PROXY}`,
+        "",
+        "Thanks.",
+      ].join("\r\n"),
+    );
+    const sent = recordGmail();
+    expect(await read()).toMatchObject({ relayed: 1 });
+    expect(await query("SELECT subject, rfc_message_id FROM letter_replies")).toEqual([
+      { subject: "", rfc_message_id: null },
+    ]);
+    expect(sent[0].headers.has("subject")).toBe(false);
+  });
+
+  it("searches the last few days of the letters inbox, Spam and Sent too, when its history has gone", async () => {
+    await write();
+    const { server } = await import("@/tests/fixtures/msw");
+    const { http, HttpResponse } = await import("msw");
+    let searched = "";
+    server.use(
+      http.get("https://gmail.googleapis.com/gmail/v1/users/me/history", () => HttpResponse.json({}, { status: 404 })),
+      http.get("https://gmail.googleapis.com/gmail/v1/users/me/messages", ({ request }) => {
+        searched = new URL(request.url).searchParams.get("q")!;
+        return HttpResponse.json({ messages: [] });
+      }),
+    );
+    expect(await read()).toMatchObject({ restarted: true });
+    expect(searched).toBe("in:anywhere newer_than:3d");
+  });
+
+  it("notes a bounce that's only delayed as soft, blocking nothing", async () => {
+    const letter = await write();
+    deliverToLettersInbox(
+      [
+        "From: postmaster@parliament.example",
+        `To: ${LETTERS_INBOX}`,
+        "Subject: Delayed",
+        'Content-Type: multipart/report; report-type=delivery-status; boundary="r"',
+        "",
+        "--r",
+        "Content-Type: message/delivery-status",
+        "",
+        "Reporting-MTA: dns; mx.parliament.example",
+        "",
+        "Final-Recipient: rfc822; test-mp@parliament.example",
+        "Action: delayed",
+        "Status: 4.4.1",
+        "--r",
+        "Content-Type: text/rfc822-headers",
+        "",
+        `Message-ID: <${letter.letter}>`,
+        "--r--",
+      ].join("\r\n"),
+    );
+    expect(await read()).toMatchObject({ bounces: 1 });
+    expect(await query("SELECT kind FROM email_problems")).toEqual([{ kind: "soft" }]);
+    expect(await query("SELECT address FROM email_blocks")).toEqual([]);
   });
 
   it("counts spam that matches no letter, and doesn't fail the run for it", async () => {

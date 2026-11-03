@@ -35,14 +35,16 @@ describe("the fake letters inbox", () => {
     await send(`To: jane@example.com\r\nCc: ${LETTERS_INBOX}\r\nSubject: Cc\r\n\r\nHi`);
     // Another account's mail to it isn't the letters inbox's own: it's delivered from outside, in a test.
     await send(`To: ${LETTERS_INBOX}\r\nSubject: From Jo\r\n\r\nHi`, undefined, "jo@pauseai.uk");
-    expect(lettersMailbox().messages.map((m) => m.id)[0]).toBe(id);
-    expect(lettersMailbox().messages).toHaveLength(2);
-    expect(labelNames(lettersMailbox().messages[0])).toEqual(["INBOX", "SENT", "UNREAD"]);
-    expect(await gmail("/history?startHistoryId=1001").json()).toEqual({
-      historyId: "1002",
-      history: [{ id: "1002", messagesAdded: [{ message: { id: lettersMailbox().messages[1].id } }] }],
+    // What it sent is kept, in Sent, and what it sent to itself in the Inbox too.
+    const kept = lettersMailbox().messages;
+    expect(kept).toHaveLength(3);
+    expect(kept[1].id).toBe(id);
+    expect(kept.map(labelNames)).toEqual([["SENT"], ["INBOX", "SENT", "UNREAD"], ["INBOX", "SENT", "UNREAD"]]);
+    expect(await gmail("/history?startHistoryId=1002").json()).toEqual({
+      historyId: "1003",
+      history: [{ id: "1003", messagesAdded: [{ message: { id: kept[2].id } }] }],
     });
-    expect(await gmail("/history?startHistoryId=1002").json()).toEqual({ historyId: "1002" });
+    expect(await gmail("/history?startHistoryId=1003").json()).toEqual({ historyId: "1003" });
   });
 
   it("serves a message's headers asked for, and whole; labels it, makes labels, and trashes it", async () => {
@@ -101,7 +103,7 @@ describe("the fake letters inbox", () => {
 
   it("knows no letters inbox where LETTERS_INBOX isn't set", async () => {
     vi.stubEnv("LETTERS_INBOX", "");
-    await send(`To: ${LETTERS_INBOX}\r\n\r\nHi`, undefined, "jo@pauseai.uk");
+    await send(`To: ${LETTERS_INBOX}\r\n\r\nHi`, undefined, LETTERS_INBOX);
     expect(lettersMailbox().messages).toEqual([]);
   });
 });

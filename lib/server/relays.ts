@@ -116,11 +116,7 @@ export async function sendRelay(relayId: number): Promise<{ sent: boolean; reaso
           : []),
       ]),
   });
-  if (!result.sent && result.reason === "blocked") {
-    await setStatus(relayId, "held", "blocked");
-    await relayEvent(relayId, "relay_held", { to, reason: "blocked" });
-    return { sent: false, reason: "blocked" };
-  }
+  // A block found only as it went is one the next try finds first.
   if (!result.sent) return requeue(relayId, to, "failed", relay.reason);
   await query(
     "UPDATE letter_relays SET status = 'sent', reason = NULL, sent_at = now(), rfc_message_id = $2 WHERE id = $1",
@@ -158,19 +154,10 @@ export async function uncertainRelays(): Promise<number> {
   return left.length;
 }
 
-/**
- * After a bounce: marks the relay of the email that bounced, if it was a
- * relay to the MP, bounced, and tells the supporter.
- */
-export async function relayBounced(rfcMessageId: string | null): Promise<void> {
-  const [relayRow] = await query<{ id: number; letterId: number }>(
-    `UPDATE letter_relays SET status = 'bounced' WHERE rfc_message_id = $1 AND NOT to_supporter
-     RETURNING id::int AS id, letter_id::int AS "letterId"`,
-    [rfcMessageId],
-  );
-  if (!relayRow) return;
-  await relayEvent(relayRow.id, "relay_bounced");
-  await noticeToSender(relayRow.letterId, "bounced");
+/** After a bounce of relay `relayId` to the MP: marks it bounced, and tells the supporter. */
+export async function relayBounced(relayId: number, letterId: number): Promise<void> {
+  await setStatus(relayId, "bounced");
+  await noticeToSender(letterId, "bounced");
 }
 
 /**

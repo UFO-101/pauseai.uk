@@ -202,7 +202,7 @@ describe("SupporterLetterThread", () => {
     expect(answer.element().textContent).toContain(
       `${copy.headers.to}Testy McTestface MP <testy.mctestface.mp@parliament.uk>`,
     );
-    await expect.element(page.getByRole("radiogroup", { name: staffCopy.letterChanges.label })).toBeVisible();
+    await expect.element(page.getByRole("button", { name: staffCopy.letterChanges.asSent })).toBeVisible();
   });
 
   it("a message whose text can't be read says so", async () => {
@@ -357,29 +357,40 @@ describe("AskForm", () => {
 
 describe("LetterChanges", () => {
   const words = staffCopy.letterChanges;
-  const draft = "Dear MP,\n\nPlease act now.\n\nJane";
-  const sent = "Dear MP,\n\nPlease act. I live here.\n\nJane";
+  const draft = "Dear MP,\n\nOne.\n\nPlease act now.\n\nTwo.\n\nThree.\n\nJane";
+  const sent = "Dear MP,\n\nOne.\n\nPlease act. I live here.\n\nTwo.\n\nThree.\n\nJane";
 
-  it("shows what the supporter added and cut, then the letter as sent, then the starting draft", async () => {
+  it("shows only what changed, the paragraphs left alone folded, a click unfolding them", async () => {
     const { container } = await render(<LetterChanges sent={sent} draft={draft} approximate={false} />);
-    await expect
-      .element(page.getByRole("radio", { name: words.views.changes }))
-      .toHaveAttribute("aria-checked", "true");
-    expect([...container.querySelectorAll("ins")].map((e) => e.textContent)).toEqual(["act. I live here.\n\n"]);
-    expect([...container.querySelectorAll("del")].map((e) => e.textContent)).toEqual(["act now.\n\n"]);
-    await expect.element(page.getByText(words.approximate)).not.toBeInTheDocument();
-    await page.getByRole("radio", { name: words.views.sent }).click();
-    expect(container.querySelector("ins")).toBeNull();
-    await expect.element(page.getByText("I live here.", { exact: false })).toBeVisible();
-    await page.getByRole("radio", { name: words.views.draft }).click();
-    await expect.element(page.getByText("Please act now.", { exact: false })).toBeVisible();
+    await expect.element(page.getByText(words.intro)).toBeVisible();
+    expect([...container.querySelectorAll("ins")].map((e) => e.textContent)).toEqual(["act. I live here."]);
+    expect([...container.querySelectorAll("del")].map((e) => e.textContent)).toEqual(["act now."]);
+    const folds = page.getByRole("button", { name: words.folded(2) });
+    expect(folds.all()).toHaveLength(2);
+    await expect.element(page.getByRole("button", { name: words.folded(1) })).toBeVisible();
+    await expect.element(page.getByText("Two.", { exact: false })).not.toBeInTheDocument();
+    await folds.last().click();
+    await expect.element(page.getByText("Two.\n\nThree.")).toBeVisible();
+    expect(page.getByRole("button", { name: words.folded(2) }).all()).toHaveLength(1);
   });
 
-  it("says a draft is approximate, and with none kept shows the letter alone", async () => {
+  it("shows the letter as sent, and back", async () => {
+    const { container } = await render(<LetterChanges sent={sent} draft={draft} approximate={false} />);
+    const asSent = page.getByRole("button", { name: words.asSent });
+    await asSent.click();
+    await expect.element(asSent).toHaveAttribute("aria-pressed", "true");
+    expect(container.querySelector("ins")).toBeNull();
+    await expect.element(page.getByText(sent)).toBeVisible();
+    await asSent.click();
+    expect(container.querySelector("ins")).not.toBeNull();
+  });
+
+  it("says a draft is approximate, a letter sent as drafted, and with none kept shows the letter alone", async () => {
     await render(<LetterChanges sent={sent} draft={draft} approximate />);
     await expect.element(page.getByText(words.approximate)).toBeVisible();
+    await render(<LetterChanges sent={draft} draft={draft} approximate={false} />);
+    await expect.element(page.getByText(words.unchanged)).toBeVisible();
     const { container } = await render(<LetterChanges sent={sent} draft={null} approximate={false} />);
     expect(container.textContent).toBe(sent);
-    expect(container.querySelector('[role="radiogroup"]')).toBeNull();
   });
 });

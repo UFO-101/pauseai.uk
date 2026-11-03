@@ -162,6 +162,61 @@ describeWithDatabase("the letters inbox's queue", () => {
     expect(await query("SELECT copy_state FROM letters_from_supporters")).toEqual([{ copy_state: "sent" }]);
   });
 
+  it("stops the queue while the letters inbox can't send, leaving relays, letters and copies waiting", async () => {
+    const id = await replied();
+    await query("UPDATE letter_relays SET status = 'queued'");
+    await query("UPDATE letters_from_supporters SET copy_state = 'queued'");
+    await disconnect();
+    await submitLetter({ ...FORM, email: "sam@example.com", name: "Sam Smith" });
+    expect(await sendLetterQueue(Date.now() + 10_000)).toEqual({ sent: 0, left: 3 });
+    // A relay that can't go, as its address is blocked, isn't counted as sent.
+    await connectTestGmail(LETTERS_INBOX);
+    await block(JANE);
+    expect(await sendLetterQueue(Date.now() + 10_000)).toMatchObject({ sent: 1 });
+    expect(await query("SELECT status FROM letter_relays")).toEqual([{ status: "held" }]);
+    void id;
+  });
+
+  it("holds a relay to an MP with no address, and sends one with nothing to thread it on all the same", async () => {
+    const id = await replied();
+    deliverToLettersInbox(testMail({ from: JANE, to: testProxy("testy.mctestface.mp"), text: "Thanks\r\n" }));
+    await query("UPDATE notable_people SET email = NULL");
+    await readGmail("test");
+    expect(await query("SELECT status FROM letter_relays WHERE NOT to_supporter")).toEqual([{ status: "held" }]);
+    await query("UPDATE notable_people SET email = $1", [MP]);
+    await query("DELETE FROM email_sends WHERE purpose = 'letter'");
+    await query("UPDATE letter_relays SET status = 'queued' WHERE NOT to_supporter");
+    const sent = recordGmail();
+    const [{ relayId }] = await query<{ relayId: number }>(
+      'SELECT id::int AS "relayId" FROM letter_relays WHERE NOT to_supporter',
+    );
+    expect(await sendRelay(relayId)).toEqual({ sent: true });
+    expect(sent[0].headers.has("in-reply-to")).toBe(false);
+    void id;
+  });
+
+  it("tells the supporter nothing has gone again while it can't go", async () => {
+    const id = await replied();
+    await query("UPDATE letters SET status = 'bounced'");
+    await query("INSERT INTO letter_events (letter_id, status, details) VALUES ($1, 'notice', $2)", [
+      id,
+      JSON.stringify({ to: JANE, notice: "bounced" }),
+    ]);
+    await disconnect();
+    await resendAfterFix({
+      politicianId: (await query<{ id: number }>("SELECT id::int AS id FROM notable_people"))[0].id,
+    });
+    expect(await statusOf()).toBe("queued");
+    expect((await events()).filter((e) => e.status === "notice")).toHaveLength(1);
+  });
+
+  it("sends no notice when Gmail refuses it", async () => {
+    await submitLetter(FORM);
+    const id = (await query<{ id: number }>("SELECT id::int AS id FROM letters"))[0].id;
+    recordGmail(() => HttpResponse.json({ error: { code: 500 } }, { status: 500 }));
+    expect(await noticeToSender(id, "bounced")).toBe(false);
+  });
+
   it("sends no notice while the letters inbox can't, nor for a letter that's gone", async () => {
     await submitLetter(FORM);
     const id = (await query<{ id: number }>("SELECT id::int AS id FROM letters"))[0].id;
@@ -303,7 +358,7 @@ describeWithDatabase("the letters inbox's queue", () => {
       expect(await query("SELECT status FROM letter_relays WHERE NOT to_supporter")).toEqual([{ status: "bounced" }]);
       expect(sent.map((s) => s.headers.get("to"))).toEqual([JANE]);
       expect(sent[0].text).toBe(copy.notices.bounced("Testy McTestface MP"));
-      expect((await events()).slice(-3).map((e) => e.status)).toEqual(["relay_bounced", "relay_bounced", "notice"]);
+      expect((await events()).slice(-3).map((e) => e.status)).toEqual(["relayed", "relay_bounced", "notice"]);
       expect(await query("SELECT count(*)::int AS n FROM email_sends WHERE purpose = 'staff-alert'")).toEqual([
         { n: 1 },
       ]);
@@ -342,6 +397,16 @@ describeWithDatabase("the letters inbox's queue", () => {
         details: { email: JANE, reason: "No such user" },
       });
       expect(await query("SELECT address FROM email_blocks")).toEqual([{ address: JANE }]);
+    });
+
+    it("a letter that bounced goes again once its MP's address is unblocked, and the supporter is told", async () => {
+      await submitLetter(FORM);
+      await bounce(await sentId("letter"), MP);
+      expect(await statusOf()).toBe("bounced");
+      const sent = recordGmail();
+      expect(await unblock(MP, "staff@pauseai.uk", "Their office gave us the right address")).toBe(true);
+      expect(sent.map((s) => s.headers.get("to"))).toEqual([`"Testy McTestface MP" <${MP}>`, JANE]);
+      expect(await statusOf()).toBe("sent");
     });
 
     it("tells the supporter only of a hard bounce of the letter, not a soft one or a complaint", async () => {

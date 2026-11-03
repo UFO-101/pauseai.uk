@@ -1,23 +1,38 @@
 "use client";
 
 import { useState } from "react";
-import { Segmented } from "@/components/ui/Controls";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { wordDiff } from "@/lib/letter-changes";
+import { changeBlocks, type Change } from "@/lib/letter-changes";
 import styles from "./LetterChanges.module.css";
 
 const copy = staffCopy.letterChanges;
 
-type View = "changes" | "sent" | "draft";
+/** A run of changes, what was added marked and what was cut struck through. */
+function Changes({ changes }: { changes: Change[] }) {
+  return (
+    <div className={styles.changed}>
+      {changes.map((change, i) =>
+        change.kind === "added" ? (
+          <ins key={i}>{change.text}</ins>
+        ) : change.kind === "removed" ? (
+          <del key={i}>{change.text}</del>
+        ) : (
+          <span key={i}>{change.text}</span>
+        ),
+      )}
+    </div>
+  );
+}
 
 /**
- * A supporter's letter as they sent it, against the draft the campaign
- * gave them, word by word, with a switch above it: the changes (the
- * default: what they added marked, what they cut struck through), the
- * letter as sent, or the starting draft. A draft rebuilt after a deploy
- * changed the campaign's text is said to be approximate. With no draft
- * kept, the letter alone.
+ * A supporter's letter as the changes they made to the draft the campaign
+ * gave them: each paragraph they changed, added or cut, word by word, and
+ * between them, the paragraphs they left alone, folded to a line saying
+ * how many, which a click unfolds, as the campaign's text is known already.
+ * A button above shows the letter as sent instead, and back. A draft
+ * rebuilt after a deploy changed the campaign's text is said to be
+ * approximate. With no draft kept, the letter alone.
  */
 export default function LetterChanges({
   sent,
@@ -28,36 +43,36 @@ export default function LetterChanges({
   draft: string | null;
   approximate: boolean;
 }) {
-  const [view, setView] = useState<View>("changes");
+  const [asSent, setAsSent] = useState(false);
+  const [unfolded, setUnfolded] = useState<number[]>([]);
   if (draft === null) return <div className={styles.text}>{sent}</div>;
+  const blocks = changeBlocks(draft, sent);
+  const unchanged = !blocks.some((block) => block.kind === "changed");
   return (
     <div className={styles.changes}>
-      {approximate && <Muted>{copy.approximate}</Muted>}
-      <Segmented<View>
-        label={copy.label}
-        value={view}
-        onChange={setView}
-        options={[
-          { value: "changes", label: copy.views.changes },
-          { value: "sent", label: copy.views.sent },
-          { value: "draft", label: copy.views.draft },
-        ]}
-      />
-      <div className={styles.text}>
-        {view === "sent"
-          ? sent
-          : view === "draft"
-            ? draft
-            : wordDiff(draft, sent).map((change, i) =>
-                change.kind === "added" ? (
-                  <ins key={i}>{change.text}</ins>
-                ) : change.kind === "removed" ? (
-                  <del key={i}>{change.text}</del>
-                ) : (
-                  <span key={i}>{change.text}</span>
-                ),
-              )}
+      <div className={styles.bar}>
+        <Muted>{unchanged ? copy.unchanged : approximate ? copy.approximate : copy.intro}</Muted>
+        <button type="button" className={styles.toggle} aria-pressed={asSent} onClick={() => setAsSent(!asSent)}>
+          {copy.asSent}
+        </button>
       </div>
+      {asSent ? (
+        <div className={styles.text}>{sent}</div>
+      ) : (
+        blocks.map((block, i) =>
+          block.kind === "changed" ? (
+            <Changes key={i} changes={block.changes} />
+          ) : unfolded.includes(i) ? (
+            <div key={i} className={styles.text}>
+              {block.paragraphs.join("\n\n")}
+            </div>
+          ) : (
+            <button key={i} type="button" className={styles.fold} onClick={() => setUnfolded([...unfolded, i])}>
+              {copy.folded(block.paragraphs.length)}
+            </button>
+          ),
+        )
+      )}
     </div>
   );
 }

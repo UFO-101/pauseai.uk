@@ -373,6 +373,10 @@ describeWithDatabase("a letter for its page", () => {
         }),
       ],
     });
+    // Where the letters inbox isn't set, in a mailbox we don't know.
+    vi.stubEnv("LETTERS_INBOX", "");
+    expect((await getSupporterLetter(id))!.gmail).toMatchObject({ mailbox: null });
+    vi.stubEnv("LETTERS_INBOX", LETTERS_INBOX);
     // Before it's sent, nothing to find it by.
     await query(
       "UPDATE email_sends SET outcome = 'failed', message_id = NULL, rfc_message_id = NULL WHERE purpose = 'letter'",

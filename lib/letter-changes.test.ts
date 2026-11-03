@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { draftHash, ownWords, wordDiff } from "./letter-changes";
+import { changeBlocks, draftHash, ownWords, wordDiff } from "./letter-changes";
 
 describe("draftHash", () => {
   it("is the same for the same text, and another for any change", () => {
@@ -41,5 +41,47 @@ describe("ownWords", () => {
     expect(ownWords("one two three", "one two three four")).toBe(0.25);
     expect(ownWords("one two", "five six")).toBe(1);
     expect(ownWords("one", "")).toBe(0);
+  });
+});
+
+describe("changeBlocks", () => {
+  it("gives each run of changed, added or cut paragraphs word by word, and runs of those left alone", () => {
+    expect(
+      changeBlocks(
+        "Dear MP,\n\nOne.\n\nTwo two.\n\nThree.\n\nMeet me.\n\nJane",
+        "Dear MP,\n\n One.\n\nTwo two, really.\n\nThree.\n\nMine.\n\n\nNew too.\n\nJane",
+      ),
+    ).toEqual([
+      { kind: "unchanged", paragraphs: ["Dear MP,", "One."] },
+      {
+        kind: "changed",
+        changes: [
+          { kind: "same", text: "Two " },
+          { kind: "added", text: "two, really." },
+          { kind: "removed", text: "two." },
+        ],
+      },
+      { kind: "unchanged", paragraphs: ["Three."] },
+      {
+        kind: "changed",
+        changes: [
+          { kind: "added", text: "Mine.\n\nNew too." },
+          { kind: "removed", text: "Meet me." },
+        ],
+      },
+      { kind: "unchanged", paragraphs: ["Jane"] },
+    ]);
+  });
+
+  it("gives a letter sent as drafted as one unchanged run, and what was only added or only cut, at either end", () => {
+    expect(changeBlocks("A\n\nB", "A\n\nB")).toEqual([{ kind: "unchanged", paragraphs: ["A", "B"] }]);
+    expect(changeBlocks("A", "A\n\nB")).toEqual([
+      { kind: "unchanged", paragraphs: ["A"] },
+      { kind: "changed", changes: [{ kind: "added", text: "B" }] },
+    ]);
+    expect(changeBlocks("A\n\nB", "B")).toEqual([
+      { kind: "changed", changes: [{ kind: "removed", text: "A" }] },
+      { kind: "unchanged", paragraphs: ["B"] },
+    ]);
   });
 });

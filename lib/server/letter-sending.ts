@@ -159,7 +159,8 @@ async function sendTaken(id: number): Promise<{ sent: true } | { sent: false; re
     id,
     { backend: lettersBackend() },
   );
-  if (!result.sent) return requeue(id, result.reason === "blocked" ? "blocked" : "failed");
+  // A block found only as it went is one the next try finds first.
+  if (!result.sent) return requeue(id, "failed");
   await query("UPDATE letters SET status = 'sent', sent_at = now() WHERE id = $1", [id]);
   await letterEvent(id, "sent", { from, to: letter.mpEmail, messageId: result.messageId });
   await sendCopy(id);
@@ -253,6 +254,19 @@ async function resendToChangedAddresses(): Promise<void> {
   for (const { id } of changed) await resendAfterFix({ politicianId: id });
 }
 
+/**
+ * Sends each of `ids` in turn with `send`, while it's before `until` and the
+ * letters inbox has room for `room` more. Returns how many `send` says went.
+ */
+async function drain(ids: number[], until: number, room: number, send: (id: number) => Promise<boolean>) {
+  let sent = 0;
+  for (const id of ids) {
+    if (Date.now() >= until || (await cannotSend(room))) break;
+    if (await send(id)) sent++;
+  }
+  return sent;
+}
+
 /** What a run through the queue sent, and what's left in it. */
 export type LetterQueueRun = { sent: number; left: number };
 
@@ -267,31 +281,20 @@ export type LetterQueueRun = { sent: number; left: number };
 export async function sendLetterQueue(until: number): Promise<LetterQueueRun> {
   await uncertainRelays();
   await resendToChangedAddresses();
-  let sent = 0;
-  const relays = await query<{ id: number }>(
-    "SELECT id::int AS id FROM letter_relays WHERE status = 'queued' ORDER BY created_at, id",
-  );
-  for (const { id } of relays) {
-    if (Date.now() >= until || (await cannotSend(1))) break;
-    if ((await sendRelay(id)).sent) sent++;
-  }
-  const letters = await query<{ id: number }>(
+  const ids = async (sql: string) => (await query<{ id: number }>(sql)).map((row) => row.id);
+  const relays = await ids("SELECT id::int AS id FROM letter_relays WHERE status = 'queued' ORDER BY created_at, id");
+  let sent = await drain(relays, until, 1, async (id) => (await sendRelay(id)).sent);
+  const letters = await ids(
     `SELECT l.id::int AS id FROM letters l JOIN letters_from_supporters s USING (id) JOIN notable_people n ON n.id = l.notable_person_id
      WHERE l.status = 'queued' AND n.email IS NOT NULL
        AND NOT EXISTS (SELECT 1 FROM email_blocks b WHERE b.address = lower(n.email))
      ORDER BY l.created_at, l.id`,
   );
-  for (const { id } of letters) {
-    if (Date.now() >= until || (await cannotSend(2))) break;
-    if ((await sendLetter(id)).sent) sent++;
-  }
-  const copies = await query<{ id: number }>(
+  sent += await drain(letters, until, 2, async (id) => (await sendLetter(id)).sent);
+  const copies = await ids(
     "SELECT s.id::int AS id FROM letters_from_supporters s JOIN letters l USING (id) WHERE s.copy_state = 'queued' AND l.status = 'sent' ORDER BY s.id",
   );
-  for (const { id } of copies) {
-    if (Date.now() >= until || (await cannotSend(1))) break;
-    await sendCopy(id);
-  }
+  await drain(copies, until, 1, async (id) => (await sendCopy(id), false));
   const [{ left }] = await query<{ left: number }>(
     `SELECT (SELECT count(*) FROM letter_relays WHERE status = 'queued')
        + (SELECT count(*) FROM letters WHERE status = 'queued')

@@ -322,6 +322,12 @@ test("Over the daily limit: the letter waits, then goes after a relay that was w
   await readInbox(request);
   expect(sentIds(flowDatabase, janes, "relay")).toHaveLength(1);
 
+  expect(
+    runSql(
+      flowDatabase,
+      `SELECT count(*) FROM email_sends WHERE sender = '${LETTERS_INBOX}' AND outcome = 'sent' AND at > now() - interval '1 day'`,
+    ),
+  ).toEqual(["1950"]);
   const sam = madeUpAddress("Sam Smith", 39);
   await fakeTurnstile(page);
   await lookUpTestMp(page, BASE, TEST_MPS[0], "Sam Smith");
@@ -347,7 +353,7 @@ test("Over the daily limit: the letter waits, then goes after a relay that was w
   await frame(page, "the next hour: Jane's waiting relay went first, then Sam's letter and his copy");
 });
 
-test("Jane adds her own words and cuts a sentence: the letter's page shows the changes, as sent, and the draft", async ({
+test("Jane adds her own words and cuts a sentence: the letter's page shows only what she changed", async ({
   page,
   flowDatabase,
 }) => {
@@ -368,17 +374,23 @@ test("Jane adds her own words and cuts a sentence: the letter's page shows the c
   await logIn(page, flowDatabase, ["supporters"]);
   await openLetter(page, letterIdOf(flowDatabase, sender));
 
+  const words = staffCopy.letterChanges;
   const letter = page.getByRole("article").first();
   await expect(letter.locator("ins")).toContainText("My children ask me about AI");
   await expect(letter.locator("del")).toContainText("arrange a short meeting");
-  await frame(page, "the letter's page: what Jane added, highlighted, and what she cut, struck through");
-  await page.getByRole("radio", { name: staffCopy.letterChanges.views.sent }).click();
+  // The campaign's paragraphs she left alone, folded.
+  await expect(letter).not.toContainText("national security");
+  await frame(page, "the letter's page: only what Jane changed, the campaign's paragraphs she left alone folded");
+  await letter
+    .getByRole("button", { name: /unchanged/ })
+    .first()
+    .click();
+  await expect(letter).toContainText("national security");
+  await frame(page, "a fold clicked: the paragraphs she left alone, unfolded");
+  await letter.getByRole("button", { name: words.asSent }).click();
   await expect(letter).not.toContainText("arrange a short meeting");
-  await frame(page, "as sent: what the MP got");
-  await page.getByRole("radio", { name: staffCopy.letterChanges.views.draft }).click();
-  await expect(letter).toContainText("arrange a short meeting");
-  await expect(letter).not.toContainText("My children ask me");
-  await frame(page, "the starting draft: the campaign's text as Jane was given it");
+  await expect(letter.locator("ins")).toHaveCount(0);
+  await frame(page, "Show as sent: the letter as the MP got it");
 });
 
 /** Postmark's inbound webhook, as it posts an email to an old letter's own address; gives how many it was forwarded to. */

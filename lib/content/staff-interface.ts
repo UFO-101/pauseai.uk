@@ -1371,12 +1371,15 @@ export const staffCopy = {
   },
   // A supporter's letter on its page: what they changed in the draft the campaign gave them.
   letterChanges: {
-    label: "⁂ Show the letter",
-    views: { changes: "⁂ Changes", sent: "⁂ As sent", draft: "⁂ Starting draft" },
-    // Above the switch, when the campaign's text changed between opening the form and sending.
-    approximate: "⁂ The starting draft is approximate: the campaign's letter changed while this one was being written.",
-    // In the letters list, the share of the letter that's the supporter's own words.
-    ownWords: (share: number) => `⁂ ${Math.round(share * 100)}% own words`,
+    // Above the changes.
+    intro: "⁂ What the supporter changed in the campaign's letter:",
+    approximate:
+      "⁂ What the supporter changed, against an approximate draft: the campaign's letter changed while this one was being written.",
+    unchanged: "⁂ Sent as the campaign drafted it.",
+    // Toggles to the letter as the MP got it, and back.
+    asSent: "⁂ Show as sent",
+    // In place of paragraphs left as they were; a click unfolds them.
+    folded: (n: number) => (n === 1 ? "⁂ 1 paragraph unchanged" : `⁂ ${n} paragraphs unchanged`),
   },
   // The letters inbox, which supporters' letters to MPs go from (lib/server/letters-inbox-reading.ts).
   lettersInbox: {

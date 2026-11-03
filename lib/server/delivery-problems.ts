@@ -86,8 +86,8 @@ async function alertStaff(mpName: string, problem: DeliveryProblem, request: Req
  * only noted, as Gmail keeps trying.
  */
 const relayProblem: Hook = async ({ letterId, rfcMessageId }, problem, request) => {
-  const [toMp] = await query<{ mpName: string }>(
-    `SELECT n.name AS "mpName" FROM letter_relays r JOIN letters l ON l.id = r.letter_id
+  const [toMp] = await query<{ id: number; mpName: string }>(
+    `SELECT r.id::int AS id, n.name AS "mpName" FROM letter_relays r JOIN letters l ON l.id = r.letter_id
        JOIN notable_people n ON n.id = l.notable_person_id
      WHERE r.rfc_message_id = $1 AND NOT r.to_supporter`,
     [rfcMessageId],
@@ -97,7 +97,7 @@ const relayProblem: Hook = async ({ letterId, rfcMessageId }, problem, request) 
     reason: problem.reason,
   });
   if (!toMp || problem.kind === "soft") return;
-  await relayBounced(rfcMessageId);
+  await relayBounced(toMp.id, letterId!);
   await alertStaff(toMp.mpName, problem, request);
 };
 

@@ -1,6 +1,5 @@
 import "server-only";
 import { fixtureResponse } from "@/tests/fixtures/outside-services";
-import { flowDatabase } from "../flow-database";
 
 /**
  * fetch() for calls to outside services (Luma, Airtable, postcodes.io, ...). With
@@ -11,6 +10,8 @@ import { flowDatabase } from "../flow-database";
 export async function outsideFetch(url: string, init?: RequestInit): Promise<Response> {
   if (process.env.DATA_FIXTURES === "1") {
     // The storyboard flow's database, for the fakes that keep what they're sent, one set each flow.
+    // Imported here, so a component that renders on fixture data in the browser doesn't load it.
+    const { flowDatabase } = await import("../flow-database");
     return fixtureResponse(url, init, await flowDatabase()) ?? new Response("No fixture for this URL", { status: 404 });
   }
   return fetch(url, init);

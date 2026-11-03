@@ -184,8 +184,8 @@ describeWithDatabase("eraseSupporter", () => {
       expect(await letterReply(key)).toBeUndefined();
       // Only the letter's own send stays, without its letter; the copy, the relay and the rest go.
       expect(await query("SELECT purpose FROM email_sends ORDER BY id")).toEqual([{ purpose: "letter" }]);
-      // In the letters inbox, the office's reply, and her copy, which came back to the MP's proxy, are in Trash.
-      expect(lettersMailbox().messages.map((m) => m.labels.has("TRASH"))).toEqual([true, true]);
+      // In the letters inbox, all of it is in Trash: what was sent, and the office's reply.
+      expect(lettersMailbox().messages.every((m) => m.labels.has("TRASH"))).toBe(true);
     });
 
     it("is done all the same when the letters inbox can't be reached, saying so", async () => {

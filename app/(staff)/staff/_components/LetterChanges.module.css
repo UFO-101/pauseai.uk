@@ -1,25 +1,67 @@
-/* The switch over the letter, and any note above it, a step apart. */
+/* The note and the button over the letter, then each block, a step apart. */
 .changes {
   display: grid;
   gap: var(--space-3);
-  justify-items: start;
 }
 
-/* The letter's text as it was written: its line breaks kept. */
-.text {
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+/* A letter's text as it was written: its line breaks kept. */
+.text,
+.changed {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
 /* What the supporter added: tinted, as a highlighter would. */
-.text ins {
+.changed ins {
   background: var(--status-green-bg);
   color: var(--status-green);
   text-decoration: none;
 }
 
-/* What they cut: struck through, and fainter. */
-.text del {
+/* What they cut: struck through, and tinted. */
+.changed del {
   background: var(--status-red-bg);
   color: var(--status-red);
+}
+
+/* Paragraphs left as they were, folded: a dashed line across the letter
+   saying how many, which unfolds them. */
+.fold {
+  padding: var(--space-1) var(--space-2);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.fold:hover {
+  color: var(--text);
+}
+
+/* Show as sent: a quiet button, pressed while it's showing. */
+.toggle {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-strong);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.toggle[aria-pressed="true"] {
+  font-weight: 600;
 }

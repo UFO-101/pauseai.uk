@@ -25,7 +25,7 @@ import parliamentMembers from "./parliament-members.json";
 import controlaiLetter from "./controlai-letter.json";
 import stripeCheckoutSessions from "./stripe-checkout-sessions.json";
 import stripePaymentIntents from "./stripe-payment-intents.json";
-import { deliverSent, historyIdOf, lettersInboxResponse, lettersMailbox } from "./letters-inbox";
+import { historyIdOf, keepSent, lettersInboxResponse, lettersMailbox } from "./letters-inbox";
 
 /** A UUID-shaped id that depends only on `text`. */
 function fixtureUuid(text: string): string {
@@ -336,8 +336,8 @@ function googleResponse(
     const id = fixtureUuid(String(init!.body)).replace(/-/g, "").slice(0, 16);
     const raw = Buffer.from((JSON.parse(String(init!.body)) as { raw: string }).raw, "base64url").toString();
     SENT_GMAIL.set(id, /^Message-ID: *(.+)$/im.exec(raw)?.[1].trim() ?? "");
-    // The letters inbox's mail to one of its own addresses comes back to it, as the supporter's copy does.
-    if (letters && toLettersInbox(raw)) deliverSent(raw, id, scope);
+    // The letters inbox keeps what it sent; mail to one of its own addresses, as the supporter's copy is, comes back to it.
+    if (letters) keepSent(raw, id, toLettersInbox(raw), scope);
     return json({ id, threadId: id, labelIds: ["SENT"] });
   }
   // An email it sent, by its headers: the Message-ID it was sent with, kept as it was.

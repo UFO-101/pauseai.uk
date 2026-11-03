@@ -1365,7 +1365,8 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/LetterChanges.tsx",
       variants: [
         {
-          label: "What the supporter added and cut, the letter as sent, or the starting draft; the switch on Changes",
+          label:
+            "Only what the supporter changed in a long letter, the paragraphs they left alone folded; Show as sent above",
           render: () => (
             <StaffPage as="div">
               <LetterChanges
@@ -1377,7 +1378,7 @@ export const staff: Group = {
           ),
         },
         {
-          label: "An approximate draft, said so above the switch",
+          label: "An approximate draft, said so above the changes",
           render: () => (
             <StaffPage as="div">
               <LetterChanges

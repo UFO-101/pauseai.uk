@@ -155,10 +155,10 @@ async function chooseLetter(
   letters: number[],
   account: string,
   message: GmailMessageHeaders,
+  subject: string,
 ): Promise<{ letterId: number; uncertain: boolean }> {
   if (letters.length === 1) return { letterId: letters[0], uncertain: false };
   const refs = [...messageIds(message.headers.get("in-reply-to")), ...messageIds(message.headers.get("references"))];
-  const subject = message.headers.get("subject") ?? "";
   const caseRef = /\(Case Ref: ([A-Z0-9]+)\)/i.exec(subject)?.[0] ?? null;
   const [found] = await query<{ letterId: number }>(
     `SELECT letter_id::int AS "letterId" FROM (
@@ -224,6 +224,7 @@ async function place(
   account: string,
   message: GmailMessageHeaders,
   from: string,
+  subject: string,
 ): Promise<{ letterId: number; party: Party; uncertain: boolean } | { reason: NotUnderstoodReason }> {
   const { proxies, unknown } = await proxiesNamed(message);
   const politicianIds = proxies.flatMap((p) => (p.politicianId ? [p.politicianId] : []));
@@ -236,14 +237,17 @@ async function place(
     return { letterId: answered.id, party, uncertain: false };
   }
   const own = await lettersOf({ email: from, politicianIds });
-  if (own.length)
-    return { ...(await chooseLetter([...new Set(own.map((l) => l.id))], account, message)), party: "supporter" };
+  if (own.length) {
+    const ids = [...new Set(own.map((l) => l.id))];
+    return { ...(await chooseLetter(ids, account, message, subject)), party: "supporter" };
+  }
   const theirs = await lettersOf({ proxyIds: supporters.map((p) => p.id), politicianIds: [] });
   if (!theirs.length) return { reason: "stranger" };
   const chosen = await chooseLetter(
     theirs.map((l) => l.id),
     account,
     message,
+    subject,
   );
   if (!(await isOffice(chosen.letterId, from))) return { reason: "stranger" };
   return { ...chosen, party: "office" };
@@ -265,6 +269,7 @@ async function keep(
   message: GmailMessageHeaders,
   raw: Buffer,
   party: Party,
+  subject: string,
 ): Promise<number> {
   const from = fromAddress(message.headers.get("from"));
   const key = `${account}/${message.id}.eml.gz`;
@@ -281,7 +286,7 @@ async function keep(
       messageIds(message.headers.get("message-id"))[0] ?? null,
       from.address,
       from.name,
-      decodeWords(message.headers.get("subject") ?? ""),
+      subject,
       new Date(Number(message.internalDate)),
       party === "supporter",
       key,
@@ -303,7 +308,13 @@ async function isOurs(account: string, message: GmailMessageHeaders): Promise<bo
 }
 
 /** Records each address a bounce of an email we sent says failed. Returns how many, or undefined for a bounce of nothing we sent. */
-async function bounce(account: string, raw: Buffer, message: GmailMessageHeaders, request: Request | undefined) {
+async function bounce(
+  account: string,
+  raw: Buffer,
+  message: GmailMessageHeaders,
+  subject: string,
+  request: Request | undefined,
+) {
   const { addresses, messageId } = readBounce(raw.toString("latin1"));
   const [sent] = await query<{ messageId: string }>(
     `SELECT message_id AS "messageId" FROM email_sends WHERE sender = $1 AND outcome = 'sent' AND rfc_message_id = $2`,
@@ -316,7 +327,7 @@ async function bounce(account: string, raw: Buffer, message: GmailMessageHeaders
         address: failed.address,
         messageId: sent.messageId,
         kind: failed.delayed ? "soft" : "hard",
-        reason: failed.reason || failed.status || message.headers.get("subject") || "",
+        reason: failed.reason || failed.status || subject,
         canReset: true,
         details: { status: failed.status, account },
         gmailMessageId: message.id,
@@ -358,12 +369,12 @@ async function readMessage(
   if (isLettersInboxAddress(from.address)) return file(token, labels, id, "noted");
   const raw = await gmailRawMessage(token, id);
   if (/^(mailer-daemon|postmaster)@/.test(from.address)) {
-    const bounces = await bounce(account, raw, message, request);
+    const bounces = await bounce(account, raw, message, subject, request);
     if (bounces === undefined) return notUnderstood("bounce");
     read.bounces += bounces;
     return file(token, labels, id, "noted");
   }
-  const placed = await place(account, message, from.address);
+  const placed = await place(account, message, from.address, subject);
   if ("reason" in placed) return notUnderstood(placed.reason);
   const { letterId, party, uncertain } = placed;
   const auto = isMachineReply((name) => message.headers.get(name), subject);
@@ -378,7 +389,7 @@ async function readMessage(
     await letterEvent(letterId, "not_relayed", { ...event, reason: "not_verified" });
     return notUnderstood("not_verified");
   }
-  const replyId = await keep(account, letterId, message, raw, party);
+  const replyId = await keep(account, letterId, message, raw, party, subject);
   await letterEvent(letterId, auto ? "auto_reply" : "replied", event);
   if (party === "office" && !auto) {
     await query("UPDATE letters SET replied_at = coalesce(replied_at, $2) WHERE id = $1", [

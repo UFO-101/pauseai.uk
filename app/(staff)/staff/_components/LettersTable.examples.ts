@@ -1,4 +1,6 @@
 import { campaigns } from "@/lib/content/email-your-mp";
+import { draftLetter } from "@/lib/email-your-mp";
+import { toText } from "@/lib/letter-format";
 import type { LetterSummary, PauseaiLetterDetails, SupporterLetterDetails } from "@/lib/server/letters";
 import type { LettersSearch } from "@/lib/staff-search";
 
@@ -56,6 +58,26 @@ export const exampleSupporterLetterDetails: SupporterLetterDetails = {
 };
 
 const LETTERS_INBOX = "fixture-letters@pauseai.uk";
+
+/** The campaign's whole letter, as the form drafts it for Jane to the test MP. */
+const PROXIED_DRAFT = toText(
+  draftLetter(pm, { salutation: "Mr McTestface", constituency: "Testshire", senderName: "Jane Smith", statuses: {} }, [
+    "1 High Street",
+    "Testville",
+    "ZZ9 9ZZ",
+  ]),
+);
+
+/** What Jane sent: the request for a meeting cut, a paragraph of her own added, and a word changed. */
+const PROXIED_SENT = PROXIED_DRAFT.replace(
+  "I would also like you to arrange a short meeting with me to discuss this important matter.\n\n",
+  "",
+)
+  .replace("I am very concerned", "I am deeply concerned")
+  .replace(
+    "Thank you for your consideration,",
+    "My children ask me about AI every week, and I don't know what to tell them. I'd like to be able to tell them their MP is doing something about it.\n\nThank you for your consideration,",
+  );
 
 /**
  * A supporter's letter from the letters inbox: Jane added a paragraph of
@@ -119,9 +141,8 @@ export const exampleProxiedLetterDetails: SupporterLetterDetails = {
     },
   ],
   sent: {
-    text: "Dear Mr McTestface,\n\nPlease back a pause on frontier AI. I live in Testville and I worry about my children's future.\n\nYours sincerely,\nJane Smith",
-    draft:
-      "Dear Mr McTestface,\n\nPlease back a pause on frontier AI. It is the most urgent issue of our time.\n\nYours sincerely,\nJane Smith",
+    text: PROXIED_SENT,
+    draft: PROXIED_DRAFT,
     approximate: false,
     messages: [
       {

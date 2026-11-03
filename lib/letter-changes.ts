@@ -78,3 +78,61 @@ export function ownWords(draft: string, sent: string): number {
     .reduce((n, change) => n + wordCount(change.text), 0);
   return added / total;
 }
+
+/**
+ * A letter's changes as the page shows them: each run of paragraphs the
+ * supporter changed, added or cut, with its changes word by word; and each
+ * run of paragraphs they left as they were, to fold away.
+ */
+export type ChangeBlock = { kind: "changed"; changes: Change[] } | { kind: "unchanged"; paragraphs: string[] };
+
+/** A text's paragraphs, trimmed, without empty ones. */
+function paragraphsOf(text: string): string[] {
+  return text
+    .split(/\n[ \t]*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+}
+
+/**
+ * The changes from `draft` to `sent` by paragraph: those the two share,
+ * by their longest common run, and between them, what was cut and added,
+ * compared word by word (wordDiff).
+ */
+export function changeBlocks(draft: string, sent: string): ChangeBlock[] {
+  const a = paragraphsOf(draft);
+  const b = paragraphsOf(sent);
+  const lengths = Array.from({ length: a.length + 1 }, () => new Array<number>(b.length + 1).fill(0));
+  for (let i = a.length - 1; i >= 0; i--) {
+    for (let j = b.length - 1; j >= 0; j--) {
+      lengths[i][j] = a[i] === b[j] ? lengths[i + 1][j + 1] + 1 : Math.max(lengths[i + 1][j], lengths[i][j + 1]);
+    }
+  }
+  const blocks: ChangeBlock[] = [];
+  let cut: string[] = [];
+  let added: string[] = [];
+  const flush = () => {
+    if (cut.length || added.length)
+      blocks.push({ kind: "changed", changes: wordDiff(cut.join("\n\n"), added.join("\n\n")) });
+    cut = [];
+    added = [];
+  };
+  let i = 0;
+  let j = 0;
+  while (i < a.length || j < b.length) {
+    if (i < a.length && j < b.length && a[i] === b[j]) {
+      flush();
+      const last = blocks.at(-1);
+      if (last?.kind === "unchanged") last.paragraphs.push(a[i]);
+      else blocks.push({ kind: "unchanged", paragraphs: [a[i]] });
+      i++;
+      j++;
+    } else if (j < b.length && (i === a.length || lengths[i][j + 1] >= lengths[i + 1][j])) {
+      added.push(b[j++]);
+    } else {
+      cut.push(a[i++]);
+    }
+  }
+  flush();
+  return blocks;
+}
