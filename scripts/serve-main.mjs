@@ -59,7 +59,7 @@ if (!existsSync(stamp) || readFileSync(stamp, "utf8") !== lock) {
   writeFileSync(stamp, lock);
 }
 
-const env = { ...process.env, ...fixtureEnv({ outboxDir: MAIN_OUTBOX_DIR }) };
+const env = { ...process.env, ...fixtureEnv({ outboxDir: MAIN_OUTBOX_DIR, origin: `http://localhost:${port}` }) };
 // The same test Postgres as this branch's (`db-test`, say), which the
 // worktree's own copy of the database script can't find in our .env.local.
 const testServer = testServerUrl();

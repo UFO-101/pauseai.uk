@@ -114,7 +114,11 @@ caption)` (`tests/storyboard/frame.ts`) shows an email from the outbox in
   So the frames compare, the fixture build fills in what would be random:
   the `Date` header is the fixed clock's, and a login link's token and a
   letter's reply address come from a seed (`randomId` in
-  `lib/server/random-id.ts`).
+  `lib/server/random-id.ts`). A fixture build knows the address it's served at
+  (`FIXTURE_ORIGIN`, set by `scripts/serve-fixture.mjs` and
+  `scripts/serve-main.mjs`), as the live site knows its own, so every
+  link in an email is whole, whether or not the code that sent it had a
+  request; the picture shows it at `pauseai.example.org`.
 - **Gmail and Outlook are checked from the HTML.** `lib/letter-format.test.ts`
   runs the letter's HTML through doiuse-email
   (`@jsx-email/doiuse-email`, the Can I email tables,
@@ -213,7 +217,7 @@ pair whose files are the same, and the review opens
 newest run's page: the flows in
 sections, each frame captioned and pictured on desktop and phone, with this
 branch's picture, main's and the diff, a lightbox, a phone/desktop toggle
-that stays on the flow being looked at, a "changed only" filter, a box
+that stays on the flow being looked at, "changed only" and "failed only" filters, each with its count, a box
 that filters flows by their section, title, captions or story (`/` to start,
 Escape to clear), and a failed flow's message under its last frame. The
 sections come under three headings, the public site, the staff pages, and
@@ -222,7 +226,7 @@ the tools and checks, in the order of `SECTIONS`
 gallery is last. The flows in each keep their spec file's order. The
 sidebar follows the page: the section in view is open and the flow in
 view marked, the rest folded, but a section opened or shut by hand stays
-so. The "changed only" filter and the filter's words are kept on a
+so. The two checkboxes and the filter's words are kept on a
 reload. The same data is in
 `test-results/storyboard/latest/storyboard.json`, for an agent.
 Both are local only and gitignored. A difference never fails; only this

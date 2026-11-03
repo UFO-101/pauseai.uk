@@ -40,10 +40,13 @@ export const FIXTURE_NOW = "2026-10-16T12:00:00.000Z";
 export const FLOW_DATABASE_COOKIE = "storyboard_database";
 export const FLOW_DATABASE_PREFIX = "pauseai_sb_";
 
-/** @param {{ outboxDir: string }} options */
-export function fixtureEnv({ outboxDir }) {
+/** @param {{ outboxDir: string, origin?: string }} options */
+export function fixtureEnv({ outboxDir, origin = "" }) {
   return {
     DATA_FIXTURES: "1",
+    // The address the build is served at, which its links and redirects use, as the live site's do its own
+    // (SITE_ORIGIN, next.config.ts).
+    FIXTURE_ORIGIN: origin,
     FIXTURE_NOW,
     // Analytics loads only on the live site (lib/analytics.ts). The
     // storyboard turns it on to drive the cookie consent flow, and blocks

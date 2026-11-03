@@ -6,4 +6,4 @@ export const NOTIFICATION_INBOX: string;
 export const FIXTURE_NOW: string;
 export const FLOW_DATABASE_COOKIE: string;
 export const FLOW_DATABASE_PREFIX: string;
-export function fixtureEnv(options: { outboxDir: string }): Record<string, string>;
+export function fixtureEnv(options: { outboxDir: string; origin?: string }): Record<string, string>;
