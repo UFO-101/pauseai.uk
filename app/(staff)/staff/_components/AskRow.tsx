@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { buttonClass } from "@/components/ui/Button";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Segmented, TextInput } from "@/components/ui/Controls";
@@ -12,6 +12,7 @@ import type { Ask } from "@/lib/server/asks";
 import type { Politician } from "@/lib/server/politicians";
 import { staffDate } from "@/lib/staff-time";
 import { AskLead } from "./AskLine";
+import { BubbleBox, bubbleTrigger } from "./ui/Bubble";
 import Menu from "./ui/Menu";
 import styles from "./Details.module.css";
 
@@ -114,13 +115,7 @@ export default function AskRow({
     return () => bubble.removeEventListener("toggle", closed);
   }, [onClose]);
   return (
-    <div
-      ref={row}
-      className={styles.ask}
-      role="group"
-      aria-label={ask.title}
-      style={{ anchorName: `--row-${ask.slug}` } as CSSProperties}
-    >
+    <div ref={row} className={styles.ask} role="group" aria-label={ask.title}>
       <div className={styles.asked}>
         <AskLead ask={ask} />
         {status && (
@@ -134,29 +129,16 @@ export default function AskRow({
         <span>{status ? staffCopy.statuses[status.status] : staffCopy.statuses.noAnswer}</span>
         {status?.date && <span className={styles.askMeta}>{staffDate(status.date)}</span>}
         {byHand && (
-          <button
-            type="button"
-            className={styles.edit}
-            popoverTarget={editId}
-            style={{ anchorName: `--${editId}` } as CSSProperties}
-          >
+          <button type="button" className={styles.edit} {...bubbleTrigger(editId)}>
             {copy.edit}
           </button>
         )}
       </div>
       {byHand && (
         // Keyed on the answer, so a change made from it closes it and empties the note.
-        <div
-          key={status?.updatedAt ?? "none"}
-          ref={popover}
-          id={editId}
-          popover="auto"
-          className={styles.editPopover}
-          // Under Edit, or on a phone under the whole row (Details.module.css).
-          style={{ "--under-edit": `--${editId}`, "--under-row": `--row-${ask.slug}` } as CSSProperties}
-        >
+        <BubbleBox key={status?.updatedAt ?? "none"} ref={popover} id={editId} className={styles.editPopover}>
           <AnswerForm politician={politician} ask={ask} setStatus={setStatus} />
-        </div>
+        </BubbleBox>
       )}
     </div>
   );

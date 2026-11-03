@@ -10,6 +10,7 @@ import ChangesTable from "@/app/(staff)/staff/_components/ChangesTable";
 import EmailBlockFilters from "@/app/(staff)/staff/_components/EmailBlockFilters";
 import FilterBar from "@/app/(staff)/staff/_components/ui/FilterBar";
 import Menu from "@/app/(staff)/staff/_components/ui/Menu";
+import Bubble, { BubbleBox, bubbleTrigger } from "@/app/(staff)/staff/_components/ui/Bubble";
 import { NationShape, Rosette, StatusDot } from "@/app/(staff)/staff/_components/PoliticianIcons";
 import { exampleProblems } from "@/app/(staff)/staff/_components/EmailBlocksTable.examples";
 import EmailProblemsTable from "@/app/(staff)/staff/_components/EmailProblemsTable";
@@ -2841,6 +2842,41 @@ export const staff: Group = {
                 <p>One</p>
                 <p>Two</p>
               </Menu>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "Bubble",
+      file: "app/(staff)/staff/_components/ui/Bubble.tsx",
+      variants: [
+        {
+          label: "A button that opens a form or a few words, pointing to it",
+          render: () => (
+            <StaffPage as="div">
+              <Bubble id="example-bubble" label="Edit">
+                <p>A small form</p>
+              </Bubble>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "BubbleBox",
+      file: "app/(staff)/staff/_components/ui/Bubble.tsx",
+      variants: [
+        {
+          label: "The bubble alone, for a button of its own look",
+          render: () => (
+            <StaffPage as="div">
+              <button type="button" {...bubbleTrigger("example-bubble-box")}>
+                ?
+              </button>
+              <BubbleBox id="example-bubble-box">
+                <p>A few words</p>
+              </BubbleBox>
             </StaffPage>
           ),
         },

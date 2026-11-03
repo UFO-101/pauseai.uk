@@ -14,8 +14,8 @@ function whereFor(find: GmailFind): string {
 
 /**
  * Copy Gmail search, a button that copies the search for a letter in
- * Gmail, then says Copied!, and in a bubble to paste it into Gmail search,
- * and under that, lighter, where (whereFor). The
+ * Gmail, then says Copied!, and in a Notice under it to paste it into Gmail
+ * search, and under that, lighter, where (whereFor). The
  * search works in any mailbox, a delegate's too (lib/letter-links.ts). It
  * isn't shown, as an ID means nothing to read. Nothing when there's nothing
  * to find.

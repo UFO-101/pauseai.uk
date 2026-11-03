@@ -5,6 +5,7 @@ import { CHANNELS, waysKey, type Channel, type ContactPermission, type Topic } f
 import { staffDate } from "@/lib/staff-time";
 import ChannelIcon from "./ChannelIcon";
 import Tag from "@/components/ui/Tag";
+import { BubbleBox, bubbleTrigger } from "./ui/Bubble";
 import styles from "./PermissionTiles.module.css";
 
 const copy = staffCopy.supporters.detail.permissions;
@@ -86,13 +87,7 @@ function TopicRow({ topic, permissions }: { topic: Topic; permissions: ContactPe
     <li className={styles.item}>
       <span className={styles.head}>
         <span className={styles.topic}>{name}</span>
-        <button
-          type="button"
-          className={styles.help}
-          popoverTarget={id}
-          aria-label={copy.why}
-          style={{ anchorName: `--${id}` } as React.CSSProperties}
-        >
+        <button type="button" className={styles.help} aria-label={copy.why} {...bubbleTrigger(id)}>
           ?
         </button>
       </span>
@@ -106,14 +101,9 @@ function TopicRow({ topic, permissions }: { topic: Topic; permissions: ContactPe
         </span>
       ))}
       {shared && <span className={styles.reason}>{reasons[0]}</span>}
-      <div
-        id={id}
-        popover="auto"
-        className={styles.popover}
-        style={{ positionAnchor: `--${id}` } as React.CSSProperties}
-      >
+      <BubbleBox id={id} className={styles.popover}>
         <TopicDetails topic={topic} channels={[...new Set(permissions.map((p) => p.channel))]} name={name} />
-      </div>
+      </BubbleBox>
     </li>
   );
 }
