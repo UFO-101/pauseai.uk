@@ -9,7 +9,7 @@ import { FIXTURE_NOW, FLOW_DATABASE_COOKIE, LOCAL_URL } from "../fixture-env.mjs
 import { historyIdNow } from "../fixtures/letters-inbox";
 
 export { expect } from "@playwright/test";
-export { emailFrame, frame } from "./frame";
+export { emailFrame, frame, story } from "./frame";
 
 /** The build under test. */
 export const BASE = LOCAL_URL;

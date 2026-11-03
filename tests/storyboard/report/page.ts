@@ -124,6 +124,10 @@ section, .flow { scroll-margin-top: calc(var(--bar) + 8px); }
 .flow h4 { font-size: 15px; margin-bottom: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
 .flow h4 .shot { margin-left: 8px; font-size: 12px; font-weight: normal; color: var(--muted); }
 .flow .status { font-weight: normal; color: var(--muted); font-size: 13px; margin-left: 8px; }
+/* The flow's story, told around its frames (story() in frame.ts). */
+.story { max-width: 72ch; margin: 14px 0 2px; font-size: 15px; line-height: 1.5; color: #111; }
+.story + .story { margin-top: 6px; }
+.story + .frame { border-top: 0; }
 .frame { display: grid; grid-template-columns: 220px 1fr; gap: 16px; padding: 10px 0; border-top: 1px solid #f0f0f0; }
 .frame:first-of-type { border-top: 0; }
 .frame .caption { color: #333; }
@@ -222,7 +226,7 @@ function render() {
         // or by some captions, and then shows those.
         const frames = framesOf(flow).filter((f) => !state.changedOnly || f.changed);
         if (!terms.length || matches(sectionName(section) + " " + flow.flow, terms)) return { flow, frames };
-        const hits = frames.filter((f) => matches(f.caption, terms));
+        const hits = frames.filter((f) => matches(f.caption + " " + (f.story ?? []).join(" "), terms));
         return hits.length ? { flow, frames: hits } : null;
       })
       .filter(Boolean);
@@ -271,7 +275,8 @@ function render() {
       if (flow.status !== "passed") h4.append(el("span", { class: "status" }, [flow.status]));
       else if (flow.mainStatus && flow.mainStatus !== "passed") h4.append(el("span", { class: "status" }, ["main: " + flow.mainStatus]));
       const div = el("div", { class: "flow", id: flowId, "data-section": id }, [h4]);
-      for (const frame of frames) div.append(renderFrame(frame, terms));
+      for (const frame of frames) div.append(...storyOf(frame.story, terms), renderFrame(frame, terms));
+      div.append(...storyOf(flow.end, terms));
       // A flow that checks without picturing: redirects over HTTP, a scroll position, a header.
       if (flow.frames === 0) div.append(el("p", { class: "no-frames" }, [flow.status === "passed" ? "Passed. No frames: this flow only checks." : "No frames: this flow only checks."]));
       if (flow.error) div.append(el("pre", { class: "error" }, [flow.error]));
@@ -294,6 +299,9 @@ function render() {
     (failed ? ", " + failed + " failed" : "") + "." +
     (carried ? " " + plural(flows.length - carried, "flow") + " shot now, " + carried + " carried from earlier runs." : "");
 }
+
+/** The lines of a flow's story, each a paragraph. */
+const storyOf = (lines, terms) => (lines ?? []).map((line) => el("p", { class: "story" }, marked(line, terms)));
 
 function renderFrame(frame, terms) {
   const caption = el("div", { class: "caption" }, [el("span", { class: "n" }, [String(frame.index)]), ...marked(frame.caption, terms)]);

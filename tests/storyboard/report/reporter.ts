@@ -40,6 +40,19 @@ export default class StoryboardReporter implements Reporter {
       writeFileSync(file, a.body);
       pngs.set(a.name.split(":")[0], relative(this.dir, file));
     }
+    // The story's lines go with the frame after them; any after the last, with the flow.
+    const frames: FlowRun["frames"] = [];
+    let story: string[] = [];
+    for (const a of test.annotations) {
+      if (a.type === "story") story.push(a.description ?? "");
+      if (a.type !== "frame") continue;
+      frames.push({
+        caption: a.description ?? "",
+        png: pngs.get(`frame ${frames.length + 1}`),
+        ...(story.length ? { story } : {}),
+      });
+      story = [];
+    }
     this.runs.push({
       section,
       flow: test.title,
@@ -47,9 +60,8 @@ export default class StoryboardReporter implements Reporter {
       line: test.location.line,
       status: result.status,
       error: result.error?.message?.split("\n")[0],
-      frames: test.annotations
-        .filter((a) => a.type === "frame")
-        .map((a, i) => ({ caption: a.description ?? "", png: pngs.get(`frame ${i + 1}`) })),
+      frames,
+      ...(story.length ? { end: story } : {}),
       shotAt: this.shotAt,
     });
   }

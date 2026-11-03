@@ -5,7 +5,7 @@ import type { OutboxEmail } from "../fixtures/outbox";
 import { LOCAL_URL } from "../fixture-env.mjs";
 
 /**
- * A frame of the storyboard: a caption, and, when the run takes screenshots
+ * A frame of the storyboard: a caption, saying what the picture shows, and, when the run takes screenshots
  * (STORYBOARD_SHOTS=1, set by scripts/storyboard.mjs), a screenshot of the
  * page as it is now. The gate takes none, so a frame costs it nothing. Put one
  * after each thing a person would see; the checks go between them.
@@ -88,6 +88,17 @@ export async function frame(
   }
   const body = inWindow || windowOnly ? await page.screenshot(SHOT) : await wholePage(page);
   await info.attach(`frame ${index}: ${caption}`, { body, contentType: "image/png" });
+}
+
+/**
+ * A line of the flow's story, told around its frames: what the person does
+ * next, and why, as anyone who has used the site would say it. The review
+ * page shows it above the next frame; a line after the last frame ends the
+ * flow. The captions say only what's on the screen, and the flow's title
+ * only names it, so the story is where the flow is explained.
+ */
+export function story(text: string): void {
+  test.info().annotations.push({ type: "story", description: text });
 }
 
 /**

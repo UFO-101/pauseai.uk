@@ -17,7 +17,7 @@ type EditorHandle = {
   };
   chain: () => { focus: () => { deleteRange: (range: { from: number; to: number }) => { run: () => boolean } } };
 };
-import { BASE, emailFrame, expect, frame, madeUpAddress, test } from "./fixtures";
+import { BASE, emailFrame, expect, frame, madeUpAddress, story, test } from "./fixtures";
 import {
   bounceOf,
   deliver,
@@ -70,38 +70,36 @@ async function writeLetter(page: Page, database: string, sender: string): Promis
   return sentLetterId(page, database, sender);
 }
 
-test("Write to the test MP: the letter goes from Jane's proxy, her copy to the MP's, and the history says so", async ({
-  page,
-  flowDatabase,
-}) => {
+test("Jane writes to her MP", async ({ page, flowDatabase }) => {
+  story(
+    "Jane writes to her MP from the campaign page. Her letter goes from the letters inbox, from a proxy address of her own, so the MP's reply comes back to us.",
+  );
   const sender = madeUpAddress("Jane Smith", 31);
   const id = await writeLetter(page, flowDatabase, sender);
+  story(
+    "Jane gets a copy, from her proxy address to the MP's. If she replies to it, her reply reaches the MP through us too.",
+  );
   const copied = sentEmail(flowDatabase, id, "letter-copy");
   expect(copied.Bcc).toBe(sender);
   expect(copied.ReplyTo).toBe(copied.To);
-  await emailFrame(
-    page,
-    copied,
-    "Jane's copy: Bcc'd to her, from her proxy to the MP's, which Reply and Reply all reach",
+  await emailFrame(page, copied, "Jane's copy of her letter");
+  story(
+    "Staff open the letter. Its history says Gmail sent it, then her copy. Jane didn't change the campaign's letter, so it's folded.",
   );
   const entries = await openLetter(page, id);
   await expect(entries.first()).toContainText(staffCopy.letters.status.copy_sent);
   await expect(entries.nth(1)).toContainText(staffCopy.letters.backends.gmail);
   await expect(entries.nth(1)).toContainText(`${history.fields.to}${OFFICE_ADDRESS}`);
   await expect(page.getByRole("article").getByRole("button", { name: /unchanged/ })).toBeVisible();
-  await frame(
-    page,
-    "the letter's page: sent by Gmail from Jane's proxy, then her copy; her letter, as drafted, folded",
-  );
+  await frame(page, "The letter's page");
 });
 
-test("The MP replies and Jane answers: each relayed, the same message, from the other's proxy", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("The MP replies, and Jane answers", async ({ page, request, flowDatabase }) => {
   const sender = madeUpAddress("Jane Smith", 32);
   const id = await writeLetter(page, flowDatabase, sender);
+  story(
+    "The MP's office replies to Jane's proxy address. Within the hour the letters inbox is read, and the reply is relayed to Jane exactly as the office wrote it, from the MP's proxy address, in the thread of her copy.",
+  );
 
   deliver(flowDatabase, { from: OFFICE, to: JANES_PROXY, cc: "caseworker@parliament.example", text: MP_REPLY });
   expect(await readInbox(request)).toMatchObject({ replies: 1, relayed: 1, notUnderstood: [] });
@@ -111,7 +109,8 @@ test("The MP replies and Jane answers: each relayed, the same message, from the 
   expect(toJane.Cc).toBeUndefined();
   expect(toJane.InReplyTo).toBe(`<${sentIds(flowDatabase, id, "letter-copy")[0]}>`);
   expect(toJane.TextBody).toBe(MP_REPLY.replace(/\r/g, ""));
-  await emailFrame(page, toJane, "the MP's reply, relayed to Jane from the MP's proxy, in the thread of her copy");
+  await emailFrame(page, toJane, "The MP's reply, as Jane gets it");
+  story("Jane answers. Her answer is relayed to the MP the same way, as a reply to her letter.");
 
   deliver(flowDatabase, {
     from: `"Jane Smith" <${sender}>`,
@@ -125,18 +124,22 @@ test("The MP replies and Jane answers: each relayed, the same message, from the 
   expect(toMp.To).toBe(`"Testy McTestface MP" <${OFFICE_ADDRESS}>`);
   expect(toMp.From).toBe(`"Jane Smith (via PauseAI)" <${JANES_PROXY}>`);
   expect(toMp.InReplyTo).toBe(`<${sentIds(flowDatabase, id, "letter")[0]}>`);
-  await emailFrame(page, toMp, "Jane's answer, relayed to the MP from her proxy, naming the letter");
+  await emailFrame(page, toMp, "Jane's answer, as the office gets it");
+  story("The letter's page shows the letter, the reply and her answer.");
 
   const entries = await openLetter(page, id);
   await expect(entries.first()).toContainText(staffCopy.letters.status.relayed);
   await expect(entries.nth(1)).toContainText(staffCopy.letters.status.replied);
   await expect(page.getByRole("article")).toHaveCount(3);
-  await frame(page, "the letter's page: the letter, the MP's reply and Jane's answer, each relayed");
+  await frame(page, "The letter's page");
 });
 
-test("A reply with HTML and an attachment is relayed unchanged", async ({ page, request, flowDatabase }) => {
+test("A reply with an attachment", async ({ page, request, flowDatabase }) => {
   const sender = madeUpAddress("Jane Smith", 33);
   const id = await writeLetter(page, flowDatabase, sender);
+  story(
+    "The MP's office replies with a formatted email and a briefing attached as a PDF. Jane gets it exactly as they sent it.",
+  );
   const pdf = Buffer.from("%PDF-1.4\n% A briefing\n").toString("base64");
   deliver(
     flowDatabase,
@@ -176,16 +179,13 @@ test("A reply with HTML and an attachment is relayed unchanged", async ({ page, 
   const relayed = sentEmail(flowDatabase, id, "relay");
   expect(relayed.HtmlBody).toContain("<strong>My briefing on AI</strong>");
   expect(relayed.Attachments).toEqual([{ Name: "briefing.pdf", ContentType: "application/pdf", Content: pdf }]);
-  await emailFrame(page, relayed, "the reply relayed to Jane: its HTML and its attachment, as the office sent them");
+  await emailFrame(page, relayed, "The reply, as Jane gets it");
 });
 
-test("Automatic replies are relayed both ways; a loop stops at the cap, and staff are told", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("Automatic replies", async ({ page, request, flowDatabase }) => {
   const sender = madeUpAddress("Jane Smith", 34);
   const id = await writeLetter(page, flowDatabase, sender);
+  story("The MP's office acknowledges Jane's letter automatically. That's relayed to her like any reply.");
   const acknowledgement =
     "Thank you for contacting me. Please take this reply as confirmation that your email has been received.\r\n";
   deliver(flowDatabase, {
@@ -195,7 +195,10 @@ test("Automatic replies are relayed both ways; a loop stops at the cap, and staf
     text: acknowledgement,
   });
   await readInbox(request);
-  await emailFrame(page, sentEmail(flowDatabase, id, "relay"), "the office's acknowledgement, relayed to Jane");
+  await emailFrame(page, sentEmail(flowDatabase, id, "relay"), "The acknowledgement, as Jane gets it");
+  story(
+    "Jane is away, and her out-of-office answers it. That's relayed to the MP still marked as automatic, so the office's system knows not to answer it.",
+  );
   deliver(flowDatabase, {
     from: sender,
     to: MPS_PROXY,
@@ -206,7 +209,10 @@ test("Automatic replies are relayed both ways; a loop stops at the cap, and staf
   await readInbox(request);
   const ooo = sentEmail(flowDatabase, id, "relay");
   expect(ooo.AutoSubmitted).toBe("auto-replied");
-  await emailFrame(page, ooo, "Jane's out-of-office, relayed to the MP, still marked as automatic");
+  await emailFrame(page, ooo, "Jane's out-of-office, as the office gets it");
+  story(
+    "The office's system answers anyway, again and again. A letter relays at most five emails an hour, so the last is kept in the letters inbox, and staff get an email about it.",
+  );
 
   // Two responders answering each other: the letter's relays stop at its cap, five in an hour.
   for (let i = 0; i < 4; i++) {
@@ -223,20 +229,23 @@ test("Automatic replies are relayed both ways; a loop stops at the cap, and staf
     (email) => email.To === POLICY_INBOX && email.Subject === staffCopy.lettersInbox.alert.subject(1, LETTERS_INBOX),
   )!;
   expect(alert.TextBody).toContain(staffCopy.lettersInbox.reasons.over_cap);
-  await emailFrame(page, alert, "the email staff get: one message not relayed, over the letter's cap");
+  await emailFrame(page, alert, "The email staff get");
+  story("The letter's history says the last one wasn't relayed, and why.");
   const entries = await openLetter(page, id);
   await expect(entries.first()).toContainText(staffCopy.letters.status.not_relayed);
   await expect(entries.first()).toContainText(history.reasons.over_cap);
-  await frame(page, "the letter's history: the last automatic reply not relayed, over the cap");
+  await frame(page, "The letter's history");
 });
 
-test("A stranger, a forged MP's reply, and spam: none relayed, and the run says which need a look", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("Emails that aren't relayed", async ({ page, request, flowDatabase }) => {
   const sender = madeUpAddress("Jane Smith", 35);
   await writeLetter(page, flowDatabase, sender);
+  story(
+    "Three emails arrive at proxy addresses: one to Jane from a stranger, one that says it's from the MP's office but fails Gmail's checks, and spam. None of them is relayed.",
+  );
+  story(
+    "Staff get one email about the first two, with a link to each in Gmail, so someone can decide what to do. Spam stays in Gmail's spam folder.",
+  );
   deliver(flowDatabase, { from: '"A Stranger" <stranger@example.com>', to: JANES_PROXY, subject: "Hello Jane" });
   deliver(flowDatabase, {
     from: OFFICE,
@@ -252,21 +261,20 @@ test("A stranger, a forged MP's reply, and spam: none relayed, and the run says 
   const alert = newestEmail(
     (email) => email.To === POLICY_INBOX && email.Subject === staffCopy.lettersInbox.alert.subject(2, LETTERS_INBOX),
   )!;
-  await emailFrame(page, alert, "the email staff get: two messages that need a look, each with a link to it in Gmail");
+  await emailFrame(page, alert, "The email staff get");
+  story("On the Gmail import's page, that run failed, and lists the two emails.");
   await page.goto(`${BASE}/staff/import-data/gmail`);
   await expect(page.getByText(staffCopy.runs.status.failed, { exact: true }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: staffCopy.lettersInbox.openInGmail })).toHaveCount(2);
-  await frame(page, "the run failed: the stranger and the forgery listed, the spam counted");
+  await frame(page, "The Gmail import's runs");
+  story("The dashboard says so too, until a run reads the letters inbox without any.");
   await page.goto(`${BASE}/staff`);
   await expect(page.getByText(staffCopy.lettersInbox.alert.subject(2, LETTERS_INBOX))).toBeVisible();
-  await frame(page, "the dashboard: two messages in the letters inbox for a person to look at");
+  await frame(page, "The dashboard");
 });
 
-test("The letter bounces: staff alerted and Jane told; unblocked, it goes again", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("The letter bounces", async ({ page, request, flowDatabase }) => {
+  story("Jane writes to an MP whose address bounces her letter. The address is blocked, and staff get an email.");
   const sender = madeUpAddress("Jane Smith", 36);
   const id = await sentLetterId(page, flowDatabase, sender, bouncy);
   deliver(flowDatabase, bounceOf(sentIds(flowDatabase, id, "letter")[0], BOUNCY_ADDRESS));
@@ -274,11 +282,15 @@ test("The letter bounces: staff alerted and Jane told; unblocked, it goes again"
   const alert = newestEmail(
     (email) => email.To === POLICY_INBOX && email.Subject === staffCopy.alert.subject(bouncy.name),
   )!;
-  await emailFrame(page, alert, "the email staff get about it");
+  await emailFrame(page, alert, "The email staff get");
+  story("Jane is told, in the thread of her copy, that her letter hasn't reached her MP.");
   const notice = sentEmail(flowDatabase, id, "supporter-notice");
   expect(notice.TextBody).toBe(copy.notices.bounced(bouncy.name));
   expect(notice.From).toBe(`"PauseAI" <${LETTERS_INBOX}>`);
-  await emailFrame(page, notice, "Jane told, in our own words, in her copy's thread: her letter hasn't reached her MP");
+  await emailFrame(page, notice, "The email Jane gets");
+  story(
+    "Staff check the address with the MP's office, then unblock it on the blocked emails page, with a note. The letter goes again, and Jane is told.",
+  );
 
   await page.goto(`${BASE}/staff/politicians/blocked-emails`);
   await page.getByRole("link", { name: bouncy.name, exact: true }).first().click();
@@ -290,18 +302,18 @@ test("The letter bounces: staff alerted and Jane told; unblocked, it goes again"
   expect(sentIds(flowDatabase, id, "letter")).toHaveLength(2);
   const resent = sentEmail(flowDatabase, id, "supporter-notice");
   expect(resent.TextBody).toBe(copy.notices.resent(bouncy.name));
-  await emailFrame(page, resent, "unblocked: the letter goes again, and Jane is told");
+  await emailFrame(page, resent, "The second email Jane gets");
+  story("The letter's history shows each step.");
   const entries = await openLetter(page, id);
   await expect(entries.first()).toContainText(staffCopy.letters.status.notice);
   await expect(entries.filter({ hasText: new RegExp(`^${staffCopy.letters.status.bounced}`) })).toBeVisible();
-  await frame(page, "the letter's history: bounced, Jane told, sent again, Jane told");
+  await frame(page, "The letter's history");
 });
 
-test("Jane's own address bounces: the MP's next reply is held, and the history says why", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("Jane's address bounces", async ({ page, request, flowDatabase }) => {
+  story(
+    "Jane's copy of her letter bounces, so her address is blocked. When the MP replies, the reply is kept but not sent to her, and the letter's history says why.",
+  );
   const sender = madeUpAddress("Jane Smith", 37);
   const id = await writeLetter(page, flowDatabase, sender);
   deliver(flowDatabase, bounceOf(sentIds(flowDatabase, id, "letter-copy")[0], sender));
@@ -313,14 +325,13 @@ test("Jane's own address bounces: the MP's next reply is held, and the history s
   await expect(entries.first()).toContainText(staffCopy.letters.status.relay_held);
   await expect(entries.first()).toContainText(history.reasons.blocked);
   await expect(page.getByText(staffCopy.letters.status.copy_bounced)).toBeVisible();
-  await frame(page, "Jane's copy bounced, so the MP's reply is kept but held, as her address is blocked");
+  await frame(page, "The letter's history");
 });
 
-test("Over the daily limit: the letter waits, then goes after a relay that was waiting", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("The daily limit", async ({ page, request, flowDatabase }) => {
+  story(
+    "The letters inbox sends at most 1,950 emails a day. Today it's nearly there. The MP replies to Jane, and the reply is relayed with the last of the day. A second reply has to wait.",
+  );
   const jane = madeUpAddress("Jane Smith", 38);
   const janes = await writeLetter(page, flowDatabase, jane);
   // A day's sends from the letters inbox, all but one: room for a relay, but not a letter and its copy.
@@ -347,17 +358,22 @@ test("Over the daily limit: the letter waits, then goes after a relay that was w
       `SELECT count(*) FROM email_sends WHERE sender = '${LETTERS_INBOX}' AND outcome = 'sent' AND at > now() - interval '1 day'`,
     ),
   ).toEqual(["1950"]);
+  story("Sam writes to the same MP. His letter can't go yet, so the page he sees says it will go within the hour.");
   const sam = madeUpAddress("Sam Smith", 39);
   await fakeTurnstile(page);
   await lookUpTestMp(page, BASE, TEST_MPS[0], "Sam Smith");
   await fillLetter(page, sam);
   await page.getByRole("button", { name: copy.preview.send }).click();
   await expect(page.getByRole("status")).toHaveText(copy.sent.queued(TEST_MPS[0].name));
-  await frame(page, "the sent page: the letter will reach the MP within the hour");
+  await frame(page, "The page Sam sees");
+  story("On his letter's page, staff see it's waiting, and why.");
   const sams = letterIdOf(flowDatabase, sam);
   let entries = await openLetter(page, sams);
   await expect(entries.first()).toContainText(history.reasons.daily_limit);
-  await frame(page, "Sam's letter, queued: the letters inbox reached its daily limit");
+  await frame(page, "Sam's letter, waiting");
+  story(
+    "The next day, the hourly job sends what's waiting: the MP's second reply to Jane first, then Sam's letter and his copy.",
+  );
 
   // A day on, the next hour's run: the waiting relay first, then the letter and its copy.
   runSql(flowDatabase, "DELETE FROM email_sends WHERE message_id LIKE 'filler-%'");
@@ -369,13 +385,11 @@ test("Over the daily limit: the letter waits, then goes after a relay that was w
   expect(order).toEqual([`letter ${sams}`, `relay ${janes}`]);
   entries = await openLetter(page, sams);
   await expect(entries.first()).toContainText(staffCopy.letters.status.copy_sent);
-  await frame(page, "the next hour: Jane's waiting relay went first, then Sam's letter and his copy");
+  await frame(page, "Sam's letter, sent");
 });
 
-test("Jane adds her own words and cuts a sentence: the letter's page shows only what she changed", async ({
-  page,
-  flowDatabase,
-}) => {
+test("Jane changes the letter", async ({ page, flowDatabase }) => {
+  story("Jane cuts the sentence asking for a meeting, and adds a paragraph of her own.");
   const sender = madeUpAddress("Jane Smith", 40);
   await fakeTurnstile(page);
   await lookUpTestMp(page, BASE);
@@ -393,7 +407,10 @@ test("Jane adds her own words and cuts a sentence: the letter's page shows only 
   await expect(editor(page)).not.toContainText(meeting);
   await newParagraphAboveSignOff(page);
   await page.keyboard.type("My children ask me about AI every week, and I don't know what to tell them.");
-  await frame(page, "Jane's letter: a sentence cut, and a paragraph of her own");
+  await frame(page, "Jane's letter");
+  story(
+    "She sends it. On the letter's page, staff see only what she changed. The paragraphs she left alone are folded.",
+  );
   await fillLetter(page, sender);
   await page.getByRole("button", { name: copy.preview.send }).click();
   await expect(page.getByRole("status")).toHaveText(copy.sent.body(TEST_MPS[0].name));
@@ -406,18 +423,20 @@ test("Jane adds her own words and cuts a sentence: the letter's page shows only 
   await expect(letter.locator("del").first()).toContainText("arrange a short meeting");
   // The campaign's paragraphs she left alone, folded.
   await expect(letter).not.toContainText("national security");
-  await frame(page, "the letter's page: only what Jane changed, the campaign's paragraphs she left alone folded");
+  await frame(page, "The letter's page");
+  story("Clicking a fold opens it.");
   await letter
     .getByRole("button", { name: /unchanged/ })
     .first()
     .click();
   await expect(letter).toContainText("national security");
-  await frame(page, "a fold clicked: the paragraphs she left alone, unfolded");
+  await frame(page, "A fold opened");
+  story("Show as sent shows the letter as the MP got it.");
   await letter.getByRole("button", { name: words.asSent }).click();
   await expect(letter).not.toContainText("arrange a short meeting");
   await expect(letter.locator("ins")).toHaveCount(0);
   await expect(letter.getByRole("button", { name: words.showChanges })).toBeVisible();
-  await frame(page, "Show as sent: the letter as the MP got it, with Show changes to go back");
+  await frame(page, "The letter as sent");
 });
 
 /** Postmark's inbound webhook, as it posts an email to an old letter's own address; gives how many it was forwarded to. */
@@ -437,11 +456,10 @@ async function inbound(request: APIRequestContext, address: string, email: Recor
   return ((await res.json()) as { forwarded: number }).forwarded;
 }
 
-test("An old letter's reply comes through Postmark, and is forwarded as before", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("A reply to an older letter", async ({ page, request, flowDatabase }) => {
+  story(
+    "Letters written before the letters inbox each went from an address of their own on letters.pauseai.uk. Replies to them still come in, and are forwarded to the writer and to the shared inbox.",
+  );
   const sender = madeUpAddress("Jane Smith", 41);
   // A letter sent before the letters inbox, from its own address on letters.pauseai.uk by Postmark.
   const [id] = runSql(
@@ -461,14 +479,11 @@ test("An old letter's reply comes through Postmark, and is forwarded as before",
   const forwarded = newestEmailTo(sender)!;
   expect(forwarded.TextBody).toContain(copy.forwardedReply.toSender(office.Name));
   expect(forwarded.ReplyTo).toBe(`${OFFICE_ADDRESS}, ${address}`);
-  await emailFrame(
-    page,
-    forwarded,
-    "the MP's reply, forwarded to Jane, as replies to letters before the letters inbox are",
-  );
+  await emailFrame(page, forwarded, "The reply, as Jane gets it");
+  story("The letter's history says where the reply went, and why.");
   await logIn(page, flowDatabase, ["supporters"]);
   const entries = await openLetter(page, id);
   await expect(entries.first()).toContainText(history.handlingReasons.sender);
   await expect(entries.first()).toContainText(`${POLICY_INBOX} · `);
-  await frame(page, "its history: forwarded to the shared inbox and to Jane, and why");
+  await frame(page, "The letter's history");
 });
