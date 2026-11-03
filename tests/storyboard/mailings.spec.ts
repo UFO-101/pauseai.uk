@@ -213,6 +213,9 @@ test("Reschedule a mailing, then unschedule it", async ({ page, request, flowDat
   // The draft comes back wherever the click on Unschedule left the window, which isn't the same each time;
   // the frame is of the page as a whole, so from its top.
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  // The bar with the title at the top of the window goes once the title is back in view, which
+  // the page learns a frame or two after the scroll (MailingWriter's IntersectionObserver).
+  await expect(page.locator("[data-shown]")).toHaveCount(0);
   await frame(page, "unscheduled: a draft again, to change and schedule again");
 });
 

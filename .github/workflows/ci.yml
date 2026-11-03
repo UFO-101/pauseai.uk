@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  # Five jobs, so each result arrives as soon as it's known: a formatting
+  # Separate jobs, so each result arrives as soon as it's known: a formatting
   # slip shows up in a minute, not after the tests.
   checks:
     name: Lint, format
@@ -16,13 +16,24 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Set up Node
+        id: node
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           check-latest: true
-          cache: "npm"
+
+      # node_modules itself, kept for each lockfile and Node version: unpacking
+      # it takes seconds, where npm ci takes most of a minute. Every job of
+      # the site's does the same. Nothing is installed outside node_modules.
+      - name: Cache dependencies
+        id: node-modules
+        uses: actions/cache@v6
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ steps.node.outputs.node-version }}-${{ hashFiles('package-lock.json') }}
 
       - name: Install dependencies
+        if: steps.node-modules.outputs.cache-hit != 'true'
         run: npm ci
 
       # Every check runs even if an earlier one fails, so one push reports
@@ -78,13 +89,22 @@ jobs:
         run: echo 'Acquire::Retries "3"; Acquire::http::Timeout "20"; Acquire::https::Timeout "20";' | sudo tee /etc/apt/apt.conf.d/80-retries
 
       - name: Set up Node
+        id: node
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           check-latest: true
-          cache: "npm"
+
+      # As the first job does: node_modules, kept for each lockfile and Node version.
+      - name: Cache dependencies
+        id: node-modules
+        uses: actions/cache@v6
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ steps.node.outputs.node-version }}-${{ hashFiles('package-lock.json') }}
 
       - name: Install dependencies
+        if: steps.node-modules.outputs.cache-hit != 'true'
         run: npm ci
 
       # The browser Vitest project renders components in real Chromium.
@@ -145,23 +165,52 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Set up Node
+        id: node
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           check-latest: true
-          cache: "npm"
+
+      # As the first job does: node_modules, kept for each lockfile and Node version.
+      - name: Cache dependencies
+        id: node-modules
+        uses: actions/cache@v6
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ steps.node.outputs.node-version }}-${{ hashFiles('package-lock.json') }}
 
       - name: Install dependencies
+        if: steps.node-modules.outputs.cache-hit != 'true'
         run: npm ci
+
+      # Turbopack's work and the resized images from the last build, so this
+      # one starts warm (Next checks what it reuses against the sources).
+      # Kept for each commit, and taken from the newest there is.
+      - name: Cache the build
+        uses: actions/cache@v6
+        with:
+          path: .next/cache
+          key: next-build-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
+          restore-keys: |
+            next-build-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+            next-build-${{ runner.os }}-
 
       # `next build` alone. Netlify's `npm run build` runs the unit tests and
       # the linters first, which the jobs above do, with a Postgres.
       - name: Build
         run: npx next build
 
-  storyboard:
-    name: Storyboard
+  # The flows split between three jobs, each building the site: the flows
+  # are most of the time, the setup and the build a minute or so. Three
+  # brings the slowest part under the Test job's time; Playwright splits by
+  # number of flows, not their length, so the parts aren't the same length.
+  storyboard-shard:
+    name: Storyboard (${{ matrix.shard }} of 3)
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     # Tests that need a database make their own in this Postgres
     # (tests/database.ts, scripts/fresh-database.mjs).
     services:
@@ -192,13 +241,22 @@ jobs:
         run: echo 'Acquire::Retries "3"; Acquire::http::Timeout "20"; Acquire::https::Timeout "20";' | sudo tee /etc/apt/apt.conf.d/80-retries
 
       - name: Set up Node
+        id: node
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           check-latest: true
-          cache: "npm"
+
+      # As the first job does: node_modules, kept for each lockfile and Node version.
+      - name: Cache dependencies
+        id: node-modules
+        uses: actions/cache@v6
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ steps.node.outputs.node-version }}-${{ hashFiles('package-lock.json') }}
 
       - name: Install dependencies
+        if: steps.node-modules.outputs.cache-hit != 'true'
         run: npm ci
 
       # Keyed on the Playwright version rather than the lockfile hash, so an
@@ -243,8 +301,8 @@ jobs:
           done
           exit 1
 
-      # pg_dump 18, to match the server: the build below runs the unit tests,
-      # including the one that checks netlify/database/schema.sql is up to date.
+      # psql 18, to match the server: each flow's database is made with it
+      # (scripts/fresh-database.mjs).
       - name: Install the Postgres 18 client
         timeout-minutes: 4
         run: |
@@ -252,21 +310,44 @@ jobs:
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
           sudo apt-get install -y postgresql-client-18
 
+      # As the Build job does, for the fixture build: kept apart, as its
+      # settings differ.
+      - name: Cache the build
+        uses: actions/cache@v6
+        with:
+          path: .next/cache
+          key: next-storyboard-${{ matrix.shard }}-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
+          restore-keys: |
+            next-storyboard-${{ matrix.shard }}-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+            next-storyboard-${{ matrix.shard }}-${{ runner.os }}-
+
       # playwright.config.ts's webServer builds and starts the app itself, so
       # there is no separate build step here. The gate takes no screenshots;
       # the comparison with main (npm run storyboard) is run by hand.
       - name: Storyboard
-        run: npm run test:storyboard
+        run: npm run test:storyboard -- --shard=${{ matrix.shard }}/3
 
       - name: Upload report on failure
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: |
             playwright-report/
             test-results/
           retention-days: 7
+
+  # One result for the three parts, under the storyboard check's own name.
+  # It runs whatever they did, so a failed part fails it, rather than
+  # leaving it skipped.
+  storyboard:
+    name: Storyboard
+    needs: storyboard-shard
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every part passed
+        run: test "${{ needs.storyboard-shard.result }}" = success
 
   # The database backup's own package (backup/README.md): its tests, with
   # their coverage gate, and its types.

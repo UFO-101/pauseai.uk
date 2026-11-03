@@ -141,7 +141,11 @@ test("A supporter's letter: the letter as an email, Copy Gmail search, and the M
   await page.getByLabel(staffCopy.politician.note).fill("Signed, says their reply");
   await frame(page, "Edit: a note of how we know, and Mark as signed", { window: true });
   await page.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
-  await expect(page.getByText(staffCopy.mailings.columns.answered, { exact: true })).toBeVisible();
+  const answered = page.getByText(staffCopy.mailings.columns.answered, { exact: true });
+  await expect(answered).toBeVisible();
+  // The edit form closing shortens the page, and where that leaves the window differs between runs:
+  // the frame is of the tag, in the middle of the window.
+  await answered.evaluate((el) => el.scrollIntoView({ block: "center", behavior: "instant" }));
   await frame(page, "the MP marked as having signed: the letter's tag says answered, in green");
 });
 

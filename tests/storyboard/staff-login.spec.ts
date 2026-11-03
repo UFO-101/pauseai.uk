@@ -1,12 +1,13 @@
 import { staffCopy } from "@/lib/content/staff-interface";
-import { addStaffAccount, askForLoginLink, logInAsStaff, loginLinkFor, newestEmailTo } from "../steps";
+import { addStaffAccount, askForLoginLink, logInWithLink, loginLinkFor, newestEmailTo } from "../steps";
 import { BASE, emailFrame, expect, flowStorageState, frame, test } from "./fixtures";
 import { STAFF_PAGES, stayOnPage, staffEmail, logIn } from "./staff-steps";
 
 // Logging in to the staff pages, and your own account: the dev login, a
 // login link, a first login and an admin's accounts, being logged out, your
-// Gmail, and the pages kept out of search. Each flow on its own database;
-// staff log in with the link emailed to them (logInAsStaff in tests/steps.ts).
+// Gmail, and the pages kept out of search. Each flow on its own database.
+// Here staff log in with the link emailed to them (logInWithLink in
+// tests/steps.ts); the other sections use the dev login (logInAsStaff).
 
 test("Dev login: sign in with one click", async ({ page, flowDatabase }) => {
   addStaffAccount(flowDatabase, "jo@pauseai.uk", ["supporters"]);
@@ -52,9 +53,9 @@ test("Logged out: the staff API changes nothing", async ({ request }) => {
 test("An address outside pauseai.uk gets no login link", { tag: "@phone" }, async ({ page }) => {
   await page.goto(`${BASE}/staff/login`);
   await frame(page, "the login page");
-  expect(await logInAsStaff(page, BASE, "someone@gmail.com")).toBe(false);
+  expect(await logInWithLink(page, BASE, "someone@gmail.com")).toBe(false);
   await frame(page, "check your inbox, for an address that gets nothing");
-  expect(await logInAsStaff(page, BASE, "someone@pauseai.uk.evil.example")).toBe(false);
+  expect(await logInWithLink(page, BASE, "someone@pauseai.uk.evil.example")).toBe(false);
 });
 
 test("A login link works once, in the browser that asked", async ({ page, browser, request, flowDatabase }) => {
@@ -95,7 +96,7 @@ test("A login link works once, in the browser that asked", async ({ page, browse
 test("First login, then an admin manages accounts", async ({ page, flowDatabase }, testInfo) => {
   const colleague = `colleague-${testInfo.testId.replace(/\W/g, "").slice(-8)}@pauseai.uk`;
   // Logged in for the first time, with no account: one is made, with no permissions, so the dashboard and the pages any account opens.
-  await logInAsStaff(page, BASE, staffEmail());
+  await logInWithLink(page, BASE, staffEmail());
   await expect(page.getByRole("heading", { level: 2, name: staffCopy.home.dashboard.sections.mps })).toBeVisible();
   // The sidebar (hidden behind the bar's menu on a phone, so read from the DOM) offers the ordinary pages and not the admin's.
   await expect(page.locator('nav a[href="/staff/politicians"]').first()).toBeAttached();
