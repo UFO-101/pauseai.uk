@@ -68,6 +68,7 @@
     "@vitest/coverage-v8": "^5.0.5",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.4.3",
+    "flatted": "^3.4.4",
     "knip": "6.44.0",
     "msw": "^3.0.3",
     "prettier": "3.9.10",

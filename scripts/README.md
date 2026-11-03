@@ -33,8 +33,14 @@ where there's an npm script. Each file's opening comment has the details.
 
 `docs/development.md`, section 5, covers the photos.
 
+## Coverage
+
+| Script               | Run with                                     | What it does                                                                                                                                                                                           |
+| -------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `coverage-blobs.mjs` | `node scripts/coverage-blobs.mjs <blob dir>` | Readies the blob reports of `npm test` split with `--shard` for `vitest --merge-reports --coverage`, so the merge reports exactly what one unsplit run does. Its opening comment says why it's needed. |
+
 ## Tests and types
 
-`db-migrate.test.ts` and `fresh-database.test.ts` test the scripts beside
+`db-migrate.test.ts`, `fresh-database.test.ts` and `coverage-blobs.test.ts` test the scripts beside
 them, in the Vitest node project. The `.d.mts` files give the scripts'
 functions types, for the TypeScript that imports them.

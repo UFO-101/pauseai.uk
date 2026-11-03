@@ -43,6 +43,11 @@ start`), so it is slower. Use it only for what Vitest can't see:
 - **Every source file is in the report**, including files no test imports
   (they show as 0%). So an untested component fails the gate rather than
   going unnoticed.
+- **Split across machines** with `--shard` and `--reporter=blob`, the
+  blobs go through `scripts/coverage-blobs.mjs` before
+  `vitest --merge-reports --coverage`. Without it the merge counts some
+  statements twice and fails files that pass in one run (the script's
+  opening comment says why).
 - **No ignore comments.** `v8 ignore`, `c8 ignore` and `istanbul ignore` are
   banned (`tests/checks/coverage-ignores.test.ts` fails on one). If code is hard to
   reach, test it in the browser project, or restructure it so it can be
