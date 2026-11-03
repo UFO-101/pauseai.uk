@@ -7,15 +7,7 @@ import "server-only";
 // written in the code. It's connected on /staff/me by someone logged in as
 // it, like a staff member's Gmail (lib/server/gmail-accounts.ts).
 
-/**
- * The most the letters inbox sends in a day, counting letters, copies,
- * relays and notices alike: under Google's 2,000
- * (https://support.google.com/a/answer/166852), as going over can stop it
- * sending for up to a day. Nobody else sends from it, so it's higher than a
- * staff member's GMAIL_DAILY_LIMIT; the few spare cover any difference
- * between our count and Google's.
- */
-export const LETTERS_DAILY_LIMIT = 1950;
+export { LETTERS_DAILY_LIMIT } from "@/lib/gmail-connect";
 
 /** The letters inbox's own address, lowercased; undefined where it isn't set. */
 export function lettersInbox(): string | undefined {

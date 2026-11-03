@@ -125,6 +125,13 @@ export const staffCopy = {
       "The site reads only those replies and bounces, and never deletes or changes anything.",
     ],
     limit: (limit: string) => `At most ${limit} a day, leaving room for the account's other email.`,
+    // The same, logged in as the letters inbox, which sends supporters' letters to MPs and nothing else.
+    lettersInboxExplain: [
+      "Supporters' letters to MPs go from proxy addresses on it, and the MPs' replies come back to it, to be relayed to the supporters, and their answers back.",
+      "The site reads all of its mail, labels and archives what it has handled, and moves an erased supporter's mail to Trash.",
+    ],
+    lettersInboxLimit: (limit: string) =>
+      `At most ${limit} a day, letters, copies and relays together, under Google's 2,000.`,
     connect: "Connect Gmail",
     disconnect: "Disconnect Gmail",
     connected: (when: string) => `Connected ${when}.`,
@@ -1397,9 +1404,9 @@ export const staffCopy = {
     },
     // After the account's line in a run.
     result: (a: { relayed: number; spam: number; uncertain: number }) =>
-      `⁂ ${a.relayed} relayed, ${a.spam} spam, ${a.uncertain} matched to a letter only as its latest.`,
+      `${a.relayed} relayed, ${a.spam} spam, ${a.uncertain} matched to a letter only as its latest.`,
     // Each message not understood, a line each, with a link to it in Gmail.
-    notUnderstood: "⁂ Not understood:",
+    notUnderstood: "Not understood:",
     reasons: {
       unknown_proxy: "to a proxy we don't have",
       no_proxy: "to none of our proxies",

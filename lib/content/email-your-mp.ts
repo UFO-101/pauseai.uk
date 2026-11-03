@@ -190,7 +190,7 @@ export const copy = {
     noEmail: "No email found for your MP.",
     // Their address bounced before: a letter waits until staff fix it.
     unreachable:
-      "⁂ Your MP's email address isn't working at the moment. You can still write: your letter will go as soon as it works.",
+      "Your MP's email address isn't working at the moment. You can still write, we will send your letter as soon as it works.",
   },
   form: {
     emailLabel: "Your email",
@@ -228,10 +228,10 @@ export const copy = {
     title: "Thank you!",
     body: (mpName: string) => `Your letter has been sent to ${mpName}.`,
     // In place of body, when the letter couldn't go at once: Gmail's limits, or Gmail down, so it goes within the hour.
-    queued: (mpName: string) => `⁂ Your letter to ${mpName} is on its way, and will reach them within the hour.`,
+    queued: (mpName: string) => `Your letter to ${mpName} is on its way, and will reach them within an hour.`,
     // In place of body, when the MP's address bounced before: it goes once staff fix it.
     waiting: (mpName: string) =>
-      `⁂ Your letter to ${mpName} will go as soon as their email address works again. We're looking into it.`,
+      `Your letter to ${mpName} will go as soon as their email address works again. We're looking into it.`,
     // Under that, a paragraph of its own.
     more: "Please do ask your friends to write to their MPs too, or come along to a PauseAI event.",
     // Opened without having just sent one.
@@ -239,14 +239,14 @@ export const copy = {
   },
   // The line above the sender's copy of their letter, from the letters inbox, to their MP's proxy.
   letterCopy: (mpName: string) =>
-    `⁂ This is a copy of your letter to ${mpName}. Their reply will come to you here, and replying to it reaches them.`,
+    `This is a copy of your letter to ${mpName}. If you don't hear from them, you can follow up by replying to this email.`,
   // Our own short emails to the sender, in the thread of their copy, from the letters inbox as "PauseAI".
   notices: {
     // The letter, or a message they sent through their MP's proxy, bounced.
     bounced: (mpName: string) =>
-      `⁂ Your message hasn't reached ${mpName}: their office's email address isn't working. We're looking into it, and will send it again once it does.`,
+      `Your message hasn't reached ${mpName}. Their office's email address isn't working. We're looking into it, and will send it again once it work.`,
     // It went again once the address worked.
-    resent: (mpName: string) => `⁂ Your message has now been sent to ${mpName}.`,
+    resent: (mpName: string) => `Your message has now been sent to ${mpName}.`,
   },
   // The note on a copy of an MP's reply: to the sender, and to the shared inbox.
   forwardedReply: {
@@ -281,7 +281,7 @@ export const copy = {
     testMpOnly: "You can only write to the test MP here.",
     alreadySent: "You've already written to your MP about this.",
     // The sender's email is one of ours: the letters inbox, a proxy, or the policy team's.
-    ourAddress: "⁂ Please give your own email address, so your MP's reply can reach you.",
+    ourAddress: "Please give your own email address, so your MP's reply can reach you.",
     failed: "Sorry! We failed to send the email, for technical reasons.",
     spamUnavailable: "Spam protection is unavailable.",
     spamMisconfigured: "Spam protection is misconfigured.",

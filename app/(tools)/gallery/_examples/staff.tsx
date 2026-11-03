@@ -1295,6 +1295,14 @@ export const staff: Group = {
             </StaffPage>
           ),
         },
+        {
+          label: "The same for the letters inbox: what it does with supporters' letters, and its own limit",
+          render: () => (
+            <StaffPage as="div">
+              <GmailConnect back="/staff/me" lettersInbox />
+            </StaffPage>
+          ),
+        },
       ],
     },
     {

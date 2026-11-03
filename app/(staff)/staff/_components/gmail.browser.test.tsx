@@ -27,6 +27,15 @@ describe("GmailConnect, SentToday and GmailOutcome", () => {
       .toHaveAttribute("href", "/staff/api/gmail/connect?back=%2Fstaff%2Fme");
   });
 
+  it("for the letters inbox: what connecting it means for supporters' letters, and its own limit", async () => {
+    await render(<GmailConnect back="/staff/me" lettersInbox />);
+    await expect.element(page.getByText(gmail.intro)).not.toBeInTheDocument();
+    for (const line of gmail.lettersInboxExplain) await expect.element(page.getByText(line)).toBeVisible();
+    await expect.element(page.getByText(gmail.lettersInboxLimit("1,950"))).toBeVisible();
+    await render(<SentToday sent={3} lettersInbox />);
+    await expect.element(page.getByText(gmail.sentToday(3, "1,950"))).toBeVisible();
+  });
+
   it("is pending from its click until the page shows again, as after the browser's Back", async () => {
     // Kept on this page, as Google's would replace the test's.
     const stay = (event: MouseEvent) => event.preventDefault();
@@ -404,6 +413,11 @@ describe("LetterChanges", () => {
     await page.getByRole("button", { name: words.showChanges }).click();
     await expect.element(page.getByRole("button", { name: words.asSent })).toBeVisible();
     expect(container.querySelector("ins")).not.toBeNull();
+    // Unfolded, then as sent and back: folded again.
+    await page.getByRole("button", { name: words.folded(2) }).click();
+    await page.getByRole("button", { name: words.asSent }).click();
+    await page.getByRole("button", { name: words.showChanges }).click();
+    await expect.element(page.getByRole("button", { name: words.folded(2) })).toBeVisible();
   });
 
   it("folds a letter sent as drafted whole, and with no draft kept shows the letter alone", async () => {

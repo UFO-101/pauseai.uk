@@ -31,7 +31,7 @@ function Changes({ changes }: { changes: Change[] }) {
  * added or cut, word by word, and between them, the paragraphs they left
  * alone, folded to a line saying how many, which a click unfolds, as the
  * campaign's text is known already. At the right of the subject's line, a
- * button shows the letter as sent instead, then the changes again. With no
+ * button shows the letter as sent instead, then the changes again, folded. With no
  * draft kept, the letter alone, and no button.
  */
 export default function LetterChanges({
@@ -60,7 +60,15 @@ export default function LetterChanges({
     );
   }
   const toggle = (
-    <button type="button" className={styles.toggle} onClick={() => setAsSent(!asSent)}>
+    // Back to the changes, folded again.
+    <button
+      type="button"
+      className={styles.toggle}
+      onClick={() => {
+        setAsSent(!asSent);
+        setUnfolded([]);
+      }}
+    >
       {asSent ? copy.showChanges : copy.asSent}
     </button>
   );

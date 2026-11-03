@@ -45,7 +45,8 @@ export default function MyGmail({
         {account ? (
           <>
             <p>
-              {copy.connected(staffDate(account.connectedAt))} <SentToday sent={account.sentToday} />
+              {copy.connected(staffDate(account.connectedAt))}{" "}
+              <SentToday sent={account.sentToday} lettersInbox={lettersInbox} />
             </p>
             <form action={disconnect}>
               <SubmitButton variant="ghost" size="small" fit>
@@ -54,7 +55,7 @@ export default function MyGmail({
             </form>
           </>
         ) : (
-          <GmailConnect back="/staff/me" />
+          <GmailConnect back="/staff/me" lettersInbox={lettersInbox} />
         )}
       </div>
     </>
