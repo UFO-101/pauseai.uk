@@ -145,9 +145,9 @@ test("Google disconnects a Gmail", async ({ page, request, flowDatabase }) => {
   await expect(page.getByText(staffCopy.gmailReading.disconnected)).toBeVisible();
   await frame(page, "The Gmail import's page");
 
-  story("Their account page says their Gmail isn't connected, with the button to connect it again.");
+  story("Their account page offers to connect their Gmail again.");
   await page.goto(`${BASE}/staff/me`);
-  await expect(page.getByText(staffCopy.gmail.notConnected)).toBeVisible();
+  await expect(page.getByRole("link", { name: staffCopy.gmail.connect })).toBeVisible();
   await frame(page, "Their account page");
 });
 

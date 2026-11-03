@@ -161,12 +161,15 @@ describeWithDatabase("the letters inbox's queue", () => {
 
   it("queues a letter when Gmail refuses the MP's address as blocked", async () => {
     const id = await queued();
-    // Blocked between the check and the send, as by a bounce read meanwhile.
+    // Blocked between the check and the send, as by a bounce read meanwhile; awaited before the test ends,
+    // so it's never still writing when the next test empties the tables.
+    let blocking: Promise<unknown> = Promise.resolve();
     recordGmail(() => {
-      void block(MP);
+      blocking = block(MP);
       return HttpResponse.json({ error: { code: 500 } }, { status: 500 });
     });
     expect(await sendLetter(id)).toMatchObject({ sent: false });
+    await blocking;
     expect(await statusOf()).toBe("queued");
   });
 

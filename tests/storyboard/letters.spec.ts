@@ -222,7 +222,9 @@ test("A letter bounces", async ({ page, request, flowDatabase }) => {
     .getByRole("list", { name: staffCopy.letters.detail.historyTitle })
     .getByRole("listitem")
     .filter({ hasText: new RegExp(`^${staffCopy.letters.status.bounced}`) })
+    // The bounce's own, not that of the notice to Jane under it.
     .getByRole("button")
+    .first()
     .click();
   await expect(page.locator(":popover-open")).toContainText('"reason"');
   await frame(page, "What the bounce said", { window: true });
