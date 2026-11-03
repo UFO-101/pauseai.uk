@@ -46,9 +46,9 @@ export default function Timeline() {
             </EntryText>
             <Photos count={4}>
               <Shot
-                href="/images/oxford-panel-oct-2026/oxford-panel-speakers.jpg"
-                src="/images/oxford-panel-oct-2026/oxford-panel-speakers-thumb.jpg"
-                alt="The panel speakers and organisers standing together in the lecture theatre"
+                href="/images/oxford-panel-oct-2026/oxford-panel-discussion.jpg"
+                src="/images/oxford-panel-oct-2026/oxford-panel-discussion-thumb.jpg"
+                alt="A panellist speaking into a microphone beside the others at the table"
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
               <Shot
@@ -58,9 +58,9 @@ export default function Timeline() {
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
               <Shot
-                href="/images/oxford-panel-oct-2026/oxford-panel-discussion.jpg"
-                src="/images/oxford-panel-oct-2026/oxford-panel-discussion-thumb.jpg"
-                alt="A panellist speaking into a microphone beside the others at the table"
+                href="/images/oxford-panel-oct-2026/oxford-panel-speakers.jpg"
+                src="/images/oxford-panel-oct-2026/oxford-panel-speakers-thumb.jpg"
+                alt="The panel speakers and organisers standing together in the lecture theatre"
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
               <Shot
