@@ -16,8 +16,8 @@ import { resendAfterFix, sendRelay, uncertainRelays } from "./relays";
 
 // Supporters' letters to MPs, sent from the letters inbox
 // (lib/server/letters-inbox.ts): the letter, from the supporter's proxy to
-// the MP's address, then the supporter's copy, from their proxy to the
-// MP's, Bcc'd to them, so replying to it reaches only our proxies. Once a
+// the MP's address, then the supporter's copy, from their proxy to them,
+// with Reply-To the MP's proxy, so replying to it reaches only our proxies. Once a
 // letter passes the form's checks it's kept, queued, and never deleted for
 // failing to send: the request tries at once, and whatever stops it waits,
 // with its reason, for the hourly run (sendLetterQueue), or, for a blocked
@@ -172,8 +172,10 @@ async function sendTaken(id: number): Promise<{ sent: true } | { sent: false; re
 
 /**
  * Sends the supporter their copy of a letter that has gone: the letter,
- * with a line above it saying what it is, from their proxy to their MP's,
- * which it's Reply-To as well, Bcc'd to them. Held while their address is
+ * with a line above it saying what it is, from their proxy to them, by
+ * name, with Reply-To their MP's proxy, so Reply and Reply all reach the
+ * MP through us. Addressed to them, not Bcc'd: mail they're only Bcc'd on
+ * is more likely to be filed as junk. Held while their address is
  * blocked; left queued while the letters inbox can't send.
  */
 export async function sendCopy(id: number): Promise<void> {
@@ -195,13 +197,12 @@ export async function sendCopy(id: number): Promise<void> {
   const doc = checkDoc(letter.letter)!;
   const line = copy.letterCopy(mpName(letter.mpName));
   const from = proxyLine(letter.senderName, letter.supporterTag);
-  const to = proxyLine(mpName(letter.mpName), letter.mpTag);
+  const replyTo = proxyLine(mpName(letter.mpName), letter.mpTag);
   const result = await send(
     {
       From: from,
-      To: to,
-      ReplyTo: to,
-      Bcc: nameLine(letter.senderName, letter.senderEmail),
+      To: nameLine(letter.senderName, letter.senderEmail),
+      ReplyTo: replyTo,
       Subject: letter.subject,
       TextBody: `${line}\n\n${toText(doc)}`,
       HtmlBody: `<p>${line.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</p>${toHtml(doc)}`,
@@ -215,8 +216,8 @@ export async function sendCopy(id: number): Promise<void> {
   await state("sent");
   await letterEvent(id, "copy_sent", {
     from,
-    to,
-    bcc: letter.senderEmail,
+    to: letter.senderEmail,
+    replyTo,
     messageId: result.messageId,
     ...sentBy(result.backend),
   });

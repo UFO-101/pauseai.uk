@@ -7,7 +7,13 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { NIGHTLY, runStatus, type GmailReading } from "@/lib/import-runs";
 import { docFromMarkup } from "@/lib/letter-format";
 import { addTestMp, connectTestGmail, describeWithDatabase, useTestDatabase } from "@/tests/database";
-import { deliverToLettersInbox, labelNames, lettersMailbox, resetLettersInbox } from "@/tests/fixtures/letters-inbox";
+import {
+  deliverToLettersInbox,
+  keepSent,
+  labelNames,
+  lettersMailbox,
+  resetLettersInbox,
+} from "@/tests/fixtures/letters-inbox";
 import {
   LETTERS_INBOX,
   recordGmail,
@@ -262,11 +268,11 @@ describeWithDatabase("reading the letters inbox", () => {
     expect(sent.map((s) => s.headers.get("to"))).toEqual([JANE_LINE, MP]);
   });
 
-  it("notes its own mail, and the supporter's copy coming back to the MP's proxy, without relaying either", async () => {
+  it("notes its own mail, and a copy sent to the MP's proxy as copies were, without relaying either", async () => {
     await write();
+    // A copy from when copies went to the MP's proxy: in Sent, and back in the Inbox too.
+    keepSent(testMail({ from: JANES_PROXY, to: MPS_PROXY, messageId: "old-copy@pauseai.uk" }), "oldcopy", true);
     const sent = recordGmail();
-    // The letter is in Sent, and the copy, sent to the MP's proxy, in the Inbox too.
-    expect(lettersMailbox().messages).toHaveLength(2);
     expect(await read()).toMatchObject({ replies: 0, relayed: 0, notUnderstood: [] });
     expect(sent).toEqual([]);
     expect(labelsOfNewest()).toEqual(["SENT", labels.noted].sort());

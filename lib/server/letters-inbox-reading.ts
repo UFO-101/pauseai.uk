@@ -356,7 +356,8 @@ async function readMessage(
 ): Promise<void> {
   const message = await gmailMessageHeaders(token, id, HEADERS).catch(unlessGone);
   if (!message) return;
-  // Our own: what we sent is in Sent, and the supporter's copy, to the MP's proxy, in the Inbox too.
+  // Our own: what we sent is in Sent, and a supporter's copy from when copies went to the MP's proxy, in the
+  // Inbox too.
   if (message.labelIds.includes("SENT"))
     return message.labelIds.includes("INBOX") ? file(token, labels, id, "noted") : undefined;
   if (await isOurs(account, message)) return file(token, labels, id, "noted");

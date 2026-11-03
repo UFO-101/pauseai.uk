@@ -121,9 +121,10 @@ describeWithDatabase("submitLetter", () => {
 
     const mpProxy = `"Testy McTestface MP (via PauseAI)" <${testProxy("testy.mctestface.mp")}>`;
     expect(copied.headers.get("from")).toBe(letter.headers.get("from"));
-    expect(copied.headers.get("to")).toBe(mpProxy);
+    // To her, by name, not Bcc'd, which Outlook junks more readily; replying reaches the MP's proxy.
+    expect(copied.headers.get("to")).toBe(`"Jane Smith" <jane@example.com>`);
     expect(copied.headers.get("reply-to")).toBe(mpProxy);
-    expect(copied.headers.get("bcc")).toBe(`"Jane Smith" <jane@example.com>`);
+    expect(copied.headers.get("bcc")).toBeUndefined();
     expect(copied.text).toBe(`${copy.letterCopy("Testy McTestface MP")}\n\n${letter.text}`);
     expect(copied.html.startsWith(`<p>${copy.letterCopy("Testy McTestface MP")}</p>`)).toBe(true);
     expect(copied.mime.parts.slice(1)).toHaveLength(campaigns[0].attachments.length);
@@ -164,7 +165,7 @@ describeWithDatabase("submitLetter", () => {
       },
       {
         purpose: "letter-copy",
-        address: testProxy("testy.mctestface.mp"),
+        address: "jane@example.com",
         outcome: "sent",
         backend: "gmail",
         sender: LETTERS_INBOX,

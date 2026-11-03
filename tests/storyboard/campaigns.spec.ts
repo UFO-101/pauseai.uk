@@ -84,10 +84,10 @@ test("Jane writes to her MP (ZZ99ZZ)", { tag: "@phone" }, async ({ page, flowDat
   expect(letter.TextBody).toMatch(/Jane Smith\n\n1 High Street, Testville\nZZ9 9ZZ$/);
   expect(letter.Attachments!.map((a) => a.Name)).toEqual(campaigns[0].attachments.map((a) => a.file));
   await emailFrame(page, letter, "The letter the MP gets");
-  story("Jane gets a copy, from her proxy address to the MP's, so a reply to it reaches the MP.");
+  story("Jane gets a copy, from her proxy address, addressed to her. A reply to it reaches the MP through us.");
   const copied = sentEmail(flowDatabase, id, "letter-copy");
-  expect(copied.Bcc).toBe(`"Jane Smith" <${sender}>`);
-  expect(copied.To).toBe(`"Testy McTestface MP (via PauseAI)" <${MPS_PROXY}>`);
+  expect(copied.To).toBe(`"Jane Smith" <${sender}>`);
+  expect(copied.ReplyTo).toBe(`"Testy McTestface MP (via PauseAI)" <${MPS_PROXY}>`);
   expect(copied.TextBody).toContain(copy.letterCopy("Testy McTestface MP"));
   await emailFrame(page, copied, "Jane's copy");
 });
