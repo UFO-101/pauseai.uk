@@ -44,9 +44,8 @@ export function renderStoryboardPage(storyboard: Storyboard): string {
         <input type="search" id="filter" placeholder="Filter flows and frames  /" aria-label="Filter flows and frames" autocomplete="off">
         <button type="button" id="filter-clear" aria-label="Clear the filter" hidden>×</button>
       </span>
-      <span class="only">
-        <label><input type="checkbox" id="changed-only"> Changed only <span class="count" id="changed-count"></span></label>
-        <label><input type="checkbox" id="failed-only"> Failed only <span class="count" id="failed-count"></span></label>
+      <span class="segmented" id="show" role="radiogroup" aria-label="Show">
+        <button type="button" data-show="all" aria-pressed="true">All</button><button type="button" data-show="changed" aria-pressed="false">Changed <span class="count" id="changed-count"></span></button><button type="button" data-show="failed" aria-pressed="false">Failed <span class="count" id="failed-count"></span></button>
       </span>
     </div>
     <nav id="section-list" aria-label="Sections and flows"></nav>
@@ -97,7 +96,10 @@ h1, h2, h3, h4, p { margin: 0; }
 #sidebar .tools { display: grid; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 #sidebar .tools label { display: flex; gap: 6px; align-items: center; color: #333; cursor: pointer; }
 /* Changed only and Failed only, side by side. */
-#sidebar .tools .only { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+/* All, Changed or Failed: the buttons share the width, each count beside its name, on one line. */
+#show { display: flex; }
+#show button { flex: auto; white-space: nowrap; padding: 4px 8px; }
+#sidebar #show button[aria-pressed="true"] .count { color: #ddd; }
 #section-list { flex: 1; overflow: auto; overscroll-behavior: contain; padding: 0 0 40vh; }
 /* A part: the public site, the staff pages, the tools. */
 #sidebar .part { position: sticky; top: 0; z-index: 1; padding: 14px 16px 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); background: var(--bg); }
@@ -167,13 +169,14 @@ dialog::backdrop { background: #000; }
 const JS = `
 const data = JSON.parse(document.getElementById("data").textContent);
 const sectionInfo = new Map(JSON.parse(document.getElementById("sections").textContent).map((s) => [s.id, s]));
-// The browser restores the checkboxes' ticks and the filter's words on a
-// reload, so the page starts from them. \`opened\` and \`closed\` hold the
-// sections folded open or shut by hand; any other opens while it's in view.
+// The browser restores the filter's words on a reload, and the tab keeps
+// which of All, Changed and Failed was chosen (\`show\`), so the page starts
+// from them. \`opened\` and \`closed\` hold the sections folded open or shut
+// by hand; any other opens while it's in view.
+const SHOWN = "storyboard-show";
 const state = {
   viewport: "desktop",
-  changedOnly: document.getElementById("changed-only").checked,
-  failedOnly: document.getElementById("failed-only").checked,
+  show: ["changed", "failed"].includes(sessionStorage.getItem(SHOWN)) ? sessionStorage.getItem(SHOWN) : "all",
   query: document.getElementById("filter").value,
   opened: new Set(),
   closed: new Set(),
@@ -226,12 +229,12 @@ function render() {
   let partBlock = null;
   for (const section of sections) {
     const shown = flows
-      .filter((f) => f.section === section && (!state.changedOnly || f.changed > 0 || f.status !== "passed"))
-      .filter((f) => !state.failedOnly || f.status !== "passed")
+      .filter((f) => f.section === section)
+      .filter((f) => (state.show === "changed" ? f.changed > 0 : state.show === "failed" ? f.status !== "passed" : true))
       .map((flow) => {
         // A flow matches by its section or title, and then shows every frame;
         // or by some captions, and then shows those.
-        const frames = framesOf(flow).filter((f) => !state.changedOnly || f.changed);
+        const frames = framesOf(flow).filter((f) => state.show !== "changed" || f.changed);
         if (!terms.length || matches(sectionName(section) + " " + flow.flow, terms)) return { flow, frames };
         const hits = frames.filter((f) => matches(f.caption + " " + (f.story ?? []).join(" "), terms));
         return hits.length ? { flow, frames: hits } : null;
@@ -292,13 +295,13 @@ function render() {
     partBlock.append(sec);
   }
   if (!shownFlows)
-    board.append(el("p", { class: "empty-note" }, [terms.length ? "No flow or frame matches “" + state.query.trim() + "”." : state.failedOnly ? "Nothing failed on this viewport." : state.changedOnly ? "Nothing changed on this viewport." : "No flows ran on this viewport."]));
+    board.append(el("p", { class: "empty-note" }, [terms.length ? "No flow or frame matches “" + state.query.trim() + "”." : state.show === "failed" ? "Nothing failed on this viewport." : state.show === "changed" ? "Nothing changed on this viewport." : "No flows ran on this viewport."]));
   here = { section: null, flow: null };
   trackPlace();
   const frames = data.frames.filter((f) => f.viewport === state.viewport);
   const changed = frames.filter((f) => f.changed).length;
   const failed = flows.filter((f) => f.status !== "passed").length;
-  // Beside each checkbox, how much it would show on this viewport: the frames changed, the flows failed.
+  // Beside Changed and Failed, what each shows on this viewport: the frames changed, the flows failed.
   document.getElementById("changed-count").textContent = "(" + changed + ")";
   document.getElementById("failed-count").textContent = "(" + failed + ")";
   const carried = flows.filter((f) => f.shotAt && f.shotAt !== newestShot).length;
@@ -440,8 +443,17 @@ for (const button of document.querySelectorAll(".bar [data-viewport]")) {
     }
   });
 }
-document.getElementById("changed-only").addEventListener("change", (e) => { state.changedOnly = e.target.checked; render(); });
-document.getElementById("failed-only").addEventListener("change", (e) => { state.failedOnly = e.target.checked; render(); });
+const showButtons = document.querySelectorAll("#show button");
+const markShown = () => { for (const b of showButtons) b.setAttribute("aria-pressed", String(b.dataset.show === state.show)); };
+markShown();
+for (const button of showButtons) {
+  button.addEventListener("click", () => {
+    state.show = button.dataset.show;
+    sessionStorage.setItem(SHOWN, state.show);
+    markShown();
+    render();
+  });
+}
 // Filtering as you type, a moment after the last key; / to start, Escape to clear.
 const filter = document.getElementById("filter");
 const clearFilter = document.getElementById("filter-clear");
