@@ -1372,19 +1372,6 @@ export const staff: Group = {
               <LetterChanges
                 sent={exampleProxiedLetterDetails.sent!.text}
                 draft={exampleProxiedLetterDetails.sent!.draft}
-                approximate={false}
-              />
-            </StaffPage>
-          ),
-        },
-        {
-          label: "An approximate draft, said so above the changes",
-          render: () => (
-            <StaffPage as="div">
-              <LetterChanges
-                sent={exampleProxiedLetterDetails.sent!.text}
-                draft={exampleProxiedLetterDetails.sent!.draft}
-                approximate
               />
             </StaffPage>
           ),
@@ -1393,7 +1380,7 @@ export const staff: Group = {
           label: "No draft kept: the letter alone",
           render: () => (
             <StaffPage as="div">
-              <LetterChanges sent={exampleProxiedLetterDetails.sent!.text} draft={null} approximate={false} />
+              <LetterChanges sent={exampleProxiedLetterDetails.sent!.text} draft={null} />
             </StaffPage>
           ),
         },

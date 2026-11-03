@@ -142,7 +142,7 @@ test("A supporter's letter: the letter as an email, Copy Gmail search, and the M
   const letter = page.getByRole("article");
   await expect(letter).toContainText(sender);
   // Sent as the campaign drafted it, so its text is folded away.
-  await expect(letter).toContainText(staffCopy.letterChanges.unchanged);
+  await expect(letter.getByRole("button", { name: /unchanged/ })).toBeVisible();
   await frame(page, "the letter's page: sent, the letter as an email, beside its campaign's ask and its history");
 
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);

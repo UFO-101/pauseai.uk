@@ -76,7 +76,7 @@ test("Write to the test MP: the letter goes from Jane's proxy, her copy to the M
   await expect(entries.first()).toContainText(staffCopy.letters.status.copy_sent);
   await expect(entries.nth(1)).toContainText(staffCopy.letters.backends.gmail);
   await expect(entries.nth(1)).toContainText(`${history.fields.to}${OFFICE_ADDRESS}`);
-  await expect(page.getByRole("article")).toContainText(staffCopy.letterChanges.unchanged);
+  await expect(page.getByRole("article").getByRole("button", { name: /unchanged/ })).toBeVisible();
   await frame(
     page,
     "the letter's page: sent by Gmail from Jane's proxy, then her copy; her letter, as drafted, folded",

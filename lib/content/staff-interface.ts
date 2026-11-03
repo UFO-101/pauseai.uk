@@ -1380,11 +1380,6 @@ export const staffCopy = {
   },
   // A supporter's letter on its page: what they changed in the draft the campaign gave them.
   letterChanges: {
-    // Above the changes.
-    intro: "⁂ What the supporter changed in the campaign's letter:",
-    approximate:
-      "⁂ What the supporter changed, against an approximate draft: the campaign's letter changed while this one was being written.",
-    unchanged: "⁂ Sent as the campaign drafted it.",
     // Toggles to the letter as the MP got it, and back.
     asSent: "⁂ Show as sent",
     showChanges: "⁂ Show changes",
@@ -1395,10 +1390,10 @@ export const staffCopy = {
   lettersInbox: {
     // The labels reading puts on each message in Gmail, by what it made of it.
     labels: {
-      relayed: "⁂ Relayed",
+      relayed: "Relayed",
       noted: "⁂ Noted",
-      spam: "⁂ Spam",
-      notUnderstood: "⁂ Not understood",
+      spam: "Spam",
+      notUnderstood: "Not understood",
     },
     // After the account's line in a run.
     result: (a: { relayed: number; spam: number; uncertain: number }) =>

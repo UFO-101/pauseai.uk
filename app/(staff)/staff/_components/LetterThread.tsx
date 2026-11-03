@@ -146,7 +146,7 @@ export function SupporterLetterThread({ letter, link }: { letter: SupporterLette
         missing={!sent}
       >
         {sent ? (
-          <LetterChanges sent={sent.text} draft={sent.draft} approximate={sent.approximate} />
+          <LetterChanges sent={sent.text} draft={sent.draft} />
         ) : (
           <NoText note={copy.supporterNoText} link={link} />
         )}

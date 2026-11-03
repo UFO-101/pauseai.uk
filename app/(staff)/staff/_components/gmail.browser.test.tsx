@@ -383,8 +383,7 @@ describe("LetterChanges", () => {
   const sent = "Dear MP,\n\nOne.\n\nPlease act on this. I live here.\n\nTwo.\n\nThree.\n\nJane";
 
   it("shows only what changed, the paragraphs left alone folded, a click unfolding them", async () => {
-    const { container } = await render(<LetterChanges sent={sent} draft={draft} approximate={false} />);
-    await expect.element(page.getByText(words.intro)).toBeVisible();
+    const { container } = await render(<LetterChanges sent={sent} draft={draft} />);
     expect([...container.querySelectorAll("ins")].map((e) => e.textContent)).toEqual(["I live here."]);
     expect([...container.querySelectorAll("del")].map((e) => e.textContent)).toEqual(["now "]);
     await expect.element(page.getByRole("button", { name: words.folded(2) })).toBeVisible();
@@ -396,7 +395,7 @@ describe("LetterChanges", () => {
   });
 
   it("shows the letter as sent, and back", async () => {
-    const { container } = await render(<LetterChanges sent={sent} draft={draft} approximate={false} />);
+    const { container } = await render(<LetterChanges sent={sent} draft={draft} />);
     await page.getByRole("button", { name: words.asSent }).click();
     expect(container.querySelector("ins")).toBeNull();
     await expect.element(page.getByText(sent)).toBeVisible();
@@ -405,12 +404,10 @@ describe("LetterChanges", () => {
     expect(container.querySelector("ins")).not.toBeNull();
   });
 
-  it("says a draft is approximate, a letter sent as drafted, and with none kept shows the letter alone", async () => {
-    await render(<LetterChanges sent={sent} draft={draft} approximate />);
-    await expect.element(page.getByText(words.approximate)).toBeVisible();
-    await render(<LetterChanges sent={draft} draft={draft} approximate={false} />);
-    await expect.element(page.getByText(words.unchanged)).toBeVisible();
-    const { container } = await render(<LetterChanges sent={sent} draft={null} approximate={false} />);
+  it("folds a letter sent as drafted whole, and with no draft kept shows the letter alone", async () => {
+    await render(<LetterChanges sent={draft} draft={draft} />);
+    await expect.element(page.getByRole("button", { name: words.folded(6) })).toBeVisible();
+    const { container } = await render(<LetterChanges sent={sent} draft={null} />);
     expect(container.textContent).toBe(sent);
   });
 });

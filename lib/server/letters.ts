@@ -215,11 +215,11 @@ export type SupporterLetterDetails = LetterSummary & {
   forwards: LetterForward[];
   /**
    * For one from the letters inbox: its text as sent, and the draft it was
-   * written from, if kept, and whether that's approximate; then every
+   * written from, if kept; then every
    * message both ways through the proxies, oldest first. Null for others,
    * whose text isn't kept.
    */
-  sent: { text: string; draft: string | null; approximate: boolean; messages: ThreadMessage[] } | null;
+  sent: { text: string; draft: string | null; messages: ThreadMessage[] } | null;
 };
 
 /** One of PauseAI's letters, for its own page: to whom, at which address now, in which mailing, and what happened. */
@@ -315,7 +315,7 @@ export async function getPauseaiLetter(mailingId: number, id: number): Promise<P
 export async function getSupporterLetter(id: number): Promise<SupporterLetterDetails | undefined> {
   const [letter] = await recentLetters({ letterId: id });
   if (!letter) return undefined;
-  const [{ subject, postmarkId, rfcId, mpEmail, campaignAsk, forwards, doc, draft, approximate }] = await query<{
+  const [{ subject, postmarkId, rfcId, mpEmail, campaignAsk, forwards, doc, draft }] = await query<{
     subject: string;
     postmarkId: string | null;
     rfcId: string | null;
@@ -324,13 +324,12 @@ export async function getSupporterLetter(id: number): Promise<SupporterLetterDet
     forwards: LetterForward[];
     doc: unknown;
     draft: string | null;
-    approximate: boolean | null;
   }>(
     `SELECT s.subject, c.ask AS "campaignAsk", (SELECT e.message_id FROM email_sends e WHERE e.letter_id = s.id AND e.purpose = 'letter'
        AND e.outcome = 'sent' ORDER BY e.at DESC, e.id DESC LIMIT 1) AS "postmarkId",
        (SELECT e.rfc_message_id FROM email_sends e WHERE e.letter_id = s.id AND e.purpose = 'letter'
         AND e.outcome = 'sent' ORDER BY e.at DESC, e.id DESC LIMIT 1) AS "rfcId",
-       s.letter AS doc, s.draft, s.draft_approximate AS approximate, n.email AS "mpEmail",
+       s.letter AS doc, s.draft, n.email AS "mpEmail",
        coalesce((SELECT json_agg(json_build_object('at', e.at, 'address', e.address, 'outcome', e.outcome) ORDER BY e.at, e.id)
                  FROM email_sends e WHERE e.letter_id = s.id AND e.purpose = 'forwarded-reply'), '[]') AS forwards
      FROM letters_from_supporters s JOIN letters l USING (id) JOIN notable_people n ON n.id = l.notable_person_id
@@ -344,7 +343,6 @@ export async function getSupporterLetter(id: number): Promise<SupporterLetterDet
     const sent = {
       text: toText(sentDoc),
       draft,
-      approximate: approximate === true,
       messages: await threadMessages(id),
     };
     const gmail = rfcId ? { mailbox: lettersInbox() ?? null, search: messageIdSearch(rfcId) } : null;

@@ -364,7 +364,6 @@ describeWithDatabase("a letter for its page", () => {
     expect(letter.sent).toEqual({
       text: "Dear Mr McTestface,\n\nPlease back a pause.",
       draft: expect.stringContaining("Jane Smith"),
-      approximate: true,
       messages: [
         expect.objectContaining({
           fromAddress: "test-mp@parliament.example",

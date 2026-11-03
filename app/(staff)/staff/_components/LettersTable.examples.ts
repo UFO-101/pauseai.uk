@@ -143,7 +143,6 @@ export const exampleProxiedLetterDetails: SupporterLetterDetails = {
   sent: {
     text: PROXIED_SENT,
     draft: PROXIED_DRAFT,
-    approximate: false,
     messages: [
       {
         id: 1,
