@@ -1,0 +1,72 @@
+/* A briefing's paper (BriefingSheet). The briefings follow their designer's
+   A4 layout; its sizes are scaled so the text is 16px, which makes its
+   column about --measure-page wide. The element styles are inside :where(),
+   so any piece's own class outranks them. */
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: calc(var(--measure-page) + 2 * var(--space-7));
+  margin: 0 auto;
+  padding: var(--space-7);
+  background: var(--surface);
+  box-shadow:
+    0 1px 2px var(--shadow),
+    0 8px 28px var(--shadow-strong);
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+:where(.sheet) p {
+  margin: 0 0 var(--space-2);
+}
+:where(.sheet) ul {
+  margin: 0 0 var(--space-2);
+  padding-left: var(--space-5);
+}
+:where(.sheet) :is(p, ul):last-child {
+  margin-bottom: 0;
+}
+:where(.sheet) li {
+  margin-bottom: 6px;
+}
+:where(.sheet) li::marker {
+  color: var(--tone, var(--text));
+}
+:where(.sheet) h3 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+:where(.sheet) * + h3 {
+  margin-top: var(--space-3);
+}
+:where(.sheet) strong {
+  font-weight: 700;
+}
+
+/* The marks citing a source: small, bold, the headline's darker orange. */
+:where(.sheet) sup {
+  margin-left: 1px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 0;
+  color: var(--briefing-headline-text);
+}
+:where(.sheet) sup a {
+  color: inherit;
+  text-decoration: none;
+}
+:where(.sheet) sup a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 820px) {
+  .sheet {
+    padding: var(--space-5) var(--space-4);
+    box-shadow: none;
+  }
+}

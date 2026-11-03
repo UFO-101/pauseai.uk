@@ -1,0 +1,39 @@
+/* A briefing's sources (BriefingSources): small, under an orange rule. The
+   sources are its own list items, styled through .list. */
+
+.sources {
+  margin-top: var(--space-5);
+}
+.heading {
+  margin: 0 0 var(--space-3);
+  padding-bottom: 7px;
+  border-bottom: 3px solid var(--briefing-headline);
+  font-family: inherit;
+  font-size: 22px;
+  font-weight: 700;
+}
+.list {
+  margin: 0;
+  padding-left: 28px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.list li {
+  margin-bottom: var(--space-2);
+}
+.list li::marker {
+  font-weight: 700;
+  color: var(--briefing-headline-text);
+}
+/* A source's address, written out, breaks anywhere rather than run off a phone's screen. */
+.list a {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+}
+/* The source a mark jumped to. */
+.list li:target {
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  box-shadow: 0 0 0 6px var(--surface-2);
+}

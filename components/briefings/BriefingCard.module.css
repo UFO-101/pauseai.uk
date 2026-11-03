@@ -1,0 +1,14 @@
+/* A briefing in the list (BriefingCard): the link to read it, under its key stories. */
+
+.read {
+  margin: 0;
+  text-align: right;
+  font-weight: 700;
+}
+.read a {
+  color: var(--briefing-headline-text);
+  text-decoration: none;
+}
+.read a:hover {
+  text-decoration: underline;
+}

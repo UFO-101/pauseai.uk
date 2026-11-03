@@ -1,93 +1,86 @@
-/* A budget split into groups of items (BudgetChart): a bar of the whole,
-   a key, then a bar per item. Each group has a colour and a hatching at its
-   own angle, so the groups differ without colour too. Its text and lists
-   are styled under .chart, to outrank a post body's (PostBody). */
+/* A budget split into groups of items (BudgetChart), as the briefings'
+   designer drew it: a bar of the whole, its parts named above in their
+   colours, then a bar per item against a dashed grid. Each group has its
+   topic's colour (--tone) and a hatching at its own angle (--angle). Its
+   text and lists are styled under .chart, to outrank a briefing's plain
+   ones (BriefingSheet). */
 
 .chart {
-  margin: 28px 0;
-  padding: 20px 22px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  margin: var(--space-2) 0 0;
 }
 
-/* A group's colour and the angle of its hatching. */
-.orange {
-  --tone: var(--chart-orange);
-  --angle: 45deg;
-}
-.blue {
-  --tone: var(--chart-blue);
-  --angle: 135deg;
-}
-.green {
-  --tone: var(--chart-green);
-  --angle: 90deg;
-}
-.part,
+.partBar,
 .swatch,
 .bar {
-  border: 1.5px solid var(--tone);
+  border: 2px solid var(--tone);
   background: repeating-linear-gradient(
     var(--angle),
-    color-mix(in srgb, var(--tone) 30%, transparent) 0 2px,
-    transparent 2px 6px
+    color-mix(in srgb, var(--tone) 75%, transparent) 0 1.5px,
+    transparent 1.5px 5px
   );
 }
 
-/* The whole */
+/* The whole: each part a column of its name, its bar and what's under it,
+   their lines the same height so the bars line up. */
 .whole {
   display: flex;
-  gap: 2px;
+  gap: 4px;
 }
 .part {
+  display: flex;
   flex: var(--share) 1 0%;
+  flex-direction: column;
   min-width: 0;
-  padding: 6px 8px;
-  border-radius: 4px;
+}
+.partName,
+.partUnder {
+  min-height: 1.5em;
   font-size: 13px;
-  font-weight: 700;
-  color: var(--text);
+  line-height: 1.5;
   white-space: nowrap;
-  overflow: hidden;
 }
-.chart .total {
-  margin: 6px 0 12px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-/* The key */
-.chart .legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 18px;
-  margin: 0 0 18px;
-  padding: 0;
-  list-style: none;
-}
-.chart .legend li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  font-size: 12.5px;
-  font-weight: 700;
+.partName {
+  font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text-secondary);
+  color: var(--tone);
 }
-.swatch {
-  width: 18px;
-  height: 12px;
-  border-radius: 3px;
+.partNameUnder {
+  text-align: right;
+}
+.partUnder {
+  font-weight: 700;
+  color: var(--text);
+}
+.partBar {
+  padding: 5px 6px;
+  border-radius: 6px;
+}
+.partTotal {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.5;
+  color: var(--text);
 }
 
-/* The items */
+/* The key and the total under the whole, on a phone only. */
+.chart .legend,
+.chart .totalUnder {
+  display: none;
+}
+
+/* The items. --room is kept for the amount beside the longest bar, in px,
+   so the bars, the grid's lines and the axis's marks, each in its own size
+   of type, agree. */
 .items {
+  --room: 42px;
+
   width: 100%;
+  margin-top: var(--space-4);
   border-collapse: collapse;
   table-layout: fixed;
   font-size: 13.5px;
@@ -99,58 +92,134 @@
   vertical-align: middle;
 }
 .items thead th {
-  font-size: 11.5px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border-strong);
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   text-align: left;
   color: var(--muted);
-  padding-bottom: 6px;
 }
 .items .name {
-  width: 36%;
+  width: 32%;
   padding-right: 10px;
   text-align: right;
   font-weight: 400;
   color: var(--text);
 }
+
+/* The bars' column: dashed lines at the axis's marks, behind the bars. */
+.plot {
+  position: relative;
+}
+.plot::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: calc(100% - var(--room) + 1px);
+  background: repeating-linear-gradient(
+    to right,
+    var(--border-strong) 0 1px,
+    transparent 1px calc((100% - 1px) * var(--step))
+  );
+  mask-image: repeating-linear-gradient(to bottom, var(--black) 0 3px, transparent 3px 7px);
+}
 .amount {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 6px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text);
 }
-/* Room is kept for the amount beside the longest bar. */
 .bar {
-  width: calc((100% - 3em) * var(--share));
-  height: 15px;
-  border-radius: 0 4px 4px 0;
+  width: calc((100% - var(--room)) * var(--share));
+  height: 16px;
+  border-radius: var(--radius-sm);
+}
+/* Dots leading from the amount to what it's for. */
+.leader {
+  flex: 1;
+  min-width: 0;
+  border-bottom: 1.5px dotted var(--border-strong);
 }
 .items .purpose {
-  width: 34%;
-  padding-left: 12px;
+  width: 36%;
+  padding-left: 8px;
+  font-size: 13px;
   font-style: italic;
-  color: var(--text-secondary);
+  color: var(--briefing-diary);
+}
+.items thead .purpose {
+  font-style: normal;
 }
 .purposeUnder {
   display: none;
 }
 
+/* The axis's marks, each under its line. */
+.items .axis {
+  position: relative;
+  height: 2em;
+}
+.axis span {
+  position: absolute;
+  top: 6px;
+  left: calc((100% - var(--room)) * var(--at));
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
 .chart .caption {
-  margin-top: 14px;
-  font-size: 13px;
+  margin-top: var(--space-1);
+  font-size: 12.5px;
+  font-style: italic;
   line-height: 1.5;
   color: var(--muted);
 }
 
-/* On a phone, what each item is for goes under its name. */
+/* On a phone: the groups' names as a key, and what each item is for under its name. */
 @media (max-width: 600px) {
-  .chart {
-    padding: 16px 14px;
+  .partName,
+  .partUnder {
+    display: none;
+  }
+  .chart .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    margin: var(--space-2) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .chart .legend li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--tone);
+  }
+  .swatch {
+    width: 18px;
+    height: 12px;
+    border-radius: 3px;
+  }
+  .chart .totalUnder {
+    display: block;
+    margin: 4px 0 0;
+    font-size: 13px;
+    font-weight: 700;
   }
   .items .name {
-    width: 58%;
+    width: 55%;
     text-align: left;
   }
   .items .purpose {
@@ -160,10 +229,13 @@
     display: block;
     font-size: 12.5px;
     font-style: italic;
-    color: var(--text-secondary);
+    color: var(--briefing-diary);
   }
   .items tbody th,
   .items tbody td {
     padding: 5px 0;
+  }
+  .leader {
+    display: none;
   }
 }

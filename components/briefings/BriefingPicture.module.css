@@ -1,0 +1,10 @@
+/* A drawing in a box (BriefingPicture), pushed to its bottom right, the box
+   being a column. */
+
+.picture {
+  display: block;
+  align-self: flex-end;
+  width: 128px;
+  height: auto;
+  margin-top: auto;
+}

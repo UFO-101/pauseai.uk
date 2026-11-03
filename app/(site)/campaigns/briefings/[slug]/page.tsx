@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
+import Briefing from "@/components/briefings/Briefing";
 import JsonLd from "@/components/layout/JsonLd";
-import PostBody from "@/components/posts/PostBody";
-import PostHeader from "@/components/posts/PostHeader";
 import { postJsonLd, postMetadata } from "@/lib/content/blog";
 import { BRIEFINGS, briefings, findBriefing } from "@/lib/content/briefings";
 import { found } from "@/lib/found";
@@ -23,9 +22,7 @@ export default async function BriefingPage({ params }: { params: Promise<{ slug:
     <>
       <JsonLd data={postJsonLd(briefing, BRIEFINGS)} />
       <main>
-        <PostHeader post={briefing} section={BRIEFINGS} />
-
-        <PostBody post={briefing} />
+        <Briefing briefing={briefing} section={BRIEFINGS} />
       </main>
     </>
   );

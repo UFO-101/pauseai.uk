@@ -2248,7 +2248,7 @@ function toNumber(value: unknown): number | undefined {
 }
 
 /** A section's posts, newest first. */
-export function newestFirst(list: BlogPost[]): BlogPost[] {
+export function newestFirst<Post extends BlogPost>(list: Post[]): Post[] {
   return [...list].sort((a, b) => b.date.localeCompare(a.date));
 }
 

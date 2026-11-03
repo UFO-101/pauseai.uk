@@ -1,0 +1,24 @@
+/* A briefing's page (Briefing): its sheet on the page's background, the
+   link back above it. */
+
+.page {
+  padding: var(--space-6) var(--space-5) var(--space-8);
+}
+.back {
+  max-width: calc(var(--measure-page) + 2 * var(--space-7));
+  margin: 0 auto var(--space-4);
+  font-size: 15px;
+  font-weight: 600;
+}
+.back a {
+  text-decoration: none;
+}
+
+@media (max-width: 820px) {
+  .page {
+    padding: var(--space-4) 0 0;
+  }
+  .back {
+    padding: 0 var(--space-4);
+  }
+}

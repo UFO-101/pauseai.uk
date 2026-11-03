@@ -1,28 +1,31 @@
-/* A working week (WeekCalendar): a row of days, the busy ones ringed. Its
-   lists are styled under .calendar, to outrank a post body's (PostBody). */
+/* A working week (WeekCalendar), drawn as the briefings' designer drew it:
+   a dark ruled frame, the weekdays in a band across the top, the busy days'
+   dates ringed in orange, and what's on in small type, each dotted in its
+   topic's colour. Its lists are styled under .week, to outrank the plain
+   lists of a briefing (BriefingSheet). */
 
-.calendar .week {
+.week {
   display: grid;
   grid-auto-columns: minmax(0, 1fr);
   grid-auto-flow: column;
-  margin: 24px 0;
+  margin: 0;
   padding: 0;
   list-style: none;
   background: var(--surface);
-  border: 1px solid var(--border-strong);
+  border: 2px solid var(--briefing-diary);
   border-radius: 10px;
   overflow: hidden;
 }
-.calendar .week > li {
+.week > li {
   display: flex;
   flex-direction: column;
   align-items: center;
   min-height: 112px;
   margin: 0;
-  padding: 0 6px 10px;
-  border-left: 1px solid var(--border);
+  padding: 0 6px var(--space-2);
+  border-left: 1px solid color-mix(in srgb, var(--briefing-diary) 60%, transparent);
 }
-.calendar .week > li:first-child {
+.week > li:first-child {
   border-left: 0;
 }
 .week time {
@@ -30,11 +33,11 @@
 }
 .weekday {
   align-self: stretch;
-  padding: 5px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  padding: 5px 0 4px;
+  border-bottom: 1.5px solid var(--briefing-diary);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   text-align: center;
   color: var(--muted);
@@ -42,41 +45,52 @@
 .date {
   display: grid;
   place-items: center;
-  width: 40px;
+  width: 54px;
   height: 40px;
-  margin: 8px 0 6px;
+  margin: 6px 0 4px;
   border: 2px solid transparent;
   border-radius: 50%;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--text);
 }
 .busy .date {
-  border-color: var(--pause-orange);
+  border-color: var(--briefing-headline);
 }
-.calendar .events {
+.week .events {
   align-self: stretch;
   margin: 0;
   padding: 0;
   list-style: none;
 }
-.calendar .events li {
+.week .event {
+  position: relative;
   margin: 0 0 3px;
-  padding: 0;
-  font-size: 12px;
+  padding-left: 12px;
+  font-size: 11.5px;
+  font-weight: 500;
   line-height: 1.3;
-  text-align: center;
-  color: var(--text-secondary);
+  color: var(--briefing-diary);
+}
+.event::before {
+  content: "";
+  position: absolute;
+  top: 0.3em;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--tone);
 }
 
 /* On a phone: a list of the busy days, each date beside what's on. */
 @media (max-width: 600px) {
-  .calendar .week {
+  .week {
     grid-auto-flow: row;
   }
-  .calendar .week > li {
+  .week > li {
     display: grid;
-    grid-template-columns: 44px 40px minmax(0, 1fr);
+    grid-template-columns: 44px 52px minmax(0, 1fr);
     align-items: center;
     gap: 10px;
     min-height: 0;
@@ -86,7 +100,7 @@
   .busy ~ .busy {
     border-top: 1px solid var(--border);
   }
-  .calendar .week > li.free {
+  .week > li.free {
     display: none;
   }
   .weekday {
@@ -95,14 +109,13 @@
     text-align: left;
   }
   .date {
-    width: 36px;
+    width: 48px;
     height: 36px;
     margin: 0;
-    font-size: 17px;
+    font-size: 18px;
   }
-  .calendar .events li {
+  .week .event {
     margin: 2px 0;
     font-size: 13.5px;
-    text-align: left;
   }
 }

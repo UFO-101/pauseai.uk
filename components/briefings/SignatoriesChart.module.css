@@ -1,28 +1,25 @@
-/* Counts of signatories over time (SignatoriesChart): bars standing on a
-   line of dates, the line ending in an event, and a callout. Its text and
-   lists are styled under .chart, to outrank a post body's (PostBody). */
+/* Counts of signatories over time (SignatoriesChart), as the briefings'
+   designer drew it: hatched bars standing on a line of dates, the line
+   running on as an arrow to an event, and a dashed callout above the event.
+   Its bars and the event are in its box's colour (--tone). Its text and
+   lists are styled under .chart, to outrank a briefing's plain ones
+   (BriefingSheet). */
 
 .chart {
-  margin: 28px 0;
-  padding: 18px 22px 14px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  margin: 0;
 }
 .chart .title {
-  margin: 0 0 14px;
-  font-size: 14px;
-  font-weight: 700;
+  margin: 0 0 var(--space-2);
+  font-size: 15px;
+  font-weight: 800;
   color: var(--text);
 }
 .plot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 16px 28px;
+  position: relative;
 }
 
-/* The bars above the line of dates, their dates below it. */
+/* The bars above the line of dates, their dates below it; the event's
+   column takes the rest of the line, the callout over it. */
 .chart .counts {
   display: flex;
   margin: 0;
@@ -32,84 +29,104 @@
 .chart .counts > li {
   display: flex;
   flex-direction: column;
-  min-width: 88px;
+  min-width: 84px;
   margin: 0;
   padding: 0;
-  font-size: 12.5px;
   line-height: 1.3;
   text-align: center;
+}
+.chart .counts > li.event {
+  flex: 1;
+  min-width: 150px;
 }
 .above {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  height: 112px;
+  height: 120px;
 }
 .below {
+  position: relative;
   display: flex;
   flex-direction: column;
-  padding: 8px 8px 0;
-  border-top: 2px solid var(--text-secondary);
+  padding: var(--space-2) 4px 0;
+  border-top: 2.5px solid var(--briefing-diary);
+}
+/* The arrowhead at the line's end. */
+.event .below::after {
+  content: "";
+  position: absolute;
+  top: -7px;
+  right: 1px;
+  width: 9px;
+  height: 9px;
+  border-top: 2.5px solid var(--briefing-diary);
+  border-right: 2.5px solid var(--briefing-diary);
+  transform: rotate(45deg);
 }
 .value {
   font-size: 26px;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1.1;
   color: var(--text);
 }
 .bar {
-  width: 36px;
-  height: calc(70px * var(--share));
+  width: 40px;
+  height: calc(80px * var(--share));
   margin-top: 4px;
-  border: 1.5px solid var(--chart-green);
+  border: 2.5px solid var(--tone);
   border-bottom: 0;
-  border-radius: 4px 4px 0 0;
+  border-radius: 6px 6px 0 0;
   background: repeating-linear-gradient(
     45deg,
-    color-mix(in srgb, var(--chart-green) 30%, transparent) 0 2px,
-    transparent 2px 6px
+    color-mix(in srgb, var(--tone) 75%, transparent) 0 1.5px,
+    transparent 1.5px 5px
   );
 }
 .date {
+  font-size: 14px;
   font-weight: 700;
-  color: var(--text-secondary);
+  color: var(--briefing-diary);
   white-space: nowrap;
 }
 .note {
+  font-size: 13px;
   font-style: italic;
   color: var(--muted);
 }
 
-/* The event: a ring on the line, its words in the darker green, as small text. */
+/* The event: a ring on the line, its words bold in the chart's colour. */
 .dot {
-  width: 16px;
-  height: 16px;
-  margin-bottom: -9px;
-  border: 2px solid var(--chart-green);
+  width: 18px;
+  height: 18px;
+  margin-bottom: -10px;
+  border: 2.5px solid var(--tone);
   border-radius: 50%;
   background: var(--surface);
 }
 .event .date,
 .event .note {
+  font-size: 14px;
   font-style: normal;
-  font-weight: 700;
-  color: var(--status-green);
+  font-weight: 800;
+  color: var(--tone);
 }
 
 .chart .callout {
+  position: absolute;
+  top: 24px;
+  right: 0;
   margin: 0;
-  padding: 6px 10px;
-  border: 1.5px dashed var(--status-red);
-  border-radius: 6px;
-  background: var(--status-red-bg);
-  font-size: 13px;
-  font-weight: 700;
+  padding: 6px 12px;
+  border: 2.5px dashed var(--briefing-risk);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 800;
   line-height: 1.4;
-  color: var(--status-red);
+  color: var(--briefing-risk);
 }
 .chart .cite {
-  margin: 8px 0 0;
-  font-size: 12.5px;
+  margin: 0;
   text-align: right;
 }

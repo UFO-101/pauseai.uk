@@ -6,8 +6,8 @@ export type Count = { value: number; date: string; note: string };
 
 /**
  * How many have signed something, over time: a bar for each count, standing
- * on a line of dates that ends with a later event, and a callout beside
- * them, such as who hasn't signed.
+ * on a line of dates that runs on to a later event, and a callout above the
+ * event, such as who hasn't signed. Drawn in its box's colour (--tone).
  */
 export default function SignatoriesChart({
   title,

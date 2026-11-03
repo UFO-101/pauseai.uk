@@ -9,13 +9,13 @@ describe("BudgetChart", () => {
   const groups = [
     {
       name: "Safety",
-      tone: "orange" as const,
+      tone: "risk" as const,
       items: [
         { name: "Lab", amount: 30, purpose: "Tests things" },
         { name: "Shield", amount: 10, purpose: "Defends things" },
       ],
     },
-    { name: "Jobs", tone: "green" as const, items: [{ name: "Prize", amount: 20, purpose: "Rewards things" }] },
+    { name: "Jobs", tone: "good" as const, items: [{ name: "Prize", amount: 20, purpose: "Rewards things" }] },
   ];
 
   it("splits the whole into its groups, labelled with their totals and keyed by name", async () => {
@@ -86,7 +86,7 @@ describe("WeekCalendar", () => {
     const { container } = await render(
       <WeekCalendar
         days={[
-          { date: "2026-11-02", events: ["Third reading", "Summit"] },
+          { date: "2026-11-02", events: [{ what: "Third reading", tone: "parliament" }, { what: "Summit", tone: "industry" }] },
           { date: "2026-11-03", events: [] },
         ]}
       />,

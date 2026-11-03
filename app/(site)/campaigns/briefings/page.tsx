@@ -1,4 +1,4 @@
-import PostList from "@/components/posts/PostList";
+import BriefingList from "@/components/briefings/BriefingList";
 import PageHero from "@/components/ui/PageHero";
 import { feedLink, newestFirst } from "@/lib/content/blog";
 import { BRIEFINGS, briefings } from "@/lib/content/briefings";
@@ -21,7 +21,7 @@ export default function BriefingsIndexPage() {
         lede="Each week's UK-focussed AI news in one page: the key stories, what happened in Parliament, and the dates coming up."
       />
 
-      <PostList posts={newestFirst(briefings)} section={BRIEFINGS} />
+      <BriefingList briefings={newestFirst(briefings)} section={BRIEFINGS} />
     </main>
   );
 }

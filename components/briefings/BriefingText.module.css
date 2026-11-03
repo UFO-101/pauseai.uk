@@ -1,0 +1,30 @@
+/* Words set apart in a briefing's text (BriefingText). */
+
+.accent {
+  color: var(--tone, var(--text));
+}
+
+.subhead {
+  margin: 0 0 4px;
+  font-weight: 700;
+  color: var(--tone, var(--text));
+}
+
+.flag {
+  display: inline-block;
+  margin-left: var(--space-1);
+  padding: 0 6px;
+  border: 2px solid var(--briefing-risk);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  line-height: 1.4;
+  color: var(--briefing-risk);
+  vertical-align: 1px;
+}
+
+.aside {
+  margin: 6px 0 0;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border-strong);
+}
