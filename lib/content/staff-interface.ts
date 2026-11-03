@@ -115,6 +115,9 @@ export const staffCopy = {
     title: "Let staff send mailings from your Gmail",
     // The heading once it's connected.
     connectedTitle: "Staff can send mailings from your Gmail",
+    // The same two, logged in as the letters inbox, which sends supporters' letters to MPs and nothing else.
+    lettersInboxTitle: "⁂ Send supporters' letters to MPs from this Gmail",
+    lettersInboxConnectedTitle: "⁂ Supporters' letters to MPs go from this Gmail",
     // What connecting it means, said before it goes to Google: a line, then a bullet each.
     intro: "Usually this is a shared account rather than a person's own: log in here as it, then connect it.",
     explain: [

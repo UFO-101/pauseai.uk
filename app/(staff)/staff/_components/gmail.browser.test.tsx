@@ -83,6 +83,24 @@ describe("MyGmail", () => {
       .element(page.getByRole("link", { name: gmail.connect }))
       .toHaveAttribute("href", "/staff/api/gmail/connect?back=%2Fstaff%2Fme");
   });
+
+  it("the letters inbox's: headed as sending supporters' letters, connected or not, told so when it connects", async () => {
+    const { rerender } = await render(
+      <MyGmail me="letters@pauseai.uk" lettersInbox account={undefined} outcome="" disconnect={vi.fn()} />,
+    );
+    await expect.element(page.getByRole("heading", { level: 2, name: gmail.lettersInboxTitle })).toBeVisible();
+    await rerender(
+      <MyGmail
+        me="letters@pauseai.uk"
+        lettersInbox
+        account={exampleGmailAccount}
+        outcome="connected"
+        disconnect={vi.fn()}
+      />,
+    );
+    await expect.element(page.getByRole("heading", { level: 2, name: gmail.lettersInboxConnectedTitle })).toBeVisible();
+    await expect.element(page.getByRole("status")).toHaveTextContent(gmail.outcomes.connectedLettersInbox);
+  });
 });
 
 describe("AccountTitle", () => {

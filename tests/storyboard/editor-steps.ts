@@ -20,7 +20,7 @@ type TiptapElement = HTMLElement & {
  * a click or an arrow key, and a key pressed before then lands where the
  * caret was. No person types that fast.
  */
-export async function caretSettled(page: Page, text: string, at?: "start" | "end") {
+async function caretSettled(page: Page, text: string, at?: "start" | "end") {
   await expect
     .poll(() =>
       editor(page).evaluate(
@@ -42,7 +42,7 @@ export async function caretSettled(page: Page, text: string, at?: "start" | "end
  * focuses the editor can lose its caret to that, and land at the letter's
  * start. A timer due after ProseMirror's runs after it.
  */
-export async function focusEditor(page: Page) {
+async function focusEditor(page: Page) {
   await editor(page).focus();
   await editor(page).evaluate(() => new Promise((done) => setTimeout(done, 25)));
 }
