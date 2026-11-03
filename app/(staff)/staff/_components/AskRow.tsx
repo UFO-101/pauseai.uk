@@ -12,7 +12,8 @@ import type { Ask } from "@/lib/server/asks";
 import type { Politician } from "@/lib/server/politicians";
 import { staffDate } from "@/lib/staff-time";
 import { AskLead } from "./AskLine";
-import { BubbleBox, bubbleTrigger } from "./ui/Bubble";
+import { BubbleBox } from "./ui/Bubble";
+import { bubbleTrigger } from "./ui/bubble-trigger";
 import Menu from "./ui/Menu";
 import styles from "./Details.module.css";
 

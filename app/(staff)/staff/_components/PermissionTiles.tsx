@@ -5,7 +5,8 @@ import { CHANNELS, waysKey, type Channel, type ContactPermission, type Topic } f
 import { staffDate } from "@/lib/staff-time";
 import ChannelIcon from "./ChannelIcon";
 import Tag from "@/components/ui/Tag";
-import { BubbleBox, bubbleTrigger } from "./ui/Bubble";
+import { BubbleBox } from "./ui/Bubble";
+import { bubbleTrigger } from "./ui/bubble-trigger";
 import styles from "./PermissionTiles.module.css";
 
 const copy = staffCopy.supporters.detail.permissions;

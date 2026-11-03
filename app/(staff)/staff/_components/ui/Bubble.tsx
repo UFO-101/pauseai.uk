@@ -2,21 +2,13 @@
 
 import { useEffect, useRef, type CSSProperties, type ReactNode, type RefObject } from "react";
 import styles from "./Bubble.module.css";
+import { bubbleTrigger } from "./bubble-trigger";
 
 /** How far from the window's edges a bubble opening is scrolled to be. */
 const SCROLL_MARGIN = 16;
 
 /** Room kept above a bubble for its button, with nothing to keep in view: a staff button's height, and the gap. */
 const BUTTON_ROOM = 56;
-
-/**
- * What a button needs to open the bubble `id` and have it point to it: for
- * a button of its own look, such as an IconButton. `id` must be unique on
- * the page.
- */
-export function bubbleTrigger(id: string) {
-  return { popoverTarget: id, style: { anchorName: `--${id}` } as CSSProperties };
-}
 
 /**
  * A bubble that a button opens, for a form or a few words on the thing

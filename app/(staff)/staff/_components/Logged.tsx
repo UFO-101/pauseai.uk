@@ -2,7 +2,8 @@ import { Fragment, type ReactNode } from "react";
 import IconButton from "@/components/ui/IconButton";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { BubbleBox, bubbleTrigger } from "./ui/Bubble";
+import { BubbleBox } from "./ui/Bubble";
+import { bubbleTrigger } from "./ui/bubble-trigger";
 import styles from "./Logged.module.css";
 
 /** Parts of a line, between middle dots. */
