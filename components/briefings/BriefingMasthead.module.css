@@ -3,7 +3,7 @@
 
 .masthead {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 62%);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 60%);
   gap: var(--space-2) var(--space-5);
   align-items: center;
   padding-bottom: var(--space-3);
@@ -20,7 +20,7 @@
 }
 .byline {
   margin: 0;
-  font-size: 17px;
+  font-size: 16px;
   color: var(--text-secondary);
 }
 .byline a {

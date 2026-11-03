@@ -253,4 +253,8 @@
   .leader {
     display: none;
   }
+  /* Only the axis's ends: the marks between run into each other. */
+  .axis span:not(:first-child, :last-child) {
+    display: none;
+  }
 }
