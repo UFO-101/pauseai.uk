@@ -3,7 +3,17 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { addFilter, changeFilter, fakeTurnstile, lookUpTestMp, newestEmail, openLookup } from "../steps";
 import { BASE, emailFrame, expect, madeUpAddress, frame, test } from "./fixtures";
 import { TEST_MPS } from "@/lib/test-mps";
-import { bouncy, BOUNCY_ADDRESS, logIn, POLICY_INBOX, postBounce, postReply, sentLetterId } from "./staff-steps";
+import { sentEmail } from "./letters-inbox-steps";
+import {
+  bounceLetter,
+  bouncy,
+  BOUNCY_ADDRESS,
+  logIn,
+  POLICY_INBOX,
+  postBounce,
+  postReply,
+  sentLetterId,
+} from "./staff-steps";
 
 // Supporters' letters to MPs: the list filtered, by status and by what came
 // back to a letter, and a letter that bounces,
@@ -14,7 +24,12 @@ test("Filter letters by status and campaigns, reset, then sort by sender", async
   const jane = madeUpAddress("Jane Smith", 11);
   const sam = madeUpAddress("Sam Smith", 12);
   await sentLetterId(page, flowDatabase, jane);
-  await postBounce(request, await sentLetterId(page, flowDatabase, sam, bouncy, "Sam Smith"));
+  await bounceLetter(
+    request,
+    flowDatabase,
+    await sentLetterId(page, flowDatabase, sam, bouncy, "Sam Smith"),
+    BOUNCY_ADDRESS,
+  );
 
   await page.reload();
   const janes = page.getByRole("row").filter({ hasText: jane });
@@ -126,13 +141,13 @@ test("A supporter's letter: the letter as an email, Copy Gmail search, and the M
   );
   const letter = page.getByRole("article");
   await expect(letter).toContainText(sender);
-  await expect(letter.getByText(staffCopy.letterThread.supporterNoText)).toBeVisible();
+  await expect(letter).toContainText("Dear Mr McTestface");
   await frame(page, "the letter's page: sent, the letter as an email, beside its campaign's ask and its history");
 
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.getByRole("button", { name: staffCopy.findInGmail.copy }).click();
   await expect(page.getByRole("status")).toContainText(staffCopy.findInGmail.next.stressed);
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/^rfc822msgid:\S+@mtasv\.net$/);
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/^rfc822msgid:\S+@pauseai\.uk$/);
   await frame(page, "Copy Gmail search: copied, and where to paste it", { window: true });
 
   const ask = page.getByRole("region", { name: staffCopy.mailings.fields.ask });
@@ -152,10 +167,9 @@ test("A supporter's letter: the letter as an email, Copy Gmail search, and the M
 
 test("A letter bounces: staff are emailed, the address is blocked", async ({ page, request, flowDatabase }) => {
   const sender = madeUpAddress("Jane Smith", 13);
-  const messageId = await sentLetterId(page, flowDatabase, sender, bouncy);
-  const sent = newestEmail((email) => email.Cc?.includes(sender) ?? false);
-  expect(sent?.To).toBe(`"Bouncy McTestface MP" <${BOUNCY_ADDRESS}>`);
-  await postBounce(request, messageId);
+  const letterId = await sentLetterId(page, flowDatabase, sender, bouncy);
+  expect(sentEmail(flowDatabase, letterId, "letter").To).toBe(`"Bouncy McTestface MP" <${BOUNCY_ADDRESS}>`);
+  await bounceLetter(request, flowDatabase, letterId, BOUNCY_ADDRESS);
 
   const alert = newestEmail(
     (email) => email.To === POLICY_INBOX && email.Subject === staffCopy.alert.subject(bouncy.name),
@@ -181,7 +195,7 @@ test("A letter bounces: staff are emailed, the address is blocked", async ({ pag
   await frame(page, "the letter's page: bounced, in red, the letter as an email, and what happened to it");
   await page.getByRole("list", { name: staffCopy.letters.detail.historyTitle }).getByRole("button").first().click();
   await expect(page.locator(":popover-open")).toContainText('"reason"');
-  await frame(page, "the bounce's {}: what Postmark said, as JSON, in a bubble by the button", { window: true });
+  await frame(page, "the bounce's {}: what the bounce said, as JSON, in a bubble by the button", { window: true });
   await page.keyboard.press("Escape");
   await page.getByRole("link", { name: staffCopy.nav.letters }).first().click();
   await expect(page).toHaveURL(`${BASE}/staff/letters`);
@@ -195,13 +209,15 @@ test("Unblock an MP's bounced address", async ({ page, request, flowDatabase }) 
   await expect(page.getByRole("heading", { name: bouncy.name })).toBeVisible();
   const unreachable = page.getByText(copy.lookup.unreachable);
   await expect(unreachable).toBeVisible();
+  // The letter can still be written: it waits until the address works.
+  await expect(page.getByLabel(copy.form.emailLabel)).toBeVisible();
   // The MP's card is under the form: its heading put in the middle of the window, so the frame
   // shows it, wherever the window was. Brought into view only if needed, it stays put when it's in
   // view already, which it is or isn't by where the click left the window.
   await page
     .getByRole("heading", { name: bouncy.name })
     .evaluate((heading) => heading.scrollIntoView({ block: "center", behavior: "instant" }));
-  await frame(page, "the form says the MP can't be reached");
+  await frame(page, "the MP's address isn't working: the letter can be written, and will go once it does");
 
   await logIn(page, flowDatabase, ["admin"]);
   // The home page says the MP's email bounced, first thing, with a button to their page.

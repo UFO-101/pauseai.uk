@@ -1,8 +1,10 @@
 import type { Page } from "@playwright/test";
 import { campaigns, copy } from "@/lib/content/email-your-mp";
 import { site } from "@/lib/content/site";
-import { fakeTurnstile, fillLetter, lookUpTestMp, newestEmail, openLookup, sendLetter, WEBHOOK_AUTH } from "../steps";
+import { fakeTurnstile, fillLetter, lookUpTestMp, openLookup, sendLetter, WEBHOOK_AUTH } from "../steps";
 import { BASE, emailFrame, expect, madeUpAddress, frame, test } from "./fixtures";
+import { caretAt, editor, newParagraphAboveSignOff, paste, toolbar } from "./editor-steps";
+import { letterIdOf, sentEmail, MPS_PROXY } from "./letters-inbox-steps";
 import { wholePage } from "./settle";
 
 // Email your MP, end to end on fixture data. ZZ99ZZ finds the test
@@ -34,7 +36,7 @@ async function fillAndPreview(page: Page, email: string) {
 test(
   "Write to your MP (ZZ99ZZ): postcode, letter, preview, send, the letter the MP gets",
   { tag: "@phone" },
-  async ({ page }) => {
+  async ({ page, flowDatabase }) => {
     // Each flow writes as its own sender, so its letter is its own in the outbox.
     const sender = madeUpAddress("Jane Smith", 21);
     await openLookup(page, BASE);
@@ -70,18 +72,21 @@ test(
     await expect(page.getByRole("status")).toHaveText(copy.sent.body("Testy McTestface MP"));
     expect(await adsEvents(page)).toBe(0);
 
-    const letter = newestEmail(
-      (email) => email.To.includes("test-mp@parliament.example") && !!email.Cc?.includes(sender),
-    )!;
-    // The letter's own address, whatever its shape (lib/server/mp-letters.test.ts checks that), so main gets this far too.
-    const address = letter.From.match(/<([^>]+@letters\.pauseai\.uk)>/)![1];
-    expect(letter.From).toBe(`"Jane Smith via PauseAI" <${address}>`);
-    expect(letter.Bcc).toBe("policy@example.org");
-    expect(letter.Cc).toBe(`"Jane Smith" <${sender}>`);
-    expect(letter.ReplyTo).toBeUndefined();
+    // From Jane's proxy on the letters inbox, to the MP alone; then her copy, from it to the MP's.
+    const id = letterIdOf(flowDatabase, sender);
+    const letter = sentEmail(flowDatabase, id, "letter");
+    expect(letter.From).toMatch(/^"Jane Smith \(via PauseAI\)" <\S+\+jane\.smith@pauseai\.uk>$/);
+    expect(letter.To).toBe('"Testy McTestface MP" <test-mp@parliament.example>');
+    expect(letter.Cc).toBeUndefined();
+    expect(letter.Bcc).toBeUndefined();
     expect(letter.TextBody).toMatch(/Jane Smith\n\n1 High Street, Testville\nZZ9 9ZZ$/);
     expect(letter.Attachments!.map((a) => a.Name)).toEqual(campaigns[0].attachments.map((a) => a.file));
-    await emailFrame(page, letter, "the letter the MP gets");
+    await emailFrame(page, letter, "the letter the MP gets, from Jane's proxy");
+    const copied = sentEmail(flowDatabase, id, "letter-copy");
+    expect(copied.Bcc).toBe(sender);
+    expect(copied.To).toBe(`"Testy McTestface MP (via PauseAI)" <${MPS_PROXY}>`);
+    expect(copied.TextBody).toContain(copy.letterCopy("Testy McTestface MP"));
+    await emailFrame(page, copied, "Jane's copy, from her proxy to the MP's, which a reply reaches");
   },
 );
 
@@ -100,89 +105,7 @@ test("Find your MP, then go back: the form is as you left it", async ({ page }) 
   await frame(page, "back at the form, as it was");
 });
 
-/** The letter's editor: the text box Tiptap draws, labelled by the form's "Message". */
-const editor = (page: Page) => page.getByRole("textbox", { name: copy.form.letterLabel, exact: true });
-
-/** The editor's element: Tiptap puts the editor on it, and so where it has the caret. */
-type TiptapElement = HTMLElement & {
-  editor: {
-    state: { selection: { $to: { parentOffset: number; parent: { textContent: string; content: { size: number } } } } };
-  };
-};
-
-/**
- * Waits for the editor to have the caret at the start or end of the
- * paragraph that reads `text`. It reads where the caret went a moment after
- * a click or an arrow key, and a key pressed before then lands where the
- * caret was. No person types that fast.
- */
-async function caretSettled(page: Page, text: string, at?: "start" | "end") {
-  await expect
-    .poll(() =>
-      editor(page).evaluate(
-        (el, { text, at }) => {
-          const { $to } = (el as TiptapElement).editor.state.selection;
-          const offset = at === undefined || $to.parentOffset === (at === "start" ? 0 : $to.parent.content.size);
-          return $to.parent.textContent === text && offset;
-        },
-        { text, at },
-      ),
-    )
-    .toBe(true);
-}
-
-/**
- * Gives the editor focus, and waits out what ProseMirror does then: 20ms
- * later, it puts its own caret back unless it has seen where the browser's
- * went (prosemirror-view's handlers.focus). On a busy machine, a click that
- * focuses the editor can lose its caret to that, and land at the letter's
- * start. A timer due after ProseMirror's runs after it.
- */
-async function focusEditor(page: Page) {
-  await editor(page).focus();
-  await editor(page).evaluate(() => new Promise((done) => setTimeout(done, 25)));
-}
-
-/**
- * Puts the caret at the start or end of the letter's paragraph that reads
- * `text`: a click in it, and once the caret is there, Home or End.
- */
-async function caretAt(page: Page, text: string, at: "start" | "end") {
-  await focusEditor(page);
-  await editor(page).getByText(text, { exact: true }).click();
-  await caretSettled(page, text);
-  await page.keyboard.press(at === "start" ? "Home" : "End");
-  await caretSettled(page, text, at);
-}
-
-/** Opens a new paragraph above the sign-off, as someone adding to the letter would, with the caret in it. */
-async function newParagraphAboveSignOff(page: Page) {
-  await caretAt(page, "Thank you for your consideration,", "start");
-  await page.keyboard.press("Enter");
-  await page.keyboard.press("ArrowUp");
-  await caretSettled(page, "", "start");
-}
-
-/** Clicks a toolbar button, then waits for the editor to take focus back, a frame later, as Tiptap gives it. */
-async function toolbar(page: Page, name: string) {
-  await page.getByRole("button", { name, exact: true }).click();
-  await expect(editor(page)).toBeFocused();
-}
-
-/** Pastes `html` into the editor, as a browser does from another app's clipboard. */
-async function paste(page: Page, html: string, text: string) {
-  await editor(page).evaluate(
-    (el, { html, text }) => {
-      const data = new DataTransfer();
-      data.setData("text/html", html);
-      data.setData("text/plain", text);
-      el.dispatchEvent(new ClipboardEvent("paste", { clipboardData: data, bubbles: true, cancelable: true }));
-    },
-    { html, text },
-  );
-}
-
-test("Format the letter and paste into it: the preview is what the MP gets", async ({ page }) => {
+test("Format the letter and paste into it: the preview is what the MP gets", async ({ page, flowDatabase }) => {
   const sender = madeUpAddress("Jane Smith", 22);
   await lookUp(page);
   const letter = editor(page);
@@ -237,7 +160,7 @@ test("Format the letter and paste into it: the preview is what the MP gets", asy
   await frame(page, "the preview, formatted as written");
   await sendLetter(page);
 
-  const sent = newestEmail((email) => email.To.includes("test-mp@parliament.example") && !!email.Cc?.includes(sender))!;
+  const sent = sentEmail(flowDatabase, letterIdOf(flowDatabase, sender), "letter");
   expect(sent.HtmlBody).toContain("<strong>Please reply.</strong>");
   expect(sent.HtmlBody).toMatch(/<ul>\s*<li><p>First reason<\/p><\/li>\s*<li><p>Second reason<\/p><\/li>\s*<\/ul>/);
   expect(sent.HtmlBody).toContain('See <a href="https://example.com/">this report</a> and red words.');

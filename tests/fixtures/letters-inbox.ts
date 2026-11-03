@@ -69,11 +69,14 @@ let written = 0;
 
 /**
  * Delivers `raw`, a whole message, to the letters inbox of `scope`: a
- * file for the server to pick up where LETTERS_INBOX_DIR is set, else
- * straight into this process's mailbox. In Spam if `spam`.
+ * file for the server to pick up in `dir` (LETTERS_INBOX_DIR, unless a
+ * storyboard flow names the build's), else straight into this process's
+ * mailbox. In Spam if `spam`.
  */
-export function deliverToLettersInbox(raw: string, { scope = "default", spam = false } = {}): void {
-  const dir = process.env.LETTERS_INBOX_DIR;
+export function deliverToLettersInbox(
+  raw: string,
+  { scope = "default", spam = false, dir = process.env.LETTERS_INBOX_DIR } = {},
+): void {
   if (!dir) {
     receive(lettersMailbox(scope), raw, spam);
     return;
