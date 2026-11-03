@@ -163,7 +163,9 @@ npm run test:report       # Playwright's own report, with the trace of a failed 
 ```
 
 **The gate** is what CI runs. It fails only on a flow's checks, never on
-how a page looks.
+how a page looks. CI runs it in three parts at once, each a job of its own
+("Storyboard (1 of 3)" and so on), and the Storyboard check passes when
+all three have; `.github/workflows/ci.yml` says why.
 
 **The review** (`scripts/storyboard.mjs`) runs the suite against this
 branch with screenshots, meanwhile building and serving main if it looks to be needed
