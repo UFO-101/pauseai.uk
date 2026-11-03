@@ -2,7 +2,7 @@ import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fromEml, readOutbox, saveToOutbox, toEml } from "./outbox";
+import { fromEml, readOutbox, saveRawToOutbox, saveToOutbox, toEml } from "./outbox";
 
 let dir: string | undefined;
 afterEach(() => {
@@ -26,6 +26,43 @@ describe("the test outbox", () => {
     const files = readdirSync(dir);
     expect(files.every((file) => file.endsWith(".eml"))).toBe(true);
     expect(readFileSync(join(dir, files[0]), "utf8")).toMatch(/^From: a@example.org\r\nTo: b@example.org\r\n/);
+  });
+
+  it("keeps a whole message as it went, a relay's, and reads its text in base64 and its threading", () => {
+    dir = mkdtempSync(join(tmpdir(), "outbox-"));
+    const raw = [
+      "From: a@example.org",
+      "To: b@example.org",
+      "Subject: Re: Hi",
+      "Message-ID: <relay@pauseai.uk>",
+      "In-Reply-To: <copy@pauseai.uk>",
+      "References: <copy@pauseai.uk>",
+      "Auto-Submitted: auto-replied",
+      "Content-Type: multipart/mixed; boundary=b1",
+      "",
+      "--b1",
+      "Content-Type: text/plain; charset=utf-8",
+      "Content-Transfer-Encoding: base64",
+      "",
+      Buffer.from("Thank you.").toString("base64"),
+      "--b1--",
+      "",
+    ].join("\r\n");
+    saveRawToOutbox(dir, Buffer.from(raw));
+    expect(readOutbox(dir)).toMatchObject([
+      {
+        Subject: "Re: Hi",
+        MessageId: "<relay@pauseai.uk>",
+        InReplyTo: "<copy@pauseai.uk>",
+        References: "<copy@pauseai.uk>",
+        AutoSubmitted: "auto-replied",
+        TextBody: "Thank you.",
+      },
+    ]);
+  });
+
+  it("writes the Message-ID a Gmail send went with", () => {
+    expect(fromEml(toEml({ ...email(1), MessageId: "m@pauseai.uk" })).MessageId).toBe("<m@pauseai.uk>");
   });
 
   it("reads an outbox that isn't there as empty", () => {

@@ -1,5 +1,17 @@
+import { docFromMarkup } from "@/lib/letter-format";
+import { deliverToLettersInbox, resetLettersInbox } from "@/tests/fixtures/letters-inbox";
+import { LETTERS_INBOX, stubLettersInboxEnv, testMail, testProxy } from "@/tests/gmail-sends";
+import { readGmail } from "./gmail-reading";
+import { submitLetter } from "./mp-letters";
 import { expect, it, vi } from "vitest";
-import { addTestLetter, addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import {
+  addTestLetter,
+  addTestMp,
+  addTestPolitician,
+  connectTestGmail,
+  describeWithDatabase,
+  useTestDatabase,
+} from "@/tests/database";
 import { sentNearSearch } from "@/lib/letter-links";
 import type { LetterFilter } from "@/lib/staff-search";
 import { query } from "./db";
@@ -320,6 +332,52 @@ describeWithDatabase("a letter for its page", () => {
       sentAt: "2026-10-01T12:00:00Z",
     });
     expect(await getSupporterLetter(noAddress)).toMatchObject({ gmail: null });
+    vi.unstubAllEnvs();
+  });
+
+  it("gives a letter from the letters inbox with its text, its draft and the messages both ways, found there by its Message-ID", async () => {
+    stubLettersInboxEnv();
+    resetLettersInbox();
+    await addTestMp();
+    await connectTestGmail(LETTERS_INBOX);
+    await submitLetter({
+      campaign: "regulate-letter-pm",
+      name: "Jane Smith",
+      postcode: "zz9 9zz",
+      address: "1 High Street",
+      email: "jane@example.com",
+      subject: "Please back a pause",
+      letter: docFromMarkup("Dear Mr McTestface,\n\nPlease back a pause."),
+      draftHash: "",
+      consent: false,
+      nickname: "",
+      turnstileToken: "",
+    });
+    deliverToLettersInbox(testMail({ from: "test-mp@parliament.example", to: testProxy("jane.smith") }));
+    await readGmail("test");
+    const [{ id, rfc }] = await query<{ id: number; rfc: string }>(
+      "SELECT letter_id::int AS id, rfc_message_id AS rfc FROM email_sends WHERE purpose = 'letter'",
+    );
+    const letter = (await getSupporterLetter(id))!;
+    expect(letter.gmail).toEqual({ mailbox: LETTERS_INBOX, search: `rfc822msgid:${rfc}` });
+    expect(letter.backend).toBe("gmail");
+    expect(letter.sent).toEqual({
+      text: "Dear Mr McTestface,\n\nPlease back a pause.",
+      draft: expect.stringContaining("Jane Smith"),
+      approximate: true,
+      messages: [
+        expect.objectContaining({
+          fromAddress: "test-mp@parliament.example",
+          fromSupporter: false,
+          text: "Dear Jane,\n\nThank you for writing to me.",
+        }),
+      ],
+    });
+    // Before it's sent, nothing to find it by.
+    await query(
+      "UPDATE email_sends SET outcome = 'failed', message_id = NULL, rfc_message_id = NULL WHERE purpose = 'letter'",
+    );
+    expect((await getSupporterLetter(id))!.gmail).toBeNull();
     vi.unstubAllEnvs();
   });
 

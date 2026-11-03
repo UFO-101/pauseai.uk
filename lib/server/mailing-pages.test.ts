@@ -1,3 +1,4 @@
+import { LETTERS_INBOX } from "@/tests/gmail-sends";
 import { expect, it } from "vitest";
 import { afterEach, vi } from "vitest";
 import { addTestPolitician, connectTestGmail, describeWithDatabase, useTestDatabase } from "@/tests/database";
@@ -17,6 +18,8 @@ describeWithDatabase("the mailing pages' data", () => {
       "INSERT INTO staff_accounts (email, added_by) VALUES ('samuel.whitlock@pauseai.uk', 'admin@pauseai.uk')",
     );
     await connectTestGmail("jo@pauseai.uk");
+    // The letters inbox is connected too, but never offered.
+    await connectTestGmail(LETTERS_INBOX);
     const data = await newMailingData({ house: "commons", party: "Gone Party", sort: "name" }, "jo@pauseai.uk");
     expect(data.filter).toEqual({ list: "politicians", params: { house: "commons", party: "Gone Party" } });
     expect(data.unknown).toEqual(["party=Gone Party"]);

@@ -1412,7 +1412,7 @@ describe("PoliticianDetails", () => {
               campaign: "old-campaign",
               campaignTitle: "Old campaign, from pauseai.info",
               campaignUrl: null,
-              status: "queued",
+              status: "mislaid",
               createdAt: "2026-07-01T08:00:00Z",
               repliedAt: null,
             },
@@ -1496,7 +1496,7 @@ describe("PoliticianDetails", () => {
       "1 Aug 2026, 10:00strange  · x",
       `20 Jul 2026, 10:00${copy["edit politician"]} Polly Placeholder · ${staffCopy.fields.party} Labour → Labour (Co-op) · sync`,
       `15 Jul 2026, 10:00${copy["add politician"]} Polly Placeholder · import`,
-      `1 Jul 2026, 08:00${copy.letter} Old Writer · Old campaign, from pauseai.info · queued`,
+      `1 Jul 2026, 08:00${copy.letter} Old Writer · Old campaign, from pauseai.info · mislaid`,
       `1 Jun 2026, 08:00${copy["pauseai-letter"]} Example Mailing · made-up`,
     ]);
     // An answer leads to everyone who gave it, the ask to the letter as in the asks card, PauseAI's email to its
@@ -1568,7 +1568,7 @@ describe("PoliticianDetails", () => {
               campaign: "old-campaign",
               campaignTitle: "Old campaign, from pauseai.info",
               campaignUrl: "https://example.org/old-campaign.pdf",
-              status: "queued",
+              status: "mislaid",
               createdAt: "2026-07-01T08:00:00Z",
               repliedAt: null,
             },
@@ -1586,7 +1586,7 @@ describe("PoliticianDetails", () => {
     ).toEqual([
       `15 Oct 2026, 09:00${copy["unsigned-letter-replied"]} · ${pm.title}`,
       `13 Oct 2026, 08:00${copy.unsignedLetter} · ${pm.title} · ${staffCopy.letters.status.sent}`,
-      `1 Jul 2026, 08:00${copy.unsignedLetter} · Old campaign, from pauseai.info · queued`,
+      `1 Jul 2026, 08:00${copy.unsignedLetter} · Old campaign, from pauseai.info · mislaid`,
       `1 Jun 2026, 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.letters.status.sent}`,
       `1 May 2026, 08:00${copy["pauseai-letter"]} Example Mailing · made-up`,
     ]);
@@ -3045,6 +3045,23 @@ describe("LetterHistory", () => {
     await expect.element(page.getByText('"type": "HardBounce"', { exact: false })).toBeVisible();
   });
 
+  it("puts a reason, a notice and an uncertain match in words, and a reason it doesn't know as recorded", async () => {
+    await render(
+      <LetterHistory
+        events={[
+          { at: "2026-10-14T10:00:00Z", status: "queued", details: { reason: "daily_limit" } },
+          { at: "2026-10-13T10:00:00Z", status: "notice", details: { notice: "bounced", to: "jane@example.com" } },
+          { at: "2026-10-12T10:00:00Z", status: "replied", details: { uncertain: true, reason: "odd", notice: "odd" } },
+        ]}
+      />,
+    );
+    const [queued, notice, replied] = history().getByRole("listitem").all();
+    expect(queued.element().textContent).toContain(`${copy.detail.fields.reason}${copy.detail.reasons.daily_limit}`);
+    expect(notice.element().textContent).toContain(`${copy.detail.fields.notice}${copy.detail.notices.bounced}`);
+    expect(replied.element().textContent).toContain(`${copy.detail.fields.uncertain}${copy.consent.yes}`);
+    expect(replied.element().textContent).toContain(`${copy.detail.fields.reason}odd`);
+  });
+
   it("puts each field a line, by name, in words where it has them; a status nobody knows as stored", async () => {
     await render(
       <LetterHistory
@@ -3565,7 +3582,7 @@ describe("SupporterDetails", () => {
               campaignUrl: null,
               detail: "Gone MP",
               href: null,
-              status: "queued",
+              status: "mislaid",
             },
           ],
         }}
@@ -3574,7 +3591,7 @@ describe("SupporterDetails", () => {
     openHistory();
     const old = page.getByRole("list", { name: copy.detail.activityTitle });
     expect(old.element().textContent).toContain(
-      `${copy.detail.kinds.letter} Gone MP ${copy.detail.about} Old campaign, from pauseai.info · queued`,
+      `${copy.detail.kinds.letter} Gone MP ${copy.detail.about} Old campaign, from pauseai.info · mislaid`,
     );
     // Only the status links, to the supporter's letters.
     expect(

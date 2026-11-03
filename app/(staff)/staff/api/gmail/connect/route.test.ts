@@ -36,4 +36,17 @@ describeWithDatabase("GET /staff/api/gmail/connect", () => {
     );
     expect(JSON.parse(res.cookies.get("staff_gmail")!.value).back).toBe("/staff/me");
   });
+
+  it("asks the letters inbox, logged in as itself, for labelling and trashing too", async () => {
+    vi.stubEnv("LETTERS_INBOX", "letters@pauseai.uk");
+    const scope = async () =>
+      new URL(
+        (await GET(new NextRequest("https://pauseai.uk/staff/api/gmail/connect"))).headers.get("location")!,
+      ).searchParams
+        .get("scope")!
+        .split(" ");
+    expect(await scope()).not.toContain("https://www.googleapis.com/auth/gmail.modify");
+    requestCookies.set("staff_session", await createSession("letters@pauseai.uk"));
+    expect(await scope()).toContain("https://www.googleapis.com/auth/gmail.modify");
+  });
 });

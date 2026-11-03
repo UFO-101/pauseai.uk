@@ -10,6 +10,7 @@ import {
   parseHeaders,
   parseMime,
   partText,
+  relayMime,
   toMime,
 } from "./mime";
 
@@ -62,6 +63,60 @@ describe("toMime", () => {
   it("makes a new Message-ID each time, at pauseai.uk", () => {
     expect(newMessageId()).toMatch(/^[0-9a-f-]{36}@pauseai\.uk$/);
     expect(newMessageId()).not.toBe(newMessageId());
+  });
+});
+
+describe("toMime's other headers", () => {
+  it("writes them as given, before the MIME version", () => {
+    const raw = toMime({ ...EMAIL, Headers: [{ Name: "In-Reply-To", Value: "<x@pauseai.uk>" }] });
+    expect(parseMime(raw).headers.get("in-reply-to")).toBe("<x@pauseai.uk>");
+  });
+});
+
+describe("relayMime", () => {
+  const ORIGINAL = [
+    "Received: from mx",
+    "From: Office <office@parliament.uk>",
+    "To: proxy@example.org",
+    "Cc: someone@parliament.uk",
+    "Subject: Re: Pause",
+    "Message-ID: <theirs@parliament.uk>",
+    "Auto-Submitted: auto-replied",
+    "Content-Type: multipart/mixed;",
+    '\tboundary="b1"',
+    "MIME-Version: 1.0",
+    "",
+    "--b1",
+    "Content-Type: text/plain",
+    "",
+    "Caf\xe9",
+    "--b1--",
+  ].join("\r\n");
+
+  it("keeps the body byte for byte and the headers that say how it's written, putting ours first", () => {
+    const relayed = relayMime(Buffer.from(ORIGINAL, "latin1"), [
+      ["From", '"Zoë (via PauseAI)" <letters+zoe@example.org>'],
+      ["To", "jane@example.com"],
+      ["Message-ID", "<ours@pauseai.uk>"],
+    ]).toString("latin1");
+    const [head, body] = [relayed.slice(0, relayed.indexOf("\r\n\r\n")), relayed.slice(relayed.indexOf("\r\n\r\n"))];
+    expect(body).toBe(ORIGINAL.slice(ORIGINAL.indexOf("\r\n\r\n")));
+    expect(head.split("\r\n")).toEqual([
+      "From: =?UTF-8?B?Wm/DqyAodmlhIFBhdXNlQUkp?= <letters+zoe@example.org>",
+      "To: jane@example.com",
+      "Message-ID: <ours@pauseai.uk>",
+      "Subject: Re: Pause",
+      "Auto-Submitted: auto-replied",
+      "Content-Type: multipart/mixed;",
+      '\tboundary="b1"',
+      "MIME-Version: 1.0",
+    ]);
+  });
+
+  it("relays a message with no body as headers alone", () => {
+    expect(relayMime(Buffer.from("Subject: Hi"), [["To", "a@example.org"]]).toString()).toBe(
+      "To: a@example.org\r\nSubject: Hi\r\n\r\n",
+    );
   });
 });
 

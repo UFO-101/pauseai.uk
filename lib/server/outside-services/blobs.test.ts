@@ -2,7 +2,7 @@ import { gunzipSync, gzipSync } from "node:zlib";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
-import { letterReply, saveLetterReply } from "./blobs";
+import { deleteLetterReply, letterReply, saveLetterReply } from "./blobs";
 
 beforeEach(() => vi.stubEnv("DATA_FIXTURES", "1"));
 afterEach(() => vi.unstubAllEnvs());
@@ -13,6 +13,8 @@ describe("Netlify Blobs", () => {
     await saveLetterReply("jo@pauseai.uk/m1.eml.gz", gzipped);
     expect((await letterReply("jo@pauseai.uk/m1.eml.gz"))!.equals(gzipped)).toBe(true);
     expect(await letterReply("jo@pauseai.uk/none.eml.gz")).toBeUndefined();
+    await deleteLetterReply("jo@pauseai.uk/m1.eml.gz");
+    expect(await letterReply("jo@pauseai.uk/m1.eml.gz")).toBeUndefined();
   });
 
   it("reads a fixture database's replies from the fixtures' folder", async () => {

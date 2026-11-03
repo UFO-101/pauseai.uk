@@ -28,6 +28,7 @@ import {
   exampleLetterCampaigns,
   examplePauseaiLetterDetails,
   exampleOlderRepliedLetterDetails,
+  exampleProxiedLetterDetails,
   exampleRepliedLetterDetails,
   exampleSupporterLetterDetails,
 } from "@/app/(staff)/staff/_components/LettersTable.examples";
@@ -123,6 +124,7 @@ import BounceReason from "@/app/(staff)/staff/_components/BounceReason";
 import { GmailConnect, GmailOutcome, SentToday } from "@/app/(staff)/staff/_components/GmailConnect";
 import AccountTitle from "@/app/(staff)/staff/_components/AccountTitle";
 import { AskLead, AskPreview, AskTitle } from "@/app/(staff)/staff/_components/AskLine";
+import LetterChanges from "@/app/(staff)/staff/_components/LetterChanges";
 import LetterThread, { SupporterLetterThread } from "@/app/(staff)/staff/_components/LetterThread";
 import { exampleImportedThread, exampleThread } from "@/app/(staff)/staff/_components/LetterThread.examples";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -1344,6 +1346,53 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <SupporterLetterThread letter={exampleSupporterLetterDetails} />
+            </StaffPage>
+          ),
+        },
+        {
+          label:
+            "A letter from the letters inbox: its changes to the draft, then the office's reply and the supporter's answer",
+          render: () => (
+            <StaffPage as="div">
+              <SupporterLetterThread letter={exampleProxiedLetterDetails} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "LetterChanges",
+      file: "app/(staff)/staff/_components/LetterChanges.tsx",
+      variants: [
+        {
+          label: "What the supporter added and cut, the letter as sent, or the starting draft; the switch on Changes",
+          render: () => (
+            <StaffPage as="div">
+              <LetterChanges
+                sent={exampleProxiedLetterDetails.sent!.text}
+                draft={exampleProxiedLetterDetails.sent!.draft}
+                approximate={false}
+              />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "An approximate draft, said so above the switch",
+          render: () => (
+            <StaffPage as="div">
+              <LetterChanges
+                sent={exampleProxiedLetterDetails.sent!.text}
+                draft={exampleProxiedLetterDetails.sent!.draft}
+                approximate
+              />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "No draft kept: the letter alone",
+          render: () => (
+            <StaffPage as="div">
+              <LetterChanges sent={exampleProxiedLetterDetails.sent!.text} draft={null} approximate={false} />
             </StaffPage>
           ),
         },

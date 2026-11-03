@@ -314,7 +314,7 @@ describe("MailingView", () => {
         recipients: [
           { ...mailing.recipients[0], answer: null, replies: 0 },
           { ...mailing.recipients[1], status: "spam_complaint" },
-          { ...mailing.recipients[2], status: "queued", skipReason: null, sentAt: null },
+          { ...mailing.recipients[2], status: "mislaid", skipReason: null, sentAt: null },
         ],
       },
     });
@@ -337,7 +337,7 @@ describe("MailingView", () => {
     await expect.element(recipient("Polly").getByRole("link", { name: copy.letterAndReplies(1) })).toBeVisible();
     await expect.element(recipient("Morag")).toMatchTextContent(staffCopy.letters.status.spam_complaint);
     // A status nobody knows any more, as it's stored, dated when the mailing last changed.
-    await expect.element(recipient("Dora")).toMatchTextContent("queued");
+    await expect.element(recipient("Dora")).toMatchTextContent("mislaid");
     await expect.element(recipient("Dora")).toMatchTextContent("28 Oct 2026");
   });
 
@@ -532,7 +532,7 @@ describe("LetterView", () => {
       .not.toBeInTheDocument();
     await rerender(
       <LetterView
-        letter={{ ...letter, status: "queued" }}
+        letter={{ ...letter, status: "mislaid" }}
         politician={{ ...politician, statuses: {} }}
         asks={exampleAsks}
         setStatus={noAction}
@@ -540,7 +540,7 @@ describe("LetterView", () => {
         <p>the thread</p>
       </LetterView>,
     );
-    await expect.element(page.getByText("queued", { exact: true })).toBeVisible();
+    await expect.element(page.getByText("mislaid", { exact: true })).toBeVisible();
     await rerender(
       <LetterView
         letter={{ ...letter, status: "spam_complaint" }}

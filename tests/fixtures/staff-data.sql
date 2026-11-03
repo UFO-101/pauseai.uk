@@ -468,6 +468,72 @@ INSERT INTO email_blocks (address, problem_id) VALUES
   ('gordon.gone.mp@parliament.uk', 3),
   ('grumpy@example.com', 4);
 
+-- A letter from the letters inbox, long ago, so it counts in neither week:
+-- Pat's proxy and the test MP's; the letter as sent, and the draft it was
+-- written from; her copy; the office's reply to her proxy, kept whole
+-- (tests/fixtures/letter-replies/) and relayed to her.
+INSERT INTO proxies (tag, supporter_email, created_at) VALUES ('pat.proxy', 'pat.proxy@example.com', now() - interval '50 days');
+INSERT INTO proxies (tag, notable_person_id, created_at)
+SELECT 'testy.mctestface.mp', id, now() - interval '50 days' FROM politicians WHERE test_postcode = 'ZZ99ZZ';
+CREATE TEMP TABLE seed_proxied ON COMMIT DROP AS SELECT nextval(pg_get_serial_sequence('letters', 'id')) AS id;
+INSERT INTO letters (id, kind, notable_person_id, status, created_at, sent_at, replied_at) OVERRIDING SYSTEM VALUE
+SELECT s.id, 'supporter', p.id, 'sent', now() - interval '50 days', now() - interval '50 days', now() - interval '48 days'
+FROM seed_proxied s, politicians p WHERE p.test_postcode = 'ZZ99ZZ';
+INSERT INTO form_entries (id, form, created_at, name, email, address, postcode, contact_consent) OVERRIDING SYSTEM VALUE
+SELECT id, 'email-your-mp', now() - interval '50 days', 'Pat Proxy', 'pat.proxy@example.com', '17 Seed Row, Leeds', 'LS1 1AA', true
+FROM seed_proxied;
+INSERT INTO letters_from_supporters (id, entry_id, campaign, subject, proxy_id, letter, draft, draft_approximate, own_words, copy_state)
+SELECT s.id, s.id, 'regulate-letter-pm', 'Please back a pause on frontier AI', (SELECT id FROM proxies WHERE tag = 'pat.proxy'),
+  '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Dear Mr McTestface,"}]}, {"type": "paragraph", "content": [{"type": "text", "text": "Please back a pause on frontier AI. My children ask me about it every week."}]}, {"type": "paragraph", "content": [{"type": "text", "text": "Pat Proxy"}]}]}',
+  E'Dear Mr McTestface,\n\nPlease back a pause on frontier AI. It is the most urgent issue of our time.\n\nPat Proxy',
+  false, 0.4, 'sent'
+FROM seed_proxied s;
+INSERT INTO email_sends (at, purpose, letter_id, address, outcome, message_id, backend, sender, rfc_message_id, gmail_thread_id)
+SELECT now() - interval '50 days', 'letter', id, 'test-mp@parliament.example', 'sent', 'gmail-seed-proxied-letter', 'gmail',
+  'fixture-letters@pauseai.uk', 'fixture-proxied-letter@pauseai.uk', 'thread-seed-proxied'
+FROM seed_proxied
+UNION ALL
+SELECT now() - interval '50 days', 'letter-copy', id, 'fixture-letters+testy.mctestface.mp@pauseai.uk', 'sent', 'gmail-seed-proxied-copy', 'gmail',
+  'fixture-letters@pauseai.uk', 'fixture-proxied-copy@pauseai.uk', 'thread-seed-proxied-copy'
+FROM seed_proxied
+UNION ALL
+SELECT now() - interval '48 days', 'relay', id, 'pat.proxy@example.com', 'sent', 'gmail-seed-proxied-relay', 'gmail',
+  'fixture-letters@pauseai.uk', 'fixture-proxied-relay@pauseai.uk', 'thread-seed-proxied-copy'
+FROM seed_proxied;
+INSERT INTO letter_replies (letter_id, account, gmail_message_id, gmail_thread_id, rfc_message_id, from_address, from_name,
+  subject, at, from_us, from_supporter, blob_key, size)
+SELECT id, 'fixture-letters@pauseai.uk', 'gmail-seed-office-reply', 'thread-seed-office-reply', 'fixture-office-reply@parliament.example',
+  'test-mp@parliament.example', 'Testy McTestface MP', 'Re: Please back a pause on frontier AI', now() - interval '48 days',
+  false, false, 'fixture/office-reply-to-proxy.eml.gz', 512
+FROM seed_proxied;
+INSERT INTO letter_relays (letter_id, reply_id, to_supporter, status, created_at, sent_at, rfc_message_id)
+SELECT s.id, r.id, true, 'sent', now() - interval '48 days', now() - interval '48 days', 'fixture-proxied-relay@pauseai.uk'
+FROM seed_proxied s JOIN letter_replies r ON r.letter_id = s.id;
+INSERT INTO letter_events (letter_id, at, status, details)
+SELECT id, now() - interval '50 days', 'sent', '{"from": "\"Pat Proxy (via PauseAI)\" <fixture-letters+pat.proxy@pauseai.uk>", "to": "test-mp@parliament.example"}'::jsonb FROM seed_proxied
+UNION ALL
+SELECT id, now() - interval '50 days', 'copy_sent', '{"to": "\"Testy McTestface MP (via PauseAI)\" <fixture-letters+testy.mctestface.mp@pauseai.uk>", "bcc": "pat.proxy@example.com"}'::jsonb FROM seed_proxied
+UNION ALL
+SELECT id, now() - interval '48 days', 'replied', '{"from": "test-mp@parliament.example", "name": "Testy McTestface MP", "gmailMessageId": "gmail-seed-office-reply"}'::jsonb FROM seed_proxied
+UNION ALL
+SELECT id, now() - interval '48 days', 'relayed', '{"to": "pat.proxy@example.com", "gmailMessageId": "gmail-seed-office-reply"}'::jsonb FROM seed_proxied;
+
+-- And Pat's letter to Signy, queued while the letters inbox was at its daily limit.
+INSERT INTO proxies (tag, notable_person_id, created_at)
+SELECT 'signy.mctestface.mp', id, now() - interval '50 days' FROM politicians WHERE test_postcode = 'ZZ99ZS';
+CREATE TEMP TABLE seed_queued ON COMMIT DROP AS SELECT nextval(pg_get_serial_sequence('letters', 'id')) AS id;
+INSERT INTO letters (id, kind, notable_person_id, status, created_at) OVERRIDING SYSTEM VALUE
+SELECT s.id, 'supporter', p.id, 'queued', now() - interval '50 days' FROM seed_queued s, politicians p WHERE p.test_postcode = 'ZZ99ZS';
+INSERT INTO form_entries (id, form, created_at, name, email, address, postcode, contact_consent) OVERRIDING SYSTEM VALUE
+SELECT id, 'email-your-mp', now() - interval '50 days', 'Pat Proxy', 'pat.proxy@example.com', '17 Seed Row, Leeds', 'LS1 1AA', true
+FROM seed_queued;
+INSERT INTO letters_from_supporters (id, entry_id, campaign, subject, proxy_id, letter, draft, draft_approximate, own_words, copy_state)
+SELECT s.id, s.id, 'support-sobel-bill', 'Back the Sobel bill', (SELECT id FROM proxies WHERE tag = 'pat.proxy'),
+  '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Dear Ms McTestface, please back the bill. Pat Proxy"}]}]}',
+  'Dear Ms McTestface, please back the bill. Pat Proxy', true, 0, 'queued'
+FROM seed_queued s;
+INSERT INTO letter_events (letter_id, at, status, details) SELECT id, now() - interval '50 days', 'queued', '{"reason": "daily_limit"}' FROM seed_queued;
+
 -- --------------------------------------------- letters from Airtable
 
 -- Letters supporters sent through pauseai.info's old form, as the one-off

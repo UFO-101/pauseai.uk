@@ -6,6 +6,7 @@ import {
   exampleFailedRun,
   exampleDisconnectedGmail,
   exampleGmailResult,
+  exampleLettersInboxRead,
   exampleHeldSync,
   exampleLumaResult,
   exampleRun,
@@ -56,6 +57,11 @@ it("says a Gmail read that couldn't read an account is incomplete, but not one t
   expect(runTone(exampleRun("read-gmail", exampleGmailResult))).toBe("amber");
   expect(runStatus(exampleRun("read-gmail", { accounts: exampleGmailResult.accounts.slice(0, 1) }))).toBe("ok");
   expect(runStatus(exampleFailedRun("read-gmail", "boom", {}))).toBe("failed");
+  // Mail in the letters inbox a person has to look at fails it; with none, it went well.
+  expect(runStatus(exampleRun("read-gmail", { accounts: [exampleLettersInboxRead] }))).toBe("failed");
+  expect(runStatus(exampleRun("read-gmail", { accounts: [{ ...exampleLettersInboxRead, notUnderstood: [] }] }))).toBe(
+    "ok",
+  );
 });
 
 it("colours a run by how it ended: green done, applied or unchanged, amber held or stopped short, red failed, none otherwise", () => {

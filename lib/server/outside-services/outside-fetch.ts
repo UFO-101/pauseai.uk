@@ -1,6 +1,6 @@
 import "server-only";
 import { fixtureResponse } from "@/tests/fixtures/outside-services";
-import { flowDatabase } from "../db";
+import { flowDatabase } from "../flow-database";
 
 /**
  * fetch() for calls to outside services (Luma, Airtable, postcodes.io, ...). With

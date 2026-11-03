@@ -336,8 +336,8 @@ function googleResponse(
     const id = fixtureUuid(String(init!.body)).replace(/-/g, "").slice(0, 16);
     const raw = Buffer.from((JSON.parse(String(init!.body)) as { raw: string }).raw, "base64url").toString();
     SENT_GMAIL.set(id, /^Message-ID: *(.+)$/im.exec(raw)?.[1].trim() ?? "");
-    // Mail to one of the letters inbox's own addresses comes back to it, as the supporter's copy does.
-    if (toLettersInbox(raw)) deliverSent(raw, id, scope);
+    // The letters inbox's mail to one of its own addresses comes back to it, as the supporter's copy does.
+    if (letters && toLettersInbox(raw)) deliverSent(raw, id, scope);
     return json({ id, threadId: id, labelIds: ["SENT"] });
   }
   // An email it sent, by its headers: the Message-ID it was sent with, kept as it was.
@@ -356,11 +356,9 @@ function googleResponse(
   return new Response(JSON.stringify({ error: { code: 404 } }), { status: 404 });
 }
 
-/** Whether a message is to one of the letters inbox's addresses, its own or a proxy, in its To, Cc or Bcc. */
+/** Whether a message is to one of the letters inbox's addresses (LETTERS_INBOX), its own or a proxy, in its To, Cc or Bcc. */
 function toLettersInbox(raw: string): boolean {
-  const inbox = process.env.LETTERS_INBOX?.toLowerCase();
-  if (!inbox) return false;
-  const [local, domain] = inbox.split("@");
+  const [local, domain] = process.env.LETTERS_INBOX!.toLowerCase().split("@");
   const head = raw.slice(0, raw.search(/\r?\n\r?\n/));
   return [...head.matchAll(/^(?:To|Cc|Bcc):(.*)$/gim)].some(([, line]) =>
     [...line.toLowerCase().matchAll(/[^\s<>",]+@[^\s<>",]+/g)].some(([address]) => {

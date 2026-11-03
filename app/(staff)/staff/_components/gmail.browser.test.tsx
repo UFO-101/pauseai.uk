@@ -7,8 +7,9 @@ import AskForm from "./AskForm";
 import BounceReason from "./BounceReason";
 import { GmailConnect, GmailOutcome, SentToday } from "./GmailConnect";
 import AccountTitle from "./AccountTitle";
+import LetterChanges from "./LetterChanges";
 import LetterThread, { SupporterLetterThread } from "./LetterThread";
-import { exampleSupporterLetterDetails } from "./LettersTable.examples";
+import { exampleProxiedLetterDetails, exampleSupporterLetterDetails } from "./LettersTable.examples";
 import { exampleEditableAsk, exampleGmailAccount, exampleImportedThread, exampleThread } from "./LetterThread.examples";
 import { DeleteTwice } from "./DeleteTwice";
 import MyGmail from "./MyGmail";
@@ -187,6 +188,33 @@ describe("SupporterLetterThread", () => {
     await expect.element(page.getByText(copy.supporterNoText)).toBeVisible();
   });
 
+  it("one from the letters inbox: its changes to the draft, then each message both ways, with Gmail at the heading", async () => {
+    await render(<SupporterLetterThread letter={exampleProxiedLetterDetails} link={<a href="#gmail">Gmail</a>} />);
+    // The way to it in Gmail at the heading, not in the letter's place.
+    await expect
+      .element(page.getByRole("article").first().getByRole("link", { name: "Gmail" }))
+      .not.toBeInTheDocument();
+    await expect.element(page.getByRole("link", { name: "Gmail" })).toBeVisible();
+    const [, reply, answer] = page.getByRole("article").all();
+    await expect.element(reply.getByText("Thank you for writing to me.", { exact: false })).toBeVisible();
+    // The office's reply is to Jane; her answer, to the MP.
+    expect(reply.element().textContent).toContain(`${copy.headers.to}Jane Smith <jane@example.com>`);
+    expect(answer.element().textContent).toContain(
+      `${copy.headers.to}Testy McTestface MP <testy.mctestface.mp@parliament.uk>`,
+    );
+    await expect.element(page.getByRole("radiogroup", { name: staffCopy.letterChanges.label })).toBeVisible();
+  });
+
+  it("a message whose text can't be read says so", async () => {
+    const sent = exampleProxiedLetterDetails.sent!;
+    await render(
+      <SupporterLetterThread
+        letter={{ ...exampleProxiedLetterDetails, sent: { ...sent, messages: [{ ...sent.messages[0], text: null }] } }}
+      />,
+    );
+    await expect.element(page.getByText(copy.unreadable)).toBeVisible();
+  });
+
   it("one not yet a supporter's, never sent, with no subject: unlinked, undated, by its campaign", async () => {
     await render(
       <SupporterLetterThread letter={{ ...letter, supporterId: null, sentAt: null, subject: "", mpEmail: null }} />,
@@ -324,5 +352,34 @@ describe("AskForm", () => {
     expect(page.getByRole("button", { name: copy.delete }).query()).toBeNull();
     expect(page.getByText(copy.kindFixed).query()).toBeNull();
     expect(page.getByText(copy.notDeletable).query()).toBeNull();
+  });
+});
+
+describe("LetterChanges", () => {
+  const words = staffCopy.letterChanges;
+  const draft = "Dear MP,\n\nPlease act now.\n\nJane";
+  const sent = "Dear MP,\n\nPlease act. I live here.\n\nJane";
+
+  it("shows what the supporter added and cut, then the letter as sent, then the starting draft", async () => {
+    const { container } = await render(<LetterChanges sent={sent} draft={draft} approximate={false} />);
+    await expect
+      .element(page.getByRole("radio", { name: words.views.changes }))
+      .toHaveAttribute("aria-checked", "true");
+    expect([...container.querySelectorAll("ins")].map((e) => e.textContent)).toEqual(["act. I live here.\n\n"]);
+    expect([...container.querySelectorAll("del")].map((e) => e.textContent)).toEqual(["act now.\n\n"]);
+    await expect.element(page.getByText(words.approximate)).not.toBeInTheDocument();
+    await page.getByRole("radio", { name: words.views.sent }).click();
+    expect(container.querySelector("ins")).toBeNull();
+    await expect.element(page.getByText("I live here.", { exact: false })).toBeVisible();
+    await page.getByRole("radio", { name: words.views.draft }).click();
+    await expect.element(page.getByText("Please act now.", { exact: false })).toBeVisible();
+  });
+
+  it("says a draft is approximate, and with none kept shows the letter alone", async () => {
+    await render(<LetterChanges sent={sent} draft={draft} approximate />);
+    await expect.element(page.getByText(words.approximate)).toBeVisible();
+    const { container } = await render(<LetterChanges sent={sent} draft={null} approximate={false} />);
+    expect(container.textContent).toBe(sent);
+    expect(container.querySelector('[role="radiogroup"]')).toBeNull();
   });
 });
