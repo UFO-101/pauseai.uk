@@ -394,7 +394,7 @@ describeWithDatabase("the letters inbox's queue", () => {
     await query("UPDATE letter_relays SET status = 'sending', sent_at = NULL, created_at = now() - interval '1 hour'");
     expect(await uncertainRelays()).toBe(1);
     expect(await query("SELECT status FROM letter_relays")).toEqual([{ status: "uncertain" }]);
-    expect((await events()).at(-1)?.status).toBe("relay_uncertain");
+    expect((await events()).at(-1)).toMatchObject({ status: "relay_uncertain", details: { to: JANE } });
     // One just begun is left: a run may be sending it now.
     const [{ replyId }] = await query<{ replyId: number }>('SELECT reply_id::int AS "replyId" FROM letter_relays');
     await query("DELETE FROM letter_relays");

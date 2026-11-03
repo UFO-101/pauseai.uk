@@ -147,11 +147,15 @@ export async function relay(letterId: number, replyId: number, toSupporter: bool
  * Only those left a while, so a run going now isn't caught.
  */
 export async function uncertainRelays(): Promise<number> {
-  const left = await query<{ id: number }>(
-    `UPDATE letter_relays SET status = 'uncertain' WHERE status = 'sending' AND created_at < now() - interval '15 minutes'
-     RETURNING id::int AS id`,
+  const left = await query<{ id: number; to: string | null }>(
+    `UPDATE letter_relays r SET status = 'uncertain' FROM letters l
+       JOIN letters_from_supporters s USING (id) JOIN form_entries f ON f.id = s.entry_id
+       JOIN notable_people n ON n.id = l.notable_person_id
+     WHERE r.letter_id = l.id AND r.status = 'sending' AND r.created_at < now() - interval '15 minutes'
+     RETURNING r.id::int AS id, CASE WHEN r.to_supporter THEN f.email ELSE n.email END AS to`,
   );
-  for (const { id } of left) await relayEvent(id, "relay_uncertain");
+  // Who it may have gone to, as every email's change says.
+  for (const { id, to } of left) await relayEvent(id, "relay_uncertain", { to });
   return left.length;
 }
 

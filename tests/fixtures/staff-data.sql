@@ -426,10 +426,10 @@ CREATE TEMP VIEW seed_letter_rows AS SELECT l.*, s.postmark_mailbox FROM letters
 
 -- Their history: sending, then sent, then what followed.
 INSERT INTO letter_events (letter_id, at, status, details) SELECT id, created_at, 'sending', '{}' FROM seed_letter_rows WHERE true;
-INSERT INTO letter_events (letter_id, at, status, details) SELECT id, sent_at, 'sent', jsonb_build_object('messageId', 'seed-message-' || id) FROM seed_letter_rows WHERE sent_at IS NOT NULL;
+INSERT INTO letter_events (letter_id, at, status, details) SELECT id, sent_at, 'sent', jsonb_build_object('to', (SELECT lower(email) FROM notable_people WHERE id = notable_person_id), 'messageId', 'seed-message-' || id) FROM seed_letter_rows WHERE sent_at IS NOT NULL;
 INSERT INTO letter_events (letter_id, at, status, details) SELECT id, created_at + interval '1 second', 'not_sent', '{"reason": "The MP has no email address"}' FROM seed_letter_rows WHERE status = 'not_sent';
-INSERT INTO letter_events (letter_id, at, status, details) SELECT id, replied_at, 'replied', jsonb_build_object('from', 'The office of ' || (SELECT name FROM notable_people WHERE id = notable_person_id)) FROM seed_letter_rows WHERE replied_at IS NOT NULL;
-INSERT INTO letter_events (letter_id, at, status, details) SELECT id, sent_at + interval '2 minutes', 'auto_reply', '{"from": "Backy McTestface MP", "subject": "Out of office"}' FROM seed_letter_rows WHERE postmark_mailbox IN ('seed-prev-ahmed', 'seed-week-mia');
+INSERT INTO letter_events (letter_id, at, status, details) SELECT id, replied_at, 'replied', jsonb_build_object('from', 'The office of ' || (SELECT name FROM notable_people WHERE id = notable_person_id), 'to', postmark_mailbox || '@letters.pauseai.uk', 'backend', 'postmark') FROM seed_letter_rows WHERE replied_at IS NOT NULL;
+INSERT INTO letter_events (letter_id, at, status, details) SELECT id, sent_at + interval '2 minutes', 'auto_reply', jsonb_build_object('from', 'Backy McTestface MP', 'to', postmark_mailbox || '@letters.pauseai.uk', 'subject', 'Out of office', 'backend', 'postmark') FROM seed_letter_rows WHERE postmark_mailbox IN ('seed-prev-ahmed', 'seed-week-mia');
 INSERT INTO letter_events (letter_id, at, status, details) SELECT id, sent_at + interval '1 minute', 'bounced', '{"type": "HardBounce", "description": "The address does not exist"}' FROM seed_letter_rows WHERE status = 'bounced';
 INSERT INTO letter_events (letter_id, at, status, details) SELECT id, sent_at + interval '3 hours', 'spam_complaint', '{"type": "SpamComplaint"}' FROM seed_letter_rows WHERE status = 'spam_complaint';
 
@@ -510,13 +510,13 @@ INSERT INTO letter_relays (letter_id, reply_id, to_supporter, status, created_at
 SELECT s.id, r.id, true, 'sent', now() - interval '48 days', now() - interval '48 days', 'fixture-proxied-relay@pauseai.uk'
 FROM seed_proxied s JOIN letter_replies r ON r.letter_id = s.id;
 INSERT INTO letter_events (letter_id, at, status, details)
-SELECT id, now() - interval '50 days', 'sent', '{"from": "\"Pat Proxy (via PauseAI)\" <fixture-letters+pat.proxy@pauseai.uk>", "to": "test-mp@parliament.example"}'::jsonb FROM seed_proxied
+SELECT id, now() - interval '50 days', 'sent', '{"from": "\"Pat Proxy (via PauseAI)\" <fixture-letters+pat.proxy@pauseai.uk>", "to": "test-mp@parliament.example", "backend": "gmail", "account": "fixture-letters@pauseai.uk"}'::jsonb FROM seed_proxied
 UNION ALL
-SELECT id, now() - interval '50 days', 'copy_sent', '{"to": "\"Testy McTestface MP (via PauseAI)\" <fixture-letters+testy.mctestface.mp@pauseai.uk>", "bcc": "pat.proxy@example.com"}'::jsonb FROM seed_proxied
+SELECT id, now() - interval '50 days', 'copy_sent', '{"from": "\"Pat Proxy (via PauseAI)\" <fixture-letters+pat.proxy@pauseai.uk>", "to": "\"Testy McTestface MP (via PauseAI)\" <fixture-letters+testy.mctestface.mp@pauseai.uk>", "bcc": "pat.proxy@example.com", "backend": "gmail", "account": "fixture-letters@pauseai.uk"}'::jsonb FROM seed_proxied
 UNION ALL
-SELECT id, now() - interval '48 days', 'replied', '{"from": "test-mp@parliament.example", "name": "Testy McTestface MP", "gmailMessageId": "gmail-seed-office-reply"}'::jsonb FROM seed_proxied
+SELECT id, now() - interval '48 days', 'replied', '{"from": "test-mp@parliament.example", "name": "Testy McTestface MP", "to": "fixture-letters+pat.proxy@pauseai.uk", "gmailMessageId": "gmail-seed-office-reply", "backend": "gmail", "account": "fixture-letters@pauseai.uk"}'::jsonb FROM seed_proxied
 UNION ALL
-SELECT id, now() - interval '48 days', 'relayed', '{"to": "pat.proxy@example.com", "gmailMessageId": "gmail-seed-office-reply"}'::jsonb FROM seed_proxied;
+SELECT id, now() - interval '48 days', 'relayed', '{"from": "\"Testy McTestface MP (via PauseAI)\" <fixture-letters+testy.mctestface.mp@pauseai.uk>", "to": "pat.proxy@example.com", "messageId": "fixture-proxied-relay@pauseai.uk", "gmailMessageId": "gmail-seed-office-reply", "backend": "gmail", "account": "fixture-letters@pauseai.uk"}'::jsonb FROM seed_proxied;
 
 -- And Pat's letter to Signy, queued while the letters inbox was at its daily limit.
 INSERT INTO proxies (tag, notable_person_id, created_at)
@@ -653,7 +653,7 @@ FROM seed_written w JOIN notable_people n ON n.id = w.person WHERE w.state = 'se
 INSERT INTO letter_events (letter_id, at, status, details)
 SELECT id, due_at - interval '2 days', 'scheduled', '{}' FROM seed_written;
 INSERT INTO letter_events (letter_id, at, status, details)
-SELECT id, due_at, 'sent', jsonb_build_object('from', 'jo@pauseai.uk', 'messageId', 'fixture-letter-' || n || '@pauseai.uk',
+SELECT id, due_at, 'sent', jsonb_build_object('from', 'jo@pauseai.uk', 'to', (SELECT lower(email) FROM letters l JOIN notable_people p ON p.id = l.notable_person_id WHERE l.id = seed_written.id), 'messageId', 'fixture-letter-' || n || '@pauseai.uk',
   'threadId', 'thread-seed-' || n)
 FROM seed_written WHERE state = 'sent';
 INSERT INTO letter_events (letter_id, at, status, details)
