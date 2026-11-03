@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { buttonClass } from "@/components/ui/Button";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Segmented, TextInput } from "@/components/ui/Controls";
@@ -115,7 +115,14 @@ export default function AskRow({
     return () => bubble.removeEventListener("toggle", closed);
   }, [onClose]);
   return (
-    <div ref={row} className={styles.ask} role="group" aria-label={ask.title}>
+    <div
+      ref={row}
+      className={styles.ask}
+      role="group"
+      aria-label={ask.title}
+      // What its bubble opens under on a phone (Details.module.css).
+      style={{ anchorName: `--row-${ask.slug}`, "--row-anchor": `--row-${ask.slug}` } as CSSProperties}
+    >
       <div className={styles.asked}>
         <AskLead ask={ask} />
         {status && (

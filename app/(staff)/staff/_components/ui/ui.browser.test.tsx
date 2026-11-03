@@ -1,3 +1,4 @@
+import type React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
@@ -162,6 +163,28 @@ describe("Bubble", () => {
       await userEvent.keyboard("{Escape}");
       await expect.element(bubble).not.toBeVisible();
     }
+  });
+
+  it("opens under what --bubble-under names, its pointer still at its button's middle", async () => {
+    await render(
+      <div style={{ anchorName: "--the-row", "--row": "--the-row" } as React.CSSProperties}>
+        <button type="button" {...bubbleTrigger("under")}>
+          Under
+        </button>
+        <p>The words of the row, under its button</p>
+        <BubbleBox id="under" className="under">
+          <p>Inside</p>
+        </BubbleBox>
+        <style>{".under { --bubble-under: var(--row); }"}</style>
+      </div>,
+    );
+    const button = page.getByRole("button", { name: "Under" }).element();
+    await page.getByRole("button", { name: "Under" }).click();
+    const bubble = document.getElementById("under")!;
+    await expect.element(bubble).toBeVisible();
+    const words = page.getByText("The words of the row, under its button").element().getBoundingClientRect();
+    expect(bubble.getBoundingClientRect().top).toBeGreaterThan(words.bottom);
+    expect(Math.abs(middle(bubble.querySelector("[aria-hidden]")!) - middle(button))).toBeLessThan(1);
   });
 
   it("has a box alone for a button of its own, taking a class for its width", async () => {

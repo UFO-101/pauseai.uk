@@ -1,0 +1,41 @@
+
+added 84 packages, and audited 85 packages in 1s
+
+20 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+npm warn install-scripts 2 packages have install scripts not yet covered by allowScripts:
+npm warn install-scripts   esbuild@0.28.2 (postinstall: node install.js)
+npm warn install-scripts   workerd@1.20261023.1 (postinstall: node install.js)
+npm warn install-scripts
+npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+
+> test
+> vitest run --coverage
+
+
+ RUN  v5.0.5 /pauseai.uk/tmp/popup-bubbles/backup
+      Coverage enabled with v8
+
+
+ Test Files  8 passed (8)
+      Tests  45 passed (45)
+   Start at  07:40:09
+   Duration  5.81s (tests 93%, transform 5%, worker 1%, import 1%)
+
+[34m % [39m[2mCoverage report from [22m[33mv8[39m
+No files with missing coverage.
+8 files fully covered.
+
+=============================== Coverage summary ===============================
+Statements   : 100% ( 196/196 )
+Branches     : 100% ( 98/98 )
+Functions    : 100% ( 35/35 )
+Lines        : 100% ( 173/173 )
+================================================================================
+
+> typecheck
+> tsc --noEmit
+
+exit 0

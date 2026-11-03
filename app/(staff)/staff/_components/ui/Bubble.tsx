@@ -17,7 +17,9 @@ export function bubbleTrigger(id: string) {
  * hangs under its button, centred on it but kept inside the window's
  * margins, with a pointer always up to the button's middle; elsewhere it
  * sits in the middle of the window, with none. `className` is for its
- * width alone (--bubble-width), never its look.
+ * width alone (--bubble-width), never its look, or to open it under
+ * something else than its button (--bubble-under, an anchor's name), its
+ * pointer still at the button's middle: a row that should stay in view.
  */
 export function BubbleBox({
   id,
@@ -30,16 +32,15 @@ export function BubbleBox({
   ref?: Ref<HTMLDivElement>;
   children: ReactNode;
 }) {
-  const anchor = { positionAnchor: `--${id}` } as CSSProperties;
   return (
     <div
       ref={ref}
       id={id}
       popover="auto"
       className={[styles.bubble, className].filter(Boolean).join(" ")}
-      style={anchor}
+      style={{ "--bubble-anchor": `--${id}` } as CSSProperties}
     >
-      <span className={styles.pointer} style={anchor} aria-hidden="true" />
+      <span className={styles.pointer} aria-hidden="true" />
       {children}
     </div>
   );

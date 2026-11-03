@@ -102,9 +102,19 @@
   cursor: pointer;
 }
 
-/* The form's bubble (ui/Bubble), wide enough for its row of answers. */
+/* The form's bubble (ui/Bubble), wide enough for its row of answers. On a
+   phone, the width of the screen, less a margin each side, and under the
+   whole row rather than Edit, so the ask stays in view above it, its
+   pointer still up to Edit. */
 .editPopover {
   --bubble-width: 28rem;
+}
+
+@media (max-width: 720px) {
+  .editPopover {
+    --bubble-width: 100vw;
+    --bubble-under: var(--row-anchor);
+  }
 }
 
 /* Who asked, and who set the answer and how, under the title; the answer's date. */

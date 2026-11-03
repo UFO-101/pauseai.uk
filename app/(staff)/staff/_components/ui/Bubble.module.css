@@ -21,12 +21,14 @@
   display: none;
 }
 
-/* Under its button, across the window but for its margins, centred on the
-   button as far as the margins let it: so at any width, and wherever the
-   button is, it stays in the window. Never flipped above, so the pointer is
-   always on its top edge. */
+/* Under its button (--bubble-anchor), or what --bubble-under names, across
+   the window but for its margins, centred on the button as far as the
+   margins let it: so at any width, and wherever the button is, it stays in
+   the window. Never flipped above, so the pointer is always on its top
+   edge. */
 @supports (position-area: bottom) {
   .bubble {
+    position-anchor: var(--bubble-under, var(--bubble-anchor));
     max-height: none;
     margin: var(--space-2) var(--space-4) 0;
     position-area: bottom span-all;
@@ -41,7 +43,8 @@
   .pointer {
     display: block;
     position: fixed;
-    top: calc(anchor(bottom) + var(--space-1));
+    position-anchor: var(--bubble-anchor);
+    top: calc(anchor(var(--bubble-under, var(--bubble-anchor)) bottom) + var(--space-1));
     left: calc(anchor(center) - var(--space-1));
     width: var(--space-2);
     height: var(--space-2);
