@@ -3104,6 +3104,32 @@ describe("LetterHistory", () => {
     expect(items[2].querySelector("ol")).toBeNull();
     expect(under(items[3])).toEqual([copy.status.copy_bounced]);
     expect(under(items[4])).toEqual([copy.status.copy_sent, copy.status.copy_held]);
+    // A notice to the supporter under what it tells of: the letter's bounce, a relay's (beside it, under its
+    // reply), the letter or a relay gone again; one of nothing before it, or of something else, stays.
+    const notice = (at: string, kind: string) => ({ at, status: "notice", details: { notice: kind } });
+    const told = historyOf({
+      ...letter,
+      events: [
+        notice("2026-10-16T10:01:00Z", "resent"),
+        { at: "2026-10-16T10:00:00Z", status: "relayed", details: { gmailMessageId: "m2" } },
+        notice("2026-10-15T10:01:00Z", "bounced"),
+        { at: "2026-10-15T10:00:00Z", status: "relay_bounced", details: { gmailMessageId: "m2" } },
+        { at: "2026-10-14T10:00:00Z", status: "replied", details: { gmailMessageId: "m2" } },
+        notice("2026-10-13T10:01:00Z", "resent"),
+        { at: "2026-10-13T10:00:00Z", status: "sent", details: {} },
+        notice("2026-10-12T10:01:00Z", "bounced"),
+        { at: "2026-10-12T10:00:00Z", status: "bounced", details: {} },
+        notice("2026-10-11T10:00:00Z", "odd"),
+        notice("2026-10-10T10:00:00Z", "bounced"),
+      ],
+    });
+    expect(told.map((e) => [e.status, e.under?.map((u) => `${u.status} ${u.details.notice ?? ""}`.trim())])).toEqual([
+      ["replied", ["notice resent", "relayed", "notice bounced", "relay_bounced"]],
+      ["sent", ["notice resent"]],
+      ["bounced", ["notice bounced"]],
+      ["notice", undefined],
+      ["notice", undefined],
+    ]);
     // With no Sent at all, a copy stays where it was.
     const copyOnly = { at: "2026-10-10T10:00:00Z", status: "copy_held", details: {} };
     expect(historyOf({ ...letter, events: [copyOnly] })).toEqual([copyOnly]);

@@ -60,12 +60,21 @@ function withHandling(events: HistoryEntry[], forwards: LetterForward[]): Histor
 
 const isCopy = (event: LetterEvent) => event.status.startsWith("copy_");
 
+/** What a notice to the supporter says happened: the email bounced, or went again. */
+const NOTICE_OF: Record<string, (event: LetterEvent) => boolean> = {
+  bounced: (event) => event.status === "bounced" || event.status === "relay_bounced",
+  // The letter, or a relay to the MP, gone again.
+  resent: (event) => wasSent(event) || event.status === "relayed",
+};
+
 /**
  * Each change that belongs to another, under it, taken from among the rest:
  * a reply's relay (every other change that names the reply's message in
- * Gmail: relayed, held, waiting, bounced, not relayed), and the
- * supporter's copy (sent, held, bounced) under the Sent it went with, the
- * last before it, or the first if none was.
+ * Gmail: relayed, held, waiting, bounced, not relayed, the office told);
+ * the supporter's copy (sent, held, bounced) under the Sent it went with,
+ * the last before it, or the first if none was; and a notice to the
+ * supporter under what it tells of, the last bounce or Sent before it, or
+ * that one's own place, as a relay's bounce is under its reply.
  */
 function nested(events: HistoryEntry[]): HistoryEntry[] {
   const sents = events.filter(wasSent);
@@ -76,6 +85,11 @@ function nested(events: HistoryEntry[]): HistoryEntry[] {
     return events.find((reply) => isReply(reply) && reply.details.gmailMessageId === message);
   };
   const parents = new Map(events.map((event) => [event, parentOf(event)]));
+  for (const notice of events.filter((event) => event.status === "notice")) {
+    const tells = NOTICE_OF[String(notice.details.notice)];
+    const of = tells && events.find((event) => event !== notice && time(event.at) <= time(notice.at) && tells(event));
+    if (of) parents.set(notice, parents.get(of) ?? of);
+  }
   return events
     .filter((event) => !parents.get(event))
     .map((event) => {

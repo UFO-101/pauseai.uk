@@ -155,6 +155,29 @@ adds what its kind has, joined as notable people are:
 
 A letter's ask is its campaign's or its mailing's, never its own.
 
+**A letter's history**, on its page (`historyOf` and `LetterHistory` in
+`app/(staff)/staff/_components/LetterHistory.tsx`), is its events, newest
+first, each with its fields in words and a {} for what it recorded. Every
+email in it says who it went to, and its tag says what sent or brought
+it, Postmark or Gmail: as its event recorded (`sentBy` in
+`lib/server/email.ts`), or, for one recorded before events did, what the
+letter went by. A Sent with no event of its own comes from the letter's
+dates. What belongs to another entry goes under it, a size smaller:
+
+- under a reply, its relay: every entry naming the reply's message in
+  Gmail (relayed, waiting, held, bounced, uncertain, not relayed, and the
+  MP's office told it can't be passed on);
+- under Sent, the supporter's copy (sent, held, bounced, delayed): under
+  the last Sent before it, or the first if it was recorded a moment
+  earlier;
+- under what it tells of, a notice to the supporter: one that the letter
+  bounced under the last bounce before it, and one that it went again
+  under the last Sent; a relay's bounce or sending again is under its
+  reply, so the notice goes there, beside it.
+
+Anything else, and a notice with nothing before it to go under, stays in
+the list, in its place.
+
 ### Letters through the letters inbox
 
 Supporters' letters go to MPs from the letters inbox, a Gmail account used

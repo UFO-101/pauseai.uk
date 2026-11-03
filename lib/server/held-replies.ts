@@ -28,15 +28,16 @@ const answering = (subject: string) => (/^re:/i.test(subject) ? subject : `Re: $
  * reply held, while the letters inbox can send.
  */
 export async function tellOfficesOfHeldReplies(): Promise<void> {
-  const held = await query<{ letterId: number; messageId: string | null; subject: string }>(
-    `SELECT DISTINCT ON (r.letter_id) r.letter_id::int AS "letterId", m.rfc_message_id AS "messageId", m.subject
+  const held = await query<{ letterId: number; messageId: string | null; gmailMessageId: string; subject: string }>(
+    `SELECT DISTINCT ON (r.letter_id) r.letter_id::int AS "letterId", m.rfc_message_id AS "messageId",
+       m.gmail_message_id AS "gmailMessageId", m.subject
      FROM letter_relays r JOIN letter_replies m ON m.id = r.reply_id
      WHERE r.status = 'held' AND r.reason = 'blocked' AND r.to_supporter
        AND r.created_at < now() - interval '${HELD_DAYS} days'
        AND NOT EXISTS (SELECT 1 FROM letter_events e WHERE e.letter_id = r.letter_id AND e.status = 'office_told')
      ORDER BY r.letter_id, r.created_at, r.id`,
   );
-  for (const { letterId, messageId, subject } of held) {
+  for (const { letterId, messageId, gmailMessageId, subject } of held) {
     if (await cannotSend(1)) return;
     const letter = (await outgoingLetter(letterId))!;
     if (!letter.mpEmail || (await isBlocked(letter.mpEmail))) continue;
@@ -53,7 +54,10 @@ export async function tellOfficesOfHeldReplies(): Promise<void> {
       letterId,
       { backend: lettersBackend() },
     );
-    if (result.sent) await letterEvent(letterId, "office_told", { to: letter.mpEmail, ...sentBy(result.backend) });
+    // Naming the reply, so the letter's history shows it under that.
+    if (result.sent) {
+      await letterEvent(letterId, "office_told", { to: letter.mpEmail, gmailMessageId, ...sentBy(result.backend) });
+    }
   }
 }
 
