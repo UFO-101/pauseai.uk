@@ -13,14 +13,15 @@ import { query } from "./db";
 import {
   bareAddress,
   blockOn,
+  type DeliveryProblem,
   isBlocked,
   isPoliticianAddress,
   listBlocks,
   recentProblems,
   recordProblem,
   send,
+  sentBy,
   unblock,
-  type DeliveryProblem,
 } from "./email";
 
 const POSTMARK = "https://api.postmarkapp.com/email";
@@ -430,4 +431,9 @@ describeWithDatabase("listBlocks, blockOn and recentProblems", () => {
     expect(await isPoliticianAddress('"Polly" <POLLY@example.org>')).toBe(true);
     expect(await isPoliticianAddress("jane@example.com")).toBe(false);
   });
+});
+
+it("says what sent an email, for its event: the backend, and a Gmail's account", () => {
+  expect(sentBy({ name: "postmark" })).toEqual({ backend: "postmark" });
+  expect(sentBy({ name: "gmail", account: "jo@pauseai.uk" })).toEqual({ backend: "gmail", account: "jo@pauseai.uk" });
 });
