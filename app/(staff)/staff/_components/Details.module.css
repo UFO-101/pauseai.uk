@@ -165,7 +165,7 @@
 }
 
 /* The answers to pick from, a row of their own over the note. */
-.answerChoices {
+.statusChoices {
   flex: 1 0 100%;
 }
 

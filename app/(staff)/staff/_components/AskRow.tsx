@@ -32,7 +32,7 @@ function AnswerForm({ politician, ask, setStatus }: { politician: Politician; as
     <FilterForm action={setStatus} aria-label={`${copy.setStatus}: ${ask.title}`}>
       <input type="hidden" name="politicianId" value={politician.id} />
       <input type="hidden" name="ask" value={ask.slug} />
-      <span className={styles.answerChoices}>
+      <span className={styles.statusChoices}>
         <Segmented
           label={copy.status}
           options={[
