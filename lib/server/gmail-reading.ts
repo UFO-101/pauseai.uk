@@ -5,6 +5,7 @@ import { importPath, type GmailRead, type GmailReadResult } from "@/lib/import-r
 import { gmailMessageLink } from "@/lib/letter-links";
 import { query } from "./db";
 import { handleDeliveryProblem } from "./delivery-problems";
+import { sentBy } from "./email";
 import { lettersInbox } from "./letters-inbox";
 import { readLettersInbox } from "./letters-inbox-reading";
 import { notifyStaff, staffLink } from "./notifications";
@@ -148,7 +149,14 @@ async function keepReply(
   await query("UPDATE letters SET replied_at = coalesce(replied_at, $2) WHERE id = $1", [letterId, at]);
   await query("INSERT INTO letter_events (letter_id, status, details) VALUES ($1, 'replied', $2)", [
     letterId,
-    JSON.stringify({ from: from.address, name: from.name, ...addressed(message), gmailMessageId: message.id }),
+    JSON.stringify({
+      from: from.address,
+      name: from.name,
+      ...addressed(message),
+      gmailMessageId: message.id,
+      // What received it, as every email's event says (sentBy in email.ts).
+      ...sentBy({ name: "gmail", account }),
+    }),
   ]);
 }
 

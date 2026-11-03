@@ -178,6 +178,8 @@ describeWithDatabase("reading the letters inbox", () => {
           to: JANES_PROXY,
           cc: "someone@parliament.example",
           gmailMessageId: expect.any(String),
+          backend: "gmail",
+          account: LETTERS_INBOX,
         },
       },
       {

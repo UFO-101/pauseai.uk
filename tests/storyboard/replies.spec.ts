@@ -484,6 +484,12 @@ test("A reply to an older letter", async ({ page, request, flowDatabase }) => {
      INSERT INTO letters_from_supporters (id, entry_id, campaign, subject, postmark_mailbox)
      SELECT l.id, f.id, 'regulate-letter-pm', 'Please back a pause', 'jane.smith.482913' FROM l, f RETURNING id`,
   );
+  // Sent by Postmark, as every letter before the letters inbox was.
+  runSql(
+    flowDatabase,
+    `INSERT INTO email_sends (at, purpose, letter_id, address, outcome, message_id, backend)
+     VALUES (now() - interval '20 days', 'letter', ${id}, 'test-mp@parliament.example', 'sent', 'old-letter-1', 'postmark')`,
+  );
   const address = "jane.smith.482913@letters.pauseai.uk";
   const office = { Email: OFFICE_ADDRESS, Name: "Testy McTestface MP" };
   expect(await inbound(request, address, { FromFull: office, MessageID: "old-reply-1", TextBody: MP_REPLY })).toBe(2);
@@ -491,10 +497,14 @@ test("A reply to an older letter", async ({ page, request, flowDatabase }) => {
   expect(forwarded.TextBody).toContain(copy.forwardedReply.toSender(office.Name));
   expect(forwarded.ReplyTo).toBe(`${OFFICE_ADDRESS}, ${address}`);
   await emailFrame(page, forwarded, "The reply, as Jane gets it");
-  story("The letter's history says where the reply went, and why.");
+  story(
+    "The letter's history says where the reply went, and why, and that Postmark sent the letter and brought the reply.",
+  );
   await logIn(page, flowDatabase, ["supporters"]);
   const entries = await openLetter(page, id);
   await expect(entries.first()).toContainText(history.handlingReasons.sender);
   await expect(entries.first()).toContainText(`${POLICY_INBOX} · `);
+  await expect(entries.first().getByText(staffCopy.letters.backends.postmark)).toBeVisible();
+  await expect(entries.last().getByText(staffCopy.letters.backends.postmark)).toBeVisible();
   await frame(page, "The letter's history");
 });

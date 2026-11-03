@@ -3220,15 +3220,22 @@ describe("historyOf", () => {
     const events = [
       { at: "2026-10-14T10:00:00Z", status: "relayed", details: { to: "jane@example.com", backend: "gmail" } },
       { at: "2026-10-13T10:00:00Z", status: "notice", details: { to: "jane@example.com", backend: "postmark" } },
-      { at: "2026-10-12T10:00:00Z", status: "replied", details: {} },
+      { at: "2026-10-12T10:00:00Z", status: "replied", details: { backend: "postmark" } },
+      // A reply recorded before replies said what brought them: what the letter went by, which they came back through.
+      { at: "2026-10-11T10:00:00Z", status: "auto_reply", details: {} },
+      { at: "2026-10-10T10:00:00Z", status: "bounced", details: {} },
     ];
     expect(historyOf({ ...exampleSupporterLetterDetails, backend: "gmail", events }).map((e) => e.tag)).toEqual([
       copy.backends.gmail,
       copy.backends.postmark,
-      undefined,
-      // And Sent, from the letter's own send, as it has no event of its own.
+      copy.backends.postmark,
       copy.backends.gmail,
+      // And Sent, from the letter's own send, as it has no event of its own, in its place.
+      copy.backends.gmail,
+      undefined,
     ]);
+    // One Airtable sent heard nothing back through it: an old reply says nothing of what brought it.
+    expect(historyOf({ ...airtable, sentAt: null, events: [events[3]] }).map((e) => e.tag)).toEqual([undefined]);
   });
 
   it("is the changes recorded, Sent tagged with what sent it; nothing more for one never sent", () => {

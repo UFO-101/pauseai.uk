@@ -122,6 +122,8 @@ test("Google disconnects a Gmail", async ({ page, request, flowDatabase }) => {
   await page.goto(`${BASE}/staff/me`);
   await page.getByRole("link", { name: staffCopy.gmail.connect }).click();
   await expect(page.getByText(staffCopy.gmail.outcomes.connected)).toBeVisible();
+  // Theirs alone: the letters inbox, which every flow has connected, isn't.
+  runSql(flowDatabase, `UPDATE staff_accounts SET gmail_token = NULL WHERE email = '${LETTERS_INBOX}'`);
   failService(flowDatabase, "oauth2.googleapis.com", FAILING_DIR);
 
   story(

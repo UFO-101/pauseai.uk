@@ -4,6 +4,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import type { GmailRead, NotUnderstoodReason } from "@/lib/import-runs";
 import { query } from "./db";
 import { handleDeliveryProblem } from "./delivery-problems";
+import { sentBy } from "./email";
 import { readBounce } from "./gmail-reading";
 import { letterEvent } from "./letter-sending";
 import { isLettersInboxAddress, proxyTag } from "./letters-inbox";
@@ -389,6 +390,8 @@ async function readMessage(
     ...addressed(message),
     gmailMessageId: id,
     ...(uncertain && { uncertain }),
+    // What received it, as every email's event says (sentBy in email.ts).
+    ...sentBy({ name: "gmail", account }),
   };
   if (!authenticated(raw.toString("latin1"), from.address)) {
     await letterEvent(letterId, "not_relayed", { ...event, reason: "not_verified" });

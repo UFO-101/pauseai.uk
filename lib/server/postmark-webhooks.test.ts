@@ -180,6 +180,7 @@ describeWithDatabase("forwardReply", () => {
           name: "Testy McTestface MP",
           to: `${mailbox}@letters.pauseai.uk`,
           messageId: "inbound-1",
+          backend: "postmark",
           handling: [
             { outcome: "forwarded", to: "replies@pauseai.uk", reason: "policy_inbox", at: expect.any(String) },
             { outcome: "forwarded", to: "Jane@Example.com", reason: "sender", at: expect.any(String) },
@@ -264,6 +265,7 @@ describeWithDatabase("forwardReply", () => {
           name: "Jane Smith",
           to: `test-mp@parliament.example, ${mailbox}@letters.pauseai.uk`,
           messageId: "inbound-1",
+          backend: "postmark",
           handling: [
             { outcome: "forwarded", to: "replies@pauseai.uk", reason: "policy_inbox", at: expect.any(String) },
             { outcome: "not_forwarded", to: "Jane@Example.com", reason: "own_follow_up" },
@@ -326,6 +328,7 @@ describeWithDatabase("forwardReply", () => {
           from: "",
           name: "",
           messageId: null,
+          backend: "postmark",
           handling: [{ outcome: "forwarded", to: "Jane@Example.com", reason: "sender", at: expect.any(String) }],
         },
       },

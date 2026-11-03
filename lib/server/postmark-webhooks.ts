@@ -134,6 +134,8 @@ async function recordReply(letter: { id: number; senderEmail: string }, email: I
     cc: addresses(email.CcFull),
     replyTo: email.ReplyTo || undefined,
     messageId: email.MessageID ?? null,
+    // What received it, as every email's event says (sentBy in email.ts).
+    backend: "postmark",
   };
   return transaction(async (db) => {
     await query("SELECT 1 FROM letters WHERE id = $1 FOR UPDATE", [letter.id], db);
