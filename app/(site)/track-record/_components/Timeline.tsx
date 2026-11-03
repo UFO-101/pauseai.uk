@@ -11,6 +11,67 @@ export default function Timeline() {
     <section className={styles.timeline}>
       <div className="container">
         <TimelineList>
+          <TimelineEntry id="oxford-panel-discussion" month="October" year="2026" title={"Oxford Panel Discussion "}>
+            <EntryText>
+              <p>
+                We held a{" "}
+                <a
+                  href="https://x.com/PauseAI_UK/status/2114091420386721804"
+                  className="inline-link"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  panel discussion
+                </a>{" "}
+                in Oxford, <em>Out of the Loop: Who&apos;s in Charge When AI Builds Itself?</em>, featuring:
+              </p>
+              <EntryList>
+                <li>
+                  <strong>Toby Ord</strong>, Senior Researcher at Oxford University&apos;s AI Governance Initiative.
+                </li>
+                <li>
+                  <strong>Ben Harack</strong>, Research Lead at the Oxford Hardware AI Governance Lab.
+                </li>
+                <li>
+                  <strong>Catherine Ge-Wang</strong>, MIRI Technical Governance fellow.
+                </li>
+                <li>
+                  <strong>Anneliese Dodds</strong>, MP for Oxford East.
+                </li>
+              </EntryList>
+              <p>
+                We talked about the implications of recursive self-improvement and the hard questions of global
+                governance of AI.
+              </p>
+            </EntryText>
+            <Photos count={4}>
+              <Shot
+                href="/images/oxford-panel-oct-2026/oxford-panel-discussion.jpg"
+                src="/images/oxford-panel-oct-2026/oxford-panel-discussion-thumb.jpg"
+                alt="A panellist speaking into a microphone beside the others at the table"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+              <Shot
+                href="/images/oxford-panel-oct-2026/oxford-panel-room.jpg"
+                src="/images/oxford-panel-oct-2026/oxford-panel-room-thumb.jpg"
+                alt="The audience in a lecture theatre watching the panel at the front"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+              <Shot
+                href="/images/oxford-panel-oct-2026/oxford-panel-speakers.jpg"
+                src="/images/oxford-panel-oct-2026/oxford-panel-speakers-thumb.jpg"
+                alt="The panel speakers and organisers standing together in the lecture theatre"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+              <Shot
+                href="/images/oxford-panel-oct-2026/oxford-panel-table.jpg"
+                src="/images/oxford-panel-oct-2026/oxford-panel-table-thumb.jpg"
+                alt="The panel seated at a table in front of a Keble College slide"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+            </Photos>
+          </TimelineEntry>
+
           <TimelineEntry
             id="emergency-protest-downing-street"
             month="September"
