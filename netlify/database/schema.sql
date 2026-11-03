@@ -280,15 +280,15 @@ CREATE TABLE public.letters_from_supporters (
     airtable_id text,
     entry_id bigint NOT NULL,
     proxy_id bigint,
-    body text,
+    letter jsonb,
     draft text,
     draft_approximate boolean,
     own_words real,
     copy_state text,
-    CONSTRAINT letters_from_supporters_body CHECK ((((proxy_id IS NULL) = (body IS NULL)) AND ((proxy_id IS NULL) = (copy_state IS NULL)))),
     CONSTRAINT letters_from_supporters_copy_state_check CHECK ((copy_state = ANY (ARRAY['queued'::text, 'sending'::text, 'sent'::text, 'held'::text]))),
     CONSTRAINT letters_from_supporters_draft CHECK ((((draft IS NULL) = (draft_approximate IS NULL)) AND ((draft IS NULL) = (own_words IS NULL)) AND ((draft IS NULL) OR (proxy_id IS NOT NULL)))),
     CONSTRAINT letters_from_supporters_kind_check CHECK ((kind = 'supporter'::text)),
+    CONSTRAINT letters_from_supporters_letter CHECK ((((proxy_id IS NULL) = (letter IS NULL)) AND ((proxy_id IS NULL) = (copy_state IS NULL)))),
     CONSTRAINT letters_from_supporters_own_words_check CHECK (((own_words >= (0)::double precision) AND (own_words <= (1)::double precision))),
     CONSTRAINT letters_from_supporters_sent_by CHECK ((num_nonnulls(postmark_mailbox, airtable_id, proxy_id) = 1))
 );
@@ -1342,7 +1342,7 @@ CREATE TABLE public.letter_relays (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     sent_at timestamp with time zone,
     rfc_message_id text,
-    CONSTRAINT letter_relays_check CHECK (((status = 'sent'::text) = (sent_at IS NOT NULL))),
+    CONSTRAINT letter_relays_check CHECK (((status <> ALL (ARRAY['sent'::text, 'bounced'::text])) OR (sent_at IS NOT NULL))),
     CONSTRAINT letter_relays_status_check CHECK ((status = ANY (ARRAY['queued'::text, 'sending'::text, 'sent'::text, 'held'::text, 'bounced'::text, 'uncertain'::text])))
 );
 

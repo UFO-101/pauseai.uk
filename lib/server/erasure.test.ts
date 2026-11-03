@@ -1,6 +1,12 @@
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { query } from "@/lib/server/db";
-import { addTestLetter, addTestMp, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { docFromMarkup } from "@/lib/letter-format";
+import { addTestLetter, addTestMp, connectTestGmail, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { deliverToLettersInbox, lettersMailbox, resetLettersInbox } from "@/tests/fixtures/letters-inbox";
+import { LETTERS_INBOX, stubLettersInboxEnv, testMail, testProxy } from "@/tests/gmail-sends";
+import { readGmail } from "./gmail-reading";
+import { submitLetter } from "./mp-letters";
+import { letterReply } from "./outside-services/blobs";
 import { eraseSupporter } from "./erasure";
 import { importLuma } from "./luma-import";
 import { importMembers } from "./members-import";
@@ -79,6 +85,8 @@ describeWithDatabase("eraseSupporter", () => {
       formEntries: 2,
       letters: 1,
       members: 1,
+      proxies: 0,
+      messages: 0,
     });
     expect(await query("SELECT 1 FROM supporters WHERE id = $1", [id])).toEqual([]);
     expect(await query("SELECT 1 FROM luma_people WHERE user_id = 'usr-fixture-1'")).toEqual([]);
@@ -109,7 +117,16 @@ describeWithDatabase("eraseSupporter", () => {
       {
         actor: "jo@pauseai.uk",
         action: "erase supporter",
-        details: { id, reference: "ICO-123", lumaUsers: 1, formEntries: 2, letters: 1, members: 1 },
+        details: {
+          id,
+          reference: "ICO-123",
+          lumaUsers: 1,
+          formEntries: 2,
+          letters: 1,
+          members: 1,
+          proxies: 0,
+          messages: 0,
+        },
       },
     ]);
     // Everyone else is still there, and the next import doesn't bring Jane back.
@@ -121,6 +138,62 @@ describeWithDatabase("eraseSupporter", () => {
     expect(await query("SELECT 1 FROM luma_event_hosts WHERE user_id = 'usr-fixture-1'")).toEqual([]);
     expect(await query("SELECT 1 FROM members WHERE id = 'recMemberJane'")).toEqual([]);
     expect(await query("SELECT count(*)::int AS n FROM supporters")).toEqual([{ n: 13 }]);
+  });
+
+  describe("a letter from the letters inbox", () => {
+    beforeEach(async () => {
+      stubLettersInboxEnv();
+      resetLettersInbox();
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      await addTestMp();
+      await connectTestGmail(LETTERS_INBOX);
+    });
+    afterEach(() => vi.restoreAllMocks());
+
+    /** Jane's letter, and the office's reply to her proxy, kept and relayed. Returns her supporter ID. */
+    async function janesLetter(): Promise<number> {
+      await submitLetter({
+        campaign: "regulate-letter-pm",
+        name: "Jane Smith",
+        postcode: "zz9 9zz",
+        address: "1 High Street",
+        email: "jane@example.com",
+        subject: "Please back a pause",
+        letter: docFromMarkup("Dear Mr McTestface,\n\nPlease back a pause."),
+        draftHash: "",
+        consent: false,
+        nickname: "",
+        turnstileToken: "",
+      });
+      deliverToLettersInbox(testMail({ from: "test-mp@parliament.example", to: testProxy("jane.smith") }));
+      await readGmail("test");
+      return (await query<{ id: number }>("SELECT supporter_id::int AS id FROM supporter_links"))[0].id;
+    }
+
+    it("deletes her proxy, her draft and every message kept, their blobs too, and moves the mail to Trash", async () => {
+      const id = await janesLetter();
+      const [{ key }] = await query<{ key: string }>("SELECT blob_key AS key FROM letter_replies");
+      expect(await eraseSupporter(id, "ICO-124", "jo@pauseai.uk")).toMatchObject({
+        letters: 1,
+        proxies: 1,
+        messages: 4,
+      });
+      expect(await query("SELECT tag FROM proxies")).toEqual([{ tag: "testy.mctestface.mp" }]);
+      expect(await query("SELECT 1 FROM letter_replies")).toEqual([]);
+      expect(await query("SELECT 1 FROM letter_relays")).toEqual([]);
+      expect(await letterReply(key)).toBeUndefined();
+      // Only the letter's own send stays, without its letter; the copy, the relay and the rest go.
+      expect(await query("SELECT purpose FROM email_sends ORDER BY id")).toEqual([{ purpose: "letter" }]);
+      // In the letters inbox, the office's reply, and her copy, which came back to the MP's proxy, are in Trash.
+      expect(lettersMailbox().messages.map((m) => m.labels.has("TRASH"))).toEqual([true, true]);
+    });
+
+    it("is done all the same when the letters inbox can't be reached, saying so", async () => {
+      const id = await janesLetter();
+      await query("UPDATE staff_accounts SET gmail_token = NULL, gmail_connected_at = NULL, gmail_history_id = NULL");
+      expect(await eraseSupporter(id, "ICO-125", "jo@pauseai.uk")).toMatchObject({ proxies: 1 });
+      expect(console.error).toHaveBeenCalledWith("Couldn't clear an erased supporter's mail:", expect.any(Error));
+    });
   });
 
   it("does nothing for a supporter that doesn't exist", async () => {

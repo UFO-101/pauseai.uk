@@ -74,7 +74,7 @@ CREATE TABLE letter_relays (
   created_at timestamptz NOT NULL DEFAULT now(),
   sent_at timestamptz,
   rfc_message_id text,
-  CHECK ((status = 'sent') = (sent_at IS NOT NULL))
+  CHECK (status NOT IN ('sent', 'bounced') OR sent_at IS NOT NULL)
 );
 CREATE INDEX letter_relays_letter ON letter_relays (letter_id, created_at);
 CREATE INDEX letter_relays_waiting ON letter_relays (created_at) WHERE status = 'queued';

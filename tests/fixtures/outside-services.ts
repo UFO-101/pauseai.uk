@@ -337,7 +337,7 @@ function googleResponse(
     const raw = Buffer.from((JSON.parse(String(init!.body)) as { raw: string }).raw, "base64url").toString();
     SENT_GMAIL.set(id, /^Message-ID: *(.+)$/im.exec(raw)?.[1].trim() ?? "");
     // Mail to one of the letters inbox's own addresses comes back to it, as the supporter's copy does.
-    if (toLettersInbox(raw)) deliverSent(raw, scope);
+    if (toLettersInbox(raw)) deliverSent(raw, id, scope);
     return json({ id, threadId: id, labelIds: ["SENT"] });
   }
   // An email it sent, by its headers: the Message-ID it was sent with, kept as it was.

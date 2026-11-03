@@ -55,6 +55,7 @@ import {
   exampleLumaResult,
   exampleDisconnectedGmail,
   exampleGmailResult,
+  exampleLettersInboxRead,
   exampleMembersResult,
   exampleRun,
   exampleSyncedMp,
@@ -2741,6 +2742,26 @@ describe("RunList", () => {
     await expect.element(page.getByText(staffCopy.gmailReading.result(accounts), { exact: false })).toBeVisible();
     await expect.element(page.getByText(staffCopy.gmailReading.disconnected, { exact: false })).toBeVisible();
     await expect.element(page.getByText(exampleDisconnectedGmail.error!, { exact: false })).not.toBeInTheDocument();
+  });
+
+  it("says a Gmail read failed that found mail in the letters inbox it couldn't account for, listing each with a link", async () => {
+    await render(
+      <RunList runs={[ran("read-gmail", { accounts: [exampleLettersInboxRead] }, { id: 1 })]} none="None" />,
+    );
+    await expect.element(page.getByText(staffCopy.runs.status.failed, { exact: true })).toBeVisible();
+    await expect
+      .element(page.getByText(staffCopy.lettersInbox.result({ relayed: 4, spam: 2, uncertain: 1 }), { exact: false }))
+      .toBeVisible();
+    const links = page.getByRole("link", { name: staffCopy.lettersInbox.openInGmail });
+    expect(links.all()).toHaveLength(2);
+    await expect
+      .element(links.first())
+      .toHaveAttribute("href", "https://mail.google.com/mail/u/fixture-letters%40pauseai.uk/#all/18c0ffee00000001");
+    await expect
+      .element(
+        page.getByText(`someone@example.com, “Hello”: ${staffCopy.lettersInbox.reasons.stranger}.`, { exact: false }),
+      )
+      .toBeVisible();
   });
 
   it("says how many hosts a Luma run changed and how many pages of contacts it read", async () => {

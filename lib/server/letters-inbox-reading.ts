@@ -340,8 +340,9 @@ async function readMessage(
   request: Request | undefined,
 ): Promise<void> {
   const message = await gmailMessageHeaders(token, id, HEADERS);
-  // Our own: what we sent is in Sent; the supporter's copy also comes back to the MP's proxy.
-  if (message.labelIds.includes("SENT")) return;
+  // Our own: what we sent is in Sent, and the supporter's copy, to the MP's proxy, in the Inbox too.
+  if (message.labelIds.includes("SENT"))
+    return message.labelIds.includes("INBOX") ? file(token, labels, id, "noted") : undefined;
   if (await isOurs(account, message)) return file(token, labels, id, "noted");
   const from = fromAddress(message.headers.get("from"));
   const subject = decodeWords(message.headers.get("subject") ?? "");

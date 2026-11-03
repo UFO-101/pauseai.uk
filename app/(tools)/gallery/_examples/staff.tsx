@@ -54,6 +54,7 @@ import {
   exampleLumaResult,
   exampleDisconnectedGmail,
   exampleGmailResult,
+  exampleLettersInboxRead,
   exampleMembersResult,
   exampleRun,
   exampleSyncedMp,
@@ -331,10 +332,12 @@ const RUNS: Record<ImportJob, Variant> = {
     ),
   },
   "read-gmail": {
-    label: "A read of Gmail, one account unread, and one that disconnected an account",
+    label:
+      "A read of Gmail, one account unread; one that disconnected an account; one with mail in the letters inbox not understood",
     render: () => (
       <StaffPage as="div">
         <Run run={exampleRun("read-gmail", exampleGmailResult)} open />
+        <Run run={exampleRun("read-gmail", { accounts: [exampleLettersInboxRead] }, { id: 4 })} open />
         <Run
           run={exampleRun(
             "read-gmail",

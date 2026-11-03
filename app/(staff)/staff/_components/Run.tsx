@@ -1,5 +1,6 @@
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { gmailMessageLink } from "@/lib/letter-links";
 import {
   type AnyImportRun,
   type ControlAiImport,
@@ -284,19 +285,44 @@ function MembersRun({ run, open }: { run: MembersImport; open?: boolean }) {
   );
 }
 
-/** A read of Gmail: the totals, then each account's, with whether it couldn't be read, or was disconnected. */
+/**
+ * A read of Gmail: the totals, then each account's, with whether it
+ * couldn't be read, or was disconnected; for the letters inbox, what it
+ * relayed, and each message it couldn't account for, with a link to it in
+ * Gmail.
+ */
 function GmailRun({ run, open }: { run: GmailReading; open?: boolean }) {
   if (run.status === "failed") return <RunBox run={run} summary={null} open={open} />;
   const words = staffCopy.gmailReading;
+  const inbox = staffCopy.lettersInbox;
   const { accounts } = run.result;
+  const lines = accounts.reduce((n, a) => n + 1 + (a.notUnderstood?.length ?? 0), 0);
   return (
-    <RunBox run={run} summary={words.result(accounts)} lines={accounts.length} open={open}>
+    <RunBox run={run} summary={words.result(accounts)} lines={lines} open={open}>
       <ul>
         {accounts.map((a) => (
           <li key={a.account}>
             {words.account(a)}
+            {a.relayed !== undefined &&
+              ` ${inbox.result({ relayed: a.relayed, spam: a.spam ?? 0, uncertain: a.uncertain ?? 0 })}`}
             {a.restarted && ` ${words.restarted}`}
             {a.error && <Muted> {a.disconnected ? words.disconnected : words.failed(a.error)}</Muted>}
+            {!!a.notUnderstood?.length && (
+              <>
+                {" "}
+                {inbox.notUnderstood}
+                <ul>
+                  {a.notUnderstood.map((m) => (
+                    <li key={m.gmailMessageId}>
+                      {m.from}, &ldquo;{m.subject}&rdquo;: {inbox.reasons[m.reason]}.{" "}
+                      <a href={gmailMessageLink(a.account, m.gmailMessageId)} target="_blank" rel="noreferrer">
+                        {inbox.openInGmail}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
           </li>
         ))}
       </ul>

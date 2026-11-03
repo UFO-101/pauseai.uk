@@ -241,7 +241,7 @@ describeWithDatabase("reading the letters inbox", () => {
     expect(lettersMailbox().messages).toHaveLength(1);
     expect(await read()).toMatchObject({ replies: 0, relayed: 0, notUnderstood: [] });
     expect(sent).toEqual([]);
-    expect(labelsOfNewest()).toEqual([labels.noted]);
+    expect(labelsOfNewest()).toEqual(["SENT", labels.noted].sort());
     // A message from one of our own addresses, sent some other way, is noted too.
     deliver({ from: LETTERS_INBOX, to: JANES_PROXY, messageId: "elsewhere@pauseai.uk" });
     expect(await read()).toMatchObject({ relayed: 0, notUnderstood: [] });

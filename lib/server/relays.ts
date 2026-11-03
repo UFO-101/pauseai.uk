@@ -190,7 +190,7 @@ export async function resendAfterFix(fix: { address?: string; politicianId?: num
   await query(
     `UPDATE letters_from_supporters SET copy_state = 'queued'
      WHERE copy_state = 'held' AND id IN (SELECT l.id FROM ${FROM} WHERE ${toSupporter})`,
-    params,
+    [params[0]],
   );
   const letters = await query<{ id: number; told: boolean }>(
     `SELECT l.id::int AS id, EXISTS (SELECT 1 FROM letter_events e WHERE e.letter_id = l.id AND e.status = 'notice'
@@ -205,7 +205,7 @@ export async function resendAfterFix(fix: { address?: string; politicianId?: num
   }
   const copies = await query<{ id: number }>(
     `SELECT l.id::int AS id FROM ${FROM} WHERE s.copy_state = 'queued' AND l.status = 'sent' AND ${toSupporter}`,
-    params,
+    [params[0]],
   );
   for (const { id } of copies) await sendCopy(id);
   const relays = await query<{ id: number; letterId: number; status: string }>(

@@ -286,7 +286,7 @@ export async function sendLetterQueue(until: number): Promise<LetterQueueRun> {
     if ((await sendLetter(id)).sent) sent++;
   }
   const copies = await query<{ id: number }>(
-    "SELECT id::int AS id FROM letters_from_supporters WHERE copy_state = 'queued' ORDER BY id",
+    "SELECT s.id::int AS id FROM letters_from_supporters s JOIN letters l USING (id) WHERE s.copy_state = 'queued' AND l.status = 'sent' ORDER BY s.id",
   );
   for (const { id } of copies) {
     if (Date.now() >= until || (await cannotSend(1))) break;
@@ -295,7 +295,7 @@ export async function sendLetterQueue(until: number): Promise<LetterQueueRun> {
   const [{ left }] = await query<{ left: number }>(
     `SELECT (SELECT count(*) FROM letter_relays WHERE status = 'queued')
        + (SELECT count(*) FROM letters WHERE status = 'queued')
-       + (SELECT count(*) FROM letters_from_supporters WHERE copy_state = 'queued') AS left`,
+       + (SELECT count(*) FROM letters_from_supporters s JOIN letters l USING (id) WHERE s.copy_state = 'queued' AND l.status = 'sent') AS left`,
   );
   return { sent, left: Number(left) };
 }

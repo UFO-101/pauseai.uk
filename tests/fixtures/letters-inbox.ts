@@ -41,11 +41,12 @@ export function lettersMailbox(scope = "default"): Mailbox {
   return mailbox;
 }
 
-/** Puts a message in a mailbox, unread, in its Inbox or Spam. */
-function receive(mailbox: Mailbox, raw: string, spam: boolean): InboxMessage {
+/** Puts a message in a mailbox, unread, in its Inbox or Spam; or one it sent itself, under the ID it was sent with. */
+function receive(mailbox: Mailbox, raw: string, spam: boolean, sentId?: string): InboxMessage {
   const historyId = FIRST_HISTORY + mailbox.messages.length + 1;
-  const id = createHash("sha256").update(`${historyId}\n${raw}`).digest("hex").slice(0, 16);
-  const message = { id, raw, labels: new Set([spam ? "SPAM" : "INBOX", "UNREAD"]), historyId };
+  const id = sentId ?? createHash("sha256").update(`${historyId}\n${raw}`).digest("hex").slice(0, 16);
+  const labels = [spam ? "SPAM" : "INBOX", "UNREAD", ...(sentId ? ["SENT"] : [])];
+  const message = { id, raw, labels: new Set(labels), historyId };
   mailbox.messages.push(message);
   return message;
 }
@@ -55,9 +56,13 @@ export function historyIdOf(mailbox: Mailbox): number {
   return FIRST_HISTORY + mailbox.messages.length;
 }
 
-/** Delivers a message sent by the site, to one of the letters inbox's addresses, to its mailbox. */
-export function deliverSent(raw: string, scope?: string): void {
-  receive(lettersMailbox(scope), raw, false);
+/**
+ * Delivers a message the letters inbox sent to one of its own addresses
+ * to its mailbox: as Gmail does, one message, in Sent and the Inbox both,
+ * under the ID it was sent with.
+ */
+export function deliverSent(raw: string, id: string, scope?: string): void {
+  receive(lettersMailbox(scope), raw, false, id);
 }
 
 let written = 0;
