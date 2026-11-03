@@ -34,8 +34,8 @@ export const staffCopy = {
   // The dev login's box under the login card, in a fixture build only.
   devLogin: {
     // Before what a shared inbox's address is, in the dev login.
-    lettersInbox: "⁂ The letters inbox",
-    policyInbox: "⁂ The policy inbox",
+    lettersInbox: "Letters inbox",
+    policyInbox: "Policy inbox",
     title: "Development only: sign in now as",
     hint: "This appears when DATA_FIXTURES=1 and never in production.",
     // Beside each address: what it may do.
@@ -132,7 +132,7 @@ export const staffCopy = {
       connected: "Your Gmail is connected. All staff will be able to send mailings from it now.",
       // The same, for the letters inbox, which sends supporters' letters and nothing else.
       connectedLettersInbox:
-        "⁂ The letters inbox is connected. Supporters' letters to MPs go from it now, and replies are relayed through it every hour.",
+        "The letters inbox is connected. Supporters' letters to MPs go from it now, and replies are relayed through it every hour.",
       refused: "Gmail wasn't connected, as you didn't allow it.",
       failed: "Gmail couldn't be connected. Try again.",
       disconnected: "Your Gmail is disconnected.",

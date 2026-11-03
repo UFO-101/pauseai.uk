@@ -267,6 +267,7 @@ test("The letter bounces: staff alerted and Jane told; unblocked, it goes again"
 
   await page.goto(`${BASE}/staff/politicians/blocked-emails`);
   await page.getByRole("link", { name: bouncy.name, exact: true }).first().click();
+  await expect(page.getByRole("heading", { level: 1, name: bouncy.name })).toBeVisible();
   await page.getByLabel(staffCopy.emails.note).fill("Their office gave us the right address");
   await page.getByRole("button", { name: staffCopy.emails.unblock }).click();
   await expect(page.getByLabel(staffCopy.emails.note)).not.toBeVisible();
@@ -277,7 +278,7 @@ test("The letter bounces: staff alerted and Jane told; unblocked, it goes again"
   await emailFrame(page, resent, "unblocked: the letter goes again, and Jane is told");
   const entries = await openLetter(page, id);
   await expect(entries.first()).toContainText(staffCopy.letters.status.notice);
-  await expect(page.getByText(staffCopy.letters.status.bounced).first()).toBeVisible();
+  await expect(entries.filter({ hasText: new RegExp(`^${staffCopy.letters.status.bounced}`) })).toBeVisible();
   await frame(page, "the letter's history: bounced, Jane told, sent again, Jane told");
 });
 
