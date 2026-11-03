@@ -155,7 +155,7 @@ export async function addTestLetter(letter: {
   senderPostcode?: string;
   contactConsent?: boolean;
   subject?: string;
-  replyHash?: string;
+  postmarkMailbox?: string;
   createdAt?: string;
   sentAt?: string | null;
   repliedAt?: string | null;
@@ -184,13 +184,13 @@ export async function addTestLetter(letter: {
     ],
   );
   await query(
-    "INSERT INTO letters_from_supporters (id, entry_id, campaign, subject, reply_hash) VALUES ($1, $2, $3, $4, $5)",
+    "INSERT INTO letters_from_supporters (id, entry_id, campaign, subject, postmark_mailbox) VALUES ($1, $2, $3, $4, $5)",
     [
       id,
       entry.id,
       letter.campaign ?? "regulate-letter-pm",
       letter.subject ?? "A letter",
-      letter.replyHash ?? `reply-${id}`,
+      letter.postmarkMailbox ?? `reply-${id}`,
     ],
   );
   return id;

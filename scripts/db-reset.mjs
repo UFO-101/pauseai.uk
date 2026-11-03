@@ -5,7 +5,8 @@
 // adds the fake supporters too (tests/fixtures/staff-data.sql), and the test
 // MPs whatever TEST_MP_EMAIL says, since their letters go to the fixture
 // outbox anyway. Reads all three from .env.local, the way `npm run dev` does.
-// Its admin account is given the supporters permission too, so the one
+// With DATA_FIXTURES, LETTERS_INBOX and GMAIL_TOKEN_KEY set, it connects
+// the fake letters inbox too. Its admin account is given the supporters permission too, so the one
 // account a fresh database has opens every staff page.
 //
 // It wipes the database if it already exists, so it only works on a
@@ -14,6 +15,7 @@ import nextEnv from "@next/env";
 import {
   addFixtureData,
   addTestMps,
+  connectLettersInbox,
   giveAdminSupporters,
   isLocal,
   resetDatabase,
@@ -43,5 +45,9 @@ const fixtures = process.env.DATA_FIXTURES === "1";
 const email = process.env.TEST_MP_EMAIL?.trim() || (fixtures ? "test-mp@parliament.example" : undefined);
 if (email) addTestMps(url, email);
 if (fixtures) addFixtureData(url);
+// So letters go from the fake letters inbox, as they would from the real one once it's connected.
+const lettersInbox = process.env.LETTERS_INBOX?.trim().toLowerCase();
+if (fixtures && lettersInbox && process.env.GMAIL_TOKEN_KEY)
+  connectLettersInbox(url, lettersInbox, process.env.GMAIL_TOKEN_KEY);
 const mps = email ? `, with the test MPs (${email})` : ", without the test MPs: set TEST_MP_EMAIL to add them";
 console.log(`Made ${new URL(url).pathname.slice(1)}${mps}${fixtures ? " and the fake supporters" : ""}.`);

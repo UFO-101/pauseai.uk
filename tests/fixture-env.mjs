@@ -15,6 +15,13 @@ export const MAIN_URL = process.env.MAIN_URL ?? "http://localhost:3001";
 export const TEST_MP_EMAIL = "test-mp@parliament.example";
 
 /**
+ * The letters inbox in a fixture build, and the tests (LETTERS_INBOX,
+ * lib/server/letters-inbox.ts): made up, as the real one's address isn't
+ * in the repo, but at pauseai.uk, as it has a staff account.
+ */
+export const LETTERS_INBOX = "fixture-letters@pauseai.uk";
+
+/**
  * The moment a fixture build thinks it is: the server (lib/now.ts and the
  * database's now(), tests/storyboard/global-setup.ts) and every page's clock
  * (tests/storyboard/fixtures.ts). After both flyering trackers' races, before
@@ -59,5 +66,8 @@ export function fixtureEnv({ outboxDir }) {
     POLICY_INBOX: "policy@example.org",
     // Each email sent is also written here (tests/fixtures/outbox.ts).
     OUTBOX_DIR: outboxDir,
+    LETTERS_INBOX,
+    // Mail to the letters inbox that a flow writes, for the fake Gmail to pick up (tests/fixtures/letters-inbox.ts).
+    LETTERS_INBOX_DIR: `${outboxDir}/letters-inbox`,
   };
 }

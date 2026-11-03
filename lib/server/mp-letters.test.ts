@@ -158,11 +158,11 @@ describeWithDatabase("submitLetter", () => {
     expect(await submitLetter(FORM)).toEqual({ ok: true });
 
     const [letter] = await query<Record<string, unknown>>(
-      `SELECT l.*, s.campaign, s.reply_hash, f.form, f.email, f.postcode, f.contact_consent
+      `SELECT l.*, s.campaign, s.postmark_mailbox, f.form, f.email, f.postcode, f.contact_consent
        FROM letters l JOIN letters_from_supporters s USING (id) JOIN form_entries f ON f.id = s.entry_id`,
     );
-    expect(letter.reply_hash).toMatch(/^jane\.smith\.\d{6}$/);
-    const address = `${letter.reply_hash}@letters.pauseai.uk`;
+    expect(letter.postmark_mailbox).toMatch(/^jane\.smith\.\d{6}$/);
+    const address = `${letter.postmark_mailbox}@letters.pauseai.uk`;
     expect(sent).toHaveLength(1);
     expect(sent[0].ReplyTo).toBeUndefined();
     expect(sent[0]).toMatchObject({
@@ -318,8 +318,10 @@ describeWithDatabase("submitLetter", () => {
     expect(await submitLetter(FORM)).toEqual({ ok: true });
     const digits = (seed: string) =>
       String(createHash("sha256").update(seed).digest().readUInt32BE() % 1_000_000).padStart(6, "0");
-    const letters = await query<{ reply_hash: string }>("SELECT reply_hash FROM letters_from_supporters ORDER BY id");
-    expect(letters.map((l) => l.reply_hash)).toEqual([
+    const letters = await query<{ postmark_mailbox: string }>(
+      "SELECT postmark_mailbox FROM letters_from_supporters ORDER BY id",
+    );
+    expect(letters.map((l) => l.postmark_mailbox)).toEqual([
       `jane.smith.${digits("letter jane@example.com 0")}`,
       `jane.smith.${digits("letter jane@example.com 1")}`,
     ]);

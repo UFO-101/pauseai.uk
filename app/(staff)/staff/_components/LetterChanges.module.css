@@ -1,0 +1,25 @@
+/* The switch over the letter, and any note above it, a step apart. */
+.changes {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+}
+
+/* The letter's text as it was written: its line breaks kept. */
+.text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* What the supporter added: tinted, as a highlighter would. */
+.text ins {
+  background: var(--status-green-bg);
+  color: var(--status-green);
+  text-decoration: none;
+}
+
+/* What they cut: struck through, and fainter. */
+.text del {
+  background: var(--status-red-bg);
+  color: var(--status-red);
+}

@@ -5,6 +5,7 @@ import type { LetterThread as Thread } from "@/lib/server/letter-threads";
 import type { SupporterLetterDetails } from "@/lib/server/letters";
 import { named } from "@/lib/named-address";
 import { staffTime } from "@/lib/staff-time";
+import LetterChanges from "./LetterChanges";
 import { MailingLetter } from "./MailingLetter";
 import StaffLink from "./ui/StaffLink";
 import styles from "./LetterThread.module.css";
@@ -119,13 +120,18 @@ export default function LetterThread({ thread, link }: { thread: Thread; link?: 
 /**
  * A supporter's letter as an email, in a thread as PauseAI's are: from
  * them, leading to their supporter page once they're linked to one, to
- * their MP, when it went, with its subject; in place of its text, which the
- * site doesn't keep, a note saying so, with `link`, the way to it in Gmail.
+ * their MP, when it went, with its subject. One from the letters inbox
+ * shows its text against the draft it was written from (LetterChanges),
+ * with `link`, the way to it there, at the right of the heading, then each
+ * message both ways, oldest first. For another, whose text the site
+ * doesn't keep, a note saying so, with `link` in its place.
  */
 export function SupporterLetterThread({ letter, link }: { letter: SupporterLetterDetails; link?: ReactNode }) {
   const sender = named(letter.senderName, letter.senderEmail);
+  const mp = named(letter.mpName, letter.mpEmail);
+  const { sent } = letter;
   return (
-    <Thread>
+    <Thread link={sent && link}>
       <Email
         from={
           letter.supporterId === null ? (
@@ -134,13 +140,28 @@ export function SupporterLetterThread({ letter, link }: { letter: SupporterLette
             <StaffLink href={`/staff/supporters/${letter.supporterId}`}>{sender}</StaffLink>
           )
         }
-        to={named(letter.mpName, letter.mpEmail)}
+        to={mp}
         at={letter.sentAt}
         subject={letter.subject || letter.campaignTitle}
-        missing
+        missing={!sent}
       >
-        <NoText note={copy.supporterNoText} link={link} />
+        {sent ? (
+          <LetterChanges sent={sent.text} draft={sent.draft} approximate={sent.approximate} />
+        ) : (
+          <NoText note={copy.supporterNoText} link={link} />
+        )}
       </Email>
+      {sent?.messages.map((message) => (
+        <Email
+          key={message.id}
+          from={named(message.fromName, message.fromAddress)}
+          to={message.fromSupporter ? mp : sender}
+          at={message.at}
+          subject={message.subject}
+        >
+          {message.text === null ? <Muted>{copy.unreadable}</Muted> : <div className={styles.text}>{message.text}</div>}
+        </Email>
+      ))}
     </Thread>
   );
 }

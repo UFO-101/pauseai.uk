@@ -34,3 +34,8 @@ export async function letterReply(key: string): Promise<Buffer | undefined> {
   const data = await store().get(key, { type: "arrayBuffer" });
   return data ? Buffer.from(data) : undefined;
 }
+
+/** Deletes the message kept under `key`, if there is one. */
+export async function deleteLetterReply(key: string): Promise<void> {
+  await store().delete(key);
+}

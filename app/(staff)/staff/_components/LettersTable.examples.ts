@@ -52,6 +52,100 @@ export const exampleSupporterLetterDetails: SupporterLetterDetails = {
     inPolicyGroup: true,
   },
   forwards: [],
+  sent: null,
+};
+
+const LETTERS_INBOX = "fixture-letters@pauseai.uk";
+
+/**
+ * A supporter's letter from the letters inbox: Jane added a paragraph of
+ * her own and cut a sentence of the campaign's draft; the letter went from
+ * her proxy and her copy from it to the MP's; the MP's office replied to
+ * her proxy, relayed to her, and she answered, relayed to the office.
+ */
+export const exampleProxiedLetterDetails: SupporterLetterDetails = {
+  ...exampleSupporterLetterDetails,
+  status: "sent",
+  backend: "gmail",
+  repliedAt: "2026-10-13T09:00:00Z",
+  gmail: { mailbox: LETTERS_INBOX, search: "rfc822msgid:letter-1@pauseai.uk" },
+  events: [
+    {
+      at: "2026-10-13T10:00:00Z",
+      status: "relayed",
+      details: {
+        from: `"Jane Smith (via PauseAI)" <fixture-letters+jane.smith@pauseai.uk>`,
+        to: "testy.mctestface.mp@parliament.uk",
+      },
+    },
+    {
+      at: "2026-10-13T10:00:00Z",
+      status: "replied",
+      details: { from: "jane@example.com", name: "Jane Smith", to: "fixture-letters+testy.mctestface.mp@pauseai.uk" },
+    },
+    {
+      at: "2026-10-13T09:00:00Z",
+      status: "relayed",
+      details: {
+        from: `"Testy McTestface MP (via PauseAI)" <fixture-letters+testy.mctestface.mp@pauseai.uk>`,
+        to: "jane@example.com",
+      },
+    },
+    {
+      at: "2026-10-13T09:00:00Z",
+      status: "replied",
+      details: {
+        from: "testy.mctestface.mp@parliament.uk",
+        name: "Testy McTestface MP",
+        to: "fixture-letters+jane.smith@pauseai.uk",
+      },
+    },
+    {
+      at: "2026-10-12T09:05:00Z",
+      status: "copy_sent",
+      details: {
+        from: `"Jane Smith (via PauseAI)" <fixture-letters+jane.smith@pauseai.uk>`,
+        to: `"Testy McTestface MP (via PauseAI)" <fixture-letters+testy.mctestface.mp@pauseai.uk>`,
+        bcc: "jane@example.com",
+      },
+    },
+    {
+      at: "2026-10-12T09:05:00Z",
+      status: "sent",
+      details: {
+        from: `"Jane Smith (via PauseAI)" <fixture-letters+jane.smith@pauseai.uk>`,
+        to: "testy.mctestface.mp@parliament.uk",
+      },
+    },
+  ],
+  sent: {
+    text: "Dear Mr McTestface,\n\nPlease back a pause on frontier AI. I live in Testville and I worry about my children's future.\n\nYours sincerely,\nJane Smith",
+    draft:
+      "Dear Mr McTestface,\n\nPlease back a pause on frontier AI. It is the most urgent issue of our time.\n\nYours sincerely,\nJane Smith",
+    approximate: false,
+    messages: [
+      {
+        id: 1,
+        at: "2026-10-13T09:00:00Z",
+        fromName: "Testy McTestface MP",
+        fromAddress: "testy.mctestface.mp@parliament.uk",
+        fromUs: false,
+        fromSupporter: false,
+        subject: "Re: Please back a pause on frontier AI",
+        text: "Dear Jane,\n\nThank you for writing to me.\n\nTesty",
+      },
+      {
+        id: 2,
+        at: "2026-10-13T10:00:00Z",
+        fromName: "Jane Smith",
+        fromAddress: "jane@example.com",
+        fromUs: false,
+        fromSupporter: true,
+        subject: "Re: Please back a pause on frontier AI",
+        text: "Dear Mr McTestface,\n\nThank you. Could we meet?\n\nJane",
+      },
+    ],
+  },
 };
 
 const LETTER_ADDRESS = "jane.smith.482913@letters.pauseai.uk";

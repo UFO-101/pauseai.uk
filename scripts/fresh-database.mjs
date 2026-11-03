@@ -12,6 +12,7 @@
 // server's Unix socket: /var/run/postgresql on Debian and Ubuntu, /tmp on a
 // Mac (Postgres.app, Homebrew), else it tries localhost.
 import { execFileSync } from "node:child_process";
+import { createCipheriv, randomBytes } from "node:crypto";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { basename, join } from "node:path";
 import { userInfo } from "node:os";
@@ -171,11 +172,6 @@ export function addTestMps(url, email) {
 }
 
 /**
- * Adds the fake supporters (tests/fixtures/staff-data.sql): Luma guests and
- * contacts, letters to the test MPs, an opt-out. For a development database
- * with DATA_FIXTURES=1, after addTestMps.
- */
-/**
  * Gives the migrations' admin account the supporters permission too, so a
  * local database opens every staff page to it. Live databases keep the
  * migration's admin alone.
@@ -184,8 +180,33 @@ export function giveAdminSupporters(url) {
   psql(url, "-c", "UPDATE staff_accounts SET permissions = '{admin,supporters}' WHERE email = 'admin@pauseai.uk'");
 }
 
+/**
+ * Adds the fake supporters (tests/fixtures/staff-data.sql): Luma guests and
+ * contacts, letters to the test MPs, an opt-out. For a development database
+ * with DATA_FIXTURES=1, after addTestMps.
+ */
 export function addFixtureData(url) {
   psql(url, "-1", "-f", FIXTURE_DATA);
+}
+
+/**
+ * Connects the fake Gmail of `email`, the letters inbox of a fixture build
+ * (LETTERS_INBOX), as someone logged in as it would on /staff/me: a staff
+ * account holding the fixture's refresh token for it, encrypted with `key`
+ * (GMAIL_TOKEN_KEY) as lib/server/gmail-tokens.ts does, read from the fake
+ * mailbox's first history ID.
+ */
+export function connectLettersInbox(url, email, key) {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv("aes-256-gcm", Buffer.from(key, "base64"), iv);
+  const sealed = Buffer.concat([cipher.update(`fixture-refresh:${email}`, "utf8"), cipher.final()]);
+  const token = Buffer.concat([iv, sealed, cipher.getAuthTag()]).toString("hex");
+  psql(
+    url,
+    "-c",
+    `INSERT INTO staff_accounts (email, added_by, gmail_token, gmail_connected_at, gmail_history_id, gmail_name)
+     VALUES ('${email}', 'migration', '\\x${token}', now(), '1000', 'Letters')`,
+  );
 }
 
 //   node scripts/fresh-database.mjs <name> [--test-mp <email>]

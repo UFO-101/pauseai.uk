@@ -85,6 +85,11 @@ function postmarkWords(type: string): string {
 /** One field a change recorded, its value in words: Postmark's kind of bounce; the address, leading to it among the blocked emails; the rest as recorded. */
 function EventValue({ name, value }: { name: string; value: unknown }) {
   if (name === "type" && typeof value === "string") return <>{postmarkWords(value)}</>;
+  if (name === "reason" && typeof value === "string" && copy.detail.reasons[value])
+    return <>{copy.detail.reasons[value]}</>;
+  if (name === "notice" && typeof value === "string" && copy.detail.notices[value])
+    return <>{copy.detail.notices[value]}</>;
+  if (name === "uncertain") return <>{copy.consent.yes}</>;
   if (name === "email" && typeof value === "string")
     return <StaffLink href={`/staff/politicians/blocked-emails?q=${encodeURIComponent(value)}`}>{value}</StaffLink>;
   return <>{typeof value === "string" ? value : JSON.stringify(value)}</>;
@@ -98,7 +103,7 @@ function EventValue({ name, value }: { name: string; value: unknown }) {
 const IDS = ["messageId", "threadId", "gmailMessageId", "bounceId", "handling"];
 
 /** Who an email was from and to, in an email's order, first: the database keeps a record's fields in an order of its own. */
-const ADDRESSES = ["from", "name", "to", "cc", "replyTo"];
+const ADDRESSES = ["from", "name", "to", "cc", "bcc", "replyTo"];
 const place = (name: string) => (ADDRESSES.includes(name) ? ADDRESSES.indexOf(name) : ADDRESSES.length);
 
 /**

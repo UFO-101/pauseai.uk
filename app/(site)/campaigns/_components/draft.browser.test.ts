@@ -16,6 +16,7 @@ const DRAFT: Draft = {
   address: "1 High St",
   subject: "A subject",
   letter: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Hello" }] }] },
+  draftHash: "0badcafe",
   nickname: "",
 };
 

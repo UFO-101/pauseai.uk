@@ -18,7 +18,7 @@ describeWithDatabase("recentLetters", () => {
 
   it("pages the letters page's list, with how many there are in all", async () => {
     const mp = await addTestMp();
-    for (let i = 0; i <= LETTERS_PAGE_SIZE; i++) await addTestLetter({ politicianId: mp, replyHash: `h${i}` });
+    for (let i = 0; i <= LETTERS_PAGE_SIZE; i++) await addTestLetter({ politicianId: mp, postmarkMailbox: `h${i}` });
     const first = await listLetters({});
     expect([first.letters.length, first.total, first.pages]).toEqual([LETTERS_PAGE_SIZE, LETTERS_PAGE_SIZE + 1, 2]);
     const second = await listLetters({ page: 2 });
@@ -55,7 +55,7 @@ describeWithDatabase("recentLetters", () => {
         politicianId: mp,
         senderName: "Jane",
         senderEmail: "jane@example.com",
-        replyHash: hash,
+        postmarkMailbox: hash,
         status,
       });
     }
@@ -86,7 +86,7 @@ describeWithDatabase("recentLetters", () => {
       ["a", "Jane Smith", "jane@example.com", "Please act"],
       ["b", "Sam Jones", "sam@example.com", "AI risk"],
     ]) {
-      await addTestLetter({ politicianId: mp, senderName: name, senderEmail: email, subject, replyHash: hash });
+      await addTestLetter({ politicianId: mp, senderName: name, senderEmail: email, subject, postmarkMailbox: hash });
     }
     await query("UPDATE letters SET replied_at = now() WHERE id = 2");
     await query("INSERT INTO supporters DEFAULT VALUES");
@@ -120,7 +120,7 @@ describeWithDatabase("recentLetters", () => {
     expect(await ids({ campaign: ["regulate-letter-pm", "support-sobel-bill"] })).toEqual([2, 1]);
     expect(await ids({ not: { campaign: ["support-sobel-bill"] } })).toEqual([1]);
     // What sent it: Airtable, for one copied from it, or the backend of its newest send that went.
-    await query("UPDATE letters_from_supporters SET airtable_id = 'rec1', reply_hash = NULL WHERE id = 2");
+    await query("UPDATE letters_from_supporters SET airtable_id = 'rec1', postmark_mailbox = NULL WHERE id = 2");
     await query(
       `INSERT INTO email_sends (at, purpose, letter_id, address, outcome, message_id, backend, sender) VALUES
          ('2026-10-01T09:00:00Z', 'letter', 1, 'test-mp@parliament.example', 'sent', 'pm-1', 'postmark', NULL),
@@ -160,7 +160,7 @@ describeWithDatabase("recentLetters", () => {
         politicianId: mp,
         senderName: name,
         senderEmail: `${hash}@example.com`,
-        replyHash: hash,
+        postmarkMailbox: hash,
         createdAt: `2026-10-${day}T09:00:00Z`,
         repliedAt: hash === "c" ? "2026-10-04T09:00:00Z" : null,
       });

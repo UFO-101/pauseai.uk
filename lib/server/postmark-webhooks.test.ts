@@ -45,7 +45,7 @@ async function sentLetter(mailbox = "jane.smith.482913"): Promise<string> {
     senderName: "Jane Smith",
     senderEmail: "Jane@Example.com",
     contactConsent: true,
-    replyHash: mailbox,
+    postmarkMailbox: mailbox,
   });
   return mailbox;
 }
@@ -389,7 +389,7 @@ describeWithDatabase("forwardReply", () => {
     const [{ politicianId }] = await query<{ politicianId: number }>(
       `SELECT notable_person_id::int AS "politicianId" FROM letters`,
     );
-    const sam = [{ id: await addTestLetter({ politicianId, senderName: "Sam", replyHash: "sam.000001" }) }];
+    const sam = [{ id: await addTestLetter({ politicianId, senderName: "Sam", postmarkMailbox: "sam.000001" }) }];
     postmark();
     const both = reply("jane.smith.482913", {
       OriginalRecipient: "sam.000001@letters.pauseai.uk",

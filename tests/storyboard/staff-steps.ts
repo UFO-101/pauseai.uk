@@ -127,7 +127,7 @@ export async function postBounce(request: APIRequestContext, messageId?: string)
 export async function postReply(request: APIRequestContext, database: string, messageId: string, auto = false) {
   const [mailbox] = runSql(
     database,
-    `SELECT s.reply_hash FROM email_sends e JOIN letters_from_supporters s ON s.id = e.letter_id WHERE e.message_id = '${messageId}'`,
+    `SELECT s.postmark_mailbox FROM email_sends e JOIN letters_from_supporters s ON s.id = e.letter_id WHERE e.message_id = '${messageId}'`,
   );
   const address = `${mailbox}@letters.pauseai.uk`;
   const reply = await request.post(`${BASE}/api/postmark/inbound`, {

@@ -1,20 +1,19 @@
 import "server-only";
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 import { copy } from "@/lib/content/email-your-mp";
-import { campaignBySlug, looksLikeEmail } from "@/lib/email-your-mp";
-import { checkDoc, isBlank, toHtml, toText, type LetterDoc } from "@/lib/letter-format";
-import { query, transaction, type Queryable } from "./db";
+import { campaignBySlug, draftLetter, looksLikeEmail, signatureAddress } from "@/lib/email-your-mp";
+import { draftHash, ownWords } from "@/lib/letter-changes";
+import { checkDoc, isBlank, toText, type LetterDoc } from "@/lib/letter-format";
+import { query, transaction } from "./db";
 import { findMp } from "./find-mp";
-import { isBlocked, send } from "./email";
-import { headerName, lettersDomain } from "./outside-services/postmark";
-import { randomId } from "./random-id";
+import { sendLetter, type QueueReason } from "./letter-sending";
+import { isLettersInboxAddress } from "./letters-inbox";
 import { checkNotSpam } from "./outside-services/turnstile";
-import { refreshSupporterFacts } from "./supporter-facts";
+import { statusesOf } from "./politicians";
+import { politicianProxy, supporterProxy } from "./proxies";
 import { linkSupporters } from "./supporters";
 
-// A letter from the form, sent from the letter's own
-// address as soon as the form is accepted.
+// A letter from the form: checked, kept, then sent from the letters inbox
+// at once if it can be (lib/server/letter-sending.ts), else queued.
 
 export type LetterForm = {
   campaign: string;
@@ -25,12 +24,15 @@ export type LetterForm = {
   subject: string;
   /** The editor's document, if it holds only what a letter may. */
   letter: LetterDoc | undefined;
+  /** The hash of the draft the form began with (draftHash), to tell whether the server's rebuild of it is the same. */
+  draftHash: string;
   consent: boolean;
   nickname: string;
   turnstileToken: string;
 };
 
-export type SubmitResult = { ok: true } | { ok: false; status: number; message: string };
+/** Kept, and sent, or queued and why; or refused, with the status and message to answer with. */
+export type SubmitResult = { ok: true; queued?: QueueReason } | { ok: false; status: number; message: string };
 
 function text(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
@@ -47,6 +49,7 @@ export function parseLetterForm(body: unknown): LetterForm {
     email: text(data.email),
     subject: text(data.subject),
     letter: checkDoc(data.letter),
+    draftHash: text(data.draftHash),
     consent: data.consent === true,
     nickname: text(data.nickname),
     turnstileToken: text(data.turnstileToken),
@@ -62,90 +65,22 @@ export function mayWriteTo(mp: { isTest: boolean }): boolean {
   return mp.isTest || process.env.DEPLOY_CONTEXT === "production";
 }
 
-/** Letters that are still not ASCII once accents are taken off, and how to spell them. */
-const SPELLINGS: Record<string, string> = {
-  ß: "ss",
-  æ: "ae",
-  ø: "o",
-  œ: "oe",
-  ł: "l",
-  đ: "d",
-  ð: "d",
-  þ: "th",
-  ı: "i",
-};
-
-/**
- * The sender's name as the start of an email address: lowercase ASCII words
- * joined by dots ("Zoë O'Brien-Smith" is zoe.obrien.smith), at most 30
- * characters, or "letter" when none of it is Latin script.
- */
-export function mailboxName(name: string): string {
-  return (
-    name
-      .normalize("NFKD")
-      .replace(/\p{M}/gu, "")
-      .toLowerCase()
-      .replace(/[ßæøœłđðþı]/g, (letter) => SPELLINGS[letter])
-      .replace(/['’]/g, "")
-      .split(/[^a-z0-9]+/)
-      .filter(Boolean)
-      .join(".")
-      .slice(0, 30)
-      .replace(/\.$/, "") || "letter"
-  );
-}
-
-/**
- * The letter's own address, <mailbox>@letters.pauseai.uk, where the mailbox
- * is the sender's name and six random digits: jane.smith.482913. The mailbox
- * is kept in letters.reply_hash. Older letters' addresses are reply+<hex>,
- * and only the hex is kept (lib/server/postmark-webhooks.ts matches both).
- */
-export function letterAddress(mailbox: string): string {
-  return `${mailbox}@${lettersDomain()}`;
-}
-
-/** The MP, by name: "Jane Smith MP" <jane.smith.mp@parliament.uk>. "MP" is added unless their name ends with it. */
-export function recipient(mp: { name: string }, email: string): string {
-  const name = headerName(mp.name);
-  return `"${/\bMP$/.test(name) ? name : `${name} MP`}" <${email}>`;
-}
-
-/** Our shared inbox gets a blind copy of each letter: the only copy kept of its text. */
-function bcc(): string | undefined {
-  return process.env.POLICY_INBOX || undefined;
-}
-
-async function logEvent(letterId: number, status: string, details: object, db?: Queryable): Promise<void> {
-  await query(
-    "INSERT INTO letter_events (letter_id, status, details) VALUES ($1, $2, $3)",
-    [letterId, status, JSON.stringify(details)],
-    db,
-  );
-}
-
 function fail(status: number, message: string): SubmitResult {
   return { ok: false, status, message };
 }
 
-async function attachments(campaignSlug: string) {
-  const campaign = campaignBySlug(campaignSlug)!;
-  return Promise.all(
-    campaign.attachments.map(async ({ file }) => ({
-      Name: file,
-      Content: (await readFile(join(process.cwd(), "public", "pdfs", file))).toString("base64"),
-      ContentType: "application/pdf",
-    })),
-  );
+/** Whether `email` is one of ours, which a sender can't give: the letters inbox's, a proxy, or the policy team's. */
+function isOurAddress(email: string): boolean {
+  const policy = process.env.POLICY_INBOX?.trim().toLowerCase();
+  return isLettersInboxAddress(email) || (!!policy && email.trim().toLowerCase() === policy);
 }
 
 /**
- * Checks a letter and sends it to the MP straight away. Each sender email
- * gets one letter per campaign, except to the test MPs, so they can be tried
- * again and again. If it fails to send, nothing is kept, so the sender can
- * try again. If the MP's address is blocked, as it bounced before, the
- * letter is kept as not sent, and doesn't count.
+ * Checks a letter, keeps it, queued, and tries to send it at once. Each
+ * sender email gets one letter per campaign, except to the test MPs, so
+ * they can be tried again and again. Once kept it's never deleted for
+ * failing to send: what stops it waits in the queue, with its reason
+ * (lib/server/letter-sending.ts), and the result says so.
  */
 export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
   const spam = await checkNotSpam(form);
@@ -164,30 +99,29 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
     return fail(400, copy.errors.missingFields);
   }
   if (!looksLikeEmail(form.email)) return fail(400, copy.errors.invalidEmail);
+  if (isOurAddress(form.email)) return fail(400, copy.errors.ourAddress);
   const campaign = campaignBySlug(form.campaign);
   if (!campaign) return fail(400, copy.errors.unknownCampaign);
 
   const found = await findMp(form.postcode);
   const mp = found.ok ? found.mp : undefined;
-  const to = mp?.email;
-  if (!mp || !to) return fail(400, copy.errors.noRecipient);
+  if (!mp?.email) return fail(400, copy.errors.noRecipient);
   if (!mayWriteTo(mp)) return fail(403, copy.errors.testMpOnly);
 
-  // As the sender left it: it ends with their name and address, which they could edit.
+  // The draft the form began with, rebuilt as it made it, and what the sender changed.
+  const draft = toText(
+    draftLetter(
+      campaign,
+      {
+        salutation: mp.salutation,
+        constituency: mp.constituency,
+        senderName: form.name,
+        statuses: await statusesOf(mp.id),
+      },
+      signatureAddress(form.address, form.postcode),
+    ),
+  );
   const letter = form.letter;
-  const body = toText(letter);
-  const html = toHtml(letter);
-  const digits = (
-    await randomId(4, async () => {
-      // The sender and how many they've sent: a different seed for each letter.
-      const [{ sent }] = await query<{ sent: number }>(
-        "SELECT count(*)::int AS sent FROM letters_from_supporters s JOIN form_entries f ON f.id = s.entry_id WHERE lower(trim(f.email)) = lower(trim($1))",
-        [form.email],
-      );
-      return `letter ${form.email} ${sent}`;
-    })
-  ).readUInt32BE();
-  const mailbox = `${mailboxName(form.name)}.${String(digits % 1_000_000).padStart(6, "0")}`;
   let id: number | undefined;
   try {
     id = await transaction(async (db) => {
@@ -204,7 +138,7 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
         if (count > 0) return undefined;
       }
       const [{ id }] = await query<{ id: number }>(
-        `INSERT INTO letters (kind, notable_person_id, status) VALUES ('supporter', $1, 'sending') RETURNING id::int AS id`,
+        `INSERT INTO letters (kind, notable_person_id, status) VALUES ('supporter', $1, 'queued') RETURNING id::int AS id`,
         [mp.id],
         db,
       );
@@ -214,78 +148,33 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
         [form.name, form.email, form.address, form.postcode.toUpperCase(), form.consent],
         db,
       );
+      const proxy = await supporterProxy(form.email, form.name, db);
+      await politicianProxy(mp, db);
       await query(
-        `INSERT INTO letters_from_supporters (id, entry_id, campaign, subject, reply_hash) VALUES ($1, $2, $3, $4, $5)`,
-        [id, entry.id, campaign.slug, form.subject, mailbox],
+        `INSERT INTO letters_from_supporters (id, entry_id, campaign, subject, proxy_id, letter, draft, draft_approximate,
+           own_words, copy_state)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'queued')`,
+        [
+          id,
+          entry.id,
+          campaign.slug,
+          form.subject,
+          proxy.id,
+          JSON.stringify(letter),
+          draft,
+          draftHash(draft) !== form.draftHash,
+          ownWords(draft, toText(letter)),
+        ],
         db,
       );
-      await logEvent(id, "sending", {}, db);
       await linkSupporters(db);
       return id;
     });
-    if (id === undefined) return fail(409, copy.errors.alreadySent);
-
-    const address = letterAddress(mailbox);
-    const email = {
-      From: `"${headerName(form.name)} via PauseAI" <${address}>`,
-      To: recipient(mp, to),
-      Bcc: bcc(),
-      Subject: form.subject,
-      TextBody: body,
-      HtmlBody: html,
-      Attachments: await attachments(campaign.slug),
-      Metadata: { letter: String(id), campaign: campaign.slug },
-      Tag: campaign.slug,
-    };
-    // The sender has a copy, and a reply-all reaches them, unless their
-    // address is blocked. There's no Reply-To: MPs' offices answer one
-    // address, so it's the From, the letter's own, whose replies are
-    // recorded and forwarded to the sender and the policy team.
-    const cc = (await isBlocked(form.email)) ? undefined : `"${headerName(form.name)}" <${form.email}>`;
-    let copied = !!cc;
-    let result = await send({ ...email, Cc: cc }, "letter", id);
-    // Postmark refused the sender's address, which is blocked now: the letter goes without their copy.
-    if (!result.sent && result.reason === "failed" && cc && (await isBlocked(form.email))) {
-      copied = false;
-      result = await send(email, "letter", id);
-    }
-    if (result.sent) {
-      await query("UPDATE letters SET status = 'sent', sent_at = now() WHERE id = $1", [id]);
-      await logEvent(id, "sent", { from: address, to, cc: copied ? form.email : undefined, messageId: result.id });
-      return { ok: true };
-    }
-    if (result.reason === "blocked") {
-      // Kept, so staff see someone tried to write to an MP whose address doesn't work.
-      await query("UPDATE letters SET status = 'not_sent' WHERE id = $1", [id]);
-      await logEvent(id, "not_sent", {});
-      return fail(409, copy.errors.unreachable);
-    }
-    throw new Error("the email wasn't sent");
   } catch (error) {
-    console.error(`Couldn't send letter ${id ?? "(not saved)"}:`, error);
-    if (id !== undefined) {
-      // The letter, then the entry made for it, which takes the sender's link with it.
-      const sender = await transaction(async (db) => {
-        const [letter] = await query<{ entryId: number }>(
-          `SELECT s.entry_id::int AS "entryId" FROM letters_from_supporters s WHERE s.id = $1`,
-          [id],
-          db,
-        );
-        const links = await query<{ id: number }>(
-          "SELECT supporter_id::int AS id FROM supporter_links WHERE form_entry_id = $1",
-          [letter.entryId],
-          db,
-        );
-        await query("DELETE FROM letters WHERE id = $1", [id], db);
-        await query("DELETE FROM form_entries WHERE id = $1", [letter.entryId], db);
-        return links;
-      });
-      // Its sender may have been first seen by it.
-      await refreshSupporterFacts(
-        undefined,
-        sender.map((row) => row.id),
-      );
-    }
+    console.error("Couldn't keep a letter:", error);
     return fail(500, copy.errors.failed);
   }
+  if (id === undefined) return fail(409, copy.errors.alreadySent);
+  const sent = await sendLetter(id);
+  return sent.sent ? { ok: true } : { ok: true, queued: sent.reason };
 }

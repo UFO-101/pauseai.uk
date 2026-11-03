@@ -14,7 +14,7 @@ const imported = () =>
   query(
     `SELECT s.airtable_id AS "airtableId", n.name AS "to", s.campaign, f.form, f.name AS "senderName",
        f.email AS "senderEmail", f.address, f.postcode, f.contact_consent AS consent, f.created_at AS "enteredAt",
-       s.reply_hash AS "replyHash", l.status, l.created_at AS "createdAt", l.sent_at AS "sentAt"
+       s.postmark_mailbox AS "postmarkMailbox", l.status, l.created_at AS "createdAt", l.sent_at AS "sentAt"
      FROM letters_from_supporters s JOIN letters l USING (id) JOIN form_entries f ON f.id = s.entry_id
        JOIN notable_people n ON n.id = l.notable_person_id
      WHERE s.airtable_id IS NOT NULL ORDER BY l.sent_at`,
@@ -55,7 +55,7 @@ describeWithDatabase("importWebFormLetters", () => {
         consent: false,
         // Airtable has no time the form was sent, so it's when the letter was.
         enteredAt: new Date("2025-07-20T09:00:30Z"),
-        replyHash: null,
+        postmarkMailbox: null,
         status: "sent",
         createdAt: new Date("2025-07-20T09:00:30Z"),
         sentAt: new Date("2025-07-20T09:00:30Z"),

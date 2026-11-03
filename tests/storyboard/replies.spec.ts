@@ -38,7 +38,7 @@ async function sendLetter(page: Page, database: string, sender: string): Promise
   const messageId = await sentLetterId(page, database, sender);
   const [row] = runSql(
     database,
-    `SELECT e.letter_id || ' ' || s.reply_hash FROM email_sends e JOIN letters_from_supporters s ON s.id = e.letter_id
+    `SELECT e.letter_id || ' ' || s.postmark_mailbox FROM email_sends e JOIN letters_from_supporters s ON s.id = e.letter_id
      WHERE e.message_id = '${messageId}' ORDER BY e.id DESC LIMIT 1`,
   );
   const [id, mailbox] = row.split(" ");

@@ -17,6 +17,8 @@ const CHECKOUT = createHash("sha256").update(process.cwd()).digest("hex").slice(
 
 /** Where the build under test writes its emails (tests/fixtures/outbox.ts). */
 export const OUTBOX_DIR = process.env.OUTBOX_DIR ?? join(tmpdir(), `pauseai-storyboard-outbox-${CHECKOUT}`);
+/** Where a flow writes mail to the letters inbox, for the build's fake Gmail to pick up (tests/fixtures/letters-inbox.ts); as tests/fixture-env.mjs tells the build. */
+export const LETTERS_INBOX_DIR = join(OUTBOX_DIR, "letters-inbox");
 /** Where main's fixture build (scripts/serve-main.mjs) writes its emails. */
 export const MAIN_OUTBOX_DIR = join(tmpdir(), `pauseai-storyboard-main-outbox-${CHECKOUT}`);
 /** Main's checkout, kept between reviews (scripts/serve-main.mjs). */

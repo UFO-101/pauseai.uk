@@ -1,4 +1,5 @@
 import "server-only";
+import { isLettersInboxAddress } from "./letters-inbox";
 import { RECIPIENT_TABS, getMailing, type Mailing, type RecipientTab } from "./mailings";
 import type { MailingChoice } from "@/lib/mailing-fields";
 import type { MailingRecipientValues } from "@/lib/mailing-doc";
@@ -67,7 +68,8 @@ async function writerData(filter: StoredFilter, me: string): Promise<WriterData>
     leftOut: audience.leftOut,
     fields: audience.fields,
     conditions: audience.conditions,
-    senders,
+    // Never the letters inbox, which sends supporters' letters and nothing else.
+    senders: senders.filter((sender) => !isLettersInboxAddress(sender.email)),
     me,
     sends: Boolean(mailingChannel("email")?.sendsMailings),
   };

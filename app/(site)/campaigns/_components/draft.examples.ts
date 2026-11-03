@@ -43,5 +43,6 @@ export const exampleDraft: Draft = {
       },
     ],
   },
+  draftHash: "0badcafe",
   nickname: "",
 };

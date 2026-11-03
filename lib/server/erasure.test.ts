@@ -21,7 +21,7 @@ async function janeWithEverything(mp: number): Promise<number> {
     senderName: "Jane",
     senderEmail: "jane.fixture@example.com",
     contactConsent: true,
-    replyHash: "h1",
+    postmarkMailbox: "h1",
   });
   await query("INSERT INTO letter_events (letter_id, status, details) VALUES ($1, 'sent', '{}')", [letterId]);
   await query(

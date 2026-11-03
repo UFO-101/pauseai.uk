@@ -37,7 +37,7 @@ async function getPool(): Promise<Pool> {
 }
 
 /** The database this request's storyboard cookie names, if it's one a flow may use. */
-async function flowDatabase(): Promise<string | undefined> {
+export async function flowDatabase(): Promise<string | undefined> {
   try {
     const { cookies } = await import("next/headers");
     const value = (await cookies()).get(FLOW_DATABASE_COOKIE)?.value;

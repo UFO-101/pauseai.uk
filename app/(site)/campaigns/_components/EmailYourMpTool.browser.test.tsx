@@ -50,6 +50,7 @@ describe("EmailYourMpTool", () => {
       address: "",
       subject: "",
       letter: { type: "doc", content: [] },
+      draftHash: "0badcafe",
       nickname: "",
     });
     await render(<EmailYourMpTool campaignSlug={letterToPm.slug} />);

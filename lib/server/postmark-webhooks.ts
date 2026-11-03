@@ -227,10 +227,10 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
     mailbox: string;
   }>(
     `SELECT l.id::int AS id, f.name AS "senderName", f.email AS "senderEmail", p.name AS "mpName",
-       s.reply_hash AS mailbox
+       s.postmark_mailbox AS mailbox
      FROM letters_from_supporters s JOIN letters l ON l.id = s.id JOIN form_entries f ON f.id = s.entry_id
        JOIN notable_people p ON p.id = l.notable_person_id
-     WHERE s.reply_hash = ANY($1) ORDER BY array_position($1, s.reply_hash) LIMIT 1`,
+     WHERE s.postmark_mailbox = ANY($1) ORDER BY array_position($1, s.postmark_mailbox) LIMIT 1`,
     [mailboxes],
   );
   if (!letter) return [];

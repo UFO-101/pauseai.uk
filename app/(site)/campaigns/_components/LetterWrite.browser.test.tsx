@@ -56,6 +56,7 @@ describe("LetterWrite", () => {
       address: "1 High St",
       subject: "Kept subject",
       letter: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Kept letter" }] }] },
+      draftHash: "0badcafe",
       nickname: "",
     });
     await render(<LetterWrite campaignSlug={letterToPm.slug} />);

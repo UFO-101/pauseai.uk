@@ -1,5 +1,6 @@
 export const OUTBOX_DIR: string;
 export const MAIN_OUTBOX_DIR: string;
+export const LETTERS_INBOX_DIR: string;
 export const MAIN_WORKTREE: string;
 export const FLOW_DATABASES: string;
 export const TEMPLATE_DATABASE: string;

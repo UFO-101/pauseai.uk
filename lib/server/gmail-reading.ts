@@ -1,8 +1,15 @@
 import "server-only";
 import { gzipSync } from "node:zlib";
-import type { GmailRead, GmailReadResult } from "@/lib/import-runs";
+import { staffCopy } from "@/lib/content/staff-interface";
+import { importPath, type GmailRead, type GmailReadResult } from "@/lib/import-runs";
+import { gmailMessageLink } from "@/lib/letter-links";
+import { siteUrl } from "@/lib/site-url";
 import { query } from "./db";
 import { handleDeliveryProblem } from "./delivery-problems";
+import { send } from "./email";
+import { lettersInbox } from "./letters-inbox";
+import { readLettersInbox } from "./letters-inbox-reading";
+import { notifyDomain } from "./outside-services/postmark";
 import { gmailAccess, gmailReadingState, saveGmailName, saveHistoryId } from "./gmail-accounts";
 import { keepingFailure, recordRun } from "./import-runs";
 import {
@@ -65,6 +72,9 @@ const BOUNCE_SEARCH = "from:mailer-daemon OR from:postmaster newer_than:3d";
 
 /** When the mailbox's history has gone, what's searched instead, to miss nothing since the last read. */
 const RESTART_SEARCH = "newer_than:3d";
+
+/** The same for the letters inbox, its Spam and Sent included, which the history has too. */
+const LETTERS_RESTART_SEARCH = "in:anywhere newer_than:3d";
 
 /** Whether a sender is a mail server reporting a bounce. */
 const isBounceSender = (address: string) => /^(mailer-daemon|postmaster)@/.test(address);
@@ -280,22 +290,61 @@ async function readMessage(account: string, token: string, id: string, read: Gma
   read.replies++;
 }
 
-/** Reads one account, from where it last got to, and saves where it got to. */
+/**
+ * Reads one account, from where it last got to, and saves where it got to.
+ * The letters inbox is read as its own (letters-inbox-reading.ts): all its
+ * mail is ours, and its bounces come to it rather than in a thread.
+ */
 async function readAccount(account: string, historyId: string, request: Request | undefined): Promise<GmailRead> {
-  const read: GmailRead = { account, replies: 0, autoReplies: 0, bounces: 0 };
+  let read: GmailRead = { account, replies: 0, autoReplies: 0, bounces: 0 };
   const token = await gmailAccess(account);
+  const letters = account === lettersInbox();
   let history = await gmailHistory(token, historyId);
   if (!history) {
     const { historyId: now } = await gmailProfile(token);
-    history = { messageIds: await searchGmail(token, RESTART_SEARCH, 500), historyId: now };
+    history = {
+      messageIds: await searchGmail(token, letters ? LETTERS_RESTART_SEARCH : RESTART_SEARCH, 500),
+      historyId: now,
+    };
     read.restarted = true;
   }
-  const ids = new Set([...history.messageIds, ...(await searchGmail(token, BOUNCE_SEARCH))]);
-  for (const id of ids) await readMessage(account, token, id, read, request);
+  if (letters) {
+    read = await readLettersInbox(account, token, history.messageIds, read, request);
+  } else {
+    const ids = new Set([...history.messageIds, ...(await searchGmail(token, BOUNCE_SEARCH))]);
+    for (const id of ids) await readMessage(account, token, id, read, request);
+  }
   await saveHistoryId(account, history.historyId);
   // Its name, as Gmail has it now: renamed since it was connected, or connected before the site kept it.
   await saveGmailName(account, await gmailSendName(token));
   return read;
+}
+
+/**
+ * Emails the policy inbox once, after a run that found mail in the letters
+ * inbox it couldn't account for: each message, with a link to it in Gmail,
+ * and a link to the runs.
+ */
+async function alertNotUnderstood(accounts: GmailRead[], request: Request | undefined): Promise<void> {
+  const inbox = process.env.POLICY_INBOX;
+  const words = staffCopy.lettersInbox;
+  const lines = accounts.flatMap((a) =>
+    (a.notUnderstood ?? []).map(
+      (m) =>
+        `- ${m.from}, "${m.subject}": ${words.reasons[m.reason]}. ${gmailMessageLink(a.account, m.gmailMessageId)}`,
+    ),
+  );
+  if (!inbox || !lines.length) return;
+  await send(
+    {
+      From: `PauseAI UK <noreply@${notifyDomain()}>`,
+      To: inbox,
+      Subject: words.alert.subject(lines.length),
+      TextBody: words.alert.body(lines, siteUrl(importPath(JOB), request).href),
+      Tag: "staff-alert",
+    },
+    "staff-alert",
+  );
 }
 
 /**
@@ -324,8 +373,17 @@ export function readGmail(startedBy: string, request?: Request): Promise<GmailRe
         });
       }
     }
-    const found = accounts.some((a) => a.replies + a.autoReplies + a.bounces > 0 || a.restarted || a.error);
+    const found = accounts.some(
+      (a) =>
+        a.replies + a.autoReplies + a.bounces > 0 ||
+        a.relayed ||
+        a.spam ||
+        a.notUnderstood?.length ||
+        a.restarted ||
+        a.error,
+    );
     await recordRun(JOB, startedBy, found ? "ok" : "unchanged", { accounts });
+    await alertNotUnderstood(accounts, request);
     return { accounts };
   });
 }

@@ -377,7 +377,7 @@ INSERT INTO event_docs (event_id, url, set_by, set_at) VALUES
 
 -- Letters to the test MPs in every state. Seven sent in the last week and
 -- four the week before; two replied to this week and three the week before;
--- one bounce this week and two the week before. reply_hash doubles as a
+-- one bounce this week and two the week before. postmark_mailbox doubles as a
 -- handle for the rows below.
 CREATE TEMP TABLE seed_letters (hash text, postcode text, campaign text, sender text, email text, address text, sender_postcode text, consent boolean, subject text, status text, created interval, sent interval, replied interval) ON COMMIT DROP;
 INSERT INTO seed_letters VALUES
@@ -413,23 +413,23 @@ FROM seeded_letters s JOIN politicians p ON p.test_postcode = s.postcode;
 INSERT INTO form_entries (id, form, created_at, name, email, address, postcode, contact_consent) OVERRIDING SYSTEM VALUE
 SELECT s.id, 'email-your-mp', l.created_at, s.sender, s.email, s.address, s.sender_postcode, s.consent
 FROM seeded_letters s JOIN letters l ON l.id = s.id;
-INSERT INTO letters_from_supporters (id, entry_id, campaign, subject, reply_hash)
+INSERT INTO letters_from_supporters (id, entry_id, campaign, subject, postmark_mailbox)
 SELECT s.id, s.id, s.campaign, s.subject, 'seed-' || s.hash FROM seeded_letters s JOIN letters l ON l.id = s.id;
 -- Most of the recent letters went to Airtable's two MPs, so the dashboard,
 -- which leaves the test MPs out, counts them; the bounces stay on Bouncy's.
 UPDATE letters SET notable_person_id = (SELECT id FROM notable_people WHERE airtable_id = 'recDummy')
-WHERE id IN (SELECT id FROM letters_from_supporters WHERE reply_hash IN ('seed-prev-lee', 'seed-prev-li', 'seed-week-ben', 'seed-week-kwame', 'seed-week-noah'));
+WHERE id IN (SELECT id FROM letters_from_supporters WHERE postmark_mailbox IN ('seed-prev-lee', 'seed-prev-li', 'seed-week-ben', 'seed-week-kwame', 'seed-week-noah'));
 UPDATE letters SET notable_person_id = (SELECT id FROM notable_people WHERE airtable_id = 'recPlaceholder')
-WHERE id IN (SELECT id FROM letters_from_supporters WHERE reply_hash IN ('seed-prev-omar', 'seed-week-sam', 'seed-week-grace', 'seed-week-mia'));
+WHERE id IN (SELECT id FROM letters_from_supporters WHERE postmark_mailbox IN ('seed-prev-omar', 'seed-week-sam', 'seed-week-grace', 'seed-week-mia'));
 -- The seed letters, with their handles.
-CREATE TEMP VIEW seed_letter_rows AS SELECT l.*, s.reply_hash FROM letters l JOIN letters_from_supporters s USING (id) WHERE s.reply_hash LIKE 'seed-%';
+CREATE TEMP VIEW seed_letter_rows AS SELECT l.*, s.postmark_mailbox FROM letters l JOIN letters_from_supporters s USING (id) WHERE s.postmark_mailbox LIKE 'seed-%';
 
 -- Their history: sending, then sent, then what followed.
 INSERT INTO letter_events (letter_id, at, status, details) SELECT id, created_at, 'sending', '{}' FROM seed_letter_rows WHERE true;
 INSERT INTO letter_events (letter_id, at, status, details) SELECT id, sent_at, 'sent', jsonb_build_object('messageId', 'seed-message-' || id) FROM seed_letter_rows WHERE sent_at IS NOT NULL;
 INSERT INTO letter_events (letter_id, at, status, details) SELECT id, created_at + interval '1 second', 'not_sent', '{"reason": "The MP has no email address"}' FROM seed_letter_rows WHERE status = 'not_sent';
 INSERT INTO letter_events (letter_id, at, status, details) SELECT id, replied_at, 'replied', jsonb_build_object('from', 'The office of ' || (SELECT name FROM notable_people WHERE id = notable_person_id)) FROM seed_letter_rows WHERE replied_at IS NOT NULL;
-INSERT INTO letter_events (letter_id, at, status, details) SELECT id, sent_at + interval '2 minutes', 'auto_reply', '{"from": "Backy McTestface MP", "subject": "Out of office"}' FROM seed_letter_rows WHERE reply_hash IN ('seed-prev-ahmed', 'seed-week-mia');
+INSERT INTO letter_events (letter_id, at, status, details) SELECT id, sent_at + interval '2 minutes', 'auto_reply', '{"from": "Backy McTestface MP", "subject": "Out of office"}' FROM seed_letter_rows WHERE postmark_mailbox IN ('seed-prev-ahmed', 'seed-week-mia');
 INSERT INTO letter_events (letter_id, at, status, details) SELECT id, sent_at + interval '1 minute', 'bounced', '{"type": "HardBounce", "description": "The address does not exist"}' FROM seed_letter_rows WHERE status = 'bounced';
 INSERT INTO letter_events (letter_id, at, status, details) SELECT id, sent_at + interval '3 hours', 'spam_complaint', '{"type": "SpamComplaint"}' FROM seed_letter_rows WHERE status = 'spam_complaint';
 
@@ -438,7 +438,7 @@ INSERT INTO letter_events (letter_id, at, status, details) SELECT id, sent_at + 
 INSERT INTO email_sends (at, purpose, letter_id, address, outcome, message_id)
 SELECT sent_at, 'letter', id, (SELECT coalesce(email, '') FROM notable_people WHERE id = notable_person_id), 'sent', 'seed-message-' || id FROM seed_letter_rows WHERE sent_at IS NOT NULL;
 INSERT INTO email_sends (at, purpose, letter_id, address, outcome, message_id)
-SELECT replied_at + interval '1 minute', 'forwarded-reply', id, 'replies@pauseai.uk', 'sent', 'seed-forward-' || id FROM seed_letter_rows WHERE replied_at IS NOT NULL AND reply_hash IN ('seed-week-sam', 'seed-week-grace');
+SELECT replied_at + interval '1 minute', 'forwarded-reply', id, 'replies@pauseai.uk', 'sent', 'seed-forward-' || id FROM seed_letter_rows WHERE replied_at IS NOT NULL AND postmark_mailbox IN ('seed-week-sam', 'seed-week-grace');
 INSERT INTO email_sends (at, purpose, letter_id, address, outcome, message_id) VALUES
   (now() - interval '3 days', 'staff-login', NULL, 'jo@pauseai.uk', 'sent', 'seed-login-jo'),
   (now() - interval '1 day', 'staff-login', NULL, 'samuel.whitlock@pauseai.uk', 'sent', 'seed-login-sam'),
@@ -457,10 +457,10 @@ INSERT INTO email_problems (id, at, address, message_id, kind, reason, can_reset
   (4, now() - interval '5 days' + interval '3 hours', 'grumpy@example.com', NULL, 'complaint', 'Marked as spam', false, '{"type": "SpamComplaint"}'),
   (5, now() - interval '4 days', 'polly.placeholder.mp@parliament.uk', NULL, 'soft', 'Mailbox full', true, '{"type": "SoftBounce"}'),
   (6, now() - interval '3 days' + interval '1 minute', 'no-such-mailbox@pauseai.uk', NULL, 'hard', 'The address does not exist', true, '{"type": "HardBounce"}');
-UPDATE email_problems p SET message_id = 'seed-message-' || l.id FROM seed_letter_rows l WHERE l.reply_hash = 'seed-prev-bounce-1' AND p.id = 1;
-UPDATE email_problems p SET message_id = 'seed-message-' || l.id FROM seed_letter_rows l WHERE l.reply_hash = 'seed-prev-bounce-2' AND p.id = 2;
-UPDATE email_problems p SET message_id = 'seed-message-' || l.id FROM seed_letter_rows l WHERE l.reply_hash = 'seed-week-spam' AND p.id = 4;
-UPDATE email_problems p SET message_id = 'seed-message-' || l.id FROM seed_letter_rows l WHERE l.reply_hash = 'seed-week-bounce' AND p.id = 6;
+UPDATE email_problems p SET message_id = 'seed-message-' || l.id FROM seed_letter_rows l WHERE l.postmark_mailbox = 'seed-prev-bounce-1' AND p.id = 1;
+UPDATE email_problems p SET message_id = 'seed-message-' || l.id FROM seed_letter_rows l WHERE l.postmark_mailbox = 'seed-prev-bounce-2' AND p.id = 2;
+UPDATE email_problems p SET message_id = 'seed-message-' || l.id FROM seed_letter_rows l WHERE l.postmark_mailbox = 'seed-week-spam' AND p.id = 4;
+UPDATE email_problems p SET message_id = 'seed-message-' || l.id FROM seed_letter_rows l WHERE l.postmark_mailbox = 'seed-week-bounce' AND p.id = 6;
 -- Blocked: Bouncy's address by the first bounce, Gordon's by his, Gus by his
 -- complaint. Polly's soft bounce blocked nothing.
 INSERT INTO email_blocks (address, problem_id) VALUES

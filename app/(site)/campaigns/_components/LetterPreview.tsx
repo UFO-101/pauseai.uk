@@ -81,6 +81,7 @@ export default function LetterPreview({ campaignSlug, turnstileSiteKey }: Props)
           email: letter.email,
           subject: letter.subject,
           letter: letter.letter,
+          draftHash: letter.draftHash,
           consent,
           nickname: letter.nickname,
           turnstileToken,
@@ -90,7 +91,11 @@ export default function LetterPreview({ campaignSlug, turnstileSiteKey }: Props)
       if (result.ok) {
         sent = true;
         countConversion();
-        markSent({ campaign: campaign.slug, mpName: letter.mp.name });
+        markSent({
+          campaign: campaign.slug,
+          mpName: letter.mp.name,
+          ...(result.queued && { queued: result.queued === "blocked" ? "blocked" : "soon" }),
+        });
         // Next's own navigation, not a page load, so GTM's request for the
         // conversion isn't cut off.
         router.push(`${campaignPath(campaign)}/sent`);

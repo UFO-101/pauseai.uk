@@ -32,7 +32,7 @@ describeWithDatabase("POST /api/postmark/inbound", () => {
       politicianId: mp,
       senderName: "Jane",
       senderEmail: "jane@example.com",
-      replyHash: "jane.482913",
+      postmarkMailbox: "jane.482913",
     });
     const to: string[] = [];
     server.use(

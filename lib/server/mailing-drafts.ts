@@ -1,4 +1,5 @@
 import "server-only";
+import { isLettersInboxAddress } from "./letters-inbox";
 import {
   checkMailingDoc,
   isBlankMailing,
@@ -101,7 +102,9 @@ export function mailingChangesFrom(value: unknown): MailingChanges | undefined {
     if (name === "subject" && typeof one === "string") changes.subject = one;
     else if (name === "body" && checkMailingDoc(one)) changes.body = checkMailingDoc(one);
     else if ((name === "ask" || name === "fromName") && textOrNull(one)) changes[name] = (one as string | null) || null;
-    else if (name === "sentFrom" && textOrNull(one)) changes.sentFrom = (one as string | null)?.toLowerCase() || null;
+    // Never the letters inbox, which sends supporters' letters and nothing else.
+    else if (name === "sentFrom" && textOrNull(one) && !isLettersInboxAddress(String(one ?? "")))
+      changes.sentFrom = (one as string | null)?.toLowerCase() || null;
     else if (name === "dueAt" && (one === null || (typeof one === "string" && !Number.isNaN(Date.parse(one))))) {
       changes.dueAt = one;
     } else return undefined;

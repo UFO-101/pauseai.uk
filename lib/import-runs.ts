@@ -172,7 +172,24 @@ export type GmailRead = {
   error?: string;
   /** Google refused its access, so it was disconnected, and isn't read again until it's connected again. */
   disconnected?: boolean;
+  /** The letters inbox's: messages relayed, spam that matched no letter, and letters matched only by being the latest. */
+  relayed?: number;
+  spam?: number;
+  uncertain?: number;
+  /** The letters inbox's messages it couldn't account for, which a person has to look at. */
+  notUnderstood?: NotUnderstood[];
 };
+
+/**
+ * Why a message in the letters inbox wasn't understood: to a proxy we
+ * don't have, or none of ours; from neither of a letter's two parties;
+ * failing authentication; over its letter's cap on relays; or a bounce of
+ * nothing we sent.
+ */
+export type NotUnderstoodReason = "unknown_proxy" | "no_proxy" | "stranger" | "not_verified" | "over_cap" | "bounce";
+
+/** A message the letters inbox couldn't account for: its Gmail ID, for a link, who it's from, its subject and why. */
+export type NotUnderstood = { gmailMessageId: string; from: string; subject: string; reason: NotUnderstoodReason };
 
 /** What a run of reading Gmail found, account by account. */
 export type GmailReadResult = { accounts: GmailRead[] };
@@ -248,7 +265,8 @@ export function runStatus(run: AnyImportRun): string {
   // Emails held back for a mailing nobody has added yet.
   if (run.job === "sync-emails" && run.status !== "failed" && run.result.unplaced.length > 0) return "incomplete";
   if (run.job === "read-gmail" && run.status !== "failed") {
-    if (run.result.accounts.some((a) => a.disconnected)) return "failed";
+    // An account disconnected, or mail in the letters inbox that a person has to look at.
+    if (run.result.accounts.some((a) => a.disconnected || a.notUnderstood?.length)) return "failed";
     // An account that couldn't be read, which the next run reads from where it got to.
     if (run.result.accounts.some((a) => a.error)) return "incomplete";
   }

@@ -10,7 +10,10 @@ import {
 } from "@/lib/letter-links";
 import { AUTO_REPLIED_AT, LETTER_COLUMNS } from "@/lib/letter-sort";
 import type { PoliticianFlag } from "@/lib/politician-filters";
+import { checkDoc, toText } from "@/lib/letter-format";
 import { query } from "./db";
+import { threadMessages, type ThreadMessage } from "./letter-threads";
+import { lettersInbox } from "./letters-inbox";
 import { FLAG_CONDITIONS } from "./politicians";
 
 // Letters, for the staff interface.
@@ -210,6 +213,13 @@ export type SupporterLetterDetails = LetterSummary & {
   gmail: GmailFind | null;
   /** Every forward of a reply to it, oldest first. */
   forwards: LetterForward[];
+  /**
+   * For one from the letters inbox: its text as sent, and the draft it was
+   * written from, if kept, and whether that's approximate; then every
+   * message both ways through the proxies, oldest first. Null for others,
+   * whose text isn't kept.
+   */
+  sent: { text: string; draft: string | null; approximate: boolean; messages: ThreadMessage[] } | null;
 };
 
 /** One of PauseAI's letters, for its own page: to whom, at which address now, in which mailing, and what happened. */
@@ -295,7 +305,8 @@ export async function getPauseaiLetter(mailingId: number, id: number): Promise<P
 
 /**
  * A supporter's letter `id`, for its page, or undefined if there's none:
- * PauseAI's letters have theirs under their mailing. Its copy is the one
+ * PauseAI's letters have theirs under their mailing. One from the letters
+ * inbox is kept here, and found there by its Message-ID. Another's copy is the one
  * Bcc'd to the policy inbox, found by the Message-ID of the newest send
  * Postmark made of it, or, for one copied from Airtable, by its MP's
  * address and when it went; in its members' mail for one sent while the
@@ -304,15 +315,22 @@ export async function getPauseaiLetter(mailingId: number, id: number): Promise<P
 export async function getSupporterLetter(id: number): Promise<SupporterLetterDetails | undefined> {
   const [letter] = await recentLetters({ letterId: id });
   if (!letter) return undefined;
-  const [{ subject, postmarkId, mpEmail, campaignAsk, forwards }] = await query<{
+  const [{ subject, postmarkId, rfcId, mpEmail, campaignAsk, forwards, doc, draft, approximate }] = await query<{
     subject: string;
     postmarkId: string | null;
+    rfcId: string | null;
     mpEmail: string | null;
     campaignAsk: string | null;
     forwards: LetterForward[];
+    doc: unknown;
+    draft: string | null;
+    approximate: boolean | null;
   }>(
     `SELECT s.subject, c.ask AS "campaignAsk", (SELECT e.message_id FROM email_sends e WHERE e.letter_id = s.id AND e.purpose = 'letter'
-       AND e.outcome = 'sent' ORDER BY e.at DESC, e.id DESC LIMIT 1) AS "postmarkId", n.email AS "mpEmail",
+       AND e.outcome = 'sent' ORDER BY e.at DESC, e.id DESC LIMIT 1) AS "postmarkId",
+       (SELECT e.rfc_message_id FROM email_sends e WHERE e.letter_id = s.id AND e.purpose = 'letter'
+        AND e.outcome = 'sent' ORDER BY e.at DESC, e.id DESC LIMIT 1) AS "rfcId",
+       s.letter AS doc, s.draft, s.draft_approximate AS approximate, n.email AS "mpEmail",
        coalesce((SELECT json_agg(json_build_object('at', e.at, 'address', e.address, 'outcome', e.outcome) ORDER BY e.at, e.id)
                  FROM email_sends e WHERE e.letter_id = s.id AND e.purpose = 'forwarded-reply'), '[]') AS forwards
      FROM letters_from_supporters s JOIN letters l USING (id) JOIN notable_people n ON n.id = l.notable_person_id
@@ -320,6 +338,18 @@ export async function getSupporterLetter(id: number): Promise<SupporterLetterDet
      WHERE s.id = $1`,
     [id],
   );
+  const sentDoc = checkDoc(doc);
+  if (sentDoc) {
+    // From the letters inbox: kept here, and found there by the Message-ID it went with.
+    const sent = {
+      text: toText(sentDoc),
+      draft,
+      approximate: approximate === true,
+      messages: await threadMessages(id),
+    };
+    const gmail = rfcId ? { mailbox: lettersInbox() ?? null, search: messageIdSearch(rfcId) } : null;
+    return { ...letter, kind: "supporter", subject, mpEmail, campaignAsk, gmail, forwards, sent };
+  }
   const search = postmarkId
     ? postmarkSearch(postmarkId)
     : letter.sentAt && mpEmail && sentNearSearch(mpEmail, letter.sentAt);
@@ -327,7 +357,7 @@ export async function getSupporterLetter(id: number): Promise<SupporterLetterDet
   const gmail = search
     ? { mailbox: process.env.POLICY_INBOX || null, search, ...(group ? { inPolicyGroup: true as const } : {}) }
     : null;
-  return { ...letter, kind: "supporter", subject, mpEmail, campaignAsk, gmail, forwards };
+  return { ...letter, kind: "supporter", subject, mpEmail, campaignAsk, gmail, forwards, sent: null };
 }
 
 /** A letter on an MP's page for staff without `supporters`: what happened to it, and nothing of who wrote it. */

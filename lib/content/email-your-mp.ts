@@ -226,10 +226,26 @@ export const copy = {
   sent: {
     title: "Thank you!",
     body: (mpName: string) => `Your letter has been sent to ${mpName}.`,
+    // In place of body, when the letter couldn't go at once: Gmail's limits, or Gmail down, so it goes within the hour.
+    queued: (mpName: string) => `⁂ Your letter to ${mpName} is on its way, and will reach them within the hour.`,
+    // In place of body, when the MP's address bounced before: it goes once staff fix it.
+    waiting: (mpName: string) =>
+      `⁂ Your letter to ${mpName} will go as soon as their email address works again. We're looking into it.`,
     // Under that, a paragraph of its own.
     more: "Please do ask your friends to write to their MPs too, or come along to a PauseAI event.",
     // Opened without having just sent one.
     none: "No letter has been sent recently.",
+  },
+  // The line above the sender's copy of their letter, from the letters inbox, to their MP's proxy.
+  letterCopy: (mpName: string) =>
+    `⁂ This is a copy of your letter to ${mpName}. Their reply will come to you here, and replying to it reaches them.`,
+  // Our own short emails to the sender, in the thread of their copy, from the letters inbox as "PauseAI".
+  notices: {
+    // The letter, or a message they sent through their MP's proxy, bounced.
+    bounced: (mpName: string) =>
+      `⁂ Your message hasn't reached ${mpName}: their office's email address isn't working. We're looking into it, and will send it again once it does.`,
+    // It went again once the address worked.
+    resent: (mpName: string) => `⁂ Your message has now been sent to ${mpName}.`,
   },
   // The note on a copy of an MP's reply: to the sender, and to the shared inbox.
   forwardedReply: {
@@ -263,6 +279,8 @@ export const copy = {
     noRecipient: "We couldn't send the letter, because we don't have a valid email address for your MP.",
     testMpOnly: "You can only write to the test MP here.",
     alreadySent: "You've already written to your MP about this.",
+    // The sender's email is one of ours: the letters inbox, a proxy, or the policy team's.
+    ourAddress: "⁂ Please give your own email address, so your MP's reply can reach you.",
     // The MP's address bounced since they looked them up.
     unreachable: "Your letter wasn't sent, because your MP's email address isn't working. We've told our team.",
     failed: "Sorry! We failed to send the email, for technical reasons.",

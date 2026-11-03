@@ -37,3 +37,8 @@ export function sentNearSearch(address: string, sentAt: string | Date): string {
   const margin = SEARCH_MINUTES * 60;
   return `to:${address} after:${seconds - margin} before:${seconds + margin}`;
 }
+
+/** A link to a message in a mailbox the person is logged in to, by Gmail's ID for it: the letters inbox's, which isn't delegated. */
+export function gmailMessageLink(mailbox: string, gmailMessageId: string): string {
+  return `https://mail.google.com/mail/u/${encodeURIComponent(mailbox)}/#all/${gmailMessageId}`;
+}

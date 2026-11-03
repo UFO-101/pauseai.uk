@@ -78,7 +78,7 @@ describeWithDatabase("migration 0043_form_entries", MAKES_DATABASES, () => {
       );
       await query(
         `INSERT INTO supporter_letters (id, campaign, sender_name, sender_email, sender_address, sender_postcode,
-           contact_consent, subject, reply_hash, airtable_id)
+           contact_consent, subject, postmark_mailbox, airtable_id)
          VALUES ($1, $2, $3, $4, $5, $6, $7, 'A letter', $8, $9)`,
         [id, web ? "pauseai-info-deepmind" : "regulate-letter-pm", ...sender, web ? null : `reply-${id}`, web ?? null],
       );
@@ -266,7 +266,7 @@ describeWithDatabase("migration 0044_form_entry_luma", MAKES_DATABASES, () => {
       [mp],
     );
     await query(
-      "INSERT INTO supporter_letters (id, entry_id, campaign, subject, reply_hash) VALUES (1, 1, 'regulate-letter-pm', 'S', 'r1')",
+      "INSERT INTO supporter_letters (id, entry_id, campaign, subject, postmark_mailbox) VALUES (1, 1, 'regulate-letter-pm', 'S', 'r1')",
     );
     await expect(
       query(
