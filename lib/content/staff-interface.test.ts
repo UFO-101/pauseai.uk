@@ -34,8 +34,8 @@ describe("staff interface copy", () => {
       ["form entry", "form entries"],
       ["letter", "letters"],
       ["member record", "member records"],
-      ["⁂ proxy", "⁂ proxies"],
-      ["⁂ message in the letters inbox", "⁂ messages in the letters inbox"],
+      ["proxy", "proxies"],
+      ["message in the letters inbox", "messages in the letters inbox"],
       ["session", "sessions"],
     ]);
     expect(staffCopy.luma.places({ postcodes: 1, towns: 1 })).toBe("1 postcode, 1 town looked up.");

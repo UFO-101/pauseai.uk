@@ -3061,7 +3061,7 @@ describe("LetterHistory", () => {
     const [queued, notice, replied] = history().getByRole("listitem").all();
     expect(queued.element().textContent).toContain(`${copy.detail.fields.reason}${copy.detail.reasons.daily_limit}`);
     expect(notice.element().textContent).toContain(`${copy.detail.fields.notice}${copy.detail.notices.bounced}`);
-    expect(replied.element().textContent).toContain(`${copy.detail.fields.uncertain}${copy.consent.yes}`);
+    expect(replied.element().textContent).toContain(`${copy.detail.fields.uncertain}${copy.detail.uncertainLetter}`);
     expect(replied.element().textContent).toContain(`${copy.detail.fields.reason}odd`);
   });
 

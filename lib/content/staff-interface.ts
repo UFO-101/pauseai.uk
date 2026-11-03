@@ -116,8 +116,8 @@ export const staffCopy = {
     // The heading once it's connected.
     connectedTitle: "Staff can send mailings from your Gmail",
     // The same two, logged in as the letters inbox, which sends supporters' letters to MPs and nothing else.
-    lettersInboxTitle: "⁂ Send supporters' letters to MPs from this Gmail",
-    lettersInboxConnectedTitle: "⁂ Supporters' letters to MPs go from this Gmail",
+    lettersInboxTitle: "Send supporters' letters to MPs from this Gmail",
+    lettersInboxConnectedTitle: "Supporters' letters to MPs go from this Gmail",
     // What connecting it means, said before it goes to Google: a line, then a bullet each.
     intro: "Usually this is a shared account rather than a person's own: log in here as it, then connect it.",
     explain: [
@@ -1633,8 +1633,10 @@ export const staffCopy = {
         status: "Code",
         bcc: "Bcc",
         notice: "Notice",
-        uncertain: "Matched only as the latest letter",
+        uncertain: "Which letter",
       } as Record<string, string>,
+      // The value of uncertain: the reply named none of the supporter's letters to the MP, so it was put with the newest.
+      uncertainLetter: "A guess: their newest to this MP, as the reply didn't say which it answers",
       // A reason, recorded as a word, in words: why a letter, copy or relay waits or wasn't relayed.
       reasons: {
         not_connected: "The letters inbox isn't connected",

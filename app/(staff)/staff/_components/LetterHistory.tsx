@@ -89,7 +89,7 @@ function EventValue({ name, value }: { name: string; value: unknown }) {
     return <>{copy.detail.reasons[value]}</>;
   if (name === "notice" && typeof value === "string" && copy.detail.notices[value])
     return <>{copy.detail.notices[value]}</>;
-  if (name === "uncertain") return <>{copy.consent.yes}</>;
+  if (name === "uncertain") return <>{copy.detail.uncertainLetter}</>;
   if (name === "email" && typeof value === "string")
     return <StaffLink href={`/staff/politicians/blocked-emails?q=${encodeURIComponent(value)}`}>{value}</StaffLink>;
   return <>{typeof value === "string" ? value : JSON.stringify(value)}</>;
