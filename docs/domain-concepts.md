@@ -195,8 +195,10 @@ written to and kept.
   that passes the form's checks is kept, `queued`, and never deleted for
   failing to send. The request tries at once: the letter, from the
   supporter's proxy to the MP alone, then the supporter's copy, from their
-  proxy to the MP's, Reply-To the MP's, Bcc'd to them, with a line above
-  it saying what it is, so Reply and Reply all reach only our proxies.
+  proxy to them, Reply-To the MP's proxy, with a line above it saying
+  what it is, so Reply and Reply all reach only our proxies. It's
+  addressed to them, not Bcc'd, as Outlook files mail its reader is only
+  Bcc'd on as junk more readily.
   What can't go waits with its reason: the letters inbox not connected or
   at its daily limit (1,950 of Google's 2,000, `LETTERS_DAILY_LIMIT`),
   Gmail failing, or the MP's address blocked; the sent page says it will
@@ -583,6 +585,8 @@ each time it happens, with a link to where to deal with it:
 - mail in the letters inbox it can't relay (`lib/server/gmail-reading.ts`);
 - an import failing, after a run of it that didn't (`recordFailure` in
   `lib/server/import-runs.ts`);
+- a Gmail account the hourly read couldn't read, after a run that could
+  (`lib/server/gmail-reading.ts`); one Google disconnected has its own;
 - the MP import held, when none was (`lib/server/politician-sync.ts`);
 - Google disconnecting a Gmail account (`lib/server/gmail-accounts.ts`);
 - letters to MPs waiting over three hours to go, until those it named

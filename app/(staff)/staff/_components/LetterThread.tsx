@@ -62,6 +62,7 @@ export default function LetterThread({ thread, link }: { thread: Thread; link?: 
           key={message.id}
           from={named(message.fromName, message.fromAddress)}
           to={message.fromUs ? politician : ours}
+          cc={message.cc}
           at={message.at}
           subject={message.subject}
         >
@@ -111,6 +112,7 @@ export function SupporterLetterThread({ letter, link }: { letter: SupporterLette
           key={message.id}
           from={named(message.fromName, message.fromAddress)}
           to={message.fromSupporter ? mp : sender}
+          cc={message.cc}
           at={message.at}
           subject={message.subject}
         >

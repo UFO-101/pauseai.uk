@@ -493,7 +493,7 @@ SELECT now() - interval '50 days', 'letter', id, 'test-mp@parliament.example', '
   'fixture-letters@pauseai.uk', 'fixture-proxied-letter@pauseai.uk', 'thread-seed-proxied'
 FROM seed_proxied
 UNION ALL
-SELECT now() - interval '50 days', 'letter-copy', id, 'fixture-letters+testy.mctestface.mp@pauseai.uk', 'sent', 'gmail-seed-proxied-copy', 'gmail',
+SELECT now() - interval '50 days', 'letter-copy', id, 'pat.proxy@example.com', 'sent', 'gmail-seed-proxied-copy', 'gmail',
   'fixture-letters@pauseai.uk', 'fixture-proxied-copy@pauseai.uk', 'thread-seed-proxied-copy'
 FROM seed_proxied
 UNION ALL
@@ -512,7 +512,7 @@ FROM seed_proxied s JOIN letter_replies r ON r.letter_id = s.id;
 INSERT INTO letter_events (letter_id, at, status, details)
 SELECT id, now() - interval '50 days', 'sent', '{"from": "\"Pat Proxy (via PauseAI)\" <fixture-letters+pat.proxy@pauseai.uk>", "to": "test-mp@parliament.example", "backend": "gmail", "account": "fixture-letters@pauseai.uk"}'::jsonb FROM seed_proxied
 UNION ALL
-SELECT id, now() - interval '50 days', 'copy_sent', '{"from": "\"Pat Proxy (via PauseAI)\" <fixture-letters+pat.proxy@pauseai.uk>", "to": "\"Testy McTestface MP (via PauseAI)\" <fixture-letters+testy.mctestface.mp@pauseai.uk>", "bcc": "pat.proxy@example.com", "backend": "gmail", "account": "fixture-letters@pauseai.uk"}'::jsonb FROM seed_proxied
+SELECT id, now() - interval '50 days', 'copy_sent', '{"from": "\"Pat Proxy (via PauseAI)\" <fixture-letters+pat.proxy@pauseai.uk>", "to": "pat.proxy@example.com", "replyTo": "\"Testy McTestface MP (via PauseAI)\" <fixture-letters+testy.mctestface.mp@pauseai.uk>", "backend": "gmail", "account": "fixture-letters@pauseai.uk"}'::jsonb FROM seed_proxied
 UNION ALL
 SELECT id, now() - interval '48 days', 'replied', '{"from": "test-mp@parliament.example", "name": "Testy McTestface MP", "to": "fixture-letters+pat.proxy@pauseai.uk", "gmailMessageId": "gmail-seed-office-reply", "backend": "gmail", "account": "fixture-letters@pauseai.uk"}'::jsonb FROM seed_proxied
 UNION ALL

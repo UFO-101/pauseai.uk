@@ -78,11 +78,12 @@ test("Jane writes to her MP", async ({ page, flowDatabase }) => {
   const sender = madeUpAddress("Jane Smith", 31);
   const id = await writeLetter(page, flowDatabase, sender);
   story(
-    "Jane gets a copy, from her proxy address to the MP's. If she replies to it, her reply reaches the MP through us too.",
+    "Jane gets a copy, from her proxy address, addressed to her. If she replies to it, her reply reaches the MP through us too.",
   );
   const copied = sentEmail(flowDatabase, id, "letter-copy");
-  expect(copied.Bcc).toBe(`"Jane Smith" <${sender}>`);
-  expect(copied.ReplyTo).toBe(copied.To);
+  expect(copied.To).toBe(`"Jane Smith" <${sender}>`);
+  expect(copied.Bcc).toBeUndefined();
+  expect(copied.ReplyTo).toBe(`"Testy McTestface MP (via PauseAI)" <${MPS_PROXY}>`);
   await emailFrame(page, copied, "Jane's copy of her letter");
   story(
     "Staff open the letter. Its history says Gmail sent it, with her copy under it. Jane didn't change the campaign's letter, so it's folded.",
@@ -128,12 +129,15 @@ test("The MP replies, and Jane answers", async ({ page, request, flowDatabase })
   expect(toMp.From).toBe(`"Jane Smith (via PauseAI)" <${JANES_PROXY}>`);
   expect(toMp.InReplyTo).toBe(`<${sentIds(flowDatabase, id, "letter")[0]}>`);
   await emailFrame(page, toMp, "Jane's answer, as the office gets it");
-  story("The letter's page shows the letter, the reply and her answer.");
+  story(
+    "The letter's page shows the letter, the reply and her answer. The reply shows the caseworker the office copied in, though Jane's copy didn't.",
+  );
 
   const entries = await openLetter(page, id);
   await expect(entries.first()).toContainText(staffCopy.letters.status.relayed);
   await expect(entries.nth(1)).toContainText(staffCopy.letters.status.replied);
   await expect(page.getByRole("article")).toHaveCount(3);
+  await expect(page.getByRole("article").nth(1)).toContainText("caseworker@parliament.example");
   await frame(page, "The letter's page");
 });
 

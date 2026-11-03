@@ -103,7 +103,7 @@ export const staffCopy = {
     noReplies: "No replies yet.",
     unreadable: "This message couldn't be read.",
     // Over each message, as an email shows them.
-    headers: { from: "From", to: "To", date: "Date", subject: "Subject" },
+    headers: { from: "From", to: "To", cc: "Cc", date: "Date", subject: "Subject" },
   },
   // Your own page: your sessions and your Gmail.
   me: {

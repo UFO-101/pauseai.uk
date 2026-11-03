@@ -109,10 +109,7 @@ describeWithDatabase("the letters inbox's queue", () => {
     await queued();
     const sent = recordGmail();
     expect(await sendLetterQueue(Date.now() + 10_000)).toEqual({ sent: 1, left: 0 });
-    expect(sent.map((s) => s.headers.get("to"))).toEqual([
-      `"Testy McTestface MP" <${MP}>`,
-      expect.stringContaining(testProxy("testy.mctestface.mp")),
-    ]);
+    expect(sent.map((s) => s.headers.get("to"))).toEqual([`"Testy McTestface MP" <${MP}>`, JANE_LINE]);
     expect(await statusOf()).toBe("sent");
     expect((await events()).map((e) => e.status)).toEqual(["queued", "sent", "copy_sent"]);
   });
@@ -180,7 +177,7 @@ describeWithDatabase("the letters inbox's queue", () => {
     expect((await events()).at(-1)).toEqual({ status: "copy_held", details: { to: JANE, reason: "blocked" } });
     const sent = recordGmail();
     expect(await unblock(JANE, "staff@pauseai.uk", "She fixed her mailbox")).toBe(true);
-    expect(sent.map((s) => s.headers.get("bcc"))).toEqual([JANE_LINE]);
+    expect(sent.map((s) => s.headers.get("to"))).toEqual([JANE_LINE]);
     expect(await query("SELECT copy_state FROM letters_from_supporters")).toEqual([{ copy_state: "sent" }]);
   });
 

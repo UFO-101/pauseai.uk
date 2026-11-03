@@ -1,6 +1,6 @@
 import "server-only";
 import { gzipSync } from "node:zlib";
-import { staffCopy } from "@/lib/content/staff-interface";
+import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { importPath, type GmailRead, type GmailReadResult } from "@/lib/import-runs";
 import { gmailMessageLink } from "@/lib/letter-links";
 import { query } from "./db";
@@ -27,6 +27,7 @@ import {
   gmailMessageHeaders,
   gmailProfile,
   gmailRawMessage,
+  unlessGone,
   gmailSendName,
   GmailError,
   searchGmail,
@@ -273,9 +274,10 @@ async function recordBounce(
   return bounce.addresses.length;
 }
 
-/** Reads one message: a bounce, a reply to a letter, or something else, left alone. */
+/** Reads one message: a bounce, a reply to a letter, or something else, left alone; one gone since, skipped. */
 async function readMessage(account: string, token: string, id: string, read: GmailRead, request: Request | undefined) {
-  const message = await gmailMessageHeaders(token, id, HEADERS);
+  const message = await gmailMessageHeaders(token, id, HEADERS).catch(unlessGone);
+  if (!message) return;
   const from = fromAddress(message.headers.get("from")).address;
   if (isBounceSender(from)) {
     read.bounces += await recordBounce(account, token, message, request);
@@ -324,6 +326,31 @@ async function readAccount(account: string, historyId: string, request: Request 
   // Its name, as Gmail has it now: renamed since it was connected, or connected before the site kept it.
   await saveGmailName(account, await gmailSendName(token));
   return read;
+}
+
+/**
+ * Emails the notification inbox, as for an import that failed, for each
+ * account this run couldn't read that the run before could: once, until
+ * it's read again. Not one Google disconnected, which has an email of its
+ * own (gmail-accounts.ts).
+ */
+async function alertUnreadable(accounts: GmailRead[], request: Request | undefined): Promise<void> {
+  const failing = accounts.filter((a) => a.error && !a.disconnected);
+  if (!failing.length) return;
+  // This run, and the one before it, if any; a run that failed outright has no accounts.
+  const [, before] = await query<{ result: { accounts?: GmailRead[] } }>(
+    "SELECT result FROM import_runs WHERE job = $1 ORDER BY at DESC, id DESC LIMIT 2",
+    [JOB],
+  );
+  const failedBefore = new Set((before?.result.accounts ?? []).filter((a) => a.error).map((a) => a.account));
+  const words = staffCopy.notifications.importFailed;
+  const title = jobTitles[JOB];
+  for (const { account, error } of failing.filter((a) => !failedBefore.has(a.account))) {
+    await notifyStaff(
+      words.subject(title),
+      words.body(title, `${account}: ${error}`, staffLink(importPath(JOB), request)),
+    );
+  }
 }
 
 /**
@@ -383,6 +410,7 @@ export function readGmail(startedBy: string, request?: Request): Promise<GmailRe
     );
     await recordRun(JOB, startedBy, found ? "ok" : "unchanged", { accounts });
     await alertNotUnderstood(accounts, request);
+    await alertUnreadable(accounts, request);
     return { accounts };
   });
 }

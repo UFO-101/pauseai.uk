@@ -48,13 +48,13 @@ it("says an Emails sync that held emails back is incomplete, but not one that he
   expect(runStatus(exampleFailedRun("sync-emails", "boom", {}))).toBe("failed");
 });
 
-it("says a Gmail read that couldn't read an account is incomplete, but not one that read them all, or failed", () => {
-  expect(runStatus(exampleRun("read-gmail", exampleGmailResult))).toBe("incomplete");
+it("says a Gmail read that couldn't read an account failed, but not one that read them all", () => {
+  expect(runStatus(exampleRun("read-gmail", exampleGmailResult))).toBe("failed");
   // One it had to disconnect isn't read again, so the read failed, whatever else it read.
   const disconnected = { accounts: [...exampleGmailResult.accounts, exampleDisconnectedGmail] };
   expect(runStatus(exampleRun("read-gmail", disconnected))).toBe("failed");
   expect(runTone(exampleRun("read-gmail", disconnected))).toBe("red");
-  expect(runTone(exampleRun("read-gmail", exampleGmailResult))).toBe("amber");
+  expect(runTone(exampleRun("read-gmail", exampleGmailResult))).toBe("red");
   expect(runStatus(exampleRun("read-gmail", { accounts: exampleGmailResult.accounts.slice(0, 1) }))).toBe("ok");
   expect(runStatus(exampleFailedRun("read-gmail", "boom", {}))).toBe("failed");
   // Mail in the letters inbox a person has to look at fails it; with none, it went well.

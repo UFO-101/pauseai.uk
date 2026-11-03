@@ -23,6 +23,7 @@ import {
   sendGmail,
   sendRawGmail,
   trashGmailMessage,
+  unlessGone,
 } from "./gmail";
 
 const API = "https://gmail.googleapis.com/gmail/v1/users/me";
@@ -354,4 +355,11 @@ describe("the Gmail API", () => {
     await trashGmailMessage("tok", "gone");
     await expect(trashGmailMessage("tok", "broken")).rejects.toThrow(GmailError);
   });
+});
+
+it("takes a message Gmail no longer has as gone, and passes on any other failure", () => {
+  expect(unlessGone(new GmailError("Gmail answered 404 for /messages/m1", 404))).toBeUndefined();
+  const broken = new GmailError("Gmail answered 500 for /messages/m1", 500);
+  expect(() => unlessGone(broken)).toThrow(broken);
+  expect(() => unlessGone(new Error("network"))).toThrow("network");
 });

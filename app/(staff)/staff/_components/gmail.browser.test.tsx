@@ -219,7 +219,7 @@ describe("SupporterLetterThread", () => {
     await expect.element(page.getByText(copy.supporterNoText)).toBeVisible();
   });
 
-  it("one from the letters inbox: its changes to the draft, then each message both ways, with Gmail at the heading", async () => {
+  it("one from the letters inbox: its changes to the draft, then each message both ways, any Cc, with Gmail at the heading", async () => {
     await render(<SupporterLetterThread letter={exampleProxiedLetterDetails} link={<a href="#gmail">Gmail</a>} />);
     // The way to it in Gmail at the heading, not in the letter's place.
     await expect
@@ -233,6 +233,9 @@ describe("SupporterLetterThread", () => {
     expect(answer.element().textContent).toContain(
       `${copy.headers.to}Testy McTestface MP <testy.mctestface.mp@parliament.uk>`,
     );
+    // Whom the office copied in, under To; her answer copied nobody.
+    expect(reply.element().textContent).toContain(`${copy.headers.cc}Casey Worker <casey.worker@parliament.uk>`);
+    expect(answer.element().textContent).not.toContain(copy.headers.cc);
     await expect.element(page.getByRole("button", { name: staffCopy.letterChanges.asSent })).toBeVisible();
   });
 

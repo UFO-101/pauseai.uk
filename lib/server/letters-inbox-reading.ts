@@ -15,6 +15,7 @@ import {
   gmailLabel,
   gmailMessageHeaders,
   gmailRawMessage,
+  unlessGone,
   labelGmailMessage,
   type GmailMessageHeaders,
 } from "./outside-services/gmail";
@@ -344,7 +345,7 @@ async function bounce(
 /** An account's line of the run, with the letters inbox's counts. */
 type LettersInboxRead = GmailRead & Required<Pick<GmailRead, "relayed" | "spam" | "uncertain" | "notUnderstood">>;
 
-/** Reads one message of the letters inbox and files it (above). */
+/** Reads one message of the letters inbox and files it (above); one gone since, skipped. */
 async function readMessage(
   account: string,
   token: string,
@@ -353,8 +354,10 @@ async function readMessage(
   read: LettersInboxRead,
   request: Request | undefined,
 ): Promise<void> {
-  const message = await gmailMessageHeaders(token, id, HEADERS);
-  // Our own: what we sent is in Sent, and the supporter's copy, to the MP's proxy, in the Inbox too.
+  const message = await gmailMessageHeaders(token, id, HEADERS).catch(unlessGone);
+  if (!message) return;
+  // Our own: what we sent is in Sent, and a supporter's copy from when copies went to the MP's proxy, in the
+  // Inbox too.
   if (message.labelIds.includes("SENT"))
     return message.labelIds.includes("INBOX") ? file(token, labels, id, "noted") : undefined;
   if (await isOurs(account, message)) return file(token, labels, id, "noted");
