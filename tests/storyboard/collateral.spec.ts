@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import type { Download, Page } from "@playwright/test";
 import JSZip from "jszip";
-import { BASE, expect, frame, test } from "./fixtures";
+import { BASE, expect, frame, story, test } from "./fixtures";
 import { wholePage } from "./settle";
 
 // The collateral maker (/tools/collateral), as a volunteer uses it before a
@@ -34,9 +34,11 @@ async function zipNames(file: Download): Promise<string[]> {
     .sort();
 }
 
-test("Make an image for an event, then download a PNG and a print PDF", async ({ page }) => {
+test("An image for an event", async ({ page }) => {
+  story("A volunteer opens the collateral maker to make an image for their protest.");
   await open(page, "Single image", /^Download PNG$/);
-  await frame(page, "the maker, as it opens");
+  await frame(page, "The collateral maker");
+  story("They pick the London protest from our events. That fills in its title, and a QR code for its page.");
 
   // One of our events fills in the Event layout, with a QR code for it.
   const event = page.locator("#collateral-import-event");
@@ -45,13 +47,15 @@ test("Make an image for an event, then download a PNG and a print PDF", async ({
   await expect(page.getByRole("radio", { name: /^Event/ })).toHaveAttribute("aria-checked", "true");
   await expect(page.getByLabel("Event title")).toHaveValue("PauseAI London: Protest at Parliament");
   await expect(page.getByLabel("QR code 1 web address")).toHaveValue(/lu\.ma\//);
-  await frame(page, "filled in from the London protest");
+  await frame(page, "The London protest, filled in");
+  story("They add a photo of the London protest group and choose black. The photo can be dragged to move it.");
 
   await page.getByRole("button", { name: "London protest group" }).click();
   await page.getByRole("radio", { name: "Black" }).click();
   // With a photo, the preview can be dragged to move it.
   await expect(page.getByRole("img", { name: /^Preview of/ })).toHaveCSS("cursor", "grab");
-  await frame(page, "with a photo, in black");
+  await frame(page, "With a photo, in black");
+  story("They download it as a PNG, then make it an A5 flyer and download a PDF to print.");
 
   const png = await download(page, /^Download PNG$/);
   expect(png.suggestedFilename()).toBe("pauseai-event-ig-square-black.png");
@@ -62,7 +66,7 @@ test("Make an image for an event, then download a PNG and a print PDF", async ({
   ).toBe("PNG");
 
   await page.getByLabel("Where will it be used?").selectOption("a5");
-  await frame(page, "as an A5 flyer");
+  await frame(page, "As an A5 flyer");
   const pdf = await download(page, /^Download print PDF/);
   expect(pdf.suggestedFilename()).toBe("pauseai-event-a5-black.pdf");
   expect(
@@ -71,24 +75,28 @@ test("Make an image for an event, then download a PNG and a print PDF", async ({
       .toString(),
   ).toBe("%PDF-");
 
+  story("The maker keeps their work in the browser. When they open it again, it's as they left it.");
   // Kept in the browser: opening it again carries on where they were.
   await page.goto(PAGE);
   await expect(page.getByLabel("Event title")).toHaveValue("PauseAI London: Protest at Parliament");
   await expect(page.getByLabel("Where will it be used?")).toHaveValue("a5");
   await expect(page.getByRole("button", { name: /^Download print PDF/ })).toBeEnabled();
-  await frame(page, "opened again, as it was left");
+  await frame(page, "Opened again");
 });
 
-test("Make a campaign pack in several formats, then download the zip", async ({ page }) => {
+test("A campaign pack", async ({ page }) => {
+  story("A volunteer makes a campaign pack: one design in six formats.");
   await open(page, "Campaign pack", /^Download 6 formats \(\.zip\)$/);
-  await frame(page, "the pack, with its six formats");
+  await frame(page, "The campaign pack");
+  story("They give it a title, add an A4 poster and take out the X header.");
 
   await page.getByRole("textbox", { name: "Event title" }).fill("Pause frontier AI now");
   await page.getByRole("checkbox", { name: /A4 poster/ }).check();
   await page.getByRole("checkbox", { name: /X header/ }).uncheck();
   await expect(page.getByRole("button", { name: "Download 6 formats (.zip)" })).toBeEnabled();
   await wholePage(page);
-  await frame(page, "a new title, an A4 poster in, the X header out");
+  await frame(page, "The pack, with a title and an A4 poster");
+  story("They pick the Luma event cover from the previews to adjust it on its own.");
 
   // The Luma cover, picked from the previews, is adjusted on its own.
   await page
@@ -98,7 +106,8 @@ test("Make a campaign pack in several formats, then download the zip", async ({ 
   await expect(page.getByRole("heading", { name: "Adjust Luma event cover" })).toBeVisible();
   await expect(page.getByRole("img", { name: "Preview of Luma event cover" })).toBeVisible();
   await wholePage(page);
-  await frame(page, "adjusting the Luma cover");
+  await frame(page, "The Luma event cover");
+  story("They download the pack as a zip, with the formats they chose.");
 
   const zip = await download(page, "Download 6 formats (.zip)");
   expect(zip.suggestedFilename()).toBe("pauseai-event-pack.zip");
@@ -109,9 +118,13 @@ test("Make a campaign pack in several formats, then download the zip", async ({ 
   expect(names.join(" ")).toContain("a4");
 });
 
-test("Make a set of slides with photos and captions, then download the zip", async ({ page }) => {
+test("Slides for a carousel", async ({ page }) => {
+  story("A volunteer makes a set of slides to post as a carousel. It starts with two example slides.");
   await open(page, "Gallery / carousel", /^Download slides$/);
-  await frame(page, "the gallery, with its two example slides");
+  await frame(page, "Two example slides");
+  story(
+    "They caption the first slide, then add a third with a photo of the DeepMind protest, in cream, with its own caption.",
+  );
 
   await page.getByLabel("Caption for slide 1").fill("Thousands marched");
   await page.getByRole("button", { name: /^Add a slide/ }).click();
@@ -122,12 +135,14 @@ test("Make a set of slides with photos and captions, then download the zip", asy
   // Where the clicks above leave the window varies from run to run, and the
   // frame with it. At the top, it pictures the whole studio instead.
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
-  await frame(page, "a third slide, with its own photo and style");
+  await frame(page, "Three slides");
+  story("They move the third slide earlier, to second.");
 
   await page.getByRole("button", { name: "Show slide 3" }).click();
   await page.getByRole("button", { name: "← Move earlier" }).click();
   await expect(page.getByLabel("Caption for slide 2")).toHaveValue("Outside Google DeepMind");
-  await frame(page, "moved to second");
+  await frame(page, "The slide, moved to second");
+  story("They leave out LinkedIn and download the slides as a zip, with a folder for each of the other platforms.");
 
   await page.getByRole("checkbox", { name: /LinkedIn/ }).uncheck();
   const zip = await download(page, "Download slides");

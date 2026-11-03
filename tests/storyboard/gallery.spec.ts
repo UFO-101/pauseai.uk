@@ -1,4 +1,4 @@
-import { BASE, expect, frame, test } from "./fixtures";
+import { BASE, expect, frame, story, test } from "./fixtures";
 import { hydrated } from "./settle";
 
 // The component gallery (app/(tools)/gallery):
@@ -54,6 +54,7 @@ async function open(page: import("@playwright/test").Page, path: string) {
 }
 
 test("gallery: index", async ({ page }) => {
+  story("The gallery's index links to each group of components, in order.");
   await open(page, "/gallery");
   const hrefs = await page
     .getByRole("main")
@@ -61,7 +62,7 @@ test("gallery: index", async ({ page }) => {
     .getByRole("link")
     .evaluateAll((links) => links.map((link) => link.getAttribute("href")));
   expect(hrefs).toEqual(GROUPS.map((group) => `/gallery/${group}`));
-  await frame(page, "the index");
+  await frame(page, "The index");
 });
 
 for (const group of GROUPS) {

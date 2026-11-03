@@ -147,6 +147,38 @@ each `await frame(page, "caption")` a **frame**: a caption and, when
 screenshots are on, a screenshot. The checks go between the frames. The
 tests know nothing about main.
 
+**How a flow is told.** The review page reads as a story of each flow,
+for anyone who has used the site or the staff pages, in three kinds of
+words:
+
+- **The title** names the flow, like a chapter heading: "The letter
+  bounces", "Automatic replies", "An MP who has signed (ZZ99ZS)". It
+  doesn't try to say what happens. `public-pages` titles each flow with
+  its route, and the gallery with its group.
+- **A caption** says what the frame pictures, and no more: "The letter's
+  page", "The email staff get".
+- **The story**, `story("…")` (`tests/storyboard/frame.ts`), says what
+  happens and why, a line or two at a time: one at the start of the flow,
+  and more between the frames. The page shows each above the next frame;
+  one after the last frame ends the flow, and a flow with no frames is
+  told by its story alone. Write it where it happens in the spec, so the
+  code and the story read together.
+
+They're written from the point of view of the person using the site, a
+supporter or staff, in the words the site and the staff pages use
+(letters inbox, relayed, blocked emails, mailing, ask), and plainly: what
+happens, not how the test fakes it. A fixture, a route or a webhook is
+named only if a person would see it. For example:
+
+```ts
+test("The letter bounces", async ({ page, request, flowDatabase }) => {
+  story("Jane writes to an MP whose address bounces her letter. The address is blocked, and staff get an email.");
+  // … the letter, and its bounce
+  await emailFrame(page, alert, "The email staff get");
+  story("Jane is told, in the thread of her copy, that her letter hasn't reached her MP.");
+  await emailFrame(page, notice, "The email Jane gets");
+```
+
 A frame pictures the whole page when the page is at the top, so its layout
 can be looked over, and only the window once a person, or a step, has
 scrolled: where they are is then the point, and a full-page picture of a
@@ -182,7 +214,7 @@ newest run's page: the flows in
 sections, each frame captioned and pictured on desktop and phone, with this
 branch's picture, main's and the diff, a lightbox, a phone/desktop toggle
 that stays on the flow being looked at, a "changed only" filter, a box
-that filters flows by their section, title or captions (`/` to start,
+that filters flows by their section, title, captions or story (`/` to start,
 Escape to clear), and a failed flow's message under its last frame. The
 sections come under three headings, the public site, the staff pages, and
 the tools and checks, in the order of `SECTIONS`
@@ -285,28 +317,24 @@ order, alongside the others:
 
 - Every new interactive behaviour goes in a flow, existing or new, with a
   frame after each thing a person would see. A PR without it isn't done.
+- Every flow is told: a title that names it, captions that say what each
+  frame shows, and its story ("How a flow is told", above).
 - Every email the site sends is pictured: the flow that sends it shows it
   with `emailFrame` (`tests/storyboard/frame.ts`), right after it's sent.
   A new email, or a change to one, isn't done until its frame is in a
   flow ("Email", above).
 - Flows stay small: one thing a person does, about ten frames at most.
   Sections split past a dozen flows.
-- A flow's title says what the person does, as they'd tell a colleague.
-  It's what the review's sidebar lists, so someone scanning it knows
-  what each flow is without opening it:
-  - Lead with the action, or the situation it's in, then after a colon
-    what comes of it: "Reschedule a mailing, then unschedule it",
-    "Register when Luma fails", "An MP with no email (ZZ99ZN): no letter
-    to write".
-  - Short: about ten words at most. The captions carry the details, so
-    the title doesn't list every frame.
+- A flow's title names it, as the review's sidebar lists it, so someone
+  scanning it knows which flow is which ("How a flow is told", above):
+  - A few words, sentence case, no full stop, and no colon listing what
+    comes of it: the story says that.
   - The words on the site, not the code's: "Log in", "Connect Gmail",
     "blocked emails", never "RSC payload", "Server Action" or
     "hydration".
-  - Sentence case, a capital first, no full stop.
-  - Unique, and kept once written: the review pairs a flow's frames
-    with main's by its title, so a renamed flow shows every frame as
-    new until it's merged.
+  - Unique in its section: the review pairs a flow's frames with main's
+    by section, title and caption. Both sides run this branch's spec
+    files, so a renamed flow still pairs.
 - Tag a flow `@phone` to run it on the phone in the gate too; `@phone-only`
   for one that only makes sense there (the mobile nav), `@desktop-only` for
   the reverse. The review runs every other flow on both viewports.

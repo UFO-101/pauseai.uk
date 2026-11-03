@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { BASE, expect, frame, test } from "./fixtures";
+import { BASE, expect, frame, story, test } from "./fixtures";
 import { hydrated, layoutSettled, scrollSettled } from "./settle";
 
 // In-page scrolling is deliberately all browser behaviour: `scroll-behavior`
@@ -60,7 +60,10 @@ async function expectClearOfNav(page: Page, id: string) {
 }
 
 test.describe("in-page scrolling", () => {
-  test("Scrolling leaves the address bar alone", async ({ page }) => {
+  test("Scrolling and the address bar", async ({ page }) => {
+    story(
+      "Scrolling down the home page doesn't change the address in the address bar, so copying it shares the page, not the part someone had scrolled to.",
+    );
     await gotoSettled(page);
     const before = page.url();
 
@@ -74,17 +77,21 @@ test.describe("in-page scrolling", () => {
     expect(page.url()).toBe(before);
   });
 
-  test("A link within the page lands below the header", async ({ page }) => {
+  test("A link within the page", async ({ page }) => {
+    story(
+      "Upcoming events ↓ on the home page scrolls down to the events, which land just below the header, not under it.",
+    );
     await gotoSettled(page);
     await page.getByRole("link", { name: "Upcoming events ↓" }).click();
     await expect.poll(() => new URL(page.url()).hash).toBe("#events");
     await scrollSettled(page);
 
     await expectClearOfNav(page, "events");
-    await frame(page, "after following the Upcoming events link");
+    await frame(page, "The events, below the header");
   });
 
-  test("Back undoes a link within the page", async ({ page }) => {
+  test("Back, after a link within the page", async ({ page }) => {
+    story("After following Upcoming events ↓, Back takes the address back to the home page without #events.");
     await gotoSettled(page);
     await page.getByRole("link", { name: "Upcoming events ↓" }).click();
     await expect.poll(() => new URL(page.url()).hash).toBe("#events");
@@ -95,7 +102,8 @@ test.describe("in-page scrolling", () => {
     await scrollSettled(page);
   });
 
-  test("A link within the page moves the keyboard's place", async ({ page }) => {
+  test("Tab, after a link within the page", async ({ page }) => {
+    story("After following Upcoming events ↓, pressing Tab carries on from the events, not from the top of the page.");
     // The old preventDefault + scrollIntoView moved the viewport but left the
     // tab position in the hero, so a keyboard user who followed the link then
     // tabbed straight back into the nav. Native fragment navigation sets the
@@ -120,15 +128,17 @@ test.describe("in-page scrolling", () => {
     expect(focusIsAfterTarget).toBe(true);
   });
 
-  test("A link to part of a page scrolls there", async ({ page }) => {
+  test("A link to part of a page", async ({ page }) => {
+    story("Opening a link to Share your story on the people page lands on that section, just below the header.");
     await gotoSettled(page, "/people#share-your-story");
 
     expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
     await expectClearOfNav(page, "share-your-story");
-    await frame(page, "/people#share-your-story");
+    await frame(page, "Share your story, on the people page");
   });
 
-  test("A link to part of another page lands there", async ({ page }) => {
+  test("A link to part of another page", async ({ page }) => {
+    story("A link on the home page to Share your story opens the people page at that section, below the header.");
     await gotoSettled(page);
     await page.click('a[href="/people#share-your-story"]');
     // Polling the URL rather than page.waitForURL: this is a client-side
@@ -140,7 +150,10 @@ test.describe("in-page scrolling", () => {
     await expectClearOfNav(page, "share-your-story");
   });
 
-  test("A link far down the home page stays put", async ({ page }) => {
+  test("A link far down the home page", async ({ page }) => {
+    story(
+      "A link to Meet the organisers, far down the home page, lands there. It stays put while the map, the photos and the sign-up form above it finish loading.",
+    );
     // #staff sits below the local groups map, the people carousel and the
     // onboarding embed, each of which could change height after load.
     // Nothing re-scrolls afterwards, so any late shift shows up as drift.
@@ -153,10 +166,13 @@ test.describe("in-page scrolling", () => {
     await page.waitForLoadState("networkidle");
     await layoutSettled(page, "#staff");
     expect(Math.abs((await targetOffset(page, "staff")) - settled)).toBeLessThan(2);
-    await frame(page, "/#staff");
+    await frame(page, "Meet the organisers, on the home page");
   });
 
-  test("A link to part of another page jumps, without gliding", async ({ page }) => {
+  test("Jumping to part of another page", async ({ page }) => {
+    story(
+      "More ways to get involved, at the foot of the theory of change page, opens the home page at Join PauseAI UK. It jumps straight there, rather than gliding down the page.",
+    );
     await gotoSettled(page, "/theory-of-change");
     // By name: on a phone the closed menu holds an invisible Join link to the
     // same place, which a bare href selector matches first and waits on.
@@ -192,7 +208,10 @@ test.describe("in-page scrolling", () => {
     expect([...inBetween], "scrolled through intermediate positions").toEqual([]);
   });
 
-  test("The footer's cookie link doesn't jump to the top", async ({ page }) => {
+  test("The footer's cookie link", async ({ page }) => {
+    story(
+      "Cookie settings in the footer opens the cookie banner and leaves the page where it was, not back at the top.",
+    );
     // It is an href="#": CookieConsent calls preventDefault itself, so
     // following it mustn't jump to the top.
     await gotoSettled(page);
@@ -209,7 +228,8 @@ test.describe("in-page scrolling", () => {
 });
 
 test.describe("reduced motion", () => {
-  test("Smooth scrolling is off", async ({ page }) => {
+  test("Less motion", async ({ page }) => {
+    story("For someone whose device is set to reduce motion, links within a page jump rather than glide.");
     await page.emulateMedia({ reducedMotion: "reduce" });
     await gotoSettled(page);
 
@@ -219,7 +239,10 @@ test.describe("reduced motion", () => {
 });
 
 test.describe("onboarding embed", () => {
-  test("The sign-up form shrinking doesn't move the page", async ({ page }) => {
+  test("The sign-up form getting shorter", async ({ page }) => {
+    story(
+      "Someone is reading further down the home page when the sign-up form above them gets shorter. The page doesn't scroll back up to the form.",
+    );
     // The embed brings its own top back into view when a step gets shorter.
     // A reflow before anyone has touched the form (a late font, the iOS
     // toolbar resizing the viewport) also shrinks it, and mustn't yank the

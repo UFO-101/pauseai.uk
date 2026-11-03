@@ -1,7 +1,7 @@
 import type { ConsoleMessage } from "@playwright/test";
 import { isStaffRoute } from "../../app/sitemap";
 import { ROUTES } from "../routes";
-import { BASE, expect, frame, test } from "./fixtures";
+import { BASE, expect, frame, story, test } from "./fixtures";
 import { hydrated } from "./settle";
 
 // Every public page on the site (tests/routes.ts), loaded in a real browser
@@ -102,7 +102,8 @@ for (const route of PUBLIC_ROUTES) {
   });
 }
 
-test("/blog/feed.xml: the blog's Atom feed, linked from the blog's pages", async ({ page, request }) => {
+test("/blog/feed.xml", async ({ page, request }) => {
+  story("The blog links to its feed, for feed readers. The feed lists the blog's posts.");
   await page.goto(`${BASE}/blog`);
   const link = page.locator('head link[rel="alternate"][type="application/atom+xml"]');
   await expect(link).toHaveAttribute("href", /\/blog\/feed\.xml$/);

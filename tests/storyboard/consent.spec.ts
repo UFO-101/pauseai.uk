@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { ANALYTICS_URL, BASE, expect, frame, test } from "./fixtures";
+import { ANALYTICS_URL, BASE, expect, frame, story, test } from "./fixtures";
 
 // Cookie consent across pages. The banner itself, and what each button does on
 // the page, are tested in components/layout/layout.browser.test.tsx. This file
@@ -24,18 +24,23 @@ const banner = (page: Page) => page.getByRole("dialog", { name: "Cookie consent"
 
 async function choose(page: Page, choice: "Accept" | "Decline") {
   await page.getByRole("link", { name: "Cookie settings" }).click();
-  await frame(page, "the cookie banner");
+  await frame(page, "The cookie banner");
   await banner(page).getByRole("button", { name: choice }).click();
   await expect(banner(page)).toHaveCount(0);
 }
 
-test("Decline cookies: remembered, and no analytics on a later visit", { tag: "@phone" }, async ({ page }) => {
+test("Declining cookies", { tag: "@phone" }, async ({ page }) => {
+  story("Someone opens the privacy page. They haven't chosen yet, so analytics load.");
   const requested = await analyticsRequests(page);
   await page.goto(`${BASE}/privacy`);
   await expect.poll(() => requested.length).toBeGreaterThan(0);
-  await frame(page, "the privacy page, before any choice");
+  await frame(page, "The privacy page");
+  story("They open Cookie settings at the foot of the page, and decline.");
   await choose(page, "Decline");
-  await frame(page, "declined");
+  await frame(page, "The privacy page, after declining");
+  story(
+    "Analytics stay off as they move around the site. On the next page they load, the banner doesn't come back and analytics don't load.",
+  );
 
   // Moving within the site: analytics stays switched off.
   await page.locator('a[href^="/governance"]').first().dispatchEvent("click");
@@ -47,10 +52,11 @@ test("Decline cookies: remembered, and no analytics on a later visit", { tag: "@
   await page.goto(`${BASE}/what-is-pauseai-uk`, { waitUntil: "load" });
   expect(requested).toEqual([]);
   expect(await page.evaluate((key) => localStorage.getItem(key), CONSENT_KEY)).toBe("declined");
-  await frame(page, "the next page: no banner, no analytics");
+  await frame(page, "The next page");
 });
 
-test("Decline cookies: the analytics cookies are deleted", async ({ page, context }) => {
+test("Declining clears the analytics cookies", async ({ page, context }) => {
+  story("Someone who already has Google Analytics cookies declines. By the next page, those cookies are gone.");
   await analyticsRequests(page);
   await page.goto(`${BASE}/privacy`);
   const { hostname } = new URL(page.url());
@@ -66,7 +72,10 @@ test("Decline cookies: the analytics cookies are deleted", async ({ page, contex
   expect(names.filter((n) => n.startsWith("_ga") || n === "_gid")).toEqual([]);
 });
 
-test("Accept after declining: analytics come back on", async ({ page }) => {
+test("Accepting after declining", async ({ page }) => {
+  story(
+    "Someone declined cookies on an earlier visit. Analytics stay off when they come back, until they open Cookie settings and accept.",
+  );
   await page.addInitScript((key) => {
     // Only the first visit has declined; after that the page's own choice stands.
     if (!sessionStorage.getItem("seeded")) {
@@ -79,7 +88,8 @@ test("Accept after declining: analytics come back on", async ({ page }) => {
   expect(requested).toEqual([]);
   await choose(page, "Accept");
   await expect.poll(() => requested.length).toBeGreaterThan(0);
-  await frame(page, "accepted");
+  await frame(page, "The privacy page, after accepting");
+  story("Analytics load straight away, and on the next page too.");
 
   requested.length = 0;
   await page.goto(`${BASE}/what-is-pauseai-uk`);
@@ -87,7 +97,8 @@ test("Accept after declining: analytics come back on", async ({ page }) => {
   expect(await page.evaluate((key) => localStorage.getItem(key), CONSENT_KEY)).toBe("accepted");
 });
 
-test("The tools never load analytics", async ({ page }) => {
+test("No analytics on the tools", async ({ page }) => {
+  story("Someone accepts cookies, then opens the tools pages. The tools load no analytics all the same.");
   const requested = await analyticsRequests(page);
   await page.goto(`${BASE}/privacy`);
   await choose(page, "Accept");
@@ -97,6 +108,6 @@ test("The tools never load analytics", async ({ page }) => {
     await page.goto(`${BASE}${path}`, { waitUntil: "load" });
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   }
-  await frame(page, "a tool, with analytics accepted: none loaded");
+  await frame(page, "The collateral maker");
   expect(requested).toEqual([]);
 });

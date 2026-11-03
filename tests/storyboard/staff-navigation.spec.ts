@@ -1,6 +1,6 @@
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { lockTable, syncPoliticians } from "../steps";
-import { BASE, expect, frame, test } from "./fixtures";
+import { BASE, expect, frame, story, test } from "./fixtures";
 import { PM_LETTER, staffEmail, logIn, holdNextPage, loadingLine } from "./staff-steps";
 
 // Finding your way round the staff pages: the dashboard's tiles, the sidebar
@@ -8,15 +8,14 @@ import { PM_LETTER, staffEmail, logIn, holdNextPage, loadingLine } from "./staff
 // setting a status that shows on the public campaigns. Each flow on its own
 // database.
 
-test("Fold the sidebar to icons", { tag: "@desktop-only" }, async ({ page, flowDatabase }) => {
+test("Folding the sidebar", { tag: "@desktop-only" }, async ({ page, flowDatabase }) => {
+  story("The sidebar lists the staff pages, each with its icon. A round button on its edge folds it.");
   await logIn(page, flowDatabase, ["supporters", "admin"]);
   await page.goto(`${BASE}/staff/politicians`);
   const nav = page.getByRole("navigation", { name: staffCopy.nav.title });
   await expect(nav.getByRole("link", { name: staffCopy.nav.supporters })).toBeVisible();
-  await frame(
-    page,
-    "the sidebar open: each page's icon beside its name, and a round fold button on its edge at its foot",
-  );
+  await frame(page, "The sidebar");
+  story("Folded, it's a strip of icons, each at the height it was, and the page is wider.");
 
   // Folding moves the icons sideways only: each stays at the height it was.
   const heights = () =>
@@ -26,7 +25,8 @@ test("Fold the sidebar to icons", { tag: "@desktop-only" }, async ({ page, flowD
   await expect(nav.getByRole("button", { name: staffCopy.nav.unfold })).toBeVisible();
   await expect(nav.getByRole("heading", { name: staffCopy.nav.sections.admin })).toBeHidden();
   expect(await heights()).toEqual(open);
-  await frame(page, "folded: a rail of icons, each where it was, the sections a rule apart, and the list wider");
+  await frame(page, "The sidebar, folded");
+  story("Tabbing to an icon, or hovering over it, shows the page's name beside it.");
 
   // Tabbed to, as the frame moves the mouse away: a hover shows the same. The label and the focus ring show
   // only while the page has the window's focus, which a busy run can give another page as the picture is
@@ -40,23 +40,29 @@ test("Fold the sidebar to icons", { tag: "@desktop-only" }, async ({ page, flowD
   await expect
     .poll(() => supporters.locator("[class*=label]").evaluate((l) => l.getBoundingClientRect().width))
     .toBeGreaterThan(1);
-  await frame(page, "a page's name beside its icon, tabbed to or hovered over");
+  await frame(page, "A page's name");
+  story("The next page opens with the sidebar still folded.");
 
   await nav.getByRole("link", { name: staffCopy.nav.supporters }).click();
   await expect(page).toHaveURL(`${BASE}/staff/supporters`);
   await expect(nav.getByRole("button", { name: staffCopy.nav.unfold })).toBeVisible();
-  await frame(page, "the next page, still folded");
+  await frame(page, "The next page");
+  story("The same button unfolds it.");
 
   await nav.getByRole("button", { name: staffCopy.nav.unfold }).click();
   await expect(nav.getByRole("heading", { name: staffCopy.nav.sections.admin })).toBeVisible();
 });
 
-test("Sort or search: the choice shows at once", async ({ page, flowDatabase }) => {
+test("Sorting and searching", async ({ page, flowDatabase }) => {
+  story("Staff look at the test politicians, sorted by name, A to Z.");
   // The line along the top slides while it waits; held still, so each frame of it is the same.
   await page.emulateMedia({ reducedMotion: "reduce" });
   await logIn(page, flowDatabase, ["supporters", "admin"]);
   await page.goto(`${BASE}/staff/politicians?flag=test`);
-  await frame(page, "the test politicians, by name, A to Z");
+  await frame(page, "The test politicians");
+  story(
+    "Clicking Name again turns its arrow at once. The rows stay as they were, with a line along the top, until Z to A arrives.",
+  );
 
   // A sort heading: its arrow turns at once; the rows stay as they were.
   let next = await holdNextPage(page, /sort=name&dir=desc/);
@@ -65,7 +71,8 @@ test("Sort or search: the choice shows at once", async ({ page, flowDatabase }) 
   await expect(name).toHaveAttribute("data-pending", "true");
   await expect(name).toContainText("▼");
   await expect.poll(() => loadingLine(page)).toBe(true);
-  await frame(page, "Name clicked again: its arrow turned at once, a line along the top while Z to A loads");
+  await frame(page, "Sorting Z to A");
+  story("A search shows the same line along the top while it looks.");
   await next.release();
   await expect(page).toHaveURL(/sort=name&dir=desc/);
   await expect.poll(() => loadingLine(page)).toBe(false);
@@ -75,14 +82,18 @@ test("Sort or search: the choice shows at once", async ({ page, flowDatabase }) 
   await page.getByRole("searchbox").fill("Testy");
   await page.getByRole("button", { name: staffCopy.search }).click();
   await expect.poll(() => loadingLine(page)).toBe(true);
-  await frame(page, "a search sent: the list as it was, a line along the top while it looks");
+  await frame(page, "Searching");
+  story("Then what it found.");
   await next.release();
   await expect(page).toHaveURL(/q=Testy/);
   await expect(page.getByRole("table").getByRole("row")).toHaveCount(2);
-  await frame(page, "what the search found");
+  await frame(page, "The search's results");
 });
 
-test("Click a sidebar link: it's marked at once", async ({ page, flowDatabase }) => {
+test("Following a sidebar link", async ({ page, flowDatabase }) => {
+  story(
+    "Staff click Asks in the sidebar (on a phone, in the menu). The page is slow to come, so Asks is marked at once, and a line along the top shows it's on its way.",
+  );
   await page.emulateMedia({ reducedMotion: "reduce" });
   await logIn(page, flowDatabase, ["supporters", "admin"]);
   await page.goto(`${BASE}/staff/politicians`);
@@ -98,13 +109,17 @@ test("Click a sidebar link: it's marked at once", async ({ page, flowDatabase })
   await expect(asks.filter({ visible: true })).toHaveAttribute("data-pending", "true");
   await expect(page.getByRole("heading", { level: 1, name: staffCopy.politicians.title })).toBeVisible();
   await expect.poll(() => loadingLine(page)).toBe(true);
-  await frame(page, "Asks clicked: marked in the sidebar at once, the politicians still there, a line along the top");
+  await frame(page, "Asks, on its way");
+  story("Then the Asks page arrives.");
   await release();
   await expect(page.getByRole("heading", { level: 1, name: staffCopy.asks.title })).toBeVisible();
-  await frame(page, "the Asks page arrived");
+  await frame(page, "The Asks page");
 });
 
-test("The MPs signed tile: who signed, then everyone", async ({ page, request, flowDatabase }) => {
+test("The MPs signed tile", async ({ page, request, flowDatabase }) => {
+  story(
+    "An admin records that Polly Placeholder signed the Frontier AI letter to the Prime Minister. The dashboard's MPs signed tile counts her.",
+  );
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase, ["admin"]);
   await page.goto(`${BASE}/staff/politicians`);
@@ -123,10 +138,14 @@ test("The MPs signed tile: who signed, then everyone", async ({ page, request, f
   // One signed this week: the tile is their page.
   await page.goto(`${BASE}/staff`);
   const tile = page.getByRole("link").filter({ hasText: staffCopy.home.dashboard.metrics.mpsSigned(1) });
-  await frame(page, "the home: one MP signed this week");
+  await frame(page, "The dashboard");
+  story("With one MP signed, the tile leads to her page.");
   await tile.click();
   await expect(page.getByRole("heading", { level: 1, name: "Polly Placeholder" })).toBeVisible();
-  await frame(page, "the tile leads to her page");
+  await frame(page, "Polly Placeholder's page");
+  story(
+    "Importing ControlAI's letter records another signature. Now the tile leads to the politicians list of everyone who signed anything, the latest recorded first.",
+  );
 
   // ControlAI's letter adds several: the tile is everyone who signed anything, the latest recorded first.
   await page.goto(`${BASE}/staff/import-data/controlai`);
@@ -143,10 +162,11 @@ test("The MPs signed tile: who signed, then everyone", async ({ page, request, f
   ).toBeVisible();
   await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toHaveCount(0);
-  await frame(page, "everyone who signed anything, the latest recorded first: the import just recorded the peer's");
+  await frame(page, "Everyone who signed");
 });
 
-test("Open a politician's page and sort the list", async ({ page, request, flowDatabase }) => {
+test("A politician's page", async ({ page, request, flowDatabase }) => {
+  story("Staff open the test MP's page. It's marked as a test MP, says what they are, and has no history yet.");
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/politicians?flag=test`);
@@ -159,7 +179,10 @@ test("Open a politician's page and sort the list", async ({ page, request, flowD
   ).toBeVisible();
   await expect(page.getByText(staffCopy.politician.sources.test)).toBeVisible();
   await expect(page.getByText(staffCopy.politician.noHistory)).toBeVisible();
-  await frame(page, "the test MP's page");
+  await frame(page, "The test MP's page");
+  story(
+    "The link above their name goes back to the politicians list. Clicking Constituency twice sorts the list by constituency, Z to A.",
+  );
 
   // The way back, above the name; then the list sorted by a heading, and reversed.
   await page.getByRole("navigation", { name: staffCopy.nav.politicians }).getByRole("link").click();
@@ -168,10 +191,11 @@ test("Open a politician's page and sort the list", async ({ page, request, flowD
   await expect(page).toHaveURL(/sort=constituency&dir=asc/);
   await page.getByRole("link", { name: staffCopy.fields.constituency }).click();
   await expect(page).toHaveURL(/sort=constituency&dir=desc/);
-  await frame(page, "the politicians sorted by constituency, reversed");
+  await frame(page, "The politicians, by constituency");
 });
 
-test("Log in, set an MP's status, see it on /campaigns, log out", async ({ page, request, flowDatabase }) => {
+test("An MP signs, and /campaigns shows it", async ({ page, request, flowDatabase }) => {
+  story("An admin logs in, and lands on the dashboard.");
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase, ["admin"]);
   // Logging in lands on the home page: the dashboard, with this admin's permission under their address in the sidebar.
@@ -179,7 +203,8 @@ test("Log in, set an MP's status, see it on /campaigns, log out", async ({ page,
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.home.title);
   await expect(page.getByText(staffEmail()).first()).toBeAttached();
   await expect(page.getByRole("heading", { level: 2, name: staffCopy.home.dashboard.sections.mps })).toBeVisible();
-  await frame(page, "the staff home, just logged in as an admin");
+  await frame(page, "The dashboard");
+  story("They open Politicians from the sidebar (on a phone, from the menu). The test politicians are left out.");
 
   // The pages are in the sidebar; on a phone, behind the bar's menu.
   const politicians = page.getByRole("link", { name: staffCopy.nav.politicians });
@@ -189,13 +214,15 @@ test("Log in, set an MP's status, see it on /campaigns, log out", async ({ page,
   // The test politicians are left out until the Marked filter asks for them.
   await expect(page.getByRole("link", { name: "Polly Placeholder" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toHaveCount(0);
-  await frame(page, "the politicians list");
+  await frame(page, "The politicians list");
+  story("Polly Placeholder's page shows the asks she has answered beside her details.");
 
   // Signed on their page, in the ask's row of the panel beside their details, with a note.
   await page.getByRole("link", { name: "Polly Placeholder" }).click();
   const card = page.getByRole("group", { name: PM_LETTER });
   await expect(card).toHaveCount(0);
-  await frame(page, "Polly Placeholder's page: the asks she's answered beside her details");
+  await frame(page, "Polly Placeholder's page");
+  story("Add another answer opens a form for the Frontier AI letter. They choose Signed, with a note of how we know.");
   await page.getByRole("button", { name: staffCopy.politician.otherAsk }).click();
   await page
     .getByRole("list", { name: staffCopy.politician.otherAsk })
@@ -203,46 +230,54 @@ test("Log in, set an MP's status, see it on /campaigns, log out", async ({ page,
     .click();
   await card.getByRole("radio", { name: staffCopy.statuses.signed }).click();
   await card.getByLabel(staffCopy.politician.note).fill("Told us at the march");
-  await frame(page, "Add another answer: the letter's form, Signed chosen, with a note of how we know");
+  await frame(page, "The answer's form");
+  story("Saved, her page shows she signed, with the note.");
   await card.getByRole("button", { name: staffCopy.politician.save }).click();
   await expect(card.locator("[class*=answer]")).toHaveText(new RegExp(`^${staffCopy.statuses.signed}`));
   await expect(card.getByText(/Told us at the march/)).toBeVisible();
-  await frame(page, "Polly Placeholder marked as signed");
+  await frame(page, "Polly Placeholder, signed");
+  story("The politicians list shows it too.");
   await page.getByRole("link", { name: staffCopy.nav.politicians }).first().click();
   const pollyRow = page.getByRole("row").filter({ hasText: "Polly Placeholder" });
   await expect(pollyRow).toContainText(PM_LETTER);
   await expect(pollyRow.getByRole("button")).toHaveCount(0);
-  await frame(page, "the list shows it, with no buttons");
+  await frame(page, "The politicians list, with her signature");
+  story("The campaign page lists her among the signatories.");
 
   const signed = await (await request.get(`${BASE}/api/signatories`)).json();
   expect(signed).toContainEqual(expect.objectContaining({ name: "Polly Placeholder", house: "commons" }));
   await page.goto(`${BASE}/campaigns`);
   await expect(page.locator("#signatories").getByText("Polly Placeholder")).toBeVisible();
-  await frame(page, "/campaigns lists the new signatory");
+  await frame(page, "/campaigns");
+  story("The audit log records the change. Its {} button shows what was logged.");
 
   await page.goto(`${BASE}/staff/audit-log`);
   await expect(page.getByRole("cell", { name: "set status" }).first()).toBeVisible();
-  await frame(page, "the audit log");
+  await frame(page, "The audit log");
   await page.getByRole("button", { name: staffCopy.changes.json }).first().click();
   await expect(page.locator(":popover-open")).toBeVisible();
-  await frame(page, "an entry's {}: what it logged, as JSON, in a bubble by the button", { window: true });
+  await frame(page, "What was logged", { window: true });
   await page.keyboard.press("Escape");
 
   // The import page: a card per job; each opens the job's own page.
+  story("The Import data page has a card for each import.");
   await page.goto(`${BASE}/staff/import-data`);
-  await frame(page, "the import page");
+  await frame(page, "The Import data page");
+  story("ControlAI's import reads the signatures on their letter, which Polly Placeholder has signed.");
   await page.getByRole("link", { name: jobTitles["import-controlai"] }).click();
   await expect(page).toHaveURL(`${BASE}/staff/import-data/controlai`);
 
   // The fixture ControlAI letter is signed by Polly Placeholder MP, so the bill's column says so.
   await page.getByRole("button", { name: staffCopy.controlAi.importNow }).click();
   await expect(page.getByText(/6 names/)).toBeVisible();
-  await frame(page, "ControlAI's letter imported");
+  await frame(page, "ControlAI's letter, imported");
+  story("The politicians list says she signed ControlAI's campaign statement.");
   await page.goto(`${BASE}/staff/politicians`);
   await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toContainText(
     "ControlAI's campaign statement",
   );
-  await frame(page, "the politicians list says who signed ControlAI's letter");
+  await frame(page, "The politicians list, with ControlAI's letter");
+  story("The MP check finds Polly Placeholder has an email in Airtable that Parliament doesn't list.");
 
   // The fixture Airtable gives Polly Placeholder an email Parliament doesn't list.
   await page.goto(`${BASE}/staff/import-data/mp-check`);
@@ -250,17 +285,18 @@ test("Log in, set an MP's status, see it on /campaigns, log out", async ({ page,
   const blake = page.getByRole("row").filter({ hasText: "Cities of London and Westminster" });
   await expect(blake).toContainText(staffCopy.check.kinds.email);
   await expect(blake).toContainText("polly.placeholder.mp@parliament.uk");
-  await frame(page, "the MP check found a differing email");
+  await frame(page, "The MP check");
+  story("They log out (on a phone, from the menu), and the staff pages ask them to log in again.");
 
   // On a phone the navigation and Log out are behind the bar's menu.
   const logout = page.getByRole("button", { name: staffCopy.nav.logout });
   if (!(await logout.first().isVisible())) {
     await page.locator("nav details > summary").click();
-    await frame(page, "the staff menu open");
+    await frame(page, "The staff menu");
   }
   await logout.filter({ visible: true }).click();
   await expect(page).toHaveURL(`${BASE}/staff/login`);
-  await frame(page, "logged out");
+  await frame(page, "The login page");
   await page.goto(`${BASE}/staff`);
   await expect(page).toHaveURL(`${BASE}/staff/login`);
 });

@@ -2,7 +2,7 @@ import type { Page } from "@playwright/test";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { runSql } from "@/scripts/fresh-database.mjs";
 import { addStaffAccount, logInAsStaff, newestEmail, syncPoliticians } from "../steps";
-import { BASE, emailFrame, expect, frame, test } from "./fixtures";
+import { BASE, emailFrame, expect, frame, story, test } from "./fixtures";
 import { stayOnPage } from "./staff-steps";
 
 // Mailings to politicians written on the site: started from New mailing,
@@ -68,7 +68,8 @@ function addMailing(database: string, title: string, state: string, statuses: st
   return id;
 }
 
-test("Write a new mailing, save it, preview it and send yourself a test", async ({ page, request, flowDatabase }) => {
+test("A new mailing", async ({ page, request, flowDatabase }) => {
+  story("Staff connect their Gmail on their account page, so there's one to send from, then open the mailings page.");
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   // Your Gmail connected, on your account page, so there's one to send from.
@@ -76,7 +77,10 @@ test("Write a new mailing, save it, preview it and send yourself a test", async 
   await page.getByRole("link", { name: staffCopy.gmail.connect }).click();
   await expect(page.getByText(staffCopy.gmail.outcomes.connected)).toBeVisible();
   await page.goto(`${BASE}/staff/mailings`);
-  await frame(page, "the mailings, with New mailing at the top right");
+  await frame(page, "The mailings page");
+  story(
+    "New mailing opens the politicians list, to choose who it's for. Down the list, what they're doing stays at the top of the window, and the way on at the foot.",
+  );
 
   await page.getByRole("link", { name: copy.newTitle }).click();
   await expect(page.getByText(copy.choosingNew)).toBeVisible();
@@ -84,25 +88,26 @@ test("Write a new mailing, save it, preview it and send yourself a test", async 
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
   // Down the list, what's being done stays at the top, and the way on at the foot.
   await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
-  await frame(page, "every politician, scrolled down: the strip held at the top, the bar at the foot", {
+  await frame(page, "Every politician, scrolled down", {
     window: true,
   });
+  story("They choose the Scottish Parliament. The bar at the foot says how many that is, with Write to this one.");
   await page.getByRole("link", { name: staffCopy.houses["scottish-parliament"] }).click();
   await expect(page).toHaveURL(/house=scottish-parliament/);
   const bar = page.getByRole("region", { name: copy.choosingCount(1) });
   await expect(bar).toBeVisible();
-  await frame(
-    page,
-    "the politicians list, choosing who it's for: what to do at the top, and at the foot how many, with Write to these",
-    {
-      window: true,
-    },
-  );
+  await frame(page, "The politicians list, filtered", {
+    window: true,
+  });
+  story("Write to this one opens a new mailing to them. Nothing is saved yet.");
 
   await bar.getByRole("link", { name: copy.writeToThese(1) }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.newTitle);
   await expect(page.getByRole("status").first()).toHaveText("");
-  await frame(page, "a new mailing to them: who, write, preview, sent from, when and send; nothing saved yet");
+  await frame(page, "The new mailing");
+  story(
+    "They write a subject, and a line under the greeting. The mailing is saved as a draft, and the preview shows the email as Morag Example will get it.",
+  );
 
   await page.getByLabel(copy.subject).fill("Edinburgh: one week to go");
   // The letter starts with its greeting; the rest is written under it.
@@ -117,20 +122,18 @@ test("Write a new mailing, save it, preview it and send yourself a test", async 
   await expect(preview.getByText("We hope to see you there.")).toBeVisible();
   await expect(preview.getByText("Dear Ms Example,")).toBeVisible();
   await preview.getByRole("button", { name: copy.sendTest }).scrollIntoViewIfNeeded();
-  await frame(
-    page,
-    "written under the greeting, saved as a draft, and the preview filled in, to send a test to yourself",
-    {
-      window: true,
-    },
-  );
+  await frame(page, "The draft and its preview", {
+    window: true,
+  });
+  story("Send test sends them a copy, as Morag would get it.");
 
   await preview.getByRole("button", { name: copy.sendTest }).click();
   await expect(preview.getByText(copy.testSent(staffEmail()))).toBeVisible();
   const email = newestEmail((one) => one.To === `"Morag Example" <${staffEmail()}>`)!;
   expect(email.Subject).toBe("Edinburgh: one week to go");
   expect(email.TextBody).toBe("Dear Ms Example,\n\nWe hope to see you there.");
-  await emailFrame(page, email, "the test copy, as Morag would get it, sent to yourself");
+  await emailFrame(page, email, "The test copy");
+  story("Reloaded, the draft is as they left it, to go from their Gmail.");
 
   // Reopened, it's the draft as it was.
   await page.reload();
@@ -138,7 +141,10 @@ test("Write a new mailing, save it, preview it and send yourself a test", async 
   await expect(page.getByLabel(copy.fromLegend, { exact: false })).toHaveValue(staffEmail());
 });
 
-test("Change who a draft goes to, then delete it", async ({ page, request, flowDatabase }) => {
+test("Changing and deleting a draft", async ({ page, request, flowDatabase }) => {
+  story(
+    "Staff start a draft to every politician in office, then press Change who. The draft is saved, and the button waits while the politicians list comes.",
+  );
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   await startDraft(page, "Lords only");
@@ -147,9 +153,12 @@ test("Change who a draft goes to, then delete it", async ({ page, request, flowD
   const changeWho = page.getByRole("link", { name: copy.changeWho });
   await changeWho.click();
   await expect(changeWho.locator("[aria-hidden]")).toBeVisible();
-  await frame(page, "Change who pressed: the draft saved, the button greyed with a spinner while the list comes", {
+  await frame(page, "Change who, waiting", {
     window: true,
   });
+  story(
+    "The list names the draft at the top. They choose the Lords, and the bar's button uses them for the draft instead.",
+  );
   await page.goto(await list.asked());
   await expect(page).toHaveURL(/mailing=\d+/);
   await expect(page.getByText(copy.choosingDraft("Lords only"))).toBeVisible();
@@ -157,29 +166,29 @@ test("Change who a draft goes to, then delete it", async ({ page, request, flowD
   await expect(page).toHaveURL(/house=lords/);
   const use = page.getByRole("button", { name: copy.useThese(1) });
   await expect(use).toBeVisible();
-  await frame(
-    page,
-    "back on the list, choosing for the draft, named at the top: the bar's button makes it go to these instead",
-    {
-      window: true,
-    },
-  );
+  await frame(page, "The politicians list, for the draft", {
+    window: true,
+  });
+  story("The draft now goes to the Lords.");
 
   await use.click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Lords only");
   await expect(page.getByRole("list", { name: copy.whoLabel })).toContainText(staffCopy.houses.lords);
-  await frame(page, "the draft, now to the Lords");
+  await frame(page, "The draft");
+  story("Delete draft asks to be pressed again.");
 
   await page.getByRole("button", { name: copy.deleteDraft }).click();
   await expect(page.getByRole("button", { name: staffCopy.deleteIt })).toBeFocused();
-  await frame(page, "Delete draft turns red, asking to be pressed again", { window: true });
+  await frame(page, "Delete draft, pressed once", { window: true });
+  story("Pressed again, the draft is deleted, and gone from the mailings page.");
   await page.getByRole("button", { name: staffCopy.deleteIt }).click();
   await expect(page).toHaveURL(`${BASE}/staff/mailings`);
   await expect(page.getByRole("link", { name: "Lords only" })).toHaveCount(0);
-  await frame(page, "the mailings, with the draft gone");
+  await frame(page, "The mailings page");
 });
 
-test("Reschedule a mailing, then unschedule it", async ({ page, request, flowDatabase }) => {
+test("Rescheduling a mailing", async ({ page, request, flowDatabase }) => {
+  story("A mailing is scheduled for 30 October. The mailings page shows it coming up, with when it goes.");
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   const id = addMailing(flowDatabase, "Edinburgh reminder", "scheduled", ["scheduled", "scheduled", "scheduled"]);
@@ -188,22 +197,26 @@ test("Reschedule a mailing, then unschedule it", async ({ page, request, flowDat
   await expect(page.getByRole("listitem").filter({ hasText: "Edinburgh reminder" })).toContainText(
     copy.states.scheduled,
   );
-  await frame(page, "the mailings: one coming up, when it goes in blue, over those sent, each a box of counts");
+  await frame(page, "The mailings page");
+  story("Its page says when it sends, and to whom.");
 
   await page.getByRole("link", { name: "Edinburgh reminder" }).click();
   await expect(page.getByText(copy.sends("Fri 30 Oct at 09:18"))).toBeVisible();
-  await frame(page, "scheduled: when it sends, and to whom");
+  await frame(page, "The scheduled mailing");
+  story("Change the time opens a calendar to choose another day.");
 
   await page.getByRole("button", { name: copy.changeTime }).click();
   await page.getByRole("button", { name: copy.day }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
-  await frame(page, "the day's calendar: the weeks running on into November, where it starts marked", { window: true });
+  await frame(page, "The calendar", { window: true });
+  story("They choose Monday 2 November, and the 14:00 hour, in London's time.");
   await page
     .getByRole("dialog")
     .getByRole("button", { name: /^Monday 2 November 2026/ })
     .click();
   await page.getByLabel(copy.hour, { exact: false }).selectOption("14");
-  await frame(page, "a new day and time, in London's hours, each saying when it sends", { window: true });
+  await frame(page, "A new day and hour", { window: true });
+  story("Change it saves the new time. Then Unschedule makes the mailing a draft again, to change and schedule later.");
   await page.getByRole("button", { name: copy.saveTime }).click();
   await expect(page.getByText(copy.sends("Mon 2 Nov at 14:18"))).toBeVisible();
 
@@ -216,39 +229,42 @@ test("Reschedule a mailing, then unschedule it", async ({ page, request, flowDat
   // The bar with the title at the top of the window goes once the title is back in view, which
   // the page learns a frame or two after the scroll (MailingWriter's IntersectionObserver).
   await expect(page.locator("[data-shown]")).toHaveCount(0);
-  await frame(page, "unscheduled: a draft again, to change and schedule again");
+  await frame(page, "The draft");
 });
 
-test("A mailing sending, and one sent with bounces", async ({ page, request, flowDatabase }) => {
+test("Sending and sent", async ({ page, request, flowDatabase }) => {
+  story("A mailing is part-way through sending. Its page shows how far it's got, with Stop sending.");
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   const sending = addMailing(flowDatabase, "Going out now", "sending", ["sent", "scheduled", "scheduled"]);
   await page.goto(`${BASE}/staff/mailings/${sending}`);
   await expect(page.getByText(copy.sendingBar(1, 3))).toBeVisible();
-  await frame(page, "sending: how far it's got, in blue, with Stop sending");
+  await frame(page, "A mailing sending");
+  story("Another mailing has been sent. Of its four letters, two failed: one bounced, and one was skipped.");
 
   const sent = addMailing(flowDatabase, "Edinburgh follow-up", "sent", ["sent", "bounced", "skipped", "sent"]);
   await page.goto(`${BASE}/staff/mailings/${sent}`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Edinburgh follow-up");
   await expect(page.getByRole("link", { name: `2 ${copy.counts.failed}` })).toBeVisible();
-  await frame(page, "sent: its band of counts, then the email beside its recipients");
+  await frame(page, "The sent mailing");
+  story("The failed count shows only those two, and pressed again goes back to everyone.");
 
   await page.getByRole("link", { name: `2 ${copy.counts.failed}` }).click();
   await expect(page.getByRole("row")).toHaveCount(3);
-  await frame(page, "only the two that failed, skipped and bounced, its count marked, with the way back to everyone");
+  await frame(page, "The two that failed");
+  story("Each recipient links to their letter's page, under the mailing's.");
 
   // Each recipient leads to their letter's own page, under the mailing, back to which it goes.
   await page.getByRole("table").getByRole("link", { name: copy.theLetter }).click();
   await expect(page).toHaveURL(new RegExp(`/staff/mailings/${sent}/letters/\\d+$`));
   await expect(page.getByRole("navigation").getByRole("link", { name: "Edinburgh follow-up" })).toBeVisible();
-  await frame(page, "the letter that bounced: its status in red, the letter, and its history beside it");
+  await frame(page, "A failed letter's page");
 });
 
-test("A mailing stopped part-way: why each letter failed, and those never sent", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("A stopped mailing", async ({ page, request, flowDatabase }) => {
+  story(
+    "A mailing was stopped part-way through. On the mailings page, its counts show one sent, four failed and one stopped.",
+  );
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   addMailing(
@@ -263,33 +279,38 @@ test("A mailing stopped part-way: why each letter failed, and those never sent",
   const row = page.getByRole("listitem").filter({ hasText: "Briefing on the bill" });
   await expect(row).toContainText(copy.counts.stopped);
   await row.scrollIntoViewIfNeeded();
-  await frame(page, "in the list: one sent, four failed, one stopped", { window: true });
+  await frame(page, "The stopped mailing, on the mailings page", { window: true });
+  story(
+    "On its page, the failed count shows why each of the four failed: one politician left office, one has no address, one address is blocked, and Gmail refused one.",
+  );
 
   await row.getByRole("link", { name: "Briefing on the bill", exact: true }).click();
   await page.getByRole("link", { name: `4 ${copy.counts.failed}` }).click();
   await expect(page.getByRole("row")).toHaveCount(5);
-  await frame(page, "the four that failed: left office, no address, address blocked, and the one Gmail refused");
+  await frame(page, "The four that failed");
+  story("The stopped count shows the one never sent, as the mailing was stopped first.");
 
   await page.getByRole("link", { name: `1 ${copy.counts.stopped}` }).click();
   await expect(page.getByRole("row")).toHaveCount(2);
-  await frame(page, "the one never sent, as the mailing was stopped first");
+  await frame(page, "The one never sent");
+  story("Pressed again, the count is no longer chosen, and everyone shows.");
 
   // Pressed again, the count shows everyone.
   await page.getByRole("link", { name: `1 ${copy.counts.stopped}` }).click();
   await expect(page).toHaveURL(/\/staff\/mailings\/\d+$/);
   await expect(page.getByRole("row")).toHaveCount(7);
-  await frame(page, "stopped pressed again: everyone, none of the counts chosen");
+  await frame(page, "Everyone");
+  story("The sent count shows the one letter that went.");
 
   await page.getByRole("link", { name: `1 ${copy.counts.sent}` }).click();
   await expect(page.getByRole("row")).toHaveCount(2);
-  await frame(page, "sent: only the one that arrived");
+  await frame(page, "The one sent");
 });
 
-test("Send a mailing from a connected Gmail: schedule it, and the hourly job sends it", async ({
-  page,
-  request,
-  flowDatabase,
-}) => {
+test("Sending from your Gmail", async ({ page, request, flowDatabase }) => {
+  story(
+    "Staff start a mailing to a politician in Scotland. No Gmail is connected, so Sent from says nothing can be sent, with a link to add theirs.",
+  );
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   // With no Gmail connected, a mailing can't be sent, and Sent from says where to connect one.
@@ -297,7 +318,10 @@ test("Send a mailing from a connected Gmail: schedule it, and the hourly job sen
   await page.getByRole("link", { name: copy.mailThese(1) }).click();
   const from = page.getByRole("region", { name: copy.sections.from });
   await expect(from.getByText(copy.noSenders)).toBeVisible();
-  await frame(page, "Sent from, with no Gmail connected: where to connect one");
+  await frame(page, "Sent from, with no Gmail");
+  story(
+    "They connect their Gmail on their account page, and start the mailing again. It's sent from their Gmail, under its name, and says how many of today's 1,800 emails it has sent.",
+  );
 
   // Connected on your account page, it's the one a new mailing is sent from.
   await from.getByRole("link", { name: copy.connectOne }).click();
@@ -317,9 +341,10 @@ test("Send a mailing from a connected Gmail: schedule it, and the hourly job sen
   await expect(from.getByRole("link", { name: copy.connectOne })).toHaveCount(0);
   await expect(page.getByLabel(copy.fromNameLabel, { exact: false })).not.toHaveValue("");
   await from.scrollIntoViewIfNeeded();
-  await frame(page, "Sent from your connected Gmail, its name filled in, and how many it has sent of today's 1,800", {
+  await frame(page, "Sent from their Gmail", {
     window: true,
   });
+  story("They give it a name of its own in place of the Gmail's. The preview's From line shows it.");
 
   // A name of its own, in place of the Gmail's, shown in the preview's From line.
   await page.getByLabel(copy.fromNameLabel, { exact: false }).fill("Sam Example, PauseAI UK");
@@ -330,12 +355,14 @@ test("Send a mailing from a connected Gmail: schedule it, and the hourly job sen
   const preview = page.getByRole("region", { name: copy.sections.preview });
   await expect(preview.getByText(`Sam Example, PauseAI UK <${staffEmail()}>`)).toBeVisible();
   await from.scrollIntoViewIfNeeded();
-  await frame(page, "Sent from a name of its own, in place of the Gmail's", { window: true });
+  await frame(page, "Sent from, with a name of its own", { window: true });
+  story("They schedule it for the 14:00 hour. It will send at 14:18.");
 
   await page.getByLabel(copy.hour, { exact: false }).selectOption("14");
   await page.getByRole("button", { name: copy.schedule(1) }).click();
   await expect(page.getByText(copy.sends("Fri 16 Oct at 14:18"))).toBeVisible();
-  await frame(page, "scheduled for 14:18, from your Gmail");
+  await frame(page, "The scheduled mailing");
+  story("When its time comes, the hourly job sends it from their Gmail.");
 
   // Its time come, the hourly job starts it and sends it.
   const [id] = runSql(flowDatabase, "SELECT id FROM mailings WHERE title = 'See you in Edinburgh'");
@@ -346,25 +373,33 @@ test("Send a mailing from a connected Gmail: schedule it, and the hourly job sen
   expect(await sent.json()).toMatchObject({ started: [Number(id)], sent: 1, left: 0 });
   const letter = newestEmail((one) => one.To === '"Morag Example" <morag.example.msp@parliament.example>')!;
   expect(letter.From).toBe(`"Sam Example, PauseAI UK" <${staffEmail()}>`);
-  await emailFrame(page, letter, "the letter as Morag got it, from your Gmail");
+  await emailFrame(page, letter, "The email Morag gets");
+  story("The mailing's page shows it sent, to its one recipient.");
 
   await page.reload();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("See you in Edinburgh");
   await expect(page.getByText(copy.sends("Fri 16 Oct at 14:18"))).not.toBeVisible();
-  await frame(page, "sent: its counts and its one recipient");
+  await frame(page, "The sent mailing");
+  story("Morag's letter's page shows it as it went, with no replies yet.");
 
   await page
     .getByRole("row", { name: /Morag Example/ })
     .getByRole("link", { name: copy.theLetter })
     .click();
-  await frame(page, "the letter as it went, with Copy Gmail search, and no replies yet");
+  await frame(page, "Morag's letter");
+  story(
+    "Copy Gmail search copies a search that finds the letter in Gmail, and says to paste it in an inbox that can see their mail.",
+  );
 
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
   // Copy Gmail search copies the search for it by its Message-ID, and says to paste it where your mail is.
   await page.getByRole("button", { name: staffCopy.findInGmail.copy }).click();
   await expect(page.getByRole("status")).toContainText(staffCopy.findInGmail.where(staffEmail()));
   expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/^rfc822msgid:\S+$/);
-  await frame(page, "copied: paste it in Gmail search where you can see your mail");
+  await frame(page, "The search copied");
+  story(
+    "Morag replies. Within the hour their Gmail is read, and her reply shows under the letter, without the letter she quotes.",
+  );
 
   // Morag answers, and the hourly read of your Gmail keeps her reply (tests/fixtures/letter-replies/).
   const letterId = page.url().split("/").at(-1);
@@ -379,5 +414,5 @@ test("Send a mailing from a connected Gmail: schedule it, and the hourly job sen
   await expect(page.getByText("I look", { exact: false })).toBeVisible();
   // Without the letter she quotes, which is above it already.
   await expect(page.getByText("We'd love to see you", { exact: false })).toHaveCount(0);
-  await frame(page, "her reply, under the letter, without the letter it quotes");
+  await frame(page, "Morag's reply");
 });
