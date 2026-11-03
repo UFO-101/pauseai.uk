@@ -2,23 +2,25 @@
 
 Mailings to supporters by text, on the staff pages in
 `plans/mailings.md`. A mailing is by email or by text. A text is sent
-by one of two backends: WhatsApp if the number is on it, SMS if not.
-Three pull requests:
+by WhatsApp, and perhaps later by SMS to numbers not on WhatsApp.
+Two pull requests, and an optional third:
 
 1. Groundwork: consent, opt-outs and replies.
 2. The WhatsApp backend, which comes next.
-3. The SMS backend, for numbers not on WhatsApp.
+3. Optional: an SMS backend, for numbers not on WhatsApp.
 
 ## Now
 
 - We have about 750 numbers. Roughly 470 are volunteers' from the join
   form, Tally-era ones included, and allow calls and texts. Roughly 320
   are from Luma, nearly all from the November march and PauseCon 2025,
-  and allow texts only. A handful are from our march form, live since
-  28 October.
+  and allow texts only. More come from our march form, live since
+  28 October, whose box allows calls and texts.
 - `contact_permission()` answers for numbers, and `TOPIC_WAYS` in
   `lib/contact-permissions.ts` says which ways each topic allows: calls,
-  texts or both.
+  texts or both. A member's number since 30 June 2026 with no volunteering
+  intent is unsure.
+- `opt_outs` takes numbers, but only from Luma.
 - The site doesn't send texts. Our giffgaff number has the WhatsApp Business
   app on Reuben's phone, but its broadcast lists only reach people who
   have saved the number, so we need the API.
@@ -63,7 +65,7 @@ Blocking or reporting us in WhatsApp isn't reported to us. Messages to
 that person stop being delivered, and a number never delivered to is
 skipped after a few tries, as one not on WhatsApp is.
 
-Each stop is a row in `opt_outs` with its source (`whatsapp-webhook`,
+Each stop is a row in `opt_outs` with a new source (`whatsapp-webhook`,
 `sms-provider`, `reply` or `staff`), so `contact_permission()` says no
 for every topic from then on and `contact_unsubscribes` lists it. It's
 kept after erasure. A resume in WhatsApp's settings closes the stop it
@@ -94,14 +96,15 @@ and event messages.
 
 1. Each message in a text mailing records which backend sent it.
    `mailings.channel` loses `whatsapp`, leaving `email` and `text`.
-2. Opt-ins: the box on Email your MP and our other forms; the Luma
-   checkbox, which the import reads as it reads the postcode question;
-   and staff recording a yes given elsewhere, with how it was given.
+2. Opt-ins: the Luma checkbox, which the import reads as it reads the
+   postcode question; and staff recording a yes given elsewhere, with
+   how it was given. Our forms' box already counts for a number they
+   ask (`site-forms`); Email your MP asks for none.
 3. Opt-outs, as above, including staff recording one by hand.
 4. Mark a number that isn't a mobile, or isn't on WhatsApp, and skip it
    from then on.
-5. A new source for `volunteering`. Global's new join form won't ask
-   intent, so a new member's number is unsure (open question 7).
+5. A new source for `volunteering`, as a new member's number is unsure
+   (open question 7).
 6. Replies, in a new `message_replies` table with the message each
    answers, shown on the supporter's page with a reply box. Anyone with
    the `supporters` permission can reply, and each reply records who
@@ -152,7 +155,7 @@ An easy Stop button means people stop rather than block us.
    mailing can't be scheduled sooner. The site reads the status back
    hourly and by webhook, and a template Meta pauses stops its mailing
    ([templates](https://developers.facebook.com/documentation/business-messaging/whatsapp/templates/overview)).
-   Until the SMS backend is built, a text mailing skips numbers not on
+   Without an SMS backend, a text mailing skips numbers not on
    WhatsApp.
 3. A webhook at `/api/whatsapp`, which checks `X-Hub-Signature-256`
    ([webhooks](https://developers.facebook.com/documentation/business-messaging/whatsapp/webhooks/create-webhook-endpoint.md))
@@ -170,16 +173,16 @@ An easy Stop button means people stop rather than block us.
    at no charge, and after that only with a template
    ([pricing](https://developers.facebook.com/docs/whatsapp/pricing)).
 
-## 3. The SMS backend
+## 3. Optional: an SMS backend
 
-1. An SMS provider in `lib/server/outside-services/`, with a fake for
-   tests, sending from a real UK number so people can reply.
-2. A text mailing's words go as they are to numbers not on WhatsApp,
-   ending with how to stop, such as "Reply STOP to stop". The new
-   message page counts 160-character segments, as each is charged.
-3. The provider's webhook records deliveries and failures, STOP as a
-   stop, and other replies.
-4. Staff can reply at any time, each reply charged as an SMS.
+Only if WhatsApp leaves too many numbers out. An SMS provider would send
+a text mailing's words as they are to numbers not on WhatsApp, from a
+real UK number so people can reply, ending with how to stop, such as
+"Reply STOP to stop". Each 160-character segment is charged, and so is
+each reply staff send.
+
+Its webhook would record deliveries, failures, STOP as a stop, and other
+replies, as WhatsApp's does.
 
 ## Calls
 

@@ -8,8 +8,8 @@ messages to supporters, by email or text, built on those for
 politicians. Sending by each channel has its own plan:
 
 - `plans/supporters-email.md`: email.
-- `plans/supporters-phone.md`: text, sent by WhatsApp if the number is
-  on it and by SMS if not. Staff choose text, never the backend.
+- `plans/supporters-phone.md`: text, sent by WhatsApp. Staff choose
+  text, never the backend.
 
 This is one pull request, designed first as mock-ups on the real staff
 components, as the politicians' pages were.
@@ -18,10 +18,10 @@ components, as the politicians' pages were.
 
 - Only accounts with the `supporters` permission see them.
 - Supporters are messaged only from a list filtered by a Contact filter
-  answered "Can email" or "Can text" for one topic, and that filter sets
-  the mailing's channel and topic. "Not sure" isn't enough, so members
-  can't be emailed PauseAI updates until we can read CiviCRM's
-  unsubscribes (`plans/supporters-email.md`).
+  answered yes ("Can email", "Can text" or "Can call or text") for one
+  topic, and that filter sets the mailing's channel and topic. "Not
+  sure" isn't enough, so members can't be emailed PauseAI updates until
+  we can read CiviCRM's unsubscribes (`plans/supporters-email.md`).
 - As for politicians, the recipients are fixed when the mailing is
   scheduled, and each is checked again just before sending:
   `contact_permission()` must still say yes, or the message is skipped,

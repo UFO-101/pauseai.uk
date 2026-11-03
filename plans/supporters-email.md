@@ -13,14 +13,9 @@ once we can read CiviCRM's unsubscribes.
   people: 99.6% were delivered, 13.5% clicked a link and 9 unsubscribed.
   Most of it, apart from the lead story, is Luma events, which the site
   could fill in (`eventMatchers` in `lib/content/local-groups.ts`).
-- `contact_permission()` answers `pauseai-updates` for email. A member's
-  yes is unsure, because Airtable's "Keep me informed" is never updated
-  and we can't see who unsubscribed in CiviCRM. A yes from the box on
-  our own forms (`site-forms`) is sure.
-- Following the Luma calendar is a yes for `luma-calendar` only. Luma's
-  unsubscribes, removals, blocks and spam reports reach us by its
-  webhook and the daily pass over its contacts.
-
+- `contact_permission()` answers `pauseai-updates` for a member's email,
+  but a yes is only "Not sure", as we can't see who unsubscribed in
+  CiviCRM.
 ## Global's chapter contacts API
 
 People stop the weekly in CiviCRM by unsubscribing, by stopping all
@@ -56,19 +51,11 @@ the flags.
 
 We'd send by Postmark, not through CiviCRM: we already email people who
 aren't CRM contacts, and sharing its SES account would let our
-complaints pause Global's sending.
+complaints pause Global's sending. What we read from CiviCRM is used
+only to stop emails.
 
-We import 1,621 members (29 October) against the API's 1,536: 1,091 who
-shared their details, and 530 who joined before July 2026 and were never
-asked (open question 1).
-
-There's no data agreement between PauseAI UK and Stichting PauseAI;
-Global's draft [legal pack](https://github.com/PauseAI/legal-pack) isn't
-signed. Someone who joined PauseAI UK through pauseai.info meant us to
-have their details, so we use them, as the members import does, and
-what we read from CiviCRM is used only to stop emails. Germany, France
-and Spain run their own lists, and we will keep passing new members to
-Global.
+We import 1,621 members (29 October) against the API's 1,536 (open
+question 1).
 
 ## Steps
 
@@ -110,9 +97,9 @@ Global.
   charities (PECR regulation 22(3A), since 5 February 2026) is for
   registered charities, and Safe AI Alliance Ltd is a company limited by
   guarantee.
-- Ask "Your postcode (the first half is fine)" on every Luma event,
-  which the import already reads. Events near the reader need a town;
-  their MP needs a full postcode.
+- Ask for a postcode on every Luma event, which the import already
+  reads. Events near the reader need only the first half; their MP needs
+  all of it.
 
 ## Data protection
 
