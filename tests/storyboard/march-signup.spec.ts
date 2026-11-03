@@ -49,10 +49,16 @@ async function fillIn(page: Page, email: string) {
 
 /**
  * The form's top at the top of the window, under the header. Typing in a field
- * scrolls it into view, which leaves the window a few pixels apart between runs.
+ * scrolls it into view, which leaves the window a few pixels apart between runs;
+ * and the page's scroll-padding is the header's height only once the header has
+ * measured itself, so the form is placed by the header's own height, as the
+ * scroll-padding puts it (styles/base.css), not by scrollIntoView.
  */
 async function formAtTop(page: Page): Promise<void> {
-  await page.locator("form").evaluate((el) => el.scrollIntoView({ block: "start", behavior: "instant" }));
+  await page.locator("form").evaluate((form) => {
+    const clearance = document.querySelector("header")!.offsetHeight + 13;
+    window.scrollTo({ top: window.scrollY + form.getBoundingClientRect().top - clearance, behavior: "instant" });
+  });
   await scrollSettled(page);
 }
 

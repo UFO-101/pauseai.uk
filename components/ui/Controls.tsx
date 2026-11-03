@@ -80,7 +80,9 @@ export function Checkbox({
 
 /**
  * A row of mutually exclusive buttons, e.g. a QR code's size; each with an
- * icon before its words if it has one. `disabled`, none can be picked.
+ * icon before its words if it has one. One `quiet` is set apart from the
+ * rest, dashed and grey, for a choice of nothing, such as no answer.
+ * `disabled`, none can be picked.
  */
 export function Segmented<T extends string | boolean>({
   label,
@@ -90,7 +92,7 @@ export function Segmented<T extends string | boolean>({
   disabled = false,
 }: {
   label: string;
-  options: { value: T; label: string; icon?: ReactNode }[];
+  options: { value: T; label: string; icon?: ReactNode; quiet?: boolean }[];
   value: T;
   onChange: (value: T) => void;
   disabled?: boolean;
@@ -103,7 +105,7 @@ export function Segmented<T extends string | boolean>({
           type="button"
           role="radio"
           aria-checked={o.value === value}
-          className={styles.segment}
+          className={o.quiet ? `${styles.segment} ${styles.quiet}` : styles.segment}
           disabled={disabled}
           onClick={() => onChange(o.value)}
         >

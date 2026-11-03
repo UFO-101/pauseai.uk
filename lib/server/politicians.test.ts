@@ -527,11 +527,13 @@ describeWithDatabase("politicians", () => {
     expect(await politicianHistory(mp, null)).toHaveLength(1);
   });
 
-  it("lists who signed, by name, never the test MP or those without a status", async () => {
+  it("lists who signed, by name, never the test MP, those without a status or those who declined", async () => {
     const mp = await addTestPolitician();
     const peer = await addPeer();
     const test = await addTestMp();
     await addTestPolitician({ airtableId: "rec2", name: "Sam Unsigned", constituency: "Ipswich" });
+    const decliner = await addTestPolitician({ airtableId: "rec3", name: "Dee Declined", constituency: "Bath" });
+    await setStatus(decliner, PM, { status: "declined", date: null, note: "" }, "jo@pauseai.uk");
     for (const id of [mp, peer, test])
       await setStatus(id, PM, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
 

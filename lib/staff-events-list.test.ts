@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { StaffEvent } from "@/lib/server/staff-events";
+import type { SearchedEvent } from "@/lib/server/staff-events";
 import { EVENTS_PAGE_SIZE, findEvents, type EventFilter } from "./staff-events-list";
 
 const NOW = "2026-11-02T12:00:00.000Z";
 
-const event = (id: string, more: Partial<StaffEvent> = {}): StaffEvent => ({
+const event = (id: string, more: Partial<SearchedEvent> = {}): SearchedEvent => ({
   id,
   name: `Event ${id}`,
   url: `https://luma.com/${id}`,
@@ -15,6 +15,8 @@ const event = (id: string, more: Partial<StaffEvent> = {}): StaffEvent => ({
   going: 0,
   owner: null,
   doc: null,
+  hosts: [],
+  hostEmails: [],
   ...more,
 });
 
@@ -25,6 +27,8 @@ const events = [
     city: "Oxford",
     going: 5,
     tags: ["Oxford"],
+    hosts: [{ name: "Jane Smith", supporterId: 1 }],
+    hostEmails: ["jane.host@example.com"],
   }),
   event("b", { name: "alpha talk", startAt: "2026-11-10T18:00:00.000Z", city: null, going: 9, owner: "jo@pauseai.uk" }),
   event("c", { startAt: "2026-11-10T18:00:00.000Z", doc: "https://docs.google.com/d", tags: ["Big"] }),
@@ -53,8 +57,11 @@ describe("findEvents", () => {
     expect(findEvents(events, future(), NOW)).toMatchObject({ total: 3, pages: 1, removed: 0 });
   });
 
-  it("searches names, whatever their case", () => {
+  it("searches names, whatever their case, and hosts' names and emails, and owners' emails", () => {
     expect(ids(future({ search: "ALPHA" }))).toEqual(["b"]);
+    expect(ids(future({ search: "jane smith" }))).toEqual(["a"]);
+    expect(ids(future({ search: "jane.host@" }))).toEqual(["a"]);
+    expect(ids(future({ search: "jo@pauseai" }))).toEqual(["b"]);
   });
 
   it("finds only those taken off Luma, or only those still on it", () => {

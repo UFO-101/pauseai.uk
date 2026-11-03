@@ -27,7 +27,7 @@ import {
   exampleSupporterLetterDetails,
 } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import Run from "@/app/(staff)/staff/_components/Run";
-import AskRow, { AskRows, OtherAsks } from "@/app/(staff)/staff/_components/AskRow";
+import AskRow, { AskRows, PoliticianAsks } from "@/app/(staff)/staff/_components/AskRow";
 import EraseForm from "@/app/(staff)/staff/_components/EraseForm";
 import DeletePolitician from "@/app/(staff)/staff/_components/DeletePolitician";
 import StaffAccountsTable, { AddStaff } from "@/app/(staff)/staff/_components/StaffAccountsTable";
@@ -129,19 +129,30 @@ export function HeldSyncExample() {
  */
 /**
  * The asks card's rows: one answered from Airtable, one staff record with
- * no answer yet; then, with `others`, the button whose menu adds another.
+ * no answer yet, or, with `declined`, a letter they declined; then, with
+ * `others`, the button whose menu adds another.
  */
-export function AskRowExample({ others = false }: { others?: boolean }) {
-  const politician = { ...examplePolitician, airtableId: null };
+export function AskRowExample({ others = false, declined = false }: { others?: boolean; declined?: boolean }) {
+  const decline = { ...examplePolitician.statuses["frontier-ai-letter"]!, status: "declined" as const };
+  const politician = {
+    ...examplePolitician,
+    airtableId: null,
+    statuses: declined
+      ? { ...examplePolitician.statuses, [exampleAsks[4]!.slug]: decline }
+      : examplePolitician.statuses,
+  };
   return (
     <Logged>
-      {(log) => (
-        <AskRows>
-          <AskRow politician={politician} ask={exampleAsks[0]!} setStatus={log("setStatus")} />
-          <AskRow politician={politician} ask={exampleAsks[4]!} setStatus={log("setStatus")} />
-          {others && <OtherAsks politician={politician} asks={exampleAsks.slice(3)} setStatus={log("setStatus")} />}
-        </AskRows>
-      )}
+      {(log) =>
+        others ? (
+          <PoliticianAsks politician={politician} asks={exampleAsks} setStatus={log("setStatus")} />
+        ) : (
+          <AskRows>
+            <AskRow politician={politician} ask={exampleAsks[0]!} setStatus={log("setStatus")} />
+            <AskRow politician={politician} ask={exampleAsks[4]!} setStatus={log("setStatus")} />
+          </AskRows>
+        )
+      }
     </Logged>
   );
 }
@@ -601,15 +612,18 @@ export function MailingsOverviewExample({ empty = false }: { empty?: boolean }) 
 
 /**
  * The events page's table, on a tab, with a search or filters as typed,
- * (`params`); saving an event's edit form is logged, and with `emailed`,
- * says it emailed the owner chosen and Joseph, the owner before.
+ * (`params`), and its hosts, but without `hosts`, as staff who don't see
+ * supporters have it; saving an event's edit form is logged, and with
+ * `emailed`, says it emailed the owner chosen and Joseph, the owner before.
  */
 export function EventsTableExample({
   params = {},
   emailed = false,
+  hosts = true,
 }: {
   params?: Parameters<typeof exampleEventsTab>[0];
   emailed?: boolean;
+  hosts?: boolean;
 }) {
   const { search, found } = exampleEventsTab(params);
   return (
@@ -620,6 +634,7 @@ export function EventsTableExample({
           search={search}
           staff={exampleStaff}
           now={exampleEventsNow}
+          hosts={hosts}
           save={async (form) => {
             log("save")(form);
             const chosen = String(form.get("owner"));

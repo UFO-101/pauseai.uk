@@ -42,7 +42,7 @@ import {
   saveStaffAccount,
 } from "@/lib/server/staff-accounts";
 
-/** The form on a politician's page: sets their answer to an ask, dated today, with its note, or clears it. */
+/** The form on a politician's page: sets their answer to an ask, dated today, or clears it, with its note of how we know. */
 export async function setAskStatus(form: FormData): Promise<void> {
   const { email } = await requireStaff();
   const parsed = statusFrom(form);
@@ -51,7 +51,7 @@ export async function setAskStatus(form: FormData): Promise<void> {
   await setStatus(
     parsed.politicianId,
     parsed.ask,
-    { status: parsed.status, date: parsed.status ? today : null, note: parsed.status ? parsed.note : "" },
+    { status: parsed.status, date: parsed.status ? today : null, note: parsed.note },
     email,
   );
   revalidatePath("/staff/politicians");

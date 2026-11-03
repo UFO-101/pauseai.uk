@@ -70,6 +70,7 @@ export type SupporterActivity = {
   kind:
     | "luma-contact"
     | "luma-registered"
+    | "luma-hosted"
     | "letter"
     | "letter-replied"
     | "form-entry"
@@ -190,6 +191,24 @@ export const SUPPORTERS_PAGE_SIZE = 100;
 export function registrationStatus(status: string | null): string {
   const words = staffCopy.supporters.detail.statuses[status ?? ""] ?? staffCopy.supporters.detail.registered;
   return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/** Their events, newest first, as the activity has them: those they registered for, and those they hosted, a row each. */
+export function eventsOf(activity: SupporterActivity[]): SupporterActivity[] {
+  return activity.filter((a) => a.kind === "luma-registered" || a.kind === "luma-hosted");
+}
+
+/**
+ * How many different events they registered for, but didn't decline, or
+ * hosted, as supporters_summary counts them: one they registered for and
+ * hosted counts once. An event's link is its own.
+ */
+export function eventsCounted(activity: SupporterActivity[]): number {
+  return new Set(
+    eventsOf(activity)
+      .filter((a) => a.kind === "luma-hosted" || a.detail !== "declined")
+      .map((a) => a.href),
+  ).size;
 }
 
 /** A supporter's page's name: theirs, or the stand-in for one with none. */

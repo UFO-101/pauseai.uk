@@ -1206,12 +1206,12 @@ describe("PoliticianDetails", () => {
       .element(page.getByText(`${staffCopy.politician.source} ${staffCopy.politician.sources.staff}`))
       .toBeVisible();
     expect(document.querySelectorAll("dd svg[aria-hidden]")).toHaveLength(2);
-    // The asks done: MP signed one.
+    // The letters supporters wrote them, then the asks done: MP signed one.
     const counts = document.querySelector("[class*=counts]")!;
     expect(counts.querySelector("a")).toBeNull();
     expect([...counts.children].map((count) => count.textContent)).toEqual([
-      `1 ${staffCopy.politician.band.asksDone(1)}`,
       `0 ${staffCopy.politician.band.lettersCounted(0)}`,
+      `1 ${staffCopy.politician.band.asksDone(1)}`,
     ]);
     // Not PauseAI's emails: they're in the history.
     expect(page.getByRole("link", { name: /from PauseAI/ }).query()).toBeNull();
@@ -1600,7 +1600,7 @@ describe("PoliticianDetails", () => {
       .toHaveAttribute("href", "/staff/mailings/3/letters/12");
   });
 
-  it("gives each ask staff record, and each they've answered, a row: the answer first, the ask linked, who asked and when, who set the answer, and the form where staff record it", async () => {
+  it("gives each ask they've answered a row: the answer first, the ask linked, who asked and when, who set the answer, and the form where staff record it", async () => {
     const { fn, sent } = action();
     const signed = { ...MP.statuses["frontier-ai-letter"], note: "By email" };
     await render(
@@ -1612,14 +1612,14 @@ describe("PoliticianDetails", () => {
       />,
     );
     const row = (slug: string) => page.getByRole("group", { name: ask(slug).title });
-    // The ask staff record first, then the rest they've answered; an ask they haven't, staff don't record, isn't there.
+    // Those they've answered, in the asks' order; one they haven't isn't there.
     expect(
       page
         .getByRole("region", { name: staffCopy.politician.statusesTitle })
         .getByRole("group")
         .all()
         .map((g) => g.element().getAttribute("aria-label")),
-    ).toEqual([ask("frontier-ai-letter").title, ask("edinburgh-conference-2026").title]);
+    ).toEqual([ask("edinburgh-conference-2026").title, ask("frontier-ai-letter").title]);
     const letter = row("frontier-ai-letter");
     // Signed, and when, ticked in green.
     const answer = (group: typeof letter) => group.element().querySelector("[class*=answer]")!;
@@ -1654,11 +1654,24 @@ describe("PoliticianDetails", () => {
       .toBeVisible();
     expect(event.getByRole("button").all()).toHaveLength(0);
 
-    // The form, behind Edit.
-    expect(letter.getByRole("button", { name: staffCopy.politicians.unmarkSigned }).query()).toBeNull();
+    // The form, behind Edit: a letter's answers in a row, starting from theirs, and Clear answer set apart.
+    expect(letter.getByRole("radiogroup").query()).toBeNull();
     await letter.getByText(staffCopy.politician.edit, { exact: true }).click();
+    const choices = letter.getByRole("radiogroup", { name: staffCopy.politician.status });
+    await expect
+      .element(choices.getByRole("radio", { name: staffCopy.statuses.signed }))
+      .toHaveAttribute("aria-checked", "true");
+    expect(
+      choices
+        .getByRole("radio")
+        .all()
+        .map((r) => r.element().textContent),
+    ).toEqual([staffCopy.statuses.signed, staffCopy.statuses.declined, staffCopy.politician.clearAnswer]);
+    const clear = choices.getByRole("radio", { name: staffCopy.politician.clearAnswer });
+    expect(clear.element().className).toMatch(/quiet/);
+    await clear.click();
     await letter.getByLabelText(staffCopy.politician.note).fill("Their office wrote");
-    await letter.getByRole("button", { name: staffCopy.politicians.unmarkSigned }).click();
+    await letter.getByRole("button", { name: staffCopy.politician.save }).click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
     expect(sent[0]).toEqual({ politicianId: "7", ask: "frontier-ai-letter", status: "", note: "Their office wrote" });
   });
@@ -1683,20 +1696,54 @@ describe("PoliticianDetails", () => {
     await expect.element(row.getByText(staffCopy.politician.askedThem("", "event"), { exact: true })).toBeVisible();
   });
 
-  it("offers to mark them signed where they haven't", async () => {
+  it("has no row for a letter they haven't answered, and records a decline from Add another answer", async () => {
     const { fn, sent } = action();
     await render(<PoliticianDetails {...none} politician={{ ...MP, statuses: {} }} setStatus={fn} unblock={vi.fn()} />);
+    expect(page.getByRole("group", { name: ask("frontier-ai-letter").title }).query()).toBeNull();
+    await page.getByRole("button", { name: staffCopy.politician.otherAsk }).click();
+    await page
+      .getByRole("list", { name: staffCopy.politician.otherAsk })
+      .getByRole("button", { name: ask("frontier-ai-letter").title })
+      .click();
     const letter = page.getByRole("group", { name: ask("frontier-ai-letter").title });
-    await expect.element(letter.getByText(staffCopy.statuses.none)).toBeVisible();
+    await expect.element(letter.getByText(staffCopy.statuses.noAnswer, { exact: true }).first()).toBeVisible();
+    // With no answer yet, there's none to clear, and Save waits for one to be picked.
+    const choices = letter.getByRole("radiogroup", { name: staffCopy.politician.status });
+    expect(
+      choices
+        .getByRole("radio")
+        .all()
+        .map((r) => r.element().textContent),
+    ).toEqual([staffCopy.statuses.signed, staffCopy.statuses.declined]);
+    const save = letter.getByRole("button", { name: staffCopy.politician.save });
+    await expect.element(save).toBeDisabled();
+    await choices.getByRole("radio", { name: staffCopy.statuses.declined }).click();
+    await expect.element(save).toBeEnabled();
     // Not without a note of how they know.
-    await letter.getByText(staffCopy.politician.edit, { exact: true }).click();
-    const mark = letter.getByRole("button", { name: staffCopy.politicians.markSigned });
-    await mark.click();
+    await save.click();
     expect(sent).toHaveLength(0);
     await letter.getByLabelText(staffCopy.politician.note).fill("They emailed");
-    await mark.click();
+    await save.click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
-    expect(sent[0]).toEqual({ politicianId: "7", ask: "frontier-ai-letter", status: "signed", note: "They emailed" });
+    expect(sent[0]).toEqual({ politicianId: "7", ask: "frontier-ai-letter", status: "declined", note: "They emailed" });
+  });
+
+  it("crosses a letter they declined", async () => {
+    const declined = { ...MP.statuses["frontier-ai-letter"], status: "declined" as const };
+    await render(
+      <PoliticianDetails
+        {...none}
+        politician={{ ...MP, statuses: { "frontier-ai-letter": declined } }}
+        setStatus={vi.fn()}
+        unblock={vi.fn()}
+      />,
+    );
+    const answer = page
+      .getByRole("group", { name: ask("frontier-ai-letter").title })
+      .element()
+      .querySelector("[class*=answer]")!;
+    expect(answer.textContent).toBe(`${staffCopy.statuses.declined}1 Oct 2026${staffCopy.politician.edit}`);
+    expect(answer.className).toMatch(/no/);
   });
 
   it("chooses an event's answer from a list, where staff record it", async () => {
@@ -1712,14 +1759,14 @@ describe("PoliticianDetails", () => {
         unblock={vi.fn()}
       />,
     );
+    await page.getByRole("button", { name: staffCopy.politician.otherAsk }).click();
+    await page.getByRole("button", { name: "Example Event" }).click();
     const row = page.getByRole("group", { name: "Example Event" });
     expect(row.element().querySelector("[class*=answer]")!.textContent).toBe(
       `${staffCopy.statuses.noAnswer}${staffCopy.politician.edit}`,
     );
-    await row.getByText(staffCopy.politician.edit, { exact: true }).click();
-    const select = row.getByRole("combobox", { name: staffCopy.politician.status });
-    await expect.element(select).toHaveValue("");
-    await select.selectOptions("going");
+    expect(row.getByRole("radio", { checked: true }).query()).toBeNull();
+    await row.getByRole("radio", { name: staffCopy.statuses.going }).click();
     await row.getByLabelText(staffCopy.politician.note).fill("Their office said");
     await row.getByRole("button", { name: staffCopy.politician.save }).click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
@@ -1729,7 +1776,7 @@ describe("PoliticianDetails", () => {
       status: "going",
       note: "Their office said",
     });
-    // Going: ticked in green, the list starting from their answer.
+    // Going: ticked in green, the form starting from their answer.
     await render(
       <PoliticianDetails
         {...none}
@@ -1744,7 +1791,9 @@ describe("PoliticianDetails", () => {
     );
     const going = page.getByRole("group", { name: "Example Event" }).last();
     expect(going.element().querySelector("[class*=answer]")!.className).toMatch(/yes/);
-    expect(going.element().querySelector("select")!.value).toBe("going");
+    expect(going.element().querySelector("[role=radio][aria-checked=true]")!.textContent).toBe(
+      staffCopy.statuses.going,
+    );
   });
 
   it("adds another ask staff record from the button under the asks, as a row with no answer and its form open", async () => {
@@ -1778,11 +1827,12 @@ describe("PoliticianDetails", () => {
     await expect.poll(() => menu.query()).toBeNull();
     const row = page.getByRole("group", { name: "Giant Pause Button" });
     expect(row.element().querySelector("[class*=answer]")!.textContent).toBe(
-      `${staffCopy.statuses.none}${staffCopy.politician.edit}`,
+      `${staffCopy.statuses.noAnswer}${staffCopy.politician.edit}`,
     );
-    await expect.element(row.getByRole("button", { name: staffCopy.politicians.markSigned })).toBeVisible();
+    await expect.element(row.getByRole("radiogroup", { name: staffCopy.politician.status })).toBeVisible();
+    await row.getByRole("radio", { name: staffCopy.statuses.signed }).click();
     await row.getByLabelText(staffCopy.politician.note).fill("At the march");
-    await row.getByRole("button", { name: staffCopy.politicians.markSigned }).click();
+    await row.getByRole("button", { name: staffCopy.politician.save }).click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
     expect(sent[0]).toEqual({
       politicianId: "7",
@@ -1804,6 +1854,52 @@ describe("PoliticianDetails", () => {
     await menu.getByRole("button", { name: "Village Fair" }).click();
     await expect.element(page.getByRole("group", { name: "Village Fair" })).toBeVisible();
     expect(another.query()).toBeNull();
+
+    // Its answer cleared, it has no row, and it's back in the menu.
+    await rerender(details({}));
+    await expect.element(page.getByRole("group", { name: "Giant Pause Button" })).not.toBeInTheDocument();
+    await expect.element(another).toBeVisible();
+    expect(
+      [...document.querySelectorAll(`ul[aria-label="${staffCopy.politician.otherAsk}"] button`)].map(
+        (b) => b.textContent,
+      ),
+    ).toEqual(["Giant Pause Button"]);
+  });
+
+  it("puts an ask added from the menu in its place among the rows, scrolled to, and takes it away closed unanswered", async () => {
+    const dome = { ...ask("frontier-ai-letter"), slug: "giant-pause-button-oct-2026", title: "Giant Pause Button" };
+    const fair = { ...dome, slug: "village-fair-nov-2026", title: "Village Fair", kind: "event" as const };
+    const going = { ...MP.statuses["frontier-ai-letter"], status: "going" as const };
+    // A window too short for the bubble under the row, so it's scrolled to.
+    vi.spyOn(window, "innerHeight", "get").mockReturnValue(0);
+    const scrolled = vi.spyOn(window, "scrollBy");
+    await render(
+      <PoliticianDetails
+        {...none}
+        asks={[dome, fair]}
+        politician={{ ...MP, statuses: { "village-fair-nov-2026": going } }}
+        setStatus={vi.fn()}
+        unblock={vi.fn()}
+      />,
+    );
+    const titles = () => [...document.querySelectorAll("[role=group]")].map((g) => g.getAttribute("aria-label"));
+    expect(titles()).toEqual(["Village Fair"]);
+    const another = page.getByRole("button", { name: staffCopy.politician.otherAsk });
+    await another.click();
+    await page.getByRole("button", { name: "Giant Pause Button" }).click();
+    // The asks' order, not the order they were added in.
+    expect(titles()).toEqual(["Giant Pause Button", "Village Fair"]);
+    expect(scrolled).toHaveBeenCalledOnce();
+    vi.restoreAllMocks();
+
+    // Its bubble closed with no answer saved, the row goes and the ask is back in the menu.
+    await expect.element(page.getByRole("radiogroup", { name: staffCopy.politician.status })).toBeVisible();
+    await userEvent.keyboard("{Escape}");
+    await vi.waitFor(() => expect(titles()).toEqual(["Village Fair"]));
+    await another.click();
+    await expect
+      .element(page.getByRole("list", { name: staffCopy.politician.otherAsk }).getByRole("button"))
+      .toHaveTextContent("Giant Pause Button");
   });
 
   it("says in one place that letters aren't being sent, why, what to check, and unblocks it with a note", async () => {
@@ -2186,7 +2282,7 @@ describe("AsksTable", () => {
       exampleAsks[3].title,
       "",
       `${copy.askedBy.supporters}${copy.askedBy.pauseai}`,
-      copy.count(staffCopy.statuses.signed, 10),
+      [copy.count(staffCopy.statuses.signed, 10), copy.count(staffCopy.statuses.declined, 2)].join(" · "),
       "",
     ]);
     expect(cells(exampleAsks[2].title).at(-2)).toBe(copy.noAnswers);
@@ -2647,13 +2743,16 @@ describe("RunList", () => {
     await expect.element(page.getByText(exampleDisconnectedGmail.error!, { exact: false })).not.toBeInTheDocument();
   });
 
-  it("says how many pages of contacts a Luma run read", async () => {
+  it("says how many hosts a Luma run changed and how many pages of contacts it read", async () => {
     await render(
-      <RunList runs={[ran("import-luma", { ...exampleLumaResult, contactPages: 10 }, { id: 1 })]} none="None" />,
+      <RunList
+        runs={[ran("import-luma", { ...exampleLumaResult, hostsChanged: 3, contactPages: 10 }, { id: 1 })]}
+        none="None"
+      />,
     );
     const [run] = page.getByRole("status").all();
     expect(run.element().textContent).toContain(
-      `${staffCopy.luma.result(exampleLumaResult)} ${staffCopy.luma.contactPages(10)}`,
+      `${staffCopy.luma.result(exampleLumaResult)} ${staffCopy.luma.hostsChanged(3)} ${staffCopy.luma.contactPages(10)}`,
     );
     expect(run.element().textContent).toMatch(new RegExp(`^${staffCopy.runs.status.ok} `));
   });
@@ -3384,10 +3483,14 @@ describe("SupporterDetails", () => {
     );
     await expect.element(page.getByRole("link", { name: "+447700900001" })).not.toBeInTheDocument();
     // Beside the profile, her events and her letters, a table each.
+    // The event she registered for and hosts is two rows, one event in the band.
     const events = page.getByRole("region", { name: copy.detail.eventsTitle, exact: false });
     await expect
-      .element(events.getByRole("link", { name: "PauseAI Manchester Social" }))
+      .element(events.getByRole("link", { name: "PauseAI Manchester Social" }).first())
       .toHaveAttribute("href", "https://luma.com/fixture-manchester-social");
+    expect(
+      [...events.element().querySelectorAll("tbody tr")].map((tr) => (tr as HTMLTableRowElement).cells[2].textContent),
+    ).toEqual([copy.detail.registered, copy.detail.host]);
     const letters = page.getByRole("region", { name: copy.detail.lettersTitle });
     await expect
       .element(letters.getByRole("link", { name: "Polly Placeholder" }))
@@ -3408,8 +3511,9 @@ describe("SupporterDetails", () => {
     // The history, folded until opened: what, linked, with a status only when it isn't approved.
     const history = page.getByRole("list", { name: copy.detail.activityTitle });
     await expect
-      .element(history.getByRole("link", { name: "PauseAI Manchester Social" }))
+      .element(history.getByRole("link", { name: "PauseAI Manchester Social" }).first())
       .toHaveAttribute("href", "https://luma.com/fixture-manchester-social");
+    expect(history.element().textContent).toContain(`${copy.detail.kinds["luma-hosted"]} PauseAI Manchester Social`);
     expect(history.element().textContent).not.toContain("approved");
     // A letter: the MP links to their page, the campaign to its public page, and the letter's status follows.
     await expect

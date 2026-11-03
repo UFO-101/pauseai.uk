@@ -5,7 +5,7 @@
 // as the table ask_kind_statuses does, so a new status needs a migration.
 
 export const ASK_STATUSES = {
-  letter: ["signed"],
+  letter: ["signed", "declined"],
   event: ["going", "tentative", "meeting_staff", "tentative_staff", "declined", "declined_surgery", "passed_on"],
 } as const;
 

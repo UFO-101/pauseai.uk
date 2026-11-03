@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { buttonClass } from "@/components/ui/Button";
 import { SubmitButton } from "@/components/ui/SubmitButton";
-import { Select, TextInput } from "@/components/ui/Controls";
+import { Segmented, TextInput } from "@/components/ui/Controls";
 import { FilterForm } from "@/components/ui/Form";
 import { ASK_STATUSES } from "@/lib/asks";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -20,44 +20,36 @@ const copy = staffCopy.politician;
 type SetStatus = (form: FormData) => void | Promise<void>;
 
 /**
- * Setting their answer to an ask staff record, with a note: Signed, or
- * taking it away, for a letter; one of an event's answers, or none.
+ * Setting their answer to an ask staff record, with a note: one of the
+ * answers its kind allows (ASK_STATUSES), all of them in a row to pick from,
+ * and Save, which sends the one picked. Once there's an answer, no answer is
+ * one to pick too, set apart from the rest, to clear it.
  */
 function AnswerForm({ politician, ask, setStatus }: { politician: Politician; ask: Ask; setStatus: SetStatus }) {
-  const status = politician.statuses[ask.slug];
-  const note = (
-    <span className={styles.note}>
-      <TextInput name="note" aria-label={copy.note} placeholder={copy.notePlaceholder} required />
-    </span>
-  );
+  const current = politician.statuses[ask.slug]?.status ?? "";
+  const [chosen, setChosen] = useState<string>(current);
   return (
     <FilterForm action={setStatus} aria-label={`${copy.setStatus}: ${ask.title}`}>
       <input type="hidden" name="politicianId" value={politician.id} />
       <input type="hidden" name="ask" value={ask.slug} />
-      {ask.kind === "letter" ? (
-        <>
-          <input type="hidden" name="status" value={status ? "" : "signed"} />
-          {note}
-          <SubmitButton variant={status ? "ghost" : "primary"} size="small">
-            {status ? staffCopy.politicians.unmarkSigned : staffCopy.politicians.markSigned}
-          </SubmitButton>
-        </>
-      ) : (
-        <>
-          <Select name="status" defaultValue={status?.status ?? ""} aria-label={copy.status}>
-            <option value="">{staffCopy.statuses.noAnswer}</option>
-            {ASK_STATUSES.event.map((value) => (
-              <option key={value} value={value}>
-                {staffCopy.statuses[value]}
-              </option>
-            ))}
-          </Select>
-          {note}
-          <SubmitButton variant="primary" size="small">
-            {copy.save}
-          </SubmitButton>
-        </>
-      )}
+      <span className={styles.statusChoices}>
+        <Segmented
+          label={copy.status}
+          options={[
+            ...ASK_STATUSES[ask.kind].map((value) => ({ value: value as string, label: staffCopy.statuses[value] })),
+            ...(current ? [{ value: "", label: copy.clearAnswer, quiet: true }] : []),
+          ]}
+          value={chosen}
+          onChange={setChosen}
+        />
+      </span>
+      <label className={styles.note}>
+        <span className={styles.noteLabel}>{copy.note}</span>
+        <TextInput name="note" placeholder={copy.notePlaceholder} required />
+      </label>
+      <SubmitButton variant="primary" size="small" name="status" value={chosen} disabled={!chosen && !current}>
+        {copy.save}
+      </SubmitButton>
     </FilterForm>
   );
 }
@@ -66,6 +58,9 @@ function AnswerForm({ politician, ask, setStatus }: { politician: Politician; as
 export function AskRows({ children }: { children: ReactNode }) {
   return <div className={styles.asks}>{children}</div>;
 }
+
+/** Pixels kept clear between an ask just opened and the window's edge, when it's scrolled to. */
+const SCROLL_MARGIN = 16;
 
 /** Answers that are a yes, ticked in green, and a no, crossed. */
 const YES = ["signed", "going"];
@@ -77,30 +72,55 @@ const NO = ["declined", "declined_surgery"];
  * import; beside it, in a column of its own, their answer and its date, a
  * yes ticked in green and a no crossed, and for an ask staff record, Edit
  * under it, which opens the form to change it in a bubble below. `open`
- * opens it at once, for an ask just added to the card.
+ * opens it at once, scrolled to, for an ask just added to the card, and `onClose` is
+ * told when it closes.
  */
 export default function AskRow({
   politician,
   ask,
   setStatus,
   open = false,
+  onClose,
 }: {
   politician: Politician;
   ask: Ask;
   setStatus: SetStatus;
   open?: boolean;
+  onClose?: () => void;
 }) {
   const status = politician.statuses[ask.slug];
-  const none = ask.kind === "letter" ? staffCopy.statuses.none : staffCopy.statuses.noAnswer;
   const byHand = answeredByHand(ask.slug);
   const editId = `edit-${ask.slug}`;
   const tone = status && (YES.includes(status.status) ? styles.yes : NO.includes(status.status) ? styles.no : "");
   const popover = useRef<HTMLDivElement>(null);
+  const row = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (open) popover.current!.showPopover();
+    if (!open) return;
+    const bubble = popover.current!;
+    bubble.showPopover();
+    // On the page, the row and its bubble under it, as much as fits with the row's top in view.
+    row.current!.scrollIntoView({ block: "nearest" });
+    const below = bubble.getBoundingClientRect().bottom + SCROLL_MARGIN - window.innerHeight;
+    const above = row.current!.getBoundingClientRect().top - SCROLL_MARGIN;
+    if (below > 0) window.scrollBy(0, Math.min(below, above));
   }, [open]);
+  useEffect(() => {
+    const bubble = popover.current;
+    if (!bubble || !onClose) return;
+    const closed = (event: Event) => {
+      if ((event as ToggleEvent).newState === "closed") onClose();
+    };
+    bubble.addEventListener("toggle", closed);
+    return () => bubble.removeEventListener("toggle", closed);
+  }, [onClose]);
   return (
-    <div className={styles.ask} role="group" aria-label={ask.title}>
+    <div
+      ref={row}
+      className={styles.ask}
+      role="group"
+      aria-label={ask.title}
+      style={{ anchorName: `--row-${ask.slug}` } as CSSProperties}
+    >
       <div className={styles.asked}>
         <AskLead ask={ask} />
         {status && (
@@ -111,7 +131,7 @@ export default function AskRow({
         )}
       </div>
       <div className={`${styles.answer} ${tone || ""}`}>
-        <span>{status ? staffCopy.statuses[status.status] : none}</span>
+        <span>{status ? staffCopy.statuses[status.status] : staffCopy.statuses.noAnswer}</span>
         {status?.date && <span className={styles.askMeta}>{staffDate(status.date)}</span>}
         {byHand && (
           <button
@@ -132,7 +152,8 @@ export default function AskRow({
           id={editId}
           popover="auto"
           className={styles.editPopover}
-          style={{ positionAnchor: `--${editId}` } as CSSProperties}
+          // Under Edit, or on a phone under the whole row (Details.module.css).
+          style={{ "--under-edit": `--${editId}`, "--under-row": `--row-${ask.slug}` } as CSSProperties}
         >
           <AnswerForm politician={politician} ask={ask} setStatus={setStatus} />
         </div>
@@ -142,11 +163,14 @@ export default function AskRow({
 }
 
 /**
- * Under the asks card's rows: a small button whose menu lists the other
- * asks staff record by hand. One chosen joins the rows, with no answer and
- * its form open; once answered, the page has it as a row of its own.
+ * A politician's asks card: a row for each ask they've answered, then under
+ * them a small button whose menu lists the other asks staff record by hand.
+ * One chosen joins the rows in its place, as the asks are ordered, with no
+ * answer and its form open; closed unanswered, it's back in the menu at
+ * once. Once answered, it's one of theirs, and if its answer is cleared,
+ * it's back in the menu.
  */
-export function OtherAsks({
+export function PoliticianAsks({
   politician,
   asks,
   setStatus,
@@ -156,12 +180,23 @@ export function OtherAsks({
   setStatus: SetStatus;
 }) {
   const [added, setAdded] = useState<string[]>([]);
-  const rows = asks.filter((ask) => added.includes(ask.slug));
-  const left = asks.filter((ask) => !added.includes(ask.slug));
+  const answered = (ask: Ask) => Boolean(politician.statuses[ask.slug]);
+  // One answered is a row of its own now, so it's no longer one added here.
+  const still = added.filter((slug) => asks.some((ask) => ask.slug === slug && !answered(ask)));
+  if (still.length < added.length) setAdded(still);
+  const rows = asks.filter((ask) => answered(ask) || added.includes(ask.slug));
+  const left = asks.filter((ask) => answeredByHand(ask.slug) && !rows.includes(ask));
   return (
-    <>
+    <AskRows>
       {rows.map((ask) => (
-        <AskRow key={ask.slug} politician={politician} ask={ask} setStatus={setStatus} open />
+        <AskRow
+          key={ask.slug}
+          politician={politician}
+          ask={ask}
+          setStatus={setStatus}
+          open={!answered(ask)}
+          onClose={answered(ask) ? undefined : () => setAdded((now) => now.filter((slug) => slug !== ask.slug))}
+        />
       ))}
       {left.length > 0 && (
         <div className={styles.otherAsks}>
@@ -187,6 +222,6 @@ export function OtherAsks({
           </Menu>
         </div>
       )}
-    </>
+    </AskRows>
   );
 }

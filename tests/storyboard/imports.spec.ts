@@ -15,17 +15,18 @@ test("Run the Luma import twice", async ({ page, flowDatabase }) => {
   await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/import-data/luma`);
   await page.getByRole("button", { name: staffCopy.luma.importNow }).click();
-  // The fixture calendar: nine public events and a private one, five guests each over two pages, three contacts.
+  // The fixture calendar: nine public events and a private one, five guests each over two pages, each event's hosts,
+  // one of them no guest, three contacts.
   const first = {
     events: 9,
     eventsSynced: 9,
     eventsLeft: 0,
     guestsChanged: 45,
-    people: 5,
+    people: 6,
     contacts: 3,
-    supportersAdded: 6,
-    linked: 6,
-    requests: 21,
+    supportersAdded: 7,
+    linked: 7,
+    requests: 30,
   };
   await expect(page.getByText(staffCopy.luma.result(first))).toBeVisible();
   await page.getByRole("heading", { name: staffCopy.luma.title }).scrollIntoViewIfNeeded();

@@ -256,7 +256,7 @@ shape, made in the migrations: `supporter_source_<name>` (`source_id`,
 history, and `supporter_contact_<name>` (`source_id`, `at`, `phone`,
 `postcode`, `latitude`, `longitude`, `city`) for contact details and places.
 `supporter_identity`, `supporter_activity` and `supporter_contact` union
-them by supporter (Luma's activity is two arms of `supporter_activity`
+them by supporter (Luma's activity is three arms of `supporter_activity`
 itself, as Postgres can't narrow a union inside a join to one supporter),
 and `supporters_summary` is one row per supporter. The list reads
 `supporters_listed`: `supporters_list`, a materialized view of every
@@ -279,9 +279,12 @@ Where they come from:
 - **Luma.** The hourly import (`lib/server/luma-import.ts`) copies every
   public event on our calendar into `luma_events`, each registered guest
   into `luma_guests` (phone, a postcode answer, `utm_source`; never Luma's
-  invited-only rows) and every Luma user into `luma_people`, with when
-  they joined the calendar as a contact and when a read of the contacts
-  last listed them. Luma's own IDs are the keys, and
+  invited-only rows), each of our own events' hosts into
+  `luma_event_hosts` (from Luma's details of the event, as its list has no
+  hosts: every past event's read once, and each still to come hourly until
+  its day is over) and every Luma user, guest, host or contact, into
+  `luma_people`, with when they joined the calendar as a contact and when
+  a read of the contacts last listed them. Luma's own IDs are the keys, and
   only the import writes these tables. The site's events pages still read
   Luma live.
 - **Our forms.** Each form entry ("Form entries", above). Its source in
@@ -332,7 +335,13 @@ badge, and its part of erasure.
 Our events are Luma's, as the hourly import copies them (`luma_events`);
 the staff interface's events page (`/staff/events`) lists our own as a
 table, on a Future tab, soonest first, and a Past tab, latest first, with
-how many are going, sorted and filtered there (`lib/staff-events-list.ts`). Each can have one owner on staff
+how many are going, sorted and filtered there (`lib/staff-events-list.ts`).
+Staff who see supporters see each event's hosts too, by name, each linked
+to their supporter, and can search by their names and emails; a host's
+supporter page lists the events they hosted, beside those they registered
+for, each dated when the import first found them a host of it, or, for a
+host since its first read, when it was made on Luma (Luma doesn't say when
+someone became a host). Each can have one owner on staff
 (`event_owners`, `lib/server/staff-events.ts`), kept apart from
 `luma_events` as only the import writes that. Any staff member can make
 anyone with a staff account an event's owner, from the page, but can't

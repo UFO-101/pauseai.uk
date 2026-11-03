@@ -127,6 +127,8 @@ export type LumaImportResult = {
   eventsLeft: number;
   /** Guest rows added, changed or marked as removed. */
   guestsChanged: number;
+  /** Hosts added to or taken off events (runs kept before hosts were copied don't say). */
+  hostsChanged?: number;
   /** People added or changed. */
   people: number;
   /** Contacts whose joining date was set. */

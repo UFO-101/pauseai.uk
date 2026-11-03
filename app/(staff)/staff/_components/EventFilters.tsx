@@ -8,8 +8,8 @@ import FilterBar, { filterWords, type Filter } from "./ui/FilterBar";
 export type EventChoices = { staff: readonly string[]; tags: string[]; cities: string[] };
 
 /**
- * The events list's filters, in its columns' order: its tags; where it
- * is, a city or online; its owner, or none; and taken off Luma, which
+ * The events list's filters, in its columns' order: where it is, a city
+ * or online; its tags; its owner, or none; and taken off Luma, which
  * finds only those, as the list leaves them out otherwise, as the
  * politicians list does test politicians. All but the last can be chosen
  * more than once.
@@ -18,16 +18,16 @@ function eventFilters({ staff, tags, cities }: EventChoices): Filter[] {
   const copy = staffCopy.events;
   return [
     {
-      name: "tag",
-      label: copy.filters.tag,
-      repeat: true,
-      options: tags.map((tag) => ({ value: tag, label: tag })),
-    },
-    {
       name: "place",
       label: copy.filters.place,
       repeat: true,
       options: [...cities.map((city) => ({ value: city, label: city })), { value: ONLINE, label: copy.online }],
+    },
+    {
+      name: "tag",
+      label: copy.filters.tag,
+      repeat: true,
+      options: tags.map((tag) => ({ value: tag, label: tag })),
     },
     {
       name: "owner",

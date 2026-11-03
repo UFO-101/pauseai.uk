@@ -13,16 +13,17 @@ type Props = { searchParams: Promise<Partial<EventsSearch>> };
 
 /** The list's title, with its filters. */
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
-  await requireStaff();
+  const staff = await requireStaff();
   const { filter, ...search } = eventsSearch(await searchParams);
-  return { title: filteredTitle(staffCopy.events.title, eventWords(search, await eventsPage(filter))) };
+  const page = await eventsPage(filter, staff.permissions.includes("supporters"));
+  return { title: filteredTitle(staffCopy.events.title, eventWords(search, page)) };
 }
 
-/** Our events, to come or past, filtered, each with its owner and Google Doc. */
+/** Our events, to come or past, filtered, each with its owner and Google Doc, and its hosts for those who see supporters. */
 export default async function EventsPage({ searchParams }: Props) {
-  await requireStaff();
+  const hosts = (await requireStaff()).permissions.includes("supporters");
   const { filter, ...search } = eventsSearch(await searchParams);
-  const { events, total, pages, removed, staff, tags, cities, now } = await eventsPage(filter);
+  const { events, total, pages, removed, staff, tags, cities, now } = await eventsPage(filter, hosts);
   return (
     <>
       <PageTitle action={<EventsSource />}>{staffCopy.events.title}</PageTitle>
@@ -34,6 +35,7 @@ export default async function EventsPage({ searchParams }: Props) {
         staff={staff}
         now={now}
         save={saveEventNow}
+        hosts={hosts}
       />
     </>
   );

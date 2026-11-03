@@ -415,12 +415,23 @@ the audit log. A table that isn't a whole list, inside a card, is a
 
 Columns go in the same order in every list: who it is, then how it
 stands, then counts, then when. The times that date a status, such as a
-letter's sent and replied, can sit beside it instead, read with it. Where a row has a page of its own, the
-first column leads to it, so there's one place to click to open it: a
-supporter's or politician's name. A row with no name, such as a letter,
-starts with what leads to it instead, its status, before who it's from
-and to. A log, read by time, newest first, starts with when instead: the
-audit log, an import's runs, a history.
+letter's sent and replied, can sit beside it instead, read with it.
+What we add of our own to a record from elsewhere, our process rather
+than the thing itself, comes after what the record says: an event's
+owner and doc, after Luma's name, place, tags and who's going. What a
+row's Edit changes goes last, just before Edit, so it sits by the button
+that changes it: those, or an account's permissions.
+
+Where a row has a page of its own, the first column leads to it, so
+there's one place to click to open it: a supporter's or politician's
+name. A row with no name, such as a letter, starts with what leads to it
+instead, its status, before who it's from and to. A list read by time
+starts with when instead. In a log, newest first, when is all there is
+to it: the audit log, an import's runs, a history. Something that
+happens on a day, such as an event, is named by its date as much as its
+name, so its name comes straight after, still leading to it: when, what,
+where, then the rest as usual. If people say the date when they mean the
+thing, the date goes first; otherwise it goes last.
 
 **Filters** (`ui/FilterBar`). Every list's filters are the same bar
 above it, and a list's own filters component only says what its filters

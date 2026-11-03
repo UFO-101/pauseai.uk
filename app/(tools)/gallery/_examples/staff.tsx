@@ -301,14 +301,19 @@ const RUNS: Record<ImportJob, Variant> = {
     ),
   },
   "import-luma": {
-    label: "A Luma import cut short by its time, and one that looked up places",
+    label: "A Luma import cut short by its time, and one that changed hosts and looked up places",
     render: () => (
       <StaffPage as="div">
         <Run run={exampleRun("import-luma", { ...exampleLumaResult, eventsLeft: 4, stoppedBy: "time" })} />
         <Run
           run={exampleRun(
             "import-luma",
-            { ...exampleLumaResult, contactPages: 10, places: { postcodes: 12, towns: 3, failed: false } },
+            {
+              ...exampleLumaResult,
+              hostsChanged: 1,
+              contactPages: 10,
+              places: { postcodes: 12, towns: 3, failed: false },
+            },
             { id: 2 },
           )}
         />
@@ -1698,7 +1703,8 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/EventsTable.tsx",
       variants: [
         {
-          label: "Future: one with its Google Doc, one with no owner or doc, in red",
+          label:
+            "Future: one with its Google Doc and three hosts, one linked, one not and one with no name; one with no owner or doc, in red",
           render: () => (
             <StaffPage as="div">
               <EventsTableExample />
@@ -1718,6 +1724,22 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <EventsTableExample params={{ when: "past", sort: "going", dir: "desc" }} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Searched by a host's email, whose address isn't shown",
+          render: () => (
+            <StaffPage as="div">
+              <EventsTableExample params={{ q: "john.smith@example" }} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Without the supporters permission: no hosts",
+          render: () => (
+            <StaffPage as="div">
+              <EventsTableExample hosts={false} />
             </StaffPage>
           ),
         },
@@ -2275,6 +2297,7 @@ export const staff: Group = {
       file: "app/(staff)/staff/_components/AskRow.tsx",
       variants: [
         { label: "An answer from Airtable, and an ask staff record with none yet", render: () => <AskRowExample /> },
+        { label: "A letter they declined, crossed", render: () => <AskRowExample declined /> },
       ],
     },
     {
@@ -2283,9 +2306,14 @@ export const staff: Group = {
       variants: [{ label: "Rows of asks, their answers lined up in a column", render: () => <AskRowExample /> }],
     },
     {
-      name: "OtherAsks",
+      name: "PoliticianAsks",
       file: "app/(staff)/staff/_components/AskRow.tsx",
-      variants: [{ label: "Under the rows, the button for another ask", render: () => <AskRowExample others /> }],
+      variants: [
+        {
+          label: "A politician's asks: those answered, in order, and the button for another",
+          render: () => <AskRowExample others />,
+        },
+      ],
     },
     {
       name: "PoliticianDetails",

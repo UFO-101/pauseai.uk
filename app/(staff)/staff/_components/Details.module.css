@@ -118,6 +118,7 @@
   .editPopover {
     margin: var(--space-2) 0 0;
     overflow: visible;
+    position-anchor: var(--under-edit);
     position-area: bottom span-left;
   }
 
@@ -135,6 +136,25 @@
     content: "";
     transform: rotate(45deg);
   }
+
+  /* On a phone, the width of the screen, less a margin each side, rather
+     than only what's left of Edit, and under the whole row, so the ask
+     stays in view above it, its pointer up to the row in the middle. */
+  @media (max-width: 720px) {
+    .editPopover {
+      width: auto;
+      max-width: none;
+      margin-inline: var(--space-4);
+      position-anchor: var(--under-row);
+      position-area: bottom span-all;
+      justify-self: stretch;
+    }
+
+    .editPopover::before {
+      right: auto;
+      left: calc(50% - var(--space-1));
+    }
+  }
 }
 
 /* Who asked, and who set the answer and how, under the title; the answer's date. */
@@ -144,11 +164,31 @@
   font-weight: 400;
 }
 
-/* A status's note and its button on one line: the field short, as a note
-   is a few words, and the button wraps under it only when there's no room. */
+/* The answers to pick from, a row of their own over the note. */
+.statusChoices {
+  flex: 1 0 100%;
+}
+
+/* A status's note, its label on its left, and its button on one line, the
+   field taking all the room the button leaves; the button wraps under it
+   only when there's no room. */
 .note {
-  flex: 0 1 12rem;
+  display: flex;
+  flex: 1 1 15rem;
+  gap: var(--space-2);
+  align-items: center;
   min-width: 0;
+}
+
+.note > input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* The note's label, on its left, in a field label's type. */
+.noteLabel {
+  font-size: var(--label-font-size);
+  font-weight: 600;
 }
 
 /* Notes kept as they were written, a line each. */

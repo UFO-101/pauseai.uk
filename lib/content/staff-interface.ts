@@ -489,12 +489,15 @@ export const staffCopy = {
       },
       // A registration that went through, where the status says nothing more.
       registered: "Registered",
+      // In the Events table's status column, for an event they hosted.
+      host: "Host",
       // Between the MP a letter went to, or who answered it, and its campaign.
       about: "about",
       noActivity: "Nothing yet.",
       kinds: {
         "luma-contact": "Became a contact of the Luma calendar",
         "luma-registered": "Registered for",
+        "luma-hosted": "Hosted",
         letter: "Wrote to",
         "letter-replied": "Letter answered by",
         "form-entry": "Filled in",
@@ -601,7 +604,6 @@ export const staffCopy = {
   // A person's answer to an ask (lib/asks.ts): a letter's, then an event's.
   statuses: {
     signed: "Signed",
-    none: "Not signed",
     going: "Going",
     tentative: "Tentatively going",
     meeting_staff: "Staff meeting instead",
@@ -609,7 +611,7 @@ export const staffCopy = {
     declined: "Declined",
     declined_surgery: "Declined, offered a surgery",
     passed_on: "Passed on invite",
-    // No answer to an event's invitation.
+    // No answer to an ask, of any kind.
     noAnswer: "No answer",
   } as Record<string, string>,
   // Whether a notable person is in office.
@@ -683,8 +685,6 @@ export const staffCopy = {
     // On a politician whose address is blocked (/staff/politicians/blocked-emails).
     emailBlocked: "Email blocked",
     // The button on an ask staff record by hand.
-    markSigned: "Mark as signed",
-    unmarkSigned: "Remove signature",
   },
   fields: {
     name: "Name",
@@ -711,12 +711,14 @@ export const staffCopy = {
     // Under it, when a search finds none, but would among those taken off Luma, linked to them.
     removedMatches: (n: number) => `${n} ${n === 1 ? "match" : "matches"} found for events taken off Luma`,
     // The table's headings; the owner's and Google Doc's are `owner` and `doc` below. Going is how many registered
-    // and were approved.
-    columns: { when: "When", name: "Event", tags: "Tags", place: "Place", going: "Going" },
+    // and were approved. Hosts are its hosts on Luma, for staff who see supporters.
+    columns: { when: "When", name: "Event", tags: "Tags", place: "Place", going: "Going", hosts: "Hosts" },
+    // A host Luma has no name for, in the Hosts column.
+    noHostName: "No name on Luma",
     // The list's search box, and its filters but Owner's: each Luma tag; each city, and Online; and taken off Luma
     // (`removed`), which finds only those, as they're left out otherwise.
     filters: {
-      search: "Event names",
+      search: "Name, host or email",
       tag: "Tag",
       place: "Place",
       removed: { yes: "Yes" } as Record<string, string>,
@@ -1159,6 +1161,8 @@ export const staffCopy = {
     // Under the answer to an ask staff record: opens the form to change it.
     edit: "Edit",
     save: "Save",
+    // In the form's row of answers, set apart from them, once there's an answer: picked and saved, it clears it.
+    clearAnswer: "Clear answer",
     // Under the asks, the small button whose menu lists the other asks staff record, to add one to the card.
     otherAsk: "Add another answer",
     // The fields of the box at the top.
@@ -1182,7 +1186,7 @@ export const staffCopy = {
     historyTitle: "History",
     // A status set or cleared, in the history: around the ask's name.
     statusSet: (status: string) => ({ before: `${status} '`, after: "'" }),
-    statusCleared: { before: "No longer marked as signed '", after: "'" },
+    statusCleared: { before: "Answer cleared for '", after: "'" },
     noHistory: "Nothing yet.",
     // What each line of the history was: a letter, a reply, or an entry of the audit log about them.
     history: {
@@ -1333,7 +1337,7 @@ export const staffCopy = {
     intro: {
       before: "The public events on ",
       link: "our Luma calendar",
-      after: ", who registered for each, and the calendar's contacts.",
+      after: ", who registered for each, who the hosts are. Also who is subscribed to the calendar (the contacts).",
     },
     importNow: "Import Luma now",
     never: "Not imported yet.",
@@ -1350,7 +1354,9 @@ export const staffCopy = {
       requests: number;
     }) =>
       `${r.events} events changed; ${r.eventsSynced} guest lists read, ${r.eventsLeft} waiting; ${r.guestsChanged} guests, ${r.people} people, ${r.contacts} contacts changed; ${r.supportersAdded} new supporters, ${r.linked} linked; ${r.requests} requests.`,
-    // After the counts, how many pages of contacts the run read (runs kept before this was recorded don't say).
+    // After the counts, how many hosts were added to or taken off events (runs kept before hosts were copied don't say).
+    hostsChanged: (n: number) => `${n} ${n === 1 ? "host" : "hosts"} changed.`,
+    // After that, how many pages of contacts the run read (runs kept before this was recorded don't say).
     contactPages: (pages: number) => `${pages} pages of contacts read.`,
     // After that, the postcodes and towns looked up at postcodes.io for where supporters are (runs kept before this was recorded don't say).
     places: (p: { postcodes: number; towns: number }) =>
