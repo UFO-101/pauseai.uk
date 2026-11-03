@@ -153,6 +153,8 @@ export const exampleProxiedLetterDetails: SupporterLetterDetails = {
         fromSupporter: false,
         subject: "Re: Please back a pause on frontier AI",
         text: "Dear Jane,\n\nThank you for writing to me.\n\nTesty",
+        // The office copied their caseworker in.
+        cc: "Casey Worker <casey.worker@parliament.uk>",
       },
       {
         id: 2,
@@ -163,6 +165,7 @@ export const exampleProxiedLetterDetails: SupporterLetterDetails = {
         fromSupporter: true,
         subject: "Re: Please back a pause on frontier AI",
         text: "Dear Mr McTestface,\n\nThank you. Could we meet?\n\nJane",
+        cc: null,
       },
     ],
   },

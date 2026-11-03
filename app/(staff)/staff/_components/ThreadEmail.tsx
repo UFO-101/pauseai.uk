@@ -7,12 +7,13 @@ const copy = staffCopy.letterThread;
 
 /**
  * One message of a letter's thread as an email shows it: who it's from and
- * to, when, and its subject, with `action`, if any, at the right of the
+ * to, whom it was copied to if anyone, when, and its subject, with `action`, if any, at the right of the
  * subject's line, over its text.
  */
 export default function ThreadEmail({
   from,
   to,
+  cc,
   at,
   subject,
   action,
@@ -21,6 +22,7 @@ export default function ThreadEmail({
 }: {
   from: ReactNode;
   to: string;
+  cc?: string | null;
   at: string | null;
   subject: string;
   action?: ReactNode;
@@ -35,6 +37,12 @@ export default function ThreadEmail({
         <dd>{from}</dd>
         <dt>{copy.headers.to}</dt>
         <dd>{to}</dd>
+        {cc && (
+          <>
+            <dt>{copy.headers.cc}</dt>
+            <dd>{cc}</dd>
+          </>
+        )}
         {at && (
           <>
             <dt>{copy.headers.date}</dt>

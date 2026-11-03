@@ -4,7 +4,7 @@ import { checkMailingDoc, letterFor, type MailingRecipientValues } from "@/lib/m
 import type { LetterDoc } from "@/lib/letter-format";
 import { replyText } from "@/lib/reply-text";
 import { query } from "./db";
-import { firstOfType, parseMime, partText } from "./mime";
+import { decodeWords, firstOfType, parseMime, partText } from "./mime";
 import { letterReply } from "./outside-services/blobs";
 
 // The thread of one of PauseAI's letters, for staff, below what its page
@@ -26,6 +26,8 @@ export type ThreadMessage = {
   subject: string;
   /** Its plain text, or its HTML's text, without the mail it quotes; null if the kept message can't be read. */
   text: string | null;
+  /** Who it was copied to, as its Cc said; null if nobody, or the kept message can't be read. */
+  cc: string | null;
 };
 
 export type LetterThread = {
@@ -79,11 +81,21 @@ function htmlText(html: string): string {
     .trim();
 }
 
-/** A kept message's text, without the mail it quotes: its plain text if it has one, else its HTML's; null if it's gone or has neither. */
-export async function messageText(blobKey: string): Promise<string | null> {
+/**
+ * A kept message's text, without the mail it quotes: its plain text if it
+ * has one, else its HTML's, or null if it has neither; and whom it was
+ * copied to, as its Cc said, or null. Both null if it's gone.
+ */
+export async function messageContent(blobKey: string): Promise<{ text: string | null; cc: string | null }> {
   const gzipped = await letterReply(blobKey);
-  if (!gzipped) return null;
+  if (!gzipped) return { text: null, cc: null };
   const message = parseMime(gunzipSync(gzipped).toString("latin1"));
+  const cc = message.headers.get("cc");
+  return { text: textOf(message), cc: cc ? decodeWords(cc) : null };
+}
+
+/** A message's text, without the mail it quotes: its plain text if it has one, else its HTML's; null if neither. */
+function textOf(message: ReturnType<typeof parseMime>): string | null {
   const plain = firstOfType(message, "text/plain");
   if (plain) return replyText(partText(plain).replace(/\r\n/g, "\n").trim());
   const html = firstOfType(message, "text/html");
@@ -122,13 +134,13 @@ export async function letterThread(mailingId: number, letterId: number): Promise
 
 /** Each message kept in a letter's thread, oldest first, with its text. */
 export async function threadMessages(letterId: number): Promise<ThreadMessage[]> {
-  const replies = await query<Omit<ThreadMessage, "text"> & { blobKey: string }>(
+  const replies = await query<Omit<ThreadMessage, "text" | "cc"> & { blobKey: string }>(
     `SELECT id::int AS id, at, from_name AS "fromName", from_address AS "fromAddress", from_us AS "fromUs",
        from_supporter AS "fromSupporter", subject, blob_key AS "blobKey"
      FROM letter_replies WHERE letter_id = $1 ORDER BY at, id`,
     [letterId],
   );
-  return Promise.all(replies.map(async ({ blobKey, ...reply }) => ({ ...reply, text: await messageText(blobKey) })));
+  return Promise.all(replies.map(async ({ blobKey, ...reply }) => ({ ...reply, ...(await messageContent(blobKey)) })));
 }
 
 /** The kept messages after `after`, by ID, as many as `limit`, for the backup: each one's ID and key. */

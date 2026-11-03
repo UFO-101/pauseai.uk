@@ -2,7 +2,7 @@ import { gzipSync } from "node:zlib";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
-import { letterThread, messageText, replyFile, repliesAfter } from "./letter-threads";
+import { letterThread, messageContent, replyFile, repliesAfter } from "./letter-threads";
 import { saveLetterReply } from "./outside-services/blobs";
 
 const LETTER = {
@@ -118,15 +118,19 @@ describeWithDatabase("letter threads", () => {
       messages: [{ text: null }],
     });
     await saveLetterReply("pdf.eml.gz", gzipSync("Content-Type: application/pdf\r\n\r\n%PDF"));
-    expect(await messageText("pdf.eml.gz")).toBeNull();
+    expect(await messageContent("pdf.eml.gz")).toEqual({ text: null, cc: null });
+    expect(await messageContent("never-kept.eml.gz")).toEqual({ text: null, cc: null });
   });
 
   it("leaves out the mail a reply quotes, in plain text or in an HTML blockquote", async () => {
     await saveLetterReply(
       "plain.eml.gz",
-      gzipSync("Subject: Re\r\n\r\nYes.\r\n\r\nOn Mon, Jo wrote:\r\n> Will you?\r\n"),
+      gzipSync(
+        "Subject: Re\r\nCc: =?utf-8?Q?Casey_W=C3=B6rker?= <casey@parliament.uk>\r\n\r\nYes.\r\n\r\nOn Mon, Jo wrote:\r\n> Will you?\r\n",
+      ),
     );
-    expect(await messageText("plain.eml.gz")).toBe("Yes.");
+    // Its Cc as it came, its encoded words decoded.
+    expect(await messageContent("plain.eml.gz")).toEqual({ text: "Yes.", cc: "Casey Wörker <casey@parliament.uk>" });
     await saveLetterReply(
       "html.eml.gz",
       gzipSync(
@@ -134,7 +138,7 @@ describeWithDatabase("letter threads", () => {
           "<blockquote>Will you?<blockquote>Older</blockquote></blockquote>",
       ),
     );
-    expect(await messageText("html.eml.gz")).toBe("No.");
+    expect(await messageContent("html.eml.gz")).toEqual({ text: "No.", cc: null });
   });
 
   it("lists the kept replies after an ID for the backup, and gives each one's file", async () => {

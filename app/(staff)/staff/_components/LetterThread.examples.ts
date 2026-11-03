@@ -28,6 +28,7 @@ export const exampleThread: LetterThread = {
       fromSupporter: false,
       subject: "Re: Edinburgh follow-up",
       text: "Dear Jo,\n\nThank you for writing to me. I'd be glad to meet.\n\nPolly",
+      cc: null,
     },
     {
       id: 2,
@@ -38,6 +39,7 @@ export const exampleThread: LetterThread = {
       fromSupporter: false,
       subject: "Re: Edinburgh follow-up",
       text: null,
+      cc: null,
     },
   ],
 };
