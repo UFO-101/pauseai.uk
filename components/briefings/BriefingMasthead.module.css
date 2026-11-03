@@ -3,7 +3,7 @@
 
 .masthead {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 58%);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 62%);
   gap: var(--space-2) var(--space-5);
   align-items: center;
   padding-bottom: var(--space-3);

@@ -146,10 +146,15 @@ export function resetDatabase(url, { singleTransaction = false, upTo } = {}) {
   server.pathname = "/postgres";
   psql(server.toString(), "-c", `DROP DATABASE IF EXISTS "${name}" WITH (FORCE)`);
   psql(server.toString(), "-c", `CREATE DATABASE "${name}" ${PRODUCTION_LOCALE}`);
-  for (const file of migrationFiles()) {
-    if (upTo !== undefined && basename(file).slice(0, upTo.length) > upTo) break;
-    psql(url, ...(singleTransaction ? ["-1"] : []), "-f", file);
-  }
+  // One psql for every file, in order, stopping at the first error: a
+  // process each would make a fresh database slower with every migration,
+  // and much slower on a loaded machine. No migration sets anything for its
+  // session, so the files share one as they would each have their own.
+  const files = migrationFiles().filter((file) => upTo === undefined || basename(file).slice(0, upTo.length) <= upTo);
+  psql(
+    url,
+    ...files.flatMap((file) => (singleTransaction ? ["-c", "BEGIN", "-f", file, "-c", "COMMIT"] : ["-f", file])),
+  );
   return url;
 }
 

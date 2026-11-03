@@ -22,9 +22,11 @@
 :where(.sheet) p {
   margin: 0;
 }
+/* Discs, even in a list nested in another, such as a card's in the list of briefings. */
 :where(.sheet) ul {
   margin: 0;
   padding-left: var(--space-5);
+  list-style-type: disc;
 }
 /* A box spaces what's in it (BriefingBox); text in a column, here. */
 :where(.sheet) div > :is(p, ul) + :is(p, ul) {
