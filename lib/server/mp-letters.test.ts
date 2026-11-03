@@ -1,24 +1,35 @@
-import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { http, HttpResponse } from "msw";
-import { server } from "@/tests/fixtures/msw";
+import { HttpResponse } from "msw";
 import { campaigns, copy } from "@/lib/content/email-your-mp";
-import { addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
-import { docFromMarkup } from "@/lib/letter-format";
+import { draftLetter, signatureAddress } from "@/lib/email-your-mp";
+import { draftHash } from "@/lib/letter-changes";
+import { docFromMarkup, toText } from "@/lib/letter-format";
+import {
+  addTestMp,
+  addTestPolitician,
+  connectTestGmail,
+  describeWithDatabase,
+  useTestDatabase,
+} from "@/tests/database";
+import { LETTERS_INBOX, recordGmail, testProxy } from "@/tests/gmail-sends";
+import { resetLettersInbox } from "@/tests/fixtures/letters-inbox";
 import { query } from "./db";
 import { recordProblem } from "./email";
-import {
-  letterAddress,
-  mailboxName,
-  mayWriteTo,
-  recipient,
-  parseLetterForm,
-  submitLetter,
-  type LetterForm,
-} from "./mp-letters";
+import { LETTERS_DAILY_LIMIT } from "./letters-inbox";
+import { mayWriteTo, parseLetterForm, submitLetter, type LetterForm } from "./mp-letters";
 
-const POSTMARK = "https://api.postmarkapp.com/email";
+/** The draft the form gives Jane for the test MP and the letter to the PM: what the server rebuilds. */
+function testDraft(): string {
+  const campaign = campaigns.find((c) => c.slug === "regulate-letter-pm")!;
+  return toText(
+    draftLetter(
+      campaign,
+      { salutation: "Mr McTestface", constituency: "Testshire", senderName: "Jane Smith", statuses: {} },
+      signatureAddress("1 High Street\nTestville", "zz9 9zz"),
+    ),
+  );
+}
 
 const FORM: LetterForm = {
   campaign: "regulate-letter-pm",
@@ -31,44 +42,18 @@ const FORM: LetterForm = {
   letter: docFromMarkup(
     "Dear Mr McTestface,\n\nPlease **do** sign.\n\nThanks,\n\nJane Smith\n\n1 High Street\nTestville\nZZ9 9ZZ",
   ),
+  draftHash: "",
   consent: true,
   nickname: "",
   turnstileToken: "token",
 };
 
-type Sent = {
-  From: string;
-  To: string;
-  Cc?: string;
-  Bcc?: string;
-  ReplyTo?: string;
-  Subject: string;
-  TextBody: string;
-  HtmlBody?: string;
-  MessageStream: string;
-  Attachments?: { Name: string; Content: string; ContentType: string }[];
-  Metadata?: Record<string, string>;
-};
-
-/** Records each email sent through Postmark, and answers with a MessageID. */
-function postmark(
-  answer: () => Response = () => HttpResponse.json({ ErrorCode: 0, MessageID: `msg-${Math.random()}` }),
-) {
-  const sent: Sent[] = [];
-  server.use(
-    http.post(POSTMARK, async ({ request }) => {
-      sent.push((await request.json()) as Sent);
-      return answer();
-    }),
-  );
-  return sent;
-}
-
 beforeEach(() => {
   vi.stubEnv("TURNSTILE_SECRET_KEY", "0xreal");
-  vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token");
   vi.stubEnv("DEPLOY_CONTEXT", "deploy-preview");
+  vi.stubEnv("POLICY_INBOX", "policy@example.org");
   vi.spyOn(console, "error").mockImplementation(() => {});
+  resetLettersInbox();
 });
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -77,11 +62,12 @@ afterEach(() => {
 
 describe("parseLetterForm", () => {
   it("trims strings, and treats anything else as empty", () => {
-    expect(parseLetterForm({ name: " Jane ", consent: true, email: 5 })).toMatchObject({
+    expect(parseLetterForm({ name: " Jane ", consent: true, email: 5, draftHash: " 0badcafe " })).toMatchObject({
       name: "Jane",
       email: "",
       address: "",
       consent: true,
+      draftHash: "0badcafe",
     });
     expect(parseLetterForm(null).consent).toBe(false);
     expect(parseLetterForm({ letter: "Dear MP" }).letter).toBeUndefined();
@@ -96,147 +82,122 @@ describe("mayWriteTo", () => {
     vi.stubEnv("DEPLOY_CONTEXT", "production");
     expect(mayWriteTo({ isTest: false })).toBe(true);
   });
-
-  it("gives each letter its own address", () => {
-    expect(letterAddress("jane.smith.482913")).toBe("jane.smith.482913@letters.pauseai.uk");
-    vi.stubEnv("LETTERS_MAIL_DOMAIN", "letters.example.org");
-    expect(letterAddress("jane.smith.482913")).toBe("jane.smith.482913@letters.example.org");
-  });
-});
-
-describe("recipient", () => {
-  it("names the MP, with MP after their name once", () => {
-    expect(recipient({ name: "Ms Dora Dummy" }, "dora@example.org")).toBe('"Ms Dora Dummy MP" <dora@example.org>');
-    expect(recipient({ name: " Testy McTestface MP " }, "t@example.org")).toBe('"Testy McTestface MP" <t@example.org>');
-    expect(recipient({ name: 'Rt Hon "Sir" Bob <Smith>' }, "b@example.org")).toBe(
-      '"Rt Hon Sir Bob Smith MP" <b@example.org>',
-    );
-    expect(recipient({ name: "Amp" }, "a@example.org")).toBe('"Amp MP" <a@example.org>');
-  });
-});
-
-describe("mailboxName", () => {
-  it("spells the sender's name in lowercase ASCII words joined by dots", () => {
-    expect(mailboxName("Jane Smith")).toBe("jane.smith");
-    expect(mailboxName("  Zoë O’Brien-Smith ")).toBe("zoe.obrien.smith");
-    expect(mailboxName("Dr. J. R. Hartley 3rd")).toBe("dr.j.r.hartley.3rd");
-    expect(mailboxName("Jürgen Strauß")).toBe("jurgen.strauss");
-    expect(mailboxName("Søren Łukasz")).toBe("soren.lukasz");
-    expect(mailboxName("Æthelred Œuvre")).toBe("aethelred.oeuvre");
-    expect(mailboxName("Đorđe Þór Iğdır")).toBe("dorde.thor.igdir");
-    expect(mailboxName('Jane "<script>" Smith@evil.com')).toBe("jane.script.smith.evil.com");
-  });
-
-  it("stops at 30 characters, never on a dot", () => {
-    expect(mailboxName("Alexandra Montgomery-Fitzwilliam")).toBe("alexandra.montgomery.fitzwilli");
-    expect(mailboxName("Abcdefghijklmnopqrstuvwxyz ABCD Efg")).toBe("abcdefghijklmnopqrstuvwxyz.abc");
-    expect(mailboxName("Abcdefghijklmnopqrstuvwxyzabc D")).toBe("abcdefghijklmnopqrstuvwxyzabc");
-  });
-
-  it("is 'letter' when none of the name is Latin script", () => {
-    expect(mailboxName("王小明")).toBe("letter");
-    expect(mailboxName("🙂")).toBe("letter");
-    expect(mailboxName("")).toBe("letter");
-  });
 });
 
 describeWithDatabase("submitLetter", () => {
   useTestDatabase();
 
-  /** What the letter's Sent event recorded. */
-  const sentDetails = async () =>
-    (await query<{ details: object }>("SELECT details FROM letter_events WHERE status = 'sent'"))[0].details;
+  const statuses = async () =>
+    (await query<{ status: string }>("SELECT status FROM letter_events ORDER BY id")).map((e) => e.status);
+
   beforeEach(async () => {
     await addTestMp();
     await addTestPolitician();
+    await connectTestGmail(LETTERS_INBOX);
   });
 
-  it("sends the letter from its own address, copied to us, replying to the sender and to us, with the PDFs", async () => {
-    vi.stubEnv("POLICY_INBOX", "replies@pauseai.uk");
-    const sent = postmark(() => HttpResponse.json({ ErrorCode: 0, MessageID: "msg-1" }));
+  it("sends the letter from the sender's proxy to the MP, then their copy from it to the MP's, Bcc'd to them", async () => {
+    const sent = recordGmail();
+    expect(await submitLetter({ ...FORM, draftHash: draftHash(testDraft()) })).toEqual({ ok: true });
 
-    expect(await submitLetter(FORM)).toEqual({ ok: true });
-
-    const [letter] = await query<Record<string, unknown>>(
-      `SELECT l.*, s.campaign, s.postmark_mailbox, f.form, f.email, f.postcode, f.contact_consent
-       FROM letters l JOIN letters_from_supporters s USING (id) JOIN form_entries f ON f.id = s.entry_id`,
+    expect(sent).toHaveLength(2);
+    const [letter, copied] = sent;
+    expect(letter.account).toBe(LETTERS_INBOX);
+    expect(letter.headers.get("from")).toBe(`"Jane Smith (via PauseAI)" <${testProxy("jane.smith")}>`);
+    expect(letter.headers.get("to")).toBe('"Testy McTestface MP" <test-mp@parliament.example>');
+    // Nobody else: no Cc, no Bcc, and nothing goes to the policy inbox.
+    expect(letter.headers.has("cc")).toBe(false);
+    expect(letter.headers.has("bcc")).toBe(false);
+    expect(letter.headers.get("subject")).toBe("Subject");
+    expect(letter.text).toBe(
+      "Dear Mr McTestface,\n\nPlease do sign.\n\nThanks,\n\nJane Smith\n\n1 High Street\nTestville\nZZ9 9ZZ",
     );
-    expect(letter.postmark_mailbox).toMatch(/^jane\.smith\.\d{6}$/);
-    const address = `${letter.postmark_mailbox}@letters.pauseai.uk`;
-    expect(sent).toHaveLength(1);
-    expect(sent[0].ReplyTo).toBeUndefined();
-    expect(sent[0]).toMatchObject({
-      From: `"Jane Smith via PauseAI" <${address}>`,
-      To: '"Testy McTestface MP" <test-mp@parliament.example>',
-      Bcc: "replies@pauseai.uk",
-      Cc: '"Jane Smith" <jane@example.com>',
-      Subject: "Subject",
-      TextBody: "Dear Mr McTestface,\n\nPlease do sign.\n\nThanks,\n\nJane Smith\n\n1 High Street\nTestville\nZZ9 9ZZ",
-      HtmlBody:
-        "<p>Dear Mr McTestface,</p>\n<p>Please <strong>do</strong> sign.</p>\n<p>Thanks,</p>\n<p>Jane Smith</p>\n<p>1 High Street<br>Testville<br>ZZ9 9ZZ</p>",
-      MessageStream: "outbound",
-      Metadata: { letter: String(letter.id), campaign: "regulate-letter-pm" },
-    });
-    expect(sent[0].Attachments!.map((a) => a.Name)).toEqual(campaigns[0].attachments.map((a) => a.file));
-    expect(
-      Buffer.from(sent[0].Attachments![0].Content, "base64").equals(
-        readFileSync("public/pdfs/Frontier-AI-Open-Letter.pdf"),
-      ),
-    ).toBe(true);
-    expect(sent[0].Attachments![0].ContentType).toBe("application/pdf");
-    expect(letter).toMatchObject({
-      campaign: "regulate-letter-pm",
+    expect(letter.html).toContain("<p>Please <strong>do</strong> sign.</p>");
+    const files = letter.mime.parts.slice(1);
+    expect(files.map((f) => f.headers.get("content-disposition"))).toEqual(
+      campaigns[0].attachments.map((a) => `attachment; filename="${a.file}"`),
+    );
+    expect(files[0].body.equals(readFileSync("public/pdfs/Frontier-AI-Open-Letter.pdf"))).toBe(true);
+
+    const mpProxy = `"Testy McTestface MP (via PauseAI)" <${testProxy("testy.mctestface.mp")}>`;
+    expect(copied.headers.get("from")).toBe(letter.headers.get("from"));
+    expect(copied.headers.get("to")).toBe(mpProxy);
+    expect(copied.headers.get("reply-to")).toBe(mpProxy);
+    expect(copied.headers.get("bcc")).toBe("jane@example.com");
+    expect(copied.text).toBe(`${copy.letterCopy("Testy McTestface MP")}\n\n${letter.text}`);
+    expect(copied.html).toMatch(/^<p>⁂ This is a copy of your letter/);
+    expect(copied.mime.parts.slice(1)).toHaveLength(campaigns[0].attachments.length);
+
+    const [row] = await query<Record<string, unknown>>(
+      `SELECT l.status, l.sent_at IS NOT NULL AS sent, s.copy_state, s.postmark_mailbox, s.draft, s.draft_approximate,
+         s.own_words, s.letter, p.tag, p.supporter_email, f.form, f.postcode, f.contact_consent
+       FROM letters l JOIN letters_from_supporters s USING (id) JOIN proxies p ON p.id = s.proxy_id
+         JOIN form_entries f ON f.id = s.entry_id`,
+    );
+    expect(row).toEqual({
+      status: "sent",
+      sent: true,
+      copy_state: "sent",
+      postmark_mailbox: null,
+      draft: testDraft(),
+      draft_approximate: false,
+      own_words: expect.any(Number),
+      letter: FORM.letter,
+      tag: "jane.smith",
+      supporter_email: "jane@example.com",
       form: "email-your-mp",
-      email: "jane@example.com",
       postcode: "ZZ9 9ZZ",
       contact_consent: true,
-      status: "sent",
     });
-    expect(await query("SELECT purpose, letter_id::int AS id, address, outcome, message_id FROM email_sends")).toEqual([
+    expect(row.own_words).toBeGreaterThan(0);
+    expect(await query("SELECT tag FROM proxies ORDER BY id")).toEqual([
+      { tag: "jane.smith" },
+      { tag: "testy.mctestface.mp" },
+    ]);
+    expect(await query("SELECT purpose, address, outcome, backend, sender FROM email_sends ORDER BY id")).toEqual([
       {
         purpose: "letter",
-        id: Number(letter.id),
         address: "test-mp@parliament.example",
         outcome: "sent",
-        message_id: "msg-1",
+        backend: "gmail",
+        sender: LETTERS_INBOX,
+      },
+      {
+        purpose: "letter-copy",
+        address: testProxy("testy.mctestface.mp"),
+        outcome: "sent",
+        backend: "gmail",
+        sender: LETTERS_INBOX,
       },
     ]);
-    expect(letter).not.toHaveProperty("body");
-    expect(letter).not.toHaveProperty("body_html");
-    expect(letter.sent_at).not.toBeNull();
+    expect(await statuses()).toEqual(["sent", "copy_sent"]);
     // The sender is a supporter from the moment the letter is kept.
-    expect(
-      await query(
-        "SELECT s.id::int AS letter_id, k.matched_value FROM supporter_links k JOIN letters_from_supporters s ON s.entry_id = k.form_entry_id",
-      ),
-    ).toEqual([{ letter_id: Number(letter.id), matched_value: "jane@example.com" }]);
-    expect(
-      (await query<{ status: string }>("SELECT status FROM letter_events ORDER BY id")).map((e) => e.status),
-    ).toEqual(["sending", "sent"]);
-    // Sent records who it was from, to and copied to.
-    expect(await sentDetails()).toEqual({
-      from: expect.stringMatching(/^jane\.smith\.\d{6}@letters\.pauseai\.uk$/),
-      to: expect.stringMatching(/@/),
-      cc: "jane@example.com",
-      messageId: expect.any(String),
-    });
+    expect(await query("SELECT matched_value FROM supporter_links")).toEqual([{ matched_value: "jane@example.com" }]);
   });
 
-  it("sends no Bcc when there's no shared inbox", async () => {
-    vi.stubEnv("POLICY_INBOX", "");
-    const sent = postmark();
+  it("keeps a supporter's proxy for every letter, and names another's with the same name apart", async () => {
+    vi.stubEnv("DEPLOY_CONTEXT", "production");
     await submitLetter(FORM);
-    expect(sent[0].Bcc).toBeUndefined();
+    await submitLetter({ ...FORM, campaign: "support-sobel-bill", email: "JANE@example.com" });
+    await submitLetter({ ...FORM, email: "other.jane@example.com" });
+    expect(
+      await query("SELECT p.tag FROM letters_from_supporters s JOIN proxies p ON p.id = s.proxy_id ORDER BY s.id"),
+    ).toEqual([{ tag: "jane.smith" }, { tag: "jane.smith" }, { tag: "jane.smith.2" }]);
+  });
+
+  it("marks the draft approximate when the form's was another, as after a deploy", async () => {
+    await submitLetter({ ...FORM, draftHash: "0badcafe" });
+    expect(await query("SELECT draft_approximate FROM letters_from_supporters")).toEqual([{ draft_approximate: true }]);
   });
 
   it("sends a campaign without attachments without any", async () => {
-    const sent = postmark();
+    const sent = recordGmail();
     await submitLetter({ ...FORM, campaign: "support-sobel-bill" });
-    expect(sent[0].Attachments).toEqual([]);
+    expect(sent[0].mime.parts).toHaveLength(2);
   });
 
   it("pretends to accept a bot's letter, and sends nothing", async () => {
-    const sent = postmark();
+    const sent = recordGmail();
     expect(await submitLetter({ ...FORM, nickname: "bot" })).toEqual({ ok: true });
     expect(sent).toEqual([]);
     expect(await query("SELECT id FROM letters")).toEqual([]);
@@ -250,7 +211,7 @@ describeWithDatabase("submitLetter", () => {
     });
   });
 
-  it("refuses missing fields, a bad email, and an unknown campaign", async () => {
+  it("refuses missing fields, a bad email, one of ours, and an unknown campaign", async () => {
     expect(await submitLetter({ ...FORM, address: "" })).toMatchObject({
       status: 400,
       message: copy.errors.missingFields,
@@ -267,10 +228,21 @@ describeWithDatabase("submitLetter", () => {
       status: 400,
       message: copy.errors.invalidEmail,
     });
+    for (const ours of [LETTERS_INBOX, testProxy("jane.smith"), "Policy@example.org"]) {
+      expect(await submitLetter({ ...FORM, email: ours })).toMatchObject({
+        status: 400,
+        message: copy.errors.ourAddress,
+      });
+    }
     expect(await submitLetter({ ...FORM, campaign: "nope" })).toMatchObject({
       status: 400,
       message: copy.errors.unknownCampaign,
     });
+  });
+
+  it("takes any address but the letters inbox's where there's no policy inbox", async () => {
+    vi.stubEnv("POLICY_INBOX", "");
+    expect(await submitLetter({ ...FORM, email: "policy@example.org" })).toEqual({ ok: true });
   });
 
   it("refuses a postcode with no MP, or an MP with no email", async () => {
@@ -283,7 +255,7 @@ describeWithDatabase("submitLetter", () => {
   });
 
   it("outside production, writes only to the test MP", async () => {
-    const sent = postmark();
+    const sent = recordGmail();
     expect(await submitLetter({ ...FORM, postcode: "SW1A 1AA" })).toMatchObject({
       status: 403,
       message: copy.errors.testMpOnly,
@@ -291,12 +263,11 @@ describeWithDatabase("submitLetter", () => {
     expect(sent).toEqual([]);
     vi.stubEnv("DEPLOY_CONTEXT", "production");
     expect(await submitLetter({ ...FORM, postcode: "SW1A 1AA" })).toEqual({ ok: true });
-    expect(sent).toHaveLength(1);
+    expect(sent).toHaveLength(2);
   });
 
   it("sends one letter per sender email per campaign, except to the test MPs", async () => {
     vi.stubEnv("DEPLOY_CONTEXT", "production");
-    const sent = postmark();
     const real = { ...FORM, postcode: "SW1A 1AA" };
     expect(await submitLetter(real)).toEqual({ ok: true });
     expect(await submitLetter({ ...real, email: "JANE@example.com" })).toEqual({
@@ -308,74 +279,33 @@ describeWithDatabase("submitLetter", () => {
     expect(await submitLetter({ ...real, email: "sam@example.com" })).toEqual({ ok: true });
     expect(await submitLetter(FORM)).toEqual({ ok: true });
     expect(await submitLetter(FORM)).toEqual({ ok: true });
-    expect(sent).toHaveLength(5);
+    expect(await query("SELECT count(*)::int AS n FROM letters WHERE status = 'sent'")).toEqual([{ n: 5 }]);
   });
 
-  it("in a fixture build, makes each letter's address from the sender and how many they've sent", async () => {
-    vi.stubEnv("DATA_FIXTURES", "1");
-    vi.stubEnv("OUTBOX_DIR", "");
-    expect(await submitLetter(FORM)).toEqual({ ok: true });
-    expect(await submitLetter(FORM)).toEqual({ ok: true });
-    const digits = (seed: string) =>
-      String(createHash("sha256").update(seed).digest().readUInt32BE() % 1_000_000).padStart(6, "0");
-    const letters = await query<{ postmark_mailbox: string }>(
-      "SELECT postmark_mailbox FROM letters_from_supporters ORDER BY id",
-    );
-    expect(letters.map((l) => l.postmark_mailbox)).toEqual([
-      `jane.smith.${digits("letter jane@example.com 0")}`,
-      `jane.smith.${digits("letter jane@example.com 1")}`,
+  it("keeps a letter it can't send at once, queued with why, and the sender is told it's on its way", async () => {
+    recordGmail(() => HttpResponse.json({ error: { code: 503 } }, { status: 503 }));
+    expect(await submitLetter(FORM)).toEqual({ ok: true, queued: "failed" });
+    expect(await query("SELECT status FROM letters")).toEqual([{ status: "queued" }]);
+    expect(await query("SELECT status, details FROM letter_events")).toEqual([
+      { status: "queued", details: { reason: "failed" } },
     ]);
   });
 
-  it("keeps nothing if Postmark refuses the letter, so the sender can try again", async () => {
-    postmark(() => HttpResponse.json({ ErrorCode: 300, Message: "Invalid email request" }, { status: 422 }));
-    expect(await submitLetter(FORM)).toMatchObject({ status: 500, message: copy.errors.failed });
-    expect(await query("SELECT id FROM letters")).toEqual([]);
-    // Nor the form entry made for it, nor the supporter's link to that.
-    expect(await query("SELECT id FROM form_entries")).toEqual([]);
-    expect(await query("SELECT id FROM supporter_links")).toEqual([]);
-    // Nor its sender as first seen by it.
-    expect(await query("SELECT first_seen_at FROM supporters")).toEqual([{ first_seen_at: null }]);
-
-    postmark();
-    expect(await submitLetter(FORM)).toEqual({ ok: true });
-  });
-
-  it("leaves the sender off the Cc when their address is blocked", async () => {
-    const sent = postmark();
-    await recordProblem({ address: "jane@example.com", messageId: null, kind: "hard", reason: "", canReset: true });
-    expect(await submitLetter(FORM)).toEqual({ ok: true });
-    expect(sent).toHaveLength(1);
-    expect(sent[0].Cc).toBeUndefined();
-    expect(await sentDetails()).not.toHaveProperty("cc");
-  });
-
-  it("sends the letter again without the Cc when Postmark refuses the sender's address", async () => {
-    let tries = 0;
-    const sent = postmark(() =>
-      ++tries === 1
-        ? HttpResponse.json(
-            { ErrorCode: 406, Message: "Found inactive addresses: jane@example.com. Inactive recipients are…" },
-            { status: 422 },
-          )
-        : HttpResponse.json({ ErrorCode: 0, MessageID: "msg-2" }),
+  it("queues every letter while the letters inbox isn't connected, or is at its daily limit", async () => {
+    await query("UPDATE staff_accounts SET gmail_token = NULL, gmail_connected_at = NULL, gmail_history_id = NULL");
+    expect(await submitLetter(FORM)).toEqual({ ok: true, queued: "not_connected" });
+    await connectTestGmail(LETTERS_INBOX);
+    await query(
+      `INSERT INTO email_sends (purpose, address, outcome, message_id, backend, sender)
+       SELECT 'relay', 'x@example.org', 'sent', 'm' || n, 'gmail', $1 FROM generate_series(1, $2) n`,
+      [LETTERS_INBOX, LETTERS_DAILY_LIMIT - 1],
     );
-    expect(await submitLetter(FORM)).toEqual({ ok: true });
-    expect(sent.map((email) => email.Cc)).toEqual(['"Jane Smith" <jane@example.com>', undefined]);
-    expect(await query("SELECT status FROM letters")).toEqual([{ status: "sent" }]);
-    expect(await sentDetails()).not.toHaveProperty("cc");
+    // Room for the letter, but not its copy as well.
+    expect(await submitLetter(FORM)).toEqual({ ok: true, queued: "daily_limit" });
   });
 
-  it("doesn't send again when it failed for another reason, with the sender's address blocked or not", async () => {
-    const sent = postmark(() => HttpResponse.json({ ErrorCode: 300, Message: "Invalid" }, { status: 422 }));
-    expect(await submitLetter(FORM)).toMatchObject({ status: 500 });
-    await recordProblem({ address: "jane@example.com", messageId: null, kind: "hard", reason: "", canReset: true });
-    expect(await submitLetter(FORM)).toMatchObject({ status: 500 });
-    expect(sent).toHaveLength(2);
-  });
-
-  it("keeps a letter to an MP whose address is blocked as not sent, and says why", async () => {
-    const sent = postmark();
+  it("queues a letter to an MP whose address is blocked, until it works", async () => {
+    const sent = recordGmail();
     await recordProblem({
       address: "test-mp@parliament.example",
       messageId: null,
@@ -383,34 +313,24 @@ describeWithDatabase("submitLetter", () => {
       reason: "",
       canReset: true,
     });
-    expect(await submitLetter(FORM)).toEqual({ ok: false, status: 409, message: copy.errors.unreachable });
+    expect(await submitLetter(FORM)).toEqual({ ok: true, queued: "blocked" });
     expect(sent).toEqual([]);
-    expect(await query("SELECT status FROM letters")).toEqual([{ status: "not_sent" }]);
-    expect(
-      (await query<{ status: string }>("SELECT status FROM letter_events ORDER BY id")).map((e) => e.status),
-    ).toEqual(["sending", "not_sent"]);
+    expect(await statuses()).toEqual(["queued"]);
   });
 
-  it("doesn't count a letter that wasn't sent towards the sender's one per campaign", async () => {
+  it("counts a queued letter as the sender's one for the campaign", async () => {
     vi.stubEnv("DEPLOY_CONTEXT", "production");
-    postmark();
+    await query("UPDATE staff_accounts SET gmail_token = NULL, gmail_connected_at = NULL, gmail_history_id = NULL");
     const real = { ...FORM, postcode: "SW1A 1AA" };
-    await recordProblem({
-      address: "polly.placeholder.mp@parliament.uk",
-      messageId: null,
-      kind: "hard",
-      reason: "",
-      canReset: true,
-    });
+    expect(await submitLetter(real)).toMatchObject({ ok: true, queued: "not_connected" });
     expect(await submitLetter(real)).toMatchObject({ status: 409 });
-    await query("DELETE FROM email_blocks");
-    expect(await submitLetter(real)).toEqual({ ok: true });
   });
 
-  it("says it failed if the letter can't be saved", async () => {
-    const sent = postmark();
-    await query("DROP TABLE letter_events");
+  it("says it failed, and keeps nothing, if the letter can't be saved", async () => {
+    const sent = recordGmail();
+    await query("DROP TABLE proxies CASCADE");
     expect(await submitLetter(FORM)).toMatchObject({ status: 500, message: copy.errors.failed });
     expect(sent).toEqual([]);
+    expect(await query("SELECT id FROM letters")).toEqual([]);
   });
 });

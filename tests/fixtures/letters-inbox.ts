@@ -174,3 +174,9 @@ export function resetLettersInbox(): void {
   MAILBOXES.clear();
   LABELS.clear();
 }
+
+/** A message's labels, by name: a system label's ID is its name, and the labels the site made are named as it made them. */
+export function labelNames(message: InboxMessage): string[] {
+  const names = new Map([...LABELS].map(([name, id]) => [id, name]));
+  return [...message.labels].map((id) => names.get(id) ?? id).sort();
+}

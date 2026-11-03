@@ -87,7 +87,7 @@ export default function PrivacyPolicy() {
 
       <h2>Email your MP</h2>
       <p>
-        ⁂ When you write to your MP through this site, we keep your name, email address, postal address and postcode,
+        When you write to your MP through this site, we keep your name, email address, postal address and postcode,
         which campaign and MP you wrote to, the letter you sent and the draft you started from, and whether you ticked
         the box to hear about events and ways to help. Your postcode goes to postcodes.io to find your constituency, and
         the form is protected by Cloudflare Turnstile. We send your letter from a Gmail inbox of ours, under an address
@@ -139,7 +139,7 @@ export default function PrivacyPolicy() {
         <li>postcodes.io: looking up postcodes; it keeps nothing.</li>
         <li>Airtable: our records of MPs and of members, and letters sent through our earlier form.</li>
         <li>
-          ⁂ Google (Gmail): our email, which sends your letters to your MP and passes on their replies, and where copies
+          Google (Gmail): our email, which sends your letters to your MP and passes on their replies, and where copies
           of letters to politicians, their replies, and the letters we send them are kept.
         </li>
       </ul>
