@@ -2,8 +2,8 @@ import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import type { ImportJob } from "@/lib/import-runs";
 import { staffDate } from "@/lib/staff-time";
 import { runSql } from "@/scripts/fresh-database.mjs";
-import { FIXTURE_NOW } from "../fixture-env.mjs";
-import { syncPoliticians } from "../steps";
+import { FIXTURE_NOW, LETTERS_INBOX } from "../fixture-env.mjs";
+import { logInAsStaff, syncPoliticians } from "../steps";
 import { BASE, expect, frame, test } from "./fixtures";
 import { staffEmail, logIn } from "./staff-steps";
 
@@ -94,6 +94,13 @@ test("Read the connected Gmail from its page", async ({ page, flowDatabase }) =>
   await expect(page.getByText(staffCopy.runs.status.unchanged)).toBeVisible();
   await page.getByRole("heading", { name: staffCopy.gmailReading.title }).scrollIntoViewIfNeeded();
   await frame(page, "read: your account, with nothing new");
+});
+
+test("The letters inbox connects its Gmail: told it sends letters, not mailings", async ({ page }) => {
+  await logInAsStaff(page, BASE, LETTERS_INBOX);
+  await page.goto(`${BASE}/staff/me?gmail=connected`);
+  await expect(page.getByRole("status")).toHaveText(staffCopy.gmail.outcomes.connectedLettersInbox);
+  await frame(page, "the letters inbox's own page, back from Google: it sends supporters' letters, not mailings");
 });
 
 test("An import's page lists its runs", async ({ page, request, flowDatabase }) => {

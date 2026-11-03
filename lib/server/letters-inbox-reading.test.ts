@@ -248,9 +248,12 @@ describeWithDatabase("reading the letters inbox", () => {
     expect(await read()).toMatchObject({ replies: 0, relayed: 0, notUnderstood: [] });
     expect(sent).toEqual([]);
     expect(labelsOfNewest()).toEqual(["SENT", labels.noted].sort());
-    // A message from one of our own addresses, sent some other way, is noted too.
+    // A message from one of our own addresses, sent some other way, is noted too, as is the site's
+    // own mail to it, such as a staff login link.
     deliver({ from: LETTERS_INBOX, to: JANES_PROXY, messageId: "elsewhere@pauseai.uk" });
+    deliver({ from: "PauseAI UK <noreply@notify.pauseai.uk>", to: LETTERS_INBOX, subject: "Your login link" });
     expect(await read()).toMatchObject({ relayed: 0, notUnderstood: [] });
+    expect(labelsOfNewest()).toEqual([labels.noted]);
   });
 
   it("handles each message once, though it comes again", async () => {

@@ -18,8 +18,24 @@ export type InboxMessage = { id: string; raw: string; labels: Set<string>; histo
 
 type Mailbox = { messages: InboxMessage[]; files: Set<string> };
 
-/** The first history ID a mailbox has, as the fake profile says for any account. */
+/** The history ID of a mailbox with nothing in it, as the fake profile says for any account. */
 const FIRST_HISTORY = 1000;
+
+/**
+ * A history ID for a message arriving now: later than any before it, and
+ * than historyIdNow() when a flow's database was made, so a flow run again
+ * on a database of the same name reads only what arrived since.
+ */
+let lastHistory = 0;
+function nextHistoryId(): number {
+  lastHistory = Math.max(lastHistory + 1, historyIdNow());
+  return lastHistory;
+}
+
+/** A history ID no message has yet, from the clock: where a fresh flow's reading of the letters inbox starts. */
+export function historyIdNow(): number {
+  return Date.now() * 1000;
+}
 
 const MAILBOXES = ((globalThis as { fixtureLettersInbox?: Map<string, Mailbox> }).fixtureLettersInbox ??= new Map());
 
@@ -47,7 +63,7 @@ export function lettersMailbox(scope = "default"): Mailbox {
  * was to itself.
  */
 function receive(mailbox: Mailbox, raw: string, spam: boolean, sent?: { id: string; toSelf: boolean }): InboxMessage {
-  const historyId = FIRST_HISTORY + mailbox.messages.length + 1;
+  const historyId = nextHistoryId();
   const id = sent?.id ?? createHash("sha256").update(`${historyId}\n${raw}`).digest("hex").slice(0, 16);
   const labels = sent ? ["SENT", ...(sent.toSelf ? ["INBOX", "UNREAD"] : [])] : [spam ? "SPAM" : "INBOX", "UNREAD"];
   const message = { id, raw, labels: new Set(labels), historyId };
@@ -57,7 +73,7 @@ function receive(mailbox: Mailbox, raw: string, spam: boolean, sent?: { id: stri
 
 /** The mailbox's history ID now: its newest message's. */
 export function historyIdOf(mailbox: Mailbox): number {
-  return FIRST_HISTORY + mailbox.messages.length;
+  return mailbox.messages.at(-1)?.historyId ?? FIRST_HISTORY;
 }
 
 /**

@@ -376,8 +376,8 @@ test("Jane adds her own words and cuts a sentence: the letter's page shows only 
 
   const words = staffCopy.letterChanges;
   const letter = page.getByRole("article").first();
-  await expect(letter.locator("ins")).toContainText("My children ask me about AI");
-  await expect(letter.locator("del")).toContainText("arrange a short meeting");
+  await expect(letter.locator("ins").first()).toContainText("My children ask me about AI");
+  await expect(letter.locator("del").first()).toContainText("arrange a short meeting");
   // The campaign's paragraphs she left alone, folded.
   await expect(letter).not.toContainText("national security");
   await frame(page, "the letter's page: only what Jane changed, the campaign's paragraphs she left alone folded");

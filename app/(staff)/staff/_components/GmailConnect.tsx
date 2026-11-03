@@ -52,8 +52,22 @@ export function SentToday({ sent }: { sent: number }) {
  * How connecting ended, when Google has sent the staff member `me` back
  * here, in its tone: another account than theirs names theirs.
  */
-export function GmailOutcome({ outcome, me }: { outcome: string; me: string }) {
-  const words = outcome === "other-account" ? copy.otherAccount(me) : copy.outcomes[outcome];
+export function GmailOutcome({
+  outcome,
+  me,
+  lettersInbox = false,
+}: {
+  outcome: string;
+  me: string;
+  /** You're logged in as the letters inbox, whose Gmail sends no mailings. */
+  lettersInbox?: boolean;
+}) {
+  const words =
+    outcome === "other-account"
+      ? copy.otherAccount(me)
+      : outcome === "connected" && lettersInbox
+        ? copy.outcomes.connectedLettersInbox
+        : copy.outcomes[outcome];
   if (!words) return null;
   return (
     <Strip tone={OUTCOME_TONES[outcome] ?? "red"} announce>

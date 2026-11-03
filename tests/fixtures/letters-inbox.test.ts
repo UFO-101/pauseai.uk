@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LETTERS_INBOX } from "../fixture-env.mjs";
-import { deliverToLettersInbox, labelNames, lettersMailbox, resetLettersInbox } from "./letters-inbox";
+import { deliverToLettersInbox, historyIdNow, labelNames, lettersMailbox, resetLettersInbox } from "./letters-inbox";
 import { fixtureResponse } from "./outside-services";
 
 const gmail = (path: string, init: RequestInit = {}, scope?: string, account = LETTERS_INBOX) =>
@@ -40,11 +40,13 @@ describe("the fake letters inbox", () => {
     expect(kept).toHaveLength(3);
     expect(kept[1].id).toBe(id);
     expect(kept.map(labelNames)).toEqual([["SENT"], ["INBOX", "SENT", "UNREAD"], ["INBOX", "SENT", "UNREAD"]]);
-    expect(await gmail("/history?startHistoryId=1002").json()).toEqual({
-      historyId: "1003",
-      history: [{ id: "1003", messagesAdded: [{ message: { id: kept[2].id } }] }],
+    const [, second, third] = kept.map((m) => String(m.historyId));
+    expect(Number(second)).toBeGreaterThan(historyIdNow() - 60_000_000);
+    expect(await gmail(`/history?startHistoryId=${second}`).json()).toEqual({
+      historyId: third,
+      history: [{ id: third, messagesAdded: [{ message: { id: kept[2].id } }] }],
     });
-    expect(await gmail("/history?startHistoryId=1003").json()).toEqual({ historyId: "1003" });
+    expect(await gmail(`/history?startHistoryId=${third}`).json()).toEqual({ historyId: third });
   });
 
   it("serves a message's headers asked for, and whole; labels it, makes labels, and trashes it", async () => {
@@ -95,7 +97,9 @@ describe("the fake letters inbox", () => {
       ]);
       // Each file once.
       expect(lettersMailbox("flow_a").messages).toHaveLength(2);
-      expect(await gmail("/profile", {}, "flow_a").json()).toMatchObject({ historyId: "1002" });
+      expect(await gmail("/profile", {}, "flow_a").json()).toMatchObject({
+        historyId: String(lettersMailbox("flow_a").messages[1].historyId),
+      });
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

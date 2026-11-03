@@ -15,12 +15,15 @@ const copy = staffCopy.gmail;
  */
 export default function MyGmail({
   me,
+  lettersInbox = false,
   account,
   outcome,
   disconnect,
 }: {
   /** Who's logged in. */
   me: string;
+  /** Whether that's the letters inbox. */
+  lettersInbox?: boolean;
   account: GmailAccount | undefined;
   /** How connecting ended, if Google has just sent you back. */
   outcome: string;
@@ -30,7 +33,7 @@ export default function MyGmail({
     <>
       <h2 id="gmail">{account ? copy.connectedTitle : copy.title}</h2>
       <div className={styles.body}>
-        <GmailOutcome outcome={outcome} me={me} />
+        <GmailOutcome outcome={outcome} me={me} lettersInbox={lettersInbox} />
         {account ? (
           <>
             <p>

@@ -65,11 +65,25 @@ describe("changeBlocks", () => {
       {
         kind: "changed",
         changes: [
-          { kind: "added", text: "Mine.\n\nNew too." },
           { kind: "removed", text: "Meet me." },
+          { kind: "added", text: "Mine.\n\nNew too." },
         ],
       },
       { kind: "unchanged", paragraphs: ["Jane"] },
+    ]);
+  });
+
+  it("strikes through a paragraph rewritten with other words whole, then gives the new one, rather than mixing them", () => {
+    expect(
+      changeBlocks("I would like to meet you to discuss this.", "My children ask me about this every week."),
+    ).toEqual([
+      {
+        kind: "changed",
+        changes: [
+          { kind: "removed", text: "I would like to meet you to discuss this." },
+          { kind: "added", text: "My children ask me about this every week." },
+        ],
+      },
     ]);
   });
 

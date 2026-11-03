@@ -50,6 +50,10 @@ describe("GmailConnect, SentToday and GmailOutcome", () => {
   it("says how connecting ended, green if it did, amber if refused, red for an error, and nothing for an outcome it doesn't know", async () => {
     const { rerender } = await render(<GmailOutcome outcome="connected" me="jo@pauseai.uk" />);
     await expect.element(page.getByRole("status")).toHaveTextContent(gmail.outcomes.connected);
+    await rerender(<GmailOutcome outcome="connected" me="letters@pauseai.uk" lettersInbox />);
+    await expect.element(page.getByRole("status")).toHaveTextContent(gmail.outcomes.connectedLettersInbox);
+    await rerender(<GmailOutcome outcome="refused" me="letters@pauseai.uk" lettersInbox />);
+    await expect.element(page.getByRole("status")).toHaveTextContent(gmail.outcomes.refused);
     await rerender(<GmailOutcome outcome="refused" me="jo@pauseai.uk" />);
     await expect.element(page.getByRole("status")).toHaveTextContent(gmail.outcomes.refused);
     await rerender(<GmailOutcome outcome="other-account" me="jo@pauseai.uk" />);
@@ -357,21 +361,20 @@ describe("AskForm", () => {
 
 describe("LetterChanges", () => {
   const words = staffCopy.letterChanges;
-  const draft = "Dear MP,\n\nOne.\n\nPlease act now.\n\nTwo.\n\nThree.\n\nJane";
-  const sent = "Dear MP,\n\nOne.\n\nPlease act. I live here.\n\nTwo.\n\nThree.\n\nJane";
+  const draft = "Dear MP,\n\nOne.\n\nPlease act now on this.\n\nTwo.\n\nThree.\n\nJane";
+  const sent = "Dear MP,\n\nOne.\n\nPlease act on this. I live here.\n\nTwo.\n\nThree.\n\nJane";
 
   it("shows only what changed, the paragraphs left alone folded, a click unfolding them", async () => {
     const { container } = await render(<LetterChanges sent={sent} draft={draft} approximate={false} />);
     await expect.element(page.getByText(words.intro)).toBeVisible();
-    expect([...container.querySelectorAll("ins")].map((e) => e.textContent)).toEqual(["act. I live here."]);
-    expect([...container.querySelectorAll("del")].map((e) => e.textContent)).toEqual(["act now."]);
-    const folds = page.getByRole("button", { name: words.folded(2) });
-    expect(folds.all()).toHaveLength(2);
-    await expect.element(page.getByRole("button", { name: words.folded(1) })).toBeVisible();
+    expect([...container.querySelectorAll("ins")].map((e) => e.textContent)).toEqual(["I live here."]);
+    expect([...container.querySelectorAll("del")].map((e) => e.textContent)).toEqual(["now "]);
+    await expect.element(page.getByRole("button", { name: words.folded(2) })).toBeVisible();
     await expect.element(page.getByText("Two.", { exact: false })).not.toBeInTheDocument();
-    await folds.last().click();
-    await expect.element(page.getByText("Two.\n\nThree.")).toBeVisible();
-    expect(page.getByRole("button", { name: words.folded(2) }).all()).toHaveLength(1);
+    await page.getByRole("button", { name: words.folded(3) }).click();
+    await expect.element(page.getByText("Two.\n\nThree.\n\nJane")).toBeVisible();
+    await expect.element(page.getByRole("button", { name: words.folded(3) })).not.toBeInTheDocument();
+    await expect.element(page.getByRole("button", { name: words.folded(1) })).not.toBeInTheDocument();
   });
 
   it("shows the letter as sent, and back", async () => {

@@ -9,6 +9,7 @@ import { letterEvent } from "./letter-sending";
 import { isLettersInboxAddress, proxyTag } from "./letters-inbox";
 import { decodeWords, fromAddress, messageIds } from "./mime";
 import { saveLetterReply } from "./outside-services/blobs";
+import { notifyDomain } from "./outside-services/postmark";
 import {
   gmailLabel,
   gmailMessageHeaders,
@@ -28,7 +29,8 @@ import { overRelayCap, relay } from "./relays";
 //   automatic replies too, as with direct email;
 // - a bounce of something we sent: recorded, never relayed;
 // - our own mail: skipped, or for the supporter's copy, which arrives at
-//   the MP's proxy, noted;
+//   the MP's proxy, and the site's own mail to it, such as a staff login
+//   link, noted;
 // - spam that matches no letter: counted;
 // - anything else is not understood, for a person: an unknown proxy, a
 //   stranger, mail that fails authentication, or a relay over the cap.
@@ -366,7 +368,10 @@ async function readMessage(
     read.notUnderstood.push({ gmailMessageId: id, from: from.address, subject, reason });
     return file(token, labels, id, "notUnderstood");
   };
-  if (isLettersInboxAddress(from.address)) return file(token, labels, id, "noted");
+  // From one of our own addresses: a proxy's, or the site's own mail to it, a staff login link or alert.
+  if (isLettersInboxAddress(from.address) || from.address.endsWith(`@${notifyDomain()}`)) {
+    return file(token, labels, id, "noted");
+  }
   const raw = await gmailRawMessage(token, id);
   if (/^(mailer-daemon|postmaster)@/.test(from.address)) {
     const bounces = await bounce(account, raw, message, subject, request);

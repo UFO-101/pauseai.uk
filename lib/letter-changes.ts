@@ -86,6 +86,21 @@ export function ownWords(draft: string, sent: string): number {
  */
 export type ChangeBlock = { kind: "changed"; changes: Change[] } | { kind: "unchanged"; paragraphs: string[] };
 
+/**
+ * What was cut and added in place of it, word by word; or, where they
+ * share less than half the words of the shorter, so a word diff would mix
+ * two different texts, the one struck through whole, then the other.
+ */
+function rewritten(cut: string, added: string): Change[] {
+  const changes = wordDiff(cut, added);
+  const shared = changes.filter((c) => c.kind === "same").reduce((n, c) => n + wordCount(c.text), 0);
+  if (shared * 2 >= Math.min(wordCount(cut), wordCount(added))) return changes;
+  return [
+    { kind: "removed" as const, text: cut },
+    { kind: "added" as const, text: added },
+  ].filter((change) => change.text);
+}
+
 /** A text's paragraphs, trimmed, without empty ones. */
 function paragraphsOf(text: string): string[] {
   return text
@@ -113,7 +128,7 @@ export function changeBlocks(draft: string, sent: string): ChangeBlock[] {
   let added: string[] = [];
   const flush = () => {
     if (cut.length || added.length)
-      blocks.push({ kind: "changed", changes: wordDiff(cut.join("\n\n"), added.join("\n\n")) });
+      blocks.push({ kind: "changed", changes: rewritten(cut.join("\n\n"), added.join("\n\n")) });
     cut = [];
     added = [];
   };

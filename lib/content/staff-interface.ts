@@ -127,6 +127,9 @@ export const staffCopy = {
     // After coming back from Google, or disconnecting.
     outcomes: {
       connected: "Your Gmail is connected. All staff will be able to send mailings from it now.",
+      // The same, for the letters inbox, which sends supporters' letters and nothing else.
+      connectedLettersInbox:
+        "⁂ The letters inbox is connected. Supporters' letters to MPs go from it now, and replies are relayed through it every hour.",
       refused: "Gmail wasn't connected, as you didn't allow it.",
       failed: "Gmail couldn't be connected. Try again.",
       disconnected: "Your Gmail is disconnected.",
