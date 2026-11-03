@@ -59,8 +59,8 @@ test("Filter, reset and sort supporters", async ({ page, request, flowDatabase }
   await logInWithSupporters(page, flowDatabase);
   await page.getByRole("link", { name: staffCopy.nav.supporters }).first().click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.title);
-  // Five guests and a contact who never registered.
-  await expect(page.getByText(copy.total(6))).toBeVisible();
+  // Five guests, a contact who never registered, and a host who never registered.
+  await expect(page.getByText(copy.total(7))).toBeVisible();
   await expect(page.getByRole("link", { name: "Fay Follower" })).toBeVisible();
   await frame(page, "every supporter the import found, newest activity first");
 
@@ -69,17 +69,19 @@ test("Filter, reset and sort supporters", async ({ page, request, flowDatabase }
   await page.getByRole("button", { name: staffCopy.search }).click();
   await expect(page).toHaveURL(/\/staff\/supporters\?q=fixture%40example$/);
   // Every one of them has an address at fixture@example.
-  await expect(page.getByText(copy.total(6))).toBeVisible();
-  await frame(page, "searched for fixture@example: all six");
+  await expect(page.getByText(copy.total(7))).toBeVisible();
+  await frame(page, "searched for fixture@example: all seven");
   await addFilter(page, copy.columns.badges, copy.badges.registered);
   await expect(page).toHaveURL(/\/staff\/supporters\?q=fixture%40example&activity=registered$/);
-  await page.getByRole("link", { name: copy.columns.name }).click();
+  await page.getByRole("link", { name: copy.columns.name, exact: true }).click();
   await expect(page).toHaveURL(/sort=name/);
   await expect(page.getByRole("link", { name: "Fay Follower" })).toHaveCount(0);
-  // Four: the fifth guest declined every event.
-  await expect(page.getByText(copy.total(4))).toBeVisible();
+  // Five: the fifth guest declined every event; the host with no name never registered, but hosts one.
+  await expect(page.getByText(copy.total(5))).toBeVisible();
   const names = await page.locator("tbody").getByRole("link").allTextContents();
-  expect(names).toEqual([...names].sort());
+  // By name, the one with none last.
+  const named = names.filter((name) => name !== copy.noName);
+  expect(names).toEqual([...named.sort(), copy.noName]);
   await frame(page, "filtered to those who registered, by name");
 
   await changeFilter(page, `${copy.columns.badges}: ${copy.badges.registered}`, copy.badges.letter);
@@ -89,16 +91,16 @@ test("Filter, reset and sort supporters", async ({ page, request, flowDatabase }
   // Reset clears every filter, and the sort.
   await page.getByRole("link", { name: staffCopy.resetFilters }).click();
   await expect(page).toHaveURL(`${BASE}/staff/supporters`);
-  await expect(page.getByText(copy.total(6))).toBeVisible();
+  await expect(page.getByText(copy.total(7))).toBeVisible();
   await expect(page.getByRole("searchbox", { name: copy.filters.search })).toHaveValue("");
   await expect(page.getByRole("button", { name: `${copy.columns.badges}: ${copy.badges.letter}` })).toHaveCount(0);
   await frame(page, "reset: every supporter again, newest activity first");
 
   // A heading sorts the list; clicking it again reverses it.
-  await page.getByRole("link", { name: copy.columns.name }).click();
+  await page.getByRole("link", { name: copy.columns.name, exact: true }).click();
   await expect(page).toHaveURL(/sort=name&dir=asc/);
   expect(await page.locator("tbody").getByRole("link").first().textContent()).toBe("Alex Fixture");
-  await page.getByRole("link", { name: copy.columns.name }).click();
+  await page.getByRole("link", { name: copy.columns.name, exact: true }).click();
   await expect(page).toHaveURL(/sort=name&dir=desc/);
   expect(await page.locator("tbody").getByRole("link").first().textContent()).toBe("Sam Fixture");
   await frame(page, "sorted by name, reversed, by clicking the heading twice");
@@ -108,7 +110,7 @@ test("Supporters not at an event, with Except", async ({ page, request, flowData
   await importLuma(request, BASE);
   await logInWithSupporters(page, flowDatabase);
   await page.goto(`${BASE}/staff/supporters`);
-  await expect(page.getByText(copy.total(6))).toBeVisible();
+  await expect(page.getByText(copy.total(7))).toBeVisible();
   const march = copy.filters.eventChoice("PauseAI London March", staffDate("2026-02-14T12:00:00Z"));
   await page.getByRole("button", { name: staffCopy.filters.except }).click();
   await expect(page.locator("[popover]:popover-open").getByText(staffCopy.filters.exceptHeading)).toBeVisible();
@@ -120,12 +122,13 @@ test("Supporters not at an event, with Except", async ({ page, request, flowData
   await frame(page, 'Except\'s events, narrowed to those with "march"');
   await page.locator("[popover]:popover-open").getByRole("link", { name: march, exact: true }).click();
   await expect(page).toHaveURL(/\/staff\/supporters\?event=%21/);
-  // Four guests were approved for it; Dee declined, and Fay follows the calendar but never registered.
-  await expect(page.getByText(copy.total(2))).toBeVisible();
+  // Four guests were approved for it; Dee declined, Fay follows the calendar but never registered, and the
+  // protest's host with no name never registered either.
+  await expect(page.getByText(copy.total(3))).toBeVisible();
   expect(await page.locator("tbody").getByRole("link").allTextContents()).toEqual(
     expect.arrayContaining(["Dee Clined", "Fay Follower"]),
   );
-  await frame(page, "not at the London March: Dee, who declined, and Fay, who never registered");
+  await frame(page, "not at the London March: Dee, who declined, and Fay and a host, who never registered");
   await page.getByRole("button", { name: staffCopy.filters.notChip(copy.filters.event, march) }).click();
   await expect(
     page.locator("[popover]:popover-open").getByRole("link", { name: staffCopy.filters.onlyInstead }),
@@ -146,7 +149,7 @@ test("Filter supporters by their MP", async ({ page, request, flowDatabase }) =>
   await syncPoliticians(request, BASE);
   await logInWithSupporters(page, flowDatabase);
   await page.goto(`${BASE}/staff/supporters`);
-  await expect(page.getByText(copy.total(6))).toBeVisible();
+  await expect(page.getByText(copy.total(7))).toBeVisible();
   const mp = staffCopy.politician.roles.commons;
   const mo = copy.filters.mpChoice("Mo Example", "Manchester Central");
   await page.getByRole("button", { name: staffCopy.filters.add }).click();
@@ -506,11 +509,11 @@ test("Erase a supporter: they stay gone after an import", async ({ page, request
   await expect(page).toHaveURL(`${BASE}/staff/supporters?erased=1`);
   await expect(page.getByRole("status")).toHaveText(staffCopy.erase.done);
   await expect(page.getByRole("link", { name: "Sam Fixture" })).toHaveCount(0);
-  await expect(page.getByText(copy.total(5))).toBeVisible();
+  await expect(page.getByText(copy.total(6))).toBeVisible();
   await frame(page, "the list without Sam, saying the erasure is done");
 
-  // The next import leaves Sam out.
-  runSql(flowDatabase, "UPDATE luma_events SET guests_synced_at = NULL");
+  // The next import, reading every guest list and host again, leaves Sam out.
+  runSql(flowDatabase, "UPDATE luma_events SET guests_synced_at = NULL, hosts_synced_at = NULL");
   await importLuma(request, BASE);
   await page.reload();
   await expect(page.getByRole("link", { name: "Sam Fixture" })).toHaveCount(0);

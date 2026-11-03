@@ -335,7 +335,8 @@ async function importHosts(eventId: string, budget: Budget, db: Queryable): Prom
   const ids = hosts.map((host) => host.userId);
   const added = await query(
     `INSERT INTO luma_event_hosts (event_id, user_id)
-     SELECT $1, user_id FROM unnest($2::text[]) AS h(user_id) WHERE user_id IN (SELECT user_id FROM luma_people)
+     SELECT $1, user_id FROM unnest($2::text[]) AS h(user_id)
+     WHERE user_id IN (SELECT user_id FROM luma_people) AND user_id NOT IN (SELECT user_id FROM luma_erased)
      ON CONFLICT DO NOTHING RETURNING user_id`,
     [eventId, ids],
     db,

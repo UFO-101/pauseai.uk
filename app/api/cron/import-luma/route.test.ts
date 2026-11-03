@@ -16,7 +16,7 @@ describeWithDatabase("POST /api/cron/import-luma", () => {
 
   it("copies the fixture calendar and says what it did", async () => {
     const res = await call("Bearer s3cret");
-    expect(await res.json()).toMatchObject({ events: 9, eventsSynced: 9, eventsLeft: 0, people: 5, contacts: 3 });
+    expect(await res.json()).toMatchObject({ events: 9, eventsSynced: 9, eventsLeft: 0, people: 6, contacts: 3 });
   });
 
   it("refuses anyone without the secret", async () => {

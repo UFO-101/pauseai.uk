@@ -106,7 +106,6 @@ test("Hosts: on the events page, searched by name, and a host's supporter page",
   const protest = page.getByRole("row").filter({ hasText: "Protest at Parliament" });
   const hosts = protest.getByRole("cell").nth(5);
   await expect(hosts).toHaveText(`Jane FixtureSam Fixture${copy.noHostName}`);
-  // Leicester's other host was erased, so the import left them out.
   await expect(page.getByRole("row").filter({ hasText: "Leicester" }).getByRole("cell").nth(5)).toHaveText(
     "Alex Fixture",
   );
@@ -122,7 +121,7 @@ test("Hosts: on the events page, searched by name, and a host's supporter page",
   await hosts.getByRole("link", { name: "Jane Fixture" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Jane Fixture" })).toBeVisible();
   const events = page.getByRole("region", { name: staffCopy.supporters.detail.eventsTitle, exact: false });
-  await expect(events.getByRole("row").filter({ hasText: staffCopy.supporters.detail.host })).toHaveCount(2);
+  await expect(events.getByRole("row").filter({ hasText: staffCopy.supporters.detail.host })).toHaveCount(1);
   // The events she registered for, not declined, or hosts, each once.
   const [count] = runSql(
     flowDatabase,
@@ -136,6 +135,6 @@ test("Hosts: on the events page, searched by name, and a host's supporter page",
   );
   await frame(
     page,
-    "Jane's page: a row for each event she hosts, beside those she registered for, and each event counted once",
+    "Jane's page: the protest she hosts, a row of its own beside her registration for it, and each event counted once",
   );
 });

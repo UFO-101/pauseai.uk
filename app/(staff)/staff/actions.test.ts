@@ -264,7 +264,7 @@ describeWithDatabase("staff Server Actions", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/staff", "layout");
     await erase();
     await eraseSupporterNow(form({ id: "2", reference: "" }));
-    expect(await query("SELECT count(*)::int AS n FROM supporters")).toEqual([{ n: 5 }]);
+    expect(await query("SELECT count(*)::int AS n FROM supporters")).toEqual([{ n: 6 }]);
   });
 
   it("importLumaNow copies the Luma calendar as the staff member", async () => {

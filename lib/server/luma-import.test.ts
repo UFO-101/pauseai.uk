@@ -414,7 +414,9 @@ describeWithDatabase("importLuma", () => {
   });
 
   it("adds an event's hosts as people, takes off those no longer listed, and never brings back an erased one", async () => {
-    await query("INSERT INTO luma_erased (user_id) VALUES ('usr-9')");
+    await query("INSERT INTO luma_erased (user_id) VALUES ('usr-9'), ('usr-8')");
+    // Erased, yet still a person here: never a host either.
+    await query("INSERT INTO luma_people (user_id, email) VALUES ('usr-8', 'person8@example.com')");
     const host = (n: number, name: string | null = `Person ${n}`) => ({
       id: `usr-${n}`,
       email: ` Person${n}@Example.com `,
@@ -423,7 +425,7 @@ describeWithDatabase("importLuma", () => {
     const luma = fakeLuma({
       events: [event("evt-1", days(1))],
       guests: { "evt-1": [guest(1)] },
-      hosts: { "evt-1": [host(1), host(2, null), host(9), host(2, null)] },
+      hosts: { "evt-1": [host(1), host(2, null), host(9), host(8), host(2, null)] },
     });
     expect(await importLuma("jo@pauseai.uk")).toMatchObject({ hostsChanged: 2, people: 2 });
     const hosts = () => query("SELECT event_id, user_id FROM luma_event_hosts ORDER BY user_id");
@@ -434,6 +436,7 @@ describeWithDatabase("importLuma", () => {
     expect(await query("SELECT user_id, email, name FROM luma_people ORDER BY user_id")).toEqual([
       { user_id: "usr-1", email: "person1@example.com", name: "Person 1" },
       { user_id: "usr-2", email: "person2@example.com", name: "" },
+      { user_id: "usr-8", email: "person8@example.com", name: "" },
     ]);
     expect(await query("SELECT hosts_synced_at IS NOT NULL AS read FROM luma_events")).toEqual([{ read: true }]);
 

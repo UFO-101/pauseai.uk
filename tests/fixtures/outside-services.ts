@@ -103,18 +103,11 @@ const LUMA_HOST = {
   alex: { id: "usr-fixture-3", email: "alex.fixture@example.com", name: "Alex Fixture", avatar_url: null },
   // A host Luma has no name for.
   noName: { id: "usr-fixture-7", email: "host.fixture@example.com", name: null, avatar_url: null },
-  // Erased (luma_erased in staff-data.sql), so the import skips them.
-  erased: { id: "usr-seed-20", email: "erased.seed@example.com", name: "Erin Erased", avatar_url: null },
 };
 
-/**
- * Each event's hosts, where they aren't Alex alone: the London protest's
- * three, Jane, who registered for it too, Sam and one with no name; and
- * Leicester's, one of them erased.
- */
+/** Each event's hosts, where they aren't Alex alone: the London protest's three, Jane, who registered for it too, Sam and one with no name. */
 const LUMA_HOSTS: Record<string, object[]> = {
   "evt-fixture-london-protest": [LUMA_HOST.sam, LUMA_HOST.noName, LUMA_HOST.jane],
-  "evt-fixture-leicester-meetup": [LUMA_HOST.erased, LUMA_HOST.alex],
 };
 
 /** A list as Luma pages it: the first `size` entries, then, from cursor "page-2", the rest. */
