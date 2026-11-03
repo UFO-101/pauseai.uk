@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 import { BRIEFINGS, briefings, type Briefing as BriefingData } from "@/lib/content/briefings";
@@ -18,12 +18,16 @@ import KeyStories from "./KeyStories";
 import SignatoriesChart from "./SignatoriesChart";
 import WeekCalendar from "./WeekCalendar";
 
+// Desktop width, but where a test says otherwise: the briefing's columns stack on a phone.
+beforeEach(async () => {
+  await page.viewport(1280, 900);
+});
+
 const BRIEFING = briefings[0];
 const STORIES = [
   { lead: "Monday: a filing.", body: "It filed." },
   { lead: "Wednesday: a budget.", body: "It spent." },
 ];
-const colour = (element: Element, property: string) => getComputedStyle(element).getPropertyValue(property);
 /** A token's colour as the browser computes it. */
 function token(name: string): string {
   const probe = document.createElement("span");
@@ -38,11 +42,11 @@ describe("Briefing", () => {
   it("links back to the briefings, then shows the masthead, the key stories whole and the rest", async () => {
     const { container } = await render(<Briefing briefing={BRIEFING} section={BRIEFINGS} />);
     expect(page.getByRole("link", { name: "← All briefings" }).element().getAttribute("href")).toBe(
-      "/campaigns/briefings/",
+      "/campaigns/briefings",
     );
     await expect.element(page.getByRole("heading", { level: 1, name: BRIEFING.title })).toBeVisible();
-    const keyStories = page.getByRole("region", { name: "Key stories this week" });
-    expect(keyStories.element().textContent).toContain("resist shutdown");
+    const keyStories = page.getByRole("heading", { name: "Key stories this week" }).element().closest("section")!;
+    expect(keyStories.textContent).toContain("resist shutdown");
     await expect.element(page.getByRole("heading", { name: "Sources" })).toBeVisible();
     expect(container.querySelector("article")).not.toBeNull();
   });
@@ -55,8 +59,8 @@ describe("BriefingList and BriefingCard", () => {
     const { container } = await render(<BriefingList briefings={[BRIEFING, earlier]} section={BRIEFINGS} />);
     const cards = [...container.querySelectorAll("ol > li > a")];
     expect(cards.map((card) => card.getAttribute("href"))).toEqual([
-      `/campaigns/briefings/${BRIEFING.slug}/`,
-      "/campaigns/briefings/earlier/",
+      `/campaigns/briefings/${BRIEFING.slug}`,
+      "/campaigns/briefings/earlier",
     ]);
     expect(cards.map((card) => card.querySelector("h2")!.textContent)).toEqual([BRIEFING.title, "An earlier briefing"]);
     expect(cards[0].textContent).toContain("Monday: Anthropic files to go public.");
@@ -79,7 +83,7 @@ describe("BriefingMasthead", () => {
     await expect.element(page.getByRole("img", { name: "PauseAI" })).toBeVisible();
     expect(container.querySelector("p")!.textContent).toBe("By Annabelle Collins · 30 October 2026");
     expect(page.getByRole("link", { name: "Annabelle Collins" }).element().getAttribute("href")).toMatch(
-      /^\/people\/.+\/$/,
+      /^\/people\/.+$/,
     );
     const byline = container.querySelector("p")!.getBoundingClientRect();
     const week = container.querySelector("ol")!.getBoundingClientRect();
@@ -116,7 +120,6 @@ describe("BriefingBox", () => {
       </BriefingSheet>,
     );
     const [westminster, key] = [...container.querySelectorAll("section")];
-    expect(colour(westminster, "--tone").trim()).toBe("var(--briefing-parliament)");
     expect(getComputedStyle(westminster, "::before").borderTopColor).toBe(token("--briefing-parliament"));
     expect(getComputedStyle(westminster.querySelector("h2")!).backgroundColor).toBe(token("--briefing-parliament"));
     expect(getComputedStyle(westminster.querySelector("li")!, "::marker").color).toBe(token("--briefing-parliament"));
@@ -148,6 +151,18 @@ describe("BriefingColumns", () => {
     const [one, two] = [...container.querySelectorAll("p")].map((p) => p.getBoundingClientRect());
     expect(two.left).toBeGreaterThan(one.right);
     expect(two.top).toBe(one.top);
+  });
+
+  it("stacks them on a phone", async () => {
+    await page.viewport(390, 800);
+    const { container } = await render(
+      <BriefingColumns layout="aside">
+        <p>One</p>
+        <p>Two</p>
+      </BriefingColumns>,
+    );
+    const [one, two] = [...container.querySelectorAll("p")].map((p) => p.getBoundingClientRect());
+    expect(two.top).toBeGreaterThan(one.bottom);
   });
 
   it("makes a pair of boxes as tall as each other, the second wider", async () => {

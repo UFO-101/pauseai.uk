@@ -29,7 +29,7 @@ test("Read a briefing: its charts, a source, and back", async ({ page }) => {
 
   const budget = page.getByRole("table");
   await budget.scrollIntoViewIfNeeded();
-  await expect(budget.getByRole("row")).toHaveCount(14);
+  await expect(budget.locator("tbody tr")).toHaveCount(13);
   await frame(page, "the budget, by item");
 
   const signatories = page.getByText("Countries backing the Call");
