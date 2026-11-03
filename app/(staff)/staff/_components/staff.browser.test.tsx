@@ -4375,6 +4375,14 @@ describe("each list's download values and contact cards", () => {
   });
 });
 
+describe("LettersTable, a letter nothing has sent yet", () => {
+  it("shows a dash for its backend, as for when it was sent", async () => {
+    await render(<LettersTable letters={[{ ...exampleLetter, status: "queued", backend: null, sentAt: null }]} />);
+    const row = page.getByRole("row").nth(1);
+    expect(row.getByText("–").all()).toHaveLength(2);
+  });
+});
+
 describe("LettersTable, a sender not yet a supporter", () => {
   it("shows the name without a link", async () => {
     await render(<LettersTable letters={[{ ...exampleLetter, supporterId: null }]} />);

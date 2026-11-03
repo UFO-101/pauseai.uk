@@ -76,7 +76,8 @@ const columns: (ListColumn<LetterSummary> & { key: LetterSort })[] = [
     label: copy.columns.backend,
     short: true,
     text: (l) => l.backend && copy.backends[l.backend],
-    cell: (l) => l.backend && copy.backends[l.backend],
+    // Nothing yet sent it, as for Sent: a dash.
+    cell: (l) => (l.backend ? copy.backends[l.backend] : <Muted>–</Muted>),
   },
   {
     key: "consent",
