@@ -20,16 +20,20 @@
   gap: var(--space-1);
 }
 
-/* The hosts, one to a line. */
+/* The hosts in a line, commas between: never narrower than room for two
+   names, so it wraps late, and then only between names. */
 .hosts {
-  display: flex;
-  flex-direction: column;
+  display: block;
+  min-width: 12rem;
 }
 
-/* The owner, prominent: bold, on one line. */
+.hosts > * {
+  white-space: nowrap;
+}
+
+/* The owner, prominent: bold, its address on two lines where it's narrow. */
 .owner {
   display: block;
-  white-space: nowrap;
 }
 
 /* No owner, or no doc, for an event to come: an error. */

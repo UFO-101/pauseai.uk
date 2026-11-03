@@ -413,7 +413,7 @@ describeWithDatabase("importLuma", () => {
     expect(await query("SELECT hosts_error FROM luma_events WHERE id = 'evt-failed'")).toEqual([{ hosts_error: null }]);
   });
 
-  it("adds an event's hosts as people, takes off those no longer listed, and never brings back an erased one", async () => {
+  it("adds an event's hosts as people, dated from the second read on, takes off those no longer listed, and never brings back an erased one", async () => {
     await query("INSERT INTO luma_erased (user_id) VALUES ('usr-9'), ('usr-8')");
     // Erased, yet still a person here: never a host either.
     await query("INSERT INTO luma_people (user_id, email) VALUES ('usr-8', 'person8@example.com')");
@@ -428,10 +428,12 @@ describeWithDatabase("importLuma", () => {
       hosts: { "evt-1": [host(1), host(2, null), host(9), host(8), host(2, null)] },
     });
     expect(await importLuma("jo@pauseai.uk")).toMatchObject({ hostsChanged: 2, people: 2 });
-    const hosts = () => query("SELECT event_id, user_id FROM luma_event_hosts ORDER BY user_id");
+    const hosts = () =>
+      query("SELECT event_id, user_id, added_at IS NOT NULL AS dated FROM luma_event_hosts ORDER BY user_id");
+    // The first read's hosts may have been there since the event was made: no date of their own.
     expect(await hosts()).toEqual([
-      { event_id: "evt-1", user_id: "usr-1" },
-      { event_id: "evt-1", user_id: "usr-2" },
+      { event_id: "evt-1", user_id: "usr-1", dated: false },
+      { event_id: "evt-1", user_id: "usr-2", dated: false },
     ]);
     expect(await query("SELECT user_id, email, name FROM luma_people ORDER BY user_id")).toEqual([
       { user_id: "usr-1", email: "person1@example.com", name: "Person 1" },
@@ -444,7 +446,11 @@ describeWithDatabase("importLuma", () => {
     luma.hosts["evt-1"] = [host(2), host(3)];
     await query("UPDATE luma_events SET hosts_synced_at = now() - interval '2 hours'");
     expect(await importLuma("jo@pauseai.uk")).toMatchObject({ hostsChanged: 2, people: 2 });
-    expect((await hosts()).map((h) => h.user_id)).toEqual(["usr-2", "usr-3"]);
+    // The new one is dated by this read; the one kept keeps none.
+    expect(await hosts()).toEqual([
+      { event_id: "evt-1", user_id: "usr-2", dated: false },
+      { event_id: "evt-1", user_id: "usr-3", dated: true },
+    ]);
 
     // The same again changes nothing.
     await query("UPDATE luma_events SET hosts_synced_at = now() - interval '2 hours'");

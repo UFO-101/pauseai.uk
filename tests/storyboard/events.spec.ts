@@ -105,7 +105,7 @@ test("Hosts: on the events page, searched by name, and a host's supporter page",
   await page.goto(`${BASE}/staff/events`);
   const protest = page.getByRole("row").filter({ hasText: "Protest at Parliament" });
   const hosts = protest.getByRole("cell").nth(5);
-  await expect(hosts).toHaveText(`Jane FixtureSam Fixture${copy.noHostName}`);
+  await expect(hosts).toHaveText(`Jane Fixture, Sam Fixture, ${copy.noHostName}`);
   await expect(page.getByRole("row").filter({ hasText: "Leicester" }).getByRole("cell").nth(5)).toHaveText(
     "Alex Fixture",
   );

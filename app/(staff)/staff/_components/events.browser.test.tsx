@@ -76,6 +76,9 @@ describe("EventsTable", () => {
     await expect
       .element(protest.getByRole("link", { name: copy.doc }))
       .toHaveAttribute("href", "https://docs.google.com/document/d/example-protest-plan/edit");
+    // The owner's address may break before its @, so the column takes little room.
+    const owner = protest.getByRole("cell").nth(5).element().querySelector("strong")!;
+    expect(owner.innerHTML).toBe("joseph<wbr>@pauseai.uk");
     // To come with no owner or doc: errors.
     await expect.element(row("AI risk talk").getByRole("cell").nth(5).getByText(copy.noOwner)).toHaveClass(/missing/);
     await expect.element(row("AI risk talk").getByText(copy.noDoc)).toHaveClass(/missing/);
@@ -135,7 +138,7 @@ describe("EventsTable", () => {
     const headings = [...document.querySelectorAll("thead th")].map((th) => th.textContent!.replace(/[▲▼ ]+$/, ""));
     expect(headings.slice(5, 7)).toEqual([copy.columns.hosts, copy.owner]);
     const hosts = row("Protest at Parliament").getByRole("cell").nth(5);
-    expect(hosts.element().textContent).toBe(`Jane SmithJohn Smith${copy.noHostName}`);
+    expect(hosts.element().textContent).toBe(`Jane Smith, John Smith, ${copy.noHostName}`);
     await expect
       .element(hosts.getByRole("link", { name: "Jane Smith" }))
       .toHaveAttribute("href", "/staff/supporters/12");

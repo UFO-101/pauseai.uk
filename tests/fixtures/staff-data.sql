@@ -191,6 +191,8 @@ INSERT INTO luma_people (user_id, email, name, contact_since, changed_at) VALUES
   ('usr-fixture-4', 'declined.fixture@example.com', 'Dee Clined', NULL, now() - interval '1 day'),
   ('usr-fixture-5', 'pat.fixture@example.com', 'Pat Fixture', NULL, now() - interval '1 day'),
   ('usr-fixture-6', 'follower.fixture@example.com', 'Fay Follower', now() - interval '80 days', now() - interval '1 day'),
+  -- A host of the London protest, and nothing else: Luma has no name for them.
+  ('usr-fixture-7', 'host.fixture@example.com', '', NULL, now() - interval '1 day'),
   ('usr-seed-7', 'omar.seed@example.com', 'Omar Seed', now() - interval '3 days', now() - interval '1 day'),
   ('usr-seed-8', 'priya.seed@example.com', 'Priya Seed', now() - interval '2 days', now() - interval '1 day'),
   ('usr-seed-9', 'tom.seed@example.com', 'Tom Seed', NULL, now() - interval '1 day'),
@@ -332,14 +334,34 @@ UPDATE luma_events SET tags = '{Leicester}' WHERE id = 'evt-fixture-leicester-me
 UPDATE luma_events SET removed_at = now() - interval '3 days' WHERE id = 'evt-seed-cancelled-picnic';
 -- Each made on Luma six weeks before it starts.
 UPDATE luma_events SET created_at = start_at - interval '42 days';
--- Hosts the import has read: the past London march's, Jane, who registered
--- for it too, so it's two rows on her page and one event in her count, and
--- the Manchester talk's, Omar. Both are over, so they're never read again.
+-- Hosts the import has read. Those to come are the Luma fixture's
+-- (tests/fixtures/outside-services.ts): the London protest's three, Sam,
+-- Jane, who registered for it too, and one Luma has no name for; Alex for
+-- each of the rest. Read two hours ago, so the next import reads them again.
+-- Of those over, never read again: the past London march's, Jane, so it's
+-- two rows on her page and one event in her count; the Glasgow stall's,
+-- Alex; and the Manchester talk's, Omar.
 INSERT INTO luma_event_hosts (event_id, user_id) VALUES
+  ('evt-fixture-london-protest', 'usr-fixture-2'),
+  ('evt-fixture-london-protest', 'usr-fixture-7'),
+  ('evt-fixture-london-protest', 'usr-fixture-1'),
+  ('evt-fixture-online-intro', 'usr-fixture-3'),
+  ('evt-fixture-manchester-social', 'usr-fixture-3'),
+  ('evt-fixture-scotland-meeting', 'usr-fixture-3'),
+  ('evt-fixture-oxford-talk', 'usr-fixture-3'),
+  ('evt-fixture-bristol-leafleting', 'usr-fixture-3'),
+  ('evt-fixture-leicester-meetup', 'usr-fixture-3'),
   ('evt-fixture-past-london-march', 'usr-fixture-1'),
+  ('evt-fixture-past-glasgow-stall', 'usr-fixture-3'),
   ('evt-seed-manchester-talk', 'usr-seed-7');
+UPDATE luma_events SET hosts_synced_at = now() - interval '2 hours' WHERE start_at > now() AND removed_at IS NULL
+  AND id LIKE 'evt-fixture-%';
 UPDATE luma_events SET hosts_synced_at = now() - interval '200 days'
-  WHERE id IN ('evt-fixture-past-london-march', 'evt-seed-manchester-talk');
+  WHERE id IN ('evt-fixture-past-london-march', 'evt-fixture-past-glasgow-stall', 'evt-seed-manchester-talk');
+-- Jane was made a host of the London protest after its first read, so her
+-- page dates it then, not when the event was made.
+UPDATE luma_event_hosts SET added_at = now() - interval '3 days'
+  WHERE event_id = 'evt-fixture-london-protest' AND user_id = 'usr-fixture-1';
 
 -- Owners for some of our events, past and to come; the rest coming up have
 -- none, so the events page shows them as needing one. One has its Google Doc.
@@ -723,10 +745,14 @@ UPDATE audit_log SET details = jsonb_set(details, '{politicianId}', to_jsonb((SE
 -- ----------------------------------------------------------- supporters
 
 -- One supporter per email, linked to everything with that email, as the
--- matcher makes them; created when their first record was. Fewer arrived
--- the week before last than in the last week.
+-- matcher makes them; created when their first record was: for a Luma
+-- person, following the calendar, else their first registration or event
+-- hosted. Fewer arrived the week before last than in the last week.
 WITH emails AS (
-  SELECT email, coalesce(contact_since, (SELECT min(g.registered_at) FROM luma_guests g WHERE g.user_id = p.user_id)) AS first_seen FROM luma_people p
+  SELECT email, coalesce(contact_since, least(
+    (SELECT min(g.registered_at) FROM luma_guests g WHERE g.user_id = p.user_id),
+    (SELECT min(coalesce(e.created_at, e.first_seen_at)) FROM luma_event_hosts h JOIN luma_events e ON e.id = h.event_id WHERE h.user_id = p.user_id)
+  )) AS first_seen FROM luma_people p
   UNION ALL
   SELECT lower(trim(email)), created_at FROM form_entries
   UNION ALL

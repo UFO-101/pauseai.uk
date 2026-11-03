@@ -333,10 +333,13 @@ async function importHosts(eventId: string, budget: Budget, db: Queryable): Prom
   }
   const people = await upsertPeople(hosts, db);
   const ids = hosts.map((host) => host.userId);
+  // A host on the event's first read may have been there since it was made, so has no date
+  // added; one found on a later read was added since the one before.
   const added = await query(
-    `INSERT INTO luma_event_hosts (event_id, user_id)
-     SELECT $1, user_id FROM unnest($2::text[]) AS h(user_id)
-     WHERE user_id IN (SELECT user_id FROM luma_people) AND user_id NOT IN (SELECT user_id FROM luma_erased)
+    `INSERT INTO luma_event_hosts (event_id, user_id, added_at)
+     SELECT $1, user_id, CASE WHEN e.hosts_synced_at IS NULL THEN NULL ELSE now() END
+     FROM unnest($2::text[]) AS h(user_id), luma_events e
+     WHERE e.id = $1 AND user_id IN (SELECT user_id FROM luma_people) AND user_id NOT IN (SELECT user_id FROM luma_erased)
      ON CONFLICT DO NOTHING RETURNING user_id`,
     [eventId, ids],
     db,

@@ -289,7 +289,8 @@ CREATE TABLE public.letters_from_supporters (
 
 CREATE TABLE public.luma_event_hosts (
     event_id text NOT NULL,
-    user_id text NOT NULL
+    user_id text NOT NULL,
+    added_at timestamp with time zone
 );
 
 --
@@ -603,7 +604,7 @@ UNION ALL
 UNION ALL
  SELECT k.supporter_id,
     'luma'::text AS source,
-    COALESCE(e.created_at, e.first_seen_at) AS at,
+    COALESCE(h.added_at, e.created_at, e.first_seen_at) AS at,
     'luma-hosted'::text AS kind,
     e.name AS title,
     NULL::text AS detail,

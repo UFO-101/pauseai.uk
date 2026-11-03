@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Tag from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -79,22 +80,35 @@ function Missing({ needed, children }: { needed: boolean; children: string }) {
   );
 }
 
-/** Who owns an event, by their address, in bold. */
+/**
+ * Who owns an event, by their address, in bold: free to break before its
+ * @, so the column takes little room, leaving it to the hosts.
+ */
 function Owner({ owner, needed }: { owner: string | null; needed: boolean }) {
   if (!owner) return <Missing needed={needed}>{copy.noOwner}</Missing>;
-  return <strong className={styles.owner}>{owner}</strong>;
+  const [name, domain] = owner.split(/(?=@)/);
+  return (
+    <strong className={styles.owner}>
+      {name}
+      <wbr />
+      {domain}
+    </strong>
+  );
 }
 
-/** An event's hosts, by name, each leading to their supporter's page once linked; never their email. */
+/** An event's hosts, by name, in a line that wraps between them, each leading to their supporter's page once linked; never their email. */
 function Hosts({ hosts }: { hosts: EventHost[] }) {
   return (
     <span className={styles.hosts}>
       {hosts.map((host, i) => {
         const name = host.name || <Muted>{copy.noHostName}</Muted>;
         return (
-          <span key={i}>
-            {host.supporterId ? <StaffLink href={`/staff/supporters/${host.supporterId}`}>{name}</StaffLink> : name}
-          </span>
+          <Fragment key={i}>
+            {i > 0 && ", "}
+            <span>
+              {host.supporterId ? <StaffLink href={`/staff/supporters/${host.supporterId}`}>{name}</StaffLink> : name}
+            </span>
+          </Fragment>
         );
       })}
     </span>

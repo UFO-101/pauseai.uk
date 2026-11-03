@@ -338,8 +338,10 @@ table, on a Future tab, soonest first, and a Past tab, latest first, with
 how many are going, sorted and filtered there (`lib/staff-events-list.ts`).
 Staff who see supporters see each event's hosts too, by name, each linked
 to their supporter, and can search by their names and emails; a host's
-supporter page lists the events they hosted, dated when each was made on
-Luma, beside those they registered for. Each can have one owner on staff
+supporter page lists the events they hosted, beside those they registered
+for, each dated when the import first found them a host of it, or, for a
+host since its first read, when it was made on Luma (Luma doesn't say when
+someone became a host). Each can have one owner on staff
 (`event_owners`, `lib/server/staff-events.ts`), kept apart from
 `luma_events` as only the import writes that. Any staff member can make
 anyone with a staff account an event's owner, from the page, but can't

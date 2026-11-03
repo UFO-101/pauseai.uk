@@ -307,21 +307,26 @@ describeWithDatabase("linkSupporters", () => {
       { name: "Pat", events: 0 },
     ]);
   });
-  it("counts the different events someone registered for, not declined, or hosted: one they did both for, once; and lists each hosted one, dated when it was made", async () => {
+  it("counts the different events someone registered for, not declined, or hosted: one they did both for, once; and lists each hosted one, dated when they were added, else when it was made", async () => {
     await lumaUser("usr-1", "jane@example.com", "Jane", "evt-1");
     await query(
       `INSERT INTO luma_events (id, name, url, start_at, access, created_at) VALUES
          ('evt-2', 'Hosted only', 'evt-2', '2026-11-01T18:00:00Z', 'manage', '2026-09-01T10:00:00Z'),
-         ('evt-3', 'Declined', 'evt-3', '2026-11-02T18:00:00Z', 'manage', NULL)`,
+         ('evt-3', 'Declined', 'evt-3', '2026-11-02T18:00:00Z', 'manage', NULL),
+         ('evt-4', 'Host added later', 'evt-4', '2026-11-03T18:00:00Z', 'manage', '2026-09-01T10:00:00Z')`,
     );
     await query(
       `INSERT INTO luma_guests (id, event_id, user_id, approval_status, registered_at)
        VALUES ('gst-3', 'evt-3', 'usr-1', 'declined', now())`,
     );
-    await query("INSERT INTO luma_event_hosts (event_id, user_id) VALUES ('evt-1', 'usr-1'), ('evt-2', 'usr-1')");
+    await query(
+      `INSERT INTO luma_event_hosts (event_id, user_id, added_at) VALUES
+         ('evt-1', 'usr-1', NULL), ('evt-2', 'usr-1', NULL), ('evt-4', 'usr-1', '2026-10-05T09:00:00Z')`,
+    );
     await linkSupporters();
-    expect(await query("SELECT events FROM supporters_summary")).toEqual([{ events: 2 }]);
+    expect(await query("SELECT events FROM supporters_summary")).toEqual([{ events: 3 }]);
     expect(await query("SELECT title, at FROM supporter_activity WHERE kind = 'luma-hosted' ORDER BY title")).toEqual([
+      { title: "Host added later", at: new Date("2026-10-05T09:00:00Z") },
       { title: "Hosted only", at: new Date("2026-09-01T10:00:00Z") },
       // Made before the import copied when: dated when it was first seen.
       { title: "evt-1", at: expect.any(Date) },
