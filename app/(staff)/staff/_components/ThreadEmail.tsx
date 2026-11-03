@@ -44,7 +44,7 @@ export default function ThreadEmail({
         <dt>{copy.headers.subject}</dt>
         <dd className={styles.subject}>
           <strong>{subject}</strong>
-          {action}
+          {action && <span className={styles.action}>{action}</span>}
         </dd>
       </dl>
       <div className={missing ? `${styles.body} ${styles.missing}` : styles.body}>{children}</div>

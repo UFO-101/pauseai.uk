@@ -37,6 +37,11 @@
   justify-content: space-between;
 }
 
+/* The action, at the right of the subject's line, and of its own line when it wraps under it. */
+.action {
+  margin-left: auto;
+}
+
 /* A body whose text isn't kept: tinted, as an empty slot, so the note in
    it reads as about the letter, not part of it. */
 .missing {
