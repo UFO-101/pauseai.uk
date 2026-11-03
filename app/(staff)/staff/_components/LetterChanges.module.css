@@ -1,4 +1,4 @@
-/* The note and the button over the letter, then each block, a step apart. */
+/* The button over the letter, at its right, then each block, a step apart. */
 .changes {
   display: grid;
   gap: var(--space-3);
@@ -9,7 +9,7 @@
   flex-wrap: wrap;
   gap: var(--space-2) var(--space-4);
   align-items: baseline;
-  justify-content: space-between;
+  justify-content: flex-end;
 }
 
 /* A letter's text as it was written: its line breaks kept. */

@@ -4,7 +4,19 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { TEST_MPS } from "@/lib/test-mps";
 import { runSql } from "@/scripts/fresh-database.mjs";
 import { fakeTurnstile, fillLetter, lookUpTestMp, newestEmail, newestEmailTo, WEBHOOK_AUTH } from "../steps";
-import { caretAt, newParagraphAboveSignOff } from "./editor-steps";
+import { editor, newParagraphAboveSignOff } from "./editor-steps";
+
+/** As much of Tiptap's editor as a flow drives directly. */
+type EditorHandle = {
+  state: {
+    doc: {
+      descendants: (
+        visit: (node: { isTextblock: boolean; textContent: string; nodeSize: number }, pos: number) => void,
+      ) => void;
+    };
+  };
+  chain: () => { focus: () => { deleteRange: (range: { from: number; to: number }) => { run: () => boolean } } };
+};
 import { BASE, emailFrame, expect, frame, madeUpAddress, test } from "./fixtures";
 import {
   bounceOf,
@@ -366,9 +378,16 @@ test("Jane adds her own words and cuts a sentence: the letter's page shows only 
   await lookUpTestMp(page, BASE);
   // The sentence asking for a meeting, cut; a paragraph of her own, added.
   const meeting = "I would also like you to arrange a short meeting with me to discuss this important matter.";
-  await caretAt(page, meeting, "end");
-  await page.keyboard.press("Shift+Home");
-  await page.keyboard.press("Backspace");
+  await editor(page).evaluate((element, text) => {
+    // Through the editor's own command, as a click into a wrapped line on a phone lands its caret unreliably.
+    const tiptap = (element as HTMLElement & { editor: EditorHandle }).editor;
+    let range = { from: 0, to: 0 };
+    tiptap.state.doc.descendants((node, pos) => {
+      if (node.isTextblock && node.textContent === text) range = { from: pos, to: pos + node.nodeSize };
+    });
+    tiptap.chain().focus().deleteRange(range).run();
+  }, meeting);
+  await expect(editor(page)).not.toContainText(meeting);
   await newParagraphAboveSignOff(page);
   await page.keyboard.type("My children ask me about AI every week, and I don't know what to tell them.");
   await frame(page, "Jane's letter: a sentence cut, and a paragraph of her own");
