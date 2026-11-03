@@ -14,6 +14,8 @@ import { submitLetter, type LetterForm } from "./mp-letters";
 import { relay, resendAfterFix, sendRelay, uncertainRelays } from "./relays";
 
 const JANE = "jane@example.com";
+/** Jane as every email to her is addressed: her name and her own address. */
+const JANE_LINE = `"Jane Smith" <${JANE}>`;
 const REQUEST = new Request("https://pauseai.uk/api/cron/read-gmail", { method: "POST" });
 const MP = "test-mp@parliament.example";
 
@@ -142,7 +144,7 @@ describeWithDatabase("the letters inbox's queue", () => {
     expect((await events()).at(-1)).toEqual({ status: "copy_held", details: { to: JANE, reason: "blocked" } });
     const sent = recordGmail();
     expect(await unblock(JANE, "staff@pauseai.uk", "She fixed her mailbox")).toBe(true);
-    expect(sent.map((s) => s.headers.get("bcc"))).toEqual([JANE]);
+    expect(sent.map((s) => s.headers.get("bcc"))).toEqual([JANE_LINE]);
     expect(await query("SELECT copy_state FROM letters_from_supporters")).toEqual([{ copy_state: "sent" }]);
   });
 
@@ -241,7 +243,7 @@ describeWithDatabase("the letters inbox's queue", () => {
     const sent = recordGmail();
     await unblock(JANE, "staff@pauseai.uk", "Fixed");
     // Her copy, held as well, then the relay.
-    expect(sent.map((s) => s.headers.get("bcc") ?? s.headers.get("to"))).toEqual([JANE, JANE]);
+    expect(sent.map((s) => s.headers.get("bcc") ?? s.headers.get("to"))).toEqual([JANE_LINE, JANE_LINE]);
     expect(await query("SELECT status FROM letter_relays")).toEqual([{ status: "sent" }]);
   });
 
@@ -267,7 +269,7 @@ describeWithDatabase("the letters inbox's queue", () => {
     sent.length = 0;
     const order = recordGmail();
     expect(await sendLetterQueue(Date.now() + 10_000)).toEqual({ sent: 2, left: 0 });
-    expect(order.map((s) => s.headers.get("to"))[0]).toBe(JANE);
+    expect(order.map((s) => s.headers.get("to"))[0]).toBe(JANE_LINE);
     // A relay not queued is left alone.
     expect(await sendRelay(id)).toEqual({ sent: false });
   });
@@ -308,9 +310,9 @@ describeWithDatabase("the letters inbox's queue", () => {
     await sendLetterQueue(Date.now() + 10_000);
     expect(sent.map((s) => s.headers.get("to"))).toEqual([
       '"Testy McTestface MP" <new-office@parliament.example>',
-      JANE,
+      JANE_LINE,
       '"Testy McTestface MP" <new-office@parliament.example>',
-      JANE,
+      JANE_LINE,
     ]);
     expect(sent[1].text).toBe(copy.notices.resent("Testy McTestface MP"));
     expect(await statusOf()).toBe("sent");
@@ -356,7 +358,7 @@ describeWithDatabase("the letters inbox's queue", () => {
       const sent = recordGmail();
       await bounce(await sentId("relay", MP), MP);
       expect(await query("SELECT status FROM letter_relays WHERE NOT to_supporter")).toEqual([{ status: "bounced" }]);
-      expect(sent.map((s) => s.headers.get("to"))).toEqual([JANE]);
+      expect(sent.map((s) => s.headers.get("to"))).toEqual([JANE_LINE]);
       expect(sent[0].text).toBe(copy.notices.bounced("Testy McTestface MP"));
       expect((await events()).slice(-3).map((e) => e.status)).toEqual(["relayed", "relay_bounced", "notice"]);
       expect(await query("SELECT count(*)::int AS n FROM email_sends WHERE purpose = 'staff-alert'")).toEqual([
@@ -364,7 +366,7 @@ describeWithDatabase("the letters inbox's queue", () => {
       ]);
       sent.length = 0;
       await unblock(MP, "staff@pauseai.uk", "Fixed by the office");
-      expect(sent.map((s) => s.headers.get("to"))).toEqual([`"Testy McTestface MP" <${MP}>`, JANE]);
+      expect(sent.map((s) => s.headers.get("to"))).toEqual([`"Testy McTestface MP" <${MP}>`, JANE_LINE]);
       expect(sent[1].text).toBe(copy.notices.resent("Testy McTestface MP"));
     });
 
@@ -405,7 +407,7 @@ describeWithDatabase("the letters inbox's queue", () => {
       expect(await statusOf()).toBe("bounced");
       const sent = recordGmail();
       expect(await unblock(MP, "staff@pauseai.uk", "Their office gave us the right address")).toBe(true);
-      expect(sent.map((s) => s.headers.get("to"))).toEqual([`"Testy McTestface MP" <${MP}>`, JANE]);
+      expect(sent.map((s) => s.headers.get("to"))).toEqual([`"Testy McTestface MP" <${MP}>`, JANE_LINE]);
       expect(await statusOf()).toBe("sent");
     });
 
@@ -417,7 +419,7 @@ describeWithDatabase("the letters inbox's queue", () => {
       await bounce(id, MP, "complaint");
       expect(sent).toEqual([]);
       await bounce(id, MP);
-      expect(sent.map((s) => s.headers.get("to"))).toEqual([JANE]);
+      expect(sent.map((s) => s.headers.get("to"))).toEqual([JANE_LINE]);
     });
   });
 });

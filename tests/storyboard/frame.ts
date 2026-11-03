@@ -22,12 +22,13 @@ import { LOCAL_URL } from "../fixture-env.mjs";
  * `of` pictures one element, exactly (the component gallery's variants), with
  * the page at the top so the sticky header is never over it. `window`
  * pictures only the window, for a page too long to picture whole (the
- * gallery itself).
+ * gallery itself). `hover` puts the pointer over an element, and keeps it
+ * there for the picture, in place of moving it out of the way.
  */
 export async function frame(
   page: Page,
   caption: string,
-  { of, window: windowOnly = false }: { of?: Locator; window?: boolean } = {},
+  { of, window: windowOnly = false, hover }: { of?: Locator; window?: boolean; hover?: Locator } = {},
 ): Promise<void> {
   const info = test.info();
   const index = info.annotations.filter((a) => a.type === "frame").length + 1;
@@ -37,7 +38,7 @@ export async function frame(
   // The pointer is wherever the last click left it, which, as the page
   // changes under it, is sometimes over a link or a select and sometimes
   // not: a hover style that differs between runs. Out of the way first.
-  await page.mouse.move(0, 0).catch(() => {});
+  await (hover ? hover.hover() : page.mouse.move(0, 0).catch(() => {}));
 
   // Images below the fold load first, and the fonts, so the picture is of the
   // finished page; and any smooth scroll (a field scrolled into view, an

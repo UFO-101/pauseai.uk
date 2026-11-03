@@ -48,8 +48,8 @@ describe("staff interface copy", () => {
 
   it("says how many messages in the letters inbox need a person, one or more", () => {
     const { subject } = staffCopy.lettersInbox.alert;
-    expect(subject(1, "letters@pauseai.uk")).toBe("1 message in letters@pauseai.uk for a person to look at");
-    expect(subject(2, "letters@pauseai.uk")).toBe("2 messages in letters@pauseai.uk for a person to look at");
+    expect(subject(1, "letters@pauseai.uk")).toBe("1 MP email in letters@pauseai.uk not relayed");
+    expect(subject(2, "letters@pauseai.uk")).toBe("2 MP emails in letters@pauseai.uk not relayed");
   });
 
   it("names the ask being edited", () => {

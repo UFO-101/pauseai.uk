@@ -153,7 +153,7 @@ describeWithDatabase("forwardReply", () => {
       ),
     ).toEqual(["replies@pauseai.uk", "Jane@Example.com"]);
 
-    expect(sent.map((e) => e.To)).toEqual(["replies@pauseai.uk", "Jane@Example.com"]);
+    expect(sent.map((e) => e.To)).toEqual(["replies@pauseai.uk", `"Jane Smith" <Jane@Example.com>`]);
     expect(sent[0]).toMatchObject({
       From: "PauseAI UK <noreply@notify.pauseai.uk>",
       ReplyTo: "test-mp@parliament.example, jane.smith.482913@letters.pauseai.uk",

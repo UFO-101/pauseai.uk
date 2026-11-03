@@ -123,7 +123,7 @@ describeWithDatabase("submitLetter", () => {
     expect(copied.headers.get("from")).toBe(letter.headers.get("from"));
     expect(copied.headers.get("to")).toBe(mpProxy);
     expect(copied.headers.get("reply-to")).toBe(mpProxy);
-    expect(copied.headers.get("bcc")).toBe("jane@example.com");
+    expect(copied.headers.get("bcc")).toBe(`"Jane Smith" <jane@example.com>`);
     expect(copied.text).toBe(`${copy.letterCopy("Testy McTestface MP")}\n\n${letter.text}`);
     expect(copied.html.startsWith(`<p>${copy.letterCopy("Testy McTestface MP")}</p>`)).toBe(true);
     expect(copied.mime.parts.slice(1)).toHaveLength(campaigns[0].attachments.length);

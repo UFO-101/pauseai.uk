@@ -51,6 +51,11 @@ export function mpName(name: string): string {
   return /\bMP$/.test(clean) ? clean : `${clean} MP`;
 }
 
+/** A person's own address as a To, Cc or Bcc line, with their name: "Jane Smith" <jane.smith@example.com>. */
+export function nameLine(name: string, address: string): string {
+  return `"${headerName(name)}" <${address}>`;
+}
+
 /** A proxy as a From or To line: "Jane Smith (via PauseAI)" <letters+jane.smith@example.org>. */
 export function proxyLine(name: string, tag: string): string {
   return `"${headerName(name)} (via PauseAI)" <${proxyAddress(tag)}>`;

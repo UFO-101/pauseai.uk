@@ -542,6 +542,13 @@ backend sent it, Postmark or a connected Gmail, a staff member's or the
 letters inbox ("Mailings to politicians" and "Letters through the letters
 inbox", above).
 
+Every address an email is to, Cc'd or Bcc'd to has a name with it: the
+person's own name on their own address, `"Jane Smith"
+<jane.smith@example.com>`, and their name with "(via PauseAI)" on a proxy
+(`nameLine` and `proxyLine` in `lib/server/proxies.ts`). The exception is
+staff: we don't know a staff account's name, nor a shared inbox's, so a
+login link, an alert or an event owner's email goes to the address alone.
+
 When an email bounces or its recipient marks it as spam, the problem is
 recorded against the address (`email_problems`). A hard bounce or a
 complaint blocks the address (`email_blocks`), and `send()` won't send to a

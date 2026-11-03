@@ -51,7 +51,7 @@ function Action({ action }: { action: DashboardAction }) {
           ? [
               staffCopy.lettersInbox.alert.subject(action.count, action.inbox),
               words.lettersInboxDetail(staffTime(action.at)),
-              words.seeRun,
+              words.lettersInboxButton,
               importPath("read-gmail"),
             ]
           : [

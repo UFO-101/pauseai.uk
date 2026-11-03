@@ -28,19 +28,14 @@ test("Folding the sidebar", { tag: "@desktop-only" }, async ({ page, flowDatabas
   await frame(page, "The sidebar, folded");
   story("Tabbing to an icon, or hovering over it, shows the page's name beside it.");
 
-  // Tabbed to, as the frame moves the mouse away: a hover shows the same. The label and the focus ring show
-  // only while the page has the window's focus, which a busy run can give another page as the picture is
-  // taken; Chromium's focus emulation has the page keep it, whatever else has the window's.
-  const cdp = await page.context().newCDPSession(page);
-  await cdp.send("Emulation.setFocusEmulationEnabled", { enabled: true });
-  await nav.getByRole("link", { name: staffCopy.nav.home }).focus();
-  await page.keyboard.press("Tab");
+  // Hovered, not tabbed to: Chromium now and then took the focus from the link, natively, a second or so after
+  // it was given, with nothing else focused, so a focused link's label was in some pictures and not others.
   const supporters = nav.getByRole("link", { name: staffCopy.nav.supporters });
-  await expect(supporters).toBeFocused();
+  await supporters.hover();
   await expect
     .poll(() => supporters.locator("[class*=label]").evaluate((l) => l.getBoundingClientRect().width))
     .toBeGreaterThan(1);
-  await frame(page, "A page's name");
+  await frame(page, "A page's name", { hover: supporters });
   story("The next page opens with the sidebar still folded.");
 
   await nav.getByRole("link", { name: staffCopy.nav.supporters }).click();

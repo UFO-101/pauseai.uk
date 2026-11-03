@@ -16,7 +16,7 @@ import {
 import { isLettersInboxAddress } from "./letters-inbox";
 import { relayMime } from "./mime";
 import { letterReply } from "./outside-services/blobs";
-import { mpName, proxyLine } from "./proxies";
+import { mpName, nameLine, proxyLine } from "./proxies";
 
 // Relays: each message the MP's office or the supporter sends through a
 // proxy, kept whole (letter_replies), sent on to the other side from the
@@ -83,14 +83,15 @@ export async function sendRelay(relayId: number): Promise<{ sent: boolean; reaso
   );
   if (!relay) return { sent: false };
   const letter = (await outgoingLetter(relay.letterId))!;
-  const [from, to, toLine, thread] = relay.toSupporter
-    ? [proxyLine(mpName(letter.mpName), letter.mpTag), letter.senderEmail, letter.senderEmail, "letter-copy" as const]
+  const [from, to, toName, thread] = relay.toSupporter
+    ? [proxyLine(mpName(letter.mpName), letter.mpTag), letter.senderEmail, letter.senderName, "letter-copy" as const]
     : [
         proxyLine(letter.senderName, letter.supporterTag),
         letter.mpEmail ?? "",
-        `"${mpName(letter.mpName)}" <${letter.mpEmail}>`,
+        mpName(letter.mpName),
         "letter" as const,
       ];
+  const toLine = nameLine(toName, to);
   if (!to || isLettersInboxAddress(to) || (await isBlocked(to))) {
     await setStatus(relayId, "held", "blocked");
     await relayEvent(relayId, "relay_held", { to, reason: "blocked" });

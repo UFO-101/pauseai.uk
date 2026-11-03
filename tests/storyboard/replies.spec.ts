@@ -57,12 +57,13 @@ Yours sincerely,\r
 Testy McTestface MP\r
 `;
 
-/** The letter's page, with its history, the newest first. */
+/** The letter's page, with its history's entries, the newest first. */
 async function openLetter(page: Page, id: string) {
   await page.goto(`${BASE}/staff/letters/${id}`);
   const list = page.getByRole("list", { name: history.historyTitle });
   await expect(list).toBeVisible();
-  return list.getByRole("listitem");
+  // Its entries, not a reply's relay, which is a list inside its reply's.
+  return list.locator(":scope > li");
 }
 
 /** Writes to the test MP as Jane, at `sender`, from the form, then logs in as staff; gives the letter's ID. */
@@ -80,7 +81,7 @@ test("Jane writes to her MP", async ({ page, flowDatabase }) => {
     "Jane gets a copy, from her proxy address to the MP's. If she replies to it, her reply reaches the MP through us too.",
   );
   const copied = sentEmail(flowDatabase, id, "letter-copy");
-  expect(copied.Bcc).toBe(sender);
+  expect(copied.Bcc).toBe(`"Jane Smith" <${sender}>`);
   expect(copied.ReplyTo).toBe(copied.To);
   await emailFrame(page, copied, "Jane's copy of her letter");
   story(
@@ -104,7 +105,7 @@ test("The MP replies, and Jane answers", async ({ page, request, flowDatabase })
   deliver(flowDatabase, { from: OFFICE, to: JANES_PROXY, cc: "caseworker@parliament.example", text: MP_REPLY });
   expect(await readInbox(request)).toMatchObject({ replies: 1, relayed: 1, notUnderstood: [] });
   const toJane = sentEmail(flowDatabase, id, "relay");
-  expect(toJane.To).toBe(sender);
+  expect(toJane.To).toBe(`"Jane Smith" <${sender}>`);
   expect(toJane.From).toBe(`"Testy McTestface MP (via PauseAI)" <${MPS_PROXY}>`);
   expect(toJane.Cc).toBeUndefined();
   expect(toJane.InReplyTo).toBe(`<${sentIds(flowDatabase, id, "letter-copy")[0]}>`);
@@ -211,7 +212,7 @@ test("Automatic replies", async ({ page, request, flowDatabase }) => {
   expect(ooo.AutoSubmitted).toBe("auto-replied");
   await emailFrame(page, ooo, "Jane's out-of-office, as the office gets it");
   story(
-    "The office's system answers anyway, again and again. A letter relays at most five emails an hour, so the last is kept in the letters inbox, and staff get an email about it.",
+    "For this test, the office's system is made to misbehave and answer anyway, again and again, as a buggy one might. A letter relays at most five emails an hour, so the last is kept in the letters inbox, and staff get an email about it.",
   );
 
   // Two responders answering each other: the letter's relays stop at its cap, five in an hour.

@@ -191,7 +191,9 @@ export const staffCopy = {
         seeRun: "See failed run",
         // The newest read of Gmail found mail in the letters inbox it couldn't handle: when, and where it waits.
         lettersInboxDetail: (at: string) =>
-          `Found ${at}. Each is left unread in the inbox, with why on the run's page.`,
+          `⁂ Open each in Gmail and deal with it by hand: forward it, answer it, or leave it. Found ${at}.`,
+        // Its button, to the run's page, which lists each with why it wasn't relayed and a link to it in Gmail.
+        lettersInboxButton: "⁂ See emails",
       },
       // The window: its length in days, each a link but the one shown.
       window: (days: number) => `${days} days`,
@@ -1422,9 +1424,9 @@ export const staffCopy = {
     // The email to the policy inbox after a run with any.
     alert: {
       subject: (count: number, inbox: string) =>
-        `${count} ${count === 1 ? "message" : "messages"} in ${inbox} for a person to look at`,
+        `${count} MP ${count === 1 ? "email" : "emails"} in ${inbox} not relayed`,
       body: (inbox: string, lines: string[], runUrl: string) =>
-        `There's mail in ${inbox} that we don't know how to handle. Check each message by hand, and resolve it:\n\n${lines.join("\n")}\n\nThe run: ${runUrl}`,
+        `Open each in Gmail and deal with it by hand: forward it, answer it, or leave it.\n\n${lines.join("\n")}\n\nThe run: ${runUrl}`,
     },
   },
   // The hourly read of the connected Gmail accounts for replies to our

@@ -8,7 +8,7 @@ import { query } from "./db";
 import { isBlocked, send, sentBy, type Backend, type Purpose } from "./email";
 import { gmailAccount, sentToday } from "./gmail-accounts";
 import { LETTERS_DAILY_LIMIT, lettersInbox } from "./letters-inbox";
-import { mpName, proxyLine } from "./proxies";
+import { mpName, nameLine, proxyLine } from "./proxies";
 import { resendAfterFix, sendRelay, uncertainRelays } from "./relays";
 
 // Supporters' letters to MPs, sent from the letters inbox
@@ -149,7 +149,7 @@ async function sendTaken(id: number): Promise<{ sent: true } | { sent: false; re
   const result = await send(
     {
       From: from,
-      To: `"${mpName(letter.mpName)}" <${letter.mpEmail}>`,
+      To: nameLine(mpName(letter.mpName), letter.mpEmail),
       Subject: letter.subject,
       TextBody: toText(doc),
       HtmlBody: toHtml(doc),
@@ -198,7 +198,7 @@ export async function sendCopy(id: number): Promise<void> {
       From: from,
       To: to,
       ReplyTo: to,
-      Bcc: letter.senderEmail,
+      Bcc: nameLine(letter.senderName, letter.senderEmail),
       Subject: letter.subject,
       TextBody: `${line}\n\n${toText(doc)}`,
       HtmlBody: `<p>${line.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</p>${toHtml(doc)}`,
@@ -230,7 +230,7 @@ export async function noticeToSender(letterId: number, notice: "bounced" | "rese
   const result = await send(
     {
       From: `"PauseAI" <${lettersInbox()}>`,
-      To: letter.senderEmail,
+      To: nameLine(letter.senderName, letter.senderEmail),
       Subject: `Re: ${letter.subject}`,
       TextBody: copy.notices[notice](mpName(letter.mpName)),
       Headers: threading(await sentMessageId(letterId, "letter-copy")),

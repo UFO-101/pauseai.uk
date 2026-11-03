@@ -24,6 +24,8 @@ import { RELAY_CAP } from "./relays";
 const REQUEST = new Request("https://pauseai.uk/api/cron/read-gmail", { method: "POST" });
 const MP = '"Testy McTestface MP" <test-mp@parliament.example>';
 const JANE = "jane@example.com";
+/** Jane as every email to her is addressed: her name and her own address. */
+const JANE_LINE = `"Jane Smith" <${JANE}>`;
 const JANES_PROXY = testProxy("jane.smith");
 const MPS_PROXY = testProxy("testy.mctestface.mp");
 
@@ -148,7 +150,7 @@ describeWithDatabase("reading the letters inbox", () => {
     expect(sent).toHaveLength(1);
     const [relay] = sent;
     expect(relay.headers.get("from")).toBe(`"Testy McTestface MP (via PauseAI)" <${MPS_PROXY}>`);
-    expect(relay.headers.get("to")).toBe(JANE);
+    expect(relay.headers.get("to")).toBe(JANE_LINE);
     expect(relay.headers.get("in-reply-to")).toBe(`<${letter.copy}>`);
     expect(relay.headers.get("references")).toBe(`<${letter.copy}>`);
     expect(relay.headers.get("subject")).toBe("Re: Request to co-sign letter on frontier AI risks");
@@ -221,7 +223,7 @@ describeWithDatabase("reading the letters inbox", () => {
     });
     const sent = recordGmail();
     expect(await read()).toMatchObject({ replies: 0, autoReplies: 2, relayed: 2 });
-    expect(sent.map((s) => s.headers.get("to"))).toEqual([JANE, MP]);
+    expect(sent.map((s) => s.headers.get("to"))).toEqual([JANE_LINE, MP]);
     expect(sent[1].headers.get("auto-submitted")).toBe("auto-replied");
     expect(sent[1].headers.get("precedence")).toBe("auto_reply");
     expect((await events(letter.id)).map((e) => e.status).slice(2)).toEqual([
@@ -239,7 +241,7 @@ describeWithDatabase("reading the letters inbox", () => {
     deliver({ from: JANE, to: LETTERS_INBOX, subject: "Out of office", inReplyTo: letter.copy! });
     const sent = recordGmail();
     expect(await read()).toMatchObject({ autoReplies: 2, relayed: 2, notUnderstood: [] });
-    expect(sent.map((s) => s.headers.get("to"))).toEqual([JANE, MP]);
+    expect(sent.map((s) => s.headers.get("to"))).toEqual([JANE_LINE, MP]);
   });
 
   it("notes its own mail, and the supporter's copy coming back to the MP's proxy, without relaying either", async () => {
@@ -520,7 +522,7 @@ describeWithDatabase("reading the letters inbox", () => {
     // The notice: from the letters inbox as PauseAI, to Jane, in her copy's thread.
     expect(sent).toHaveLength(1);
     expect(sent[0].headers.get("from")).toBe(`"PauseAI" <${LETTERS_INBOX}>`);
-    expect(sent[0].headers.get("to")).toBe(JANE);
+    expect(sent[0].headers.get("to")).toBe(JANE_LINE);
     expect(sent[0].headers.get("in-reply-to")).toBe(`<${letter.copy}>`);
     expect(sent[0].text).toBe(copy.notices.bounced("Testy McTestface MP"));
     expect((await events(letter.id)).map((e) => e.status).slice(2)).toEqual(["bounced", "notice"]);

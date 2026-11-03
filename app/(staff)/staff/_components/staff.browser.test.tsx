@@ -301,7 +301,7 @@ describe("StaffDashboard", () => {
       `${copy.actions.heldSync(24)}${copy.actions.heldSyncDetail}${copy.actions.decide}`,
       `${copy.actions.blockedMp("Bouncy McTestface MP")}${copy.actions.blockedMpDetail}${copy.actions.openMp}`,
       `${copy.actions.failedImport(jobTitles["import-controlai"])}${copy.actions.failedImportDetail("No PDF linked", "21 Oct 2026, 02:00")}${copy.actions.seeRun}`,
-      `${staffCopy.lettersInbox.alert.subject(2, "fixture-letters@pauseai.uk")}${copy.actions.lettersInboxDetail("21 Oct 2026, 03:20")}${copy.actions.seeRun}`,
+      `${staffCopy.lettersInbox.alert.subject(2, "fixture-letters@pauseai.uk")}${copy.actions.lettersInboxDetail("21 Oct 2026, 03:20")}${copy.actions.lettersInboxButton}`,
     ]);
     await expect
       .element(page.getByRole("link", { name: copy.actions.decide }))
@@ -3064,6 +3064,31 @@ describe("LetterHistory", () => {
     expect(notice.element().textContent).toContain(`${copy.detail.fields.notice}${copy.detail.notices.bounced}`);
     expect(replied.element().textContent).toContain(`${copy.detail.fields.uncertain}${copy.detail.uncertainLetter}`);
     expect(replied.element().textContent).toContain(`${copy.detail.fields.reason}odd`);
+  });
+
+  it("puts each reply's relay under it, a list of its own, and leaves the rest where they were", async () => {
+    const letter = {
+      ...exampleSupporterLetterDetails,
+      sentAt: null,
+      events: [
+        { at: "2026-10-14T11:00:00Z", status: "relayed", details: { to: "jane@example.com", gmailMessageId: "m1" } },
+        { at: "2026-10-14T10:30:00Z", status: "relay_held", details: { reason: "blocked", gmailMessageId: "m1" } },
+        { at: "2026-10-14T10:00:00Z", status: "replied", details: { from: "mp@example.org", gmailMessageId: "m1" } },
+        { at: "2026-10-13T10:00:00Z", status: "bounced", details: { gmailMessageId: "bounce" } },
+        { at: "2026-10-12T10:00:00Z", status: "replied", details: { from: "mp@example.org" } },
+      ],
+    };
+    await render(<LetterHistory events={historyOf(letter)} />);
+    const items = history().element().querySelectorAll(":scope > li");
+    expect([...items].map((item) => item.querySelector("strong")!.textContent)).toEqual([
+      copy.status.replied,
+      copy.status.bounced,
+      copy.status.replied,
+    ]);
+    const relays = [...items[0].querySelectorAll("ol > li")].map((item) => item.querySelector("strong")!.textContent);
+    expect(relays).toEqual([copy.status.relayed, copy.status.relay_held]);
+    expect(items[1].querySelector("ol")).toBeNull();
+    expect(items[2].querySelector("ol")).toBeNull();
   });
 
   it("puts each field a line, by name, in words where it has them; a status nobody knows as stored", async () => {

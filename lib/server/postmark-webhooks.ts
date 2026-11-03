@@ -6,6 +6,7 @@ import { query, transaction } from "./db";
 import { isBlocked, send, type DeliveryProblem } from "./email";
 import type { HandlingReason, ReplyHandling } from "./letters";
 import { lettersDomain, notifyDomain, type Attachment } from "./outside-services/postmark";
+import { nameLine } from "./proxies";
 
 // What Postmark tells us: bounces and spam complaints, and replies to
 // letters. Postmark doesn't sign webhooks, so each webhook URL carries a
@@ -298,7 +299,7 @@ export async function forwardReply(email: InboundEmail): Promise<string[]> {
     const result = await send(
       {
         From: `PauseAI UK <noreply@${notifyDomain()}>`,
-        To: to,
+        To: to === letter.senderEmail ? nameLine(letter.senderName, to) : to,
         // Answering it reaches whoever wrote, and the letter's address, so it's kept with the letter.
         ReplyTo: [from, `${letter.mailbox}@${lettersDomain()}`].filter(Boolean).join(", "),
         Subject: email.Subject ?? "",
