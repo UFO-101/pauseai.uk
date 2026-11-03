@@ -2729,7 +2729,8 @@ describe("RunList", () => {
       />,
     );
     await expect.element(page.getByText(staffCopy.gmailReading.result(accounts), { exact: false })).toBeVisible();
-    await expect.element(page.getByText(staffCopy.runs.status.incomplete, { exact: true })).toBeVisible();
+    // Failed, both: the one that couldn't read an account, and the one that failed outright.
+    expect(page.getByText(staffCopy.runs.status.failed, { exact: true }).all()).toHaveLength(2);
     await expect.element(page.getByText(staffCopy.runs.error("Database down"), { exact: false })).toBeVisible();
     await expect
       .element(page.getByText(`${staffCopy.gmailReading.account(accounts[0])} ${staffCopy.gmailReading.restarted}`))
