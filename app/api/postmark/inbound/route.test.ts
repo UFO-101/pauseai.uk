@@ -43,7 +43,7 @@ describeWithDatabase("POST /api/postmark/inbound", () => {
     );
     expect(await (await POST(webhookRequest("/api/postmark/inbound", inbound))).json()).toEqual({ forwarded: 2 });
 
-    expect(to).toEqual(["replies@pauseai.uk", "jane@example.com"]);
+    expect(to).toEqual(["replies@pauseai.uk", '"Jane" <jane@example.com>']);
     expect(await query("SELECT status, details FROM letter_events")).toEqual([
       {
         status: "replied",
