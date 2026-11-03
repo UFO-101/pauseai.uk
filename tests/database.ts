@@ -21,6 +21,13 @@ export const describeWithDatabase = describe.skipIf(process.env.NETLIFY === "tru
  */
 export const MAKES_DATABASES = { timeout: 30_000 };
 
+/**
+ * The time a hook that makes or drops a test file's database is given. Over
+ * 10s, the hooks' default, has been seen dropping one while the storyboard's
+ * builds run alongside.
+ */
+const DATABASE_HOOK = MAKES_DATABASES.timeout;
+
 const TABLES = [
   "ask_statuses",
   "audit_log",
@@ -69,7 +76,7 @@ export function useTestDatabase(extraTables: string[] = []) {
   beforeAll(() => {
     copyDatabase(name, inject("templateDatabase"));
     process.env.NETLIFY_DB_URL = databaseUrl(name);
-  });
+  }, DATABASE_HOOK);
   beforeEach(async () => {
     await query(`TRUNCATE ${[...TABLES, ...extraTables].join(", ")} RESTART IDENTITY CASCADE`);
     // The mailings written here; the imported ones come with the migrations.
@@ -81,7 +88,7 @@ export function useTestDatabase(extraTables: string[] = []) {
     await closeDb();
     dropDatabase(name);
     process.env.NETLIFY_DB_URL = original;
-  });
+  }, DATABASE_HOOK);
 }
 
 /**
@@ -96,12 +103,12 @@ export function useDatabaseUpTo(upTo: string): { url: string } {
   beforeAll(async () => {
     await closeDb();
     db.url = process.env.NETLIFY_DB_URL = freshDatabase(name, { upTo });
-  });
+  }, DATABASE_HOOK);
   afterAll(async () => {
     await closeDb();
     dropDatabase(name);
     process.env.NETLIFY_DB_URL = original;
-  });
+  }, DATABASE_HOOK);
   return db;
 }
 
