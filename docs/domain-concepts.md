@@ -583,6 +583,8 @@ each time it happens, with a link to where to deal with it:
 - mail in the letters inbox it can't relay (`lib/server/gmail-reading.ts`);
 - an import failing, after a run of it that didn't (`recordFailure` in
   `lib/server/import-runs.ts`);
+- a Gmail account the hourly read couldn't read, after a run that could
+  (`lib/server/gmail-reading.ts`); one Google disconnected has its own;
 - the MP import held, when none was (`lib/server/politician-sync.ts`);
 - Google disconnecting a Gmail account (`lib/server/gmail-accounts.ts`);
 - letters to MPs waiting over three hours to go, until those it named

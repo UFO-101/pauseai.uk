@@ -4,7 +4,9 @@ import { gunzipSync } from "node:zlib";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
+import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { NIGHTLY } from "@/lib/import-runs";
+import { notifications } from "@/tests/notifications";
 import { addTestPolitician, connectTestGmail, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
 import { readBounce, readGmail } from "./gmail-reading";
@@ -409,7 +411,44 @@ describeWithDatabase("reading Gmail", () => {
     ]);
   });
 
+  it("tells the notification inbox when an account can't be read, once until it's read again", async () => {
+    const sent = notifications();
+    await connectTestGmail("al@pauseai.uk", "7");
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    mailbox({});
+    let failing = true;
+    server.use(
+      http.get(`${API}/history`, () =>
+        failing ? new HttpResponse(null, { status: 500 }) : HttpResponse.json({ historyId: "9" }),
+      ),
+    );
+    const words = staffCopy.notifications.importFailed;
+    const title = jobTitles["read-gmail"];
+    const told = words.body(
+      title,
+      "al@pauseai.uk: Error: Gmail answered 500 for /history",
+      "https://pauseai.uk/staff/import-data/gmail",
+    );
+    // Its first run, failing: told. Failing again: not.
+    await read();
+    await read();
+    expect(sent.map((s) => [s.Subject, s.TextBody])).toEqual([[words.subject(title), told]]);
+    // Read, then failing: told again.
+    failing = false;
+    await read();
+    failing = true;
+    await read();
+    expect(sent).toHaveLength(2);
+    // After a run that failed outright, which read no account: told.
+    await query(
+      "INSERT INTO import_runs (job, started_by, status, error) VALUES ('read-gmail', 'nightly', 'failed', 'boom')",
+    );
+    await read();
+    expect(sent).toHaveLength(3);
+  });
+
   it("says an account Google refused was disconnected, and reads the rest", async () => {
+    const sent = notifications();
     await connectTestGmail("al@pauseai.uk");
     await connectTestGmail(JO, "8");
     vi.spyOn(console, "error").mockImplementation(() => {});
@@ -433,6 +472,8 @@ describeWithDatabase("reading Gmail", () => {
       { account: JO, replies: 0, autoReplies: 0, bounces: 0 },
     ]);
     expect(await query("SELECT email FROM staff_accounts WHERE gmail_token IS NOT NULL")).toEqual([{ email: JO }]);
+    // Its own email, that it was disconnected, and not the one for an account that can't be read too.
+    expect(sent.map((s) => s.Subject)).toEqual([staffCopy.notifications.gmailDisconnected.subject("al@pauseai.uk")]);
   });
 
   it("keeps each run in the import log, unchanged when it found nothing, and who started it", async () => {
