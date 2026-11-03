@@ -165,9 +165,20 @@ describeWithDatabase("connected Gmail accounts", () => {
     ]);
     await expect(gmailAccess("al@pauseai.uk")).rejects.toThrow("isn't connected");
     await expect(gmailAccess("nobody@pauseai.uk")).rejects.toThrow("isn't connected");
-    // Two reads at once, both refused: the inbox is told once.
+    // Two reads at once, both refused, Google answering neither until both have asked: the inbox is told once.
     await connectTestGmail("bo@pauseai.uk");
+    let asked = 0;
+    let bothAsked = () => {};
+    const both = new Promise<void>((done) => (bothAsked = done));
+    server.use(
+      http.post(TOKEN, async () => {
+        if (++asked === 2) bothAsked();
+        await both;
+        return HttpResponse.json({ error: "invalid_grant" }, { status: 400 });
+      }),
+    );
     await Promise.allSettled([gmailAccess("bo@pauseai.uk"), gmailAccess("bo@pauseai.uk")]);
+    expect(asked).toBe(2);
     expect(sent).toHaveLength(2);
   });
 
