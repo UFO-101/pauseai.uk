@@ -178,6 +178,28 @@ That records 0001 to 0011 as applied, then applies the rest.
    the migration and what it does to the schema. A unit test fails while
    `schema.sql` is out of date.
 
+### Collation
+
+How Postgres sorts and compares text is the database's collation, fixed
+when the database is made. Production's (Netlify's `netlifydb`) is the
+builtin `C.UTF-8`: by code point, so every capital before every lowercase
+letter, and accented letters after z (`apple` sorts after `Zack`, `Émile`
+last). The Postgres Docker image's default is `en_US.utf8`, dictionary
+order, and a server you install may have another. So every database the
+repo makes has production's, whatever its server's default:
+`scripts/fresh-database.mjs` creates them with it (`PRODUCTION_LOCALE`),
+the dev database from `npm run db:reset` included, and CI's Postgres is
+started with it too (`POSTGRES_INITDB_ARGS` in `.github/workflows/ci.yml`).
+A database made before this keeps its own until `npm run db:reset`.
+
+So a test that sorts text gets what production gets. Nothing in the queries
+names a collation yet, so a list sorted by name is in code-point order live,
+not dictionary order.
+
+To see a database's: `select datlocprovider, datcollate, datlocale from
+pg_database where datname = current_database();` gives `b`, `C.UTF-8`,
+`C.UTF-8` for production's.
+
 ### Looking inside
 
 ```bash

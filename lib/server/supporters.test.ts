@@ -325,12 +325,15 @@ describeWithDatabase("linkSupporters", () => {
     );
     await linkSupporters();
     expect(await query("SELECT events FROM supporters_summary")).toEqual([{ events: 3 }]);
-    expect(await query("SELECT title, at FROM supporter_activity WHERE kind = 'luma-hosted' ORDER BY title")).toEqual([
-      { title: "Host added later", at: new Date("2026-10-05T09:00:00Z") },
-      { title: "Hosted only", at: new Date("2026-09-01T10:00:00Z") },
-      // Made before the import copied when: dated when it was first seen.
-      { title: "evt-1", at: expect.any(Date) },
-    ]);
+    // Newest first: by date, not title, as how titles sort depends on the database's collation.
+    expect(await query("SELECT title, at FROM supporter_activity WHERE kind = 'luma-hosted' ORDER BY at DESC")).toEqual(
+      [
+        // Made before the import copied when: dated when it was first seen, today.
+        { title: "evt-1", at: expect.any(Date) },
+        { title: "Host added later", at: new Date("2026-10-05T09:00:00Z") },
+        { title: "Hosted only", at: new Date("2026-09-01T10:00:00Z") },
+      ],
+    );
   });
 });
 

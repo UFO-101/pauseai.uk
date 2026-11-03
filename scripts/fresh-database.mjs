@@ -113,6 +113,17 @@ export function databaseNames(prefix) {
 }
 
 /**
+ * How production's database sorts and compares text: Postgres's builtin
+ * C.UTF-8, by code point, capitals before lowercase and accented letters
+ * after z (docs/development.md, "Collation"). Every database made here has
+ * it, whatever the server's own default, so a sort in a test, the
+ * storyboard or dev comes out as it does live. From template0, as a
+ * database with a locale of its own must be.
+ */
+const PRODUCTION_LOCALE =
+  "TEMPLATE template0 ENCODING 'UTF8' LOCALE_PROVIDER builtin BUILTIN_LOCALE 'C.UTF-8' LOCALE 'C.UTF-8'";
+
+/**
  * `singleTransaction` wraps each file in a transaction, as Netlify may: the
  * migrations must work either way.
  */
@@ -133,7 +144,7 @@ export function resetDatabase(url, { singleTransaction = false, upTo } = {}) {
   const server = new URL(url);
   server.pathname = "/postgres";
   psql(server.toString(), "-c", `DROP DATABASE IF EXISTS "${name}" WITH (FORCE)`);
-  psql(server.toString(), "-c", `CREATE DATABASE "${name}"`);
+  psql(server.toString(), "-c", `CREATE DATABASE "${name}" ${PRODUCTION_LOCALE}`);
   for (const file of migrationFiles()) {
     if (upTo !== undefined && basename(file).slice(0, upTo.length) > upTo) break;
     psql(url, ...(singleTransaction ? ["-1"] : []), "-f", file);

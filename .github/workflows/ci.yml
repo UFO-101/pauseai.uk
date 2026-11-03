@@ -66,6 +66,8 @@ jobs:
         image: postgres:18
         env:
           POSTGRES_PASSWORD: postgres
+          # Production's collation, not the image's en_US (docs/development.md, "Collation").
+          POSTGRES_INITDB_ARGS: --locale-provider=builtin --builtin-locale=C.UTF-8 --locale=C.UTF-8 --encoding=UTF8
         ports:
           - 5432:5432
         options: >-
@@ -218,6 +220,8 @@ jobs:
         image: postgres:18
         env:
           POSTGRES_PASSWORD: postgres
+          # Production's collation, not the image's en_US (docs/development.md, "Collation").
+          POSTGRES_INITDB_ARGS: --locale-provider=builtin --builtin-locale=C.UTF-8 --locale=C.UTF-8 --encoding=UTF8
         ports:
           - 5432:5432
         options: >-
@@ -360,6 +364,8 @@ jobs:
         image: postgres:18
         env:
           POSTGRES_PASSWORD: postgres
+          # Production's collation, not the image's en_US (docs/development.md, "Collation").
+          POSTGRES_INITDB_ARGS: --locale-provider=builtin --builtin-locale=C.UTF-8 --locale=C.UTF-8 --encoding=UTF8
         ports:
           - 5432:5432
         options: >-

@@ -78,7 +78,7 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
   // timeout (tests/database.ts, which this file, testing what that one is
   // built on, doesn't import).
   it(
-    "copies a template, runs SQL in the copy, lists and drops them, and refuses bad names",
+    "makes a database with production's collation, copies it, runs SQL in the copy, lists and drops them, and refuses bad names",
     { timeout: 30_000 },
     () => {
       try {
@@ -86,6 +86,13 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
         runSql(template, "INSERT INTO audit_log (actor, action) VALUES ('a', 'kept')");
         copyDatabase(copy, template);
         expect(runSql(copy, "SELECT actor, action FROM audit_log")).toEqual(["a\tkept"]);
+        // Production's collation, whatever the server's own, in the copy too: by code point.
+        const locale =
+          "SELECT datlocprovider, datcollate, datlocale FROM pg_database WHERE datname = current_database()";
+        expect(runSql(copy, locale)).toEqual(["b\tC.UTF-8\tC.UTF-8"]);
+        expect(
+          runSql(copy, "SELECT string_agg(x, ' ' ORDER BY x) FROM (VALUES ('apple'), ('Zack'), ('Émile')) v(x)"),
+        ).toEqual(["Zack apple Émile"]);
         expect(runSql(copy, "SELECT 1 WHERE false")).toEqual([]);
         expect(databaseNames(`test_${process.pid}_`)).toEqual([copy, template]);
         expect(() => copyDatabase("bad name", template)).toThrow("Bad database name: bad name");
