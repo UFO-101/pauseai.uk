@@ -180,7 +180,7 @@ test("A letter bounces: staff are emailed, the address is blocked", async ({ pag
   await expect(page.getByText(staffCopy.letters.status.bounced).first()).toBeVisible();
   await frame(page, "the letter's page: bounced, in red, the letter as an email, and what happened to it");
   await page.getByRole("list", { name: staffCopy.letters.detail.historyTitle }).getByRole("button").first().click();
-  await expect(page.locator(":popover-open pre")).toContainText('"reason"');
+  await expect(page.locator(":popover-open")).toContainText('"reason"');
   await frame(page, "the bounce's {}: what Postmark said, as JSON, in a bubble by the button", { window: true });
   await page.keyboard.press("Escape");
   await page.getByRole("link", { name: staffCopy.nav.letters }).first().click();

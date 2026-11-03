@@ -224,7 +224,7 @@ test("Log in, set an MP's status, see it on /campaigns, log out", async ({ page,
   await expect(page.getByRole("cell", { name: "set status" }).first()).toBeVisible();
   await frame(page, "the audit log");
   await page.getByRole("button", { name: staffCopy.changes.json }).first().click();
-  await expect(page.locator(":popover-open pre")).toBeVisible();
+  await expect(page.locator(":popover-open")).toBeVisible();
   await frame(page, "an entry's {}: what it logged, as JSON, in a bubble by the button", { window: true });
   await page.keyboard.press("Escape");
 
