@@ -59,6 +59,7 @@ export function stubLettersInboxEnv(): void {
   );
   vi.stubEnv("SITE_ORIGIN", "https://pauseai.uk");
   vi.stubEnv("POLICY_INBOX", "policy@example.org");
+  vi.stubEnv("NOTIFICATION_INBOX", "notifications@example.org");
   // Staff alerts, and unblocking, which asks Postmark to send to an address again.
   vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token");
 }

@@ -244,7 +244,7 @@ export const copy = {
   notices: {
     // The letter, or a message they sent through their MP's proxy, bounced.
     bounced: (mpName: string) =>
-      `Your message hasn't reached ${mpName}. Their office's email address isn't working. We're looking into it, and will send it again once it work.`,
+      `Your message hasn't reached ${mpName}. Their office's email address isn't working. We're looking into it, and will send it again once it works.`,
     // It went again once the address worked.
     resent: (mpName: string) => `Your message has now been sent to ${mpName}.`,
   },

@@ -32,7 +32,7 @@ import {
   sentIds,
   testProxy,
 } from "./letters-inbox-steps";
-import { bouncy, BOUNCY_ADDRESS, logIn, POLICY_INBOX, sentLetterId } from "./staff-steps";
+import { bouncy, BOUNCY_ADDRESS, logIn, NOTIFICATION_INBOX, POLICY_INBOX, sentLetterId } from "./staff-steps";
 
 // Letters to MPs through the letters inbox, and every email both ways: the
 // letter from the supporter's proxy, her copy, the MP's office's replies
@@ -227,7 +227,8 @@ test("Automatic replies", async ({ page, request, flowDatabase }) => {
   const line = await readInbox(request);
   expect(line).toMatchObject({ relayed: 3, notUnderstood: [expect.objectContaining({ reason: "over_cap" })] });
   const alert = newestEmail(
-    (email) => email.To === POLICY_INBOX && email.Subject === staffCopy.lettersInbox.alert.subject(1, LETTERS_INBOX),
+    (email) =>
+      email.To === NOTIFICATION_INBOX && email.Subject === staffCopy.lettersInbox.alert.subject(1, LETTERS_INBOX),
   )!;
   expect(alert.TextBody).toContain(staffCopy.lettersInbox.reasons.over_cap);
   await emailFrame(page, alert, "The email staff get");
@@ -260,7 +261,8 @@ test("Emails that aren't relayed", async ({ page, request, flowDatabase }) => {
   expect((line.notUnderstood as { reason: string }[]).map((m) => m.reason)).toEqual(["stranger", "not_verified"]);
   expect(sentIds(flowDatabase, letterIdOf(flowDatabase, sender), "relay")).toEqual([]);
   const alert = newestEmail(
-    (email) => email.To === POLICY_INBOX && email.Subject === staffCopy.lettersInbox.alert.subject(2, LETTERS_INBOX),
+    (email) =>
+      email.To === NOTIFICATION_INBOX && email.Subject === staffCopy.lettersInbox.alert.subject(2, LETTERS_INBOX),
   )!;
   await emailFrame(page, alert, "The email staff get");
   story("On the Gmail import's page, that run failed, and lists the two emails.");
@@ -281,7 +283,7 @@ test("The letter bounces", async ({ page, request, flowDatabase }) => {
   deliver(flowDatabase, bounceOf(sentIds(flowDatabase, id, "letter")[0], BOUNCY_ADDRESS));
   expect(await readInbox(request)).toMatchObject({ bounces: 1, notUnderstood: [] });
   const alert = newestEmail(
-    (email) => email.To === POLICY_INBOX && email.Subject === staffCopy.alert.subject(bouncy.name),
+    (email) => email.To === NOTIFICATION_INBOX && email.Subject === staffCopy.alert.subject(bouncy.name),
   )!;
   await emailFrame(page, alert, "The email staff get");
   story("Jane is told, in the thread of her copy, that her letter hasn't reached her MP.");
@@ -372,6 +374,14 @@ test("The daily limit", async ({ page, request, flowDatabase }) => {
   let entries = await openLetter(page, sams);
   await expect(entries.first()).toContainText(history.reasons.daily_limit);
   await frame(page, "Sam's letter, waiting");
+  story(
+    "Three hours on, Sam's letter is still waiting, so the notification inbox gets an email: how many letters are waiting, and why.",
+  );
+  runSql(flowDatabase, `UPDATE letters SET created_at = now() - interval '3 hours 10 minutes' WHERE id = ${sams}`);
+  await runQueue(request);
+  const waiting = staffCopy.notifications.lettersWaiting;
+  const notice = newestEmail((email) => email.To === NOTIFICATION_INBOX && email.Subject === waiting.subject(1, 3))!;
+  await emailFrame(page, notice, "The email to the notification inbox");
   story(
     "The next day, the hourly job sends what's waiting: the MP's second reply to Jane first, then Sam's letter and his copy.",
   );

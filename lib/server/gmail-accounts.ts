@@ -1,7 +1,10 @@
 import "server-only";
+import { staffCopy } from "@/lib/content/staff-interface";
 import { GMAIL_DAILY_LIMIT } from "@/lib/gmail-connect";
 import { logChange } from "./audit";
 import { query } from "./db";
+import { lettersInbox } from "./letters-inbox";
+import { notifyStaff, staffLink } from "./notifications";
 import { decryptToken, encryptToken } from "./gmail-tokens";
 import {
   exchangeGmailCode,
@@ -134,9 +137,26 @@ export async function gmailAccess(account: string): Promise<string> {
     accessTokens.set(key, { token, until: Date.now() + (expiresIn - 60) * 1000 });
     return token;
   } catch (error) {
-    if (error instanceof GmailError && error.revoked) await forget(email, "google", "access revoked");
+    if (error instanceof GmailError && error.revoked) await forgetRevoked(email);
     throw error;
   }
+}
+
+/** Where an account connects its Gmail: its own page. */
+const ACCOUNT_PATH = "/staff/me";
+
+/**
+ * Forgets `email`'s Gmail, as Google no longer lets us use it, and, the
+ * first time, emails the notification inbox: someone has to log in as it
+ * and connect it again.
+ */
+async function forgetRevoked(email: string): Promise<void> {
+  if ((await forget(email, "google", "access revoked")) === undefined) return;
+  const words = staffCopy.notifications.gmailDisconnected;
+  await notifyStaff(
+    words.subject(email),
+    words.body(email, email === lettersInbox(), staffLink(ACCOUNT_PATH, undefined)),
+  );
 }
 
 /** The connected accounts and where reading each last got to. */

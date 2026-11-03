@@ -22,7 +22,7 @@ type Sent = { To: string; Subject: string; TextBody: string };
 
 beforeEach(() => {
   vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token");
-  vi.stubEnv("POLICY_INBOX", "replies@pauseai.uk");
+  vi.stubEnv("NOTIFICATION_INBOX", "notifications@pauseai.uk");
   vi.stubEnv("SITE_ORIGIN", "https://pauseai.uk");
 });
 afterEach(() => vi.unstubAllEnvs());
@@ -87,7 +87,7 @@ describeWithDatabase("handleDeliveryProblem", () => {
     expect(await query("SELECT address FROM email_blocks")).toEqual([{ address: "test-mp@parliament.example" }]);
     expect(sent).toEqual([
       expect.objectContaining({
-        To: "replies@pauseai.uk",
+        To: "notifications@pauseai.uk",
         Subject: staffCopy.alert.subject("Testy McTestface MP"),
         TextBody: staffCopy.alert.body(
           "Testy McTestface MP",
@@ -131,8 +131,8 @@ describeWithDatabase("handleDeliveryProblem", () => {
     expect(sent).toEqual([]);
   });
 
-  it("tells nobody when there's no shared inbox", async () => {
-    vi.stubEnv("POLICY_INBOX", "");
+  it("tells nobody when there's no notification inbox", async () => {
+    vi.stubEnv("NOTIFICATION_INBOX", "");
     await sentEmail();
     const sent = postmark();
     await handleDeliveryProblem(BOUNCE, REQUEST);

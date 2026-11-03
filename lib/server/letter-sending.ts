@@ -8,6 +8,8 @@ import { query } from "./db";
 import { isBlocked, send, sentBy, type Backend, type Purpose } from "./email";
 import { gmailAccount, sentToday } from "./gmail-accounts";
 import { LETTERS_DAILY_LIMIT, lettersInbox } from "./letters-inbox";
+import { staffCopy } from "@/lib/content/staff-interface";
+import { notifyStaff, staffLink } from "./notifications";
 import { mpName, nameLine, proxyLine } from "./proxies";
 import { resendAfterFix, sendRelay, uncertainRelays } from "./relays";
 
@@ -273,6 +275,38 @@ async function drain(ids: number[], until: number, room: number, send: (id: numb
   return sent;
 }
 
+/** How long a letter to an MP waits to go before the notification inbox is told. */
+export const LATE_HOURS = 3;
+
+/** The letters waiting to go, oldest first, but those whose MP's address is blocked, which wait for staff. */
+const SENDABLE = `SELECT l.id::int AS id FROM letters l JOIN letters_from_supporters s USING (id) JOIN notable_people n ON n.id = l.notable_person_id
+     WHERE l.status = 'queued' AND n.email IS NOT NULL
+       AND NOT EXISTS (SELECT 1 FROM email_blocks b WHERE b.address = lower(n.email))`;
+
+/**
+ * Emails the notification inbox when letters have waited LATE_HOURS to go:
+ * how many, and why. Once: the email is logged against the oldest, and
+ * none goes while a letter it was logged against is still waiting.
+ */
+async function tellOfLateLetters(request: Request | undefined): Promise<void> {
+  const late = await query<{ id: number }>(
+    `${SENDABLE} AND l.created_at < now() - interval '${LATE_HOURS} hours' ORDER BY l.created_at, l.id`,
+  );
+  if (!late.length) return;
+  const [told] = await query(
+    `SELECT 1 FROM email_sends e JOIN letters l ON l.id = e.letter_id
+     WHERE e.purpose = 'staff-alert' AND e.outcome = 'sent' AND l.status = 'queued'`,
+  );
+  if (told) return;
+  const words = staffCopy.notifications.lettersWaiting;
+  const why = staffCopy.letters.detail.reasons[(await cannotSend(2)) ?? "failed"];
+  await notifyStaff(
+    words.subject(late.length, LATE_HOURS),
+    words.body(late.length, LATE_HOURS, why, staffLink("/staff/letters?status=queued", request)),
+    late[0].id,
+  );
+}
+
 /** What a run through the queue sent, and what's left in it. */
 export type LetterQueueRun = { sent: number; left: number };
 
@@ -282,20 +316,16 @@ export type LetterQueueRun = { sent: number; left: number };
  * relays waiting to be tried again, so an MP's reply is never held up
  * behind new letters; then letters, oldest first; then copies. A letter
  * whose MP's address is still blocked is passed over. Stops when the
- * letters inbox can't send.
+ * letters inbox can't send. Then tells the notification inbox if letters
+ * have waited too long (tellOfLateLetters), linking from `request`'s site.
  */
-export async function sendLetterQueue(until: number): Promise<LetterQueueRun> {
+export async function sendLetterQueue(until: number, request?: Request): Promise<LetterQueueRun> {
   await uncertainRelays();
   await resendToChangedAddresses();
   const ids = async (sql: string) => (await query<{ id: number }>(sql)).map((row) => row.id);
   const relays = await ids("SELECT id::int AS id FROM letter_relays WHERE status = 'queued' ORDER BY created_at, id");
   let sent = await drain(relays, until, 1, async (id) => (await sendRelay(id)).sent);
-  const letters = await ids(
-    `SELECT l.id::int AS id FROM letters l JOIN letters_from_supporters s USING (id) JOIN notable_people n ON n.id = l.notable_person_id
-     WHERE l.status = 'queued' AND n.email IS NOT NULL
-       AND NOT EXISTS (SELECT 1 FROM email_blocks b WHERE b.address = lower(n.email))
-     ORDER BY l.created_at, l.id`,
-  );
+  const letters = await ids(`${SENDABLE} ORDER BY l.created_at, l.id`);
   sent += await drain(letters, until, 2, async (id) => (await sendLetter(id)).sent);
   const copies = await ids(
     "SELECT s.id::int AS id FROM letters_from_supporters s JOIN letters l USING (id) WHERE s.copy_state = 'queued' AND l.status = 'sent' ORDER BY s.id",
@@ -306,5 +336,6 @@ export async function sendLetterQueue(until: number): Promise<LetterQueueRun> {
        + (SELECT count(*) FROM letters WHERE status = 'queued')
        + (SELECT count(*) FROM letters_from_supporters s JOIN letters l USING (id) WHERE s.copy_state = 'queued' AND l.status = 'sent') AS left`,
   );
+  await tellOfLateLetters(request);
   return { sent, left: Number(left) };
 }

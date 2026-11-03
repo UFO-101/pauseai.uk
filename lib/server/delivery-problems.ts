@@ -1,10 +1,9 @@
 import "server-only";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { siteUrl } from "@/lib/site-url";
 import { query } from "./db";
-import { recordProblem, send, type DeliveryProblem, type Purpose } from "./email";
+import { recordProblem, type DeliveryProblem, type Purpose } from "./email";
 import { letterEvent, noticeToSender } from "./letter-sending";
-import { notifyDomain } from "./outside-services/postmark";
+import { notifyStaff, staffLink } from "./notifications";
 import { relayBounced } from "./relays";
 
 // What happens when an email bounces or is complained about: the address is
@@ -57,24 +56,16 @@ const letterProblem: Hook = async ({ letterId }, problem, request) => {
   await alertStaff(mpName, problem, request);
 };
 
-/** Tells the policy team an MP's address bounced, as nobody can write to them until someone fixes it. */
+/** Tells the notification inbox an MP's address bounced, as nobody can write to them until someone fixes it. */
 async function alertStaff(mpName: string, problem: DeliveryProblem, request: Request | undefined) {
-  const inbox = process.env.POLICY_INBOX;
-  if (!inbox) return;
-  await send(
-    {
-      From: `PauseAI UK <noreply@${notifyDomain()}>`,
-      To: inbox,
-      Subject: staffCopy.alert.subject(mpName),
-      TextBody: staffCopy.alert.body(
-        mpName,
-        problem.address,
-        problem.reason,
-        siteUrl("/staff/politicians/blocked-emails", request).href,
-      ),
-      Tag: "staff-alert",
-    },
-    "staff-alert",
+  await notifyStaff(
+    staffCopy.alert.subject(mpName),
+    staffCopy.alert.body(
+      mpName,
+      problem.address,
+      problem.reason,
+      staffLink("/staff/politicians/blocked-emails", request),
+    ),
   );
 }
 
@@ -133,7 +124,7 @@ const HOOKS: Record<Purpose, Hook> = {
 /**
  * Records a bounce or complaint, then hands it to the purpose of the email
  * it was about, if we sent it. `request` is the call that brought it,
- * Postmark's webhook or the job that reads Gmail, for siteUrl(); none when
+ * Postmark's webhook or the job that reads Gmail, for staffLink(); none when
  * staff read Gmail from its page.
  */
 export async function handleDeliveryProblem(problem: DeliveryProblem, request?: Request): Promise<void> {

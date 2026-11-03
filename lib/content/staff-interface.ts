@@ -191,7 +191,7 @@ export const staffCopy = {
         seeRun: "See failed run",
         // The newest read of Gmail found mail in the letters inbox it couldn't handle: when, and where it waits.
         lettersInboxDetail: (at: string) =>
-          `⁂ Open each in Gmail and deal with it by hand: forward it, answer it, or leave it. Found ${at}.`,
+          `Open each in Gmail and deal with it by hand: forward it, answer it, or leave it. Found ${at}.`,
         // Its button, to the run's page, which lists each with why it wasn't relayed and a link to it in Gmail.
         lettersInboxButton: "⁂ See emails",
       },
@@ -1427,6 +1427,36 @@ export const staffCopy = {
         `${count} MP ${count === 1 ? "email" : "emails"} in ${inbox} not relayed`,
       body: (inbox: string, lines: string[], runUrl: string) =>
         `Open each in Gmail and deal with it by hand: forward it, answer it, or leave it.\n\n${lines.join("\n")}\n\nThe run: ${runUrl}`,
+    },
+  },
+  // The emails to the notification inbox (lib/server/notifications.ts) that
+  // aren't above (alert, lettersInbox.alert): each a subject, and a body with
+  // a link to where a person can deal with it.
+  notifications: {
+    // An import's run failed, after one that didn't: its title, its error, its page.
+    importFailed: {
+      subject: (job: string) => `⁂ The import '${job}' failed`,
+      body: (job: string, error: string, link: string) =>
+        `⁂ The import '${job}' failed with the error: "${error}". It will try again at its next run, and you won't be emailed again until it has worked.\n\nIts runs: ${link}`,
+    },
+    // The MP import is held, as it would change too much: how many MPs, and its page.
+    syncHeld: {
+      subject: (changes: number) => `⁂ MP import would change ${changes} MPs`,
+      body: (changes: number, link: string) =>
+        `⁂ The MP import would change ${changes} MPs, so it's held until someone checks it. Review it, then apply or discard it, and fix any problems in Airtable:\n\n${link}`,
+    },
+    // Google stopped our access to a connected Gmail: whose, what stops, and where to connect it again.
+    gmailDisconnected: {
+      subject: (account: string) => `⁂ ${account}'s Gmail is disconnected`,
+      body: (account: string, lettersInbox: boolean, link: string) =>
+        `⁂ Google stopped our access to ${account}'s Gmail. ${lettersInbox ? "Letters to MPs, and the replies to them, wait until it's connected again." : "Its replies aren't read, and its mailings wait, until it's connected again."} Log in as ${account} and connect it on its account page:\n\n${link}`,
+    },
+    // Letters to MPs have waited LATE_HOURS to go: how many, why, and the queued letters.
+    lettersWaiting: {
+      subject: (count: number, hours: number) =>
+        `⁂ ${count} ${count === 1 ? "letter" : "letters"} to MPs waiting over ${hours} hours`,
+      body: (count: number, hours: number, why: string, link: string) =>
+        `⁂ ${count === 1 ? "A letter" : `${count} letters`} to MPs ${count === 1 ? "has" : "have"} waited over ${hours} hours to go. Why: ${why}.\n\nThe letters waiting: ${link}`,
     },
   },
   // The hourly read of the connected Gmail accounts for replies to our

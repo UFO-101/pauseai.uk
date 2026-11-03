@@ -25,6 +25,7 @@ import parliamentMembers from "./parliament-members.json";
 import controlaiLetter from "./controlai-letter.json";
 import stripeCheckoutSessions from "./stripe-checkout-sessions.json";
 import stripePaymentIntents from "./stripe-payment-intents.json";
+import { failingResponse } from "./failing-services";
 import { historyIdOf, keepSent, lettersInboxResponse, lettersMailbox } from "./letters-inbox";
 
 /** A UUID-shaped id that depends only on `text`. */
@@ -120,10 +121,13 @@ function pageOf<T>(entries: T[], cursor: string | null, size: number) {
 /**
  * The canned response to a request, if there is one. `scope` is the
  * storyboard flow's database, for the services that keep what they're
- * sent (the letters inbox, letters-inbox.ts).
+ * sent (the letters inbox, letters-inbox.ts), and those a flow has made
+ * fail (failing-services.ts).
  */
 export function fixtureResponse(url: string, init?: RequestInit, scope?: string): Response | undefined {
   const { hostname, pathname, searchParams } = new URL(url);
+  const failing = failingResponse(hostname, scope);
+  if (failing) return failing;
   if (hostname === "public-api.luma.com" && pathname === "/v1/calendars/events/list") {
     // lib/server/outside-services/luma-calendar.ts asks for past events with
     // "before", upcoming with "after"; the import asks for every event, and

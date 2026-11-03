@@ -9,7 +9,7 @@ import {
   bouncy,
   BOUNCY_ADDRESS,
   logIn,
-  POLICY_INBOX,
+  NOTIFICATION_INBOX,
   postBounce,
   postReply,
   sentLetterId,
@@ -194,7 +194,7 @@ test("A letter bounces", async ({ page, request, flowDatabase }) => {
   await bounceLetter(request, flowDatabase, letterId, BOUNCY_ADDRESS);
 
   const alert = newestEmail(
-    (email) => email.To === POLICY_INBOX && email.Subject === staffCopy.alert.subject(bouncy.name),
+    (email) => email.To === NOTIFICATION_INBOX && email.Subject === staffCopy.alert.subject(bouncy.name),
   );
   expect(alert?.TextBody).toContain(`${BASE}/staff/politicians/blocked-emails`);
   await emailFrame(page, alert!, "The email staff get");

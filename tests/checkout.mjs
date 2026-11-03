@@ -19,6 +19,8 @@ const CHECKOUT = createHash("sha256").update(process.cwd()).digest("hex").slice(
 export const OUTBOX_DIR = process.env.OUTBOX_DIR ?? join(tmpdir(), `pauseai-storyboard-outbox-${CHECKOUT}`);
 /** Where a flow writes mail to the letters inbox, for the build's fake Gmail to pick up (tests/fixtures/letters-inbox.ts); as tests/fixture-env.mjs tells the build. */
 export const LETTERS_INBOX_DIR = join(OUTBOX_DIR, "letters-inbox");
+/** Where a flow says which outside services fail for it (tests/fixtures/failing-services.ts). */
+export const FAILING_DIR = join(OUTBOX_DIR, "failing");
 /** Where main's fixture build (scripts/serve-main.mjs) writes its emails. */
 export const MAIN_OUTBOX_DIR = join(tmpdir(), `pauseai-storyboard-main-outbox-${CHECKOUT}`);
 /** Main's checkout, kept between reviews (scripts/serve-main.mjs). */

@@ -2,14 +2,20 @@ import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import type { ImportJob } from "@/lib/import-runs";
 import { staffDate } from "@/lib/staff-time";
 import { runSql } from "@/scripts/fresh-database.mjs";
-import { FIXTURE_NOW, LETTERS_INBOX } from "../fixture-env.mjs";
-import { logInAsStaff, syncPoliticians } from "../steps";
-import { BASE, expect, frame, story, test } from "./fixtures";
+import { FIXTURE_NOW, LETTERS_INBOX, NOTIFICATION_INBOX } from "../fixture-env.mjs";
+import { FAILING_DIR } from "../checkout.mjs";
+import { failService } from "../fixtures/failing-services";
+import { logInAsStaff, newestEmail, syncPoliticians } from "../steps";
+import { BASE, emailFrame, expect, frame, story, test } from "./fixtures";
 import { staffEmail, logIn } from "./staff-steps";
 
 // The imports staff run and watch: Luma's, the members' and Gmail's, each import's
-// own page of its runs, and a politician import held for a person to decide.
-// Each flow on its own database.
+// own page of its runs, an import failing, a Gmail Google disconnects, and a
+// politician import held for a person to decide. Each flow on its own database.
+
+/** The newest email to the notification inbox with `subject`. */
+const notified = (subject: string) =>
+  newestEmail((email) => email.To === NOTIFICATION_INBOX && email.Subject === subject);
 
 test("The Luma import", async ({ page, flowDatabase }) => {
   story(
@@ -108,6 +114,37 @@ test("Reading Gmail", async ({ page, flowDatabase }) => {
   await frame(page, "Gmail, read");
 });
 
+test("Google disconnects a Gmail", async ({ page, request, flowDatabase }) => {
+  story(
+    "A staff member has connected their Gmail. Then Google stops letting us use it, as it does when someone removes our access or their password changes.",
+  );
+  await logIn(page, flowDatabase);
+  await page.goto(`${BASE}/staff/me`);
+  await page.getByRole("link", { name: staffCopy.gmail.connect }).click();
+  await expect(page.getByText(staffCopy.gmail.outcomes.connected)).toBeVisible();
+  failService(flowDatabase, "oauth2.googleapis.com", FAILING_DIR);
+
+  story(
+    "The next hourly read of Gmail finds out. The site disconnects the account, and the notification inbox gets an email saying who must connect it again.",
+  );
+  const res = await request.post(`${BASE}/api/cron/read-gmail`, {
+    headers: { Authorization: "Bearer fixture-cron-secret" },
+  });
+  expect(res.ok()).toBe(true);
+  const words = staffCopy.notifications.gmailDisconnected;
+  await emailFrame(page, notified(words.subject(staffEmail()))!, "The email to the notification inbox");
+
+  story("The Gmail import's page shows that run failed, and why.");
+  await page.goto(`${BASE}/staff/import-data/gmail`);
+  await expect(page.getByText(staffCopy.gmailReading.disconnected)).toBeVisible();
+  await frame(page, "The Gmail import's page");
+
+  story("Their account page says their Gmail isn't connected, with the button to connect it again.");
+  await page.goto(`${BASE}/staff/me`);
+  await expect(page.getByText(staffCopy.gmail.notConnected)).toBeVisible();
+  await frame(page, "Their account page");
+});
+
 test("The letters inbox connects", async ({ page }) => {
   story(
     "Staff log in as the letters inbox and connect its Gmail. Back from Google, the page says supporters' letters to MPs go from it now, not mailings, and replies are relayed through it.",
@@ -151,6 +188,27 @@ test("An import's runs", async ({ page, request, flowDatabase }) => {
   await frame(page, "The import page");
 });
 
+test("An import fails", async ({ page, request, flowDatabase }) => {
+  story(
+    "Luma is down. The hourly Luma import fails, and the notification inbox gets an email with the error and a link to the import's runs.",
+  );
+  failService(flowDatabase, "public-api.luma.com", FAILING_DIR);
+  const luma = () =>
+    request.post(`${BASE}/api/cron/import-luma`, { headers: { Authorization: "Bearer fixture-cron-secret" } });
+  expect((await luma()).ok()).toBe(false);
+  const words = staffCopy.notifications.importFailed;
+  const email = notified(words.subject(jobTitles["import-luma"]))!;
+  await emailFrame(page, email, "The email to the notification inbox");
+
+  story("An hour later it fails again. No second email: there's one until the import has worked.");
+  expect((await luma()).ok()).toBe(false);
+  expect(notified(words.subject(jobTitles["import-luma"]))!.MessageId).toBe(email.MessageId);
+  await logIn(page, flowDatabase);
+  await page.goto(`${BASE}/staff/import-data/luma`);
+  await expect(page.getByText(staffCopy.runs.status.failed, { exact: true })).toHaveCount(2);
+  await frame(page, "The Luma import's runs");
+});
+
 test("A held politician import", async ({ page, request, flowDatabase }) => {
   story(
     "21 MPs are no longer in Airtable. An import that would mark that many gone changes too much to go ahead alone, so it's held for a person to check.",
@@ -174,9 +232,18 @@ test("A held politician import", async ({ page, request, flowDatabase }) => {
       )[0],
     );
 
+  // The nightly import, which holds it.
+  await syncPoliticians(request, BASE);
+  story("The notification inbox gets an email about it, once.");
+  await emailFrame(
+    page,
+    notified(staffCopy.notifications.syncHeld.subject(21))!,
+    "The email to the notification inbox",
+  );
+
+  story("The import's page shows the run held, with what it would change.");
   await logIn(page, flowDatabase, ["admin"]);
   await page.goto(`${BASE}/staff/import-data/politicians`);
-  await page.getByRole("button", { name: staffCopy.syncs.syncNow }).click();
   await expect(page.getByRole("button", { name: staffCopy.syncs.apply })).toBeVisible();
   await expect(page.getByText(`${staffCopy.syncs.removed} 21`).first()).toBeVisible();
   await expect(page.getByText("Gone 1: Gone McTestface 1 MP")).toBeAttached();

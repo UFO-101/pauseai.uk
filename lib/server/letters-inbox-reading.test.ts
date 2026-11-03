@@ -444,7 +444,7 @@ describeWithDatabase("reading the letters inbox", () => {
     await read();
     expect(emails).toHaveLength(1);
     expect(emails[0]).toMatchObject({
-      To: "policy@example.org",
+      To: "notifications@example.org",
       Subject: staffCopy.lettersInbox.alert.subject(2, LETTERS_INBOX),
       Tag: "staff-alert",
     });

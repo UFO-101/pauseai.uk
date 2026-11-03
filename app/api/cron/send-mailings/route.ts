@@ -20,7 +20,7 @@ const SENDING_MS = 8_000;
 export async function POST(request: Request) {
   if (!isCronRequest(request)) return NextResponse.json({ error: "Not allowed" }, { status: 401 });
   const until = Date.now() + SENDING_MS;
-  const queue = await sendLetterQueue(until);
+  const queue = await sendLetterQueue(until, request);
   const started = await startDueMailings();
   return NextResponse.json({ started, ...(await sendDueLetters({ until })), queue });
 }

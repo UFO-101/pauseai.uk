@@ -91,8 +91,11 @@ export const loadingLine = (page: Page) =>
     return line.content !== "none" && line.opacity === "1";
   });
 
-/** The policy inbox in a fixture build (tests/fixture-env.mjs), where staff alerts and forwarded replies go. */
+/** The policy inbox in a fixture build (tests/fixture-env.mjs), where replies to letters sent before the letters inbox go. */
 export const POLICY_INBOX = "policy@example.org";
+
+/** Where a fixture build emails when something needs a person (tests/fixture-env.mjs). */
+export { NOTIFICATION_INBOX } from "../fixture-env.mjs";
 
 /** Bouncy McTestface MP, whose address doesn't exist. */
 export const bouncy = TEST_MPS.find((mp) => mp.postcode === "ZZ99ZH")!;

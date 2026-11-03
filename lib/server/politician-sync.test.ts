@@ -5,6 +5,8 @@ import fixture from "@/tests/fixtures/airtable-politicians.json";
 import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
 import { type PoliticianSync, NIGHTLY } from "@/lib/import-runs";
+import { staffCopy } from "@/lib/content/staff-interface";
+import { notifications } from "@/tests/notifications";
 import { listRuns } from "./import-runs";
 import { decideHeldSync, mpsInOffice, syncPoliticians } from "./politician-sync";
 import { setStatus } from "./politicians";
@@ -255,11 +257,18 @@ describeWithDatabase("syncPoliticians", () => {
   });
 
   it("holds a sync that changes too much, for staff to apply, with its statuses, or discard", async () => {
+    const sent = notifications();
     airtableHas(many(3));
     await syncPoliticians(NIGHTLY);
     airtableHas([...many(3), ...many(21, 4), ...fixture.records]);
     const held = await syncPoliticians(NIGHTLY);
     expect(held.status).toBe("held");
+    // The notification inbox is told, once: the next night's, held again, says nothing.
+    expect(await syncPoliticians(NIGHTLY)).toMatchObject({ status: "held" });
+    const words = staffCopy.notifications.syncHeld;
+    expect(sent.map((email) => [email.Subject, email.TextBody])).toEqual([
+      [words.subject(28), words.body(28, "https://pauseai.uk/staff/import-data/politicians")],
+    ]);
     expect(held.changes.added).toHaveLength(28);
     // Nothing applied, but the statuses of those already here are set.
     expect((await people()).filter((p) => !p.isTest)).toHaveLength(3);

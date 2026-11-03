@@ -3,13 +3,11 @@ import { gzipSync } from "node:zlib";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { importPath, type GmailRead, type GmailReadResult } from "@/lib/import-runs";
 import { gmailMessageLink } from "@/lib/letter-links";
-import { siteUrl } from "@/lib/site-url";
 import { query } from "./db";
 import { handleDeliveryProblem } from "./delivery-problems";
-import { send } from "./email";
 import { lettersInbox } from "./letters-inbox";
 import { readLettersInbox } from "./letters-inbox-reading";
-import { notifyDomain } from "./outside-services/postmark";
+import { notifyStaff, staffLink } from "./notifications";
 import { gmailAccess, gmailReadingState, saveGmailName, saveHistoryId } from "./gmail-accounts";
 import { keepingFailure, recordRun } from "./import-runs";
 import {
@@ -321,12 +319,11 @@ async function readAccount(account: string, historyId: string, request: Request 
 }
 
 /**
- * Emails the policy inbox once, after a run that found mail in the letters
+ * Emails the notification inbox once, after a run that found mail in the letters
  * inbox it couldn't account for: each message, with a link to it in Gmail,
  * and a link to the runs.
  */
 async function alertNotUnderstood(accounts: GmailRead[], request: Request | undefined): Promise<void> {
-  const inbox = process.env.POLICY_INBOX;
   const words = staffCopy.lettersInbox;
   const lines = accounts.flatMap((a) =>
     (a.notUnderstood ?? []).map(
@@ -334,16 +331,10 @@ async function alertNotUnderstood(accounts: GmailRead[], request: Request | unde
         `- ${m.from}, "${m.subject}": ${words.reasons[m.reason]}. ${gmailMessageLink(a.account, m.gmailMessageId)}`,
     ),
   );
-  if (!inbox || !lines.length) return;
-  await send(
-    {
-      From: `PauseAI UK <noreply@${notifyDomain()}>`,
-      To: inbox,
-      Subject: words.alert.subject(lines.length, lettersInbox()!),
-      TextBody: words.alert.body(lettersInbox()!, lines, siteUrl(importPath(JOB), request).href),
-      Tag: "staff-alert",
-    },
-    "staff-alert",
+  if (!lines.length) return;
+  await notifyStaff(
+    words.alert.subject(lines.length, lettersInbox()!),
+    words.alert.body(lettersInbox()!, lines, staffLink(importPath(JOB), request)),
   );
 }
 

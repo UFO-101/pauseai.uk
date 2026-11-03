@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
+import { staffCopy } from "@/lib/content/staff-interface";
+import { notifications } from "@/tests/notifications";
 import { connectTestGmail, describeWithDatabase, TEST_GMAIL_TOKEN_KEY, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
 import {
@@ -148,16 +150,33 @@ describeWithDatabase("connected Gmail accounts", () => {
     expect(await gmailAccess(JO)).toBe("a2");
   });
 
-  it("disconnects an account whose access Google has revoked, and refuses one not connected", async () => {
+  it("disconnects an account whose access Google has revoked, telling the notification inbox once, and refuses one not connected", async () => {
+    const sent = notifications();
     await connectTestGmail("al@pauseai.uk");
     server.use(http.post(TOKEN, () => HttpResponse.json({ error: "invalid_grant" }, { status: 400 })));
     await expect(gmailAccess("al@pauseai.uk")).rejects.toMatchObject({ revoked: true });
+    const words = staffCopy.notifications.gmailDisconnected;
+    expect(sent.map((email) => [email.Subject, email.TextBody])).toEqual([
+      [words.subject("al@pauseai.uk"), words.body("al@pauseai.uk", false, "https://pauseai.uk/staff/me")],
+    ]);
     expect(await gmailAccounts()).toEqual([]);
     expect(await audit()).toEqual([
       { actor: "google", action: "disconnect gmail", details: { email: "al@pauseai.uk", why: "access revoked" } },
     ]);
     await expect(gmailAccess("al@pauseai.uk")).rejects.toThrow("isn't connected");
     await expect(gmailAccess("nobody@pauseai.uk")).rejects.toThrow("isn't connected");
+    expect(sent).toHaveLength(1);
+  });
+
+  it("tells the notification inbox when it's the letters inbox that's disconnected", async () => {
+    const sent = notifications();
+    vi.stubEnv("LETTERS_INBOX", "letters@pauseai.uk");
+    await connectTestGmail("letters@pauseai.uk");
+    server.use(http.post(TOKEN, () => HttpResponse.json({ error: "invalid_grant" }, { status: 400 })));
+    await expect(gmailAccess("letters@pauseai.uk")).rejects.toMatchObject({ revoked: true });
+    expect(sent[0].TextBody).toBe(
+      staffCopy.notifications.gmailDisconnected.body("letters@pauseai.uk", true, "https://pauseai.uk/staff/me"),
+    );
   });
 
   it("passes on any other failure to get a token, and stays connected", async () => {

@@ -204,10 +204,10 @@ written to and kept.
   but those not understood are archived. Mail it can't account for (an
   unknown proxy, a stranger, a forgery, one over the cap, a bounce of
   nothing we sent) fails the run, which lists each with a link to it in
-  Gmail, and emails `POLICY_INBOX` once; spam to no letter is only
+  Gmail, and emails the notification inbox once ("Email", below); spam to no letter is only
   counted.
 - **Bounces**: the letter, or a relay to the MP, bouncing hard blocks the
-  MP's address, alerts staff, and tells the supporter, in our own words,
+  MP's address, emails the notification inbox, and tells the supporter, in our own words,
   in their copy's thread; once staff unblock the address, or the MP's
   address changes, what bounced goes again and the supporter is told
   (`resendAfterFix`). The supporter's copy, or a relay to them, bouncing
@@ -548,6 +548,21 @@ person's own name on their own address, `"Jane Smith"
 (`nameLine` and `proxyLine` in `lib/server/proxies.ts`). The exception is
 staff: we don't know a staff account's name, nor a shared inbox's, so a
 login link, an alert or an event owner's email goes to the address alone.
+
+When something needs a person, the site emails the notification inbox,
+`NOTIFICATION_INBOX` (`notifyStaff` in `lib/server/notifications.ts`), once
+each time it happens, with a link to where to deal with it:
+
+- an MP's address bouncing a letter or relay (`lib/server/delivery-problems.ts`);
+- mail in the letters inbox it can't relay (`lib/server/gmail-reading.ts`);
+- an import failing, after a run of it that didn't (`recordFailure` in
+  `lib/server/import-runs.ts`);
+- the MP import held, when none was (`lib/server/politician-sync.ts`);
+- Google disconnecting a Gmail account (`lib/server/gmail-accounts.ts`);
+- letters to MPs waiting over three hours to go, until those it named
+  have gone (`LATE_HOURS` in `lib/server/letter-sending.ts`).
+
+The backup Worker emails its own problems, to its `ALERT_TO` (`backup/README.md`).
 
 When an email bounces or its recipient marks it as spam, the problem is
 recorded against the address (`email_problems`). A hard bounce or a

@@ -21,6 +21,9 @@ export const TEST_MP_EMAIL = "test-mp@parliament.example";
  */
 export const LETTERS_INBOX = "fixture-letters@pauseai.uk";
 
+/** Where a fixture build emails when something needs a person (NOTIFICATION_INBOX, lib/server/notifications.ts). */
+export const NOTIFICATION_INBOX = "fixture-notifications@pauseai.uk";
+
 /**
  * The moment a fixture build thinks it is: the server (lib/now.ts and the
  * database's now(), tests/storyboard/global-setup.ts) and every page's clock
@@ -64,10 +67,13 @@ export function fixtureEnv({ outboxDir }) {
     POSTMARK_WEBHOOK_USER: "postmark",
     POSTMARK_WEBHOOK_PASSWORD: "fixture-webhook-password",
     POLICY_INBOX: "policy@example.org",
+    NOTIFICATION_INBOX,
     // Each email sent is also written here (tests/fixtures/outbox.ts).
     OUTBOX_DIR: outboxDir,
     LETTERS_INBOX,
     // Mail to the letters inbox that a flow writes, for the fake Gmail to pick up (tests/fixtures/letters-inbox.ts).
     LETTERS_INBOX_DIR: `${outboxDir}/letters-inbox`,
+    // The outside services a flow has made fail for itself (tests/fixtures/failing-services.ts).
+    FAILING_DIR: `${outboxDir}/failing`,
   };
 }

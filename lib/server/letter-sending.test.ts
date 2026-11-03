@@ -5,6 +5,8 @@ import { docFromMarkup } from "@/lib/letter-format";
 import { addTestMp, connectTestGmail, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { deliverToLettersInbox, resetLettersInbox } from "@/tests/fixtures/letters-inbox";
 import { LETTERS_INBOX, recordGmail, stubLettersInboxEnv, testMail, testProxy } from "@/tests/gmail-sends";
+import { staffCopy } from "@/lib/content/staff-interface";
+import { notifications } from "@/tests/notifications";
 import { query } from "./db";
 import { recordProblem, unblock } from "./email";
 import { handleDeliveryProblem } from "./delivery-problems";
@@ -71,6 +73,37 @@ describeWithDatabase("the letters inbox's queue", () => {
     await connectTestGmail(LETTERS_INBOX);
     return (await query<{ id: number }>("SELECT id::int AS id FROM letters"))[0].id;
   }
+
+  it("tells the notification inbox once letters have waited three hours, and not again while they wait", async () => {
+    const sent = notifications();
+    const id = await queued();
+    await disconnect();
+    // Two hours: not yet.
+    await query("UPDATE letters SET created_at = now() - interval '2 hours'");
+    await sendLetterQueue(Date.now() + 10_000, REQUEST);
+    expect(sent).toEqual([]);
+    await query("UPDATE letters SET created_at = now() - interval '4 hours'");
+    await sendLetterQueue(Date.now() + 10_000, REQUEST);
+    await sendLetterQueue(Date.now() + 10_000, REQUEST);
+    const words = staffCopy.notifications.lettersWaiting;
+    const why = staffCopy.letters.detail.reasons.not_connected;
+    expect(sent.map((email) => [email.Subject, email.TextBody])).toEqual([
+      [words.subject(1, 3), words.body(1, 3, why, "https://pauseai.uk/staff/letters?status=queued")],
+    ]);
+    expect(await query("SELECT letter_id::int AS id FROM email_sends WHERE purpose = 'staff-alert'")).toEqual([{ id }]);
+    // Sent, then another waits as long: told again. With room to send, but Gmail failing, it says so.
+    await connectTestGmail(LETTERS_INBOX);
+    await sendLetterQueue(Date.now() + 10_000);
+    expect(await statusOf()).toBe("sent");
+    recordGmail(() => new HttpResponse(null, { status: 503 }));
+    await submitLetter(FORM);
+    await query("UPDATE letters SET created_at = now() - interval '4 hours' WHERE status = 'queued'");
+    await sendLetterQueue(Date.now() + 10_000);
+    expect(sent.map((email) => email.TextBody)).toEqual([
+      expect.anything(),
+      words.body(1, 3, staffCopy.letters.detail.reasons.failed, "https://pauseai.uk/staff/letters?status=queued"),
+    ]);
+  });
 
   it("sends what's queued in the hourly run, saying how many went and how many are left", async () => {
     await queued();
