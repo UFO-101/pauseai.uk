@@ -47,12 +47,19 @@ function Action({ action }: { action: DashboardAction }) {
             words.openMp,
             `/staff/politicians/${action.politicianId}`,
           ]
-        : [
-            words.failedImport(jobTitles[action.job]),
-            words.failedImportDetail(action.error, staffTime(action.at)),
-            words.seeRun,
-            importPath(action.job),
-          ];
+        : action.kind === "letters-inbox"
+          ? [
+              staffCopy.lettersInbox.alert.subject(action.count, action.inbox),
+              words.lettersInboxDetail(staffTime(action.at)),
+              words.seeRun,
+              importPath("read-gmail"),
+            ]
+          : [
+              words.failedImport(jobTitles[action.job]),
+              words.failedImportDetail(action.error, staffTime(action.at)),
+              words.seeRun,
+              importPath(action.job),
+            ];
   return (
     <li>
       <Strip

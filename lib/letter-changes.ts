@@ -95,10 +95,14 @@ function rewritten(cut: string, added: string): Change[] {
   const changes = wordDiff(cut, added);
   const shared = changes.filter((c) => c.kind === "same").reduce((n, c) => n + wordCount(c.text), 0);
   if (shared * 2 >= Math.min(wordCount(cut), wordCount(added))) return changes;
+  // The new text from a line of its own, after the old.
+  if (!cut) return [{ kind: "added", text: added }];
+  if (!added) return [{ kind: "removed", text: cut }];
   return [
-    { kind: "removed" as const, text: cut },
-    { kind: "added" as const, text: added },
-  ].filter((change) => change.text);
+    { kind: "removed", text: cut },
+    { kind: "same", text: "\n" },
+    { kind: "added", text: added },
+  ];
 }
 
 /** A text's paragraphs, trimmed, without empty ones. */

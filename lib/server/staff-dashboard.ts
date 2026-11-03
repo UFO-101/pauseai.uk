@@ -153,6 +153,23 @@ export async function dashboard(days: DashboardWindow): Promise<Dashboard> {
       ? [{ kind: "failed-import", job: run.job, at: new Date(run.at).toISOString(), error: run.error }]
       : [],
   );
+  // Mail in the letters inbox a read couldn't handle, which waits there for a person.
+  const inbox: DashboardAction[] = imports.flatMap((run) =>
+    run?.job === "read-gmail" && run.status !== "failed"
+      ? run.result.accounts.flatMap((account) =>
+          account.notUnderstood?.length
+            ? [
+                {
+                  kind: "letters-inbox" as const,
+                  inbox: account.account,
+                  count: account.notUnderstood.length,
+                  at: new Date(run.at).toISOString(),
+                },
+              ]
+            : [],
+        )
+      : [],
+  );
   return {
     days,
     asOf: until,
@@ -162,6 +179,6 @@ export async function dashboard(days: DashboardWindow): Promise<Dashboard> {
     byCampaign: { lettersSent: letterCampaigns, mpsSigned: signedCampaigns },
     signedMp: signer,
     series: { eventRegistrations: registrations, supportersAdded: supporters },
-    actions: [...held, ...blocked, ...failed],
+    actions: [...held, ...blocked, ...failed, ...inbox],
   };
 }

@@ -155,4 +155,24 @@ describeWithDatabase("dashboard", () => {
     );
     expect((await dashboard(7)).signedMp).toBeNull();
   });
+
+  it("says when the newest read of Gmail left mail in the letters inbox for a person, and not when it left none", async () => {
+    const letters = { account: "letters@pauseai.uk", replies: 0, autoReplies: 0, bounces: 0, relayed: 0, spam: 0 };
+    const stranger = { gmailMessageId: "m1", from: "a@example.com", subject: "Hi", reason: "stranger" };
+    await recordRun("read-gmail", "nightly", "ok", {
+      accounts: [
+        { account: "jo@pauseai.uk", replies: 0, autoReplies: 0, bounces: 0 },
+        { ...letters, notUnderstood: [stranger, { ...stranger, gmailMessageId: "m2" }] },
+      ],
+    });
+    expect((await dashboard(7)).actions).toEqual([
+      { kind: "letters-inbox", inbox: "letters@pauseai.uk", count: 2, at: expect.any(String) },
+    ]);
+    await recordRun("read-gmail", "nightly", "ok", { accounts: [{ ...letters, notUnderstood: [] }] });
+    expect((await dashboard(7)).actions).toEqual([]);
+    await recordFailure("read-gmail", "nightly", new Error("Gmail down"));
+    expect((await dashboard(7)).actions).toEqual([
+      { kind: "failed-import", job: "read-gmail", at: expect.any(String), error: "Gmail down" },
+    ]);
+  });
 });

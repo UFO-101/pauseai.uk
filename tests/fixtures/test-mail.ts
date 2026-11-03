@@ -38,7 +38,7 @@ export function testMail(mail: TestMail): string {
     `From: ${mail.from}`,
     `To: ${mail.to}`,
     ...(mail.cc ? [`Cc: ${mail.cc}`] : []),
-    `Subject: ${mail.subject ?? "Re: Subject"}`,
+    `Subject: ${mail.subject ?? "Re: Request to co-sign letter on frontier AI risks"}`,
     `Date: ${mail.date ?? "Fri, 16 Oct 2026 13:00:00 +0100"}`,
     `Message-ID: <${mail.messageId ?? `test-${++mails}@parliament.example`}>`,
     ...(mail.inReplyTo ? [`In-Reply-To: <${mail.inReplyTo}>`, `References: <${mail.inReplyTo}>`] : []),

@@ -331,7 +331,7 @@ async function bounce(
         kind: failed.delayed ? "soft" : "hard",
         reason: failed.reason || failed.status || subject,
         canReset: true,
-        details: { status: failed.status, account },
+        details: { ...(failed.status && { status: failed.status }), account },
         gmailMessageId: message.id,
       },
       request,

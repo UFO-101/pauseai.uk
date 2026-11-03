@@ -116,7 +116,7 @@ test("The MP replies and Jane answers: each relayed, the same message, from the 
   deliver(flowDatabase, {
     from: `"Jane Smith" <${sender}>`,
     to: MPS_PROXY,
-    subject: "Re: Re: Subject",
+    subject: "Re: Re: Request to co-sign letter on frontier AI risks",
     inReplyTo: toJane.MessageId!.slice(1, -1),
     text: "Dear Mr McTestface,\r\n\r\nThank you. I'd be glad to meet at one of your surgeries.\r\n\r\nJane Smith\r\n",
   });

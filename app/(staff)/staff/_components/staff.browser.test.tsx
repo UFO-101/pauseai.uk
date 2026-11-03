@@ -301,6 +301,7 @@ describe("StaffDashboard", () => {
       `${copy.actions.heldSync(24)}${copy.actions.heldSyncDetail}${copy.actions.decide}`,
       `${copy.actions.blockedMp("Bouncy McTestface MP")}${copy.actions.blockedMpDetail}${copy.actions.openMp}`,
       `${copy.actions.failedImport(jobTitles["import-controlai"])}${copy.actions.failedImportDetail("No PDF linked", "21 Oct 2026, 02:00")}${copy.actions.seeRun}`,
+      `${staffCopy.lettersInbox.alert.subject(2, "fixture-letters@pauseai.uk")}${copy.actions.lettersInboxDetail("21 Oct 2026, 03:20")}${copy.actions.seeRun}`,
     ]);
     await expect
       .element(page.getByRole("link", { name: copy.actions.decide }))
@@ -308,14 +309,14 @@ describe("StaffDashboard", () => {
     await expect
       .element(page.getByRole("link", { name: copy.actions.openMp }))
       .toHaveAttribute("href", "/staff/politicians/7");
-    await expect
-      .element(page.getByRole("link", { name: copy.actions.seeRun }))
-      .toHaveAttribute("href", "/staff/import-data/controlai");
+    const seeRun = page.getByRole("link", { name: copy.actions.seeRun });
+    await expect.element(seeRun.first()).toHaveAttribute("href", "/staff/import-data/controlai");
+    await expect.element(seeRun.last()).toHaveAttribute("href", "/staff/import-data/gmail");
     // No heading: the strips speak for themselves. Each its icon first; the held import amber, the rest red.
     expect(page.getByRole("heading", { name: copy.actionsTitle }).all()).toHaveLength(0);
     const strips = items.map((item) => item.element().firstElementChild!);
-    expect(strips.map((strip) => strip.firstElementChild!.tagName.toLowerCase())).toEqual(["svg", "svg", "svg"]);
-    expect(strips.map((strip) => strip.className.match(/amber|red/)?.[0])).toEqual(["amber", "red", "red"]);
+    expect(strips.map((strip) => strip.firstElementChild!.tagName.toLowerCase())).toEqual(["svg", "svg", "svg", "svg"]);
+    expect(strips.map((strip) => strip.className.match(/amber|red/)?.[0])).toEqual(["amber", "red", "red", "red"]);
     expect(getComputedStyle(strips[0]).borderLeftWidth).toBe("0px");
     // Each title stands out from its detail; the buttons are the small light ones, all alike.
     const [title, detail] = [...strips[0].querySelector("div")!.children].map((el) => getComputedStyle(el));

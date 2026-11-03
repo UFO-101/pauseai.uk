@@ -151,7 +151,7 @@ describeWithDatabase("reading the letters inbox", () => {
     expect(relay.headers.get("to")).toBe(JANE);
     expect(relay.headers.get("in-reply-to")).toBe(`<${letter.copy}>`);
     expect(relay.headers.get("references")).toBe(`<${letter.copy}>`);
-    expect(relay.headers.get("subject")).toBe("Re: Subject");
+    expect(relay.headers.get("subject")).toBe("Re: Request to co-sign letter on frontier AI risks");
     // Anyone the office copied in isn't sent it, nor told of them.
     expect(relay.headers.has("cc")).toBe(false);
     expect(relay.headers.has("authentication-results")).toBe(false);
@@ -162,7 +162,7 @@ describeWithDatabase("reading the letters inbox", () => {
     const [kept] = await query<{ blobKey: string; fromSupporter: boolean; subject: string }>(
       `SELECT blob_key AS "blobKey", from_supporter AS "fromSupporter", subject FROM letter_replies`,
     );
-    expect(kept).toMatchObject({ fromSupporter: false, subject: "Re: Subject" });
+    expect(kept).toMatchObject({ fromSupporter: false, subject: "Re: Request to co-sign letter on frontier AI risks" });
     expect(gunzipSync((await letterReply(kept.blobKey))!).toString("latin1")).toBe(reply);
     expect(await query('SELECT status, to_supporter AS "toSupporter" FROM letter_relays')).toEqual([
       { status: "sent", toSupporter: true },

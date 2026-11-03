@@ -45,6 +45,7 @@ export const exampleDashboard: Dashboard = {
       at: "2026-10-19T09:30:00.000Z",
     },
     { kind: "failed-import", job: "import-controlai", at: "2026-10-21T02:00:00.000Z", error: "No PDF linked" },
+    { kind: "letters-inbox", inbox: "fixture-letters@pauseai.uk", count: 2, at: "2026-10-21T03:20:00.000Z" },
   ],
 };
 

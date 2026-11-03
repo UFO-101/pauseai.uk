@@ -189,6 +189,9 @@ export const staffCopy = {
         failedImport: (job: string) => `Import '${job}' failed`,
         failedImportDetail: (error: string, at: string) => `Error: "${error}" · ${at}`,
         seeRun: "See failed run",
+        // The newest read of Gmail found mail in the letters inbox it couldn't handle: when, and where it waits.
+        lettersInboxDetail: (at: string) =>
+          `Found ${at}. Each is left unread in the inbox, with why on the run's page.`,
       },
       // The window: its length in days, each a link but the one shown.
       window: (days: number) => `${days} days`,
@@ -1437,7 +1440,7 @@ export const staffCopy = {
     never: "Not read yet.",
     // The run's totals, over every account, then a line for each.
     result: (accounts: { replies: number; autoReplies: number; bounces: number }[]) =>
-      `${accounts.length} accounts read: ${accounts.reduce((n, a) => n + a.replies, 0)} replies, ${accounts.reduce((n, a) => n + a.autoReplies, 0)} automatic replies, ${accounts.reduce((n, a) => n + a.bounces, 0)} bounces.`,
+      `${accounts.length} ${accounts.length === 1 ? "account" : "accounts"} read: ${accounts.reduce((n, a) => n + a.replies, 0)} replies, ${accounts.reduce((n, a) => n + a.autoReplies, 0)} automatic replies, ${accounts.reduce((n, a) => n + a.bounces, 0)} bounces.`,
     account: (a: { account: string; replies: number; autoReplies: number; bounces: number }) =>
       `${a.account}: ${a.replies} replies, ${a.autoReplies} automatic replies, ${a.bounces} bounces.`,
     // After an account's line: its history had gone, so the last few days were searched instead.

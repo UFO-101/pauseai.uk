@@ -66,6 +66,7 @@ describe("changeBlocks", () => {
         kind: "changed",
         changes: [
           { kind: "removed", text: "Meet me." },
+          { kind: "same", text: "\n" },
           { kind: "added", text: "Mine.\n\nNew too." },
         ],
       },
@@ -81,6 +82,7 @@ describe("changeBlocks", () => {
         kind: "changed",
         changes: [
           { kind: "removed", text: "I would like to meet you to discuss this." },
+          { kind: "same", text: "\n" },
           { kind: "added", text: "My children ask me about this every week." },
         ],
       },
