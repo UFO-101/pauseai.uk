@@ -1381,8 +1381,8 @@ export const staffCopy = {
   // A supporter's letter on its page: what they changed in the draft the campaign gave them.
   letterChanges: {
     // Toggles to the letter as the MP got it, and back.
-    asSent: "⁂ Show as sent",
-    showChanges: "⁂ Show changes",
+    asSent: "Show as sent",
+    showChanges: "Show changes",
     // In place of paragraphs left as they were; a click unfolds them.
     folded: (n: number) => (n === 1 ? "1 paragraph unchanged" : `${n} paragraphs unchanged`),
   },
@@ -1391,7 +1391,7 @@ export const staffCopy = {
     // The labels reading puts on each message in Gmail, by what it made of it.
     labels: {
       relayed: "Relayed",
-      noted: "⁂ Noted",
+      noted: "Noted",
       spam: "Spam",
       notUnderstood: "Not understood",
     },
@@ -1401,19 +1401,19 @@ export const staffCopy = {
     // Each message not understood, a line each, with a link to it in Gmail.
     notUnderstood: "⁂ Not understood:",
     reasons: {
-      unknown_proxy: "⁂ to a proxy we don't have",
-      no_proxy: "⁂ to none of our proxies",
-      stranger: "⁂ from neither the supporter nor their MP's office",
-      not_verified: "⁂ failed authentication",
-      over_cap: "⁂ over its letter's limit on relays",
-      bounce: "⁂ a bounce of nothing we sent",
+      unknown_proxy: "to a proxy we don't have",
+      no_proxy: "to none of our proxies",
+      stranger: "from neither the supporter nor their MP's office",
+      not_verified: "failed authentication",
+      over_cap: "over its letter's limit on relays",
+      bounce: "a bounce of nothing we sent",
     } as Record<string, string>,
-    openInGmail: "⁂ Open in Gmail",
+    openInGmail: "Open in Gmail",
     // The email to the policy inbox after a run with any.
     alert: {
-      subject: (count: number) => `⁂ ${count} messages in the letters inbox need a look`,
-      body: (lines: string[], runUrl: string) =>
-        `⁂ Reading the letters inbox found mail it couldn't account for. Each needs a person to look at it:\n\n${lines.join("\n")}\n\nThe run: ${runUrl}`,
+      subject: (count: number, inbox: string) => `${count} mysterious messages in the ${inbox} inbox`,
+      body: (inbox: string, lines: string[], runUrl: string) =>
+        `There's mail in the ${inbox} letters inbox which isn't clearly to an MP or a constituent. Investigate what it is:\n\n${lines.join("\n")}\n\nThe run: ${runUrl}`,
     },
   },
   // The hourly read of the connected Gmail accounts for replies to our
@@ -1631,24 +1631,21 @@ export const staffCopy = {
         name: "Name",
         account: "Gmail",
         status: "Code",
-        bcc: "⁂ Bcc",
-        notice: "⁂ Notice",
-        uncertain: "⁂ Matched only as the latest letter",
+        bcc: "Bcc",
+        notice: "Notice",
+        uncertain: "Matched only as the latest letter",
       } as Record<string, string>,
       // A reason, recorded as a word, in words: why a letter, copy or relay waits or wasn't relayed.
       reasons: {
-        not_connected: "⁂ The letters inbox isn't connected",
-        daily_limit: "⁂ The letters inbox reached its daily limit",
-        failed: "⁂ Gmail refused it or couldn't be reached; it's tried again each hour",
-        blocked: "⁂ The address is blocked, as it bounced",
-        not_verified: "⁂ It failed authentication, so may be forged",
-        over_cap: "⁂ Over the letter's limit on relays, in case of a loop",
+        not_connected: "The letters inbox isn't connected",
+        daily_limit: "The letters inbox reached its daily limit",
+        failed: "Gmail refused it or couldn't be reached; it'll try again in every hour",
+        blocked: "The address is blocked, as it bounced",
+        not_verified: "It failed authentication, so may be forged",
+        over_cap: "Over the letter's limit on relays, in case of a loop",
       } as Record<string, string>,
       // What a notice to the supporter said.
-      notices: { bounced: "⁂ Their message hasn't reached the MP", resent: "⁂ It has now gone" } as Record<
-        string,
-        string
-      >,
+      notices: { bounced: "Their message hasn't reached the MP", resent: "It has now gone" } as Record<string, string>,
       // Under a reply, what was done with it: each line's name, before who to; "Not forwarded" when it went to no one.
       handling: {
         forwarded: "Forwarded to",
@@ -1682,19 +1679,19 @@ export const staffCopy = {
       cancelled: "Stopped",
       skipped: "Skipped",
       // A supporter's letter from the letters inbox, waiting to go, and what's done with it and the messages both ways.
-      queued: "⁂ Queued",
-      copy_sent: "⁂ Copy sent to the supporter",
-      copy_held: "⁂ Copy held",
-      copy_bounced: "⁂ Copy bounced",
-      copy_delayed: "⁂ Copy delayed",
-      relayed: "⁂ Relayed",
-      relay_queued: "⁂ Relay queued",
-      relay_held: "⁂ Relay held",
-      relay_bounced: "⁂ Relay bounced",
-      relay_delayed: "⁂ Relay delayed",
-      relay_uncertain: "⁂ Relay uncertain",
-      not_relayed: "⁂ Not relayed",
-      notice: "⁂ Supporter told",
+      queued: "Queued",
+      copy_sent: "Copy sent to the supporter",
+      copy_held: "Copy held",
+      copy_bounced: "Copy bounced",
+      copy_delayed: "Copy delayed",
+      relayed: "Relayed",
+      relay_queued: "Relay queued",
+      relay_held: "Relay held",
+      relay_bounced: "Relay bounced",
+      relay_delayed: "Relay delayed",
+      relay_uncertain: "Relay uncertain",
+      not_relayed: "Not relayed",
+      notice: "Supporter told",
     } as Record<string, string>,
     columns: {
       created: "Written",
@@ -1836,8 +1833,8 @@ export const staffCopy = {
       formEntries: (n: number) => (n === 1 ? "form entry" : "form entries"),
       letters: (n: number) => (n === 1 ? "letter" : "letters"),
       members: (n: number) => (n === 1 ? "member record" : "member records"),
-      proxies: (n: number) => (n === 1 ? "⁂ proxy" : "⁂ proxies"),
-      messages: (n: number) => (n === 1 ? "⁂ message in the letters inbox" : "⁂ messages in the letters inbox"),
+      proxies: (n: number) => (n === 1 ? "proxy" : "proxies"),
+      messages: (n: number) => (n === 1 ? "message in the letters inbox" : "messages in the letters inbox"),
       sessions: (n: number) => (n === 1 ? "session" : "sessions"),
     } as Record<string, (n: number) => string>,
   },

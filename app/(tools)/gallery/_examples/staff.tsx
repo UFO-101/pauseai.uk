@@ -125,6 +125,7 @@ import { GmailConnect, GmailOutcome, SentToday } from "@/app/(staff)/staff/_comp
 import AccountTitle from "@/app/(staff)/staff/_components/AccountTitle";
 import { AskLead, AskPreview, AskTitle } from "@/app/(staff)/staff/_components/AskLine";
 import LetterChanges from "@/app/(staff)/staff/_components/LetterChanges";
+import ThreadEmail from "@/app/(staff)/staff/_components/ThreadEmail";
 import LetterThread, { SupporterLetterThread } from "@/app/(staff)/staff/_components/LetterThread";
 import { exampleImportedThread, exampleThread } from "@/app/(staff)/staff/_components/LetterThread.examples";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -382,6 +383,14 @@ const RUNS: Record<ImportJob, Variant> = {
       </StaffPage>
     ),
   },
+};
+
+/** Who a letter in the examples is from and to, when, and its subject. */
+const EXAMPLE_EMAIL = {
+  from: "Jane Smith <jane@example.com>",
+  to: "Testy McTestface MP <testy.mctestface.mp@parliament.uk>",
+  at: "2026-10-12T09:05:00Z",
+  subject: "Please back a pause on frontier AI",
 };
 
 export const staff: Group = {
@@ -1361,6 +1370,32 @@ export const staff: Group = {
       ],
     },
     {
+      name: "ThreadEmail",
+      file: "app/(staff)/staff/_components/ThreadEmail.tsx",
+      variants: [
+        {
+          label: "A message of a thread: who from and to, when, its subject with an action at its right, over its text",
+          render: () => (
+            <StaffPage as="div">
+              <ThreadEmail {...EXAMPLE_EMAIL} action={<a href="#">An action</a>}>
+                Dear Mr McTestface, thank you.
+              </ThreadEmail>
+            </StaffPage>
+          ),
+        },
+        {
+          label: "One whose text isn't kept: no date, and a tinted body for the note in its place",
+          render: () => (
+            <StaffPage as="div">
+              <ThreadEmail {...EXAMPLE_EMAIL} at={null} missing>
+                {"The letter's text isn't kept."}
+              </ThreadEmail>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
       name: "LetterChanges",
       file: "app/(staff)/staff/_components/LetterChanges.tsx",
       variants: [
@@ -1370,6 +1405,7 @@ export const staff: Group = {
           render: () => (
             <StaffPage as="div">
               <LetterChanges
+                {...EXAMPLE_EMAIL}
                 sent={exampleProxiedLetterDetails.sent!.text}
                 draft={exampleProxiedLetterDetails.sent!.draft}
               />
@@ -1380,7 +1416,7 @@ export const staff: Group = {
           label: "No draft kept: the letter alone",
           render: () => (
             <StaffPage as="div">
-              <LetterChanges sent={exampleProxiedLetterDetails.sent!.text} draft={null} />
+              <LetterChanges {...EXAMPLE_EMAIL} sent={exampleProxiedLetterDetails.sent!.text} draft={null} />
             </StaffPage>
           ),
         },

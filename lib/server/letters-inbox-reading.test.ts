@@ -441,7 +441,7 @@ describeWithDatabase("reading the letters inbox", () => {
     expect(emails).toHaveLength(1);
     expect(emails[0]).toMatchObject({
       To: "policy@example.org",
-      Subject: staffCopy.lettersInbox.alert.subject(2),
+      Subject: staffCopy.lettersInbox.alert.subject(2, LETTERS_INBOX),
       Tag: "staff-alert",
     });
     expect(emails[0].TextBody).toContain(

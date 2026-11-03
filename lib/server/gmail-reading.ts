@@ -339,8 +339,8 @@ async function alertNotUnderstood(accounts: GmailRead[], request: Request | unde
     {
       From: `PauseAI UK <noreply@${notifyDomain()}>`,
       To: inbox,
-      Subject: words.alert.subject(lines.length),
-      TextBody: words.alert.body(lines, siteUrl(importPath(JOB), request).href),
+      Subject: words.alert.subject(lines.length, lettersInbox()!),
+      TextBody: words.alert.body(lettersInbox()!, lines, siteUrl(importPath(JOB), request).href),
       Tag: "staff-alert",
     },
     "staff-alert",

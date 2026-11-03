@@ -4,53 +4,13 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import type { LetterThread as Thread } from "@/lib/server/letter-threads";
 import type { SupporterLetterDetails } from "@/lib/server/letters";
 import { named } from "@/lib/named-address";
-import { staffTime } from "@/lib/staff-time";
 import LetterChanges from "./LetterChanges";
+import ThreadEmail from "./ThreadEmail";
 import { MailingLetter } from "./MailingLetter";
 import StaffLink from "./ui/StaffLink";
 import styles from "./LetterThread.module.css";
 
 const copy = staffCopy.letterThread;
-
-/** One message of the thread as an email shows it: who it's from and to, when, and its subject, over its text. */
-function Email({
-  from,
-  to,
-  at,
-  subject,
-  missing = false,
-  children,
-}: {
-  from: ReactNode;
-  to: string;
-  at: string | null;
-  subject: string;
-  /** Its text isn't kept, so its body is a slot with a note in it (NoText), not words of the letter. */
-  missing?: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <article className={styles.email} aria-label={subject}>
-      <dl className={styles.headers}>
-        <dt>{copy.headers.from}</dt>
-        <dd>{from}</dd>
-        <dt>{copy.headers.to}</dt>
-        <dd>{to}</dd>
-        {at && (
-          <>
-            <dt>{copy.headers.date}</dt>
-            <dd>{staffTime(at)}</dd>
-          </>
-        )}
-        <dt>{copy.headers.subject}</dt>
-        <dd>
-          <strong>{subject}</strong>
-        </dd>
-      </dl>
-      <div className={missing ? `${styles.body} ${styles.missing}` : styles.body}>{children}</div>
-    </article>
-  );
-}
 
 /** In place of a letter's text that isn't kept: a short note saying why, and `link`, the way to it in Gmail. */
 function NoText({ note, link }: { note: string; link: ReactNode }) {
@@ -88,7 +48,7 @@ export default function LetterThread({ thread, link }: { thread: Thread; link?: 
   const kept = thread.letter !== null;
   return (
     <Thread link={kept && link}>
-      <Email
+      <ThreadEmail
         from={ours}
         to={politician}
         at={thread.sentAt}
@@ -96,9 +56,9 @@ export default function LetterThread({ thread, link }: { thread: Thread; link?: 
         missing={!kept}
       >
         {thread.letter ? <MailingLetter doc={thread.letter} /> : <NoText note={copy.noText} link={link} />}
-      </Email>
+      </ThreadEmail>
       {thread.messages.map((message) => (
-        <Email
+        <ThreadEmail
           key={message.id}
           from={named(message.fromName, message.fromAddress)}
           to={message.fromUs ? politician : ours}
@@ -106,7 +66,7 @@ export default function LetterThread({ thread, link }: { thread: Thread; link?: 
           subject={message.subject}
         >
           {message.text === null ? <Muted>{copy.unreadable}</Muted> : <div className={styles.text}>{message.text}</div>}
-        </Email>
+        </ThreadEmail>
       ))}
       {thread.messages.length === 0 && (
         <p>
@@ -130,29 +90,24 @@ export function SupporterLetterThread({ letter, link }: { letter: SupporterLette
   const sender = named(letter.senderName, letter.senderEmail);
   const mp = named(letter.mpName, letter.mpEmail);
   const { sent } = letter;
+  const from =
+    letter.supporterId === null ? (
+      sender
+    ) : (
+      <StaffLink href={`/staff/supporters/${letter.supporterId}`}>{sender}</StaffLink>
+    );
+  const email = { from, to: mp, at: letter.sentAt, subject: letter.subject || letter.campaignTitle };
   return (
     <Thread link={sent && link}>
-      <Email
-        from={
-          letter.supporterId === null ? (
-            sender
-          ) : (
-            <StaffLink href={`/staff/supporters/${letter.supporterId}`}>{sender}</StaffLink>
-          )
-        }
-        to={mp}
-        at={letter.sentAt}
-        subject={letter.subject || letter.campaignTitle}
-        missing={!sent}
-      >
-        {sent ? (
-          <LetterChanges sent={sent.text} draft={sent.draft} />
-        ) : (
+      {sent ? (
+        <LetterChanges {...email} sent={sent.text} draft={sent.draft} />
+      ) : (
+        <ThreadEmail {...email} missing>
           <NoText note={copy.supporterNoText} link={link} />
-        )}
-      </Email>
+        </ThreadEmail>
+      )}
       {sent?.messages.map((message) => (
-        <Email
+        <ThreadEmail
           key={message.id}
           from={named(message.fromName, message.fromAddress)}
           to={message.fromSupporter ? mp : sender}
@@ -160,7 +115,7 @@ export function SupporterLetterThread({ letter, link }: { letter: SupporterLette
           subject={message.subject}
         >
           {message.text === null ? <Muted>{copy.unreadable}</Muted> : <div className={styles.text}>{message.text}</div>}
-        </Email>
+        </ThreadEmail>
       ))}
     </Thread>
   );

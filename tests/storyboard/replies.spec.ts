@@ -220,7 +220,7 @@ test("Automatic replies are relayed both ways; a loop stops at the cap, and staf
   const line = await readInbox(request);
   expect(line).toMatchObject({ relayed: 3, notUnderstood: [expect.objectContaining({ reason: "over_cap" })] });
   const alert = newestEmail(
-    (email) => email.To === POLICY_INBOX && email.Subject === staffCopy.lettersInbox.alert.subject(1),
+    (email) => email.To === POLICY_INBOX && email.Subject === staffCopy.lettersInbox.alert.subject(1, LETTERS_INBOX),
   )!;
   expect(alert.TextBody).toContain(staffCopy.lettersInbox.reasons.over_cap);
   await emailFrame(page, alert, "the email staff get: one message not relayed, over the letter's cap");
@@ -250,7 +250,7 @@ test("A stranger, a forged MP's reply, and spam: none relayed, and the run says 
   expect((line.notUnderstood as { reason: string }[]).map((m) => m.reason)).toEqual(["stranger", "not_verified"]);
   expect(sentIds(flowDatabase, letterIdOf(flowDatabase, sender), "relay")).toEqual([]);
   const alert = newestEmail(
-    (email) => email.To === POLICY_INBOX && email.Subject === staffCopy.lettersInbox.alert.subject(2),
+    (email) => email.To === POLICY_INBOX && email.Subject === staffCopy.lettersInbox.alert.subject(2, LETTERS_INBOX),
   )!;
   await emailFrame(page, alert, "the email staff get: two messages that need a look, each with a link to it in Gmail");
   await page.goto(`${BASE}/staff/import-data/gmail`);

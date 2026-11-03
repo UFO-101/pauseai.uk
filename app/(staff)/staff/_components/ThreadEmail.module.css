@@ -1,0 +1,45 @@
+/* A message as an email: a bordered box, its headers over its text. */
+.email {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.headers {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-sm);
+}
+
+.headers dt {
+  color: var(--text-secondary);
+}
+
+.headers dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.body {
+  padding: var(--space-3) var(--space-4);
+}
+
+/* The subject, and an action on the email at the right of its line, or under it when there's no room. */
+.subject {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+/* A body whose text isn't kept: tinted, as an empty slot, so the note in
+   it reads as about the letter, not part of it. */
+.missing {
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: var(--surface-2);
+}
