@@ -1206,12 +1206,12 @@ describe("PoliticianDetails", () => {
       .element(page.getByText(`${staffCopy.politician.source} ${staffCopy.politician.sources.staff}`))
       .toBeVisible();
     expect(document.querySelectorAll("dd svg[aria-hidden]")).toHaveLength(2);
-    // The asks done: MP signed one.
+    // The letters supporters wrote them, then the asks done: MP signed one.
     const counts = document.querySelector("[class*=counts]")!;
     expect(counts.querySelector("a")).toBeNull();
     expect([...counts.children].map((count) => count.textContent)).toEqual([
-      `1 ${staffCopy.politician.band.asksDone(1)}`,
       `0 ${staffCopy.politician.band.lettersCounted(0)}`,
+      `1 ${staffCopy.politician.band.asksDone(1)}`,
     ]);
     // Not PauseAI's emails: they're in the history.
     expect(page.getByRole("link", { name: /from PauseAI/ }).query()).toBeNull();
@@ -1654,17 +1654,22 @@ describe("PoliticianDetails", () => {
       .toBeVisible();
     expect(event.getByRole("button").all()).toHaveLength(0);
 
-    // The form, behind Edit: a letter's answers, starting from theirs.
-    expect(letter.getByRole("combobox").query()).toBeNull();
+    // The form, behind Edit: a letter's answers in a row, starting from theirs, and Clear answer set apart.
+    expect(letter.getByRole("radiogroup").query()).toBeNull();
     await letter.getByText(staffCopy.politician.edit, { exact: true }).click();
-    const select = letter.getByRole("combobox", { name: staffCopy.politician.status });
-    await expect.element(select).toHaveValue("signed");
-    expect([...select.element().querySelectorAll("option")].map((o) => o.textContent)).toEqual([
-      staffCopy.statuses.none,
-      staffCopy.statuses.signed,
-      staffCopy.statuses.declined,
-    ]);
-    await select.selectOptions("");
+    const choices = letter.getByRole("radiogroup", { name: staffCopy.politician.status });
+    await expect
+      .element(choices.getByRole("radio", { name: staffCopy.statuses.signed }))
+      .toHaveAttribute("aria-checked", "true");
+    expect(
+      choices
+        .getByRole("radio")
+        .all()
+        .map((r) => r.element().textContent),
+    ).toEqual([staffCopy.statuses.signed, staffCopy.statuses.declined, staffCopy.politician.clearAnswer]);
+    const clear = choices.getByRole("radio", { name: staffCopy.politician.clearAnswer });
+    expect(clear.element().className).toMatch(/quiet/);
+    await clear.click();
     await letter.getByLabelText(staffCopy.politician.note).fill("Their office wrote");
     await letter.getByRole("button", { name: staffCopy.politician.save }).click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
@@ -1701,10 +1706,20 @@ describe("PoliticianDetails", () => {
       .getByRole("button", { name: ask("frontier-ai-letter").title })
       .click();
     const letter = page.getByRole("group", { name: ask("frontier-ai-letter").title });
-    await expect.element(letter.getByText(staffCopy.statuses.none, { exact: true }).first()).toBeVisible();
-    await letter.getByRole("combobox", { name: staffCopy.politician.status }).selectOptions("declined");
-    // Not without a note of how they know.
+    await expect.element(letter.getByText(staffCopy.statuses.noAnswer, { exact: true }).first()).toBeVisible();
+    // With no answer yet, there's none to clear, and Save waits for one to be picked.
+    const choices = letter.getByRole("radiogroup", { name: staffCopy.politician.status });
+    expect(
+      choices
+        .getByRole("radio")
+        .all()
+        .map((r) => r.element().textContent),
+    ).toEqual([staffCopy.statuses.signed, staffCopy.statuses.declined]);
     const save = letter.getByRole("button", { name: staffCopy.politician.save });
+    await expect.element(save).toBeDisabled();
+    await choices.getByRole("radio", { name: staffCopy.statuses.declined }).click();
+    await expect.element(save).toBeEnabled();
+    // Not without a note of how they know.
     await save.click();
     expect(sent).toHaveLength(0);
     await letter.getByLabelText(staffCopy.politician.note).fill("They emailed");
@@ -1750,9 +1765,8 @@ describe("PoliticianDetails", () => {
     expect(row.element().querySelector("[class*=answer]")!.textContent).toBe(
       `${staffCopy.statuses.noAnswer}${staffCopy.politician.edit}`,
     );
-    const select = row.getByRole("combobox", { name: staffCopy.politician.status });
-    await expect.element(select).toHaveValue("");
-    await select.selectOptions("going");
+    expect(row.getByRole("radio", { checked: true }).query()).toBeNull();
+    await row.getByRole("radio", { name: staffCopy.statuses.going }).click();
     await row.getByLabelText(staffCopy.politician.note).fill("Their office said");
     await row.getByRole("button", { name: staffCopy.politician.save }).click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
@@ -1762,7 +1776,7 @@ describe("PoliticianDetails", () => {
       status: "going",
       note: "Their office said",
     });
-    // Going: ticked in green, the list starting from their answer.
+    // Going: ticked in green, the form starting from their answer.
     await render(
       <PoliticianDetails
         {...none}
@@ -1777,7 +1791,9 @@ describe("PoliticianDetails", () => {
     );
     const going = page.getByRole("group", { name: "Example Event" }).last();
     expect(going.element().querySelector("[class*=answer]")!.className).toMatch(/yes/);
-    expect(going.element().querySelector("select")!.value).toBe("going");
+    expect(going.element().querySelector("[role=radio][aria-checked=true]")!.textContent).toBe(
+      staffCopy.statuses.going,
+    );
   });
 
   it("adds another ask staff record from the button under the asks, as a row with no answer and its form open", async () => {
@@ -1811,10 +1827,10 @@ describe("PoliticianDetails", () => {
     await expect.poll(() => menu.query()).toBeNull();
     const row = page.getByRole("group", { name: "Giant Pause Button" });
     expect(row.element().querySelector("[class*=answer]")!.textContent).toBe(
-      `${staffCopy.statuses.none}${staffCopy.politician.edit}`,
+      `${staffCopy.statuses.noAnswer}${staffCopy.politician.edit}`,
     );
-    await expect.element(row.getByRole("combobox", { name: staffCopy.politician.status })).toBeVisible();
-    await row.getByRole("combobox", { name: staffCopy.politician.status }).selectOptions("signed");
+    await expect.element(row.getByRole("radiogroup", { name: staffCopy.politician.status })).toBeVisible();
+    await row.getByRole("radio", { name: staffCopy.statuses.signed }).click();
     await row.getByLabelText(staffCopy.politician.note).fill("At the march");
     await row.getByRole("button", { name: staffCopy.politician.save }).click();
     await vi.waitFor(() => expect(sent).toHaveLength(1));
@@ -1848,6 +1864,42 @@ describe("PoliticianDetails", () => {
         (b) => b.textContent,
       ),
     ).toEqual(["Giant Pause Button"]);
+  });
+
+  it("puts an ask added from the menu in its place among the rows, scrolled to, and takes it away closed unanswered", async () => {
+    const dome = { ...ask("frontier-ai-letter"), slug: "giant-pause-button-oct-2026", title: "Giant Pause Button" };
+    const fair = { ...dome, slug: "village-fair-nov-2026", title: "Village Fair", kind: "event" as const };
+    const going = { ...MP.statuses["frontier-ai-letter"], status: "going" as const };
+    // A window too short for the bubble under the row, so it's scrolled to.
+    vi.spyOn(window, "innerHeight", "get").mockReturnValue(0);
+    const scrolled = vi.spyOn(window, "scrollBy");
+    await render(
+      <PoliticianDetails
+        {...none}
+        asks={[dome, fair]}
+        politician={{ ...MP, statuses: { "village-fair-nov-2026": going } }}
+        setStatus={vi.fn()}
+        unblock={vi.fn()}
+      />,
+    );
+    const titles = () => [...document.querySelectorAll("[role=group]")].map((g) => g.getAttribute("aria-label"));
+    expect(titles()).toEqual(["Village Fair"]);
+    const another = page.getByRole("button", { name: staffCopy.politician.otherAsk });
+    await another.click();
+    await page.getByRole("button", { name: "Giant Pause Button" }).click();
+    // The asks' order, not the order they were added in.
+    expect(titles()).toEqual(["Giant Pause Button", "Village Fair"]);
+    expect(scrolled).toHaveBeenCalledOnce();
+    vi.restoreAllMocks();
+
+    // Its bubble closed with no answer saved, the row goes and the ask is back in the menu.
+    await expect.element(page.getByRole("radiogroup", { name: staffCopy.politician.status })).toBeVisible();
+    await userEvent.keyboard("{Escape}");
+    await vi.waitFor(() => expect(titles()).toEqual(["Village Fair"]));
+    await another.click();
+    await expect
+      .element(page.getByRole("list", { name: staffCopy.politician.otherAsk }).getByRole("button"))
+      .toHaveTextContent("Giant Pause Button");
   });
 
   it("says in one place that letters aren't being sent, why, what to check, and unblocks it with a note", async () => {

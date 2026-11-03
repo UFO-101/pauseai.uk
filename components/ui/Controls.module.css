@@ -99,6 +99,16 @@
   font-weight: 600;
 }
 
+/* A choice of nothing, set apart from the others. */
+.quiet {
+  border-style: dashed;
+  color: var(--text-secondary);
+}
+
+.quiet[aria-checked="true"] {
+  color: var(--text);
+}
+
 /* An option's icon, before its words. */
 .segment:has(svg) {
   display: inline-flex;

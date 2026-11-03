@@ -80,7 +80,7 @@ describe("staff interface copy", () => {
     ]);
     // Every status any kind of ask allows, and the words for no answer.
     expect(Object.keys(staffCopy.statuses).sort()).toEqual(
-      [...new Set(Object.values(ASK_STATUSES).flat()), "none", "noAnswer"].sort(),
+      [...new Set(Object.values(ASK_STATUSES).flat()), "noAnswer"].sort(),
     );
     expect(Object.keys(staffCopy.personStatuses)).toEqual([...PERSON_STATUSES]);
     expect(Object.keys(staffCopy.countries)).toEqual([...COUNTRIES]);

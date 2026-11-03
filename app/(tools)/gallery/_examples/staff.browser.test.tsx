@@ -145,13 +145,13 @@ describe("the staff examples", () => {
       .getByRole("region", { name: staffCopy.politician.statusesTitle })
       .getByText(staffCopy.politician.edit, { exact: true })
       .click();
-    await page.getByRole("combobox", { name: staffCopy.politician.status }).selectOptions("");
+    await page.getByRole("radio", { name: staffCopy.politician.clearAnswer }).click();
     await page.getByLabelText(staffCopy.politician.note).fill("Their office wrote");
     await page.getByRole("button", { name: staffCopy.politician.save }).click();
     await expect
       .element(log().nth(0))
       .toHaveTextContent(
-        'setStatus({"politicianId":"7","ask":"frontier-ai-letter","status":"","note":"Their office wrote"})',
+        'setStatus({"politicianId":"7","ask":"frontier-ai-letter","note":"Their office wrote","status":""})',
       );
   });
 

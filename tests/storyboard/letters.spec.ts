@@ -138,7 +138,7 @@ test("A supporter's letter: the letter as an email, Copy Gmail search, and the M
   const ask = page.getByRole("region", { name: staffCopy.mailings.fields.ask });
   await expect(ask.getByRole("link", { name: campaigns[0].title })).toBeVisible();
   await ask.getByRole("button", { name: staffCopy.politician.edit }).click();
-  await page.getByRole("combobox", { name: staffCopy.politician.status }).selectOption("signed");
+  await page.getByRole("radio", { name: staffCopy.statuses.signed }).click();
   await page.getByLabel(staffCopy.politician.note).fill("Signed, says their reply");
   await frame(page, "Edit: Signed chosen, with a note of how we know", { window: true });
   await page.getByRole("button", { name: staffCopy.politician.save }).click();

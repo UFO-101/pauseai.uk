@@ -19,6 +19,16 @@ describe("fixtureResponse", () => {
     expect(all.entries.length).toBeGreaterThan(8);
   });
 
+  it("serves an event's details with its hosts: the London protest's three, any other's one", async () => {
+    const get = "https://public-api.luma.com/v1/events/get";
+    const london = await fixtureResponse(`${get}?event_id=evt-fixture-london-protest`)!.json();
+    expect(london.id).toBe("evt-fixture-london-protest");
+    expect(london.hosts.map((h: { id: string }) => h.id)).toEqual(["usr-fixture-2", "usr-fixture-7", "usr-fixture-1"]);
+    const noEvent = await fixtureResponse(`${get}?x=1`)!.json();
+    expect(noEvent.id).toBe("");
+    expect(noEvent.hosts.map((h: { id: string }) => h.id)).toEqual(["usr-fixture-3"]);
+  });
+
   it("serves an event's guests over two pages, with IDs of their own, and the contacts", async () => {
     const guests = "https://public-api.luma.com/v1/events/guests/list?event_id=evt-1";
     const first = await fixtureResponse(guests)!.json();

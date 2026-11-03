@@ -2,10 +2,9 @@ import StaffLink from "./ui/StaffLink";
 import type { ReactNode } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { asksDone } from "@/lib/asks";
-import { answeredByHand } from "@/lib/email-your-mp";
 import type { Ask } from "@/lib/server/asks";
 import { AskTitle } from "./AskLine";
-import AskRow, { AskRows, OtherAsks } from "./AskRow";
+import { PoliticianAsks } from "./AskRow";
 import CampaignName from "./CampaignName";
 import { FieldChanges } from "./AuditDetail";
 import type { FieldChange } from "@/lib/field-changes";
@@ -212,18 +211,13 @@ function Detail({ change, asks }: { change: PoliticianChange; asks: Ask[] }) {
   }
 }
 
-/** The asks a politician has a row for: those they have an answer to, in the asks' order. */
-function asksOf(politician: Politician, asks: Ask[]): Ask[] {
-  return asks.filter((ask) => politician.statuses[ask.slug]);
-}
-
 /**
  * The band at the top of their page: their name and tags, with whether
  * their record has gone from Airtable, and under it what they are; at its
  * top right, quietly, where their record came from, an Airtable MP's linked
  * to it there; then their party, whether they're in office, their nation
- * and how to write to them; and how many asks they did (asksDone),
- * leading to the asks, and letters supporters wrote them, to the history.
+ * and how to write to them; and how many letters supporters wrote them,
+ * leading to the history, and asks they did (asksDone), to the asks.
  */
 function PoliticianBand({
   politician,
@@ -273,12 +267,12 @@ function PoliticianBand({
       aside={
         <Counts
           counts={[
+            { key: "letters", n: letters, label: copy.band.lettersCounted(letters) },
             {
               key: "asks",
               n: asksDone(politician.statuses),
               label: copy.band.asksDone(asksDone(politician.statuses)),
             },
-            { key: "letters", n: letters, label: copy.band.lettersCounted(letters) },
           ]}
         />
       }
@@ -375,8 +369,6 @@ export default function PoliticianDetails({
       ),
     })),
   ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
-  const rows = asksOf(politician, asks);
-  const others = asks.filter((ask) => answeredByHand(ask.slug) && !rows.includes(ask));
   return (
     <>
       <PoliticianBand politician={politician} letters={letters.letters.length} airtableTable={airtableTable} />
@@ -437,12 +429,7 @@ export default function PoliticianDetails({
         </NoteHistory>
         <Column span={3}>
           <Card look="aside" title={copy.statusesTitle} id="asks-title">
-            <AskRows>
-              {rows.map((ask) => (
-                <AskRow key={ask.slug} politician={politician} ask={ask} setStatus={setStatus} />
-              ))}
-              <OtherAsks politician={politician} asks={others} setStatus={setStatus} />
-            </AskRows>
+            <PoliticianAsks politician={politician} asks={asks} setStatus={setStatus} />
           </Card>
           {politician.notes && (
             <Card look="aside" title={copy.notes} id="airtable-notes-title">

@@ -99,16 +99,12 @@ export default function PrivacyPolicy() {
 
       <h2>Events and Luma</h2>
       <p>
-        Our events run on Luma. When you register for one of our events, or follow our calendar, Luma gives us your
-        name, email address, which events you registered for and with what status, when you followed the calendar, and,
-        where an event asked for them, your phone number and postcode. We copy this every hour. If you unsubscribe from
-        the calendar&apos;s emails, Luma tells us and we record it, so we never email that address about events. A
-        postcode you type on our home page to see events near you goes to postcodes.io and is kept only in your browser,
-        not by us.
-      </p>
-      <p>
-        ⁂ If you host one of our events on Luma, we also copy your name and email address as its host, every hour, so
-        the people who run PauseAI UK can see who runs each event and connect it to your record.
+        Our events run on Luma. When you register for or host one of our events, or follow our calendar, Luma gives us
+        your name, email address, which events you registered for and with what status, which events you host, when you
+        followed the calendar, and (where an event asked for them) your phone number and postcode. We copy this every
+        hour. If you unsubscribe from the calendar&apos;s emails, Luma tells us and we record it, so we never email that
+        address about events. A postcode you type on our home page to see events near you goes to postcodes.io and is
+        kept only in your browser, not by us.
       </p>
 
       <h2>Supporters and political opinions</h2>

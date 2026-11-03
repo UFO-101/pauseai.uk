@@ -27,7 +27,7 @@ import {
   exampleSupporterLetterDetails,
 } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import Run from "@/app/(staff)/staff/_components/Run";
-import AskRow, { AskRows, OtherAsks } from "@/app/(staff)/staff/_components/AskRow";
+import AskRow, { AskRows, PoliticianAsks } from "@/app/(staff)/staff/_components/AskRow";
 import EraseForm from "@/app/(staff)/staff/_components/EraseForm";
 import DeletePolitician from "@/app/(staff)/staff/_components/DeletePolitician";
 import StaffAccountsTable, { AddStaff } from "@/app/(staff)/staff/_components/StaffAccountsTable";
@@ -143,13 +143,16 @@ export function AskRowExample({ others = false, declined = false }: { others?: b
   };
   return (
     <Logged>
-      {(log) => (
-        <AskRows>
-          <AskRow politician={politician} ask={exampleAsks[0]!} setStatus={log("setStatus")} />
-          <AskRow politician={politician} ask={exampleAsks[4]!} setStatus={log("setStatus")} />
-          {others && <OtherAsks politician={politician} asks={exampleAsks.slice(3)} setStatus={log("setStatus")} />}
-        </AskRows>
-      )}
+      {(log) =>
+        others ? (
+          <PoliticianAsks politician={politician} asks={exampleAsks} setStatus={log("setStatus")} />
+        ) : (
+          <AskRows>
+            <AskRow politician={politician} ask={exampleAsks[0]!} setStatus={log("setStatus")} />
+            <AskRow politician={politician} ask={exampleAsks[4]!} setStatus={log("setStatus")} />
+          </AskRows>
+        )
+      }
     </Logged>
   );
 }

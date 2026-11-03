@@ -113,7 +113,7 @@ test("The MPs signed tile: who signed, then everyone", async ({ page, request, f
     .getByRole("button", { name: PM_LETTER })
     .click();
   const letter = page.getByRole("group", { name: PM_LETTER });
-  await letter.getByRole("combobox", { name: staffCopy.politician.status }).selectOption("signed");
+  await letter.getByRole("radio", { name: staffCopy.statuses.signed }).click();
   await letter.getByLabel(staffCopy.politician.note).fill("They emailed");
   await letter.getByRole("button", { name: staffCopy.politician.save }).click();
   await expect(letter.locator("[class*=answer]")).toHaveText(new RegExp(`^${staffCopy.statuses.signed}`));
@@ -199,7 +199,7 @@ test("Log in, set an MP's status, see it on /campaigns, log out", async ({ page,
     .getByRole("list", { name: staffCopy.politician.otherAsk })
     .getByRole("button", { name: PM_LETTER })
     .click();
-  await card.getByRole("combobox", { name: staffCopy.politician.status }).selectOption("signed");
+  await card.getByRole("radio", { name: staffCopy.statuses.signed }).click();
   await card.getByLabel(staffCopy.politician.note).fill("Told us at the march");
   await frame(page, "Add another answer: the letter's form, Signed chosen, with a note of how we know");
   await card.getByRole("button", { name: staffCopy.politician.save }).click();

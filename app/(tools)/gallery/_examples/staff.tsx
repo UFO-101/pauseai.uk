@@ -2306,9 +2306,14 @@ export const staff: Group = {
       variants: [{ label: "Rows of asks, their answers lined up in a column", render: () => <AskRowExample /> }],
     },
     {
-      name: "OtherAsks",
+      name: "PoliticianAsks",
       file: "app/(staff)/staff/_components/AskRow.tsx",
-      variants: [{ label: "Under the rows, the button for another ask", render: () => <AskRowExample others /> }],
+      variants: [
+        {
+          label: "A politician's asks: those answered, in order, and the button for another",
+          render: () => <AskRowExample others />,
+        },
+      ],
     },
     {
       name: "PoliticianDetails",

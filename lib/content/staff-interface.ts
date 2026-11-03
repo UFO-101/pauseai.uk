@@ -604,7 +604,6 @@ export const staffCopy = {
   // A person's answer to an ask (lib/asks.ts): a letter's, then an event's.
   statuses: {
     signed: "Signed",
-    none: "Not signed",
     going: "Going",
     tentative: "Tentatively going",
     meeting_staff: "Staff meeting instead",
@@ -612,7 +611,7 @@ export const staffCopy = {
     declined: "Declined",
     declined_surgery: "Declined, offered a surgery",
     passed_on: "Passed on invite",
-    // No answer to an event's invitation.
+    // No answer to an ask, of any kind.
     noAnswer: "No answer",
   } as Record<string, string>,
   // Whether a notable person is in office.
@@ -1162,6 +1161,8 @@ export const staffCopy = {
     // Under the answer to an ask staff record: opens the form to change it.
     edit: "Edit",
     save: "Save",
+    // In the form's row of answers, set apart from them, once there's an answer: picked and saved, it clears it.
+    clearAnswer: "Clear answer",
     // Under the asks, the small button whose menu lists the other asks staff record, to add one to the card.
     otherAsk: "Add another answer",
     // The fields of the box at the top.
@@ -1185,7 +1186,7 @@ export const staffCopy = {
     historyTitle: "History",
     // A status set or cleared, in the history: around the ask's name.
     statusSet: (status: string) => ({ before: `${status} '`, after: "'" }),
-    statusCleared: { before: "⁂ Answer cleared for '", after: "'" },
+    statusCleared: { before: "Answer cleared for '", after: "'" },
     noHistory: "Nothing yet.",
     // What each line of the history was: a letter, a reply, or an entry of the audit log about them.
     history: {
@@ -1354,7 +1355,7 @@ export const staffCopy = {
     }) =>
       `${r.events} events changed; ${r.eventsSynced} guest lists read, ${r.eventsLeft} waiting; ${r.guestsChanged} guests, ${r.people} people, ${r.contacts} contacts changed; ${r.supportersAdded} new supporters, ${r.linked} linked; ${r.requests} requests.`,
     // After the counts, how many hosts were added to or taken off events (runs kept before hosts were copied don't say).
-    hostsChanged: (n: number) => `⁂ ${n} ${n === 1 ? "host" : "hosts"} changed.`,
+    hostsChanged: (n: number) => `${n} ${n === 1 ? "host" : "hosts"} changed.`,
     // After that, how many pages of contacts the run read (runs kept before this was recorded don't say).
     contactPages: (pages: number) => `${pages} pages of contacts read.`,
     // After that, the postcodes and towns looked up at postcodes.io for where supporters are (runs kept before this was recorded don't say).
