@@ -165,7 +165,10 @@ describeWithDatabase("connected Gmail accounts", () => {
     ]);
     await expect(gmailAccess("al@pauseai.uk")).rejects.toThrow("isn't connected");
     await expect(gmailAccess("nobody@pauseai.uk")).rejects.toThrow("isn't connected");
-    expect(sent).toHaveLength(1);
+    // Two reads at once, both refused: the inbox is told once.
+    await connectTestGmail("bo@pauseai.uk");
+    await Promise.allSettled([gmailAccess("bo@pauseai.uk"), gmailAccess("bo@pauseai.uk")]);
+    expect(sent).toHaveLength(2);
   });
 
   it("tells the notification inbox when it's the letters inbox that's disconnected", async () => {
