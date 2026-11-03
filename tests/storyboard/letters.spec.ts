@@ -141,7 +141,8 @@ test("A supporter's letter: the letter as an email, Copy Gmail search, and the M
   );
   const letter = page.getByRole("article");
   await expect(letter).toContainText(sender);
-  await expect(letter).toContainText("Dear Mr McTestface");
+  // Sent as the campaign drafted it, so its text is folded away.
+  await expect(letter).toContainText(staffCopy.letterChanges.unchanged);
   await frame(page, "the letter's page: sent, the letter as an email, beside its campaign's ask and its history");
 
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
@@ -196,7 +197,7 @@ test("A letter bounces: staff are emailed, the address is blocked", async ({ pag
   await page
     .getByRole("list", { name: staffCopy.letters.detail.historyTitle })
     .getByRole("listitem")
-    .filter({ hasText: staffCopy.letters.status.bounced })
+    .filter({ hasText: new RegExp(`^${staffCopy.letters.status.bounced}`) })
     .getByRole("button")
     .click();
   await expect(page.locator(":popover-open")).toContainText('"reason"');

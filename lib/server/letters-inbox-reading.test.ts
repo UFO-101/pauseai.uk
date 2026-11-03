@@ -444,7 +444,9 @@ describeWithDatabase("reading the letters inbox", () => {
       Subject: staffCopy.lettersInbox.alert.subject(2),
       Tag: "staff-alert",
     });
-    expect(emails[0].TextBody).toContain(`https://mail.google.com/mail/u/${encodeURIComponent(LETTERS_INBOX)}/#all/`);
+    expect(emails[0].TextBody).toContain(
+      `https://mail.google.com/mail/?authuser=${encodeURIComponent(LETTERS_INBOX)}#all/`,
+    );
     expect(emails[0].TextBody).toContain("https://pauseai.uk/staff/import-data/");
     // A run with nothing to tell sends nothing.
     await read();

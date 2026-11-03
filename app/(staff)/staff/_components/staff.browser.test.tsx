@@ -2756,7 +2756,10 @@ describe("RunList", () => {
     expect(links.all()).toHaveLength(2);
     await expect
       .element(links.first())
-      .toHaveAttribute("href", "https://mail.google.com/mail/u/fixture-letters%40pauseai.uk/#all/18c0ffee00000001");
+      .toHaveAttribute(
+        "href",
+        "https://mail.google.com/mail/?authuser=fixture-letters%40pauseai.uk#all/18c0ffee00000001",
+      );
     await expect
       .element(
         page.getByText(`someone@example.com, “Hello”: ${staffCopy.lettersInbox.reasons.stranger}.`, { exact: false }),

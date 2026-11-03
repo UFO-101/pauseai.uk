@@ -18,6 +18,7 @@ import {
   sendLetter,
   syncPoliticians,
 } from "../steps";
+import { LETTERS_INBOX } from "../fixture-env.mjs";
 import { BASE, expect, madeUpAddress, frame, test } from "./fixtures";
 
 // The supporter pages, behind the supporters permission, on the fixture
@@ -336,18 +337,17 @@ test("A letter writer's page, from the letters list", async ({ page, request, fl
   await expect(page.getByText("ZZ9 9ZZ", { exact: false })).toBeVisible();
   await frame(page, "the letter writer's page: the letter, and the postcode they gave");
 
-  // The letter's status leads to its page, its copy in the policy inbox, and back to her.
+  // The letter's status leads to its page, found in the letters inbox, and back to her.
   await page.getByRole("link", { name: staffCopy.letters.status.sent }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     staffCopy.letters.oneTitle("Jane Smith", "Testy McTestface MP"),
   );
-  await frame(page, "her letter's page, with Copy Gmail search for its copy in the policy inbox");
+  await frame(page, "her letter's page, with Copy Gmail search for it in the letters inbox");
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.getByRole("button", { name: staffCopy.findInGmail.copy }).click();
-  // Sent while policy@ was a Google Group, so it's in the mail of the group's members.
-  await expect(page.getByRole("status")).toContainText(staffCopy.findInGmail.policyGroup);
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/^rfc822msgid:[\w-]+@mtasv\.net$/);
-  await frame(page, "copied: paste it in Gmail search in the mail of someone who got policy@'s when it went");
+  await expect(page.getByRole("status")).toContainText(staffCopy.findInGmail.where(LETTERS_INBOX));
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/^rfc822msgid:[\w-]+@pauseai\.uk$/);
+  await frame(page, "copied: paste it in Gmail search in the letters inbox");
   await page.getByRole("link", { name: "Jane Smith" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Jane Smith");
 });

@@ -83,7 +83,7 @@ Global.
    stops the weekly too.
 4. An email channel on Postmark's broadcast stream
    ([streams](https://postmarkapp.com/message-streams)), separate from
-   letters to MPs, for about $200–300 a year
+   the staff emails on its transactional stream, for about $200–300 a year
    ([pricing](https://postmarkapp.com/pricing)). Postmark reviews new
    broadcast senders, so apply early. A small local mailing could go by
    Gmail instead.
