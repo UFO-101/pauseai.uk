@@ -114,28 +114,16 @@ jobs:
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
 
       # Postgres's own package source, added by hand as its instructions give
-      # (https://wiki.postgresql.org/wiki/Apt) rather than with its script, which
-      # runs an apt-get update of its own: the one update is Playwright's, below.
-      # apt keeps what it downloads in ~/apt-archives, cached for each runner
-      # image and Playwright version, so a job with the cache downloads none.
-      - name: Set up apt's sources and downloads
-        id: apt
+      # (https://wiki.postgresql.org/wiki/Apt) rather than with its script,
+      # which updates every source the runner has: the Postgres client, below,
+      # updates only this one.
+      - name: Add the Postgres package source
         timeout-minutes: 2
         run: |
-          echo "image=$ImageOS-$ImageVersion" >> "$GITHUB_OUTPUT"
-          mkdir -p ~/apt-archives/partial
-          echo "Dir::Cache::Archives \"$HOME/apt-archives\";" | sudo tee /etc/apt/apt.conf.d/81-archives
           sudo install -d /usr/share/postgresql-common/pgdg
           sudo curl --fail --silent --show-error --retry 3 --max-time 30 -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
           . /etc/os-release
           echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $VERSION_CODENAME-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
-
-      - name: Cache apt's downloads
-        uses: actions/cache@v6
-        with:
-          path: ~/apt-archives
-          key: apt-${{ runner.os }}-${{ steps.apt.outputs.image }}-${{ steps.playwright.outputs.version }}
-          restore-keys: apt-${{ runner.os }}-
 
       - name: Cache Playwright browser
         id: playwright-cache
@@ -157,7 +145,10 @@ jobs:
         # which holds dpkg's lock, so that is killed and waited for before
         # dpkg finishes anything it left half done.
         timeout-minutes: 8
+        # GitHub's image has them all, which the dry run checks with no
+        # apt-get update; the install, and its update, are for one that hasn't.
         run: |
+          npx playwright install-deps --dry-run chromium && exit 0
           for attempt in 1 2 3; do
             timeout --kill-after=10 120 npx playwright install-deps chromium && exit 0
             echo "::warning::Playwright's system dependencies, attempt $attempt, failed or took over two minutes"
@@ -172,9 +163,9 @@ jobs:
       - name: Install the Postgres 18 client
         timeout-minutes: 4
         run: |
+          # The Postgres source alone: the runner's others are as its image left them.
+          sudo apt-get update -o Dir::Etc::sourcelist=/etc/apt/sources.list.d/pgdg.list -o Dir::Etc::sourceparts=- -o APT::Get::List-Cleanup=0
           sudo apt-get install -y --no-install-recommends postgresql-client-18
-          # apt's lock and part-downloads are root's, which the cache can't save.
-          sudo chown -R "$USER" ~/apt-archives
 
       # Both Vitest projects (node and browser), gated on coverage.
       - name: Test with coverage
@@ -288,25 +279,14 @@ jobs:
         id: playwright
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
 
-      # As the Test job does: Postgres's package source, and apt's downloads cached.
-      - name: Set up apt's sources and downloads
-        id: apt
+      # As the Test job does: Postgres's package source.
+      - name: Add the Postgres package source
         timeout-minutes: 2
         run: |
-          echo "image=$ImageOS-$ImageVersion" >> "$GITHUB_OUTPUT"
-          mkdir -p ~/apt-archives/partial
-          echo "Dir::Cache::Archives \"$HOME/apt-archives\";" | sudo tee /etc/apt/apt.conf.d/81-archives
           sudo install -d /usr/share/postgresql-common/pgdg
           sudo curl --fail --silent --show-error --retry 3 --max-time 30 -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
           . /etc/os-release
           echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $VERSION_CODENAME-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
-
-      - name: Cache apt's downloads
-        uses: actions/cache@v6
-        with:
-          path: ~/apt-archives
-          key: apt-${{ runner.os }}-${{ steps.apt.outputs.image }}-${{ steps.playwright.outputs.version }}
-          restore-keys: apt-${{ runner.os }}-
 
       - name: Cache Playwright browser
         id: playwright-cache
@@ -331,7 +311,10 @@ jobs:
         # which holds dpkg's lock, so that is killed and waited for before
         # dpkg finishes anything it left half done.
         timeout-minutes: 8
+        # GitHub's image has them all, which the dry run checks with no
+        # apt-get update; the install, and its update, are for one that hasn't.
         run: |
+          npx playwright install-deps --dry-run chromium && exit 0
           for attempt in 1 2 3; do
             timeout --kill-after=10 120 npx playwright install-deps chromium && exit 0
             echo "::warning::Playwright's system dependencies, attempt $attempt, failed or took over two minutes"
@@ -346,9 +329,9 @@ jobs:
       - name: Install the Postgres 18 client
         timeout-minutes: 4
         run: |
+          # The Postgres source alone: the runner's others are as its image left them.
+          sudo apt-get update -o Dir::Etc::sourcelist=/etc/apt/sources.list.d/pgdg.list -o Dir::Etc::sourceparts=- -o APT::Get::List-Cleanup=0
           sudo apt-get install -y --no-install-recommends postgresql-client-18
-          # apt's lock and part-downloads are root's, which the cache can't save.
-          sudo chown -R "$USER" ~/apt-archives
 
       # As the Build job does, for the fixture build: kept apart, as its
       # settings differ.
