@@ -257,6 +257,9 @@ test("A stranger, a forged MP's reply, and spam: none relayed, and the run says 
   await expect(page.getByText(staffCopy.runs.status.failed, { exact: true }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: staffCopy.lettersInbox.openInGmail })).toHaveCount(2);
   await frame(page, "the run failed: the stranger and the forgery listed, the spam counted");
+  await page.goto(`${BASE}/staff`);
+  await expect(page.getByText(staffCopy.lettersInbox.alert.subject(2, LETTERS_INBOX))).toBeVisible();
+  await frame(page, "the dashboard: two messages in the letters inbox for a person to look at");
 });
 
 test("The letter bounces: staff alerted and Jane told; unblocked, it goes again", async ({
