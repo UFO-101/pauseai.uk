@@ -21,12 +21,15 @@ at it. What came from an outside source says which one, so a page can say
 exception is erasure: a supporter who asks to be forgotten is removed
 (`docs/data-protection.md`).
 
-What a letter said is kept only where it isn't sensitive. A supporter's
-letter to a politician, and the politician's reply to it, can show the
-supporter's political opinions and personal circumstances, so neither's
-text is kept: only who, when, and what happened to it. A letter PauseAI
-sends a politician, and their reply, are kept in full, since they're our
-own words and a public figure's answer in their public role.
+What a letter said is kept where we need it to do the job. A supporter's
+letter to their MP, and every message between them and the MP's office,
+are kept whole, as the site relays them ("Letters", below); they can show
+the supporter's political opinions and personal circumstances, so only
+staff with `supporters` see them, and erasure deletes them. For letters
+sent before the letters inbox, neither's text is kept: only who, when, and
+what happened to it. A letter PauseAI sends a politician, and their reply,
+are kept in full, since they're our own words and a public figure's answer
+in their public role.
 
 ## Notable people and politicians
 
@@ -126,16 +129,15 @@ adds what its kind has, joined as notable people are:
 - **A supporter's letter** (`letters_from_supporters`): the campaign and subject,
   and the form entry of the person who sent it (`entry_id`; "Form
   entries", below), which holds their name, email, address, postcode and
-  consent. Sent through the
-  site, it goes from an address of its own on `letters.pauseai.uk`
-  (`reply_hash`), with the sender on Cc and no Reply-To, so a reply comes
-  back to us, matched by that address, and is forwarded to the sender and
-  the policy team. Its text isn't kept: the
-  only copy is the one Bcc'd to `POLICY_INBOX`. Each sender email can send
-  one letter per campaign, except to a test MP. The letters sent through
-  pauseai.info's old form were imported once from Airtable
-  (`lib/server/web-form-import.ts`), keyed by the record, with no address
-  of their own.
+  consent. Each sender email can send one letter per campaign, except to a
+  test MP. See "Letters through the letters inbox", below. Letters sent
+  before it went by Postmark from an address of their own on
+  `letters.pauseai.uk` (`postmark_mailbox`), with the sender on Cc, and a
+  reply to that address is still forwarded to the sender and the policy
+  team (`forwardReply`, `lib/server/postmark-webhooks.ts`); their text
+  isn't kept. The letters sent through pauseai.info's old form were
+  imported once from Airtable (`lib/server/web-form-import.ts`), keyed by
+  the record, with neither.
 - **PauseAI's letter** (`letters_from_pauseai`): one person's letter of a mailing
   (`mailings`), which may make an ask. Those sent before the site could send
   them are copied nightly from Airtable's Emails table
@@ -152,6 +154,65 @@ adds what its kind has, joined as notable people are:
   fields had. Those with no address, or a blocked one, are left out.
 
 A letter's ask is its campaign's or its mailing's, never its own.
+
+### Letters through the letters inbox
+
+Supporters' letters go to MPs from the letters inbox, a Gmail account used
+for nothing else (`LETTERS_INBOX`, `lib/server/letters-inbox.ts`), and
+each side sees the other only as a proxy, a plus address on it
+(`proxies`, `lib/server/proxies.ts`): the MP gets the letter from
+`"Jane Smith (via PauseAI)" <letters+jane.smith@…>`, the supporter gets the
+MP's replies from `"Meg Hillier MP (via PauseAI)" <letters+meg.hillier.mp@…>`.
+The MP's office never sees the supporter's address. A supporter's proxy is
+keyed by their email address, so it's the same in every letter, and named
+from their first letter's name; an MP's is named the first time they're
+written to and kept.
+
+- **Sending** (`lib/server/mp-letters.ts`, `letter-sending.ts`): a letter
+  that passes the form's checks is kept, `queued`, and never deleted for
+  failing to send. The request tries at once: the letter, from the
+  supporter's proxy to the MP alone, then the supporter's copy, from their
+  proxy to the MP's, Reply-To the MP's, Bcc'd to them, with a line above
+  it saying what it is, so Reply and Reply all reach only our proxies.
+  What can't go waits with its reason: the letters inbox not connected or
+  at its daily limit (1,950 of Google's 2,000, `LETTERS_DAILY_LIMIT`),
+  Gmail failing, or the MP's address blocked; the sent page says it will
+  go. The hourly `send-mailings` job works through the queue: relays
+  first, then letters, oldest first, then copies. Each letter keeps the
+  draft the form began with, rebuilt on the server (approximate if a
+  deploy changed it since the form opened), and the share of its words
+  that are the supporter's own; its page shows only what they changed,
+  the paragraphs they left alone folded (`LetterChanges`).
+- **Reading and relaying** (`lib/server/letters-inbox-reading.ts`,
+  `relays.ts`): the hourly `read-gmail` reads the letters inbox, Spam
+  included, all of it ours. A message from the MP's office (Parliament's
+  domain, or the address the letter went to) to the supporter's proxy is
+  relayed to the supporter from the MP's proxy, in the thread of their
+  copy; one from the supporter, to either proxy, to the MP from theirs,
+  naming the letter; an automatic reply either way too, keeping the marks
+  that stop responders answering it. A relay is the same message, byte for
+  byte, with only the headers ours (`relayMime`), and nobody the office
+  copied in gets it. Only mail that Google found passes DMARC (or, with no
+  policy, aligned SPF or DKIM) is relayed. Which letter a message is for:
+  the supporter's only one to that MP, else by the IDs it names, its
+  Gmail thread, a Case Ref, its subject, or failing those the latest, as an
+  uncertain match. Every message is kept whole (`letter_replies`, Netlify
+  Blobs), and each relay is a row (`letter_relays`) recorded before it's
+  sent, so a run that stops between is shown as uncertain rather than sent
+  twice. A letter's relays are capped, 5 an hour and 20 a day, so a loop
+  of automatic replies stops. Each message is labelled in Gmail, and all
+  but those not understood are archived. Mail it can't account for (an
+  unknown proxy, a stranger, a forgery, one over the cap, a bounce of
+  nothing we sent) fails the run, which lists each with a link to it in
+  Gmail, and emails `POLICY_INBOX` once; spam to no letter is only
+  counted.
+- **Bounces**: the letter, or a relay to the MP, bouncing hard blocks the
+  MP's address, alerts staff, and tells the supporter, in our own words,
+  in their copy's thread; once staff unblock the address, or the MP's
+  address changes, what bounced goes again and the supporter is told
+  (`resendAfterFix`). The supporter's copy, or a relay to them, bouncing
+  blocks their address, and later relays to them are held. A soft bounce
+  is only noted.
 
 ### Mailings to politicians
 
@@ -177,8 +238,8 @@ token is kept encrypted (`GMAIL_TOKEN_KEY`), and deleted on disconnecting.
   1,800 a day from an account, counting every mailing, under Gmail's 2,000,
   so the person's own email still goes (`GMAIL_DAILY_LIMIT`).
 - **Sending** (`lib/server/mailing-sending.ts`): the hourly
-  `send-mailings` job, at 18 minutes past from 06:18 UTC, starts each
-  scheduled mailing that's due, so a mailing due at 09:00 goes at 09:18
+  `send-mailings` job, at 18 minutes past, starts each scheduled mailing
+  that's due, none before 06:18 UTC, so a mailing due at 09:00 goes at 09:18
   and one due overnight at 06:18; the staff pages say so (`SENDING` in
   `lib/staff-time.ts`). Then it sends
   its letters at Gmail's pace, one a second, marking each as it goes. A
@@ -263,8 +324,7 @@ and `supporters_summary` is one row per supporter. The list reads
 supporter's summary and place, refreshed by `refreshSupportersList()` at
 the end of each import that links supporters and by an erasure, and anyone
 added since, worked out as it's read. So a supporter's counts, tags and
-place in the list are as of the last import, up to an hour old (overnight,
-until 06:17), but for whether they're a Luma contact: an opt-out from the
+place in the list are as of the last import, up to an hour old, but for whether they're a Luma contact: an opt-out from the
 calendar, or its end, is looked up as the list is read
 (`optedOutOfLuma()`). Their own page is always as they are now. When a supporter was first seen, the earliest `seen_at` of their
 records (`supporter_first_seen`), is kept on the supporter
@@ -314,7 +374,8 @@ supporters near somewhere would use it too.
 from their page (`lib/server/erasure.ts`), under the request's reference.
 For each source, what that source holds goes: a form entry, with its
 letter, the letter's events and the copies of replies forwarded to the
-sender; a Luma user with their
+sender, and for one from the letters inbox, the supporter's proxy, every
+message kept and its blob, its mail there moved to Trash; a Luma user with their
 registrations and contact; a member's record. What stays is what exists to stop us mailing
 the address: `email_problems`,
 `email_blocks` and `opt_outs`. The Luma user's ID goes in `luma_erased`,
@@ -473,11 +534,13 @@ for the purpose's topic as it checks `email_blocks`.
 ## Email
 
 Everything the site sends, to anyone (`lib/server/email.ts`). Every email
-goes through `send()` with its purpose: `letter`, `forwarded-reply`,
-`staff-login`, `staff-alert`, `mailing` or `mailing-test`. Each try is
+goes through `send()` with its purpose: `letter`, `letter-copy`, `relay`,
+`supporter-notice`, `forwarded-reply`, `staff-login`, `staff-alert`,
+`mailing` or `mailing-test`. Each try is
 logged (`email_sends`): when, why, to whom, whether it went, and which
-backend sent it, Postmark or a staff member's Gmail ("Mailings to
-politicians", above).
+backend sent it, Postmark or a connected Gmail, a staff member's or the
+letters inbox ("Mailings to politicians" and "Letters through the letters
+inbox", above).
 
 When an email bounces or its recipient marks it as spam, the problem is
 recorded against the address (`email_problems`). A hard bounce or a

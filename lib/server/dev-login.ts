@@ -10,22 +10,43 @@ export const NOBODY = "nobody@pauseai.uk";
 export type DevLoginChoice = { email: string; description: string };
 
 /**
+ * The shared inboxes a person may log in as, to see the site as they do:
+ * the letters inbox (LETTERS_INBOX) and the policy team's (POLICY_INBOX),
+ * where they're at pauseai.uk, as only those can log in; each with what it is.
+ */
+function sharedInboxes(): { email: string; role: string }[] {
+  const copy = staffCopy.devLogin;
+  return [
+    { email: process.env.LETTERS_INBOX, role: copy.lettersInbox },
+    { email: process.env.POLICY_INBOX, role: copy.policyInbox },
+  ].flatMap(({ email, role }) => {
+    const address = email?.trim().toLowerCase() ?? "";
+    return /@pauseai\.uk$/.test(address) ? [{ email: address, role }] : [];
+  });
+}
+
+/**
  * The addresses the dev login offers, in a fixture build: every account,
- * then, until it has one, an address with no account yet. Undefined
- * anywhere else, where there's no dev login.
+ * the shared inboxes saying which they are, then, until each has one, the
+ * shared inboxes and an address with no account yet. Undefined anywhere
+ * else, where there's no dev login.
  */
 export async function devLoginAccounts(): Promise<DevLoginChoice[] | undefined> {
   if (!fixturesEnabled()) return undefined;
   const copy = staffCopy.devLogin;
-  const accounts = (await listStaffAccounts()).map((account) => ({
-    email: account.email,
-    description:
+  const shared = sharedInboxes();
+  const roleOf = (email: string) => shared.find((inbox) => inbox.email === email)?.role;
+  const accounts = (await listStaffAccounts()).map((account) => {
+    const description =
       account.permissions.length > 0
         ? copy.permissions(account.permissions.map((p) => staffCopy.accounts.names[p]).join(", "))
-        : copy.noPermissions,
-  }));
-  const first = accounts.some((account) => account.email === NOBODY)
-    ? []
-    : [{ email: NOBODY, description: copy.noAccount }];
-  return [...accounts, ...first];
+        : copy.noPermissions;
+    const role = roleOf(account.email);
+    return { email: account.email, description: role ? `${role} · ${description}` : description };
+  });
+  const missing = [
+    ...shared.map(({ email, role }) => ({ email, description: `${role} · ${copy.noAccount}` })),
+    { email: NOBODY, description: copy.noAccount },
+  ].filter((choice) => !accounts.some((account) => account.email === choice.email));
+  return [...accounts, ...missing];
 }
