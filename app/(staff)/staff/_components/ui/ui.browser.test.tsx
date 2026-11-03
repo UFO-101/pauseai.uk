@@ -1,3 +1,4 @@
+import type React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
@@ -6,6 +7,8 @@ import StaffPage from "./StaffPage";
 import Tabs from "./Tabs";
 import FilterBar, { filteredTitle, filterWords, type Filter } from "./FilterBar";
 import Menu from "./Menu";
+import Bubble, { BubbleBox } from "./Bubble";
+import { bubbleTrigger } from "./bubble-trigger";
 import ListFrame, { ListTable, type ListColumn } from "./ListFrame";
 import NavFold from "./NavFold";
 import FormPending from "./FormPending";
@@ -125,6 +128,100 @@ describe("Menu", () => {
     document.body.click();
     await userEvent.keyboard("{Escape}");
     await expect.element(page.getByText("Inside")).not.toBeVisible();
+  });
+});
+
+describe("Bubble", () => {
+  /** The middle of a box, across. */
+  const middle = (el: Element) => {
+    const box = el.getBoundingClientRect();
+    return box.left + box.width / 2;
+  };
+
+  it("opens under its button, pointing to its middle, inside the window, wherever the button is", async () => {
+    await render(
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <Bubble id="left" label="Left" trigger="look">
+          <p>Words on the left, long enough to want more room than there is beside the button.</p>
+        </Bubble>
+        <Bubble id="right" label="Right" name="On the right">
+          <p>Words on the right, long enough to want more room than there is beside the button.</p>
+        </Bubble>
+      </div>,
+    );
+    expect(page.getByRole("button", { name: "Left" }).element().className).toBe("look");
+    for (const name of ["Left", "On the right"]) {
+      const button = page.getByRole("button", { name }).element();
+      await page.getByRole("button", { name }).click();
+      const bubble = document.querySelector<HTMLElement>(":popover-open")!;
+      await expect.element(bubble).toBeVisible();
+      const pointer = bubble.querySelector("[aria-hidden]")!;
+      expect(Math.abs(middle(pointer) - middle(button))).toBeLessThan(1);
+      const box = bubble.getBoundingClientRect();
+      expect(box.top).toBeGreaterThan(button.getBoundingClientRect().bottom);
+      expect(box.left).toBeGreaterThanOrEqual(0);
+      expect(box.right).toBeLessThanOrEqual(window.innerWidth);
+      await userEvent.keyboard("{Escape}");
+      await expect.element(bubble).not.toBeVisible();
+    }
+  });
+
+  it("opens under what --bubble-under names, its pointer still at its button's middle", async () => {
+    await render(
+      <div style={{ anchorName: "--the-row", "--row": "--the-row" } as React.CSSProperties}>
+        <button type="button" {...bubbleTrigger("under")}>
+          Under
+        </button>
+        <p>The words of the row, under its button</p>
+        <BubbleBox id="under" className="under">
+          <p>Inside</p>
+        </BubbleBox>
+        <style>{".under { --bubble-under: var(--row); }"}</style>
+      </div>,
+    );
+    const button = page.getByRole("button", { name: "Under" }).element();
+    await page.getByRole("button", { name: "Under" }).click();
+    const bubble = document.getElementById("under")!;
+    await expect.element(bubble).toBeVisible();
+    const words = page.getByText("The words of the row, under its button").element().getBoundingClientRect();
+    expect(bubble.getBoundingClientRect().top).toBeGreaterThan(words.bottom);
+    expect(Math.abs(middle(bubble.querySelector("[aria-hidden]")!) - middle(button))).toBeLessThan(1);
+  });
+
+  it("opening with no room under it, scrolls the page to show it whole, its button still in view", async () => {
+    await render(
+      <>
+        <div style={{ height: `${window.innerHeight - 40}px` }} />
+        <Bubble id="low" label="Low">
+          <p style={{ height: "200px" }}>Tall words</p>
+        </Bubble>
+        <div style={{ height: "1000px" }} />
+      </>,
+    );
+    const scrolled = vi.spyOn(window, "scrollBy");
+    await page.getByRole("button", { name: "Low" }).click();
+    await expect.poll(() => scrolled.mock.calls.length).toBe(1);
+    await expect
+      .poll(() => document.getElementById("low")!.getBoundingClientRect().bottom)
+      .toBeLessThanOrEqual(window.innerHeight);
+    expect(page.getByRole("button", { name: "Low" }).element().getBoundingClientRect().top).toBeGreaterThanOrEqual(0);
+    scrolled.mockRestore();
+  });
+
+  it("has a box alone for a button of its own, taking a class for its width", async () => {
+    await render(
+      <>
+        <button type="button" {...bubbleTrigger("own")}>
+          Own
+        </button>
+        <BubbleBox id="own" className="wide">
+          <p>Inside</p>
+        </BubbleBox>
+      </>,
+    );
+    expect(document.getElementById("own")!.classList).toContain("wide");
+    await page.getByRole("button", { name: "Own" }).click();
+    await expect.element(page.getByText("Inside")).toBeVisible();
   });
 });
 

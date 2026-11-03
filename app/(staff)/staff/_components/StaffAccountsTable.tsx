@@ -12,7 +12,7 @@ import { staffTime } from "@/lib/staff-time";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Muted } from "@/components/ui/Text";
 import { DeleteTwice } from "./DeleteTwice";
-import Menu from "./ui/Menu";
+import Bubble from "./ui/Bubble";
 import styles from "./StaffAccountsTable.module.css";
 
 type Action = (form: FormData) => void | Promise<void>;
@@ -40,7 +40,7 @@ function Permissions({ account, save }: { account: StaffAccount; save: Action })
   return (
     <span className={styles.permissionsCell}>
       {account.permissions.length ? account.permissions.map((p) => copy.names[p]).join(", ") : <Muted>–</Muted>}
-      <Menu
+      <Bubble
         id={`permissions-${account.email.replace(/\W/g, "-")}`}
         trigger={buttonClass({ variant: "ghost", size: "small", fit: true })}
         label={copy.edit}
@@ -88,7 +88,7 @@ function Permissions({ account, save }: { account: StaffAccount; save: Action })
             </Button>
           </span>
         </form>
-      </Menu>
+      </Bubble>
     </span>
   );
 }
@@ -135,7 +135,7 @@ export function AddStaff({ accounts, add }: { accounts: StaffAccount[]; add: Act
   };
   const submit = (form: FormData) => add(accountForm(address(form), []));
   return (
-    <Menu id="add-staff" trigger={buttonClass({ variant: "primary", fit: true })} label={copy.addStaff}>
+    <Bubble id="add-staff" trigger={buttonClass({ variant: "primary", fit: true })} label={copy.addStaff}>
       <form action={submit} onSubmit={check} aria-label={copy.addTitle} className={styles.add}>
         <TextInput
           name="email"
@@ -152,7 +152,7 @@ export function AddStaff({ accounts, add }: { accounts: StaffAccount[]; add: Act
           <FieldError announce="alert">{problem === "exists" ? copy.alreadyThere : copy.notPauseai}</FieldError>
         )}
       </form>
-    </Menu>
+    </Bubble>
   );
 }
 

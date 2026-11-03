@@ -102,58 +102,18 @@
   cursor: pointer;
 }
 
-/* The form's bubble: under Edit, its right edge on the answer's, where
-   the browser can anchor it, else in the middle of the window. */
+/* The form's bubble (ui/Bubble), wide enough for its row of answers. On a
+   phone, the width of the screen, less a margin each side, and under the
+   whole row rather than Edit, so the ask stays in view above it, its
+   pointer still up to Edit. */
 .editPopover {
-  max-width: min(28rem, calc(100vw - 2 * var(--space-4)));
-  padding: var(--space-3);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  background: var(--surface);
-  box-shadow: 0 6px 24px rgb(var(--text-rgb) / 0.15);
-  color: var(--text);
+  --bubble-width: 28rem;
 }
 
-@supports (position-area: bottom) {
+@media (max-width: 720px) {
   .editPopover {
-    margin: var(--space-2) 0 0;
-    overflow: visible;
-    position-anchor: var(--under-edit);
-    position-area: bottom span-left;
-  }
-
-  /* Its pointer, up to Edit: a square turned on its corner, its top two
-     sides the bubble's border. */
-  .editPopover::before {
-    position: absolute;
-    top: calc(-1 * var(--space-1) - 1px);
-    right: var(--space-3);
-    width: var(--space-2);
-    height: var(--space-2);
-    border-top: 1px solid var(--border-strong);
-    border-left: 1px solid var(--border-strong);
-    background: var(--surface);
-    content: "";
-    transform: rotate(45deg);
-  }
-
-  /* On a phone, the width of the screen, less a margin each side, rather
-     than only what's left of Edit, and under the whole row, so the ask
-     stays in view above it, its pointer up to the row in the middle. */
-  @media (max-width: 720px) {
-    .editPopover {
-      width: auto;
-      max-width: none;
-      margin-inline: var(--space-4);
-      position-anchor: var(--under-row);
-      position-area: bottom span-all;
-      justify-self: stretch;
-    }
-
-    .editPopover::before {
-      right: auto;
-      left: calc(50% - var(--space-1));
-    }
+    --bubble-width: 100vw;
+    --bubble-under: var(--row-anchor);
   }
 }
 

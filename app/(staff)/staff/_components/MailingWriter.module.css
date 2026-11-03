@@ -118,25 +118,6 @@
   color: var(--accent);
 }
 
-.helpBox {
-  max-width: min(22rem, calc(100vw - 2 * var(--space-4)));
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  background: var(--surface);
-  box-shadow: 0 6px 24px rgb(var(--text-rgb) / 0.15);
-  color: var(--text);
-  font-size: var(--text-sm);
-}
-
-@supports (position-area: bottom) {
-  .helpBox {
-    margin: var(--space-1) 0;
-    position-area: bottom span-right;
-    position-try-fallbacks: flip-inline;
-  }
-}
-
 .label {
   margin: 0 0 var(--space-1);
   font-size: var(--text-sm);

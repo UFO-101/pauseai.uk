@@ -1,7 +1,9 @@
-import { Fragment, type CSSProperties, type ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import IconButton from "@/components/ui/IconButton";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { BubbleBox } from "./ui/Bubble";
+import { bubbleTrigger } from "./ui/bubble-trigger";
 import styles from "./Logged.module.css";
 
 /** Parts of a line, between middle dots. */
@@ -25,18 +27,12 @@ export function DotParts({ children }: { children: ReactNode[] }) {
 export function LoggedJson({ id, details }: { id: string; details: unknown }) {
   return (
     <>
-      <IconButton
-        look="outline"
-        size={28}
-        aria-label={staffCopy.changes.json}
-        popoverTarget={id}
-        style={{ anchorName: `--${id}` } as CSSProperties}
-      >
+      <IconButton look="outline" size={28} aria-label={staffCopy.changes.json} {...bubbleTrigger(id)}>
         {"{}"}
       </IconButton>
-      <pre id={id} popover="auto" className={styles.json} style={{ positionAnchor: `--${id}` } as CSSProperties}>
-        {JSON.stringify(details, null, 2)}
-      </pre>
+      <BubbleBox id={id} className={styles.bubble}>
+        <pre className={styles.json}>{JSON.stringify(details, null, 2)}</pre>
+      </BubbleBox>
     </>
   );
 }

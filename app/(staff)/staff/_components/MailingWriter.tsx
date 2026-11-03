@@ -2,7 +2,7 @@
 
 import type { JSONContent } from "@tiptap/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button, ButtonAnchor } from "@/components/ui/Button";
 import { Select, TextInput } from "@/components/ui/Controls";
 import { Field, Hint, Label } from "@/components/ui/Field";
@@ -39,6 +39,7 @@ import MailingEditor from "./MailingEditor";
 import MailingFiles from "./MailingFiles";
 import { MailingLetter } from "./MailingLetter";
 import Grid, { Card } from "./ui/Grid";
+import Bubble from "./ui/Bubble";
 import NotIcon from "./ui/NotIcon";
 import Strip from "./ui/Strip";
 import styles from "./MailingWriter.module.css";
@@ -109,20 +110,9 @@ function SaveState({ state }: { state: SaveState }) {
 /** A "?" that opens a few words on what the thing beside it is for. */
 function Help({ id, label, children }: { id: string; label: string; children: ReactNode }) {
   return (
-    <>
-      <button
-        type="button"
-        className={styles.help}
-        popoverTarget={id}
-        aria-label={label}
-        style={{ anchorName: `--${id}` } as CSSProperties}
-      >
-        ?
-      </button>
-      <span id={id} popover="auto" className={styles.helpBox} style={{ positionAnchor: `--${id}` } as CSSProperties}>
-        {children}
-      </span>
-    </>
+    <Bubble id={id} label="?" trigger={styles.help} name={label}>
+      {children}
+    </Bubble>
   );
 }
 

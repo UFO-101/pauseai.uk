@@ -21,7 +21,7 @@ import Counts from "./ui/Counts";
 import Grid, { Card } from "./ui/Grid";
 import Progress from "./ui/Progress";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
-import Menu from "./ui/Menu";
+import Bubble from "./ui/Bubble";
 import styles from "./MailingView.module.css";
 
 const copy = staffCopy.mailingPages;
@@ -102,12 +102,12 @@ function recipientColumns(mailing: Mailing): ListColumn<MailingRecipient>[] {
   ];
 }
 
-/** Change the time: a button with a small form of the day and hour, in London, hung from it. */
+/** Change the time: a button with a small form of the day and hour, in London, in a bubble under it. */
 function ChangeTime({ mailing, action }: { mailing: WrittenMailing; action: FormAction }) {
   return (
-    <Menu id="change-time" trigger={buttonClass({ variant: "ghost", fit: true })} label={copy.changeTime}>
+    <Bubble id="change-time" trigger={buttonClass({ variant: "ghost", fit: true })} label={copy.changeTime}>
       <ChangeTimeForm id={mailing.id} dueAt={mailing.dueAt!} action={action} className={styles.changeTime} />
-    </Menu>
+    </Bubble>
   );
 }
 

@@ -1,0 +1,56 @@
+/* A bubble: over the page, a card's border and shadow, as wide as
+   --bubble-width at most and never wider than the window's margins allow;
+   something long scrolls inside it. */
+.bubble {
+  box-sizing: border-box;
+  max-width: min(var(--bubble-width, 22rem), calc(100vw - 2 * var(--space-4)));
+  max-height: calc(100dvh - 2 * var(--space-4));
+  padding: var(--space-3) var(--space-4);
+  overflow: auto;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: 0 6px 24px rgb(var(--text-rgb) / 0.15);
+  color: var(--text);
+  font-size: var(--text-sm);
+}
+
+/* Where the browser can't anchor it, it has no pointer, as it's in the
+   middle of the window. */
+.pointer {
+  display: none;
+}
+
+/* Under its button (--bubble-anchor), or what --bubble-under names, across
+   the window but for its margins, centred on the button as far as the
+   margins let it: so at any width, and wherever the button is, it stays in
+   the window. Its top is set from the anchor's bottom rather than by
+   position-area, which some browsers would move up over the button where
+   there's no room below; the page scrolls instead (Bubble.tsx). */
+@supports (position-area: bottom) {
+  .bubble {
+    position-anchor: var(--bubble-anchor);
+    inset: calc(anchor(var(--bubble-under, var(--bubble-anchor)) bottom) + var(--space-2)) 0 auto;
+    max-height: none;
+    margin: 0 var(--space-4);
+    justify-self: anchor-center;
+  }
+
+  /* The pointer: a square turned on its corner, its top two sides the
+     bubble's border, set on the window by the button's middle, so it
+     points to it wherever the bubble has had to go. Fixed, so the bubble's
+     scrolling doesn't cut it off. */
+  .pointer {
+    display: block;
+    position: fixed;
+    position-anchor: var(--bubble-anchor);
+    top: calc(anchor(var(--bubble-under, var(--bubble-anchor)) bottom) + var(--space-1));
+    left: calc(anchor(center) - var(--space-1));
+    width: var(--space-2);
+    height: var(--space-2);
+    border-top: 1px solid var(--border-strong);
+    border-left: 1px solid var(--border-strong);
+    background: var(--surface);
+    transform: rotate(45deg);
+  }
+}

@@ -12,6 +12,8 @@ import type { Ask } from "@/lib/server/asks";
 import type { Politician } from "@/lib/server/politicians";
 import { staffDate } from "@/lib/staff-time";
 import { AskLead } from "./AskLine";
+import { BubbleBox } from "./ui/Bubble";
+import { bubbleTrigger } from "./ui/bubble-trigger";
 import Menu from "./ui/Menu";
 import styles from "./Details.module.css";
 
@@ -59,9 +61,6 @@ export function AskRows({ children }: { children: ReactNode }) {
   return <div className={styles.asks}>{children}</div>;
 }
 
-/** Pixels kept clear between an ask just opened and the window's edge, when it's scrolled to. */
-const SCROLL_MARGIN = 16;
-
 /** Answers that are a yes, ticked in green, and a no, crossed. */
 const YES = ["signed", "going"];
 const NO = ["declined", "declined_surgery"];
@@ -96,13 +95,9 @@ export default function AskRow({
   const row = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
-    const bubble = popover.current!;
-    bubble.showPopover();
-    // On the page, the row and its bubble under it, as much as fits with the row's top in view.
+    // On the page, the row, then its bubble under it, as much as fits with the row's top in view (BubbleBox's keep).
     row.current!.scrollIntoView({ block: "nearest" });
-    const below = bubble.getBoundingClientRect().bottom + SCROLL_MARGIN - window.innerHeight;
-    const above = row.current!.getBoundingClientRect().top - SCROLL_MARGIN;
-    if (below > 0) window.scrollBy(0, Math.min(below, above));
+    popover.current!.showPopover();
   }, [open]);
   useEffect(() => {
     const bubble = popover.current;
@@ -119,7 +114,8 @@ export default function AskRow({
       className={styles.ask}
       role="group"
       aria-label={ask.title}
-      style={{ anchorName: `--row-${ask.slug}` } as CSSProperties}
+      // What its bubble opens under on a phone (Details.module.css).
+      style={{ anchorName: `--row-${ask.slug}`, "--row-anchor": `--row-${ask.slug}` } as CSSProperties}
     >
       <div className={styles.asked}>
         <AskLead ask={ask} />
@@ -134,29 +130,22 @@ export default function AskRow({
         <span>{status ? staffCopy.statuses[status.status] : staffCopy.statuses.noAnswer}</span>
         {status?.date && <span className={styles.askMeta}>{staffDate(status.date)}</span>}
         {byHand && (
-          <button
-            type="button"
-            className={styles.edit}
-            popoverTarget={editId}
-            style={{ anchorName: `--${editId}` } as CSSProperties}
-          >
+          <button type="button" className={styles.edit} {...bubbleTrigger(editId)}>
             {copy.edit}
           </button>
         )}
       </div>
       {byHand && (
         // Keyed on the answer, so a change made from it closes it and empties the note.
-        <div
+        <BubbleBox
           key={status?.updatedAt ?? "none"}
           ref={popover}
+          keep={row}
           id={editId}
-          popover="auto"
           className={styles.editPopover}
-          // Under Edit, or on a phone under the whole row (Details.module.css).
-          style={{ "--under-edit": `--${editId}`, "--under-row": `--row-${ask.slug}` } as CSSProperties}
         >
           <AnswerForm politician={politician} ask={ask} setStatus={setStatus} />
-        </div>
+        </BubbleBox>
       )}
     </div>
   );

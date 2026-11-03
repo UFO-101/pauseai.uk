@@ -493,8 +493,8 @@ one underlined: the politicians' houses. A list has at most one row of
 tabs, for the one choice people make most.
 
 **Popovers, not modals.** Anything a button opens, a menu, a small form or
-a "?"'s few words, is a bubble hung from that button (`ui/Menu`, or a
-popover anchored to its button the same way), so it opens where the person
+a "?"'s few words, is a bubble hung from that button (`ui/Bubble`, or
+`ui/Menu` for a list of choices), so it opens where the person
 is looking and the page stays in view around it. Never a box in the middle
 of the window: it takes them away from what they were doing, and hides
 what they'd want to check against. A browser too old to anchor one shows
@@ -508,6 +508,19 @@ in a bubble hung from the button, over the table, with Save and Cancel
 turns into its form: the cells would change size, and the whole table
 jump. A small form that's always in its row, such as Unblock, moves
 nothing and stays there.
+
+**A bubble you click open to work in or read has a pointer up to its
+button** (`ui/Bubble`). One that holds a form, or a few words on the
+thing beside it, is a small dialog: an Edit, Add staff, Change time, a
+"?", a {}. Its pointer says what it belongs to, which matters most where
+the same button is down every row, as {} is down a history. It points to
+its button's middle at any width, the bubble kept inside the window's
+margins, on a phone too. Anything that is a control opened out has none
+(`ui/Menu`): a dropdown of choices, or a date picker's calendar, which is
+the field's own, not something about the thing beside it. Nor has a
+tooltip that comes and goes with the pointer. On staff pages that's the
+rule; on the public pages, which each have their own look, it's only a
+guide.
 
 **JSON from the database is shown in words** (`Logged.tsx`). A column of
 details stored as JSON, as the audit log's and a letter's history are,
