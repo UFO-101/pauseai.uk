@@ -28,10 +28,16 @@ test("Fold the sidebar to icons", { tag: "@desktop-only" }, async ({ page, flowD
   expect(await heights()).toEqual(open);
   await frame(page, "folded: a rail of icons, each where it was, the sections a rule apart, and the list wider");
 
-  // Tabbed to, as the frame moves the mouse away: a hover shows the same.
+  // Tabbed to, as the frame moves the mouse away: a hover shows the same. The label shows only while the page
+  // has the focus, which a busy run can leave elsewhere, so it's brought to the front, and the label waited for.
+  await page.bringToFront();
   await nav.getByRole("link", { name: staffCopy.nav.home }).focus();
   await page.keyboard.press("Tab");
-  await expect(nav.getByRole("link", { name: staffCopy.nav.supporters })).toBeFocused();
+  const supporters = nav.getByRole("link", { name: staffCopy.nav.supporters });
+  await expect(supporters).toBeFocused();
+  await expect
+    .poll(() => supporters.locator("[class*=label]").evaluate((l) => l.getBoundingClientRect().width))
+    .toBeGreaterThan(1);
   await frame(page, "a page's name beside its icon, tabbed to or hovered over");
 
   await nav.getByRole("link", { name: staffCopy.nav.supporters }).click();
