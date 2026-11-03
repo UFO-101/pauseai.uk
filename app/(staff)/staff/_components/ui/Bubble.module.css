@@ -24,16 +24,16 @@
 /* Under its button (--bubble-anchor), or what --bubble-under names, across
    the window but for its margins, centred on the button as far as the
    margins let it: so at any width, and wherever the button is, it stays in
-   the window. Never flipped above, so the pointer is always on its top
-   edge. */
+   the window. Its top is set from the anchor's bottom rather than by
+   position-area, which some browsers would move up over the button where
+   there's no room below; the page scrolls instead (Bubble.tsx). */
 @supports (position-area: bottom) {
   .bubble {
-    position-anchor: var(--bubble-under, var(--bubble-anchor));
+    position-anchor: var(--bubble-anchor);
+    inset: calc(anchor(var(--bubble-under, var(--bubble-anchor)) bottom) + var(--space-2)) 0 auto;
     max-height: none;
-    margin: var(--space-2) var(--space-4) 0;
-    position-area: bottom span-all;
+    margin: 0 var(--space-4);
     justify-self: anchor-center;
-    position-try-fallbacks: none;
   }
 
   /* The pointer: a square turned on its corner, its top two sides the

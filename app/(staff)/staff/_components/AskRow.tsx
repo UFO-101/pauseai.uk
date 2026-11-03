@@ -60,9 +60,6 @@ export function AskRows({ children }: { children: ReactNode }) {
   return <div className={styles.asks}>{children}</div>;
 }
 
-/** Pixels kept clear between an ask just opened and the window's edge, when it's scrolled to. */
-const SCROLL_MARGIN = 16;
-
 /** Answers that are a yes, ticked in green, and a no, crossed. */
 const YES = ["signed", "going"];
 const NO = ["declined", "declined_surgery"];
@@ -97,13 +94,9 @@ export default function AskRow({
   const row = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
-    const bubble = popover.current!;
-    bubble.showPopover();
-    // On the page, the row and its bubble under it, as much as fits with the row's top in view.
+    // On the page, the row, then its bubble under it, as much as fits with the row's top in view (BubbleBox's keep).
     row.current!.scrollIntoView({ block: "nearest" });
-    const below = bubble.getBoundingClientRect().bottom + SCROLL_MARGIN - window.innerHeight;
-    const above = row.current!.getBoundingClientRect().top - SCROLL_MARGIN;
-    if (below > 0) window.scrollBy(0, Math.min(below, above));
+    popover.current!.showPopover();
   }, [open]);
   useEffect(() => {
     const bubble = popover.current;
@@ -143,7 +136,13 @@ export default function AskRow({
       </div>
       {byHand && (
         // Keyed on the answer, so a change made from it closes it and empties the note.
-        <BubbleBox key={status?.updatedAt ?? "none"} ref={popover} id={editId} className={styles.editPopover}>
+        <BubbleBox
+          key={status?.updatedAt ?? "none"}
+          ref={popover}
+          keep={row}
+          id={editId}
+          className={styles.editPopover}
+        >
           <AnswerForm politician={politician} ask={ask} setStatus={setStatus} />
         </BubbleBox>
       )}

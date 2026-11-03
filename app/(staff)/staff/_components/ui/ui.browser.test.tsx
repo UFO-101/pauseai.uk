@@ -187,6 +187,26 @@ describe("Bubble", () => {
     expect(Math.abs(middle(bubble.querySelector("[aria-hidden]")!) - middle(button))).toBeLessThan(1);
   });
 
+  it("opening with no room under it, scrolls the page to show it whole, its button still in view", async () => {
+    await render(
+      <>
+        <div style={{ height: `${window.innerHeight - 40}px` }} />
+        <Bubble id="low" label="Low">
+          <p style={{ height: "200px" }}>Tall words</p>
+        </Bubble>
+        <div style={{ height: "1000px" }} />
+      </>,
+    );
+    const scrolled = vi.spyOn(window, "scrollBy");
+    await page.getByRole("button", { name: "Low" }).click();
+    await expect.poll(() => scrolled.mock.calls.length).toBe(1);
+    await expect
+      .poll(() => document.getElementById("low")!.getBoundingClientRect().bottom)
+      .toBeLessThanOrEqual(window.innerHeight);
+    expect(page.getByRole("button", { name: "Low" }).element().getBoundingClientRect().top).toBeGreaterThanOrEqual(0);
+    scrolled.mockRestore();
+  });
+
   it("has a box alone for a button of its own, taking a class for its width", async () => {
     await render(
       <>
