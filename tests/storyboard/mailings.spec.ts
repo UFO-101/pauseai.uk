@@ -7,9 +7,9 @@ import { stayOnPage } from "./staff-steps";
 import { scrollSettled } from "./settle";
 
 // Mailings to politicians written on the site: started from New mailing,
-// who it's for chosen on the politicians list, written and saved as a
-// draft, previewed and sent to yourself as a test; who it's to changed
-// from the list, and a draft deleted; one sent
+// who it's for ticked on the politicians list, written, previewed and sent
+// to yourself as a test; one started from the list's filter, who it's to
+// changed from the list, and deleted; names pasted to tick; one sent
 // from your Gmail, connected from the page, scheduled and sent by the
 // hourly job; and the pages of mailings scheduled, sending and sent, made in
 // the database as scheduling would make them.
@@ -24,13 +24,16 @@ async function logIn(page: Page, database: string) {
   return logInAsStaff(page, BASE, staffEmail());
 }
 
-/** Starts a mailing to every politician in office, and writes enough of it to be kept. */
-async function startDraft(page: Page, subject: string) {
-  await page.goto(`${BASE}/staff/politicians`);
-  await page.getByRole("link", { name: /Mail these/ }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.newTitle);
-  await page.getByLabel(copy.subject).fill(subject);
-  await expect(page.getByRole("status").first()).toHaveText(copy.savePill.saved);
+/**
+ * Starts a mailing from the politicians list at `filters`, with everyone
+ * they find, `n`, ticked, and goes on to write it.
+ */
+async function startFromList(page: Page, filters: string, n: number) {
+  await page.goto(`${BASE}/staff/politicians?${filters}`);
+  await page.getByRole("button", { name: copy.newTitle }).click();
+  await expect(page.getByText(copy.choosingNew)).toBeVisible();
+  const bar = page.getByRole("region", { name: copy.choosingCount(n) });
+  await bar.getByRole("link", { name: copy.writeToThese(n) }).click();
   await expect(page).toHaveURL(/\/staff\/mailings\/\d+$/);
 }
 
@@ -80,11 +83,12 @@ test("A new mailing", async ({ page, request, flowDatabase }) => {
   await page.goto(`${BASE}/staff/mailings`);
   await frame(page, "The mailings page");
   story(
-    "New mailing opens the politicians list, to choose who it's for. Down the list, what they're doing stays at the top of the window, and the way on at the foot.",
+    "New mailing makes a draft, and opens the politicians list to tick who it's for, a box on each row. Down the list, what they're doing stays at the top of the window, and the way on at the foot.",
   );
 
-  await page.getByRole("link", { name: copy.newTitle }).click();
+  await page.getByRole("button", { name: copy.newTitle }).click();
   await expect(page.getByText(copy.choosingNew)).toBeVisible();
+  await expect(page.getByText(copy.noneTicked)).toBeVisible();
   // It opens at the top, as a page does, though the strip is held there.
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
   // Down the list, what's being done stays at the top, and the way on at the foot.
@@ -92,19 +96,22 @@ test("A new mailing", async ({ page, request, flowDatabase }) => {
   await frame(page, "Every politician, scrolled down", {
     window: true,
   });
-  story("They choose the Scottish Parliament. The bar at the foot says how many that is, with Write to this one.");
+  story(
+    "They choose the Scottish Parliament and tick Morag Example. The bar at the foot says how many are ticked, with Write to this one.",
+  );
   await page.getByRole("link", { name: staffCopy.houses["scottish-parliament"] }).click();
   await expect(page).toHaveURL(/house=scottish-parliament/);
+  await page.getByRole("checkbox", { name: copy.tick("Morag Example") }).check();
   const bar = page.getByRole("region", { name: copy.choosingCount(1) });
   await expect(bar).toBeVisible();
-  await frame(page, "The politicians list, filtered", {
+  await frame(page, "The politicians list, one ticked", {
     window: true,
   });
-  story("Write to this one opens a new mailing to them. Nothing is saved yet.");
+  story("Write to this one opens the draft, to Morag Example, ready to write.");
 
   await bar.getByRole("link", { name: copy.writeToThese(1) }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.newTitle);
-  await expect(page.getByRole("status").first()).toHaveText("");
+  await expect(page.getByRole("list", { name: copy.whoLabel })).toHaveText("Morag Example");
   await frame(page, "The new mailing");
   story(
     "They write a subject, and a line under the greeting. The mailing is saved as a draft, and the preview shows the email as Morag Example will get it.",
@@ -144,11 +151,18 @@ test("A new mailing", async ({ page, request, flowDatabase }) => {
 
 test("Changing and deleting a draft", async ({ page, request, flowDatabase }) => {
   story(
-    "Staff start a draft to every politician in office, then press Change who. The draft is saved, and the button waits while the politicians list comes.",
+    "On the politicians list, staff choose the Lords and press New mailing: everyone the list finds is ticked for it.",
   );
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
-  await startDraft(page, "Lords only");
+  await page.goto(`${BASE}/staff/politicians?house=lords`);
+  await frame(page, "The Lords");
+  story(
+    "They write the draft's subject, then press Change who. The draft is saved, and the button waits while the politicians list comes.",
+  );
+  await startFromList(page, "house=lords", 1);
+  await page.getByLabel(copy.subject).fill("Lords only");
+  await expect(page.getByRole("status").first()).toHaveText(copy.savePill.saved);
   // The list kept from coming, so the button can be seen waiting for it.
   const list = await stayOnPage(page, /\/staff\/politicians/);
   const changeWho = page.getByRole("link", { name: copy.changeWho });
@@ -157,24 +171,38 @@ test("Changing and deleting a draft", async ({ page, request, flowDatabase }) =>
   await frame(page, "Change who, waiting", {
     window: true,
   });
-  story(
-    "The list names the draft at the top. They choose the Lords, and the bar's button uses them for the draft instead.",
-  );
+  story("The list opens on the tab of those ticked, the draft named at the top.");
   await page.goto(await list.asked());
-  await expect(page).toHaveURL(/mailing=\d+/);
+  await expect(page).toHaveURL(/mailing=\d+&tab=ticked/);
   await expect(page.getByText(copy.choosingDraft("Lords only"))).toBeVisible();
-  await page.getByRole("link", { name: staffCopy.houses.lords }).click();
-  await expect(page).toHaveURL(/house=lords/);
-  const use = page.getByRole("button", { name: copy.useThese(1) });
-  await expect(use).toBeVisible();
-  await frame(page, "The politicians list, for the draft", {
+  await expect(page.getByRole("checkbox", { name: copy.tick("Lord Seedling of Example") })).toBeChecked();
+  await frame(page, "The ticked tab", {
     window: true,
   });
-  story("The draft now goes to the Lords.");
+  story("They search for Polly and tick her too: two ticked.");
 
-  await use.click();
+  await page.getByRole("link", { name: staffCopy.politicians.allHouses }).click();
+  await page.getByRole("searchbox").fill("Polly");
+  await page.getByRole("button", { name: staffCopy.search }).click();
+  await expect(page).toHaveURL(/q=Polly/);
+  await page.getByRole("checkbox", { name: copy.tick("Polly Placeholder") }).check();
+  const two = page.getByRole("region", { name: copy.choosingCount(2) });
+  await expect(two.getByRole("link", { name: copy.useThese(2) })).toBeVisible();
+  await frame(page, "Polly ticked", { window: true });
+  story("They change their minds: Clear all ticks starts again, with no one ticked.");
+
+  await two.getByRole("button", { name: copy.untickAll }).click();
+  await expect(page.getByText(copy.noneTicked)).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: copy.tick("Polly Placeholder") })).not.toBeChecked();
+  await frame(page, "No one ticked", { window: true });
+  story("They tick Polly alone, and the bar's button goes back to the draft, which now names her.");
+  await page.getByRole("checkbox", { name: copy.tick("Polly Placeholder") }).check();
+  await page
+    .getByRole("region", { name: copy.choosingCount(1) })
+    .getByRole("link", { name: copy.useThese(1) })
+    .click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Lords only");
-  await expect(page.getByRole("list", { name: copy.whoLabel })).toContainText(staffCopy.houses.lords);
+  await expect(page.getByRole("list", { name: copy.whoLabel })).toHaveText("Polly Placeholder");
   await frame(page, "The draft");
   story("Delete draft asks to be pressed again.");
 
@@ -186,6 +214,65 @@ test("Changing and deleting a draft", async ({ page, request, flowDatabase }) =>
   await expect(page).toHaveURL(`${BASE}/staff/mailings`);
   await expect(page.getByRole("link", { name: "Lords only" })).toHaveCount(0);
   await frame(page, "The mailings page");
+});
+
+test("Pasting names", async ({ page, request, flowDatabase }) => {
+  story("On the Commons, staff press New mailing: all three MPs it finds are ticked, and the box over them too.");
+  await syncPoliticians(request, BASE);
+  await logIn(page, flowDatabase);
+  await page.goto(`${BASE}/staff/politicians?house=commons`);
+  await page.getByRole("button", { name: copy.newTitle }).click();
+  await expect(page.getByText(copy.choosingNew)).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: copy.tickAll(3) })).toBeChecked();
+  await frame(page, "The Commons, all ticked", { window: true });
+  story(
+    "Paste names, in the bar, opens a box above it. They paste a row copied from the list, a constituency, and a name with a typo.",
+  );
+
+  await page.getByRole("button", { name: copy.pasteNames }).click();
+  // Typed into at once.
+  await expect(page.getByRole("textbox", { name: copy.pasteLabel })).toBeFocused();
+  await page
+    .getByRole("textbox", { name: copy.pasteLabel })
+    .fill(
+      [
+        "Polly Placeholder\tHouse of Commons\tCities of London and Westminster\tLabour (Co-op)",
+        "Exampleshire North",
+        "Ms Dora Dumy",
+      ].join("\n"),
+    );
+  await frame(page, "Paste names", { window: true });
+  story(
+    "Find these opens the Paste names tab: a row for each person found, and why. Polly is found by her name, Morag Example by her constituency, and Dora by the name nearest the typo. Morag isn't ticked yet.",
+  );
+
+  await page.getByRole("button", { name: copy.pasteTick }).click();
+  const pasted = page.getByRole("region", { name: copy.pastedTitle });
+  await expect(pasted).toBeVisible();
+  await expect(page.getByRole("link", { name: copy.pastedTab })).toHaveAttribute("aria-current", "page");
+  await expect(pasted.getByRole("checkbox", { name: copy.tick("Morag Example") })).not.toBeChecked();
+  await frame(page, "The Paste names tab", { window: true });
+  story("The box over them ticks everyone found: four ticked.");
+
+  await pasted.getByRole("checkbox", { name: copy.pastedTickAll(3) }).check();
+  await expect(page.getByRole("region", { name: copy.choosingCount(4) })).toBeVisible();
+  await frame(page, "Everyone found ticked", { window: true });
+  story("On the Ticked tab, they untick Mo Example: three left.");
+
+  await page.getByRole("link", { name: `${copy.pickedTab} 4` }).click();
+  await page.getByRole("checkbox", { name: copy.tick("Mo Example") }).uncheck();
+  await expect(page.getByRole("region", { name: copy.choosingCount(3) })).toBeVisible();
+  await frame(page, "The ticked tab", { window: true });
+  story(
+    "Write to these 3 opens the draft. It says who it's to as the Commons, as found on the day, plus Morag Example, except Mo Example.",
+  );
+
+  await page.getByRole("link", { name: copy.writeToThese(3) }).click();
+  const who = page.getByRole("list", { name: copy.whoLabel });
+  await expect(who).toContainText(copy.pickedFrom("16 Oct 2026", 3));
+  await expect(who).toContainText(copy.pickedPlus("Morag Example"));
+  await expect(who).toContainText(copy.pickedExcept("Mo Example"));
+  await frame(page, "The draft");
 });
 
 test("Rescheduling a mailing", async ({ page, request, flowDatabase }) => {
@@ -318,8 +405,7 @@ test("Sending from your Gmail", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   // With no Gmail connected, a mailing can't be sent, and Sent from says where to connect one.
-  await page.goto(`${BASE}/staff/politicians?nation=scotland`);
-  await page.getByRole("link", { name: copy.mailThese(1) }).click();
+  await startFromList(page, "nation=scotland", 1);
   const from = page.getByRole("region", { name: copy.sections.from });
   await expect(from.getByText(copy.noSenders)).toBeVisible();
   await frame(page, "Sent from, with no Gmail");
@@ -331,8 +417,7 @@ test("Sending from your Gmail", async ({ page, request, flowDatabase }) => {
   await from.getByRole("link", { name: copy.connectOne }).click();
   await page.getByRole("link", { name: staffCopy.gmail.connect }).click();
   await expect(page.getByText(staffCopy.gmail.outcomes.connected)).toBeVisible();
-  await page.goto(`${BASE}/staff/politicians?nation=scotland`);
-  await page.getByRole("link", { name: copy.mailThese(1) }).click();
+  await startFromList(page, "nation=scotland", 1);
   await page.getByLabel(copy.subject).fill("See you in Edinburgh");
   await page.getByRole("textbox", { name: copy.letter }).click();
   await page.keyboard.press("Control+End");

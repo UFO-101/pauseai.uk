@@ -18,7 +18,8 @@ import { gmailAccount } from "./gmail-accounts";
 import { gmailEmail, mailingChannel, postmarkEmail, type ChannelResult } from "./mailing-channels";
 import { politicianAudience, type PoliticianRecipient } from "./mailing-recipients";
 import type { Attachment } from "./outside-services/postmark";
-import type { StoredFilter } from "@/lib/staff-search";
+import { mailingPoliticians, politiciansSearch } from "./politicians";
+import { storedFilter, type Params, type Picked, type StoredFilter } from "@/lib/staff-search";
 import { checkStoredFilter, filterProblems } from "./stored-filters";
 
 // A mailing written on the site: a draft from the first change worth
@@ -130,6 +131,83 @@ export async function createDraft(
     await logChange(by, "create mailing", { id }, db);
     return { id, version: 1 };
   });
+}
+
+/** Who's ticked for a mailing: its ticks, or, for one from before ticks, everyone its filter finds now. */
+async function pickedIds(filter: StoredFilter): Promise<number[]> {
+  if (filter.picked) return filter.picked.ids;
+  return (await mailingPoliticians(politiciansSearch(filter.params).filter)).map((politician) => politician.id);
+}
+
+/** Those the politicians list's `params` find, every page of them, by ID. */
+export async function foundIds(params: Params): Promise<number[]> {
+  return (await mailingPoliticians(politiciansSearch(params).filter)).map((politician) => politician.id);
+}
+
+/**
+ * Ticks for a mailing: `ids`, and, when they're everyone the list's
+ * `params` found, that filter, now, and who it found.
+ */
+export function picksOf(ids: number[], params?: Params): StoredFilter & { list: "politicians" } {
+  const picked: Picked = { ids };
+  if (params) picked.from = { params: storedFilter("politicians", params).params, at: now().toISOString(), found: ids };
+  return { list: "politicians", params: {}, picked };
+}
+
+/**
+ * A change to who's ticked for a draft: those to tick, those to untick;
+ * or, ticking everyone the list's `found` filter finds, that filter, which
+ * the mailing then says who it's to by; or, with `clear`, no one, and no
+ * filter, to start again.
+ */
+export type PickChange = { tick?: number[]; untick?: number[]; found?: Params; clear?: boolean };
+
+/**
+ * Changes who's ticked for a draft, which counts as a save; a draft from
+ * before ticks has everyone its filter finds ticked first. Says whether it
+ * changed: not for one that's gone or no longer a draft.
+ */
+export async function changePicks(id: number, change: PickChange): Promise<boolean> {
+  return transaction(async (db) => {
+    const [row] = await query<{ filter: unknown }>(
+      "SELECT filter FROM mailings WHERE id = $1 AND state = 'draft' AND body IS NOT NULL FOR UPDATE",
+      [id],
+      db,
+    );
+    if (!row) return false;
+    const filter = checkStoredFilter(row.filter)!;
+    const ids = new Set(change.clear ? [] : await pickedIds(filter));
+    const found = change.found && (await foundIds(change.found));
+    for (const one of [...(change.tick ?? []), ...(found ?? [])]) ids.add(one);
+    for (const one of change.untick ?? []) ids.delete(one);
+    const picks = found ? picksOf(found, change.found) : picksOf([]);
+    picks.picked!.ids = [...ids];
+    if (!found && !change.clear && filter.picked?.from) picks.picked!.from = filter.picked.from;
+    await query(
+      "UPDATE mailings SET filter = $2, version = version + 1, updated_at = now() WHERE id = $1",
+      [id, JSON.stringify(picks)],
+      db,
+    );
+    return true;
+  });
+}
+
+/**
+ * The draft the politicians list is choosing for: its ID, its title, whether
+ * nothing's been written in it yet, as a new mailing's, and who's ticked.
+ */
+export type Choosing = { id: number; title: string; blank: boolean; ticked: number[] };
+
+/** The draft the politicians list's `mailing` parameter names; undefined for none, or one no longer a draft. */
+export async function choosingFor(mailing: string): Promise<Choosing | undefined> {
+  const draft = /^\d+$/.test(mailing) ? await getWrittenMailing(Number(mailing)) : undefined;
+  if (draft?.state !== "draft") return undefined;
+  return {
+    id: draft.id,
+    title: draft.subject || staffCopy.mailingPages.untitled,
+    blank: !draft.subject && isBlankMailing(draft.body) && draft.attachments.length === 0,
+    ticked: await pickedIds(draft.filter),
+  };
 }
 
 /** A mailing written here, as stored; undefined for none, or one imported from Airtable. */

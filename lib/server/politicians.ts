@@ -2,16 +2,7 @@ import "server-only";
 import type { AskStatus } from "@/lib/asks";
 import type { Mp, MpStatuses } from "@/lib/email-your-mp";
 import { parseSort, type SortSpec } from "@/lib/staff-sort";
-import {
-  among,
-  anyAndNone,
-  firstOf,
-  NEW_MAILING,
-  notOf,
-  pageNumber,
-  valuesOf,
-  type ParamValue,
-} from "@/lib/staff-search";
+import { among, anyAndNone, firstOf, notOf, pageNumber, valuesOf, type ParamValue } from "@/lib/staff-search";
 import { POLITICIAN_COLUMNS, POLITICIAN_SORTS, type PoliticianSort } from "@/lib/politician-sort";
 import {
   COUNTRIES,
@@ -159,6 +150,8 @@ type NegatablePoliticianFilter = "party" | "flags" | "country" | "email" | "mail
 
 /** Who the politicians list shows. */
 export type PoliticianWho = {
+  /** Only these, by ID. */
+  ids?: number[];
   /** Every word is in their name, constituency, party or email. */
   search?: string;
   house?: House;
@@ -208,11 +201,16 @@ export type PoliticiansSearch = {
   sort: string;
   dir: string;
   page: string;
-  /**
-   * Who the list is choosing for: a draft mailing's ID, after its Change who,
-   * or NEW_MAILING, for a new one. The list's bar then takes who it finds.
-   */
+  /** Who the list is choosing for: a draft mailing's ID. Its rows can then be ticked, for the mailing. */
   mailing: string;
+  /**
+   * While choosing, the tab after the houses: "ticked", only those ticked,
+   * in place of what the filters find; "pasted", the lines of names pasted
+   * and who each found. Blank for the list.
+   */
+  tab: string;
+  /** While choosing, the lines of names pasted, to show on the pasted tab. */
+  pasted: string[];
 };
 
 /**
@@ -225,12 +223,12 @@ export type PoliticiansSearch = {
 export function politiciansSearch(params: Partial<Record<keyof PoliticiansSearch, ParamValue>>): PoliticiansSearch & {
   filter: PoliticianFilter;
 } {
-  const [q, house, status, ask, answer, sort, dir, page, mailing] = (
-    ["q", "house", "status", "ask", "answer", "sort", "dir", "page", "mailing"] as const
+  const [q, house, status, ask, answer, sort, dir, page, mailing, tab] = (
+    ["q", "house", "status", "ask", "answer", "sort", "dir", "page", "mailing", "tab"] as const
   ).map((name) => firstOf(params[name]));
-  const [party, flag, nation, email, mailed] = (["party", "flag", "nation", "email", "mailed"] as const).map((name) =>
-    valuesOf(params[name]),
-  );
+  const [party, flag, nation, email, mailed, pasted] = (
+    ["party", "flag", "nation", "email", "mailed", "pasted"] as const
+  ).map((name) => valuesOf(params[name]));
   const [parties, notParties] = anyAndNone(party, (values) => values);
   const [flags, notFlags] = anyAndNone(flag, (values) => among(values, POLITICIAN_FLAGS));
   const [countries, notCountries] = anyAndNone(nation, (values) => among(values, COUNTRIES));
@@ -271,7 +269,9 @@ export function politiciansSearch(params: Partial<Record<keyof PoliticiansSearch
     sort,
     dir,
     page,
-    mailing: /^\d+$/.test(mailing) || mailing === NEW_MAILING ? mailing : "",
+    mailing: /^\d+$/.test(mailing) ? mailing : "",
+    tab: tab === "ticked" || tab === "pasted" ? tab : "",
+    pasted,
     filter,
   };
 }
@@ -318,6 +318,7 @@ function anyOf(filter: Pick<PoliticianWho, NegatablePoliticianFilter>, value: (v
  */
 function politicianWhere(filter: PoliticianWho, value: (v: unknown) => string, closest = false): string {
   const where: string[] = [];
+  if (filter.ids) where.push(`n.id = ANY(${value(filter.ids)}::bigint[])`);
   if (filter.search && !closest) {
     where.push(
       everyWord(filter.search, value, (like) =>
@@ -423,22 +424,192 @@ export async function countPoliticians(filter: PoliticianFilter): Promise<number
 /**
  * For a search that finds no one: the politicians `filter`'s other filters
  * find whose name or constituency is nearest what was typed, nearest first,
- * leaving out any not near enough.
+ * leaving out any not as near as `enough`; with `namesOnly`, by name alone.
  */
 export async function closestPoliticians(
   filter: PoliticianFilter & { search: string },
   limit = 5,
+  enough = CLOSE_ENOUGH,
+  namesOnly = false,
 ): Promise<Politician[]> {
   const [values, value] = parameters();
   const text = value(filter.search);
-  const near = `greatest(${closeness("n.name", text)}, ${closeness("p.constituency", text)})`;
+  const near = namesOnly
+    ? closeness("n.name", text)
+    : `greatest(${closeness("n.name", text)}, ${closeness("p.constituency", text)})`;
   const where = politicianWhere(filter, value, true);
   const rows = await query<Row>(
-    `${SELECT_POLITICIANS} ${where ? `${where} AND` : "WHERE"} ${near} >= ${CLOSE_ENOUGH}
+    `${SELECT_POLITICIANS} ${where ? `${where} AND` : "WHERE"} ${near} >= ${value(enough)}
      GROUP BY n.id, p.id ORDER BY ${near} DESC, n.name LIMIT ${value(limit)}`,
     values,
   );
   return rows.map(toPolitician);
+}
+
+/** The names of the politicians with these IDs, by ID: none for one there's no such politician. */
+export async function politicianNames(ids: number[]): Promise<Record<number, string>> {
+  const rows = await query<{ id: number; name: string }>(
+    `SELECT n.id::int AS id, n.name FROM ${POLITICIANS} WHERE n.id = ANY($1::bigint[])`,
+    [ids],
+  );
+  return Object.fromEntries(rows.map((row) => [row.id, row.name]));
+}
+
+/** Who a pasted name is looked for among: those in office, not the test politicians. */
+const PASTE_AMONG: PoliticianFilter = { status: "in_office", not: { flags: ["test"] } };
+
+/**
+ * Words in a line pasted that aren't the name: a bullet or number before
+ * it, anything in brackets, titles, and the letters after a member's name.
+ */
+const NOT_NAME = [
+  /^\s*(?:[-*•·–]|\d+[.)])\s*/,
+  /\([^)]*\)/g,
+  /\b(?:the|rt|right|hon|honourable|dr|sir|dame|mr|mrs|ms|miss|mx|mp|msp|mla|kc|qc|mbe|obe|cbe)\b\.?/gi,
+  /[,;:]+/g,
+];
+
+/** A line pasted as the name, constituency or email it's meant to be, without the words around it. */
+export function pastedName(line: string): string {
+  if (line.includes("@")) return line.trim();
+  return NOT_NAME.reduce((text, words) => text.replace(words, " "), line)
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** How many politicians a pasted line offers, when it doesn't find one. */
+const PASTE_CHOICES = 5;
+
+/** Who a line pasted found: those it ticks, those it might be, to choose from, and whether those are only near it. */
+/** How a line pasted found someone: their name, constituency or email in it, or the words of it in their name or constituency. */
+export type PastedBy = "name" | "constituency" | "email" | "words";
+
+/**
+ * Who a line pasted found: those it found, and how, by ID; those it might
+ * be, to choose from; and whether those are only near it.
+ */
+export type Pasted = { matches: Politician[]; by: Record<number, PastedBy>; choices: Politician[]; near?: boolean };
+
+/** Text as its words alone, lowercase, without accents, a space either side, as asWords is in SQL. */
+function wordsOf(text: string): string {
+  return ` ${text
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")} `;
+}
+
+/** SQL for text as its words alone, lowercase, without accents, a space either side, to find a name in as whole words. */
+const asWords = (sql: string) => `' ' || regexp_replace(lower(unaccent(${sql})), '[^a-z0-9]+', ' ', 'g') || ' '`;
+
+/** How near a name must be to a line pasted to be offered for it: nearer than the list's search asks. */
+const PASTE_NEAR_ENOUGH = 0.55;
+
+/**
+ * Whether a line pasted, without the words around a name, could be one:
+ * two to four words, each starting with a capital, and no digits. Lines
+ * of a page copied whole, such as a party, a heading or a menu, aren't.
+ */
+export function looksLikeName(text: string): boolean {
+  const words = text.split(" ");
+  return words.length >= 2 && words.length <= 4 && words.every((word) => /^\p{Lu}/u.test(word)) && !/\d/.test(text);
+}
+
+/** SQL for text as its words alone, without accents but keeping their case, a space either side. */
+const asCasedWords = (sql: string) => `' ' || regexp_replace(unaccent(${sql}), '[^A-Za-z0-9]+', ' ', 'g') || ' '`;
+
+/** Every email address in some text, lowercase. */
+export function emailsIn(text: string): string[] {
+  return (text.match(/[^\s@<>"'(),;:]+@[^\s@<>"'(),;:]+\.[a-z]{2,}/gi) ?? []).map((one) => one.toLowerCase());
+}
+
+/**
+ * Who a line pasted is, among those in office. First everyone it names,
+ * however much else is in it (a row copied from a table, a list on one
+ * line, a page): whose whole name is in it, whose constituency is, as
+ * written, capitals and all, so "Bath" is but "a bath" isn't, or whose
+ * email address is. Each is found, but for a name two people have, who
+ * are to choose between. Then, only for a line that looks like a name,
+ * those with every word of it in their name or constituency, found if
+ * there's only one; then the nearest names, by name alone, if any are
+ * near.
+ */
+export async function findPasted(line: string): Promise<Pasted> {
+  const text = pastedName(line);
+  if (!text) return { matches: [], by: {}, choices: [] };
+  const [values, value] = parameters();
+  const lower = value(line);
+  const cased = value(line);
+  const named = (
+    await query<Row>(
+      `${SELECT_POLITICIANS} ${politicianWhere(PASTE_AMONG, value)}
+       AND (${asWords(lower)} LIKE '%' || ${asWords("n.name")} || '%'
+         OR (p.constituency <> '' AND ${asCasedWords(cased)} LIKE '%' || ${asCasedWords("p.constituency")} || '%')
+         OR lower(n.email) = ANY(${value(emailsIn(line))}::text[]))
+       GROUP BY n.id, p.id ORDER BY n.name, n.id`,
+      values,
+    )
+  ).map(toPolitician);
+  if (named.length) {
+    const shared = (one: Politician) => named.filter((other) => other.name === one.name).length > 1;
+    const emails = emailsIn(line);
+    const by = (one: Politician): PastedBy =>
+      emails.includes(one.email?.toLowerCase() ?? "")
+        ? "email"
+        : wordsOf(line).includes(wordsOf(one.name))
+          ? "name"
+          : "constituency";
+    const matches = named.filter((one) => !shared(one));
+    return {
+      matches,
+      by: Object.fromEntries(matches.map((one) => [one.id, by(one)])),
+      choices: named.filter(shared),
+    };
+  }
+  if (!looksLikeName(text)) return { matches: [], by: {}, choices: [] };
+  const [also, put] = parameters();
+  const words = (
+    await query<Row>(
+      `${SELECT_POLITICIANS} ${politicianWhere(PASTE_AMONG, put)}
+       AND ${everyWord(text, put, (like) => [contains("n.name", like), contains("p.constituency", like)].join(" OR "))}
+       GROUP BY n.id, p.id ORDER BY n.name, n.id LIMIT ${put(PASTE_CHOICES)}`,
+      also,
+    )
+  ).map(toPolitician);
+  if (words.length === 1) return { matches: words, by: { [words[0].id]: "words" }, choices: [] };
+  if (words.length) return { matches: [], by: {}, choices: words };
+  return {
+    matches: [],
+    by: {},
+    // By name alone: a constituency's found as it's written, and one near in its letters is another place.
+    choices: await closestPoliticians({ ...PASTE_AMONG, search: text }, PASTE_CHOICES, PASTE_NEAR_ENOUGH, true),
+    near: true,
+  };
+}
+
+/**
+ * Who the lines pasted are, line by line, findPasted's way, keeping only
+ * what's of use: someone found once, at the first line that finds them,
+ * so a constituency under a name doesn't find them again; and no line
+ * that found no one, which is only counted, as `skipped`.
+ */
+export async function findPastedLines(
+  lines: string[],
+): Promise<{ lines: (Pasted & { line: string })[]; skipped: number }> {
+  const found = await Promise.all(lines.map(async (line) => ({ line, ...(await findPasted(line)) })));
+  const seen = new Set<number>();
+  const fresh = (people: Politician[]) => people.filter((one) => !seen.has(one.id));
+  const kept: (Pasted & { line: string })[] = [];
+  let skipped = 0;
+  for (const one of found) {
+    const matches = fresh(one.matches);
+    const choices = fresh(one.choices);
+    for (const person of [...matches, ...choices]) seen.add(person.id);
+    if (matches.length + choices.length) kept.push({ ...one, matches, choices });
+    // A line that found someone already found is a repeat, not one that found no one.
+    else if (one.matches.length + one.choices.length === 0) skipped++;
+  }
+  return { lines: kept, skipped };
 }
 
 export type NewPolitician = {

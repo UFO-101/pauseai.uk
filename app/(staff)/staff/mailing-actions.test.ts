@@ -2,20 +2,24 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import { query } from "@/lib/server/db";
-import { getWrittenMailing, saveDraft } from "@/lib/server/mailing-drafts";
+import { createDraft, getWrittenMailing, saveDraft, type MailingChanges } from "@/lib/server/mailing-drafts";
 import { createSession } from "@/lib/server/staff-auth";
 import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { expectRedirect, requestCookies } from "@/tests/next-headers";
 import {
   attachToMailing,
-  changeMailingWho,
   deleteMailingDraft,
   detachFromMailing,
+  newMailing,
+  pasteNames,
+  pickFound,
+  pickMany,
+  pickPolitician,
   rescheduleMailingNow,
+  untickAll,
   saveMailing,
   scheduleMailingNow,
   sendMailingTest,
-  startMailing,
   stopMailingNow,
 } from "./mailing-actions";
 
@@ -25,6 +29,10 @@ vi.mock("next/cache", () => ({ revalidatePath }));
 
 const JO = "jo@pauseai.uk";
 const LETTER = { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Hello" }] }] };
+
+/** A draft by Jo, with no one ticked, and its first changes. */
+const draft = (changes: MailingChanges = {}) =>
+  createDraft(JO, { list: "politicians", params: {}, picked: { ids: [] } }, changes);
 
 function form(fields: Record<string, string | string[]>) {
   const data = new FormData();
@@ -47,7 +55,12 @@ describeWithDatabase("the mailing pages' Server Actions", () => {
   it("change nothing without a session", async () => {
     requestCookies.clear();
     const attempts = [
-      () => startMailing({}, { subject: "x" }),
+      () => newMailing(form({})),
+      () => pickPolitician(1, 1, true),
+      () => pickFound(1, {}, true),
+      () => pasteNames(form({ names: "Jo" })),
+      () => pickMany(1, [1], true),
+      () => untickAll(1),
       () => saveMailing(1, 1, { subject: "x" }),
       () => attachToMailing(form({ id: "1" })),
       () => detachFromMailing(1, 1, 1),
@@ -56,31 +69,83 @@ describeWithDatabase("the mailing pages' Server Actions", () => {
       () => deleteMailingDraft(form({ id: "1" })),
       () => stopMailingNow(form({ id: "1" })),
       () => rescheduleMailingNow(form({ id: "1", day: "2026-12-01", hour: "9" })),
-      () => changeMailingWho(form({ id: "1" })),
     ];
     for (const attempt of attempts) expect(await expectRedirect(attempt)).toBe("/staff/login");
     expect(await query("SELECT 1 FROM mailings WHERE body IS NOT NULL")).toEqual([]);
   });
 
-  it("starts a draft by the staff member to who the list's filter finds, saves it, and refuses what isn't a change", async () => {
-    expect(await startMailing({ house: "lords" }, { subject: 3 })).toBeUndefined();
-    const { id } = (await startMailing({ house: "lords", sort: "name" }, { subject: "Hi", body: LETTER }))!;
-    expect(await getWrittenMailing(id)).toMatchObject({
-      createdBy: JO,
-      subject: "Hi",
-      filter: { list: "politicians", params: { house: "lords" } },
+  it("makes a new mailing with no one ticked, or everyone the list's filter finds, and chooses for it", async () => {
+    const polly = await addTestPolitician();
+    await addTestPolitician({ name: "Lord Sample", airtableId: "rec2", house: "lords" });
+    const empty = await expectRedirect(() => newMailing(form({})));
+    const id = Number(empty.match(/^\/staff\/politicians\?mailing=(\d+)$/)![1]);
+    expect(await getWrittenMailing(id)).toMatchObject({ createdBy: JO, filter: { picked: { ids: [] } } });
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/mailings");
+
+    const found = await expectRedirect(() => newMailing(form({ house: "commons", sort: "name", found: "1" })));
+    const ticked = Number(found.match(/^\/staff\/politicians\?house=commons&mailing=(\d+)$/)![1]);
+    expect((await getWrittenMailing(ticked))!.filter).toEqual({
+      list: "politicians",
+      params: {},
+      picked: { ids: [polly], from: { params: { house: "commons" }, at: expect.any(String), found: [polly] } },
     });
-    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("saves a draft's changes, and refuses what isn't a change", async () => {
+    const { id } = await draft({ subject: "Hi", body: LETTER as MailingChanges["body"] });
     expect(await saveMailing(id, 1, { sentFrom: "Jo@PauseAI.uk", dueAt: "2026-12-01T09:00:00Z" })).toEqual({
       saved: true,
       version: 2,
     });
     expect(await getWrittenMailing(id)).toMatchObject({ sentFrom: JO, dueAt: new Date("2026-12-01T09:00:00Z") });
+    expect(await saveMailing(id, 2, { subject: 3 })).toBeUndefined();
     expect(await saveMailing(id, 2, { filter: { list: "politicians", params: {} } })).toBeUndefined();
   });
 
+  it("ticks and unticks a politician, and everyone the list's filter finds", async () => {
+    const polly = await addTestPolitician();
+    const lord = await addTestPolitician({ name: "Lord Sample", airtableId: "rec2", house: "lords" });
+    const { id } = await draft();
+    const ticked = async () => (await getWrittenMailing(id))!.filter.picked!.ids;
+    await pickPolitician(id, lord, true);
+    expect(await ticked()).toEqual([lord]);
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/politicians");
+    await pickFound(id, { house: "commons" }, true);
+    expect(await ticked()).toEqual([lord, polly]);
+    await pickPolitician(id, lord, false);
+    expect(await ticked()).toEqual([polly]);
+    await pickFound(id, { house: "commons" }, false);
+    expect(await ticked()).toEqual([]);
+    // Everyone unticked, and the group they were ticked from forgotten, to start again.
+    await pickFound(id, { house: "commons" }, true);
+    await untickAll(id);
+    expect((await getWrittenMailing(id))!.filter.picked).toEqual({ ids: [] });
+  });
+
+  it("goes to the paste tab with the names pasted, a line each, ticking no one; and ticks many at once", async () => {
+    const polly = await addTestPolitician();
+    const { id } = await draft();
+    const back = `/staff/politicians?q=pol&mailing=${id}&pasted=old`;
+    const to = await expectRedirect(() =>
+      pasteNames(form({ back, names: "  Polly Placeholder MP \r\n\nNobody Atall\n" })),
+    );
+    expect(to).toBe(
+      `/staff/politicians?q=pol&mailing=${id}&pasted=Polly+Placeholder+MP&pasted=Nobody+Atall&tab=pasted`,
+    );
+    expect((await getWrittenMailing(id))!.filter.picked!.ids).toEqual([]);
+    // Back somewhere that isn't a staff page goes to the list; no names, nowhere.
+    expect(await expectRedirect(() => pasteNames(form({ back: "https://example.org", names: "x" })))).toBe(
+      "/staff/politicians?pasted=x&tab=pasted",
+    );
+    await pasteNames(form({}));
+    await pickMany(id, [polly], true);
+    expect((await getWrittenMailing(id))!.filter.picked!.ids).toEqual([polly]);
+    await pickMany(id, [polly], false);
+    expect((await getWrittenMailing(id))!.filter.picked!.ids).toEqual([]);
+  });
+
   it("attaches a file and takes it off, saying what's attached", async () => {
-    const { id } = (await startMailing({}, { subject: "Hi" }))!;
+    const { id } = await draft({ subject: "Hi" });
     const file = new File(["%PDF"], "brief.pdf", { type: "application/pdf" });
     const attached = await attachToMailing(withFile(id, 1, file));
     expect(attached).toMatchObject({ saved: true, version: 2, attachments: [{ filename: "brief.pdf", size: 4 }] });
@@ -112,7 +177,11 @@ describeWithDatabase("the mailing pages' Server Actions", () => {
       }),
     );
     const polly = await addTestPolitician();
-    const { id } = (await startMailing({}, { subject: "Hi", body: LETTER }))!;
+    const { id } = await createDraft(
+      JO,
+      { list: "politicians", params: {}, picked: { ids: [polly] } },
+      { subject: "Hi", body: LETTER as MailingChanges["body"] },
+    );
     expect(await sendMailingTest(id, polly)).toMatchObject({ sent: true, id: "m", to: JO });
     // To the recipient's name, at the staff member's address.
     expect(to).toBe(`"Polly Placeholder" <${JO}>`);
@@ -125,7 +194,7 @@ describeWithDatabase("the mailing pages' Server Actions", () => {
   });
 
   it("won't schedule while anything stops it, and says why", async () => {
-    const { id } = (await startMailing({}, { subject: "Hi" }))!;
+    const { id } = await draft({ subject: "Hi" });
     expect(await scheduleMailingNow(id, 1)).toMatchObject({
       scheduled: false,
       problems: expect.arrayContaining(["no-sender", "no-letter"]),
@@ -133,7 +202,7 @@ describeWithDatabase("the mailing pages' Server Actions", () => {
   });
 
   it("deletes a draft and goes to the list; a bad form only goes to the list", async () => {
-    const { id } = (await startMailing({}, { subject: "Hi" }))!;
+    const { id } = await draft({ subject: "Hi" });
     expect(await expectRedirect(() => deleteMailingDraft(form({ id: "x" })))).toBe("/staff/mailings");
     expect(await getWrittenMailing(id)).toBeDefined();
     expect(await expectRedirect(() => deleteMailingDraft(form({ id: String(id) })))).toBe("/staff/mailings");
@@ -141,7 +210,7 @@ describeWithDatabase("the mailing pages' Server Actions", () => {
   });
 
   it("stops a scheduled mailing and changes its time, in London's hours; a bad form changes nothing", async () => {
-    const { id } = (await startMailing({}, { subject: "Hi" }))!;
+    const { id } = await draft({ subject: "Hi" });
     await saveDraft(id, 1, { sentFrom: JO, fromName: "Jo", dueAt: "2099-01-01T09:00:00Z" });
     await query("UPDATE mailings SET state = 'scheduled' WHERE id = $1", [id]);
     for (const bad of [
@@ -160,23 +229,6 @@ describeWithDatabase("the mailing pages' Server Actions", () => {
     expect((await getWrittenMailing(id))!.state).toBe("scheduled");
     await stopMailingNow(form({ id: String(id) }));
     expect((await getWrittenMailing(id))!.state).toBe("draft");
-  });
-
-  it("makes a draft go to who the list's filter finds, then goes back to it", async () => {
-    const { id } = (await startMailing({}, { subject: "Hi" }))!;
-    expect(
-      await expectRedirect(() =>
-        changeMailingWho(form({ id: String(id), house: "commons", party: ["Green", "!Labour"] })),
-      ),
-    ).toBe(`/staff/mailings/${id}`);
-    expect((await getWrittenMailing(id))!.filter).toEqual({
-      list: "politicians",
-      params: { house: "commons", party: ["Green", "!Labour"] },
-    });
-    // No such draft, or none named.
-    await changeMailingWho(form({ id: "999", house: "lords" }));
-    await changeMailingWho(form({ house: "lords" }));
-    expect((await getWrittenMailing(id))!.filter.params).toMatchObject({ house: "commons" });
   });
 });
 

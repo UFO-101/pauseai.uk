@@ -29,6 +29,9 @@ import { failingResponse } from "./failing-services";
 import { historyIdOf, keepSent, lettersInboxResponse, lettersMailbox } from "./letters-inbox";
 
 /** A UUID-shaped id that depends only on `text`. */
+/** Every UUID in some text. */
+const UUIDS = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+
 function fixtureUuid(text: string): string {
   const hex = createHash("sha256").update(text).digest("hex");
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
@@ -335,10 +338,11 @@ function googleResponse(
       .map((word) => word[0].toUpperCase() + word.slice(1));
     return json({ sendAs: [{ sendAsEmail: account, displayName: name.join(" "), isPrimary: true }] });
   }
-  // The same email gets the same IDs every run, as Postmark's MessageID.
+  // The same email gets the same IDs every run, as Postmark's MessageID: from what it says, not the UUIDs
+  // each run makes afresh, its MIME boundaries and Message-IDs, and those it answers (lib/server/mime.ts).
   if (pathname.endsWith("/messages/send")) {
-    const id = fixtureUuid(String(init!.body)).replace(/-/g, "").slice(0, 16);
     const raw = Buffer.from((JSON.parse(String(init!.body)) as { raw: string }).raw, "base64url").toString();
+    const id = fixtureUuid(raw.replace(UUIDS, "uuid")).replace(/-/g, "").slice(0, 16);
     SENT_GMAIL.set(id, /^Message-ID: *(.+)$/im.exec(raw)?.[1].trim() ?? "");
     // The letters inbox keeps what it sent; mail to one of its own addresses, as the supporter's copy is, comes back to it.
     if (letters) keepSent(raw, id, toLettersInbox(raw), scope);

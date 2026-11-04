@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-import { buttonClass } from "@/components/ui/Button";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { mailingsPage } from "@/lib/server/mailings";
 import { requireStaff } from "@/lib/server/staff-auth";
-import { NEW_MAILING } from "@/lib/staff-search";
+import { newMailing } from "../../mailing-actions";
 import MailingsOverview from "../../_components/MailingsOverview";
 import PageTitle from "../../_components/ui/PageTitle";
-import StaffLink from "../../_components/ui/StaffLink";
 
 export const metadata: Metadata = { title: staffCopy.mailings.title };
 
@@ -16,12 +15,12 @@ export default async function MailingsPage() {
     <>
       <PageTitle
         action={
-          <StaffLink
-            className={buttonClass({ variant: "primary", fit: true })}
-            href={`/staff/politicians?mailing=${NEW_MAILING}`}
-          >
-            {staffCopy.mailingPages.newTitle}
-          </StaffLink>
+          // A new mailing is a draft from the start, with no one ticked, and the list then chooses who it's for.
+          <form action={newMailing}>
+            <SubmitButton variant="primary" fit>
+              {staffCopy.mailingPages.newTitle}
+            </SubmitButton>
+          </form>
         }
       >
         {staffCopy.mailings.title}

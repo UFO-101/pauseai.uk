@@ -67,9 +67,10 @@ export function BubbleBox({
 }
 
 /**
- * A button that opens a bubble (BubbleBox) under it, holding `children`.
- * `trigger` is the button's class, for how it looks, and `name` its
- * accessible name, where its label is only a glyph.
+ * A button that opens a bubble (BubbleBox) under it, holding `children`;
+ * `above` it, for a button at the foot of the window, such as in a bar
+ * held there. `trigger` is the button's class, for how it looks, and
+ * `name` its accessible name, where its label is only a glyph.
  */
 export default function Bubble({
   id,
@@ -77,6 +78,7 @@ export default function Bubble({
   trigger,
   name,
   className,
+  above = false,
   children,
 }: {
   id: string;
@@ -84,6 +86,7 @@ export default function Bubble({
   trigger?: string;
   name?: string;
   className?: string;
+  above?: boolean;
   children: ReactNode;
 }) {
   const button = useRef<HTMLButtonElement>(null);
@@ -92,7 +95,7 @@ export default function Bubble({
       <button ref={button} type="button" className={trigger} aria-label={name} {...bubbleTrigger(id)}>
         {label}
       </button>
-      <BubbleBox id={id} className={className} keep={button}>
+      <BubbleBox id={id} className={[className, above && styles.above].filter(Boolean).join(" ")} keep={button}>
         {children}
       </BubbleBox>
     </>

@@ -1,10 +1,18 @@
 import type { Metadata } from "next";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { listAsks } from "@/lib/server/asks";
-import { choosingTitle } from "@/lib/server/mailings";
-import { listParties, politiciansPage, politiciansSearch, type PoliticiansSearch } from "@/lib/server/politicians";
+import { politiciansPageData } from "@/lib/server/mailing-pages";
+import { listParties, politiciansSearch, type PoliticiansSearch } from "@/lib/server/politicians";
 import { requireStaff } from "@/lib/server/staff-auth";
-import { changeMailingWho } from "../../mailing-actions";
+import {
+  deleteMailingDraft,
+  newMailing,
+  pasteNames,
+  pickFound,
+  pickMany,
+  pickPolitician,
+  untickAll,
+} from "../../mailing-actions";
 import PoliticianFilters, { politicianWords } from "../../_components/PoliticianFilters";
 import PoliticiansList, { ChoosingHead, HouseTabs } from "../../_components/PoliticiansList";
 import { filteredTitle } from "../../_components/ui/FilterBar";
@@ -19,23 +27,28 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   return { title: filteredTitle(staffCopy.politicians.title, politicianWords(search, parties, asks)) };
 }
 
+/** The politicians list; while it's choosing who a draft is for, its tick boxes, ticked tab and names pasted. */
 export default async function PoliticiansPage({ searchParams }: Props) {
   await requireStaff();
-  const { filter, ...search } = politiciansSearch(await searchParams);
-  const [list, asks, parties, title] = await Promise.all([
-    politiciansPage(filter),
-    listAsks(),
-    listParties(),
-    choosingTitle(search.mailing),
-  ]);
+  const { search, choosing, filtersHidden, list, asks, parties, tickedHere, pasted } = await politiciansPageData(
+    await searchParams,
+  );
   return (
-    <>
-      <ChoosingHead search={search} title={title}>
-        <h1>{staffCopy.politicians.title}</h1>
-        <HouseTabs search={search} />
-        <PoliticianFilters search={search} asks={asks} parties={parties} />
-        <PoliticiansList list={list} search={search} asks={asks} changeWho={changeMailingWho} />
-      </ChoosingHead>
-    </>
+    <ChoosingHead choosing={choosing} cancel={deleteMailingDraft}>
+      <h1>{staffCopy.politicians.title}</h1>
+      <HouseTabs search={search} choosing={choosing} />
+      <PoliticianFilters search={search} asks={asks} parties={parties} hidden={filtersHidden} />
+      <PoliticiansList
+        list={list}
+        search={search}
+        asks={asks}
+        newMailing={newMailing}
+        choosing={choosing}
+        tickedHere={tickedHere}
+        pasted={pasted.lines}
+        skipped={pasted.skipped}
+        actions={{ pick: pickPolitician, pickFound, pickMany, paste: pasteNames, untickAll }}
+      />
+    </ChoosingHead>
   );
 }

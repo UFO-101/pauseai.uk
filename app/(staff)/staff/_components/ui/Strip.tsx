@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import AlertIcon from "../AlertIcon";
 import styles from "./Strip.module.css";
 
-export type StripTone = "plain" | "green" | "amber" | "red";
+export type StripTone = "plain" | "green" | "amber" | "red" | "dark";
 
 /**
  * A strip: the staff pages' way of saying how something stands, never a
@@ -12,6 +12,8 @@ export type StripTone = "plain" | "green" | "amber" | "red";
  * person. `action` sits at the right, a button or a link. `announce` reads
  * it out at once: red as an alert, any other as a status. `icon={false}`
  * leaves out the icon, for a red or amber that's an answer, not a warning.
+ * Dark is a mode the page is in, such as choosing who a mailing is for:
+ * the dark bar's look (PoliticiansList's ChoosingBar), its links light.
  */
 export default function Strip({
   tone = "plain",

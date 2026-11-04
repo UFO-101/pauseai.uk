@@ -145,6 +145,8 @@ type Props<Row> = {
   picked?: (row: Row) => boolean;
   /** What a list with nothing in it says instead. */
   empty: ReactNode;
+  /** Whether a rule is over it, as under a filter bar; not right under a row of tabs, which has its own. */
+  ruled?: boolean;
 };
 
 /**
@@ -171,6 +173,7 @@ export default function ListFrame<Row>({
   picked,
   empty,
   align,
+  ruled = true,
 }: Props<Row>) {
   if (total === 0) return <p>{empty}</p>;
   const copy = staffCopy.lists;
@@ -178,7 +181,7 @@ export default function ListFrame<Row>({
   const to = from + rows.length - 1;
   return (
     <div className={styles.frame}>
-      <div className={styles.bar}>
+      <div className={ruled ? styles.bar : `${styles.bar} ${styles.unruled}`}>
         <p className={styles.count}>
           <strong>{count}</strong>
           {pages > 1 && <Muted> · {copy.showing(from, to)}</Muted>}

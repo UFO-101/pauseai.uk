@@ -13,7 +13,13 @@ import { examplePauseaiLetterDetails, exampleSupporterLetterDetails } from "./Le
 import { mailingGroups } from "@/lib/mailing-groups";
 import MailingView from "./MailingView";
 import MailingsOverview from "./MailingsOverview";
-import { exampleMailingLetter, exampleWriterData, exampleWrittenMailing } from "./MailingWriter.examples";
+import {
+  exampleMailingLetter,
+  examplePickedGroup,
+  examplePickedList,
+  exampleWriterData,
+  exampleWrittenMailing,
+} from "./MailingWriter.examples";
 import {
   exampleDraft,
   exampleMailing,
@@ -97,6 +103,53 @@ describe("FilterPills", () => {
   it("says everyone in office for a filter of nothing", async () => {
     await render(<FilterPills data={{ ...exampleWriterData, filter: { list: "politicians", params: {} } }} />);
     await expect.element(page.getByText(copy.everyone)).toBeVisible();
+  });
+
+  it("says those ticked from a filter as its group on the day, with those added and taken off", async () => {
+    const { rerender } = await render(<FilterPills data={examplePickedGroup} />);
+    const words = () =>
+      page
+        .getByRole("listitem")
+        .all()
+        .map((item) => item.element().textContent);
+    expect(words()).toEqual([
+      staffCopy.houses.commons,
+      staffCopy.filters.notChip(staffCopy.fields.party, "Labour"),
+      copy.pickedFrom("3 Nov 2026", 3),
+      copy.pickedPlus("Morag Example"),
+      copy.pickedExcept("Ned Noaddress"),
+    ]);
+    // A group of everyone, and one ticked whose name isn't known, by their ID.
+    const from = { params: {}, at: "2026-11-03T10:00:00Z", found: [7] };
+    await rerender(
+      <FilterPills
+        data={{ ...examplePickedGroup, filter: { list: "politicians", params: {}, picked: { ids: [7, 99], from } } }}
+      />,
+    );
+    await expect.poll(words).toEqual([copy.everyone, copy.pickedFrom("3 Nov 2026", 1), copy.pickedPlus("#99")]);
+  });
+
+  it("says those ticked by name, alphabetically, past the first ten as a count; or that no one is", async () => {
+    const { rerender } = await render(<FilterPills data={examplePickedList} />);
+    const words = () =>
+      page
+        .getByRole("listitem")
+        .all()
+        .map((item) => item.element().textContent);
+    expect(words()).toEqual(["Dora Dummy", "Jane Smith", "Morag Example", "Polly Placeholder"]);
+    const ids = Array.from({ length: 12 }, (_, i) => 100 + i);
+    const names = Object.fromEntries(ids.map((id) => [id, `Person ${id}`]));
+    await rerender(
+      <FilterPills
+        data={{ ...examplePickedList, names, filter: { list: "politicians", params: {}, picked: { ids } } }}
+      />,
+    );
+    await expect.poll(() => words().at(-1)).toBe(copy.pickedMore(2));
+    expect(words()).toHaveLength(11);
+    await rerender(
+      <FilterPills data={{ ...examplePickedList, filter: { list: "politicians", params: {}, picked: { ids: [] } } }} />,
+    );
+    await expect.element(page.getByText(copy.pickedNone)).toBeVisible();
   });
 });
 
@@ -621,6 +674,7 @@ describe("MailingFor", () => {
           filter: exampleWriterData.filter,
           parties: [],
           asks: exampleAsks,
+          names: {},
         }}
         actions={actions}
       />,

@@ -42,8 +42,11 @@ describe("staff interface copy", () => {
     expect(staffCopy.luma.places({ postcodes: 2, towns: 6 })).toBe("2 postcodes, 6 towns looked up.");
     expect(staffCopy.mailingPages.leftOut(1, 1, 0)).toContain("Of the 1 person the filter found");
     expect(staffCopy.mailingPages.leftOut(3, 1, 0)).toContain("Of the 3 people the filter found");
-    expect(staffCopy.mailingPages.useThese(1)).toBe("Use this one for the draft");
-    expect(staffCopy.mailingPages.useThese(4)).toBe("Use these 4 for the draft");
+    expect(staffCopy.mailingPages.leftOut(3, 1, 0, true)).not.toContain("filter");
+    expect(staffCopy.mailingPages.writeToThese(1)).toBe("Write to this one");
+    expect(staffCopy.mailingPages.writeToThese(4)).toBe("Write to these 4");
+    expect(staffCopy.mailingPages.useThese(1)).not.toContain("1");
+    expect(staffCopy.mailingPages.useThese(4)).toContain("these 4");
   });
 
   it("says how many messages in the letters inbox need a person, one or more", () => {

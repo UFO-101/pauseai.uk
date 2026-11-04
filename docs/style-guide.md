@@ -279,8 +279,8 @@ to, so there are four places, one for each kind of adding:
 "+" marks a small control that adds to something already on the screen,
 a filter or a part of the letter, never a button that makes a new thing.
 
-Buttons that act on what a list's filters found ("Mail these",
-Download) aren't adding. They sit over the table, in the list frame's
+Buttons that act on what a list's filters found ("New mailing", to
+them, Download) aren't adding. They sit over the table, in the list frame's
 count row. A page whose list isn't a table has Download (`ui/DownloadMenu`, the
 same button) beside its title's button instead.
 
@@ -289,23 +289,29 @@ part needs a set of things chosen with another part's full tools: who a
 mailing goes to is chosen with the politicians list's tabs, search and
 filters. It doesn't get a lighter copy of those tools. The person is sent
 to the list itself, in a choosing mode, and comes back with what they
-chose. The mode is in the address (`mailing=new`, or a draft's ID, on the
-politicians list), so the tabs, filters and pages all keep it. The page
-is as it always is, but for two bars:
+chose. The mode is in the address (a draft's ID, `mailing=12`, on the
+politicians list), so the tabs, filters and pages all keep it. Each row
+has a tick box, saved as it's clicked, and the box over them ticks
+everyone the filters find, on every page. A last tab shows only those
+ticked. What's ticked is what's chosen, never what the filters find, so
+the person can search for one, tick them, and search for the next. The
+page is as it always is, but for that, and two bars:
 
 - **At the top, held there as the page scrolls** (`ChoosingHead`): a
-  plain strip saying what's being chosen and what for ("New mailing:
-  who's it for?", or naming the draft), a line on how, and at its right
-  the way back without choosing (Cancel, or Cancel changing who). It's
+  dark strip, as the bar at the foot is, saying what's being chosen and what for (a new mailing, or
+  naming the draft), a line on how, and for a new one, at its right,
+  the way out (Cancel, which deletes it). It's
   held alone, not the title under it, and inside a plain box around the
   whole page: the router scrolls a new page's first element into view,
   and a held one at the top would leave the page scrolled.
 - **At the foot of the window, held there**: a dark bar with how many
-  are chosen ("5 politicians, for the mailing") and, at its right, the
-  one orange button that takes them back ("Write to these 5", "Use these
-  5 for the draft").
+  are ticked, light buttons to see them and to untick everyone, and, at
+  its right, the one orange button on to what they're for ("Write to
+  these 5"). Ticks are saved as they're made, so a draft's way back is
+  this button too, there even with no one ticked; a new mailing's appears
+  once someone is.
 
-The page's own button for the same thing ("Mail these") goes while it's
+The page's own button for the same thing (New mailing) goes while it's
 choosing, so there's one way on. The person chooses with tools they
 already know. The top always says what they're doing and how to stop,
 and the foot always shows the result and the way on, however far they've
@@ -332,14 +338,14 @@ lists with their reasons (a popover, the login page's card, a field).
 
 **Surfaces.** Each one means one thing:
 
-| Surface                        | Look                                                       | For                                                                                          |
-| ------------------------------ | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| The page                       | the background, no box                                     | headings, prose, the history, tables                                                         |
-| A record (`Card`, the default) | white                                                      | the thing a page is about, or a thing to open: an MP's or a supporter's facts, an import job |
-| An aside (`Card look="aside"`) | the second tint, `--surface-2`                             | what sits beside a record: an MP's campaigns, a supporter's mailing lists                    |
-| A log (`Card look="log"`)      | the palest of the accent: `--accent-light` at 30% on white | a history, each entry ruled from the next                                                    |
-| A tile                         | white, bordered, an item of an `even` grid                 | sets of like things: the dashboard's numbers                                                 |
-| A strip (`ui/Strip`)           | the tone's tint, no border, `--radius-md`                  | how something stands: green done or signed, amber waiting, red broken, plain neither         |
+| Surface                        | Look                                                       | For                                                                                                               |
+| ------------------------------ | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| The page                       | the background, no box                                     | headings, prose, the history, tables                                                                              |
+| A record (`Card`, the default) | white                                                      | the thing a page is about, or a thing to open: an MP's or a supporter's facts, an import job                      |
+| An aside (`Card look="aside"`) | the second tint, `--surface-2`                             | what sits beside a record: an MP's campaigns, a supporter's mailing lists                                         |
+| A log (`Card look="log"`)      | the palest of the accent: `--accent-light` at 30% on white | a history, each entry ruled from the next                                                                         |
+| A tile                         | white, bordered, an item of an `even` grid                 | sets of like things: the dashboard's numbers                                                                      |
+| A strip (`ui/Strip`)           | the tone's tint, no border, `--radius-md`                  | how something stands: green done or signed, amber waiting, red broken, plain neither; dark, a mode the page is in |
 
 Every card has the same edge, a `1px` `--border` and `--radius-lg`; only
 its fill changes, and only among those three, all warm. Colour stays for

@@ -29,6 +29,18 @@
   font-weight: 600;
 }
 
+/* A tab's count, set apart: white on an orange pill after its words. */
+.badge {
+  display: inline-block;
+  margin-left: var(--space-1);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--accent-bg);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
 /* A tab clicked (StaffLink): chosen at once, the one it was no longer, while its list loads. */
 .tabs:has(a[data-pending]) a[aria-current="page"]:not([data-pending]) {
   border-bottom-color: transparent;

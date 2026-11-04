@@ -15,7 +15,6 @@ import {
   saveMailing,
   scheduleMailingNow,
   sendMailingTest,
-  startMailing,
   stopMailingNow,
 } from "../../../mailing-actions";
 
@@ -39,7 +38,6 @@ export default async function MailingPage({ params, searchParams }: Params) {
       <MailingFor
         data={data}
         actions={{
-          start: startMailing,
           save: saveMailing,
           attach: attachToMailing,
           detach: detachFromMailing,

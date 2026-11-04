@@ -17,6 +17,8 @@ import PoliticianTable from "@/app/(staff)/staff/_components/PoliticianTable";
 import {
   emptyPoliticiansSearch,
   exampleAsks,
+  exampleChoosing,
+  examplePasted,
   examplePoliticiansPage,
   examplePolitician,
   examplePoliticianHistory,
@@ -65,7 +67,12 @@ import MailingFor from "@/app/(staff)/staff/_components/MailingFor";
 import { FilterPills } from "@/app/(staff)/staff/_components/MailingParts";
 import MailingView from "@/app/(staff)/staff/_components/MailingView";
 import MailingWriter from "@/app/(staff)/staff/_components/MailingWriter";
-import { exampleWriterData, exampleWrittenMailing } from "@/app/(staff)/staff/_components/MailingWriter.examples";
+import {
+  exampleFreshMailing,
+  examplePickedList,
+  exampleWriterData,
+  exampleWrittenMailing,
+} from "@/app/(staff)/staff/_components/MailingWriter.examples";
 import MailingsOverview from "@/app/(staff)/staff/_components/MailingsOverview";
 import Notice from "@/app/(staff)/staff/_components/ui/Notice";
 import EventsTable from "@/app/(staff)/staff/_components/EventsTable";
@@ -81,7 +88,9 @@ import {
   exampleScheduled,
   exampleSending,
 } from "@/app/(staff)/staff/_components/MailingsTable.examples";
-import PoliticiansList from "@/app/(staff)/staff/_components/PoliticiansList";
+import PasteForm from "@/app/(staff)/staff/_components/PasteForm";
+import PickBox from "@/app/(staff)/staff/_components/PickBox";
+import PoliticiansList, { ChoosingHead, type ChoosingActions } from "@/app/(staff)/staff/_components/PoliticiansList";
 import { Controlled, Logged } from "../_components/wiring";
 
 /** The table of politicians: one function for both examples. */
@@ -541,7 +550,6 @@ function mailingActions(log: (name: string) => (...args: unknown[]) => void) {
       return answer;
     };
   return {
-    start: logged("startMailing", { id: 12, version: 1 }),
     save: async (...args: unknown[]) => {
       log("saveMailing")(...args);
       return { saved: true as const, version: ++version };
@@ -560,15 +568,16 @@ function mailingActions(log: (name: string) => (...args: unknown[]) => void) {
   };
 }
 
-/** A new mailing, or Jo's draft of it, with its actions logged. */
+/** A draft just made, four ticked and nothing written, or Jo's draft of the mailing, with its actions logged. */
 export function MailingWriterExample({ draft }: { draft: boolean }) {
+  const data = draft ? exampleWriterData : examplePickedList;
   return (
     <Logged>
       {(log) => (
         <MailingWriter
-          data={exampleWriterData}
-          draft={draft ? exampleWrittenMailing : null}
-          who={<FilterPills data={exampleWriterData} />}
+          data={data}
+          draft={draft ? exampleWrittenMailing : exampleFreshMailing}
+          who={<FilterPills data={data} />}
           actions={mailingActions(log)}
         />
       )}
@@ -753,6 +762,7 @@ export function MailingForExample({ kind }: { kind: "draft" | "written" }) {
                   filter: exampleWriterData.filter,
                   parties: exampleWriterData.parties,
                   asks: exampleAsks,
+                  names: {},
                 }
           }
           actions={mailingActions(log)}
@@ -762,23 +772,94 @@ export function MailingForExample({ kind }: { kind: "draft" | "written" }) {
   );
 }
 
-/** The politicians list, its Change who logged. */
-export function PoliticiansListExample(props: Omit<Parameters<typeof PoliticiansList>[0], "changeWho">) {
+/** What choosing who a mailing is for does, each logged. */
+function choosingActions(log: (name: string) => (...args: unknown[]) => void): ChoosingActions {
+  const logged =
+    (name: string) =>
+    async (...args: unknown[]) =>
+      log(name)(...args);
+  return {
+    pick: logged("pickPolitician"),
+    pickFound: logged("pickFound"),
+    paste: logged("pasteNames"),
+    pickMany: logged("pickMany"),
+    untickAll: logged("untickAll"),
+  };
+}
+
+/** The politicians list, New mailing and the ticks logged. */
+export function PoliticiansListExample(props: Omit<Parameters<typeof PoliticiansList>[0], "newMailing" | "actions">) {
   return (
     <Logged>
-      {(log) => <PoliticiansList {...props} changeWho={log("changeMailingWho") as (form: FormData) => Promise<void>} />}
+      {(log) => (
+        <PoliticiansList
+          {...props}
+          newMailing={log("newMailing") as (form: FormData) => Promise<void>}
+          actions={choosingActions(log)}
+        />
+      )}
     </Logged>
   );
 }
 
-/** The politicians list after a draft's Change who: its button makes the draft go to these. */
-export function ChangeWhoListExample() {
+/** The politicians list choosing who the draft "Edinburgh thank-you" goes to: Polly ticked, of the Commons. */
+export function ChoosingListExample({ pasted = false }: { pasted?: boolean }) {
   return (
     <PoliticiansListExample
       list={examplePoliticiansPage}
-      search={{ ...emptyPoliticiansSearch, house: "commons", mailing: "12" }}
+      search={{
+        ...emptyPoliticiansSearch,
+        house: "commons",
+        mailing: "12",
+        ...(pasted && { tab: "pasted", pasted: examplePasted.map((one) => one.line) }),
+      }}
       asks={exampleAsks}
+      choosing={exampleChoosing}
+      tickedHere={1}
+      pasted={pasted ? examplePasted : []}
     />
+  );
+}
+
+/** The strip over the list while it's choosing who a mailing is for: a new one's, or a draft's; Cancel logged. */
+export function ChoosingHeadExample({ blank }: { blank: boolean }) {
+  return (
+    <Logged>
+      {(log) => (
+        <ChoosingHead
+          choosing={{ ...exampleChoosing, blank }}
+          cancel={log("deleteMailingDraft") as (form: FormData) => Promise<void>}
+        >
+          <h1>Politicians</h1>
+        </ChoosingHead>
+      )}
+    </Logged>
+  );
+}
+
+/** The box for names to paste, and Find these, logged; Ctrl+Enter or Cmd+Enter sends it too. */
+export function PasteFormExample() {
+  return (
+    <Logged>
+      {(log) => (
+        <PasteForm action={log("pasteNames") as (form: FormData) => void} back="/staff/politicians?mailing=12" />
+      )}
+    </Logged>
+  );
+}
+
+/** A tick box that saves as it's clicked: ticked, not, and part ticked, the click logged. */
+export function PickBoxExample() {
+  return (
+    <Logged>
+      {(log) => (
+        <div style={{ display: "flex", gap: "var(--space-4)" }}>
+          <PickBox ticked label="Ticked" action={async (on) => log("pick")(on)} />
+          <PickBox ticked={false} label="Not ticked" action={async (on) => log("pick")(on)} />
+          <PickBox ticked={false} some label="Some ticked" action={async (on) => log("pick")(on)} />
+        </div>
+      )}
+    </Logged>
   );
 }
 

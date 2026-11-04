@@ -53,4 +53,16 @@
     background: var(--surface);
     transform: rotate(45deg);
   }
+
+  /* Above its button, for one at the foot of the window: its bottom set
+     from the button's top, and the pointer under it, pointing down. */
+  .above {
+    inset: auto 0 calc(anchor(var(--bubble-anchor) top) + var(--space-2));
+  }
+
+  .above > .pointer {
+    top: auto;
+    bottom: calc(anchor(top) + var(--space-1));
+    transform: rotate(225deg);
+  }
 }

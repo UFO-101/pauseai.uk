@@ -12,6 +12,7 @@ import {
   WHO_PARAMS,
   type FilterList,
   type Params,
+  type Picked,
   type StoredFilter,
 } from "@/lib/staff-search";
 import { NEAR_MILES, SUPPORTER_BADGES } from "@/lib/supporters";
@@ -24,20 +25,46 @@ import { MP_CHOICES } from "./supporters";
 // renamed party, is a problem to fix, as the list's parser would drop it
 // and the filter would quietly find more people.
 
+/** Whether `params` are a list's parameters that choose who, each text or a list of text. */
+function isWhoParams(list: FilterList, params: unknown): params is Params {
+  if (typeof params !== "object" || params === null) return false;
+  return Object.entries(params).every(
+    ([name, value]) =>
+      WHO_PARAMS[list].includes(name) &&
+      (typeof value === "string" || (Array.isArray(value) && value.every((one) => typeof one === "string"))),
+  );
+}
+
+/** Whether `value` is a list of IDs: whole numbers above nought. */
+function isIds(value: unknown): value is number[] {
+  return Array.isArray(value) && value.every((one) => Number.isSafeInteger(one) && one > 0);
+}
+
+/** Who was ticked, as read back, if it is that; otherwise undefined. */
+function checkPicked(list: FilterList, value: unknown): Picked | undefined {
+  if (typeof value !== "object" || value === null) return undefined;
+  const { ids, from } = value as Record<string, unknown>;
+  if (!isIds(ids)) return undefined;
+  if (from === undefined) return { ids };
+  if (typeof from !== "object" || from === null) return undefined;
+  const { params, at, found } = from as Record<string, unknown>;
+  if (!isWhoParams(list, params) || typeof at !== "string" || Number.isNaN(Date.parse(at)) || !isIds(found)) {
+    return undefined;
+  }
+  return { ids, from: { params: storedFilter(list, params).params, at, found } };
+}
+
 /** A stored filter, as read back from JSON, if it is one; otherwise undefined. */
 export function checkStoredFilter(value: unknown): StoredFilter | undefined {
   if (typeof value !== "object" || value === null) return undefined;
-  const { list, params } = value as Record<string, unknown>;
-  if (!(FILTER_LISTS as readonly unknown[]).includes(list) || typeof params !== "object" || params === null) {
+  const { list, params, picked } = value as Record<string, unknown>;
+  if (!(FILTER_LISTS as readonly unknown[]).includes(list) || !isWhoParams(list as FilterList, params)) {
     return undefined;
   }
-  const entries = Object.entries(params);
-  const fine = entries.every(
-    ([name, value]) =>
-      WHO_PARAMS[list as FilterList].includes(name) &&
-      (typeof value === "string" || (Array.isArray(value) && value.every((one) => typeof one === "string"))),
-  );
-  return fine ? storedFilter(list as FilterList, params as Params) : undefined;
+  const filter = storedFilter(list as FilterList, params);
+  if (picked === undefined) return filter;
+  const read = checkPicked(list as FilterList, picked);
+  return read && { ...filter, picked: read };
 }
 
 /** What the site knows each parameter's values can be: a list, or any, for words typed. */
@@ -89,10 +116,18 @@ async function supporterValues(params: Params): Promise<Known> {
  * "<parameter>=<value>": none, for one that can be run as it was chosen.
  */
 export async function filterProblems(filter: StoredFilter): Promise<string[]> {
+  if (filter.picked) return pickedProblems(filter.picked.ids);
   const known = await (filter.list === "politicians" ? politicianValues : supporterValues)(filter.params);
   return Object.entries(filter.params).flatMap(([name, value]) =>
     valuesOf(value)
       .filter((one) => known[name] !== "any" && !known[name].includes(notValue(one).value))
       .map((one) => `${name}=${one}`),
   );
+}
+
+/** Those ticked who aren't politicians any more, such as one deleted when Airtable lost them, as "person=<id>". */
+async function pickedProblems(ids: number[]): Promise<string[]> {
+  const rows = await query<{ id: number }>("SELECT id::int AS id FROM politicians WHERE id = ANY($1::bigint[])", [ids]);
+  const there = new Set(rows.map((row) => row.id));
+  return ids.filter((id) => !there.has(id)).map((id) => `person=${id}`);
 }

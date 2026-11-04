@@ -940,18 +940,21 @@ export const staffCopy = {
     },
     willGet: (n: number) => `${n} ${n === 1 ? "politician" : "politicians"} will be emailed.`,
     // Who's left out: each part only when there are some.
-    leftOut: (found: number, noAddress: number, blocked: number) =>
-      `Of the ${found} ${found === 1 ? "person" : "people"} the filter found, ${[
+    // Of those ticked, or for a mailing from before ticks, those its filter found.
+    leftOut: (found: number, noAddress: number, blocked: number, ticked = false) =>
+      `${ticked ? `Of the ${found} ticked` : `Of the ${found} ${found === 1 ? "person" : "people"} the filter found`}, ${[
         noAddress && `${noAddress} ${noAddress === 1 ? "has" : "have"} no email address`,
         blocked && `${blocked} ${blocked === 1 ? "has an address that's blocked" : "have addresses that are blocked"}`,
       ]
         .filter(Boolean)
-        .join(" and ")}, so they're left out.`,
+        .join(" and ")}, so they'll be left out.`,
     leftOutReasons: {
       "no-address": "no email address",
       blocked: "address blocked",
     } as Record<string, string>,
     changeWho: "Change who",
+    // The same, while no one's ticked yet.
+    chooseWho: "Choose who",
     unknownFilter: (values: string) =>
       `The saved filter has values that are no longer supported (${values}), you need to change it before carrying on.`,
     subject: "Subject",
@@ -1022,10 +1025,10 @@ export const staffCopy = {
     schedule: (n: number) => `Schedule ${n} ${n === 1 ? "email" : "emails"}`,
     // Why the schedule button can't be pressed.
     problems: {
-      "no-subject": "Fill in the subject.",
-      "no-letter": "Write the letter.",
       "unknown-filter": "The filter has values that have changed or are no longer supported.",
       "no-recipients": "There's nobody to send to.",
+      "no-subject": "Fill in the subject.",
+      "no-letter": "Write the letter.",
       "field-lacking": "It uses a field some recipients have no value for.",
       "no-sender": "Choose who to send the message from.",
       "not-connected": "The Gmail you've chosen to send from isn't connected.",
@@ -1036,22 +1039,59 @@ export const staffCopy = {
     } as Record<string, string>,
     // The list of mailings: the heading over those not sent yet.
     comingUp: "Coming up",
-    // On the politicians list, beside Download.
-    mailThese: (n: number) => `Mail these ${n}…`,
     // Choosing who a mailing is for on the politicians list: at the top, for a new mailing or for a draft named by its title,
     // and under that what to do.
-    choosingNew: "New mailing: who's it for?",
-    choosingDraft: (title: string) => `Changing who “${title}” goes to`,
-    // What to do, for a new mailing and for a draft, each naming its bar's button. Not on a phone, where the title is enough.
-    choosingHowNew: "Filter the list to the people you want, then press “Write to these” at the bottom of the page.",
-    choosingHowDraft: "Update the filter, then press “Use these” at the bottom of the page.",
-    // Beside it, back to the mailings, or to the draft, choosing no one.
+    choosingNew: "Choose who the new mailing goes to",
+    choosingDraft: (title: string) => `Change who the mailing “${title}” goes to`,
+    // What to do, for a draft and for a new mailing. Not on a phone, where the title is enough.
+    choosingHow: "Tick each person it's for. The mailing is immediately updated as you tick.",
+    choosingHowNew: "Tick each person it's for. Then press the “Write to these” button.",
+    // Beside it, for a new mailing: deleting it.
     cancelNew: "Cancel",
-    backToDraft: "Cancel changing who",
-    // In the bar at the foot of the list: how many, and the button that takes them.
-    choosingCount: (n: number) => `${n} ${n === 1 ? "politician" : "politicians"}, for the mailing`,
+    backToDraft: "Back to the draft",
+    // The tab after the houses, showing only those ticked.
+    pickedTab: "Ticked",
+    // The tab after it, once names are pasted: who each line found.
+    pastedTab: "Paste names",
+    // A row's tick box, and the one in the heading that ticks everyone the filters find, on every page.
+    tick: (name: string) => `Tick ${name} for the mailing`,
+    tickAll: (n: number) => `Tick all ${n} found, on every page`,
+    // In the bar at the foot: the button that opens a box for names, one a line, and the box's button.
+    pasteNames: "Paste names…",
+    pasteLabel: "Paste names, constituencies or emails. You can just copy and paste text from a whole page.",
+    pasteTick: "Find these",
+    // Under it after a paste, the politicians list's table, a row for each person a line found, with their
+    // tick box, and last the reason they're there: by their name, more than one match, or only near it.
+    pastedTitle: "Names pasted",
+    pastedTickAll: (n: number) => `Tick all ${n} found`,
+    pastedFound: "Reason",
+    pastedBy: {
+      name: "Their name",
+      constituency: "Their constituency",
+      email: "Their email",
+      words: "Part of their name or constituency",
+    } as Record<string, string>,
+    pastedSome: "More than one match: tick the right one",
+    pastedNone: "No exact match: nearest name",
+    // Under it: how many lines found no one; or, if none did, that.
+    pastedSkipped: (n: number) => `Couldn't find a politician on ${n} ${n === 1 ? "line" : "lines"}.`,
+    pastedNoOne: "None found.",
+    // In the bar at the foot of the list: how many are ticked, and the button on to the draft.
+    choosingCount: (n: number) => `${n} ticked for the mailing`,
+    seeTicked: "See them",
+    untickAll: "Clear all ticks",
+    noneTicked: "Tick who it's for",
     writeToThese: (n: number) => (n === 1 ? "Write to this one" : `Write to these ${n}`),
-    useThese: (n: number) => (n === 1 ? "Use this one for the draft" : `Use these ${n} for the draft`),
+    // The same, greyed, while no one's ticked.
+    writeToNone: "Write to these",
+    useThese: (n: number) => (n === 1 ? "Use this one" : `Use these ${n}`),
+    // Who a mailing's for, when everyone a filter found was ticked: that filter, the day, how many, then those
+    // added and taken off since, by name. With more changes than a few, or no such filter, the names ticked.
+    pickedFrom: (when: string, n: number) => `as found on ${when} (${n})`,
+    pickedPlus: (name: string) => `plus ${name}`,
+    pickedExcept: (name: string) => `except ${name}`,
+    pickedNone: "No one ticked yet",
+    pickedMore: (n: number) => `and ${n} more`,
     // A mailing's own page.
     states: {
       draft: "Draft",

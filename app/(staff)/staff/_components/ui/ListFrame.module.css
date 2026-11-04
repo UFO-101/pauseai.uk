@@ -24,6 +24,12 @@
   border-top: 1px solid var(--border);
 }
 
+/* Right under a row of tabs, whose own rule is over it. */
+.bar.unruled {
+  padding-top: 0;
+  border-top: 0;
+}
+
 .count {
   margin: 0;
 }

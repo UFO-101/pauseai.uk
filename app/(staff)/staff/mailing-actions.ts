@@ -9,10 +9,13 @@ import { fromLondon } from "@/lib/staff-time";
 import type { Params } from "@/lib/staff-search";
 import {
   addAttachment,
+  changePicks,
   createDraft,
   deleteDraft,
+  foundIds,
   getWrittenMailing,
   mailingChangesFrom,
+  picksOf,
   removeAttachment,
   rescheduleMailing,
   saveDraft,
@@ -25,25 +28,7 @@ import {
 import { politicianAudience } from "@/lib/server/mailing-recipients";
 import { looksLikeEmail } from "@/lib/email-your-mp";
 import { requireStaff } from "@/lib/server/staff-auth";
-import { storedFilter } from "@/lib/staff-search";
-
-/**
- * Makes a draft of a new mailing at its first change worth keeping, to the
- * politicians `params` find. Its ID and version; undefined for changes
- * that aren't what they should be.
- */
-export async function startMailing(
-  params: Params,
-  changes: unknown,
-): Promise<{ id: number; version: number } | undefined> {
-  const { email } = await requireStaff();
-  const parsed = mailingChangesFrom(changes);
-  if (!parsed) return undefined;
-  // Not revalidated: that would refresh the page, by now at the draft's own
-  // address, remounting the writer under someone still typing. The list of
-  // mailings is fetched afresh whenever it's opened.
-  return createDraft(email, storedFilter("politicians", params), parsed);
-}
+import { filtersPath, staffBack, storedFilter } from "@/lib/staff-search";
 
 /** Saves a draft's changes, if no one else has saved it since `version`. */
 export async function saveMailing(id: number, version: number, changes: unknown): Promise<SaveResult | undefined> {
@@ -128,20 +113,80 @@ export async function rescheduleMailingNow(form: FormData): Promise<void> {
   revalidatePath(`/staff/mailings/${id}`);
 }
 
-/**
- * Makes a draft go to who the politicians list's filter finds now, from
- * the list's button after Change who, then goes back to the draft.
- */
-export async function changeMailingWho(form: FormData): Promise<void> {
-  await requireStaff();
-  const id = idFrom(form);
-  const mailing = id ? await getWrittenMailing(id) : undefined;
-  if (!mailing) return;
+/** The form's fields but `skip`, as the politicians list's parameters. */
+function formParams(form: FormData, skip: string[]): Params {
   const params: Record<string, string[]> = {};
   for (const [name, value] of form.entries()) {
-    if (typeof value === "string" && name !== "id") (params[name] ??= []).push(value);
+    if (typeof value === "string" && !skip.includes(name)) (params[name] ??= []).push(value);
   }
-  await saveDraft(mailing.id, mailing.version, { filter: storedFilter("politicians", params) });
-  revalidatePath(`/staff/mailings/${mailing.id}`);
-  redirect(`/staff/mailings/${mailing.id}`);
+  return params;
+}
+
+/**
+ * Makes a new mailing, a draft, and opens the politicians list choosing
+ * who it's for. From the list, with its filter's fields and `found`, it
+ * starts with everyone the filter finds ticked, on that filter; from the
+ * list of mailings, with no one.
+ */
+export async function newMailing(form: FormData): Promise<void> {
+  const { email } = await requireStaff();
+  const found = form.has("found");
+  const params = storedFilter("politicians", formParams(form, ["found"])).params;
+  const picks = found ? picksOf(await foundIds(params), params) : picksOf([]);
+  const { id } = await createDraft(email, picks, {});
+  revalidatePath("/staff/mailings");
+  redirect(filtersPath("/staff/politicians", params, { mailing: String(id) }));
+}
+
+/** Ticks a politician for a draft, or unticks them. */
+export async function pickPolitician(mailing: number, politician: number, ticked: boolean): Promise<void> {
+  await requireStaff();
+  await changePicks(mailing, ticked ? { tick: [politician] } : { untick: [politician] });
+  revalidatePath("/staff/politicians");
+}
+
+/** Ticks everyone the politicians list's `params` find for a draft, on every page, or unticks them. */
+export async function pickFound(mailing: number, params: Params, ticked: boolean): Promise<void> {
+  await requireStaff();
+  await changePicks(mailing, ticked ? { found: params } : { untick: await foundIds(params) });
+  revalidatePath("/staff/politicians");
+}
+
+/** Unticks everyone for a draft, to start again: bound to its ID, for a form or a tick box. */
+export async function untickAll(mailing: number): Promise<void> {
+  await requireStaff();
+  await changePicks(mailing, { clear: true });
+  revalidatePath("/staff/politicians");
+}
+
+/** The most lines of names pasted that are looked for at once. */
+const MOST_PASTED = 100;
+
+/**
+ * Goes to the paste tab of the list on `back` with the form's names, a
+ * line each, to show who each found, unticked till they're ticked there.
+ */
+export async function pasteNames(form: FormData): Promise<void> {
+  await requireStaff();
+  const text = form.get("names");
+  const back = staffBack(String(form.get("back") ?? ""), "/staff/politicians");
+  if (typeof text !== "string") return;
+  const url = new URL(back, "http://staff");
+  url.searchParams.delete("pasted");
+  for (const line of text
+    .split(/\r?\n/)
+    .map((one) => one.trim())
+    .filter(Boolean)
+    .slice(0, MOST_PASTED)) {
+    url.searchParams.append("pasted", line);
+  }
+  url.searchParams.set("tab", "pasted");
+  redirect(`${url.pathname}${url.search}`);
+}
+
+/** Ticks these politicians for a draft, or unticks them: everyone a paste found, from the box over them. */
+export async function pickMany(mailing: number, politicians: number[], ticked: boolean): Promise<void> {
+  await requireStaff();
+  await changePicks(mailing, ticked ? { tick: politicians } : { untick: politicians });
+  revalidatePath("/staff/politicians");
 }

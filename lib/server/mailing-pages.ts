@@ -6,10 +6,19 @@ import type { MailingRecipientValues } from "@/lib/mailing-doc";
 import { listAsks, type Ask } from "./asks";
 import { gmailAccounts, type GmailAccount } from "./gmail-accounts";
 import { mailingChannel } from "./mailing-channels";
-import { getWrittenMailing, openWrittenMailing, type WrittenMailing } from "./mailing-drafts";
+import { choosingFor, getWrittenMailing, openWrittenMailing, type WrittenMailing } from "./mailing-drafts";
 import { politicianAudience, type LeftOut } from "./mailing-recipients";
-import { listParties } from "./politicians";
-import { firstOf, pageNumber, storedFilter, type Params, type StoredFilter } from "@/lib/staff-search";
+import {
+  countPoliticians,
+  findPastedLines,
+  listParties,
+  politicianNames,
+  politiciansPage,
+  politiciansSearch,
+  type PoliticiansSearch,
+} from "./politicians";
+import type { ParamValue } from "@/lib/staff-search";
+import { firstOf, pageNumber, type StoredFilter } from "@/lib/staff-search";
 import { filterProblems } from "./stored-filters";
 
 // What the mailing pages show, loaded in one place so each page stays a
@@ -23,8 +32,12 @@ export type PreviewRecipient = MailingRecipientValues & {
   email: string;
 };
 
-/** What a filter's pills say it in words with: the parties and asks it can name. */
-export type FilterWordsData = { filter: StoredFilter; parties: string[]; asks: Ask[] };
+/**
+ * What a mailing's pills say who it's to with: the parties and asks its
+ * filter can name, and the names of those ticked and of those its group
+ * found, by ID.
+ */
+export type FilterWordsData = { filter: StoredFilter; parties: string[]; asks: Ask[]; names: Record<number, string> };
 
 /** What writing a mailing needs: who it's to, what its letter can use, and who it can be from. */
 export type WriterData = FilterWordsData & {
@@ -44,18 +57,26 @@ export type WriterData = FilterWordsData & {
   sends: boolean;
 };
 
+/** The names of those ticked for a mailing, and of those its group found, by ID. */
+async function namesOf(filter: StoredFilter): Promise<Record<number, string>> {
+  const ids = [...(filter.picked?.ids ?? []), ...(filter.picked?.from?.found ?? [])];
+  return politicianNames(ids);
+}
+
 async function writerData(filter: StoredFilter, me: string): Promise<WriterData> {
-  const [audience, unknown, asks, parties, senders] = await Promise.all([
+  const [audience, unknown, asks, parties, senders, names] = await Promise.all([
     politicianAudience(filter),
     filterProblems(filter),
     listAsks(),
     listParties(),
     gmailAccounts(),
+    namesOf(filter),
   ]);
   return {
     filter,
     parties,
     asks,
+    names,
     unknown,
     recipients: audience.recipients.map((r) => ({
       id: r.id,
@@ -73,11 +94,6 @@ async function writerData(filter: StoredFilter, me: string): Promise<WriterData>
     me,
     sends: Boolean(mailingChannel("email")?.sendsMailings),
   };
-}
-
-/** A new mailing to the politicians the list's `params` find, written by `me`. */
-export async function newMailingData(params: Params, me: string): Promise<WriterData> {
-  return writerData(storedFilter("politicians", params), me);
 }
 
 export type MailingPageData =
@@ -105,6 +121,30 @@ export async function mailingPageData(
   const mailing = await getMailing(id, pageNumber(firstOf(search.page)), tab as RecipientTab);
   if (!mailing) return undefined;
   if (!written) return { kind: "imported", mailing };
-  const [asks, parties] = await Promise.all([listAsks(), listParties()]);
-  return { kind: "written", mailing, written, filter: written.filter, asks, parties };
+  const [asks, parties, names] = await Promise.all([listAsks(), listParties(), namesOf(written.filter)]);
+  return { kind: "written", mailing, written, filter: written.filter, asks, parties, names };
+}
+
+/**
+ * The politicians page, from its URL: the list, and the asks and parties
+ * its filters choose among; while it's choosing who a draft is for, that
+ * draft, how many of those the filters find are ticked, and the lines
+ * pasted, each with who it found. On the ticked tab, the list is those
+ * ticked, in place of what the filters find; on it and the pasted tab, the
+ * filters are hidden.
+ */
+export async function politiciansPageData(params: Partial<Record<keyof PoliticiansSearch, ParamValue>>) {
+  const { filter, ...search } = politiciansSearch(params);
+  const choosing = await choosingFor(search.mailing);
+  const onTicked = Boolean(choosing && search.tab === "ticked");
+  const shown = onTicked ? { ids: choosing!.ticked, sort: filter.sort, page: filter.page } : filter;
+  const [list, asks, parties, tickedHere, pasted] = await Promise.all([
+    politiciansPage(shown),
+    listAsks(),
+    listParties(),
+    choosing ? countPoliticians({ ...filter, ids: choosing.ticked }) : 0,
+    choosing ? findPastedLines(search.pasted) : { lines: [], skipped: 0 },
+  ]);
+  // The filters choose only the list's own view, not the ticked or pasted tabs.
+  return { search, choosing, filtersHidden: Boolean(choosing && search.tab), list, asks, parties, tickedHere, pasted };
 }

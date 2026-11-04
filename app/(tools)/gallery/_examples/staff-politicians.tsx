@@ -4,8 +4,7 @@
 // login page.
 import { NationShape, Rosette, StatusDot } from "@/app/(staff)/staff/_components/PoliticianIcons";
 import PoliticianFilters from "@/app/(staff)/staff/_components/PoliticianFilters";
-import { ChoosingHead, HouseTabs } from "@/app/(staff)/staff/_components/PoliticiansList";
-import { NEW_MAILING } from "@/lib/staff-search";
+import { HouseTabs } from "@/app/(staff)/staff/_components/PoliticiansList";
 import StaffPage from "@/app/(staff)/staff/_components/ui/StaffPage";
 import {
   exampleAsks,
@@ -17,7 +16,10 @@ import AsksTable from "@/app/(staff)/staff/_components/AsksTable";
 import { AskLead, AskPreview, AskTitle } from "@/app/(staff)/staff/_components/AskLine";
 import type { Group } from "../_components/types";
 import {
-  ChangeWhoListExample,
+  ChoosingHeadExample,
+  ChoosingListExample,
+  PasteFormExample,
+  PickBoxExample,
   PoliticiansListExample,
   AskRowExample,
   PoliticianDetailsExample,
@@ -46,6 +48,8 @@ const EMPTY_POLITICIAN_FILTERS = {
   dir: "",
   page: "",
   mailing: "",
+  tab: "",
+  pasted: [] as string[],
 };
 
 export const staffPoliticians: Group = {
@@ -64,6 +68,17 @@ export const staffPoliticians: Group = {
             </StaffPage>
           ),
         },
+        {
+          label: "Choosing who a mailing is for: the ticked tab, last, chosen",
+          render: () => (
+            <StaffPage as="div">
+              <HouseTabs
+                search={{ ...EMPTY_POLITICIAN_FILTERS, mailing: "12", tab: "ticked" }}
+                choosing={{ id: 12, title: "Edinburgh thank-you", blank: false, ticked: [1, 2, 3] }}
+              />
+            </StaffPage>
+          ),
+        },
       ],
     },
     {
@@ -74,9 +89,7 @@ export const staffPoliticians: Group = {
           label: "Choosing who a new mailing is for: what to do, with Cancel, over the title",
           render: () => (
             <StaffPage as="div">
-              <ChoosingHead search={{ ...EMPTY_POLITICIAN_FILTERS, mailing: NEW_MAILING }}>
-                <h1>Politicians</h1>
-              </ChoosingHead>
+              <ChoosingHeadExample blank />
             </StaffPage>
           ),
         },
@@ -84,9 +97,35 @@ export const staffPoliticians: Group = {
           label: "Choosing who a draft goes to, named, with the way back to it",
           render: () => (
             <StaffPage as="div">
-              <ChoosingHead search={{ ...EMPTY_POLITICIAN_FILTERS, mailing: "12" }} title="Edinburgh thank-you">
-                <h1>Politicians</h1>
-              </ChoosingHead>
+              <ChoosingHeadExample blank={false} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "PasteForm",
+      file: "app/(staff)/staff/_components/PasteForm.tsx",
+      variants: [
+        {
+          label: "The box for names, one a line, and Find these",
+          render: () => (
+            <StaffPage as="div">
+              <PasteFormExample />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "PickBox",
+      file: "app/(staff)/staff/_components/PickBox.tsx",
+      variants: [
+        {
+          label: "Ticked, not ticked, and part ticked",
+          render: () => (
+            <StaffPage as="div">
+              <PickBoxExample />
             </StaffPage>
           ),
         },
@@ -97,26 +136,24 @@ export const staffPoliticians: Group = {
       file: "app/(staff)/staff/_components/PoliticiansList.tsx",
       variants: [
         {
-          label: "Choosing who a new mailing is for: the bar at the foot writes to these",
+          label: "Choosing who a draft goes to: a tick box on each row and over them, Paste names, the bar at the foot",
           // The bar is fixed to the window's foot; a transform makes this example its window, so it sits at the example's foot.
           render: () => (
             <div style={{ transform: "translateZ(0)" }}>
               <StaffPage as="div">
-                <PoliticiansListExample
-                  list={examplePoliticiansPage}
-                  search={{ ...EMPTY_POLITICIAN_FILTERS, house: "commons", mailing: NEW_MAILING }}
-                  asks={exampleAsks}
-                />
+                <ChoosingListExample />
               </StaffPage>
             </div>
           ),
         },
         {
-          label: "After a draft's Change who: the button makes the draft go to these",
+          label: "After a paste: a row for each person the lines found, and why",
           render: () => (
-            <StaffPage as="div">
-              <ChangeWhoListExample />
-            </StaffPage>
+            <div style={{ transform: "translateZ(0)" }}>
+              <StaffPage as="div">
+                <ChoosingListExample pasted />
+              </StaffPage>
+            </div>
           ),
         },
         {

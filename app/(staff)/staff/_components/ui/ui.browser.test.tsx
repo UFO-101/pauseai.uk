@@ -111,6 +111,11 @@ describe("Tabs", () => {
       .element(nav.getByRole("link", { name: "Lords" }))
       .toHaveAttribute("href", "/staff/politicians?house=lords");
   });
+
+  it("shows a tab's count after its words, in a pill", async () => {
+    await render(<Tabs label="House" current="" tabs={[{ key: "ticked", label: "Ticked", href: "/x", badge: 4 }]} />);
+    await expect.element(page.getByRole("link", { name: "Ticked 4" })).toBeVisible();
+  });
 });
 
 describe("Menu", () => {
