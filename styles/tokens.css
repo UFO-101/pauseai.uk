@@ -164,6 +164,22 @@
   --status-blue: #1d4e89;
   --status-blue-bg: #dbe8f7;
 
+  /* The weekly briefings' colours, from their designer's A4 layout. Each
+     topic has its own, for its box, its tab and its bars and dots in the
+     charts and calendars; the headline orange rules the masthead and the
+     sources, with a stronger orange for its tab and a darker one for the
+     marks citing a source. White text on every tab is large text, at 3:1
+     or more. */
+  --briefing-headline: #f68b1e;
+  --briefing-headline-strong: #dd6510;
+  --briefing-headline-text: #c2410c;
+  --briefing-parliament: #1f6aa5;
+  --briefing-industry: #7b4f9d;
+  --briefing-international: #0b8a84;
+  --briefing-risk: #b3261e;
+  --briefing-good: #5b9a3c;
+  --briefing-diary: #4b4b48;
+
   /* The colours of the marks of the services the imports read from
      (ImportIcon), as each draws its own. */
   --brand-airtable-yellow: #fcb400;

@@ -1,16 +1,16 @@
 // The blog's, the donate page's and the events page's components.
-import PostBody from "@/app/(site)/blog/_components/PostBody";
-import PostCard, { type CardVariant } from "@/app/(site)/blog/_components/PostCard";
-import { examplePost } from "@/app/(site)/blog/_components/PostCard.examples";
-import PostHeader from "@/app/(site)/blog/_components/PostHeader";
-import PostList from "@/app/(site)/blog/_components/PostList";
+import PostBody from "@/components/posts/PostBody";
+import PostCard, { type CardVariant } from "@/components/posts/PostCard";
+import { examplePost } from "@/components/posts/PostCard.examples";
+import PostHeader from "@/components/posts/PostHeader";
+import PostList from "@/components/posts/PostList";
 import DonateBottom from "@/app/(site)/donate/_components/DonateBottom";
 import DonateForm from "@/app/(site)/donate/_components/DonateForm";
 import DonateIntro from "@/app/(site)/donate/_components/DonateIntro";
 import DonateThanks from "@/app/(site)/donate/_components/DonateThanks";
 import { exampleDonors } from "@/app/(site)/donate/_components/DonateThanks.examples";
 import FindYourGroup from "@/app/(site)/events/_components/FindYourGroup";
-import { findPost, postsNewestFirst, type BlogPost } from "@/lib/content/blog";
+import { BLOG, findPost, newestFirst, posts, type BlogPost } from "@/lib/content/blog";
 import type { Group } from "../_components/types";
 
 /** A real post, by its slug. */
@@ -36,13 +36,13 @@ export const blogDonateEvents: Group = {
   examples: [
     {
       name: "PostCard",
-      file: "app/(site)/blog/_components/PostCard.tsx",
+      file: "components/posts/PostCard.tsx",
       variants: (Object.keys(CARDS) as CardVariant[]).map((variant) => ({
         label: `${CARDS[variant]}: a photo, an author without a photo, a diagram, no image`,
         render: () => (
           <div className="container" style={{ display: "grid", gap: 24 }}>
             {[BY_PERSON, NO_AUTHOR_PHOTO, DIAGRAM, examplePost].map((card) => (
-              <PostCard key={card.slug} post={card} variant={variant} />
+              <PostCard key={card.slug} post={card} section={BLOG} variant={variant} />
             ))}
           </div>
         ),
@@ -50,24 +50,27 @@ export const blogDonateEvents: Group = {
     },
     {
       name: "PostList",
-      file: "app/(site)/blog/_components/PostList.tsx",
+      file: "components/posts/PostList.tsx",
       variants: [
-        { label: "Every post: a lead, a pair and the rest", render: () => <PostList posts={postsNewestFirst()} /> },
-        { label: "One post", render: () => <PostList posts={[examplePost]} /> },
+        {
+          label: "Every post: a lead, a pair and the rest",
+          render: () => <PostList posts={newestFirst(posts)} section={BLOG} />,
+        },
+        { label: "One post", render: () => <PostList posts={[examplePost]} section={BLOG} /> },
       ],
     },
     {
       name: "PostHeader",
-      file: "app/(site)/blog/_components/PostHeader.tsx",
+      file: "components/posts/PostHeader.tsx",
       variants: [
-        { label: "By a person with a photo", render: () => <PostHeader post={BY_PERSON} /> },
-        { label: "By a person without a photo", render: () => <PostHeader post={NO_AUTHOR_PHOTO} /> },
-        { label: "By the organisation", render: () => <PostHeader post={BY_ORGANISATION} /> },
+        { label: "By a person with a photo", render: () => <PostHeader post={BY_PERSON} section={BLOG} /> },
+        { label: "By a person without a photo", render: () => <PostHeader post={NO_AUTHOR_PHOTO} section={BLOG} /> },
+        { label: "By the organisation", render: () => <PostHeader post={BY_ORGANISATION} section={BLOG} /> },
       ],
     },
     {
       name: "PostBody",
-      file: "app/(site)/blog/_components/PostBody.tsx",
+      file: "components/posts/PostBody.tsx",
       variants: [
         { label: "Text alone", render: () => <PostBody post={examplePost} /> },
         {

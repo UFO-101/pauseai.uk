@@ -1,7 +1,8 @@
 import { readdirSync } from "fs";
 import { join } from "path";
 import type { MetadataRoute } from "next";
-import { posts } from "@/lib/content/blog";
+import { BLOG, posts, type BlogPost, type PostSection } from "@/lib/content/blog";
+import { BRIEFINGS, briefings } from "@/lib/content/briefings";
 import { people, personSlug } from "@/lib/content/people";
 import { site } from "@/lib/content/site";
 
@@ -62,14 +63,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     url: `${site.url}${path}`,
   }));
 
-  const postEntries: MetadataRoute.Sitemap = posts.map((post) => ({
-    url: `${site.url}/blog/${post.slug}`,
-    lastModified: new Date(post.date),
-  }));
+  const postEntries = (list: BlogPost[], section: PostSection): MetadataRoute.Sitemap =>
+    list.map((post) => ({
+      url: `${site.url}${section.path}/${post.slug}`,
+      lastModified: new Date(post.date),
+    }));
 
   const peopleEntries: MetadataRoute.Sitemap = people.map((person) => ({
     url: `${site.url}/people/${personSlug(person)}`,
   }));
 
-  return [...staticEntries, ...postEntries, ...peopleEntries];
+  return [...staticEntries, ...postEntries(posts, BLOG), ...postEntries(briefings, BRIEFINGS), ...peopleEntries];
 }

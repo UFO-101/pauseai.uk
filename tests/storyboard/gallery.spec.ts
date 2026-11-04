@@ -16,6 +16,7 @@ const GROUPS = [
   "areas",
   "home",
   "blog-donate-events",
+  "briefings",
   "campaigns-page",
   "campaigns-letter",
   "pages",

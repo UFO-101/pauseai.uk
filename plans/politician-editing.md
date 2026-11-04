@@ -9,32 +9,32 @@ sends mailings from the site rather than Airtable.
 
 ## What replaces each Airtable field
 
-The nightly `sync-politicians` job runs two syncs from base
-`appBInVvIm6opJ1Ob`, one for politicians and one for the Emails table.
-Two one-off imports also read that base
-(`lib/server/outside-services/airtable.ts`).
+The nightly `sync-politicians` job copies two tables from base
+`appBInVvIm6opJ1Ob`: the politicians (`lib/server/politician-sync.ts`)
+and the Emails table (`lib/server/emails-sync.ts`). Two one-off imports
+also read that base (`lib/server/outside-services/airtable.ts`).
 
-| Airtable                                                  | Replaced by                                       |
-| --------------------------------------------------------- | ------------------------------------------------- |
-| Name, body, constituency, party, country, email, status   | The official sources, every night                 |
-| Salutation                                                | Staff, with a new politician's made from the name |
-| Notes, Recommended                                        | A note in their history, from Airtable            |
-| Important target, Personal connection                     | Staff                                             |
-| Signed Frontier AI Letter, Edinburgh conference           | Staff                                             |
-| Signed DeepMind Letter                                    | Nothing; the letter was in 2025, so it's kept     |
-| ControlAI Signatory                                       | ControlAI's own page, every night                 |
-| Emails table                                              | Mailings sent from the site; the history is kept  |
-| Test records                                              | The site's own test politicians                   |
-| Web form emails, Go to Parliament                         | Nothing; both were imported once already          |
+| Airtable                                                | Replaced by                                       |
+| ------------------------------------------------------- | ------------------------------------------------- |
+| Name, body, constituency, party, country, email, status | The official sources, every night                 |
+| Salutation                                              | Staff, with a new politician's made from the name |
+| Notes, Recommended                                      | A note in their history, from Airtable            |
+| Important target, Personal connection                   | Staff                                             |
+| Signed Frontier AI Letter, Edinburgh conference         | Staff                                             |
+| Signed DeepMind Letter                                  | Nothing; the letter was in 2025, so it's kept     |
+| ControlAI Signatory                                     | ControlAI's own page, every night                 |
+| Emails table                                            | Mailings sent from the site; the history is kept  |
+| Test records                                            | The site's own test politicians                   |
+| Web form emails, Go to Parliament                       | Nothing; both were imported once already          |
 
 The members import reads a different base, Stichting PauseAI's
 "Members & Actions", and isn't affected.
 
 ## Official sources
 
-Each politician will store the ID their legislature gives them, so
-someone who leaves and comes back, or moves from one house to another,
-stays one record.
+Each politician stores the ID their legislature gives them, so someone
+who leaves and comes back, or moves from one house to another, stays
+one record.
 
 | Body                | Source                                                                                              | ID                                                               |
 | ------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
@@ -45,9 +45,11 @@ stays one record.
 
 All four give each member's name, party, constituency and email.
 
-- The Members API gives emails from `/Members/{id}/Contact`, and the
-  reason a membership ended. Its `nameAddressAs` field is mostly empty,
-  so it can't give salutations.
+- The Members API is already read for sitting MPs and their emails
+  (`lib/parliament.ts`), for the nightly check against Airtable
+  (`lib/server/mp-check.ts`). It also gives the reason a membership
+  ended. Its `nameAddressAs` field is mostly empty, so it can't give
+  salutations.
 - The Scottish Parliament gives emails and parties from separate
   endpoints, keyed by `PersonID`.
 - The NI Assembly gives emails from `GetAllMemberContactDetails_JSON`,
@@ -63,30 +65,29 @@ All four give each member's name, party, constituency and email.
    the politicians we have to the official lists once, by name, body
    and constituency, and list any that don't match so staff can match
    them by hand.
-2. Replace `sync-politicians` with a nightly update from the official
-   sources, which also does the checks in `lib/server/mp-check.ts`. It
+2. Replace the Airtable copy in `sync-politicians` with a nightly update
+   from the official sources, folding in the checks in `mp-check.ts`. It
    adds new members, marks those who have left with the reason, and
-   updates names, parties, constituencies and emails.
-   - A large change is held for someone to check, as it is now. Any
-     staff account can apply it on the Import page.
-   - A held update appears on the staff home page (`heldSyncs()` in
-     `lib/server/staff-dashboard.ts` needs to include the new job), and
-     the site emails the politicians' inbox about it, as it does for a
-     bounce.
-3. Let staff edit a politician's salutation and markers, and add
-   people who aren't in any official list (house `other`). A change of
-   status needs the date it happened and a note.
+   updates names, parties, constituencies and emails. A large change is
+   held for someone to check, as now: it shows on the staff home page
+   and can be applied on the Import page. The site also emails
+   `POLICY_INBOX` about it, as it does for a bounce.
+3. Let staff edit a politician's salutation and markers (important
+   target, personal connection), and add people who aren't in any
+   official list (house `other`). A change of their office status needs
+   the date it happened and a note.
 4. The asks page shows how many politicians received a letter about
    each ask, from a mailing or a campaign.
 5. Read ControlAI's statement every night from
    [controlai.org/statement](https://controlai.org/statement), with the
-   statuses owned by `controlai`. Each supporter on the page links to
-   their official profile, so most can be matched by ID: on 28 October,
-   141 linked to `members.parliament.uk/member/{id}` and 26 to
+   statuses owned by `controlai`, as `import-controlai` already does for
+   ControlAI's letter to the PM (`lib/server/controlai-import.ts`). Each
+   supporter on the page links to their official profile, so most can
+   be matched by ID: on 28 October, 141 linked to
+   `members.parliament.uk/member/{id}` and 26 to
    `aims.niassembly.gov.uk` with a `per=` ID. The 14 Scottish and 5
    Senedd links contain a name, so those are matched by name. If the
-   page has too few names, nothing is changed, as with ControlAI's
-   letter.
+   page has too few names, nothing is changed, as with the letter.
 6. Switch off Airtable: remove the syncs, the one-off imports, their
    rows on the Import page and the base's token. Politicians keep their
    `airtable_id`. Each politician's Airtable notes, with a line saying

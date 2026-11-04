@@ -1,7 +1,7 @@
 import { pageMetadata } from "@/lib/metadata";
-import { blogFeedLink, postsNewestFirst } from "@/lib/content/blog";
+import { BLOG, feedLink, newestFirst, posts } from "@/lib/content/blog";
 import { site } from "@/lib/content/site";
-import PostList from "./_components/PostList";
+import PostList from "@/components/posts/PostList";
 import PageHero from "@/components/ui/PageHero";
 
 const page = pageMetadata({
@@ -10,7 +10,7 @@ const page = pageMetadata({
   path: "/blog",
 });
 
-export const metadata = { ...page, alternates: { ...page.alternates, ...blogFeedLink } };
+export const metadata = { ...page, alternates: { ...page.alternates, ...feedLink(BLOG) } };
 
 export default function BlogIndexPage() {
   return (
@@ -27,7 +27,7 @@ export default function BlogIndexPage() {
           }
         />
 
-        <PostList posts={postsNewestFirst()} />
+        <PostList posts={newestFirst(posts)} section={BLOG} />
       </main>
     </>
   );

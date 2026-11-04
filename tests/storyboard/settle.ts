@@ -9,9 +9,10 @@ import { expect, type Page } from "@playwright/test";
 const POLL = { polling: 50, timeout: 20_000 };
 
 /**
- * The page has loaded and hydrated: Nav's effect has set --site-header-h on
- * the root (a page without the site header, like the staff login, has
- * nothing to wait for), the fonts are in, and the console has been quiet
+ * The page has loaded and hydrated: the header's effect has set
+ * --site-header-h on the root, Nav's on the site and SignupHeader's on the
+ * march sign-up (a page with neither, like the staff login, has nothing to
+ * wait for), the fonts are in, and the console has been quiet
  * for a moment, so a hydration warning, which React logs just after mount,
  * has had its chance.
  */
@@ -24,7 +25,7 @@ export async function hydrated(page: Page): Promise<void> {
       () =>
         document.readyState === "complete" &&
         (getComputedStyle(document.documentElement).getPropertyValue("--site-header-h").trim() !== "" ||
-          !document.querySelector('header button[aria-label="Menu"]')),
+          !document.querySelector('header button[aria-label="Menu"], header a[aria-label="PauseAI UK"]')),
       undefined,
       POLL,
     );

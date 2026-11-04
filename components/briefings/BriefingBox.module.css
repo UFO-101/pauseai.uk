@@ -1,0 +1,54 @@
+/* A briefing's box (BriefingBox): a ruled frame starting a little below the
+   top, so the tab sits across its edge. The box is a column, so a picture
+   (BriefingPicture) can drop to the bottom of a box stretched by the row. */
+
+.box {
+  --tab: var(--tone);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  height: 100%;
+  padding: 38px 22px var(--space-4);
+}
+.box[data-tone="headline"] {
+  --tab: var(--briefing-headline-strong);
+}
+
+/* The frame: inset by half the tab's height, so the tab straddles it. */
+.box::before {
+  content: "";
+  position: absolute;
+  inset: 15px 0 0;
+  border: 2.5px solid var(--tone);
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+.tab {
+  position: absolute;
+  top: 0;
+  left: 19px;
+  z-index: 1;
+  margin: 0;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  background: var(--tab);
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 30px;
+  letter-spacing: 0.01em;
+  color: var(--white);
+}
+
+@media (max-width: 820px) {
+  .box {
+    padding: 36px var(--space-4) var(--space-3);
+  }
+  .tab {
+    left: var(--space-3);
+    font-size: 18px;
+  }
+}

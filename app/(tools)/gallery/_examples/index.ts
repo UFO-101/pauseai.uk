@@ -10,6 +10,7 @@ import { layout } from "./layout";
 import { areas } from "./areas";
 import { home } from "./home";
 import { blogDonateEvents } from "./blog-donate-events";
+import { briefingsKit } from "./briefings";
 import { campaignsPage } from "./campaigns-page";
 import { campaignsLetter } from "./campaigns-letter";
 import { pages } from "./pages";
@@ -34,6 +35,7 @@ export const GROUPS: Group[] = [
   areas,
   home,
   blogDonateEvents,
+  briefingsKit,
   campaignsPage,
   campaignsLetter,
   pages,

@@ -11,8 +11,10 @@ import {
   postJsonLd,
   postMetadata,
   posts,
-  postsNewestFirst,
+  newestFirst,
+  BLOG,
   type BlogPost,
+  type PostSection,
 } from "./blog";
 
 const base: Omit<BlogPost, "content"> = {
@@ -139,7 +141,7 @@ describe("post helpers", () => {
   });
 
   it("lists posts newest first", () => {
-    const dates = postsNewestFirst().map((post) => post.date);
+    const dates = newestFirst(posts).map((post) => post.date);
     expect(dates).toEqual([...dates].sort().reverse());
     expect(dates).toHaveLength(posts.length);
   });
@@ -159,7 +161,10 @@ describe("post helpers", () => {
 describe("postMetadata", () => {
   it("uses the post's image for social previews", () => {
     const cover = { src: "/images/c.jpg", width: 800, height: 450, alt: "C" };
-    const meta = postMetadata({ ...base, slug: "my-post", title: "My post", tldr: "Short.", content: null, cover });
+    const meta = postMetadata(
+      { ...base, slug: "my-post", title: "My post", tldr: "Short.", content: null, cover },
+      BLOG,
+    );
     expect(meta).toEqual({
       title: "My post",
       description: "Short.",
@@ -179,7 +184,7 @@ describe("postMetadata", () => {
   });
 
   it("falls back to the site's cards without an image", () => {
-    const meta = postMetadata({ ...base, content: null });
+    const meta = postMetadata({ ...base, content: null }, BLOG);
     expect(meta.openGraph?.images).toEqual([
       { url: "/images/open-graph/open-graph-1200-630.jpg", width: 1200, height: 630 },
     ]);
@@ -190,7 +195,7 @@ describe("postMetadata", () => {
 describe("postJsonLd", () => {
   it("credits a person author with a link to their story", () => {
     const post = posts.find((p) => p.author !== "PauseAI UK")!;
-    const data = postJsonLd(post);
+    const data = postJsonLd(post, BLOG);
     expect(data.author).toEqual({
       "@type": "Person",
       name: post.author,
@@ -200,8 +205,22 @@ describe("postJsonLd", () => {
   });
 
   it("credits the organisation, with the default image when the post has none", () => {
-    const data = postJsonLd({ ...base, content: null });
+    const data = postJsonLd({ ...base, content: null }, BLOG);
     expect(data.author).toEqual({ "@type": "Organization", name: "PauseAI UK" });
     expect(data.image).toBe("https://pauseai.uk/images/open-graph/open-graph-1200-630.jpg");
+  });
+});
+
+describe("a section other than the blog", () => {
+  const section: PostSection = { path: "/campaigns/news", backLink: "Back", moreHeading: "More", feedTitle: "News" };
+
+  it("puts its posts' pages under its path", () => {
+    const meta = postMetadata({ ...base, slug: "a", content: null }, section);
+    expect(meta.openGraph?.url).toBe("https://pauseai.uk/campaigns/news/a/");
+    expect(meta.alternates).toEqual({
+      canonical: "/campaigns/news/a",
+      types: { "application/atom+xml": [{ url: "/campaigns/news/feed.xml", title: "News" }] },
+    });
+    expect(postJsonLd({ ...base, slug: "a", content: null }, section).url).toBe("https://pauseai.uk/campaigns/news/a");
   });
 });

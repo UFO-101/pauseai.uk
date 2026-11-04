@@ -1,7 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import { formatPostDate, ORGANISATION_AVATAR, postAuthor, postImage, type BlogPost } from "@/lib/content/blog";
+import {
+  formatPostDate,
+  ORGANISATION_AVATAR,
+  postAuthor,
+  postImage,
+  type BlogPost,
+  type PostSection,
+} from "@/lib/content/blog";
 import { parseCssStyle } from "@/lib/storyRender";
 import styles from "./PostCard.module.css";
 
@@ -21,7 +28,15 @@ function avatarStyle(post: BlogPost): CSSProperties | null {
   return { backgroundImage: `url("${author.person.imageSrc}")`, ...parseCssStyle(author.person.imageStyle ?? "") };
 }
 
-export default function PostCard({ post, variant }: { post: BlogPost; variant: CardVariant }) {
+export default function PostCard({
+  post,
+  section,
+  variant,
+}: {
+  post: BlogPost;
+  section: PostSection;
+  variant: CardVariant;
+}) {
   const image = postImage(post);
   // Diagrams (the PNG figures) are shown whole on white; photos fill the frame.
   const isDiagram = image?.src.endsWith(".png") ?? false;
@@ -29,7 +44,7 @@ export default function PostCard({ post, variant }: { post: BlogPost; variant: C
   const Title = variant === "row" ? "h3" : "h2";
   return (
     <Link
-      href={`/blog/${post.slug}/`}
+      href={`${section.path}/${post.slug}/`}
       className={[styles.card, styles[variant], !image && styles.noMedia].filter(Boolean).join(" ")}
     >
       {image && (

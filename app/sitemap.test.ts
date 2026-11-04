@@ -6,6 +6,7 @@ import { discoverStaticRoutes, HIDDEN_ROUTES } from "./sitemap";
 import sitemap from "./sitemap";
 import { people, personSlug } from "@/lib/content/people";
 import { posts } from "@/lib/content/blog";
+import { briefings } from "@/lib/content/briefings";
 import { site } from "@/lib/content/site";
 
 let dir: string | undefined;
@@ -117,6 +118,15 @@ describe("sitemap", () => {
 
     for (const post of posts) {
       expect(urls).toContain(`${site.url}/blog/${post.slug}`);
+    }
+  });
+
+  it("includes every briefing, and the briefings' index, under the campaigns", () => {
+    const urls = sitemap().map((entry) => entry.url);
+
+    expect(urls).toContain(`${site.url}/campaigns/briefings`);
+    for (const briefing of briefings) {
+      expect(urls).toContain(`${site.url}/campaigns/briefings/${briefing.slug}`);
     }
   });
 

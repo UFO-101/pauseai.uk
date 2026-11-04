@@ -1,6 +1,6 @@
 /* A post: its summary and its text, the page hero's width. The post's own
-   HTML (lib/content/blog.tsx) writes the quote and footnote classes, so
-   those are global. */
+   HTML (lib/content/blog.tsx, briefings.tsx) writes the quote and footnote
+   classes, so those are global. */
 
 .inner {
   --container-width: var(--measure-page);
@@ -28,6 +28,15 @@
   letter-spacing: -0.015em;
   color: var(--text);
   margin: 36px 0 14px;
+}
+
+.body h3 {
+  font-family: var(--font-display), "Lato", system-ui, sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text);
+  margin: 28px 0 10px;
 }
 
 .body p {
@@ -137,6 +146,10 @@
 .body :global(.blog-footnotes li) {
   padding-left: 4px;
   margin-bottom: 8px;
+}
+/* A source's address, written out, breaks anywhere rather than run off a phone's screen. */
+.body :global(.blog-footnotes a) {
+  overflow-wrap: anywhere;
 }
 .body :global(.blog-footnotes li::marker) {
   color: var(--muted);

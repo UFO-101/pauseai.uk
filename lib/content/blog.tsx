@@ -39,6 +39,28 @@ export type BlogPost = {
   cover?: PostImage;
 };
 
+/**
+ * A list of posts with pages of their own: the blog, or the campaigns'
+ * briefings (lib/content/briefings.tsx). Its posts' pages are at
+ * `${path}/${slug}`, and link back with `backLink`; its Atom feed is at
+ * `${path}/feed.xml` (lib/content/posts-feed.ts).
+ */
+export type PostSection = {
+  path: string;
+  backLink: string;
+  /** The heading over the older posts on the index. */
+  moreHeading: string;
+  /** The feed's name in a feed reader. */
+  feedTitle: string;
+};
+
+export const BLOG: PostSection = {
+  path: "/blog",
+  backLink: "← All posts",
+  moreHeading: "More from the blog",
+  feedTitle: "PauseAI UK blog",
+};
+
 export function postAuthor(post: BlogPost): { person: Person; slug: string } | null {
   const person = people.find((p) => p.name === post.author);
   if (!person) return null;
@@ -2166,7 +2188,7 @@ export function checkPostAuthors(list: BlogPost[]): void {
   for (const post of list) {
     if (post.author !== ORGANISATION_AUTHOR && !people.some((p) => p.name === post.author)) {
       throw new Error(
-        `blog.tsx: post "${post.slug}" has author "${post.author}", which is neither "${ORGANISATION_AUTHOR}" nor a name in lib/content/people.ts.`,
+        `Post "${post.slug}" has author "${post.author}", which is neither "${ORGANISATION_AUTHOR}" nor a name in lib/content/people.ts.`,
       );
     }
   }
@@ -2225,21 +2247,25 @@ function toNumber(value: unknown): number | undefined {
   return typeof n === "number" && Number.isFinite(n) ? n : undefined;
 }
 
-/** Every post, newest first. */
-export function postsNewestFirst(): BlogPost[] {
-  return [...posts].sort((a, b) => b.date.localeCompare(a.date));
+/** A section's posts, newest first. */
+export function newestFirst<Post extends BlogPost>(list: Post[]): Post[] {
+  return [...list].sort((a, b) => b.date.localeCompare(a.date));
 }
 
-/** Where the blog's Atom feed is served. */
-export const BLOG_FEED_PATH = "/blog/feed.xml";
+/** Where a section's Atom feed is served. */
+export function feedPath(section: PostSection): string {
+  return `${section.path}/feed.xml`;
+}
 
-/** The blog's Atom feed, as metadata's `alternates`, so a feed reader finds it from the blog's pages. */
-export const blogFeedLink = {
-  types: { "application/atom+xml": [{ url: BLOG_FEED_PATH, title: "PauseAI UK blog" }] },
-} satisfies Metadata["alternates"];
+/** A section's Atom feed, as metadata's `alternates`, so a feed reader finds it from the section's pages. */
+export function feedLink(section: PostSection) {
+  return {
+    types: { "application/atom+xml": [{ url: feedPath(section), title: section.feedTitle }] },
+  } satisfies Metadata["alternates"];
+}
 
 /** A post's page metadata. */
-export function postMetadata(post: BlogPost): Metadata {
+export function postMetadata(post: BlogPost, section: PostSection): Metadata {
   // A post's cover, or failing that its first image, is its social preview; posts with neither use the site-wide card.
   const image = postImage(post);
   return {
@@ -2253,18 +2279,18 @@ export function postMetadata(post: BlogPost): Metadata {
           ? { url: image.src, width: image.width, height: image.height, alt: image.alt }
           : { url: "/images/open-graph/open-graph-1200-630.jpg", width: 1200, height: 630 },
       ],
-      url: `https://pauseai.uk/blog/${post.slug}/`,
+      url: `https://pauseai.uk${section.path}/${post.slug}/`,
       type: "article",
     },
     twitter: {
       images: [image ? image.src : "/images/open-graph/open-graph-1600-840.jpg"],
     },
-    alternates: { canonical: `/blog/${post.slug}`, ...blogFeedLink },
+    alternates: { canonical: `${section.path}/${post.slug}`, ...feedLink(section) },
   };
 }
 
 /** Schema.org Article data for a post, for search engines. */
-export function postJsonLd(post: BlogPost) {
+export function postJsonLd(post: BlogPost, section: PostSection) {
   const author = postAuthor(post);
   const image = postImage(post);
   return {
@@ -2273,8 +2299,8 @@ export function postJsonLd(post: BlogPost) {
     headline: post.title,
     description: post.tldr,
     datePublished: post.date,
-    url: `${site.url}/blog/${post.slug}`,
-    mainEntityOfPage: `${site.url}/blog/${post.slug}`,
+    url: `${site.url}${section.path}/${post.slug}`,
+    mainEntityOfPage: `${site.url}${section.path}/${post.slug}`,
     image: `${site.url}${image?.src ?? "/images/open-graph/open-graph-1200-630.jpg"}`,
     author: author
       ? { "@type": "Person", name: post.author, url: `${site.url}/people/${author.slug}` }

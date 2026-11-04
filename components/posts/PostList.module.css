@@ -1,5 +1,6 @@
-/* The blog's index: the newest post large, two under it, then the rest in
-   rows, a little wider than a reading column, as the index's hero is. */
+/* A section's index, the blog's or the briefings': the newest post large,
+   two under it, then the rest in rows, a little wider than a reading
+   column, as the index's hero is. */
 
 .inner {
   --container-width: var(--measure-wide);
