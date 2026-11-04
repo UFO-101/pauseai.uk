@@ -230,6 +230,8 @@ test("Pasting names", async ({ page, request, flowDatabase }) => {
   );
 
   await page.getByRole("button", { name: copy.pasteNames }).click();
+  // Typed into at once.
+  await expect(page.getByRole("textbox", { name: copy.pasteLabel })).toBeFocused();
   await page
     .getByRole("textbox", { name: copy.pasteLabel })
     .fill(

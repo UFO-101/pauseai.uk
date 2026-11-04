@@ -886,12 +886,23 @@ describe("HouseTabs", () => {
 });
 
 describe("PasteForm", () => {
-  it("sends the names with Find these, Ctrl+Enter or Cmd+Enter, and makes a new line with Enter", async () => {
+  it("is typed into as its bubble opens; sends the names with Find these, Ctrl+Enter or Cmd+Enter; Enter is a new line", async () => {
     const action = vi.fn(async (form: FormData) => {
       expect(form.get("back")).toBe("/staff/politicians?mailing=12");
     });
-    await render(<PasteForm action={action} back="/staff/politicians?mailing=12" />);
+    await render(
+      <div id="paste-bubble" popover="auto">
+        <PasteForm action={action} back="/staff/politicians?mailing=12" />
+      </div>,
+    );
     const box = page.getByRole("textbox", { name: staffCopy.mailingPages.pasteLabel });
+    // Typed into at once when its bubble opens.
+    const bubble = document.getElementById("paste-bubble") as HTMLElement;
+    bubble.showPopover();
+    await expect.element(box).toHaveFocus();
+    // Closed and opened again, it's still typed into first.
+    bubble.hidePopover();
+    bubble.showPopover();
     await expect.element(box).toHaveFocus();
     await userEvent.keyboard("Jane Smith{Enter}Tom Fakename");
     expect(action).not.toHaveBeenCalled();

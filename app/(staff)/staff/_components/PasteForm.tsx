@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { TextArea } from "@/components/ui/Controls";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -9,8 +10,9 @@ const copy = staffCopy.mailingPages;
 /**
  * The box for names to paste, one a line, and Find these, which sends
  * them, with `back` the list to show them on. It's typed into at once when
- * its bubble opens, as a popover focuses what's marked autofocus, and
- * Ctrl+Enter, or Cmd+Enter on a Mac, sends it, as Enter is a new line.
+ * the bubble it's in opens (React's autoFocus would focus it as it's made,
+ * hidden, not then), and Ctrl+Enter, or Cmd+Enter on a Mac, sends it, as
+ * Enter is a new line.
  */
 export default function PasteForm({
   action,
@@ -21,14 +23,23 @@ export default function PasteForm({
   back: string;
   className?: string;
 }) {
+  const form = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    const bubble = form.current!.closest("[popover]");
+    if (!bubble) return;
+    const opened = (event: Event) => {
+      if ((event as ToggleEvent).newState === "open") form.current!.querySelector("textarea")!.focus();
+    };
+    bubble.addEventListener("toggle", opened);
+    return () => bubble.removeEventListener("toggle", opened);
+  }, []);
   return (
-    <form action={action} className={className}>
+    <form ref={form} action={action} className={className}>
       <input type="hidden" name="back" value={back} />
       <TextArea
         name="names"
         rows={8}
         required
-        autoFocus
         aria-label={copy.pasteLabel}
         placeholder={copy.pasteLabel}
         onKeyDown={(event) => {
