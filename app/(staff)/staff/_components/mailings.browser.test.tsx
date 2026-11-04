@@ -567,8 +567,18 @@ describe("LetterView", () => {
     await expect.element(page.getByText(staffCopy.politicians.flags.test, { exact: true })).toBeVisible();
     await expect.element(page.getByRole("heading", { name: staffCopy.mailings.fields.ask, exact: true })).toBeVisible();
     await expect.element(page.getByRole("group", { name: exampleAsks[0]!.title })).toBeVisible();
-    // Its campaign is in the letter's headers, not under the ask.
-    expect(page.getByRole("link", { name: supporters.campaignTitle }).all()).toHaveLength(0);
+    // Its campaign, under the title after the MP's seat, leading to its page, and not under the ask.
+    const campaign = page.getByRole("link", { name: supporters.campaignTitle });
+    await expect.element(campaign).toHaveAttribute("href", `/campaigns/${supporters.campaign}`);
+    expect(campaign.element().closest("p")!.textContent).toContain(
+      ` · ${staffCopy.letters.columns.campaign} ${supporters.campaignTitle}`,
+    );
+    expect(
+      page
+        .getByRole("region", { name: staffCopy.mailings.fields.ask })
+        .getByRole("link", { name: supporters.campaignTitle })
+        .all(),
+    ).toHaveLength(0);
     expect(document.body.textContent).not.toContain(staffCopy.mailings.personalised);
   });
 

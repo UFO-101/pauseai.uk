@@ -39,7 +39,6 @@ export default function LetterChanges({
   to,
   at,
   subject,
-  campaign,
   sent,
   draft,
 }: {
@@ -47,13 +46,12 @@ export default function LetterChanges({
   to: string;
   at: string | null;
   subject: string;
-  campaign?: ReactNode;
   sent: string;
   draft: string | null;
 }) {
   const [asSent, setAsSent] = useState(false);
   const [unfolded, setUnfolded] = useState<number[]>([]);
-  const email = { from, to, at, subject, campaign };
+  const email = { from, to, at, subject };
   if (draft === null) {
     return (
       <ThreadEmail {...email}>

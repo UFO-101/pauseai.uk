@@ -216,12 +216,7 @@ describe("SupporterLetterThread", () => {
       [copy.headers.to, "Testy McTestface MP <testy.mctestface.mp@parliament.uk>"],
       [copy.headers.date, "12 Oct 2026, 09:05"],
       [copy.headers.subject, letter.subject],
-      // Its campaign, leading to its page.
-      [copy.headers.campaign, letter.campaignTitle],
     ]);
-    await expect
-      .element(page.getByRole("link", { name: letter.campaignTitle }))
-      .toHaveAttribute("href", `/campaigns/${letter.campaign}`);
     await expect
       .element(page.getByRole("link", { name: "Jane Smith <jane@example.com>" }))
       .toHaveAttribute("href", "/staff/supporters/7");
@@ -277,7 +272,7 @@ describe("SupporterLetterThread", () => {
     await expect.element(page.getByText(copy.unreadable)).toBeVisible();
   });
 
-  it("one not yet a supporter's, never sent, with no subject or draft: unlinked, undated, by its campaign", async () => {
+  it("one not yet a supporter's, never sent, with no subject: unlinked, undated, by its campaign", async () => {
     await render(
       <SupporterLetterThread
         letter={{ ...letter, supporterId: null, sentAt: null, subject: "", mpEmail: null, ownWords: null }}
@@ -287,10 +282,8 @@ describe("SupporterLetterThread", () => {
       [copy.headers.from, "Jane Smith <jane@example.com>"],
       [copy.headers.to, "Testy McTestface MP"],
       [copy.headers.subject, letter.campaignTitle],
-      [copy.headers.campaign, letter.campaignTitle],
     ]);
-    // Only the campaign leads anywhere.
-    expect(page.getByRole("link").all()).toHaveLength(1);
+    expect(page.getByRole("link").all()).toHaveLength(0);
   });
 });
 

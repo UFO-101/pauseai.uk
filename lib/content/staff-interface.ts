@@ -103,7 +103,7 @@ export const staffCopy = {
     noReplies: "No replies yet.",
     unreadable: "This message couldn't be read.",
     // Over each message, as an email shows them.
-    headers: { from: "From", to: "To", cc: "Cc", date: "Date", subject: "Subject", campaign: "Campaign" },
+    headers: { from: "From", to: "To", cc: "Cc", date: "Date", subject: "Subject" },
   },
   // Your own page: your sessions and your Gmail.
   me: {
@@ -598,7 +598,7 @@ export const staffCopy = {
     // button, which adds them as a row, with no permissions.
     addStaff: "Add staff",
     // The field's label, then what's in it until something is typed.
-    addLabel: "⁂ Email:",
+    addLabel: "Email:",
     addTitle: "@pauseai.uk email address",
     add: "Add",
     // In a row's Permissions cell, after the permissions it has: the button that opens a box for each, and the form's

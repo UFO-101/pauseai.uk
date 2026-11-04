@@ -5,7 +5,6 @@ import type { LetterThread as Thread } from "@/lib/server/letter-threads";
 import type { SupporterLetterDetails } from "@/lib/server/letters";
 import { named } from "@/lib/named-address";
 import LetterChanges, { FoldedAutoReply } from "./LetterChanges";
-import CampaignName from "./CampaignName";
 import ThreadEmail from "./ThreadEmail";
 import { MailingLetter } from "./MailingLetter";
 import StaffLink from "./ui/StaffLink";
@@ -82,8 +81,7 @@ export default function LetterThread({ thread, link }: { thread: Thread; link?: 
 /**
  * A supporter's letter as an email, in a thread as PauseAI's are: from
  * them, leading to their supporter page once they're linked to one, to
- * their MP, when it went, with its subject, and the campaign it was written
- * from. One from the letters inbox
+ * their MP, when it went, with its subject. One from the letters inbox
  * shows its text against the draft it was written from (LetterChanges),
  * with `link`, the way to it there, at the right of the heading, then each
  * message both ways, oldest first, an automatic reply folded
@@ -100,8 +98,7 @@ export function SupporterLetterThread({ letter, link }: { letter: SupporterLette
     ) : (
       <StaffLink href={`/staff/supporters/${letter.supporterId}`}>{sender}</StaffLink>
     );
-  const campaign = <CampaignName slug={letter.campaign} title={letter.campaignTitle} url={letter.campaignUrl} />;
-  const email = { from, to: mp, at: letter.sentAt, subject: letter.subject || letter.campaignTitle, campaign };
+  const email = { from, to: mp, at: letter.sentAt, subject: letter.subject || letter.campaignTitle };
   return (
     <Thread link={sent && link}>
       {sent ? (

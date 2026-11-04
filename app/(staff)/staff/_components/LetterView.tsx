@@ -1,5 +1,5 @@
 import StaffLink from "./ui/StaffLink";
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import Tag from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -7,6 +7,7 @@ import type { Ask } from "@/lib/server/asks";
 import type { LetterDetails } from "@/lib/server/letters";
 import type { Politician } from "@/lib/server/politicians";
 import AskRow, { AskRows } from "./AskRow";
+import CampaignName from "./CampaignName";
 import Breadcrumb from "./Breadcrumb";
 import { historyOf, LetterHistory, letterTitle, statusOf } from "./LetterHistory";
 import Grid, { Card, Column, spanClass } from "./ui/Grid";
@@ -49,7 +50,8 @@ function AskCard({
 /**
  * A letter's page, a supporter's or one of a mailing's: its title and how
  * it stands, tagged when it's to a test politician; under it the
- * politician, leading to their page, with their seat and party; then
+ * politician, leading to their page, with their seat and party, and for a
+ * supporter's, the campaign it was written from; then
  * `children`, the letter as an email and its replies (LetterThread), beside
  * what it asks (AskCard), as wide as a politician's page has it, and what
  * happened to it. The thread says who it's from and to and when, so nothing
@@ -77,7 +79,14 @@ export default function LetterView({
       ? { href: "/staff/letters", label: staffCopy.nav.letters }
       : { href: `/staff/mailings/${letter.mailingId}`, label: letter.mailing };
   const personalised = letter.kind === "pauseai" && letter.personalised && staffCopy.mailings.personalised;
-  const about = [politician.constituency, politician.party, personalised];
+  // A supporter's letter's campaign, which gave its draft, leading to its page.
+  const campaign = letter.kind === "supporter" && (
+    <>
+      {staffCopy.letters.columns.campaign}{" "}
+      <CampaignName slug={letter.campaign} title={letter.campaignTitle} url={letter.campaignUrl} />
+    </>
+  );
+  const about = [politician.constituency, politician.party, personalised, campaign];
   return (
     <>
       <Breadcrumb href={back.href}>{back.label}</Breadcrumb>
@@ -88,7 +97,11 @@ export default function LetterView({
       </div>
       <p className={styles.about}>
         <StaffLink href={`/staff/politicians/${letter.politicianId}`}>{letter.mpName}</StaffLink>
-        <Muted>{about.filter(Boolean).map((part) => ` · ${part}`)}</Muted>
+        <Muted>
+          {about.filter(Boolean).map((part, i) => (
+            <Fragment key={i}> · {part}</Fragment>
+          ))}
+        </Muted>
       </p>
       <Grid>
         <div className={spanClass(3)}>{children}</div>
