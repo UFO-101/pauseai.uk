@@ -5,6 +5,7 @@ import { TEST_MPS } from "@/lib/test-mps";
 import { runSql } from "@/scripts/fresh-database.mjs";
 import { fakeTurnstile, fillLetter, lookUpTestMp, newestEmail, newestEmailTo, WEBHOOK_AUTH } from "../steps";
 import { editor, newParagraphAboveSignOff } from "./editor-steps";
+import { scrollSettled } from "./settle";
 
 /** As much of Tiptap's editor as a flow drives directly. */
 type EditorHandle = {
@@ -463,6 +464,10 @@ test("Jane changes the letter", async ({ page, flowDatabase }) => {
   await expect(editor(page)).not.toContainText(meeting);
   await newParagraphAboveSignOff(page);
   await page.keyboard.type("My children ask me about AI every week, and I don't know what to tell them.");
+  // Typing scrolls the window to keep the caret in view, not to the same place each time; the frame is of the
+  // page as a whole, so from its top.
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  await scrollSettled(page);
   await frame(page, "Jane's letter");
   story(
     "She sends it. On the letter's page, staff see only what she changed. The paragraphs she left alone are folded.",
