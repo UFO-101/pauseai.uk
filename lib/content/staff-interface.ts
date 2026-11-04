@@ -1673,6 +1673,8 @@ export const staffCopy = {
       mailing: "Mailing",
       personalised: "Personalised",
       historyTitle: "History",
+      // Under the ask a supporter's letter makes, before its campaign's name.
+      basedOn: "Based on the campaign",
       noHistory: "Nothing recorded yet.",
       // What a change of status recorded, each field's name before its value: Postmark's, a bounce's, a reply's.
       fields: {
