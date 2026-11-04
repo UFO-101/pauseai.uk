@@ -217,16 +217,17 @@ function SupporterBand({ supporter, events, letters }: { supporter: Details; eve
 }
 
 /**
- * The events they registered for or hosted (eventsByDate): when the event
- * is, which, their part in it, the registration's status or that they
- * host it, and when they registered or became host.
+ * The events they registered for or hosted (eventsByDate): when they
+ * registered or became host, their part in it, the registration's status
+ * or that they host it, which event, and when it is.
  */
 const eventColumns: ListColumn<SupporterActivity>[] = [
+  { key: "at", label: copy.detail.columns.joined, short: true, cell: (a) => staffDate(a.at) },
   {
-    key: "eventAt",
-    label: copy.detail.columns.eventDate,
+    key: "status",
+    label: copy.detail.columns.status,
     short: true,
-    cell: (a) => (a.eventAt ? staffDate(a.eventAt) : <Muted>–</Muted>),
+    cell: (a) => (a.kind === "luma-hosted" ? copy.detail.host : registrationStatus(a.detail)),
   },
   {
     key: "event",
@@ -234,12 +235,11 @@ const eventColumns: ListColumn<SupporterActivity>[] = [
     cell: (a) => (a.href ? <StaffLink href={a.href}>{a.title}</StaffLink> : a.title),
   },
   {
-    key: "status",
-    label: copy.detail.columns.status,
+    key: "eventAt",
+    label: copy.detail.columns.eventDate,
     short: true,
-    cell: (a) => (a.kind === "luma-hosted" ? copy.detail.host : registrationStatus(a.detail)),
+    cell: (a) => (a.eventAt ? staffDate(a.eventAt) : <Muted>–</Muted>),
   },
-  { key: "at", label: copy.detail.columns.joined, short: true, cell: (a) => staffDate(a.at) },
 ];
 
 /** Their events, the latest to start first; one whose start isn't known last. */

@@ -502,7 +502,7 @@ export const staffCopy = {
       lettersTitle: "Letters to MPs",
       noLetters: "No letters.",
       columns: {
-        // The Events table's: when the event is, which, their part in it, and when they registered or became host.
+        // The Events table's: when they registered or became host, their part in it, which event, and when it is.
         eventDate: "Event date",
         event: "Event",
         status: "Role",
@@ -1765,7 +1765,7 @@ export const staffCopy = {
       to: "To",
       campaign: "Campaign",
       // The share of the sent letter's words that weren't in the campaign's draft.
-      ownWords: "⁂ Own words",
+      ownWords: "Own words",
       backend: "Backend",
       status: "Status",
       replied: "Replied",

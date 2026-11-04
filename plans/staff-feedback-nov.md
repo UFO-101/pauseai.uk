@@ -23,7 +23,7 @@ One branch for a batch of small changes from using the site. The designs were ag
 ## Staff
 
 - **Add staff:** while the box is open the opener is pressed, not orange. The box has "Email:", the field and an orange "Add" on one row. No hint under it.
-- **A supporter's events:** columns "Event date" (the event's start, sorted newest first), Event, "Role" (Host, Registered, or the other approval statuses), and a date column for when they registered or became host ("⁂ Joined" for Francis to reword).
+- **A supporter's events:** columns "Joined" (when they registered or became host), "Role" (Host, Registered, or the other approval statuses), Event, and "Event date" (the event's start); sorted by the event's start, newest first.
 - **A supporter's history:** "Hosted" becomes "Became host for".
 - **The event owner's email:** a link to the staff events list near the top: for one event, the list searched for it; for several, filtered to the new owner. The same email goes to the owner before, Cc'd, when an owner is changed by hand.
 

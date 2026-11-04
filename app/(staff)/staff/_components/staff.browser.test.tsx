@@ -3602,12 +3602,12 @@ describe("SupporterDetails", () => {
     const events = page.getByRole("region", { name: staffCopy.supporters.detail.eventsTitle, exact: false });
     expect(
       [...events.element().querySelectorAll("tbody tr")].map((tr) =>
-        [...(tr as HTMLTableRowElement).cells].slice(0, 2).map((td) => td.textContent),
+        [...(tr as HTMLTableRowElement).cells].slice(2).map((td) => td.textContent),
       ),
     ).toEqual([
-      ["1 Nov 2026", "Later"],
-      ["1 Sept 2026", "Earlier"],
-      ["–", "Gone"],
+      ["Later", "1 Nov 2026"],
+      ["Earlier", "1 Sept 2026"],
+      ["Gone", "–"],
     ]);
   });
 
@@ -3650,14 +3650,14 @@ describe("SupporterDetails", () => {
     await expect
       .element(events.getByRole("link", { name: "PauseAI Manchester Social" }).first())
       .toHaveAttribute("href", "https://luma.com/fixture-manchester-social");
-    // When the event is, which, her part in it, and when she registered or became host.
+    // When she registered or became host, her part in it, which event, and when it is.
     const eventRows = () =>
       [...events.element().querySelectorAll("tbody tr")].map((tr) =>
         [...(tr as HTMLTableRowElement).cells].map((td) => td.textContent),
       );
     expect(eventRows()).toEqual([
-      ["1 Oct 2026", "PauseAI Manchester Social", copy.detail.registered, "20 Sept 2026"],
-      ["1 Oct 2026", "PauseAI Manchester Social", copy.detail.host, "10 Aug 2026"],
+      ["20 Sept 2026", copy.detail.registered, "PauseAI Manchester Social", "1 Oct 2026"],
+      ["10 Aug 2026", copy.detail.host, "PauseAI Manchester Social", "1 Oct 2026"],
     ]);
     const letters = page.getByRole("region", { name: copy.detail.lettersTitle });
     await expect
