@@ -49,9 +49,10 @@
   font-weight: 600;
 }
 
-/* The field, and Add on the same line. */
+/* The field, and Add on the same line, the field narrowing on a phone. */
 .addRow {
   display: flex;
+  min-width: 0;
   gap: var(--space-2);
   align-items: center;
 }
