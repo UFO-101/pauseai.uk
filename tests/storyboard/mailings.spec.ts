@@ -390,6 +390,10 @@ test("Sending from your Gmail", async ({ page, request, flowDatabase }) => {
     .getByRole("row", { name: /Morag Example/ })
     .getByRole("link", { name: copy.theLetter })
     .click();
+  // Her letter's page, not the mailing's still showing while it loads.
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    staffCopy.letters.oneTitle(staffCopy.letters.fromPauseai, "Morag Example"),
+  );
   await frame(page, "Morag's letter");
   story(
     "Copy Gmail search copies a search that finds the letter in Gmail, and says to paste it in an inbox that can see their mail.",
