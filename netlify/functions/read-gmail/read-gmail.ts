@@ -1,5 +1,5 @@
 // Netlify scheduled function (a folder, so its test can sit beside it
-// without becoming a function too): hourly, asks the site to read the
+// without becoming a function too): every 5 minutes, asks the site to read the
 // connected Gmail accounts for replies to our letters and for bounces
 // (app/api/cron/read-gmail). Scheduled functions run only on published
 // production deploys. URL is set by Netlify; CRON_SECRET by us.
@@ -13,6 +13,6 @@ export default async function readGmail(): Promise<Response> {
   return new Response(body);
 }
 
-// Every hour at 20 minutes past, sharing the Luma import's wake of the
-// database (import-luma.ts).
-export const config = { schedule: "20 * * * *" };
+// Every 5 minutes, on the minute that's a multiple of 5, night and day, so a
+// reply is relayed within minutes of reaching the letters inbox.
+export const config = { schedule: "*/5 * * * *" };

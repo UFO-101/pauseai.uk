@@ -23,6 +23,8 @@ export type ThreadMessage = {
   fromUs: boolean;
   /** For a supporter's letter, the supporter's own message through their MP's proxy, rather than the office's. */
   fromSupporter: boolean;
+  /** An automatic reply, such as an office's acknowledgement or an out-of-office, as reading it noted. */
+  auto: boolean;
   subject: string;
   /** Its plain text, or its HTML's text, without the mail it quotes; null if the kept message can't be read. */
   text: string | null;
@@ -136,8 +138,10 @@ export async function letterThread(mailingId: number, letterId: number): Promise
 export async function threadMessages(letterId: number): Promise<ThreadMessage[]> {
   const replies = await query<Omit<ThreadMessage, "text" | "cc"> & { blobKey: string }>(
     `SELECT id::int AS id, at, from_name AS "fromName", from_address AS "fromAddress", from_us AS "fromUs",
-       from_supporter AS "fromSupporter", subject, blob_key AS "blobKey"
-     FROM letter_replies WHERE letter_id = $1 ORDER BY at, id`,
+       from_supporter AS "fromSupporter", subject, blob_key AS "blobKey",
+       EXISTS (SELECT 1 FROM letter_events e WHERE e.letter_id = r.letter_id AND e.status = 'auto_reply'
+         AND e.details->>'gmailMessageId' = r.gmail_message_id) AS auto
+     FROM letter_replies r WHERE letter_id = $1 ORDER BY at, id`,
     [letterId],
   );
   return Promise.all(replies.map(async ({ blobKey, ...reply }) => ({ ...reply, ...(await messageContent(blobKey)) })));

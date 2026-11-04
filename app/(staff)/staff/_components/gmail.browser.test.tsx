@@ -9,7 +9,11 @@ import { GmailConnect, GmailOutcome, SentToday } from "./GmailConnect";
 import AccountTitle from "./AccountTitle";
 import LetterChanges from "./LetterChanges";
 import LetterThread, { SupporterLetterThread } from "./LetterThread";
-import { exampleProxiedLetterDetails, exampleSupporterLetterDetails } from "./LettersTable.examples";
+import {
+  exampleAutoRepliedLetterDetails,
+  exampleProxiedLetterDetails,
+  exampleSupporterLetterDetails,
+} from "./LettersTable.examples";
 import { exampleEditableAsk, exampleGmailAccount, exampleImportedThread, exampleThread } from "./LetterThread.examples";
 import { DeleteTwice } from "./DeleteTwice";
 import MyGmail from "./MyGmail";
@@ -212,7 +216,12 @@ describe("SupporterLetterThread", () => {
       [copy.headers.to, "Testy McTestface MP <testy.mctestface.mp@parliament.uk>"],
       [copy.headers.date, "12 Oct 2026, 09:05"],
       [copy.headers.subject, letter.subject],
+      // Its campaign, leading to its page, and how much of it is her own words.
+      [copy.headers.campaign, `${letter.campaignTitle} · ${copy.ownWords(0.18)}`],
     ]);
+    await expect
+      .element(page.getByRole("link", { name: letter.campaignTitle }))
+      .toHaveAttribute("href", `/campaigns/${letter.campaign}`);
     await expect
       .element(page.getByRole("link", { name: "Jane Smith <jane@example.com>" }))
       .toHaveAttribute("href", "/staff/supporters/7");
@@ -239,6 +248,25 @@ describe("SupporterLetterThread", () => {
     await expect.element(page.getByRole("button", { name: staffCopy.letterChanges.asSent })).toBeVisible();
   });
 
+  it("folds an automatic reply to its first paragraph, unfolded by its fold or Show as sent, and folded again by Show less", async () => {
+    const changes = staffCopy.letterChanges;
+    await render(<SupporterLetterThread letter={exampleAutoRepliedLetterDetails} />);
+    const [, acknowledgement, away] = page.getByRole("article").all();
+    const text = () => acknowledgement.element().textContent;
+    expect(text()).toContain("Thank you for contacting me.");
+    expect(text()).not.toContain("constituency office");
+    await acknowledgement.getByRole("button", { name: changes.more(3) }).click();
+    expect(text()).toContain("constituency office");
+    await acknowledgement.getByRole("button", { name: changes.showLess }).click();
+    expect(text()).not.toContain("constituency office");
+    await acknowledgement.getByRole("button", { name: changes.asSent }).click();
+    expect(text()).toContain("For my surgeries");
+    // One of a single paragraph, whole, with nothing to unfold.
+    expect(away.element().textContent).toContain("I'm away until Monday.");
+    expect(away.getByRole("button").all()).toHaveLength(0);
+    expect(changes.more(1)).not.toBe(changes.more(2));
+  });
+
   it("a message whose text can't be read says so", async () => {
     const sent = exampleProxiedLetterDetails.sent!;
     await render(
@@ -249,16 +277,20 @@ describe("SupporterLetterThread", () => {
     await expect.element(page.getByText(copy.unreadable)).toBeVisible();
   });
 
-  it("one not yet a supporter's, never sent, with no subject: unlinked, undated, by its campaign", async () => {
+  it("one not yet a supporter's, never sent, with no subject or draft: unlinked, undated, by its campaign", async () => {
     await render(
-      <SupporterLetterThread letter={{ ...letter, supporterId: null, sentAt: null, subject: "", mpEmail: null }} />,
+      <SupporterLetterThread
+        letter={{ ...letter, supporterId: null, sentAt: null, subject: "", mpEmail: null, ownWords: null }}
+      />,
     );
     expect(headers()).toEqual([
       [copy.headers.from, "Jane Smith <jane@example.com>"],
       [copy.headers.to, "Testy McTestface MP"],
       [copy.headers.subject, letter.campaignTitle],
+      [copy.headers.campaign, letter.campaignTitle],
     ]);
-    expect(page.getByRole("link").all()).toHaveLength(0);
+    // Only the campaign leads anywhere.
+    expect(page.getByRole("link").all()).toHaveLength(1);
   });
 });
 

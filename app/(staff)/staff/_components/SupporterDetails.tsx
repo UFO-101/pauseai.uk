@@ -216,9 +216,18 @@ function SupporterBand({ supporter, events, letters }: { supporter: Details; eve
   );
 }
 
-/** The events they registered for or hosted, newest first: when, which, and how it stands, or that they hosted it. */
+/**
+ * The events they registered for or hosted (eventsByDate): when the event
+ * is, which, their part in it, the registration's status or that they
+ * host it, and when they registered or became host.
+ */
 const eventColumns: ListColumn<SupporterActivity>[] = [
-  { key: "at", label: copy.detail.columns.date, short: true, cell: (a) => staffDate(a.at) },
+  {
+    key: "eventAt",
+    label: copy.detail.columns.eventDate,
+    short: true,
+    cell: (a) => (a.eventAt ? staffDate(a.eventAt) : <Muted>–</Muted>),
+  },
   {
     key: "event",
     label: copy.detail.columns.event,
@@ -230,7 +239,14 @@ const eventColumns: ListColumn<SupporterActivity>[] = [
     short: true,
     cell: (a) => (a.kind === "luma-hosted" ? copy.detail.host : registrationStatus(a.detail)),
   },
+  { key: "at", label: copy.detail.columns.joined, short: true, cell: (a) => staffDate(a.at) },
 ];
+
+/** Their events, the latest to start first; one whose start isn't known last. */
+function eventsByDate(activity: SupporterActivity[]): SupporterActivity[] {
+  const start = (a: SupporterActivity) => (a.eventAt ? new Date(a.eventAt).getTime() : -Infinity);
+  return eventsOf(activity).toSorted((a, b) => start(b) - start(a));
+}
 
 /** Their letters, newest first: how each stands, leading to the letter's page, when it was sent, to whom, and in which campaign. */
 const letterColumns: ListColumn<SupporterLetter>[] = [
@@ -281,7 +297,7 @@ export default function SupporterDetails({
   const { summary, activity, permissions, letters } = supporter;
   const usable = new Set(permissions.filter((p) => p.channel === "phone" && p.send !== "no").map((p) => p.address));
   const holding = held(supporter, usable);
-  const events = eventsOf(activity);
+  const events = eventsByDate(activity);
   const lettersPage = `/staff/letters/supporter/${summary.id}`;
   return (
     <>

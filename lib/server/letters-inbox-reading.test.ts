@@ -125,7 +125,7 @@ describeWithDatabase("reading the letters inbox", () => {
 
   const deliver = (mail: TestMail, spam = false) => deliverToLettersInbox(testMail(mail), { spam });
 
-  /** Reads Gmail as the hourly job does; gives the letters inbox's line of the run. */
+  /** Reads Gmail as the scheduled job does; gives the letters inbox's line of the run. */
   const read = async () => (await readGmail(NIGHTLY, REQUEST)).accounts.find((a) => a.account === LETTERS_INBOX)!;
 
   /** The labels, by name, of the newest message in the letters inbox but those it sent elsewhere, which are only in Sent. */

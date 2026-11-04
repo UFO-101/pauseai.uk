@@ -25,7 +25,12 @@ const GROUPS = [
   "tools",
   "collateral",
   "collateral-kit",
-  "staff",
+  "staff-kit",
+  "staff-supporters",
+  "staff-letters",
+  "staff-politicians",
+  "staff-mailings-events",
+  "staff-admin",
 ];
 
 // The public pages section leaves the gallery to this one, so this checks

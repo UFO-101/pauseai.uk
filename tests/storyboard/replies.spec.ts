@@ -199,7 +199,11 @@ test("Automatic replies", async ({ page, request, flowDatabase }) => {
     from: OFFICE,
     to: JANES_PROXY,
     subject: "Automatic reply: Please back a pause",
-    text: acknowledgement,
+    text: [
+      acknowledgement,
+      "I receive a very large volume of correspondence, and priority is given to constituents.\r\n",
+      "If your matter is urgent, please call my constituency office.\r\n",
+    ].join("\r\n"),
   });
   await readInbox(request);
   await emailFrame(page, sentEmail(flowDatabase, id, "relay"), "The acknowledgement, as Jane gets it");
@@ -243,6 +247,18 @@ test("Automatic replies", async ({ page, request, flowDatabase }) => {
   await expect(entries.first()).toContainText(staffCopy.letters.status.not_relayed);
   await expect(entries.first()).toContainText(history.reasons.over_cap);
   await frame(page, "The letter's history");
+  story(
+    "In the letter and its replies, each automatic reply of more than a paragraph is folded to its first, as the rest is rarely worth reading.",
+  );
+  const folded = page.getByRole("article", { name: "Automatic reply: Please back a pause" });
+  const changes = staffCopy.letterChanges;
+  await folded.getByRole("button", { name: changes.more(2) }).scrollIntoViewIfNeeded();
+  await expect(folded).not.toContainText("constituency office");
+  await frame(page, "The acknowledgement, folded");
+  story("Show as sent unfolds it.");
+  await folded.getByRole("button", { name: changes.asSent }).click();
+  await expect(folded).toContainText("constituency office");
+  await frame(page, "The acknowledgement, as sent");
 });
 
 test("Emails that aren't relayed", async ({ page, request, flowDatabase }) => {

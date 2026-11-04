@@ -334,6 +334,12 @@ describeWithDatabase("linkSupporters", () => {
         { title: "Hosted only", at: new Date("2026-09-01T10:00:00Z") },
       ],
     );
+    // Their page has when each event starts.
+    const { activity } = (await getSupporter(await supporterWith("jane@example.com")))!;
+    expect(activity.find((a) => a.kind === "luma-hosted" && a.title === "Hosted only")!.eventAt).toEqual(
+      new Date("2026-11-01T18:00:00Z"),
+    );
+    expect(activity.find((a) => a.kind === "luma-contact")?.eventAt ?? null).toBeNull();
   });
 });
 

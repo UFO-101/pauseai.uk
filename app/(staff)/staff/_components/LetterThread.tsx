@@ -4,7 +4,8 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import type { LetterThread as Thread } from "@/lib/server/letter-threads";
 import type { SupporterLetterDetails } from "@/lib/server/letters";
 import { named } from "@/lib/named-address";
-import LetterChanges from "./LetterChanges";
+import LetterChanges, { FoldedAutoReply } from "./LetterChanges";
+import CampaignName from "./CampaignName";
 import ThreadEmail from "./ThreadEmail";
 import { MailingLetter } from "./MailingLetter";
 import StaffLink from "./ui/StaffLink";
@@ -81,11 +82,13 @@ export default function LetterThread({ thread, link }: { thread: Thread; link?: 
 /**
  * A supporter's letter as an email, in a thread as PauseAI's are: from
  * them, leading to their supporter page once they're linked to one, to
- * their MP, when it went, with its subject. One from the letters inbox
+ * their MP, when it went, with its subject, and the campaign it was written
+ * from, with how much of it is their own words when the draft is kept. One from the letters inbox
  * shows its text against the draft it was written from (LetterChanges),
  * with `link`, the way to it there, at the right of the heading, then each
- * message both ways, oldest first. For another, whose text the site
- * doesn't keep, a note saying so, with `link` in its place.
+ * message both ways, oldest first, an automatic reply folded
+ * (FoldedAutoReply). For another, whose text the site doesn't keep, a
+ * note saying so, with `link` in its place.
  */
 export function SupporterLetterThread({ letter, link }: { letter: SupporterLetterDetails; link?: ReactNode }) {
   const sender = named(letter.senderName, letter.senderEmail);
@@ -97,7 +100,13 @@ export function SupporterLetterThread({ letter, link }: { letter: SupporterLette
     ) : (
       <StaffLink href={`/staff/supporters/${letter.supporterId}`}>{sender}</StaffLink>
     );
-  const email = { from, to: mp, at: letter.sentAt, subject: letter.subject || letter.campaignTitle };
+  const campaign = (
+    <>
+      <CampaignName slug={letter.campaign} title={letter.campaignTitle} url={letter.campaignUrl} />
+      {letter.ownWords !== null && <Muted> · {copy.ownWords(letter.ownWords)}</Muted>}
+    </>
+  );
+  const email = { from, to: mp, at: letter.sentAt, subject: letter.subject || letter.campaignTitle, campaign };
   return (
     <Thread link={sent && link}>
       {sent ? (
@@ -107,18 +116,27 @@ export function SupporterLetterThread({ letter, link }: { letter: SupporterLette
           <NoText note={copy.supporterNoText} link={link} />
         </ThreadEmail>
       )}
-      {sent?.messages.map((message) => (
-        <ThreadEmail
-          key={message.id}
-          from={named(message.fromName, message.fromAddress)}
-          to={message.fromSupporter ? mp : sender}
-          cc={message.cc}
-          at={message.at}
-          subject={message.subject}
-        >
-          {message.text === null ? <Muted>{copy.unreadable}</Muted> : <div className={styles.text}>{message.text}</div>}
-        </ThreadEmail>
-      ))}
+      {sent?.messages.map((message) => {
+        const email = {
+          from: named(message.fromName, message.fromAddress),
+          to: message.fromSupporter ? mp : sender,
+          cc: message.cc,
+          at: message.at,
+          subject: message.subject,
+        };
+        // An automatic reply folded to its first paragraph.
+        return message.auto && message.text !== null ? (
+          <FoldedAutoReply key={message.id} {...email} text={message.text} />
+        ) : (
+          <ThreadEmail key={message.id} {...email}>
+            {message.text === null ? (
+              <Muted>{copy.unreadable}</Muted>
+            ) : (
+              <div className={styles.text}>{message.text}</div>
+            )}
+          </ThreadEmail>
+        );
+      })}
     </Thread>
   );
 }

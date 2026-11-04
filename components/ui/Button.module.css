@@ -50,6 +50,17 @@
   box-shadow: 0 4px 16px rgb(var(--pause-orange-rgb) / 0.3);
 }
 
+/* A main button whose bubble is open (Bubble.tsx, the bubble just after
+   it): pressed, not orange, so the bubble's own main button is the one
+   that stands out. */
+.btn.primary:has(+ :popover-open),
+.btn.primary:has(+ :popover-open):hover {
+  background: var(--surface-2);
+  color: var(--text);
+  box-shadow: inset 0 1px 3px rgb(var(--text-rgb) / 0.15);
+  transform: none;
+}
+
 .btn.ghost {
   border-color: var(--border-strong);
   background: transparent;

@@ -115,6 +115,7 @@ export const exampleSupporterDetails: SupporterDetails = {
       detail: "approved",
       href: "https://luma.com/fixture-manchester-social",
       status: null,
+      eventAt: "2026-10-01T18:30:00Z",
     },
     // She hosts it too, made on Luma before she registered: a row of its own, one event in her count.
     {
@@ -127,6 +128,7 @@ export const exampleSupporterDetails: SupporterDetails = {
       detail: null,
       href: "https://luma.com/fixture-manchester-social",
       status: null,
+      eventAt: "2026-10-01T18:30:00Z",
     },
     {
       source: "luma",

@@ -209,7 +209,7 @@ written to and kept.
   that are the supporter's own; its page shows only what they changed,
   the paragraphs they left alone folded (`LetterChanges`).
 - **Reading and relaying** (`lib/server/letters-inbox-reading.ts`,
-  `relays.ts`): the hourly `read-gmail` reads the letters inbox, Spam
+  `relays.ts`): `read-gmail`, every 5 minutes, reads the letters inbox, Spam
   included, all of it ours. A message from the MP's office (Parliament's
   domain, or the address the letter went to) to the supporter's proxy is
   relayed to the supporter from the MP's proxy, in the thread of their
@@ -285,7 +285,7 @@ token is kept encrypted (`GMAIL_TOKEN_KEY`), and deleted on disconnecting.
   by Gmail's ID for it too, and a bounce naming no letter we know is
   matched by the Gmail thread it's in. `send()` takes a backend: Postmark, or a
   connected Gmail.
-- **Reading** (`lib/server/gmail-reading.ts`): the hourly `read-gmail` job
+- **Reading** (`lib/server/gmail-reading.ts`): the `read-gmail` job, every 5 minutes,
   lists each mailbox's new messages since the last `historyId`, and
   fetches only their reply headers. It fetches whole only the messages in
   our letters' threads, and bounces. A bounce, from mailer-daemon or
@@ -364,12 +364,12 @@ letters, their blocked addresses) is an audit log entry.
 
 Where they come from:
 
-- **Luma.** The hourly import (`lib/server/luma-import.ts`) copies every
+- **Luma.** The import, every 5 minutes, (`lib/server/luma-import.ts`) copies every
   public event on our calendar into `luma_events`, each registered guest
   into `luma_guests` (phone, a postcode answer, `utm_source`; never Luma's
   invited-only rows), each of our own events' hosts into
   `luma_event_hosts` (from Luma's details of the event, as its list has no
-  hosts: every past event's read once, and each still to come hourly until
+  hosts: every past event's read once, and each still to come every run until
   its day is over) and every Luma user, guest, host or contact, into
   `luma_people`, with when they joined the calendar as a contact and when
   a read of the contacts last listed them. Luma's own IDs are the keys, and
@@ -382,7 +382,7 @@ Where they come from:
   entry from before it is no.
 - **Members.** PauseAI's members in the UK whom we may hold: those who
   ticked "Share your details with PauseAI UK" on the join form, or joined
-  before it asked (from July 2026). The hourly import
+  before it asked (from July 2026). The daily import
   (`lib/server/members-import.ts`) reads them from Stichting PauseAI's
   "Members & Actions" Airtable base into `members`, keyed by the Airtable
   record ID, which CiviCRM keeps too: the names say what the rows are, not
@@ -421,7 +421,7 @@ badge, and its part of erasure.
 
 ## Events and their owners
 
-Our events are Luma's, as the hourly import copies them (`luma_events`);
+Our events are Luma's, as the import copies them every 5 minutes (`luma_events`);
 the staff interface's events page (`/staff/events`) lists our own as a
 table, on a Future tab, soonest first, and a Past tab, latest first, with
 how many are going, sorted and filtered there (`lib/staff-events-list.ts`).
@@ -585,7 +585,7 @@ each time it happens, with a link to where to deal with it:
 - mail in the letters inbox it can't relay (`lib/server/gmail-reading.ts`);
 - an import failing, after a run of it that didn't (`recordFailure` in
   `lib/server/import-runs.ts`);
-- a Gmail account the hourly read couldn't read, after a run that could
+- a Gmail account the read every 5 minutes couldn't read, after a run that could
   (`lib/server/gmail-reading.ts`); one Google disconnected has its own;
 - the MP import held, when none was (`lib/server/politician-sync.ts`);
 - Google disconnecting a Gmail account (`lib/server/gmail-accounts.ts`);
@@ -635,8 +635,8 @@ staff email), how it ended, why it failed, and the job's own account of
 what it found. A run can be held for staff to decide on, as a large politician sync
 is. `/staff/import-data` shows each job's newest run on a card, and each
 job's own page (`/staff/import-data/<slug>`, `importPath()` in
-`lib/import-runs.ts`) its button and every run it keeps: a week of an
-hourly job's, a month of a nightly one's, a one-off job's last 50, and
+`lib/import-runs.ts`) its button and every run it keeps: a week of a
+5-minute job's, a month of a nightly one's, a one-off job's last 50, and
 always its newest and a held run (`lib/server/log-retention.ts`, run
 nightly).
 

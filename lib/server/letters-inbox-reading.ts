@@ -22,8 +22,8 @@ import {
 import { isMachineReply } from "./postmark-webhooks";
 import { overRelayCap, relay } from "./relays";
 
-// Reading the letters inbox (lib/server/letters-inbox.ts), from the hourly
-// read of Gmail (gmail-reading.ts). All of its mail is ours, so every
+// Reading the letters inbox (lib/server/letters-inbox.ts), from the
+// read of Gmail every 5 minutes (gmail-reading.ts). All of its mail is ours, so every
 // message is read whole and sorted into one of:
 //
 // - from the MP's office to the supporter's proxy, or from the supporter to

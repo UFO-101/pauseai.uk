@@ -8,7 +8,6 @@ import type { LetterDetails } from "@/lib/server/letters";
 import type { Politician } from "@/lib/server/politicians";
 import AskRow, { AskRows } from "./AskRow";
 import Breadcrumb from "./Breadcrumb";
-import CampaignName from "./CampaignName";
 import { historyOf, LetterHistory, letterTitle, statusOf } from "./LetterHistory";
 import Grid, { Card, Column, spanClass } from "./ui/Grid";
 import styles from "./LetterView.module.css";
@@ -23,43 +22,26 @@ function StatusTag({ status, answered }: { status: string; answered: boolean }) 
 }
 
 /**
- * The card of what a letter asks: the ask, if it makes one, in the box a
- * politician's page shows it in, to set their answer from what they said;
- * for a supporter's, under it, the campaign it's based on, leading to it,
- * or the campaign alone when it makes no ask. Nothing for one of PauseAI's
- * that makes none.
+ * The card of what a letter asks, in the box a politician's page shows it
+ * in, to set their answer from what they said; nothing for a letter that
+ * makes no ask. A supporter's campaign is in the letter's headers
+ * (SupporterLetterThread).
  */
 function AskCard({
-  letter,
   politician,
   ask,
   setStatus,
 }: {
-  letter: LetterDetails;
   politician: Politician;
   ask: Ask | undefined;
   setStatus: SetStatus;
 }) {
-  if (!ask && letter.kind === "pauseai") return null;
-  const campaign = letter.kind === "supporter" && (
-    <CampaignName slug={letter.campaign} title={letter.campaignTitle} url={letter.campaignUrl} />
-  );
+  if (!ask) return null;
   return (
-    <Card look="aside" title={ask ? staffCopy.mailings.fields.ask : staffCopy.letters.columns.campaign} id="ask-title">
-      {ask ? (
-        <>
-          <AskRows>
-            <AskRow politician={politician} ask={ask} setStatus={setStatus} />
-          </AskRows>
-          {campaign && (
-            <p className={styles.campaign}>
-              {staffCopy.letters.detail.basedOn} {campaign}
-            </p>
-          )}
-        </>
-      ) : (
-        <p className={styles.campaignAlone}>{campaign}</p>
-      )}
+    <Card look="aside" title={staffCopy.mailings.fields.ask} id="ask-title">
+      <AskRows>
+        <AskRow politician={politician} ask={ask} setStatus={setStatus} />
+      </AskRows>
     </Card>
   );
 }
@@ -111,7 +93,7 @@ export default function LetterView({
       <Grid>
         <div className={spanClass(3)}>{children}</div>
         <Column span={3}>
-          <AskCard letter={letter} politician={politician} ask={ask} setStatus={setStatus} />
+          <AskCard politician={politician} ask={ask} setStatus={setStatus} />
           <Card look="log" title={staffCopy.letters.detail.historyTitle} id="letter-history">
             <LetterHistory events={historyOf(letter)} />
           </Card>

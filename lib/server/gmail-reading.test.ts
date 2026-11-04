@@ -16,7 +16,7 @@ import { letterReply } from "./outside-services/blobs";
 const API = "https://gmail.googleapis.com/gmail/v1/users/me";
 const JO = "jo@pauseai.uk";
 const REQUEST = new Request("https://pauseai.uk/api/cron/read-gmail", { method: "POST" });
-/** What the hourly job's read of every account found. */
+/** What the scheduled job's read of every account found. */
 const read = async () => (await readGmail(NIGHTLY, REQUEST)).accounts;
 const fixture = (name: string) => readFileSync(join(process.cwd(), "tests/fixtures/gmail", name), "latin1");
 

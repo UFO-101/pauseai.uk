@@ -19,6 +19,7 @@ export const exampleLetter: LetterSummary = {
   mpName: "Testy McTestface MP",
   politicianId: 3,
   isTest: true,
+  ownWords: 0.18,
   backend: "postmark",
   createdAt: "2026-10-12T09:00:00Z",
   sentAt: "2026-10-12T09:05:00Z",
@@ -151,6 +152,7 @@ export const exampleProxiedLetterDetails: SupporterLetterDetails = {
         fromAddress: "testy.mctestface.mp@parliament.uk",
         fromUs: false,
         fromSupporter: false,
+        auto: false,
         subject: "Re: Please back a pause on frontier AI",
         text: "Dear Jane,\n\nThank you for writing to me.\n\nTesty",
         // The office copied their caseworker in.
@@ -163,8 +165,48 @@ export const exampleProxiedLetterDetails: SupporterLetterDetails = {
         fromAddress: "jane@example.com",
         fromUs: false,
         fromSupporter: true,
+        auto: false,
         subject: "Re: Please back a pause on frontier AI",
         text: "Dear Mr McTestface,\n\nThank you. Could we meet?\n\nJane",
+        cc: null,
+      },
+    ],
+  },
+};
+
+/** The same letter with only an office's acknowledgement, of four paragraphs, and Jane's out-of-office, of one. */
+export const exampleAutoRepliedLetterDetails: SupporterLetterDetails = {
+  ...exampleProxiedLetterDetails,
+  sent: {
+    ...exampleProxiedLetterDetails.sent!,
+    messages: [
+      {
+        id: 3,
+        at: "2026-10-12T09:06:00Z",
+        fromName: "Testy McTestface MP",
+        fromAddress: "testy.mctestface.mp@parliament.uk",
+        fromUs: false,
+        fromSupporter: false,
+        auto: true,
+        subject: "Automatic reply: Please back a pause on frontier AI",
+        text: [
+          "Thank you for contacting me. Please take this reply as confirmation that your email has been received.",
+          "I receive a very large volume of correspondence, and priority is given to constituents.",
+          "If your matter is urgent, please call my constituency office.",
+          "For my surgeries, please see my website.",
+        ].join("\n\n"),
+        cc: null,
+      },
+      {
+        id: 4,
+        at: "2026-10-12T09:07:00Z",
+        fromName: "Jane Smith",
+        fromAddress: "jane@example.com",
+        fromUs: false,
+        fromSupporter: true,
+        auto: true,
+        subject: "Out of office",
+        text: "I'm away until Monday.",
         cc: null,
       },
     ],

@@ -182,6 +182,9 @@ describeWithDatabase("recentLetters", () => {
     expect(await ids({ key: "created", dir: "asc" })).toEqual([1, 2, 3]);
     expect(await ids({ key: "from", dir: "asc" })).toEqual([3, 2, 1]);
     expect(await ids({ key: "from", dir: "desc" })).toEqual([1, 3, 2]);
+    // None has a draft, so none has own words, and they keep the newest first.
+    expect(await ids({ key: "ownWords", dir: "desc" })).toEqual([3, 2, 1]);
+    expect((await recentLetters({})).map((l) => l.ownWords)).toEqual([null, null, null]);
     // Those with none last, either way.
     expect(await ids({ key: "replied", dir: "desc" })).toEqual([3, 2, 1]);
     expect(await ids({ key: "replied", dir: "asc" })).toEqual([3, 2, 1]);
@@ -368,10 +371,17 @@ describeWithDatabase("a letter for its page", () => {
         expect.objectContaining({
           fromAddress: "test-mp@parliament.example",
           fromSupporter: false,
+          auto: false,
           text: "Dear Jane,\n\nThank you for writing to me.",
         }),
       ],
     });
+    // Noted as an automatic reply, it says so.
+    await query(
+      `UPDATE letter_events e SET status = 'auto_reply' FROM letter_replies r
+       WHERE e.letter_id = r.letter_id AND e.status = 'replied' AND e.details->>'gmailMessageId' = r.gmail_message_id`,
+    );
+    expect((await getSupporterLetter(id))!.sent!.messages).toMatchObject([{ auto: true }]);
     // Where the letters inbox isn't set, in a mailbox we don't know.
     vi.stubEnv("LETTERS_INBOX", "");
     expect((await getSupporterLetter(id))!.gmail).toMatchObject({ mailbox: null });

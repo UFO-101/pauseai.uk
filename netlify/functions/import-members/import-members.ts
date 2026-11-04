@@ -1,5 +1,5 @@
 // Netlify scheduled function (a folder, so its test can sit beside it
-// without becoming a function too): hourly, asks the site to copy PauseAI's
+// without becoming a function too): daily, asks the site to copy PauseAI's
 // UK members (app/api/cron/import-members). Scheduled functions run only on
 // published production deploys. URL is set by Netlify; CRON_SECRET by us.
 export default async function importMembers(): Promise<Response> {
@@ -12,6 +12,7 @@ export default async function importMembers(): Promise<Response> {
   return new Response(body);
 }
 
-// Two minutes after each Luma import (at most 30 seconds) starts, so the two
-// never overlap but share the database's wake (import-luma.ts).
-export const config = { schedule: "19 * * * *" };
+// At 06:19 UTC, two minutes after a Luma import (at most 30 seconds) starts,
+// so the two, which both link supporters, never overlap; with the other daily
+// jobs (docs/development.md, "Daily jobs").
+export const config = { schedule: "19 6 * * *" };

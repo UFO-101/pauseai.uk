@@ -736,9 +736,13 @@ describe("AddStaff", () => {
     const save = action();
     await render(<AddStaff accounts={[{ email: "jo@pauseai.uk" } as StaffAccount]} add={save.fn} />);
     await page.getByRole("button", { name: staffCopy.accounts.addStaff }).click();
-    const field = page.getByRole("textbox", { name: staffCopy.accounts.addTitle });
+    const field = page.getByRole("textbox", { name: staffCopy.accounts.addLabel });
     await expect.element(field).toBeVisible();
+    await expect.element(field).toHaveAttribute("placeholder", staffCopy.accounts.addTitle);
     const addButton = page.getByRole("button", { name: staffCopy.accounts.add, exact: true });
+    // While its box is open, Add staff is pressed, not orange: Add is the one to press.
+    const opener = page.getByRole("button", { name: staffCopy.accounts.addStaff }).element();
+    expect(getComputedStyle(opener).color).toBe(getComputedStyle(field.element()).color);
 
     await field.fill("sam@example.com");
     await addButton.click();
@@ -2095,7 +2099,7 @@ describe("ImportOverview", () => {
         .getByRole("heading", { level: 2 })
         .all()
         .map((h) => h.element().textContent),
-    ).toEqual([staffCopy.import.hourly, staffCopy.import.nightly, staffCopy.import.oneOff]);
+    ).toEqual([staffCopy.import.frequent, staffCopy.import.nightly, staffCopy.import.oneOff]);
     const cards = [...document.querySelectorAll("section")];
     expect(cards.map((card) => card.querySelector("h3 a")!.getAttribute("href"))).toEqual([
       "/staff/import-data/luma",
@@ -2711,12 +2715,12 @@ describe("RunList", () => {
     await expect
       .element(first)
       .toHaveTextContent(
-        `${staffCopy.runs.status.ok} ${AT} · ${staffCopy.import.hourly} · ${staffCopy.members.result(exampleMembersResult)}`,
+        `${staffCopy.runs.status.ok} ${AT} · ${staffCopy.import.nightly} · ${staffCopy.members.result(exampleMembersResult)}`,
       );
     await expect
       .element(second)
       .toHaveTextContent(
-        `${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.hourly} · ${staffCopy.runs.error("Airtable answered 503")}`,
+        `${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.nightly} · ${staffCopy.runs.error("Airtable answered 503")}`,
       );
   });
 
@@ -2818,14 +2822,14 @@ describe("RunList", () => {
     await expect
       .element(first)
       .toHaveTextContent(
-        `${staffCopy.runs.status.ok} ${AT} · ${staffCopy.import.hourly} · ${staffCopy.luma.result(luma)}`,
+        `${staffCopy.runs.status.ok} ${AT} · ${staffCopy.import.frequent} · ${staffCopy.luma.result(luma)}`,
       );
     expect(first.element().textContent).not.toContain(staffCopy.luma.stoppedBy.time);
     expect(first.element().textContent).not.toContain(staffCopy.runs.status.incomplete);
     await expect
       .element(second)
       .toHaveTextContent(
-        `${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.hourly} · ${staffCopy.runs.error("Luma answered 500")}`,
+        `${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.frequent} · ${staffCopy.runs.error("Luma answered 500")}`,
       );
     // Only the newest run is tinted, by how it ended; an older failure is plain.
     expect(first.element().closest("section")!.parentElement!.className).toMatch(/green/);
@@ -2841,7 +2845,7 @@ describe("RunList", () => {
     await expect
       .element(only)
       .toHaveTextContent(
-        `${staffCopy.runs.status.incomplete} ${AT} · ${staffCopy.import.hourly} · ${staffCopy.luma.result(exampleLumaResult)} ${staffCopy.luma.stoppedBy["rate-limit"]}`,
+        `${staffCopy.runs.status.incomplete} ${AT} · ${staffCopy.import.frequent} · ${staffCopy.luma.result(exampleLumaResult)} ${staffCopy.luma.stoppedBy["rate-limit"]}`,
       );
     expect(only.element().closest("section")!.parentElement!.className).toMatch(/amber/);
     expect(getComputedStyle(only.element().closest("section")!).borderLeftWidth).toBe("1px");
@@ -2978,6 +2982,7 @@ describe("LettersTable", () => {
             isTest: false,
             backend: "airtable",
             contactConsent: false,
+            ownWords: 0.624,
             sentAt: null,
             repliedAt: "2026-10-13T09:00:00Z",
             autoRepliedAt: "2026-10-12T10:00:00Z",
@@ -3001,6 +3006,9 @@ describe("LettersTable", () => {
       .element(page.getByRole("link", { name: letter.senderName }).first())
       .toHaveAttribute("href", "/staff/supporters/7");
     await expect.element(page.getByRole("cell", { name: /^Gone, from pauseai.info/ })).toBeInTheDocument();
+    // How much of each is the sender's own words.
+    await expect.element(page.getByRole("cell", { name: "18%", exact: true })).toBeInTheDocument();
+    await expect.element(page.getByRole("cell", { name: "62%", exact: true })).toBeInTheDocument();
     await expect.element(page.getByRole("link", { name: "odd" })).toHaveAttribute("href", "/staff/letters/2");
     await expect
       .element(page.getByRole("cell", { name: staffCopy.letters.consent.yes, exact: true }))
@@ -3583,6 +3591,26 @@ describe("SupportersTable", () => {
 });
 
 describe("SupporterDetails", () => {
+  it("lists their events by when each starts, latest first, one no longer copied last, undated", async () => {
+    const [registered] = exampleSupporterDetails.activity.filter((a) => a.kind === "luma-registered");
+    const activity = [
+      { ...registered, title: "Earlier", eventAt: "2026-09-01T18:00:00Z" },
+      { ...registered, title: "Gone", eventAt: null },
+      { ...registered, title: "Later", eventAt: "2026-11-01T18:00:00Z" },
+    ];
+    await render(<SupporterDetails supporter={{ ...exampleSupporterDetails, activity }} />);
+    const events = page.getByRole("region", { name: staffCopy.supporters.detail.eventsTitle, exact: false });
+    expect(
+      [...events.element().querySelectorAll("tbody tr")].map((tr) =>
+        [...(tr as HTMLTableRowElement).cells].slice(0, 2).map((td) => td.textContent),
+      ),
+    ).toEqual([
+      ["1 Nov 2026", "Later"],
+      ["1 Sept 2026", "Earlier"],
+      ["–", "Gone"],
+    ]);
+  });
+
   it("shows the band, whether we can contact them, their events and letters, then the history and all we hold", async () => {
     const copy = staffCopy.supporters;
     const first = await render(<SupporterDetails supporter={exampleSupporterDetails} />);
@@ -3622,9 +3650,15 @@ describe("SupporterDetails", () => {
     await expect
       .element(events.getByRole("link", { name: "PauseAI Manchester Social" }).first())
       .toHaveAttribute("href", "https://luma.com/fixture-manchester-social");
-    expect(
-      [...events.element().querySelectorAll("tbody tr")].map((tr) => (tr as HTMLTableRowElement).cells[2].textContent),
-    ).toEqual([copy.detail.registered, copy.detail.host]);
+    // When the event is, which, her part in it, and when she registered or became host.
+    const eventRows = () =>
+      [...events.element().querySelectorAll("tbody tr")].map((tr) =>
+        [...(tr as HTMLTableRowElement).cells].map((td) => td.textContent),
+      );
+    expect(eventRows()).toEqual([
+      ["1 Oct 2026", "PauseAI Manchester Social", copy.detail.registered, "20 Sept 2026"],
+      ["1 Oct 2026", "PauseAI Manchester Social", copy.detail.host, "10 Aug 2026"],
+    ]);
     const letters = page.getByRole("region", { name: copy.detail.lettersTitle });
     await expect
       .element(letters.getByRole("link", { name: "Polly Placeholder" }))
@@ -4325,6 +4359,9 @@ describe("each list's download values and contact cards", () => {
       "Gone",
     );
     expect(typeof row.history).toBe("string");
+    // Its own words as a percentage, or nothing for a letter with no draft.
+    expect(row.ownWords).toBe("18%");
+    expect(values(letterDownloadColumns, { ...exampleLetter, ownWords: null }).ownWords).toBeNull();
     // When the MP replied, or failing that, when an automatic reply came, said so.
     expect(row.replied).toBeNull();
     expect(values(letterDownloadColumns, { ...exampleLetter, repliedAt: "2026-10-13T09:00:00Z" }).replied).toBe(

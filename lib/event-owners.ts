@@ -1,7 +1,7 @@
 // Who owns one of our events when nobody on staff has chosen: the rules,
 // written here until staff can set them. The first rule whose place the
 // event is in, by its city or one of its Luma tags, gives its owner; an
-// event no rule matches is the default owner's. The hourly Luma import
+// event no rule matches is the default owner's. The Luma import
 // gives each upcoming event with no owner its owner by these
 // (lib/server/staff-events.ts).
 

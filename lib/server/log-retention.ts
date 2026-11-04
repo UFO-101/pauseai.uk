@@ -6,7 +6,7 @@ import { query } from "./db";
 // grows for ever. Run once a day, by its own scheduled job
 // (app/api/cron/tidy-logs).
 //
-// An import run is kept for a week if its job runs hourly, a month if it
+// An import run is kept for a week if its job runs every 5 minutes, a month if it
 // runs nightly, and a one-off job keeps its last 50 runs. Every job keeps its
 // newest run, however old, as its page shows it, and a held sync is kept
 // until someone applies or discards it.
@@ -42,7 +42,7 @@ export async function tidyLogs(): Promise<{ importRuns: number; auditEntries: nu
          OR (r.job = ANY($3) AND r.id NOT IN (
                SELECT k.id FROM import_runs k WHERE k.job = r.job ORDER BY k.at DESC, k.id DESC LIMIT $4)))
      RETURNING 1`,
-    [jobsThat("hourly"), jobsThat("nightly"), jobsThat("oneOff"), ONE_OFF_RUNS],
+    [jobsThat("frequent"), jobsThat("nightly"), jobsThat("oneOff"), ONE_OFF_RUNS],
   );
   const entries = await query(
     `DELETE FROM audit_log a WHERE a.at < now() - interval '1 month' AND NOT ${POLITICIAN_HISTORY} RETURNING 1`,

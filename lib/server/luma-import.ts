@@ -21,7 +21,7 @@ import { type EventGuest, listEventGuests } from "./outside-services/luma-guests
 // luma_event_hosts: every public event, the guests who registered for each,
 // our own events' hosts, and the calendar's contacts, and from them who has
 // left the calendar or come back (recordContactsPass); then where new supporters and events are
-// (supporter-places.ts), and owners for events with none (staff-events.ts). Hourly (app/api/cron/import-luma) or when staff
+// (supporter-places.ts), and owners for events with none (staff-events.ts). Every 5 minutes (app/api/cron/import-luma) or when staff
 // ask, each run in the import log (import-runs.ts, as "import-luma").
 //
 // A run has about 20 seconds (Netlify's scheduled functions stop at 30) and
@@ -40,12 +40,27 @@ const RATE_LIMIT_RESERVE = 50;
 const LIVE_DAYS = 3;
 /** A settled event's guests are read again this often, for late changes. */
 const SETTLED_DAYS = 30;
+/** A live event's guests and hosts are read again when last read this long ago: every run, as one starts every 5 minutes. */
+const LIVE_REREAD = "4 minutes";
+/** The supporter facts and the supporters list are worked out again at least this often, even by runs that changed nothing, for what other sources changed. */
+const REFRESH_AT_LEAST = "1 hour";
 /** A full pass over every event, for edits to old ones and deletions, this often. */
 const FULL_EVENTS_HOURS = 20;
 /** The most pages of contacts a run reads. Passes over every contact follow one another, this many pages a run: it's how we see who left or came back. */
 const CONTACT_PAGES_PER_RUN = 10;
 
 type ImportList = "events" | "contacts";
+
+/** Whether no run has worked out the supporter facts and the list again in the last REFRESH_AT_LEAST. */
+async function refreshDue(db: Queryable): Promise<boolean> {
+  const [{ due }] = await query<{ due: boolean }>(
+    `SELECT NOT EXISTS (SELECT 1 FROM import_runs WHERE job = $1 AND (result->>'refreshed')::boolean
+       AND at > now() - $2::interval) AS due`,
+    [JOB, REFRESH_AT_LEAST],
+    db,
+  );
+  return due;
+}
 
 /** A full pass over the contacts failed partway: its cursor is dropped, outside the run's transaction. */
 class ContactsPassFailed extends Error {
@@ -175,7 +190,7 @@ async function importEvents(budget: Budget, db: Queryable): Promise<number> {
 
 /**
  * The events whose guests are due a read, first first: live ones not read
- * in the last hour; never read, newest first; settled ones last read within
+ * in the last run; never read, newest first; settled ones last read within
  * three days of their start, or over a month ago. An event whose last read
  * failed goes to the back. Only our own events still listed: Luma shows no
  * guests for one another calendar runs, and a removed one's are kept as last
@@ -185,14 +200,14 @@ async function eventsDueGuests(db: Queryable): Promise<string[]> {
   const rows = await query<{ id: string }>(
     `SELECT id FROM luma_events
      WHERE access = 'manage' AND removed_at IS NULL AND (
-       (start_at > now() - $1::interval AND (guests_synced_at IS NULL OR guests_synced_at < now() - interval '1 hour'))
+       (start_at > now() - $1::interval AND (guests_synced_at IS NULL OR guests_synced_at < now() - $3::interval))
        OR guests_synced_at IS NULL
        OR (start_at <= now() - $1::interval
            AND (guests_synced_at < start_at + $1::interval OR guests_synced_at < now() - $2::interval)))
      ORDER BY guests_error IS NOT NULL,
        CASE WHEN start_at > now() - $1::interval THEN 0 WHEN guests_synced_at IS NULL THEN 1 ELSE 2 END,
        start_at DESC`,
-    [`${LIVE_DAYS} days`, `${SETTLED_DAYS} days`],
+    [`${LIVE_DAYS} days`, `${SETTLED_DAYS} days`, LIVE_REREAD],
     db,
   );
   return rows.map((row) => row.id);
@@ -295,7 +310,7 @@ async function importGuests(eventId: string, budget: Budget, db: Queryable): Pro
  * The events whose hosts are due a read, first first: our own still on the
  * calendar whose hosts have never been read, which reads every past one
  * once, or whose London day hasn't ended and whose hosts weren't read in
- * the last hour. Once its day is over and they've been read, they're never
+ * the last run. Once its day is over and they've been read, they're never
  * read again. Those still to come first, then those never read, newest
  * first; one whose last read failed goes to the back.
  */
@@ -305,9 +320,9 @@ async function eventsDueHosts(db: Queryable): Promise<string[]> {
        SELECT id, start_at, hosts_synced_at, hosts_error,
          (start_at AT TIME ZONE 'Europe/London')::date >= (now() AT TIME ZONE 'Europe/London')::date AS live
        FROM luma_events WHERE access = 'manage' AND removed_at IS NULL) e
-     WHERE hosts_synced_at IS NULL OR (live AND hosts_synced_at < now() - interval '1 hour')
+     WHERE hosts_synced_at IS NULL OR (live AND hosts_synced_at < now() - $1::interval)
      ORDER BY hosts_error IS NOT NULL, CASE WHEN live THEN 0 WHEN hosts_synced_at IS NULL THEN 1 ELSE 2 END, start_at DESC`,
-    [],
+    [LIVE_REREAD],
     db,
   );
   return rows.map((row) => row.id);
@@ -520,16 +535,9 @@ function run(
     // Anyone new, from any source, gets their supporter; letters written since the last run too. A number given
     // since a supporter was linked merges them with whoever else gave it.
     const links = await linkSupporters(db, true);
-    // A record already linked may have changed, so everyone's facts, not only the newly linked.
-    await refreshSupporterFacts(db);
     result.supportersAdded = links.supportersAdded;
     result.linked = links.linked;
     result.places = await lookUpPlaces(db);
-    await refreshSupportersList(db);
-    // New events, and any whose owner's account went, get their owners by the rules.
-    const owners = await assignRuleOwners(db);
-    result.requests = budget.requests;
-    if (budget.stoppedBy) result.stoppedBy = budget.stoppedBy;
     const changed =
       result.events +
         result.guestsChanged +
@@ -540,6 +548,17 @@ function run(
         result.places.postcodes +
         result.places.towns >
       0;
+    // A record already linked may have changed, here or in another source, so everyone's facts, not only the
+    // newly linked, and the list; after a change, or else if they haven't been for a while, as they take seconds.
+    if (changed || (await refreshDue(db))) {
+      await refreshSupporterFacts(db);
+      await refreshSupportersList(db);
+      result.refreshed = true;
+    }
+    // New events, and any whose owner's account went, get their owners by the rules.
+    const owners = await assignRuleOwners(db);
+    result.requests = budget.requests;
+    if (budget.stoppedBy) result.stoppedBy = budget.stoppedBy;
     await recordRun(JOB, startedBy, changed ? "ok" : "unchanged", result, db);
     return { result, owners };
   });

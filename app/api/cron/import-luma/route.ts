@@ -4,7 +4,7 @@ import { importLuma } from "@/lib/server/luma-import";
 import { NIGHTLY } from "@/lib/import-runs";
 
 /**
- * The hourly copy of the Luma calendar's events, guests and contacts,
+ * The copy every 5 minutes of the Luma calendar's events, guests and contacts,
  * called by netlify/functions/import-luma-background.
  */
 export async function POST(request: Request) {

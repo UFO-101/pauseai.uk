@@ -16,6 +16,7 @@ import { LETTERS_INBOX, recordGmail, testProxy } from "@/tests/gmail-sends";
 import { resetLettersInbox } from "@/tests/fixtures/letters-inbox";
 import { query } from "./db";
 import { recordProblem } from "./email";
+import { recentLetters } from "./letters";
 import { LETTERS_DAILY_LIMIT } from "./letters-inbox";
 import { mayWriteTo, parseLetterForm, submitLetter, type LetterForm } from "./mp-letters";
 
@@ -125,8 +126,12 @@ describeWithDatabase("submitLetter", () => {
     expect(copied.headers.get("to")).toBe(`"Jane Smith" <jane@example.com>`);
     expect(copied.headers.get("reply-to")).toBe(mpProxy);
     expect(copied.headers.get("bcc")).toBeUndefined();
-    expect(copied.text).toBe(`${copy.letterCopy("Testy McTestface MP")}\n\n${letter.text}`);
-    expect(copied.html.startsWith(`<p>${copy.letterCopy("Testy McTestface MP")}</p>`)).toBe(true);
+    expect(copied.text).toBe(`${copy.letterCopy("Testy McTestface MP")}\n—\n\n${letter.text}`);
+    expect(
+      copied.html.startsWith(
+        `<p style="color:#666666"><em>${copy.letterCopy("Testy McTestface MP")}</em></p><hr style="border:0;border-top:1px solid #dddddd">`,
+      ),
+    ).toBe(true);
     expect(copied.mime.parts.slice(1)).toHaveLength(campaigns[0].attachments.length);
 
     const [row] = await query<Record<string, unknown>>(
@@ -151,6 +156,8 @@ describeWithDatabase("submitLetter", () => {
       contact_consent: true,
     });
     expect(row.own_words).toBeGreaterThan(0);
+    // The letters list has it.
+    expect((await recentLetters({}))[0].ownWords).toBe(row.own_words);
     expect(await query("SELECT tag FROM proxies ORDER BY id")).toEqual([
       { tag: "jane.smith" },
       { tag: "testy.mctestface.mp" },

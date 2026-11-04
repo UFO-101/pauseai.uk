@@ -9,9 +9,9 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllEnvs());
 
-describe("the hourly Gmail reading function", () => {
-  it("runs every hour, night and day, and asks the site to read with the secret", async () => {
-    expect(config.schedule).toBe("20 * * * *");
+describe("the Gmail reading function", () => {
+  it("runs every 5 minutes, night and day, and asks the site to read with the secret", async () => {
+    expect(config.schedule).toBe("*/5 * * * *");
     let auth: string | null = null;
     server.use(
       http.post("https://pauseai.uk/api/cron/read-gmail", ({ request }) => {

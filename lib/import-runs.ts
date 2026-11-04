@@ -35,10 +35,10 @@ const IMPORT_SLUGS: Record<ImportJob, string> = {
 };
 
 /** How often each job runs on its own, matching its schedule in netlify/functions/; a one-off is only run by staff. */
-export const JOB_SCHEDULES: Record<ImportJob, "hourly" | "nightly" | "oneOff"> = {
-  "import-luma": "hourly",
-  "import-members": "hourly",
-  "read-gmail": "hourly",
+export const JOB_SCHEDULES: Record<ImportJob, "frequent" | "nightly" | "oneOff"> = {
+  "import-luma": "frequent",
+  "import-members": "nightly",
+  "read-gmail": "frequent",
   "sync-politicians": "nightly",
   "sync-emails": "nightly",
   "import-web-form-letters": "oneOff",
@@ -143,6 +143,8 @@ export type LumaImportResult = {
   places?: PlacesLookup;
   /** Why the run stopped before it was done: its time was up, Luma's rate limit was near, or another run had the lock. */
   stoppedBy?: "time" | "rate-limit" | "running";
+  /** Whether it worked out every supporter's facts and the supporters list again: after a change, or at least hourly. */
+  refreshed?: boolean;
 };
 export type LumaImport = ImportRun<"import-luma", LumaImportResult>;
 

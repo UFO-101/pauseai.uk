@@ -33,18 +33,32 @@
   white-space: nowrap;
 }
 
-/* In Add staff's box: the address of someone to add, Add, and why it
-   can't be, on one line. */
+/* In Add staff's box: its label, the address of someone to add with Add
+   beside it, and under them why it can't be. */
 .add {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* Wide enough for an address and Add beside it. */
+.addBubble {
+  --bubble-width: 26rem;
+}
+
+.addLabel {
+  font-weight: 600;
+}
+
+/* The field, and Add on the same line. */
+.addRow {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-3);
+  gap: var(--space-2);
   align-items: center;
 }
 
-.add input {
-  width: 20rem;
-  max-width: 100%;
+.addRow input {
+  flex: 1;
+  min-width: 0;
 }
 
 /* What each permission opens, under its heading: its name in bold, and

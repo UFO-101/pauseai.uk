@@ -1,5 +1,5 @@
 // Netlify scheduled function (a folder, so its test can sit beside it
-// without becoming a function too): hourly, starts the background function
+// without becoming a function too): every 5 minutes, starts the background function
 // that asks the site to copy the Luma calendar's events, guests and contacts
 // (import-luma-background). A run takes up to about 25 seconds, and Netlify
 // invokes a scheduled function again when it hasn't answered after about 15,
@@ -15,11 +15,8 @@ export default async function importLuma(): Promise<Response> {
   return new Response("Started");
 }
 
-// Every hour at 17 minutes past, off the hour, away from everyone else's
-// on-the-hour fetches of Luma. The database sleeps after five minutes
-// without a query (Netlify's default "Sleep on inactivity") and is billed for
-// every minute it's awake, so every other hourly job starts within a few
-// minutes of this one: one wake an hour, not one each. They run through the
-// night too, so an MP's reply is relayed and a queued letter sent within
-// the hour, whenever it comes.
-export const config = { schedule: "17 * * * *" };
+// Every 5 minutes from 2 minutes past the hour (2, 7, 12 … 57), off the hour,
+// away from everyone else's on-the-hour fetches of Luma, night and day. The
+// database sleeps after five minutes without a query (Netlify's default
+// "Sleep on inactivity"), so with this and the Gmail reading it never sleeps.
+export const config = { schedule: "2-59/5 * * * *" };

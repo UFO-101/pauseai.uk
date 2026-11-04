@@ -554,7 +554,7 @@ describe("LetterView", () => {
     await expect.element(page.getByText(staffCopy.letters.status.spam_complaint, { exact: true })).toBeVisible();
   });
 
-  it("a supporter's: back to the letters, its campaign over its ask, tagged when it's to a test politician", async () => {
+  it("a supporter's: back to the letters, its ask, tagged when it's to a test politician", async () => {
     const supporters = { ...exampleSupporterLetterDetails, campaignAsk: exampleAsks[0]!.slug };
     await view({ letter: supporters, politician: { ...politician, isTest: true } });
     await expect
@@ -566,24 +566,15 @@ describe("LetterView", () => {
     await expect.element(page.getByText(staffCopy.mailings.columns.answered, { exact: true })).toBeVisible();
     await expect.element(page.getByText(staffCopy.politicians.flags.test, { exact: true })).toBeVisible();
     await expect.element(page.getByRole("heading", { name: staffCopy.mailings.fields.ask, exact: true })).toBeVisible();
-    // Under the ask, the campaign it's based on.
     await expect.element(page.getByRole("group", { name: exampleAsks[0]!.title })).toBeVisible();
-    const campaign = page.getByRole("link", { name: supporters.campaignTitle });
-    await expect.element(campaign).toBeVisible();
-    const basedOn = campaign.element().closest("p")!;
-    expect(basedOn.textContent).toBe(`${staffCopy.letters.detail.basedOn} ${supporters.campaignTitle}`);
-    expect(
-      page.getByRole("group").element().compareDocumentPosition(basedOn) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    // Its campaign is in the letter's headers, not under the ask.
+    expect(page.getByRole("link", { name: supporters.campaignTitle }).all()).toHaveLength(0);
     expect(document.body.textContent).not.toContain(staffCopy.mailings.personalised);
   });
 
-  it("a supporter's whose campaign makes no ask: the card is the campaign alone", async () => {
+  it("a supporter's whose campaign makes no ask: no ask card", async () => {
     await view({ letter: exampleSupporterLetterDetails });
-    await expect
-      .element(page.getByRole("heading", { name: staffCopy.letters.columns.campaign, exact: true }))
-      .toBeVisible();
-    await expect.element(page.getByRole("link", { name: exampleSupporterLetterDetails.campaignTitle })).toBeVisible();
+    expect(page.getByRole("heading", { name: staffCopy.mailings.fields.ask, exact: true }).all()).toHaveLength(0);
     expect(page.getByRole("group").all()).toHaveLength(0);
     await expect.element(page.getByText(staffCopy.letters.status.bounced, { exact: true }).first()).toBeVisible();
     expect(page.getByText(staffCopy.politicians.flags.test, { exact: true }).all()).toHaveLength(0);

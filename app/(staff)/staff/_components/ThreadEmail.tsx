@@ -8,7 +8,7 @@ const copy = staffCopy.letterThread;
 /**
  * One message of a letter's thread as an email shows it: who it's from and
  * to, whom it was copied to if anyone, when, and its subject, with `action`, if any, at the right of the
- * subject's line, over its text.
+ * subject's line, and for a supporter's letter the campaign it was written from; over its text.
  */
 export default function ThreadEmail({
   from,
@@ -17,6 +17,7 @@ export default function ThreadEmail({
   at,
   subject,
   action,
+  campaign,
   missing = false,
   children,
 }: {
@@ -26,6 +27,7 @@ export default function ThreadEmail({
   at: string | null;
   subject: string;
   action?: ReactNode;
+  campaign?: ReactNode;
   /** Its text isn't kept, so its body is a slot with a note in it, not words of the letter. */
   missing?: boolean;
   children: ReactNode;
@@ -54,6 +56,12 @@ export default function ThreadEmail({
           <strong>{subject}</strong>
           {action && <span className={styles.action}>{action}</span>}
         </dd>
+        {campaign && (
+          <>
+            <dt>{copy.headers.campaign}</dt>
+            <dd>{campaign}</dd>
+          </>
+        )}
       </dl>
       <div className={missing ? `${styles.body} ${styles.missing}` : styles.body}>{children}</div>
     </article>

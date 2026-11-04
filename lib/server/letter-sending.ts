@@ -204,8 +204,9 @@ export async function sendCopy(id: number): Promise<void> {
       To: nameLine(letter.senderName, letter.senderEmail),
       ReplyTo: replyTo,
       Subject: letter.subject,
-      TextBody: `${line}\n\n${toText(doc)}`,
-      HtmlBody: `<p>${line.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</p>${toHtml(doc)}`,
+      // The line set apart from the letter: italic and grey, over a rule; in plain text, over a dash.
+      TextBody: `${line}\n—\n\n${toText(doc)}`,
+      HtmlBody: `<p style="color:#666666"><em>${line.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</em></p><hr style="border:0;border-top:1px solid #dddddd">${toHtml(doc)}`,
       Attachments: await attachments(letter.campaign),
     },
     "letter-copy",

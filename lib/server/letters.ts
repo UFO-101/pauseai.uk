@@ -60,6 +60,8 @@ export type LetterSummary = {
   mpName: string;
   politicianId: number;
   isTest: boolean;
+  /** The share of its words, from 0 to 1, that weren't in the campaign's draft; none for one with no draft, as from Airtable. */
+  ownWords: number | null;
   /** What sent it; none for one of this site's never sent. */
   backend: LetterBackend | null;
   createdAt: string;
@@ -139,7 +141,7 @@ async function letterRows({
     .join(" ");
   return query<LetterSummary & { total: number }>(
     `SELECT l.id::int AS id, s.campaign, c.title AS "campaignTitle", c.url AS "campaignUrl", l.status, f.name AS "senderName", f.email AS "senderEmail",
-       f.contact_consent AS "contactConsent", n.name AS "mpName", n.id::int AS "politicianId", p.is_test AS "isTest", ${BACKEND} AS backend, l.created_at AS "createdAt", l.sent_at AS "sentAt", l.replied_at AS "repliedAt",
+       f.contact_consent AS "contactConsent", n.name AS "mpName", n.id::int AS "politicianId", p.is_test AS "isTest", s.own_words AS "ownWords", ${BACKEND} AS backend, l.created_at AS "createdAt", l.sent_at AS "sentAt", l.replied_at AS "repliedAt",
        ${AUTO_REPLIED_AT} AS "autoRepliedAt",
        (SELECT k.supporter_id::int FROM supporter_links k WHERE k.form_entry_id = s.entry_id) AS "supporterId",
        coalesce((SELECT json_agg(json_build_object('at', e.at, 'status', e.status, 'details', e.details) ORDER BY e.at DESC, e.id DESC)

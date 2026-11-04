@@ -198,6 +198,7 @@ describeWithDatabase("importLuma", () => {
       linked: 4,
       places: { postcodes: 1, towns: 1, failed: false },
       requests: 6,
+      refreshed: true,
     });
     expect(await query("SELECT count(*)::int AS n FROM supporter_links")).toEqual([{ n: 4 }]);
     expect(luma.requests).toEqual([
@@ -261,6 +262,16 @@ describeWithDatabase("importLuma", () => {
     // An event edited in Luma: changed here, and its guests not read again for it.
     luma.events[0] = event("evt-live", days(1), { name: "Renamed" });
     expect(await importLuma("jo@pauseai.uk")).toMatchObject({ events: 1, eventsSynced: 0, requests: 2 });
+  });
+
+  it("works out the supporters again after a change, and after an hour without, but not after a run that changed nothing within the hour", async () => {
+    fakeLuma({ events: [event("evt-1", days(1))], guests: { "evt-1": [guest(1)] }, contacts: [contact(1)] });
+    expect(await importLuma("jo@pauseai.uk")).toMatchObject({ events: 1, refreshed: true });
+    expect(await importLuma("jo@pauseai.uk")).not.toHaveProperty("refreshed");
+    // The run that worked them out, over an hour ago.
+    await query("UPDATE import_runs SET at = now() - interval '61 minutes' WHERE (result->>'refreshed')::boolean");
+    expect(await importLuma("jo@pauseai.uk")).toMatchObject({ events: 0, refreshed: true });
+    expect(await importLuma("jo@pauseai.uk")).not.toHaveProperty("refreshed");
   });
 
   it("stops at the first events page with nothing new, and once a day reads every page and marks events gone from the calendar removed", async () => {
@@ -369,7 +380,7 @@ describeWithDatabase("importLuma", () => {
     expect((await query("SELECT user_id FROM luma_people")).map((p) => p.user_id)).toEqual(["usr-2"]);
   });
 
-  it("reads our events' hosts when due: never read, or still to come and not read in the hour; still to come first, then never read, newest first, failed last", async () => {
+  it("reads our events' hosts when due: never read, or still to come and not read in the last run; still to come first, then never read, newest first, failed last", async () => {
     const luma = fakeLuma({
       events: [
         event("evt-soon", days(1)),
@@ -395,7 +406,7 @@ describeWithDatabase("importLuma", () => {
         [interval, ids],
       );
     await hostsRead("2 hours", ["evt-soon", "evt-later", "evt-past-read", "evt-gone"]);
-    await hostsRead("10 minutes", ["evt-recent"]);
+    await hostsRead("2 minutes", ["evt-recent"]);
     await hostsRead(null, ["evt-past-new", "evt-past-old"]);
     // Taken off the calendar.
     luma.events = luma.events.filter((e) => e.id !== "evt-gone");

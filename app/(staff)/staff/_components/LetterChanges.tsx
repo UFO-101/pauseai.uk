@@ -39,6 +39,7 @@ export default function LetterChanges({
   to,
   at,
   subject,
+  campaign,
   sent,
   draft,
 }: {
@@ -46,12 +47,13 @@ export default function LetterChanges({
   to: string;
   at: string | null;
   subject: string;
+  campaign?: ReactNode;
   sent: string;
   draft: string | null;
 }) {
   const [asSent, setAsSent] = useState(false);
   const [unfolded, setUnfolded] = useState<number[]>([]);
-  const email = { from, to, at, subject };
+  const email = { from, to, at, subject, campaign };
   if (draft === null) {
     return (
       <ThreadEmail {...email}>
@@ -91,6 +93,59 @@ export default function LetterChanges({
               </button>
             ),
           )}
+        </div>
+      )}
+    </ThreadEmail>
+  );
+}
+
+/**
+ * An automatic reply as an email (ThreadEmail), folded to its first
+ * paragraph, as the rest is rarely worth reading: then a line saying how
+ * many more there are, which unfolds them, and at the right of the
+ * subject's line a button that shows it as sent, then folds it again. One
+ * of a single paragraph is shown whole.
+ */
+export function FoldedAutoReply({
+  from,
+  to,
+  cc,
+  at,
+  subject,
+  text,
+}: {
+  from: ReactNode;
+  to: string;
+  cc: string | null;
+  at: string;
+  subject: string;
+  text: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const email = { from, to, cc, at, subject };
+  const [first, ...rest] = text.split(/\n\s*\n/);
+  if (rest.length === 0) {
+    return (
+      <ThreadEmail {...email}>
+        <div className={styles.text}>{text}</div>
+      </ThreadEmail>
+    );
+  }
+  const toggle = (
+    <button type="button" className={styles.toggle} onClick={() => setOpen(!open)}>
+      {open ? copy.showLess : copy.asSent}
+    </button>
+  );
+  return (
+    <ThreadEmail {...email} action={toggle}>
+      {open ? (
+        <div className={styles.text}>{text}</div>
+      ) : (
+        <div className={styles.changes}>
+          <div className={styles.text}>{first}</div>
+          <button type="button" className={styles.fold} onClick={() => setOpen(true)}>
+            {copy.more(rest.length)}
+          </button>
         </div>
       )}
     </ThreadEmail>

@@ -49,8 +49,8 @@ const CANDIDATE_COLUMNS = SUPPORTER_SOURCES.map((s) => `c.${s.column}`).join(", 
  * existing link matched on the same email, or else to a new one, made for
  * each new email; then merges those who share a UK mobile number, by the
  * numbers of the supporters it linked, or with `everyone`, by everyone's,
- * which catches a number given since a record was linked, as the hourly
- * imports do; then brings what's worked out about each supporter it linked
+ * which catches a number given since a record was linked, as the Luma
+ * and members imports do; then brings what's worked out about each supporter it linked
  * or merged into up to date. Set-based, in one transaction (`db`'s, or its
  * own).
  */
@@ -366,8 +366,10 @@ export async function getSupporter(given: number): Promise<SupporterDetails | un
       [id],
     ),
     query<SupporterActivity>(
-      `SELECT a.source, a.at, a.kind, a.title, c.title AS "campaignTitle", c.url AS "campaignUrl", a.detail, a.href, a.status
+      `SELECT a.source, a.at, a.kind, a.title, c.title AS "campaignTitle", c.url AS "campaignUrl", a.detail, a.href, a.status,
+         e.start_at AS "eventAt"
        FROM supporter_activity a LEFT JOIN campaigns c ON a.kind IN ('letter', 'letter-replied') AND c.slug = a.title
+         LEFT JOIN luma_events e ON a.kind IN ('luma-registered', 'luma-hosted') AND a.href = 'https://luma.com/' || e.url
        WHERE a.supporter_id = $1 ORDER BY a.at DESC, a.kind`,
       [id],
     ),

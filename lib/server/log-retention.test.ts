@@ -27,16 +27,16 @@ const ids = async (table: string) =>
 describeWithDatabase("tidying the logs", () => {
   useTestDatabase();
 
-  it("keeps an hourly job's runs a week, a nightly job's a month, and a one-off job's last 50", async () => {
+  it("keeps a 5-minute job's runs a week, a nightly job's a month, and a one-off job's last 50", async () => {
     await query("DELETE FROM import_runs");
     await run("import-luma", "8 days");
-    const hourlyNew = await run("import-luma", "6 days");
+    const frequentNew = await run("import-luma", "6 days");
     await run("check-mps", "32 days");
     const nightlyNew = await run("check-mps", "20 days");
     const oneOff = [];
     for (let i = ONE_OFF_RUNS; i >= 0; i--) oneOff.push(await run("import-web-form-letters", `${i} days`));
     expect(await tidyLogs()).toEqual({ importRuns: 3, auditEntries: 0 });
-    expect(await ids("import_runs")).toEqual([hourlyNew, nightlyNew, ...oneOff.slice(1)]);
+    expect(await ids("import_runs")).toEqual([frequentNew, nightlyNew, ...oneOff.slice(1)]);
   });
 
   it("keeps each job's newest run however old, and a held sync until it's decided", async () => {

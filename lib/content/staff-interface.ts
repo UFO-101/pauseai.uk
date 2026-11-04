@@ -103,7 +103,9 @@ export const staffCopy = {
     noReplies: "No replies yet.",
     unreadable: "This message couldn't be read.",
     // Over each message, as an email shows them.
-    headers: { from: "From", to: "To", cc: "Cc", date: "Date", subject: "Subject" },
+    headers: { from: "From", to: "To", cc: "Cc", date: "Date", subject: "Subject", campaign: "⁂ Campaign" },
+    // After a supporter's letter's campaign: the share of its words that weren't in the campaign's draft.
+    ownWords: (share: number) => `⁂ ${Math.round(share * 100)}% own words`,
   },
   // Your own page: your sessions and your Gmail.
   me: {
@@ -142,7 +144,7 @@ export const staffCopy = {
       connected: "Your Gmail is connected. All staff will be able to send mailings from it now.",
       // The same, for the letters inbox, which sends supporters' letters and nothing else.
       connectedLettersInbox:
-        "The letters inbox is connected. Supporters' letters to MPs go from it now, and replies are relayed through it every hour.",
+        "The letters inbox is connected. Supporters' letters to MPs go from it now, and replies are relayed through it ⁂ every 5 minutes.",
       refused: "Gmail wasn't connected, as you didn't allow it.",
       failed: "Gmail couldn't be connected. Try again.",
       disconnected: "Your Gmail is disconnected.",
@@ -500,9 +502,11 @@ export const staffCopy = {
       lettersTitle: "Letters to MPs",
       noLetters: "No letters.",
       columns: {
-        date: "Date",
+        // The Events table's: when the event is, which, their part in it, and when they registered or became host.
+        eventDate: "⁂ Event date",
         event: "Event",
-        status: "Registration",
+        status: "⁂ Role",
+        joined: "⁂ Joined",
         to: "To",
         campaign: "Campaign",
         letter: "Status",
@@ -518,7 +522,7 @@ export const staffCopy = {
       kinds: {
         "luma-contact": "Became a contact of the Luma calendar",
         "luma-registered": "Registered for",
-        "luma-hosted": "Hosted",
+        "luma-hosted": "⁂ Became host for",
         letter: "Wrote to",
         "letter-replied": "Letter answered by",
         "form-entry": "Filled in",
@@ -595,6 +599,8 @@ export const staffCopy = {
     // At the top right, the button that opens the field for the address of someone new (its label, read aloud) and its
     // button, which adds them as a row, with no permissions.
     addStaff: "Add staff",
+    // The field's label, then what's in it until something is typed.
+    addLabel: "⁂ Email:",
     addTitle: "@pauseai.uk email address",
     add: "Add",
     // In a row's Permissions cell, after the permissions it has: the button that opens a box for each, and the form's
@@ -716,7 +722,7 @@ export const staffCopy = {
     house: "House",
   },
   // The mailings page (/staff/mailings): PauseAI's mails to many politicians, and each one's own page.
-  // The events page (/staff/events): our events on Luma, as the hourly import has them, and who on staff owns each.
+  // The events page (/staff/events): our events on Luma, as the Luma import has them, and who on staff owns each.
   events: {
     title: "Events",
     // At the page's top right, in small grey print, as on a politician's page: where the events come from, linking to
@@ -774,18 +780,21 @@ export const staffCopy = {
     ownerEmail: {
       subject: (n: number, first: string, owner: string) =>
         n === 1 ? `You're now owner for ${first}, ${owner}` : `You're now owner for ${n} events, ${owner}`,
+      // `link`: the events page, showing the event, or for several, the owner's events.
       body: ({
         events,
         owner,
         previous,
         by,
+        link,
       }: {
         events: { name: string; when: string; url: string }[];
         owner: string;
         previous: string | null;
         by: string | null;
+        link: string;
       }) =>
-        `${by ? `You're now the owner of this event, ${owner}. ${by === owner ? "You took it on" : `${by} gave it to you`}${previous ? `, from ${previous}` : ""}.` : `You're now the owner of ${events.length === 1 ? "this event" : "these events"}, ${owner}, by the rules for who owns which events.`}\n\n${events
+        `${by ? `You're now the owner of this event, ${owner}. ${by === owner ? "You took it on" : `${by} gave it to you`}${previous ? `, from ${previous}` : ""}.` : `You're now the owner of ${events.length === 1 ? "this event" : "these events"}, ${owner}, by the rules for who owns which events.`}\n\n${events.length === 1 ? "⁂ This event in the staff interface:" : "⁂ Your events in the staff interface:"}\n${link}\n\n${events
           .map((event) => `${event.name}\n${event.when}\n${event.url}`)
           .join(
             "\n\n",
@@ -1351,7 +1360,7 @@ export const staffCopy = {
     columns: { name: "Name", problem: "Problem" },
     kinds: { nobody: "Nobody here", several: "Could be:" } as Record<string, string>,
   },
-  // The hourly copy of the Luma calendar's events, guests and contacts
+  // The copy every 5 minutes of the Luma calendar's events, guests and contacts
   // (lib/server/luma-import.ts), on the import page.
   luma: {
     title: "Events and guests from Luma",
@@ -1397,6 +1406,9 @@ export const staffCopy = {
     showChanges: "Show changes",
     // In place of paragraphs left as they were; a click unfolds them.
     folded: (n: number) => (n === 1 ? "1 paragraph unchanged" : `${n} paragraphs unchanged`),
+    // An automatic reply folded to its first paragraph: in place of the rest, which a click unfolds; then back.
+    more: (n: number) => (n === 1 ? "⁂ 1 more paragraph" : `⁂ ${n} more paragraphs`),
+    showLess: "⁂ Show less",
   },
   // The letters inbox, which supporters' letters to MPs go from (lib/server/letters-inbox-reading.ts).
   lettersInbox: {
@@ -1466,7 +1478,7 @@ export const staffCopy = {
         `${count === 1 ? "A letter" : `${count} letters`} to MPs ${count === 1 ? "has" : "have"} waited over ${hours} hours to go. Why: ${why}.\n\nThe letters waiting: ${link}`,
     },
   },
-  // The hourly read of the connected Gmail accounts for replies to our
+  // The read every 5 minutes of the connected Gmail accounts for replies to our
   // letters and bounces (lib/server/gmail-reading.ts), on the import page.
   gmailReading: {
     title: "Replies and bounces from Gmail",
@@ -1489,7 +1501,7 @@ export const staffCopy = {
     disconnected:
       "Google refused our access, so this account has been disconnected. Its owner can connect it again from their account page.",
   },
-  // The hourly copy of PauseAI's UK members (lib/server/members-import.ts),
+  // The daily copy of PauseAI's UK members (lib/server/members-import.ts),
   // on the import page.
   // PauseAI's emails to politicians, from Airtable's Emails table.
   pauseaiEmails: {
@@ -1638,7 +1650,7 @@ export const staffCopy = {
     luma: "Luma",
     gmail: "Gmail",
     nightly: "Nightly",
-    hourly: "Hourly",
+    frequent: "⁂ Every 5 minutes",
     oneOff: "One-off",
     checkOnly: "Check only",
   },
@@ -1662,8 +1674,6 @@ export const staffCopy = {
       mailing: "Mailing",
       personalised: "Personalised",
       historyTitle: "History",
-      // Under the ask a supporter's letter makes, before its campaign's name.
-      basedOn: "Based on the campaign",
       noHistory: "Nothing recorded yet.",
       // What a change of status recorded, each field's name before its value: Postmark's, a bounce's, a reply's.
       fields: {
@@ -1753,11 +1763,15 @@ export const staffCopy = {
       consent: "Consent",
       to: "To",
       campaign: "Campaign",
+      // The share of the sent letter's words that weren't in the campaign's draft.
+      ownWords: "⁂ Own words",
       backend: "Backend",
       status: "Status",
       replied: "Replied",
       history: "History",
     },
+    // A letter's own words, as a percentage of its words.
+    ownWords: (share: number) => `${Math.round(share * 100)}%`,
     consent: { yes: "Yes", no: "No" },
     // What sent a letter: pauseai.info's old form, whose letters are copied from Airtable, or this site, by Postmark
     // or by a staff member's Gmail.
