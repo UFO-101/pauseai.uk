@@ -901,7 +901,10 @@ describe("PasteForm", () => {
     bubble.showPopover();
     await expect.element(box).toHaveFocus();
     // Closed and opened again, it's still typed into first.
+    // Closed first, as a close and an open at once are one toggle.
     bubble.hidePopover();
+    await expect.poll(() => bubble.matches(":popover-open")).toBe(false);
+    await new Promise((done) => setTimeout(done, 50));
     bubble.showPopover();
     await expect.element(box).toHaveFocus();
     await userEvent.keyboard("Jane Smith{Enter}Tom Fakename");
