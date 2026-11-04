@@ -9,8 +9,7 @@ const copy = staffCopy.letters;
 /**
  * The letters list's filters, in the table's columns' order: whether it was
  * delivered, the MP's markers, `campaigns` (every one, by title), what sent
- * it, the sender's consent and what came back to it. All but the status,
- * consent and reply repeat.
+ * it and what came back to it. All but the status and reply repeat.
  */
 export function letterFilters(campaigns: Pick<CampaignRow, "slug" | "title">[]): Filter[] {
   return [
@@ -36,14 +35,6 @@ export function letterFilters(campaigns: Pick<CampaignRow, "slug" | "title">[]):
       label: copy.columns.backend,
       repeat: true,
       options: LETTER_BACKENDS.map((backend) => ({ value: backend, label: copy.backends[backend] })),
-    },
-    {
-      name: "consent",
-      label: copy.columns.consent,
-      options: [
-        { value: "yes", label: copy.consent.yes },
-        { value: "no", label: copy.consent.no },
-      ],
     },
     {
       name: "answered",

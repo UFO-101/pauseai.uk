@@ -76,9 +76,9 @@ describeWithDatabase("recentLetters", () => {
     );
 
     const letters = await recentLetters();
-    expect(letters.map((l) => [l.id, l.status, l.mpName, l.politicianId, l.isTest, l.contactConsent])).toEqual([
-      [2, "sending", "Testy McTestface MP", mp, true, false],
-      [1, "sent", "Testy McTestface MP", mp, true, false],
+    expect(letters.map((l) => [l.id, l.status, l.mpName, l.politicianId, l.isTest])).toEqual([
+      [2, "sending", "Testy McTestface MP", mp, true],
+      [1, "sent", "Testy McTestface MP", mp, true],
     ]);
     expect((await recentLetters({ politicianId: mp })).map((l) => l.id)).toEqual([2, 1]);
     expect(await recentLetters({ politicianId: mp + 1 })).toEqual([]);
@@ -151,11 +151,6 @@ describeWithDatabase("recentLetters", () => {
     expect(await ids({ flags: ["important", "connection"] })).toEqual([]);
     expect(await ids({ not: { flags: ["test"] } })).toEqual([]);
     expect(await ids({ not: { flags: ["important"] } })).toEqual([2, 1]);
-    await query(
-      "UPDATE form_entries SET contact_consent = true WHERE id = (SELECT entry_id FROM letters_from_supporters WHERE id = 1)",
-    );
-    expect(await ids({ consent: true })).toEqual([1]);
-    expect(await ids({ consent: false })).toEqual([2]);
     expect(await ids({ supporterId: 1 })).toEqual([1]);
     expect(await ids({ supporterId: 2 })).toEqual([]);
     expect(await ids({ letterId: 1 })).toEqual([1]);

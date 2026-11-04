@@ -1759,7 +1759,6 @@ export const staffCopy = {
       created: "Written",
       sent: "Sent",
       from: "From",
-      consent: "Consent",
       to: "To",
       campaign: "Campaign",
       // The share of the sent letter's words that weren't in the campaign's draft.
@@ -1771,7 +1770,6 @@ export const staffCopy = {
     },
     // A letter's own words, as a percentage of its words.
     ownWords: (share: number) => `${Math.round(share * 100)}%`,
-    consent: { yes: "Yes", no: "No" },
     // What sent a letter: pauseai.info's old form, whose letters are copied from Airtable, or this site, by Postmark
     // or by a staff member's Gmail.
     backends: { airtable: "Airtable", postmark: "Postmark", gmail: "Gmail" },

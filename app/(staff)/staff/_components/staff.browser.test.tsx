@@ -2981,7 +2981,6 @@ describe("LettersTable", () => {
             status: "odd",
             isTest: false,
             backend: "airtable",
-            contactConsent: false,
             ownWords: 0.624,
             sentAt: null,
             repliedAt: "2026-10-13T09:00:00Z",
@@ -3010,8 +3009,6 @@ describe("LettersTable", () => {
     await expect.element(page.getByRole("cell", { name: "18%", exact: true })).toBeInTheDocument();
     await expect.element(page.getByRole("cell", { name: "62%", exact: true })).toBeInTheDocument();
     await expect.element(page.getByRole("link", { name: "odd" })).toHaveAttribute("href", "/staff/letters/2");
-    // Whether the sender agreed to hear from us is a filter, not a column.
-    expect(page.getByRole("columnheader", { name: staffCopy.letters.columns.consent }).all()).toHaveLength(0);
     // Its history is on its page, which its status leads to; when it was sent, or a dash.
     expect(document.body.textContent).not.toContain("strange");
     await expect
@@ -4676,8 +4673,8 @@ describe("LetterFilters", () => {
     ]);
     const add = await menu(staffCopy.filters.add);
     expect(add).toContainEqual([
-      copy.consent.yes,
-      "/staff/letters?status=sent&q=jane&campaign=support-sobel-bill&campaign=%21pauseai-info-frontier-ai&flag=test&backend=%21airtable&consent=yes",
+      staffCopy.politicians.flags.important,
+      "/staff/letters?status=sent&q=jane&campaign=support-sobel-bill&campaign=%21pauseai-info-frontier-ai&flag=test&flag=important&backend=%21airtable",
     ]);
   });
 });

@@ -332,7 +332,6 @@ export const staffLetters: Group = {
                     status: "sent",
                     senderName: "Example Sender",
                     senderEmail: "sender@example.org",
-                    contactConsent: false,
                     mpName: "Polly Placeholder",
                     isTest: false,
                     repliedAt: "2026-10-13T09:00:00Z",
@@ -521,7 +520,6 @@ export const staffLetters: Group = {
                   flag: ["!test"],
                   campaign: ["regulate-letter-pm", "pauseai-info-frontier-ai"],
                   backend: ["!airtable"],
-                  consent: "yes",
                 }}
                 campaigns={exampleLetterCampaigns}
               />

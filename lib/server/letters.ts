@@ -55,8 +55,6 @@ export type LetterSummary = {
   status: string;
   senderName: string;
   senderEmail: string;
-  /** Whether they agreed to hear about events and ways to help. */
-  contactConsent: boolean;
   mpName: string;
   politicianId: number;
   isTest: boolean;
@@ -122,7 +120,6 @@ async function letterRows({
   campaign,
   flags,
   backend,
-  consent,
   supporterId,
   letterId,
   politicianId,
@@ -141,7 +138,7 @@ async function letterRows({
     .join(" ");
   return query<LetterSummary & { total: number }>(
     `SELECT l.id::int AS id, s.campaign, c.title AS "campaignTitle", c.url AS "campaignUrl", l.status, f.name AS "senderName", f.email AS "senderEmail",
-       f.contact_consent AS "contactConsent", n.name AS "mpName", n.id::int AS "politicianId", p.is_test AS "isTest", s.own_words AS "ownWords", ${BACKEND} AS backend, l.created_at AS "createdAt", l.sent_at AS "sentAt", l.replied_at AS "repliedAt",
+       n.name AS "mpName", n.id::int AS "politicianId", p.is_test AS "isTest", s.own_words AS "ownWords", ${BACKEND} AS backend, l.created_at AS "createdAt", l.sent_at AS "sentAt", l.replied_at AS "repliedAt",
        ${AUTO_REPLIED_AT} AS "autoRepliedAt",
        (SELECT k.supporter_id::int FROM supporter_links k WHERE k.form_entry_id = s.entry_id) AS "supporterId",
        coalesce((SELECT json_agg(json_build_object('at', e.at, 'status', e.status, 'details', e.details) ORDER BY e.at DESC, e.id DESC)
@@ -157,12 +154,11 @@ async function letterRows({
        AND ($6::bigint IS NULL OR EXISTS (SELECT 1 FROM supporter_links k WHERE k.form_entry_id = s.entry_id AND k.supporter_id = $6))
        AND ($7::bigint IS NULL OR l.id = $7)
        AND ($8::text[] IS NULL OR s.campaign = ANY($8))
-       AND ($9::boolean IS NULL OR f.contact_consent = $9)
-       AND ($11::text[] IS NULL OR s.campaign <> ALL($11))
-       AND ($12::text[] IS NULL OR ${BACKEND} = ANY($12))
-       AND ($13::text[] IS NULL OR (${BACKEND} = ANY($13)) IS NOT TRUE) ${flagConditions}
+       AND ($10::text[] IS NULL OR s.campaign <> ALL($10))
+       AND ($11::text[] IS NULL OR ${BACKEND} = ANY($11))
+       AND ($12::text[] IS NULL OR (${BACKEND} = ANY($12)) IS NOT TRUE) ${flagConditions}
      ORDER BY ${LETTER_COLUMNS[sort.key]} ${sort.dir === "asc" ? "ASC" : "DESC"} NULLS LAST, l.created_at DESC, l.id DESC
-     LIMIT $2 OFFSET $10`,
+     LIMIT $2 OFFSET $9`,
     [
       status ?? null,
       limit,
@@ -172,7 +168,6 @@ async function letterRows({
       supporterId ?? null,
       letterId ?? null,
       campaign ?? null,
-      consent ?? null,
       offset,
       not?.campaign ?? null,
       backend ?? null,
