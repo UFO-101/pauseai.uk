@@ -103,9 +103,7 @@ export const staffCopy = {
     noReplies: "No replies yet.",
     unreadable: "This message couldn't be read.",
     // Over each message, as an email shows them.
-    headers: { from: "From", to: "To", cc: "Cc", date: "Date", subject: "Subject", campaign: "⁂ Campaign" },
-    // After a supporter's letter's campaign: the share of its words that weren't in the campaign's draft.
-    ownWords: (share: number) => `⁂ ${Math.round(share * 100)}% own words`,
+    headers: { from: "From", to: "To", cc: "Cc", date: "Date", subject: "Subject", campaign: "Campaign" },
   },
   // Your own page: your sessions and your Gmail.
   me: {

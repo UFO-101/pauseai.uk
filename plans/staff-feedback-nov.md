@@ -15,7 +15,7 @@ One branch for a batch of small changes from using the site. The designs were ag
 ## Letters
 
 - **Own words on the letters list:** a sortable column of `own_words` as a percentage, a dash for letters with no draft; in the download too.
-- **The campaign on a letter's page:** a Campaign row in the letter's headers, with its own words ("18% own words"). The folds keep "9 paragraphs unchanged". The Ask card loses "Based on the campaign".
+- **The campaign on a letter's page:** a Campaign row in the letter's headers; its own words are on the list only. The folds keep "9 paragraphs unchanged". The Ask card loses "Based on the campaign".
 - **Folded automatic replies:** an automatic reply of more than one paragraph shows its first, then a fold ("3 more paragraphs"), and "Show as sent" / "Show less" where the letter has "Show as sent". The fold opens it too. Written replies aren't folded.
 - **The line above the sender's copy:** italic, grey, with a rule under it in the HTML; in the text part, a line of its own under it.
 - Dropped: the From line on the "Check your letter" preview.

@@ -216,8 +216,8 @@ describe("SupporterLetterThread", () => {
       [copy.headers.to, "Testy McTestface MP <testy.mctestface.mp@parliament.uk>"],
       [copy.headers.date, "12 Oct 2026, 09:05"],
       [copy.headers.subject, letter.subject],
-      // Its campaign, leading to its page, and how much of it is her own words.
-      [copy.headers.campaign, `${letter.campaignTitle} · ${copy.ownWords(0.18)}`],
+      // Its campaign, leading to its page.
+      [copy.headers.campaign, letter.campaignTitle],
     ]);
     await expect
       .element(page.getByRole("link", { name: letter.campaignTitle }))
