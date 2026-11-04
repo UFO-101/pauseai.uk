@@ -64,7 +64,11 @@ export function lettersMailbox(scope = "default"): Mailbox {
  */
 function receive(mailbox: Mailbox, raw: string, spam: boolean, sent?: { id: string; toSelf: boolean }): InboxMessage {
   const historyId = nextHistoryId();
-  const id = sent?.id ?? createHash("sha256").update(`${historyId}\n${raw}`).digest("hex").slice(0, 16);
+  // The same every run: from where it is in its own mailbox, and what it says but the UUIDs each run makes
+  // afresh, not the history ID, which counts every mailbox's messages, in whatever order the flows run.
+  const steady = raw.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, "uuid");
+  const id =
+    sent?.id ?? createHash("sha256").update(`${mailbox.messages.length}\n${steady}`).digest("hex").slice(0, 16);
   const labels = sent ? ["SENT", ...(sent.toSelf ? ["INBOX", "UNREAD"] : [])] : [spam ? "SPAM" : "INBOX", "UNREAD"];
   const message = { id, raw, labels: new Set(labels), historyId };
   mailbox.messages.push(message);
