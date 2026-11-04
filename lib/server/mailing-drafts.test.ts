@@ -9,6 +9,8 @@ import { query } from "./db";
 import type { MailingChannel } from "./mailing-channels";
 import {
   addAttachment,
+  changePicks,
+  choosingFor,
   createDraft,
   deleteDraft,
   deleteForgottenDrafts,
@@ -110,6 +112,56 @@ describeWithDatabase("mailing drafts", () => {
     });
     expect(await saveDraft(999, 1, { subject: "x" })).toEqual({ saved: false, reason: "gone" });
     expect(await query("SELECT actor, action FROM audit_log")).toEqual([{ actor: STAFF, action: "create mailing" }]);
+  });
+
+  it("ticks and unticks politicians for a draft, keeping the group last ticked from a filter, but not once it's scheduled", async () => {
+    const polly = await addTestPolitician();
+    const lord = await addTestPolitician({ name: "Lord Sample", airtableId: "rec2", house: "lords" });
+    // A draft from before ticks starts from everyone its filter finds.
+    const { id } = await createDraft(STAFF, { list: "politicians", params: { house: "commons" } }, {});
+    const picked = async () => (await getWrittenMailing(id))!.filter;
+    expect(await changePicks(id, { tick: [lord] })).toBe(true);
+    expect(await picked()).toEqual({ list: "politicians", params: {}, picked: { ids: [polly, lord] } });
+    expect((await getWrittenMailing(id))!.version).toBe(2);
+    // Everyone the Lords tab finds, then one taken off: the group stays.
+    await changePicks(id, { found: { house: "lords", sort: "name" } });
+    await changePicks(id, { untick: [polly] });
+    expect(await picked()).toEqual({
+      list: "politicians",
+      params: {},
+      picked: { ids: [lord], from: { params: { house: "lords" }, at: "2026-11-01T09:00:00.000Z", found: [lord] } },
+    });
+    await query(
+      "UPDATE mailings SET state = 'cancelled', due_at = now(), sent_from = 'jo@pauseai.uk', from_name = '' WHERE id = $1",
+      [id],
+    );
+    expect(await changePicks(id, { tick: [polly] })).toBe(false);
+    expect(await changePicks(999999, { tick: [polly] })).toBe(false);
+  });
+
+  it("says which draft the politicians list is choosing for, whether it's just made, and who's ticked", async () => {
+    const polly = await addTestPolitician();
+    const { id } = await createDraft(STAFF, { list: "politicians", params: {}, picked: { ids: [polly] } }, {});
+    expect(await choosingFor(String(id))).toEqual({
+      id,
+      title: staffCopy.mailingPages.untitled,
+      blank: true,
+      ticked: [polly],
+    });
+    await saveDraft(id, 1, { subject: "Hello" });
+    expect(await choosingFor(String(id))).toMatchObject({ title: "Hello", blank: false });
+    const { id: written } = await createDraft(STAFF, POLITICIANS, { body: LETTER });
+    expect(await choosingFor(String(written))).toMatchObject({ blank: false, ticked: [polly] });
+    const { id: filed } = await createDraft(STAFF, POLITICIANS, {});
+    await addAttachment(filed, 1, { filename: "a.pdf", contentType: "application/pdf", content: Buffer.from("x") });
+    expect(await choosingFor(String(filed))).toMatchObject({ blank: false });
+    await query(
+      "UPDATE mailings SET state = 'cancelled', due_at = now(), sent_from = 'jo@pauseai.uk', from_name = '' WHERE id = $1",
+      [id],
+    );
+    expect(await choosingFor(String(id))).toBeUndefined();
+    expect(await choosingFor("new")).toBeUndefined();
+    expect(await choosingFor("")).toBeUndefined();
   });
 
   it("finds no written mailing for an imported one, or none", async () => {

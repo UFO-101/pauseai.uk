@@ -93,17 +93,21 @@ export function politicianWords(search: PoliticiansSearch, parties: string[], as
 
 /**
  * Search and filter the politicians list: the search, then its filters. The
- * house is the tabs over the list, which Clear filters keeps.
+ * house is the tabs over the list, which Clear filters keeps. `hidden` on a
+ * view the filters don't choose, such as the tab of those ticked.
  */
 export default function PoliticianFilters({
   search,
   parties,
   asks,
+  hidden = false,
 }: {
   search: PoliticiansSearch;
   parties: string[];
   asks: Ask[];
+  hidden?: boolean;
 }) {
+  if (hidden) return null;
   return (
     <FilterBar
       path="/staff/politicians"

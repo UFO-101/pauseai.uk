@@ -59,3 +59,66 @@
 .count {
   font-weight: 600;
 }
+
+/* The bar's ghost buttons, light on its dark: light words and a faint
+   light edge, brighter on hover. Doubled to outweigh the kit's ghost look. */
+.bar .onDark.onDark {
+  border-color: color-mix(in srgb, var(--on-dark) 45%, transparent);
+  background: transparent;
+  color: var(--on-dark);
+}
+
+.bar .onDark.onDark:hover {
+  border-color: var(--on-dark);
+  background: color-mix(in srgb, var(--on-dark) 8%, transparent);
+  color: var(--on-dark);
+}
+
+/* The bar's left: how many, then its buttons, wrapping on a phone. */
+.barStart {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+}
+
+/* Cancel on a new mailing's strip: a form's button that reads as the
+   dark strip's links do, light and underlined. */
+.cancel {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--on-dark);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* The tick boxes' column: as narrow as a box. */
+.tick {
+  width: 1px;
+}
+
+/* Paste names, in the bar: a bubble wide enough for a row copied. */
+.pasteBubble {
+  --bubble-width: 28rem;
+}
+
+/* The paste tab: its table, or the line saying no one was found, then
+   the count of lines left out. Plain blocks, not a grid, so the first
+   one's margin meets the tabs' as the list's does, at the same height as
+   on the other tabs. */
+.pasted > * + * {
+  margin-top: var(--space-3);
+}
+
+.paste {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  max-width: var(--staff-measure);
+}
+
+.paste textarea {
+  width: 100%;
+}

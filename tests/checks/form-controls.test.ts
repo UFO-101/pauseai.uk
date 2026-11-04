@@ -13,6 +13,8 @@ const ROOT = join(__dirname, "..", "..");
 // The controls that aren't the kit's, and why.
 const OWN_CONTROLS: Record<string, string> = {
   "components/ui/Controls.tsx": "the kit's controls themselves",
+  "app/(staff)/staff/_components/PickBox.tsx":
+    "a tick box with no words beside it, saved as it's clicked, or part ticked",
   "app/(tools)/tools/collateral/_components/Slider.tsx": "a range slider, the one control the kit hasn't",
   "components/tools/kit/Choices.tsx": "a choice card, with its checkbox in its corner",
   "app/(site)/campaigns/_components/LetterForm.tsx": "the honeypot field, hidden from people for bots to fill",

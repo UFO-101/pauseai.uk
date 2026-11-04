@@ -29,6 +29,19 @@
   background: var(--status-red-bg);
 }
 
+/* A mode the page is in: dark, as the bar at the foot of the window is
+   while choosing, with its shadow, and light words and links. */
+.dark {
+  background: var(--charcoal);
+  color: var(--on-dark);
+  box-shadow: 0 var(--space-2) var(--space-6) var(--shadow-strong);
+}
+
+.dark a,
+.dark a:hover {
+  color: var(--on-dark);
+}
+
 /* Its words: the first line bold in the tone's colour, the rest as they are. */
 .body {
   display: grid;

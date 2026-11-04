@@ -27,7 +27,7 @@ import { looksLikeEmail } from "@/lib/email-your-mp";
 import { named } from "@/lib/named-address";
 import { leavePage } from "@/lib/leave-page";
 import { scheduleProblems } from "@/lib/mailing-schedule";
-import { filtersPath, NEW_MAILING } from "@/lib/staff-search";
+import { filtersPath } from "@/lib/staff-search";
 import { earliestHour, fromLondon, londonDayHour, londonWhen } from "@/lib/staff-time";
 import type { ChannelResult } from "@/lib/server/mailing-channels";
 import type { MailingAttachmentSummary, SaveResult, ScheduleResult, WrittenMailing } from "@/lib/server/mailing-drafts";
@@ -52,7 +52,7 @@ const SAVE_DELAY = 800;
 /** The fields a new letter's greeting can use, the first every recipient has. */
 const GREETING_FIELDS = ["salutation", "name"];
 
-/** What a mailing's page can change, before and after it's saved. */
+/** What a mailing's page can change. */
 type Changes = {
   subject: string;
   body: MailingDoc;
@@ -67,10 +67,6 @@ type AttachResult = (SaveResult | { saved: false; reason: "too-big" }) & { attac
 
 /** The mailing pages' Server Actions (app/(staff)/staff/mailing-actions.ts), which the page hands in. */
 export type MailingWriterActions = {
-  start: (
-    params: WriterData["filter"]["params"],
-    changes: unknown,
-  ) => Promise<{ id: number; version: number } | undefined>;
   save: (id: number, version: number, changes: unknown) => Promise<SaveResult | undefined>;
   attach: (form: FormData) => Promise<AttachResult | undefined>;
   detach: (id: number, version: number, attachmentId: number) => Promise<AttachResult>;
@@ -79,7 +75,7 @@ export type MailingWriterActions = {
   deleteDraft: (form: FormData) => void | Promise<void>;
 };
 
-type SaveState = "new" | "saving" | "saved" | "conflict" | "failed";
+type SaveState = "saving" | "saved" | "conflict" | "failed";
 
 /** A section's title: its number, then its name. */
 function Numbered({ n, children }: { n: number; children: ReactNode }) {
@@ -93,12 +89,8 @@ function Numbered({ n, children }: { n: number; children: ReactNode }) {
   );
 }
 
-/**
- * Whether the draft is saved: nothing before anything's written; saving,
- * grey; saved, green; not saved, red.
- */
+/** Whether the draft is saved: saving, grey; saved, green; not saved, red. */
 function SaveState({ state }: { state: SaveState }) {
-  if (state === "new") return null;
   return (
     <span className={styles.saveState} data-state={state}>
       <span className={styles.saveDot} aria-hidden="true" />
@@ -117,16 +109,15 @@ function Help({ id, label, children }: { id: string; label: string; children: Re
 }
 
 /**
- * A new mailing, or a draft, on one page, in six numbered sections: who
- * it's to, the filter's pills with Change who, and who's left out; writing
- * it, its subject, ask, letter and files; a preview of each recipient's
- * email, a case at a time; whose Gmail it's from; when it goes, never in
- * the past; and what will go, with the button to schedule it, greyed with
- * the reasons while anything stops it. A new mailing starts with a greeting,
- * and is saved as a draft at its first change worth keeping (a subject, a
- * change to the letter, or a file); the address bar then names it. A draft
- * saves itself a moment after each change. Someone else saving it meanwhile
- * stops the saving and says so.
+ * A draft mailing, on one page, in six numbered sections: who it's to, as
+ * pills, with Change who, and who's left out; writing it, its subject, ask,
+ * letter and files; a preview of each recipient's email, a case at a time;
+ * whose Gmail it's from; when it goes, never in the past; and what will go,
+ * with the button to schedule it, greyed with the reasons while anything
+ * stops it. A draft with nothing written yet starts with a greeting, from
+ * the policy team's Gmail, both saved with its first change. A draft saves
+ * itself a moment after each change. Someone else saving it meanwhile stops
+ * the saving and says so.
  */
 export default function MailingWriter({
   data,
@@ -135,7 +126,7 @@ export default function MailingWriter({
   actions,
 }: {
   data: WriterData;
-  draft: WrittenMailing | null;
+  draft: WrittenMailing;
   /** Who it's to, as pills (FilterPills). */
   who: ReactNode;
   actions: MailingWriterActions;
@@ -144,34 +135,42 @@ export default function MailingWriter({
   const letterLabel = useId();
   const askHelp = `ask-help-${useId().replace(/\W/g, "")}`;
   const askId = useId();
-  const id = useRef(draft?.id ?? null);
-  const version = useRef(draft?.version ?? 0);
-  const [savedId, setSavedId] = useState(draft?.id ?? null);
+  const { id } = draft;
+  const version = useRef(draft.version);
   const [start] = useState(() =>
     greetingLetter(
       copy.greeting,
       GREETING_FIELDS.find((field) => data.fields.some((f) => f.id === field && !f.lacking)),
     ),
   );
+  // A draft with nothing written yet, as one is when it's made: its greeting and its Gmail are to be saved.
+  const [fresh] = useState<Partial<Changes>>(() =>
+    !draft.subject && isBlankMailing(draft.body)
+      ? {
+          body: start,
+          // The policy team's Gmail, if it's connected, or else the first that is.
+          sentFrom:
+            draft.sentFrom ??
+            (data.senders.find((one) => one.email === DEFAULT_SENDER) ?? data.senders[0])?.email ??
+            null,
+        }
+      : {},
+  );
   const [values, setValues] = useState<Changes>(() => ({
-    subject: draft?.subject ?? "",
-    body: draft?.body ?? start,
-    ask: draft?.ask ?? null,
-    // A new mailing's from the policy team's Gmail, if it's connected, or else the first that is.
-    sentFrom: draft
-      ? draft.sentFrom
-      : ((data.senders.find((one) => one.email === DEFAULT_SENDER) ?? data.senders[0])?.email ?? null),
-    fromName: draft?.fromName || null,
-    dueAt: draft?.dueAt ?? null,
+    subject: draft.subject,
+    body: draft.body,
+    ask: draft.ask,
+    sentFrom: draft.sentFrom,
+    fromName: draft.fromName || null,
+    dueAt: draft.dueAt,
+    ...fresh,
   }));
   const latest = useRef(values);
-  // This new mailing's own address, before it's a draft.
-  const newPath = filtersPath("/staff/mailings/new", data.filter.params);
-  const [attachments, setAttachments] = useState(draft?.attachments ?? []);
-  const [saveState, setSaveState] = useState<SaveState>(draft ? "saved" : "new");
+  const [attachments, setAttachments] = useState(draft.attachments);
+  const [saveState, setSaveState] = useState<SaveState>("saved");
   const [fileProblem, setFileProblem] = useState("");
   const [dayPicked, setDayPicked] = useState("");
-  const pending = useRef<Partial<Changes>>({});
+  const pending = useRef<Partial<Changes>>(fresh);
   const saving = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -192,18 +191,16 @@ export default function MailingWriter({
 
   /** Whether a letter has nothing written in it yet: blank, or only the greeting it started with. */
   const unwritten = (letter: MailingDoc) => isBlankMailing(letter) || JSON.stringify(letter) === JSON.stringify(start);
-  const worthKeeping = (v: Changes) => Boolean(v.subject.trim()) || !unwritten(v.body);
 
-  /** Saves what's changed: makes the draft at the first change worth keeping, then saves to it. */
+  /** Saves what's changed. */
   async function flush(): Promise<void> {
     if (saving.current) return later();
     const changes = pending.current;
-    if (id.current === null && !worthKeeping(latest.current)) return;
     pending.current = {};
     saving.current = true;
     setSaveState("saving");
     try {
-      await (id.current === null ? create(latest.current) : save(changes));
+      await save(changes);
     } catch {
       pending.current = { ...changes, ...pending.current };
       setSaveState("failed");
@@ -212,17 +209,8 @@ export default function MailingWriter({
     }
   }
 
-  async function create(changes: Changes): Promise<void> {
-    const made = (await actions.start(data.filter.params, changes))!;
-    id.current = made.id;
-    version.current = made.version;
-    setSavedId(made.id);
-    window.history.replaceState(null, "", `/staff/mailings/${made.id}`);
-    setSaveState("saved");
-  }
-
   async function save(changes: Partial<Changes>): Promise<void> {
-    const result = (await actions.save(id.current!, version.current, changes))!;
+    const result = (await actions.save(id, version.current, changes))!;
     if (result.saved) {
       version.current = result.version;
       setSaveState("saved");
@@ -244,30 +232,19 @@ export default function MailingWriter({
     later();
   }
 
-  /**
-   * Saves now what's waiting to be saved, before leaving the page or
-   * scheduling, and says where to come back to: the draft, or this new
-   * mailing if nothing's worth keeping yet.
-   */
-  async function saveNow(): Promise<string> {
+  // The draft's own page, which Connect Gmail and the Asks page come back to.
+  const writerPath = `/staff/mailings/${id}`;
+
+  /** Saves now what's waiting to be saved, before leaving the page, scheduling or sending a test. */
+  async function saveNow(): Promise<void> {
     clearTimeout(timer.current);
-    if (id.current === null || Object.keys(pending.current).length) await flush();
-    return id.current === null ? newPath : `/staff/mailings/${id.current}`;
+    if (Object.keys(pending.current).length) await flush();
   }
 
-  /** The politicians list, choosing who this mailing goes to: the draft `saved`, or a new mailing if it's not saved. */
-  const whoPath = (saved: number | null) =>
-    filtersPath("/staff/politicians", { ...data.filter.params, mailing: saved ? String(saved) : NEW_MAILING });
-
-  /** The draft's ID, making it now if it isn't saved yet, as attaching a file is worth keeping. */
-  async function draftId(): Promise<number> {
-    clearTimeout(timer.current);
-    if (id.current === null) {
-      pending.current = {};
-      await create(latest.current);
-    }
-    return id.current!;
-  }
+  // The politicians list, choosing who it goes to: those ticked, or, for a draft from before ticks, its filter.
+  const whoPath = data.filter.picked
+    ? filtersPath("/staff/politicians", { mailing: String(id), tab: "ticked" })
+    : filtersPath("/staff/politicians", { ...data.filter.params, mailing: String(id) });
 
   /**
    * Attaches each file in turn, stopping at the first that isn't. One too
@@ -279,7 +256,8 @@ export default function MailingWriter({
     for (const file of files) {
       if (file.size > MAX_ATTACHMENT_BYTES) return setFileProblem(copy.tooBig);
       const form = new FormData();
-      form.set("id", String(await draftId()));
+      clearTimeout(timer.current);
+      form.set("id", String(id));
       form.set("version", String(version.current));
       form.set("file", file);
       const result = await actions.attach(form).catch(() => null);
@@ -339,8 +317,6 @@ export default function MailingWriter({
       .map((one) => ({ ...one, connected: true })),
     ...(values.sentFrom && !sender ? [{ email: values.sentFrom, name: "", remaining: 0, connected: false }] : []),
   ];
-  // Where Connect Gmail and the Asks page come back to, as the page shows them: this draft, or this new mailing.
-  const writerPath = savedId ? `/staff/mailings/${savedId}` : newPath;
   const noAddress = data.leftOut.filter((one) => one.reason === "no-address").length;
 
   return (
@@ -372,18 +348,17 @@ export default function MailingWriter({
               variant="primary"
               size="small"
               fit
-              href={whoPath(savedId)}
+              href={whoPath}
               pending={choosing}
               onClick={async (event) => {
-                // What's typed is saved first, so going to the list loses none of it; a new
-                // mailing worth keeping becomes a draft, which the list then chooses for.
+                // What's typed is saved first, so going to the list loses none of it.
                 event.preventDefault();
                 choose();
                 await saveNow();
-                leavePage(whoPath(id.current));
+                leavePage(whoPath);
               }}
             >
-              {copy.changeWho}
+              {data.filter.picked?.ids.length === 0 ? copy.chooseWho : copy.changeWho}
             </ButtonAnchor>
           </div>
           {data.unknown.length > 0 && <Strip tone="amber">{copy.unknownFilter(data.unknown.join(", "))}</Strip>}
@@ -391,7 +366,12 @@ export default function MailingWriter({
           {data.leftOut.length > 0 && (
             <details className={styles.leftOut}>
               <summary>
-                {copy.leftOut(data.recipients.length + data.leftOut.length, noAddress, data.leftOut.length - noAddress)}
+                {copy.leftOut(
+                  data.recipients.length + data.leftOut.length,
+                  noAddress,
+                  data.leftOut.length - noAddress,
+                  Boolean(data.filter.picked),
+                )}
               </summary>
               <ul>
                 {data.leftOut.map((one) => (
@@ -437,7 +417,8 @@ export default function MailingWriter({
                 onClick={async (event) => {
                   event.preventDefault();
                   goToAsk();
-                  leavePage(`/staff/asks/new?${new URLSearchParams({ back: await saveNow() })}`);
+                  await saveNow();
+                  leavePage(`/staff/asks/new?${new URLSearchParams({ back: writerPath })}`);
                 }}
               >
                 {copy.newAsk.link}
@@ -462,9 +443,9 @@ export default function MailingWriter({
             <p className={styles.label}>{copy.attachments}</p>
             <MailingFiles
               files={attachments}
-              base={`/staff/mailings/${savedId}/files`}
+              base={`/staff/mailings/${id}/files`}
               onAdd={attach}
-              onRemove={async (file) => void attached(await actions.detach(id.current!, version.current, file))}
+              onRemove={async (file) => void attached(await actions.detach(id, version.current, file))}
               problem={fileProblem}
             />
           </div>
@@ -478,7 +459,11 @@ export default function MailingWriter({
             sentFrom={values.sentFrom}
             fromName={values.fromName}
             written={written}
-            sendTest={async (recipient, to) => actions.sendTest(await draftId(), recipient, to)}
+            sendTest={async (recipient, to) => {
+              // The test is of the draft as saved, so what's typed goes first.
+              await saveNow();
+              return actions.sendTest(id, recipient, to);
+            }}
           />
         </Card>
 
@@ -559,7 +544,7 @@ export default function MailingWriter({
                 setScheduling(true);
                 // What's still to be saved, such as a time just chosen, goes first, or it's scheduled without it.
                 await saveNow();
-                const result = await actions.schedule(savedId!, version.current);
+                const result = await actions.schedule(id, version.current);
                 // The page becomes the scheduled mailing's, which starts at its top, at once, as a new page would;
                 // till then the button stays pending.
                 if (result.scheduled) {
@@ -572,7 +557,7 @@ export default function MailingWriter({
             >
               {copy.schedule(data.recipients.length)}
             </Button>
-            {savedId && <DeleteDraft id={savedId} action={actions.deleteDraft} />}
+            <DeleteDraft id={id} action={actions.deleteDraft} />
           </div>
           {problems.length > 0 && (
             <ul className={styles.problems}>
@@ -595,8 +580,7 @@ export default function MailingWriter({
  * answers pressed; then the choice of every recipient, which sets the
  * buttons to theirs. With no one with the answers pressed, no email, as
  * there's no one to fill it in for. Under it, a test copy, sent to
- * yourself, once the letter has something written, which saves the draft
- * first if it isn't yet.
+ * yourself, once the letter has something written.
  */
 function Preview({
   data,
@@ -614,7 +598,7 @@ function Preview({
   fromName: string | null;
   /** Whether the letter has anything in it but its greeting, so there's something to test. */
   written: boolean;
-  /** Sends the test copy of a recipient's email, saving the draft first if it isn't yet. */
+  /** Sends the test copy of a recipient's email. */
   sendTest: (recipient: number, to: string) => ReturnType<MailingWriterActions["sendTest"]>;
 }) {
   // Where the test copy goes: you, unless you give another address.

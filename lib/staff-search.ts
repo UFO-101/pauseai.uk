@@ -114,12 +114,6 @@ export function lettersSearch(
   };
 }
 
-/**
- * The politicians list's `mailing` parameter for a mailing not yet written:
- * the list is choosing who a new one is for. Any other value is a draft's ID.
- */
-export const NEW_MAILING = "new";
-
 /** A mailing's ID from its page's URL: a whole number, or undefined. */
 export function mailingId(id: string): number | undefined {
   return politicianId(id);
@@ -373,8 +367,19 @@ export function staffBack(back: string | null | undefined, fallback: string): st
 export const FILTER_LISTS = ["politicians", "supporters"] as const;
 export type FilterList = (typeof FILTER_LISTS)[number];
 
-/** Who a list shows: the list, and its parameters that choose who. */
-export type StoredFilter = { list: FilterList; params: Params };
+/**
+ * The politicians ticked on the list, by ID: who a mailing goes to, exactly,
+ * however few. And the last time everyone a filter found was ticked, that
+ * filter's parameters, when, and who it found, so the mailing can say who
+ * it's to as that group and those added or taken off.
+ */
+export type Picked = { ids: number[]; from?: { params: Params; at: string; found: number[] } };
+
+/**
+ * Who a list shows: the list, and its parameters that choose who. With
+ * `picked`, those ticked are who it is, and the parameters aren't used.
+ */
+export type StoredFilter = { list: FilterList; params: Params; picked?: Picked };
 
 /** Each list's parameters that choose who it shows. */
 export const WHO_PARAMS: Record<FilterList, readonly string[]> = {

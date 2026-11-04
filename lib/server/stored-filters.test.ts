@@ -32,6 +32,8 @@ describe("storedFilter", () => {
   });
 });
 
+const AT = "2026-11-03T10:00:00.000Z";
+
 describe("checkStoredFilter", () => {
   it("reads back a stored filter", () => {
     const filter = { list: "politicians", params: { house: "commons", party: ["A", "B"] } };
@@ -47,8 +49,48 @@ describe("checkStoredFilter", () => {
     ["a parameter of another list", { list: "politicians", params: { event: "evt-1" } }],
     ["a value that isn't text", { list: "politicians", params: { house: 1 } }],
     ["a list with a number in it", { list: "supporters", params: { event: ["evt-1", 2] } }],
+    ["ticks that aren't an object", { list: "politicians", params: {}, picked: "1" }],
+    ["ticks that are null", { list: "politicians", params: {}, picked: null }],
+    ["ticks that aren't IDs", { list: "politicians", params: {}, picked: { ids: [1, 0] } }],
+    ["ticks with no IDs", { list: "politicians", params: {}, picked: {} }],
+    ["a group that isn't an object", { list: "politicians", params: {}, picked: { ids: [1], from: "x" } }],
+    [
+      "a group of another list's parameters",
+      { list: "politicians", params: {}, picked: { ids: [1], from: { params: { event: "e" }, at: AT, found: [1] } } },
+    ],
+    [
+      "a group found at no time",
+      { list: "politicians", params: {}, picked: { ids: [1], from: { params: {}, at: "soon", found: [1] } } },
+    ],
+    [
+      "a group with no time",
+      { list: "politicians", params: {}, picked: { ids: [1], from: { params: {}, found: [1] } } },
+    ],
+    [
+      "a group that found what aren't IDs",
+      { list: "politicians", params: {}, picked: { ids: [1], from: { params: {}, at: AT, found: ["1"] } } },
+    ],
   ])("refuses %s", (_, value) => {
     expect(checkStoredFilter(value)).toBeUndefined();
+  });
+
+  it("reads back ticks, and the group they were ticked from, keeping only its parameters that choose who", () => {
+    expect(checkStoredFilter({ list: "politicians", params: {}, picked: { ids: [] } })).toEqual({
+      list: "politicians",
+      params: {},
+      picked: { ids: [] },
+    });
+    expect(
+      checkStoredFilter({
+        list: "politicians",
+        params: {},
+        picked: { ids: [1, 2], from: { params: { house: "commons", q: "" }, at: AT, found: [1, 3] } },
+      }),
+    ).toEqual({
+      list: "politicians",
+      params: {},
+      picked: { ids: [1, 2], from: { params: { house: "commons" }, at: AT, found: [1, 3] } },
+    });
   });
 });
 
@@ -74,6 +116,13 @@ describeWithDatabase("filterProblems", () => {
       }),
     ).toEqual([]);
     expect(await filterProblems({ list: "politicians", params: { answer: "going" } })).toEqual([]);
+  });
+
+  it("names each politician ticked who isn't one any more", async () => {
+    const polly = await addTestPolitician();
+    expect(await filterProblems({ list: "politicians", params: {}, picked: { ids: [polly, 999999] } })).toEqual([
+      "person=999999",
+    ]);
   });
 
   it("names each value of a politicians filter the site doesn't know", async () => {

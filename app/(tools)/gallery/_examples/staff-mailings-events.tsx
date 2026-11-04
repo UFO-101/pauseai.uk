@@ -7,7 +7,12 @@ import { EventsSource, EventTabs } from "@/app/(staff)/staff/_components/EventsT
 import { exampleEventsTab, exampleStaff } from "@/app/(staff)/staff/_components/EventsTable.examples";
 import { MailingLetter } from "@/app/(staff)/staff/_components/MailingLetter";
 import { FilterPills } from "@/app/(staff)/staff/_components/MailingParts";
-import { exampleMailingLetter, exampleWriterData } from "@/app/(staff)/staff/_components/MailingWriter.examples";
+import {
+  exampleMailingLetter,
+  examplePickedGroup,
+  examplePickedList,
+  exampleWriterData,
+} from "@/app/(staff)/staff/_components/MailingWriter.examples";
 import StaffPage from "@/app/(staff)/staff/_components/ui/StaffPage";
 import PageTitle from "@/app/(staff)/staff/_components/ui/PageTitle";
 import type { Group } from "../_components/types";
@@ -227,7 +232,7 @@ export const staffMailingsEvents: Group = {
       file: "app/(staff)/staff/_components/MailingWriter.tsx",
       variants: [
         {
-          label: "A new mailing to the Commons who aren't Labour, nothing written yet",
+          label: "A draft just made, four ticked, nothing written yet: a greeting to start",
           render: () => (
             <StaffPage as="div">
               <MailingWriterExample draft={false} />
@@ -335,6 +340,32 @@ export const staffMailingsEvents: Group = {
           render: () => (
             <StaffPage as="div">
               <FilterPills data={{ ...exampleWriterData, filter: { list: "politicians", params: {} } }} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Ticked from a filter's group on a day, with one added and one taken off since",
+          render: () => (
+            <StaffPage as="div">
+              <FilterPills data={examplePickedGroup} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Ticked one by one: their names",
+          render: () => (
+            <StaffPage as="div">
+              <FilterPills data={examplePickedList} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "No one ticked yet",
+          render: () => (
+            <StaffPage as="div">
+              <FilterPills
+                data={{ ...examplePickedList, filter: { list: "politicians", params: {}, picked: { ids: [] } } }}
+              />
             </StaffPage>
           ),
         },

@@ -500,7 +500,7 @@ export const staffKit: Group = {
       file: "app/(staff)/staff/_components/ui/Strip.tsx",
       variants: [
         {
-          label: "Each tone: plain, green, amber and red, with an action at the right",
+          label: "Each tone: plain, green, amber, red and dark, with an action at the right",
           render: () => (
             <StaffPage as="div">
               <div style={{ display: "grid", gap: "8px" }}>
@@ -532,6 +532,10 @@ export const staffKit: Group = {
                 >
                   <span>Bouncy McTestface MP&apos;s email is bouncing</span>
                   <span>Find a working email, or unblock it.</span>
+                </Strip>
+                <Strip tone="dark" action={<a href="#">Cancel</a>}>
+                  <span>New mailing: tick who it&apos;s for</span>
+                  <span>Tick each person it&apos;s for.</span>
                 </Strip>
               </div>
             </StaffPage>

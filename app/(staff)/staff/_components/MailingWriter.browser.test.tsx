@@ -7,7 +7,12 @@ import { DEFAULT_SENDER } from "@/lib/gmail-connect";
 import { MAX_ATTACHMENT_BYTES } from "@/lib/mailing-attachments";
 import { navigation } from "@/tests/browser/navigation";
 import MailingWriter, { type MailingWriterActions } from "./MailingWriter";
-import { exampleWriterData, exampleWrittenMailing } from "./MailingWriter.examples";
+import {
+  exampleFreshMailing,
+  examplePickedList,
+  exampleWriterData,
+  exampleWrittenMailing,
+} from "./MailingWriter.examples";
 
 // Following a link that saves first leaves the page, which would take the test with it.
 const { leavePage } = vi.hoisted(() => ({ leavePage: vi.fn() }));
@@ -25,7 +30,6 @@ const action = (answer: () => unknown) => vi.fn<(...args: unknown[]) => Promise<
 function fakeActions() {
   let version = 1;
   return {
-    start: action(() => ({ id: 21, version: 1 })),
     save: action(() => ({ saved: true, version: ++version })),
     attach: action(() => ({ saved: true, version: ++version, attachments: [FILE] })),
     detach: action(() => ({ saved: true, version: ++version, attachments: [] })),
@@ -40,7 +44,7 @@ async function renderWriter(props: Partial<Parameters<typeof MailingWriter>[0]> 
   const view = await render(
     <MailingWriter
       data={exampleWriterData}
-      draft={null}
+      draft={exampleFreshMailing}
       who={<p>{"Who it's to"}</p>}
       actions={actions as unknown as MailingWriterActions}
       {...props}
@@ -66,39 +70,24 @@ async function write(text: string) {
 }
 
 describe("MailingWriter", () => {
-  it("starts with a greeting by the salutation, and saves nothing until something's written", async () => {
+  it("starts a draft just made with a greeting by the salutation, from the first Gmail, both saved with its first change", async () => {
     const { actions } = await renderWriter();
     await expect.element(letter()).toHaveTextContent("Dear salutation,");
-    await expect.poll(() => status().element().textContent).toBe("");
-    await field(copy.ask).selectOptions("frontier-ai-letter");
-    await pause(1200);
-    expect(actions.start).not.toHaveBeenCalled();
-    await subject().fill("Hello");
-    await expect.poll(() => actions.start.mock.calls.length, WAIT).toBe(1);
-    expect(actions.start.mock.calls[0][0]).toEqual(exampleWriterData.filter.params);
-    // From the first connected Gmail, to start with.
-    expect(actions.start.mock.calls[0][1]).toMatchObject({
-      subject: "Hello",
-      ask: "frontier-ai-letter",
-      sentFrom: "al@pauseai.uk",
-    });
     await expect.element(status()).toHaveTextContent(copy.savePill.saved);
-    expect(location.pathname).toBe("/staff/mailings/21");
-    history.replaceState(null, "", "/");
-    await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent("Hello");
+    await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent(copy.newTitle);
+    await expect.element(field(copy.fromLegend)).toHaveValue("al@pauseai.uk");
+    await field(copy.ask).selectOptions("frontier-ai-letter");
+    await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(1);
+    const [id, version, first] = actions.save.mock.calls[0] as [number, number, Record<string, unknown>];
+    expect([id, version]).toEqual([12, 1]);
+    expect(first).toMatchObject({ ask: "frontier-ai-letter", sentFrom: "al@pauseai.uk" });
+    expect(JSON.stringify(first.body)).toContain("salutation");
     await expect.element(page.getByRole("button", { name: copy.deleteDraft })).toBeVisible();
-    await expect
-      .element(page.getByRole("link", { name: copy.changeWho }))
-      .toHaveAttribute("href", "/staff/politicians?house=commons&party=%21Labour&ask=frontier-ai-letter&mailing=21");
-
     // Each change after, a moment later, as a save of only what changed.
     await field(copy.fromLegend).selectOptions("samuel.whitlock@pauseai.uk");
     await field(copy.ask).selectOptions("");
-    await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(1);
-    expect(actions.save.mock.calls[0]).toEqual([21, 1, { sentFrom: "samuel.whitlock@pauseai.uk", ask: null }]);
-    await field(copy.fromLegend).selectOptions("al@pauseai.uk");
     await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(2);
-    expect(actions.save.mock.calls[1]).toEqual([21, 2, { sentFrom: "al@pauseai.uk" }]);
+    expect(actions.save.mock.calls[1]).toEqual([12, 2, { sentFrom: "samuel.whitlock@pauseai.uk", ask: null }]);
   });
 
   it("greets by name when not everyone has a salutation, and with no field when neither is had by all", async () => {
@@ -109,22 +98,6 @@ describe("MailingWriter", () => {
     await view.unmount();
     await renderWriter({ data: { ...exampleWriterData, fields: lacking(["salutation", "name"]) } });
     await expect.element(letter()).toHaveTextContent("Dear,");
-  });
-
-  it("makes a draft once the letter has more than its greeting, and saves the letter's changes", async () => {
-    const here = location.href;
-    const { actions } = await renderWriter();
-    await write("Come along.");
-    // Made once; typing slower than the save's wait makes it partway through, the rest coming in the next save.
-    const newest = () =>
-      JSON.stringify(
-        [...actions.start.mock.calls.map((call) => call[1]), ...actions.save.mock.calls.map((call) => call[2])].at(-1),
-      );
-    await expect.poll(newest, WAIT).toContain("Come along.");
-    expect(actions.start).toHaveBeenCalledTimes(1);
-    // The address is the draft's, so a reload opens it; the tests' page goes back to its own.
-    await expect.poll(() => location.pathname, WAIT).toBe("/staff/mailings/21");
-    history.replaceState(null, "", here);
   });
 
   it("says when someone else saved it first, and saves nothing more", async () => {
@@ -167,7 +140,7 @@ describe("MailingWriter", () => {
     expect(actions.save.mock.calls[1]).toEqual([12, 4, { sentFrom: "samuel.whitlock@pauseai.uk" }]);
   });
 
-  it("attaches files dropped or picked, making the draft first, and stops at one too big or saved by someone else", async () => {
+  it("attaches files dropped or picked, and stops at one too big or saved by someone else", async () => {
     const { actions } = await renderWriter();
     const drop = new DataTransfer();
     drop.items.add(new File(["x"], "a.pdf", { type: "application/pdf" }));
@@ -178,14 +151,13 @@ describe("MailingWriter", () => {
     box.dispatchEvent(new DragEvent("dragleave", { bubbles: true }));
     box.dispatchEvent(new DragEvent("drop", { dataTransfer: drop, bubbles: true, cancelable: true }));
     await expect.poll(() => actions.attach.mock.calls.length, WAIT).toBe(2);
-    expect(actions.start).toHaveBeenCalledTimes(1);
     const sent = actions.attach.mock.calls.map(([form]) => {
       const data = form as FormData;
       return [data.get("id"), data.get("version"), (data.get("file") as File).name];
     });
     expect(sent).toEqual([
-      ["21", "1", "a.pdf"],
-      ["21", "2", "b.pdf"],
+      ["12", "1", "a.pdf"],
+      ["12", "2", "b.pdf"],
     ]);
     await expect.element(page.getByRole("button", { name: copy.removeFile("a.pdf") })).toBeVisible();
 
@@ -236,7 +208,7 @@ describe("MailingWriter", () => {
     await expect.element(page.getByText(copy.leftOutReasons.blocked)).toBeVisible();
     await expect
       .element(page.getByRole("link", { name: copy.changeWho }))
-      .toHaveAttribute("href", "/staff/politicians?house=commons&party=%21Labour&ask=frontier-ai-letter&mailing=new");
+      .toHaveAttribute("href", "/staff/politicians?house=commons&party=%21Labour&ask=frontier-ai-letter&mailing=12");
   });
 
   it("explains the ask behind its ?", async () => {
@@ -351,14 +323,15 @@ describe("MailingWriter", () => {
     await write("Come along.");
     await test.click();
     await expect.element(preview().getByText(copy.testSent("jo@pauseai.uk"))).toBeVisible();
-    expect(actions.start).toHaveBeenCalledTimes(1);
-    expect(actions.sendTest).toHaveBeenCalledWith(21, 7, "jo@pauseai.uk");
+    // What's written is saved first, as the test is of the draft as saved.
+    expect(actions.save).toHaveBeenCalledTimes(1);
+    expect(actions.sendTest).toHaveBeenCalledWith(12, 7, "jo@pauseai.uk");
     // Another address; one that isn't one can't be sent to.
     await to.fill("not an address");
     await expect.element(test).toBeDisabled();
     await to.fill(" sam@example.org ");
     await test.click();
-    await expect.poll(() => actions.sendTest.mock.calls.at(-1)).toEqual([21, 7, "sam@example.org"]);
+    await expect.poll(() => actions.sendTest.mock.calls.at(-1)).toEqual([12, 7, "sam@example.org"]);
     actions.sendTest.mockResolvedValueOnce({ sent: false, reason: "failed" });
     await test.click();
     await expect.element(preview().getByText(copy.testFailed)).toBeVisible();
@@ -578,29 +551,16 @@ describe("MailingWriter", () => {
     await expect.element(link).toHaveAttribute("aria-busy", "true");
   });
 
-  it("makes a new mailing a draft before Change who, so the list chooses for it", async () => {
-    const { actions } = await renderWriter();
-    await field(copy.subject).fill("Kept");
-    await page.getByRole("link", { name: copy.changeWho }).click();
-    await expect.poll(() => leavePage.mock.calls.length, WAIT).toBe(1);
-    expect(actions.start).toHaveBeenCalledTimes(1);
-    expect(leavePage.mock.calls[0][0]).toMatch(/[?&]mailing=21$/);
-  });
-
-  it("keeps a new mailing with nothing worth keeping new, through Change who", async () => {
-    const { actions } = await renderWriter();
-    await page.getByRole("link", { name: copy.changeWho }).click();
-    await expect.poll(() => leavePage.mock.calls.length, WAIT).toBe(1);
-    expect(actions.start).not.toHaveBeenCalled();
-    expect(leavePage.mock.calls[0][0]).toMatch(/[?&]mailing=new$/);
-  });
-
-  it("adds an ask from a new mailing with nothing worth keeping, coming back to the new mailing", async () => {
-    const { actions } = await renderWriter();
-    await page.getByRole("link", { name: copy.newAsk.link }).click();
-    await expect.poll(() => leavePage.mock.calls.length, WAIT).toBe(1);
-    expect(actions.start).not.toHaveBeenCalled();
-    expect(leavePage.mock.calls[0][0]).toMatch(/\/staff\/asks\/new\?back=%2Fstaff%2Fmailings%2Fnew/);
+  it("goes to the list's ticked tab to change who's ticked, or to choose who, with no one ticked yet", async () => {
+    const { view } = await renderWriter({ data: examplePickedList });
+    await expect
+      .element(page.getByRole("link", { name: copy.changeWho }))
+      .toHaveAttribute("href", "/staff/politicians?mailing=12&tab=ticked");
+    await view.unmount();
+    await renderWriter({
+      data: { ...examplePickedList, filter: { list: "politicians", params: {}, picked: { ids: [] } } },
+    });
+    await expect.element(page.getByRole("link", { name: copy.chooseWho })).toBeVisible();
   });
 
   it("adds an ask on the asks page, saving first, and coming back to the draft", async () => {

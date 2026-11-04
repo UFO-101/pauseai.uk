@@ -42,6 +42,7 @@ export const exampleWriterData: WriterData = {
   filter: { list: "politicians", params: { house: "commons", party: "!Labour", ask: "frontier-ai-letter" } },
   parties: ["Green", "Labour"],
   asks: exampleAsks,
+  names: {},
   unknown: [],
   recipients: [
     {
@@ -131,4 +132,52 @@ export const exampleWrittenMailing: WrittenMailing = {
     { id: 2, filename: "venue.png", contentType: "image/png", size: 2_300_000 },
     { id: 3, filename: "notes.docx", contentType: "application/octet-stream", size: 800 },
   ],
+};
+
+/** The names of the politicians the ticks below have. */
+const exampleNames = {
+  7: "Polly Placeholder",
+  8: "Dora Dummy",
+  9: "Ned Noaddress",
+  11: "Morag Example",
+  12: "Jane Smith",
+};
+
+/**
+ * The same mailing, ticked from everyone the Commons who aren't Labour
+ * were on 3 November: Polly, Dora and Ned, with Morag added and Ned
+ * taken off since.
+ */
+export const examplePickedGroup: WriterData = {
+  ...exampleWriterData,
+  filter: {
+    list: "politicians",
+    params: {},
+    picked: {
+      ids: [7, 8, 11],
+      from: { params: { house: "commons", party: "!Labour" }, at: "2026-11-03T10:00:00Z", found: [7, 8, 9] },
+    },
+  },
+  names: exampleNames,
+};
+
+/** Four ticked one by one. */
+export const examplePickedList: WriterData = {
+  ...exampleWriterData,
+  filter: { list: "politicians", params: {}, picked: { ids: [7, 8, 11, 12] } },
+  names: exampleNames,
+};
+
+/** A draft just made, ticked for but with nothing written: the writer starts it with a greeting. */
+export const exampleFreshMailing: WrittenMailing = {
+  ...exampleWrittenMailing,
+  filter: examplePickedList.filter,
+  subject: "",
+  body: { type: "doc", content: [] },
+  ask: null,
+  sentFrom: null,
+  fromName: null,
+  dueAt: null,
+  version: 1,
+  attachments: [],
 };

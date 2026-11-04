@@ -7,8 +7,9 @@ import { listAsks } from "./asks";
 import { mailingPoliticians, politiciansSearch, type MailingPolitician } from "./politicians";
 import type { StoredFilter } from "@/lib/staff-search";
 
-// Who a mailing to politicians goes to: everyone its filter finds who has
-// an address we can write to. Those with none, or with one that's blocked,
+// Who a mailing to politicians goes to: those ticked for it, or, for one
+// from before ticks, everyone its filter finds; of them, those with an
+// address we can write to. Those with none, or with one that's blocked,
 // are left out from the start, and the page says who.
 
 const copy = staffCopy.mailingEditor;
@@ -39,9 +40,10 @@ function fieldValues(politician: MailingPolitician): Record<string, string> {
   };
 }
 
-/** Who a mailing to politicians with this filter goes to and who it leaves out, and what its letter can use. */
+/** Who a mailing to politicians with this filter, or these ticks, goes to and who it leaves out, and what its letter can use. */
 export async function politicianAudience(filter: StoredFilter): Promise<PoliticianAudience> {
-  const [found, asks] = await Promise.all([mailingPoliticians(politiciansSearch(filter.params).filter), listAsks()]);
+  const who = filter.picked ? { ids: filter.picked.ids } : politiciansSearch(filter.params).filter;
+  const [found, asks] = await Promise.all([mailingPoliticians(who), listAsks()]);
   const leftOut: LeftOut[] = [];
   const recipients: PoliticianRecipient[] = [];
   for (const politician of found) {

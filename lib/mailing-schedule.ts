@@ -38,11 +38,12 @@ export type SchedulingMailing = {
 
 /** What stops a mailing being scheduled: none, for one that can be. A field it uses must have a value for everyone. */
 export function scheduleProblems(mailing: SchedulingMailing): ScheduleProblem[] {
+  // In the order of the page's sections: who it's to, what's written, who it's from, when.
   const checks: [ScheduleProblem, boolean][] = [
-    ["no-subject", !mailing.subject.trim()],
-    ["no-letter", isBlankMailing(mailing.body)],
     ["unknown-filter", mailing.unknown.length > 0],
     ["no-recipients", mailing.recipients === 0],
+    ["no-subject", !mailing.subject.trim()],
+    ["no-letter", isBlankMailing(mailing.body)],
     ["field-lacking", fieldsIn(mailing.body).some((field) => mailing.lacking.includes(field))],
     ["no-sender", !mailing.sentFrom],
     ["not-connected", Boolean(mailing.sentFrom) && !mailing.connected],

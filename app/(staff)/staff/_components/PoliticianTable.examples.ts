@@ -1,3 +1,5 @@
+import type { Choosing } from "@/lib/server/mailing-drafts";
+import type { PastedLine } from "./PoliticiansList";
 import type { Ask, AskWithCounts } from "@/lib/server/asks";
 import type { Politician, PoliticianChange, PoliticiansPage, PoliticiansSearch } from "@/lib/server/politicians";
 
@@ -125,7 +127,28 @@ export const emptyPoliticiansSearch: PoliticiansSearch = {
   dir: "",
   page: "",
   mailing: "",
+  tab: "",
+  pasted: [],
 };
+
+/** The draft "Edinburgh thank-you", choosing who it's for, with Polly ticked. */
+export const exampleChoosing: Choosing = {
+  id: 12,
+  title: "Edinburgh thank-you",
+  blank: false,
+  ticked: [examplePolitician.id],
+};
+
+/** Names pasted: a row copied from the table, which found Polly by her name; and a typo near her. */
+export const examplePasted: PastedLine[] = [
+  {
+    line: "Polly Placeholder\tHouse of Commons\tCities of London and Westminster",
+    matches: [examplePolitician],
+    by: { [examplePolitician.id]: "name" },
+    choices: [],
+  },
+  { line: "Poly Plaseholder", matches: [], by: {}, choices: [examplePolitician], near: true },
+];
 
 /** What the audit log says about Polly: her status set, her address blocked by Postmark and unblocked by staff. */
 export const examplePoliticianHistory: PoliticianChange[] = [

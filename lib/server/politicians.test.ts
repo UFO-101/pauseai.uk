@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { addTestLetter, addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
-import { NEW_MAILING } from "@/lib/staff-search";
 import { query, transaction } from "./db";
 import {
   addPolitician,
@@ -21,6 +20,12 @@ import {
   setStatus,
   signatories,
   statusesOf,
+  emailsIn,
+  findPasted,
+  findPastedLines,
+  looksLikeName,
+  pastedName,
+  politicianNames,
 } from "./politicians";
 import { POLITICIAN_SORTS } from "@/lib/politician-sort";
 import { recordProblem } from "./email";
@@ -74,6 +79,8 @@ describe("politiciansSearch", () => {
     };
     expect(politiciansSearch(typed)).toEqual({
       ...typed,
+      tab: "",
+      pasted: [],
       filter: {
         search: "Jo",
         house: "lords",
@@ -133,11 +140,17 @@ describe("politiciansSearch", () => {
       dir: "",
       page: "",
       mailing: "",
+      tab: "",
+      pasted: [],
     };
     expect(politiciansSearch({})).toEqual({ ...blank, filter: none });
-    // A draft's ID is a number.
-    expect(politiciansSearch({ mailing: "12x" }).mailing).toBe("");
-    expect(politiciansSearch({ mailing: NEW_MAILING }).mailing).toBe(NEW_MAILING);
+    // A draft's ID is a number; the ticked tab is "1"; the lines pasted are a list.
+    expect(politiciansSearch({ mailing: "12x", tab: "yes" })).toMatchObject({ mailing: "", tab: "" });
+    expect(politiciansSearch({ mailing: "12", tab: "ticked", pasted: ["Jo", "Al"] })).toMatchObject({
+      mailing: "12",
+      tab: "ticked",
+      pasted: ["Jo", "Al"],
+    });
     const unknown = {
       house: "hogwarts",
       status: "sitting",
@@ -159,6 +172,37 @@ describe("politiciansSearch", () => {
 
   it("is everyone, in office or not, with any status", () => {
     expect(politiciansSearch({ status: "any" }).filter.status).toBeUndefined();
+  });
+});
+
+describe("looksLikeName", () => {
+  it("is two to four capitalised words with no digits", () => {
+    expect(looksLikeName("Jane Smith")).toBe(true);
+    expect(looksLikeName("Ána de la Cruz")).toBe(false);
+    expect(looksLikeName("Labour")).toBe(false);
+    expect(looksLikeName("One Two Three Four Five")).toBe(false);
+    expect(looksLikeName("Jane Smith 2")).toBe(false);
+    expect(looksLikeName("Area 51")).toBe(false);
+  });
+});
+
+describe("emailsIn", () => {
+  it("finds every email address in some text, lowercase", () => {
+    expect(emailsIn("Email: Treascom@Parliament.UK, or <jo@example.org>.")).toEqual([
+      "treascom@parliament.uk",
+      "jo@example.org",
+    ]);
+    expect(emailsIn("no address here")).toEqual([]);
+  });
+});
+
+describe("pastedName", () => {
+  it("takes the bullet, the brackets, the titles and the letters after a name off a line pasted", () => {
+    expect(pastedName("1. The Rt Hon Jane Smith MP (Labour),")).toBe("Jane Smith");
+    expect(pastedName("• Dr. Morag Example MSP")).toBe("Morag Example");
+    expect(pastedName("- Exampleton West;")).toBe("Exampleton West");
+    expect(pastedName("  Jane.Smith.MP@Parliament.uk ")).toBe("Jane.Smith.MP@Parliament.uk");
+    expect(pastedName(" MP ")).toBe("");
   });
 });
 
@@ -300,6 +344,84 @@ describeWithDatabase("politicians", () => {
     expect(await closestPoliticians({ search: "Tristian Osbourne", house: "lords" })).toEqual([]);
     expect(await closestPoliticians({ search: "Tristan", status: "in_office" }, 1)).toHaveLength(1);
     expect(await closestPoliticians({ search: "zzzz" })).toEqual([]);
+  });
+
+  it("finds who a line pasted names, by name, constituency or email, or those it might be", async () => {
+    const jane = await addTestPolitician({
+      name: "Jane Smith",
+      constituency: "Exampleton West",
+      email: "jane@example.org",
+    });
+    const david = await addTestPolitician({ name: "David Smith", constituency: "Sampleford", airtableId: "rec2" });
+    const lord = await addTestPolitician({
+      name: "David Smith",
+      house: "lords",
+      constituency: null,
+      airtableId: "rec3",
+    });
+    const ben = await addTestPolitician({ name: "Ben Owen", constituency: "Bath", airtableId: "rec4" });
+    const nina = await addTestPolitician({ name: "Nina Noemail", email: null, airtableId: "rec5" });
+    await addTestPolitician({ name: "Ann Gone", status: "retired", airtableId: "rec6" });
+    const found = async (line: string) => {
+      const { matches, by, choices, near } = await findPasted(line);
+      return { matches: matches.map((one) => one.id), by, choices: choices.map((one) => one.id), near };
+    };
+    expect(await found("Jane Smith MP")).toEqual({
+      matches: [jane],
+      by: { [jane]: "name" },
+      choices: [],
+      near: undefined,
+    });
+    expect(await found("Nina Noemail")).toMatchObject({ matches: [nina], by: { [nina]: "name" } });
+    // Everyone a line names, however much else is there: a row copied from the table, a list, a page.
+    expect(await found("Jane Smith\tHouse of Commons\tExampleton West\tLabour\tNone\t0\t0")).toMatchObject({
+      matches: [jane],
+    });
+    expect(await found("Dear Ann Gone, Jane Smith and David Smith,")).toEqual({
+      matches: [jane],
+      by: { [jane]: "name" },
+      choices: [david, lord],
+      near: undefined,
+    });
+    // A constituency as it's written, capitals and all, anywhere in a line; an email anywhere, in any case.
+    expect(await found("The MPs for Exampleton West and Bath")).toEqual({
+      matches: [ben, jane],
+      by: { [ben]: "constituency", [jane]: "constituency" },
+      choices: [],
+      near: undefined,
+    });
+    expect(await found("Run a bath")).toEqual({ matches: [], by: {}, choices: [] });
+    expect(await found("Write to JANE@example.org, please")).toMatchObject({
+      matches: [jane],
+      by: { [jane]: "email" },
+    });
+    // A line that looks like a name: every word in a name or constituency, one found, more to choose from.
+    expect(await found("David Samplef")).toMatchObject({ matches: [david], by: { [david]: "words" } });
+    expect(await found("David Smit")).toMatchObject({ matches: [], by: {}, choices: [david, lord] });
+    // Then the nearest names, by name alone, only those in office, and only those near.
+    const nearest = await found("Jane Smoth");
+    expect([nearest.matches, nearest.choices[0], nearest.near]).toEqual([[], jane, true]);
+    expect(await found("Ann Gone")).toEqual({ matches: [], by: {}, choices: [], near: true });
+    expect(await found("West Bathwick")).toEqual({ matches: [], by: {}, choices: [], near: true });
+    // Not a name: a party, a heading, one word.
+    expect(await found("Labour")).toEqual({ matches: [], by: {}, choices: [] });
+    expect(await found("Skip to main content")).toEqual({ matches: [], by: {}, choices: [] });
+    expect(await found("(nobody)")).toEqual({ matches: [], by: {}, choices: [] });
+  });
+
+  it("keeps of the lines pasted those that found someone not found before, and counts those that found no one", async () => {
+    const jane = await addTestPolitician({ name: "Jane Smith", constituency: "Exampleton West" });
+    const { lines, skipped } = await findPastedLines(["Jane Smith MP", "Exampleton West", "Labour", "Chair"]);
+    expect(lines.map((line) => [line.line, line.matches.map((one) => one.id)])).toEqual([["Jane Smith MP", [jane]]]);
+    expect(skipped).toBe(2);
+  });
+
+  it("names politicians by their IDs, and finds only those IDs", async () => {
+    const jane = await addTestPolitician({ name: "Jane Smith" });
+    const david = await addTestPolitician({ name: "David Smith", airtableId: "rec2" });
+    expect(await politicianNames([jane, david, 999999])).toEqual({ [jane]: "Jane Smith", [david]: "David Smith" });
+    expect((await listPoliticians({ ids: [david] })).map((p) => p.id)).toEqual([david]);
+    expect(await listPoliticians({ ids: [] })).toEqual([]);
   });
 
   it("lists politicians by name, filtered by search, house and ask", async () => {

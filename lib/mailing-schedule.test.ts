@@ -47,7 +47,7 @@ describe("scheduleProblems", () => {
         sends: false,
         connected: false,
       }),
-    ).toEqual(["no-subject", "no-letter", "unknown-filter", "no-recipients", "no-sender", "no-time", "cannot-send"]);
+    ).toEqual(["unknown-filter", "no-recipients", "no-subject", "no-letter", "no-sender", "no-time", "cannot-send"]);
   });
 
   it("refuses a field someone lacks, and a time gone by", () => {

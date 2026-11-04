@@ -5,6 +5,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { exampleLetter } from "@/app/(staff)/staff/_components/LettersTable.examples";
 import {
   ChangeTimeFormExample,
+  ChoosingListExample,
   DueTimeFieldsExample,
   EventsTableExample,
   HeldSyncExample,
@@ -16,6 +17,8 @@ import {
   NotesExample,
   NoteTextExample,
   NoticeExample,
+  PasteFormExample,
+  PickBoxExample,
   PoliticianDetailsExample,
   PoliticianTableEmptyExample,
   PoliticianTableExample,
@@ -161,16 +164,53 @@ describe("the staff examples", () => {
     await expect.element(page.getByText(exampleLetter.senderName)).not.toBeInTheDocument();
   });
 
-  it("logs a new mailing's start", async () => {
+  it("logs a draft just made's first save, with its greeting", async () => {
     await render(<MailingWriterExample draft={false} />);
     await subject().fill("Hello");
-    await expect.poll(() => log().nth(0).query()?.textContent).toMatch(/^startMailing\(/);
+    await expect.poll(() => log().nth(0).query()?.textContent).toMatch(/^saveMailing\(12, 1, \{"body"/);
   });
 
   it("logs a draft's save", async () => {
     await render(<MailingWriterExample draft />);
     await subject().fill("Hello again");
     await expect.poll(() => log().last().query()?.textContent).toMatch(/^saveMailing\(/);
+  });
+
+  it("logs a file taken off a draft", async () => {
+    await render(<MailingWriterExample draft />);
+    await page.getByRole("button", { name: staffCopy.mailingPages.removeFile("programme.pdf") }).click();
+    await expect.poll(() => log().last().query()?.textContent).toMatch(/^detachFromMailing\(12, /);
+  });
+
+  it("logs a row ticked or unticked while choosing who a mailing is for", async () => {
+    await render(<ChoosingListExample />);
+    await page.getByRole("checkbox", { name: staffCopy.mailingPages.tick("Polly Placeholder") }).click();
+    await expect.poll(() => log().last().query()?.textContent).toBe("pickPolitician(12, 7, false)");
+  });
+
+  it("logs names pasted, and ticking everyone they found", async () => {
+    const { unmount } = await render(<PasteFormExample />);
+    await page.getByRole("textbox", { name: staffCopy.mailingPages.pasteLabel }).fill("Polly Placeholder");
+    await page.getByRole("button", { name: staffCopy.mailingPages.pasteTick }).click();
+    await expect.poll(() => log().last().query()?.textContent).toMatch(/^pasteNames\(/);
+    await unmount();
+    await render(<ChoosingListExample pasted />);
+    await page.getByRole("checkbox", { name: staffCopy.mailingPages.pastedTickAll(1) }).click();
+    await expect.poll(() => log().last().query()?.textContent).toBe("pickMany(12, [7], false)");
+    await page.getByRole("button", { name: staffCopy.mailingPages.untickAll }).click();
+    await expect.poll(() => log().last().query()?.textContent).toMatch(/^untickAll\(12/);
+  });
+
+  it("logs each tick box's click", async () => {
+    await render(<PickBoxExample />);
+    for (const name of ["Ticked", "Not ticked", "Some ticked"]) await page.getByRole("checkbox", { name }).click();
+    await expect
+      .poll(() =>
+        log()
+          .all()
+          .map((item) => item.element().textContent),
+      )
+      .toEqual(["pick(false)", "pick(true)", "pick(true)"]);
   });
 
   it("lists politicians with no buttons", async () => {
