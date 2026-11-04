@@ -154,8 +154,9 @@ test("A letter's page", async ({ page, flowDatabase }) => {
   );
   const letter = page.getByRole("article");
   await expect(letter).toContainText(sender);
-  // Sent as the campaign drafted it, so its text is folded away.
+  // Sent as the campaign drafted it, so its text is folded away; its campaign is in its headers.
   await expect(letter.getByRole("button", { name: /unchanged/ })).toBeVisible();
+  await expect(letter.getByRole("link", { name: campaigns[0].title })).toBeVisible();
   await frame(page, "Jane's letter");
   story("Copy Gmail search copies a search for the letter, and says where to paste it.");
 
@@ -169,7 +170,6 @@ test("A letter's page", async ({ page, flowDatabase }) => {
   );
 
   const ask = page.getByRole("region", { name: staffCopy.mailings.fields.ask });
-  await expect(ask.getByRole("link", { name: campaigns[0].title })).toBeVisible();
   await ask.getByRole("button", { name: staffCopy.politician.edit }).click();
   await page.getByRole("radio", { name: staffCopy.statuses.signed }).click();
   await page.getByLabel(staffCopy.politician.note).fill("Signed, says their reply");

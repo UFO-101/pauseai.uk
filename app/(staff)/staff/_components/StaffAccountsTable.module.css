@@ -58,6 +58,7 @@
 
 .addRow input {
   flex: 1;
+  width: 18rem;
   min-width: 0;
 }
 

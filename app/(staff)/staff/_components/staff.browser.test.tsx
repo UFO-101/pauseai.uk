@@ -2103,8 +2103,8 @@ describe("ImportOverview", () => {
     const cards = [...document.querySelectorAll("section")];
     expect(cards.map((card) => card.querySelector("h3 a")!.getAttribute("href"))).toEqual([
       "/staff/import-data/luma",
-      "/staff/import-data/members",
       "/staff/import-data/gmail",
+      "/staff/import-data/members",
       "/staff/import-data/politicians",
       "/staff/import-data/emails",
       "/staff/import-data/mp-check",
@@ -2114,8 +2114,8 @@ describe("ImportOverview", () => {
     ]);
     expect(cards.map((card) => card.querySelector("h3 a")!.textContent)).toEqual([
       jobTitles["import-luma"],
-      jobTitles["import-members"],
       jobTitles["read-gmail"],
+      jobTitles["import-members"],
       jobTitles["sync-politicians"],
       jobTitles["sync-emails"],
       jobTitles["check-mps"],
@@ -2150,8 +2150,8 @@ describe("ImportOverview", () => {
     ]);
     expect(cards[5].querySelector(":scope > p")!.textContent).not.toContain(staffCopy.syncs.testMps);
     // The members come from the join form; Gmail's card leads to where it's connected.
-    expect(link(1)).toBe("https://pauseai.info/join");
-    expect(link(2)).toBe("/staff/me");
+    expect(link(2)).toBe("https://pauseai.info/join");
+    expect(link(1)).toBe("/staff/me");
     // The MP check says it changes nothing, after its name.
     expect(cards[5].querySelector("h3")!.textContent).toBe(`${jobTitles["check-mps"]}${staffCopy.import.checkOnly}`);
     expect(cards[4].querySelector("h3")!.textContent).toBe(jobTitles["sync-emails"]);
