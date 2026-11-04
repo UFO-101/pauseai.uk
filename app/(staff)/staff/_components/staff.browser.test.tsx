@@ -3010,12 +3010,8 @@ describe("LettersTable", () => {
     await expect.element(page.getByRole("cell", { name: "18%", exact: true })).toBeInTheDocument();
     await expect.element(page.getByRole("cell", { name: "62%", exact: true })).toBeInTheDocument();
     await expect.element(page.getByRole("link", { name: "odd" })).toHaveAttribute("href", "/staff/letters/2");
-    await expect
-      .element(page.getByRole("cell", { name: staffCopy.letters.consent.yes, exact: true }))
-      .toBeInTheDocument();
-    await expect
-      .element(page.getByRole("cell", { name: staffCopy.letters.consent.no, exact: true }))
-      .toBeInTheDocument();
+    // Whether the sender agreed to hear from us is a filter, not a column.
+    expect(page.getByRole("columnheader", { name: staffCopy.letters.columns.consent }).all()).toHaveLength(0);
     // Its history is on its page, which its status leads to; when it was sent, or a dash.
     expect(document.body.textContent).not.toContain("strange");
     await expect
