@@ -38,6 +38,8 @@
 .add {
   display: grid;
   gap: var(--space-2);
+  width: 24rem;
+  max-width: 100%;
 }
 
 /* Wide enough for an address and Add beside it. */
@@ -58,8 +60,7 @@
 }
 
 .addRow input {
-  flex: 1;
-  width: 18rem;
+  flex: 1 1 0;
   min-width: 0;
 }
 

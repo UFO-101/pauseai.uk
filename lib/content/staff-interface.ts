@@ -144,7 +144,7 @@ export const staffCopy = {
       connected: "Your Gmail is connected. All staff will be able to send mailings from it now.",
       // The same, for the letters inbox, which sends supporters' letters and nothing else.
       connectedLettersInbox:
-        "The letters inbox is connected. Supporters' letters to MPs go from it now, and replies are relayed through it ⁂ every 5 minutes.",
+        "The letters inbox is connected. Supporters' letters to MPs go from it now, and replies are relayed through it every 5 minutes.",
       refused: "Gmail wasn't connected, as you didn't allow it.",
       failed: "Gmail couldn't be connected. Try again.",
       disconnected: "Your Gmail is disconnected.",
@@ -503,10 +503,10 @@ export const staffCopy = {
       noLetters: "No letters.",
       columns: {
         // The Events table's: when the event is, which, their part in it, and when they registered or became host.
-        eventDate: "⁂ Event date",
+        eventDate: "Event date",
         event: "Event",
-        status: "⁂ Role",
-        joined: "⁂ Joined",
+        status: "Role",
+        joined: "Joined",
         to: "To",
         campaign: "Campaign",
         letter: "Status",
@@ -1501,7 +1501,7 @@ export const staffCopy = {
     disconnected:
       "Google refused our access, so this account has been disconnected. Its owner can connect it again from their account page.",
   },
-  // The daily copy of PauseAI's UK members (lib/server/members-import.ts),
+  // The hourly copy of PauseAI's UK members (lib/server/members-import.ts),
   // on the import page.
   // PauseAI's emails to politicians, from Airtable's Emails table.
   pauseaiEmails: {
@@ -1650,7 +1650,8 @@ export const staffCopy = {
     luma: "Luma",
     gmail: "Gmail",
     nightly: "Nightly",
-    frequent: "⁂ Every 5 minutes",
+    frequent: "Every 5 minutes",
+    hourly: "Hourly",
     oneOff: "One-off",
     checkOnly: "Check only",
   },

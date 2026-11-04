@@ -35,9 +35,9 @@ const IMPORT_SLUGS: Record<ImportJob, string> = {
 };
 
 /** How often each job runs on its own, matching its schedule in netlify/functions/; a one-off is only run by staff. */
-export const JOB_SCHEDULES: Record<ImportJob, "frequent" | "nightly" | "oneOff"> = {
+export const JOB_SCHEDULES: Record<ImportJob, "frequent" | "hourly" | "nightly" | "oneOff"> = {
   "import-luma": "frequent",
-  "import-members": "nightly",
+  "import-members": "hourly",
   "read-gmail": "frequent",
   "sync-politicians": "nightly",
   "sync-emails": "nightly",

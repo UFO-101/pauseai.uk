@@ -7,7 +7,7 @@ One branch for a batch of small changes from using the site. The designs were ag
 - Gmail and Luma every 5 minutes, in place of hourly. The database then never sleeps (it sleeps after 5 minutes without a query): about 7,200 credits a month at 1 compute unit, against about 3,000 now. Agreed, as more users will keep it awake anyway.
 - The Luma import skips working out supporter facts and the supporters list again when its run changed nothing, as both run every time now and the list takes about 2 seconds at 100,000 supporters.
 - Live events' hosts are read again every 5 minutes, not every hour.
-- The Airtable members import runs daily, with the other daily jobs at about 06:20 UTC.
+- The Airtable members import stays hourly.
 - The import log keeps a week of runs of a 5-minute job, about 2,000; check that the import pages still read well.
 - Rewrite what explains the one wake an hour: the scheduled functions' comments and `docs/development.md`, "Daily jobs".
 - Not a problem: Gmail refreshes its access token up to 288 times a day per account (Google limits issuing refresh tokens, not using them); Luma's import stops itself near the rate limit, and a 429 ends the run, not the key.

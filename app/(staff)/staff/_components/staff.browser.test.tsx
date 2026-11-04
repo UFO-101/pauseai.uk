@@ -2099,7 +2099,7 @@ describe("ImportOverview", () => {
         .getByRole("heading", { level: 2 })
         .all()
         .map((h) => h.element().textContent),
-    ).toEqual([staffCopy.import.frequent, staffCopy.import.nightly, staffCopy.import.oneOff]);
+    ).toEqual([staffCopy.import.frequent, staffCopy.import.hourly, staffCopy.import.nightly, staffCopy.import.oneOff]);
     const cards = [...document.querySelectorAll("section")];
     expect(cards.map((card) => card.querySelector("h3 a")!.getAttribute("href"))).toEqual([
       "/staff/import-data/luma",
@@ -2715,12 +2715,12 @@ describe("RunList", () => {
     await expect
       .element(first)
       .toHaveTextContent(
-        `${staffCopy.runs.status.ok} ${AT} · ${staffCopy.import.nightly} · ${staffCopy.members.result(exampleMembersResult)}`,
+        `${staffCopy.runs.status.ok} ${AT} · ${staffCopy.import.hourly} · ${staffCopy.members.result(exampleMembersResult)}`,
       );
     await expect
       .element(second)
       .toHaveTextContent(
-        `${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.nightly} · ${staffCopy.runs.error("Airtable answered 503")}`,
+        `${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.hourly} · ${staffCopy.runs.error("Airtable answered 503")}`,
       );
   });
 

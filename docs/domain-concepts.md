@@ -382,7 +382,7 @@ Where they come from:
   entry from before it is no.
 - **Members.** PauseAI's members in the UK whom we may hold: those who
   ticked "Share your details with PauseAI UK" on the join form, or joined
-  before it asked (from July 2026). The daily import
+  before it asked (from July 2026). The hourly import
   (`lib/server/members-import.ts`) reads them from Stichting PauseAI's
   "Members & Actions" Airtable base into `members`, keyed by the Airtable
   record ID, which CiviCRM keeps too: the names say what the rows are, not
