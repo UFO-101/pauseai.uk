@@ -520,7 +520,7 @@ export const staffCopy = {
       kinds: {
         "luma-contact": "Became a contact of the Luma calendar",
         "luma-registered": "Registered for",
-        "luma-hosted": "⁂ Became host for",
+        "luma-hosted": "Became host for",
         letter: "Wrote to",
         "letter-replied": "Letter answered by",
         "form-entry": "Filled in",
@@ -792,7 +792,7 @@ export const staffCopy = {
         by: string | null;
         link: string;
       }) =>
-        `${by ? `You're now the owner of this event, ${owner}. ${by === owner ? "You took it on" : `${by} gave it to you`}${previous ? `, from ${previous}` : ""}.` : `You're now the owner of ${events.length === 1 ? "this event" : "these events"}, ${owner}, by the rules for who owns which events.`}\n\n${events.length === 1 ? "⁂ This event in the staff interface:" : "⁂ Your events in the staff interface:"}\n${link}\n\n${events
+        `${by ? `You're now the owner of this event, ${owner}. ${by === owner ? "You took it on" : `${by} gave it to you`}${previous ? `, from ${previous}` : ""}.` : `You're now the owner of ${events.length === 1 ? "this event" : "these events"}, ${owner}, by the rules for who owns which events.`}\n\n${events.length === 1 ? "This event in the staff interface:" : "Your events in the staff interface:"}\n${link}\n\n${events
           .map((event) => `${event.name}\n${event.when}\n${event.url}`)
           .join(
             "\n\n",
@@ -1405,8 +1405,8 @@ export const staffCopy = {
     // In place of paragraphs left as they were; a click unfolds them.
     folded: (n: number) => (n === 1 ? "1 paragraph unchanged" : `${n} paragraphs unchanged`),
     // An automatic reply folded to its first paragraph: in place of the rest, which a click unfolds; then back.
-    more: (n: number) => (n === 1 ? "⁂ 1 more paragraph" : `⁂ ${n} more paragraphs`),
-    showLess: "⁂ Show less",
+    more: (n: number) => (n === 1 ? "1 more paragraph" : `${n} more paragraphs`),
+    showLess: "Show less",
   },
   // The letters inbox, which supporters' letters to MPs go from (lib/server/letters-inbox-reading.ts).
   lettersInbox: {

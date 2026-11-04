@@ -1,6 +1,6 @@
 # Staff feedback, November
 
-One branch for a batch of small changes from using the site. The designs were agreed on a page of mocks; what each decided is below. Every new word goes in as a ⁂ placeholder, even those Francis has agreed, so he checks the UI around each.
+One branch for a batch of small changes from using the site. The designs were agreed on a page of mocks; what each decided is below. Francis has approved every new word.
 
 ## Reading Gmail and Luma every 5 minutes
 

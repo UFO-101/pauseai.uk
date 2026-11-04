@@ -470,8 +470,8 @@ INSERT INTO email_blocks (address, problem_id) VALUES
 
 -- A letter from the letters inbox, long ago, so it counts in neither week:
 -- Pat's proxy and the test MP's; the letter as sent, and the draft it was
--- written from; her copy; the office's reply to her proxy, kept whole
--- (tests/fixtures/letter-replies/) and relayed to her.
+-- written from; her copy; the office's acknowledgement and reply to her
+-- proxy, kept whole (tests/fixtures/letter-replies/) and relayed to her.
 INSERT INTO proxies (tag, supporter_email, created_at) VALUES ('pat.proxy', 'pat.proxy@example.com', now() - interval '50 days');
 INSERT INTO proxies (tag, notable_person_id, created_at)
 SELECT 'testy.mctestface.mp', id, now() - interval '50 days' FROM politicians WHERE test_postcode = 'ZZ99ZZ';
@@ -517,6 +517,22 @@ UNION ALL
 SELECT id, now() - interval '48 days', 'replied', '{"from": "test-mp@parliament.example", "name": "Testy McTestface MP", "to": "fixture-letters+pat.proxy@pauseai.uk", "gmailMessageId": "gmail-seed-office-reply", "backend": "gmail", "account": "fixture-letters@pauseai.uk"}'::jsonb FROM seed_proxied
 UNION ALL
 SELECT id, now() - interval '48 days', 'relayed', '{"from": "\"Testy McTestface MP (via PauseAI)\" <fixture-letters+testy.mctestface.mp@pauseai.uk>", "to": "pat.proxy@example.com", "messageId": "fixture-proxied-relay@pauseai.uk", "gmailMessageId": "gmail-seed-office-reply", "backend": "gmail", "account": "fixture-letters@pauseai.uk"}'::jsonb FROM seed_proxied;
+-- Before the reply, the office's acknowledgement, of several paragraphs,
+-- kept whole and relayed to her: the letter's page folds it to its first.
+INSERT INTO letter_replies (letter_id, account, gmail_message_id, gmail_thread_id, rfc_message_id, from_address, from_name,
+  subject, at, from_us, from_supporter, blob_key, size)
+SELECT id, 'fixture-letters@pauseai.uk', 'gmail-seed-office-acknowledgement', 'thread-seed-office-acknowledgement',
+  'fixture-office-acknowledgement@parliament.example', 'test-mp@parliament.example', 'Testy McTestface MP',
+  'Automatic reply: Please back a pause on frontier AI', now() - interval '50 days' + interval '2 minutes',
+  false, false, 'fixture/office-acknowledgement.eml.gz', 512
+FROM seed_proxied;
+INSERT INTO letter_relays (letter_id, reply_id, to_supporter, status, created_at, sent_at, rfc_message_id)
+SELECT s.id, r.id, true, 'sent', r.at, r.at, 'fixture-proxied-acknowledgement-relay@pauseai.uk'
+FROM seed_proxied s JOIN letter_replies r ON r.letter_id = s.id AND r.gmail_message_id = 'gmail-seed-office-acknowledgement';
+INSERT INTO letter_events (letter_id, at, status, details)
+SELECT id, now() - interval '50 days' + interval '2 minutes', 'auto_reply', '{"from": "test-mp@parliament.example", "name": "Testy McTestface MP", "to": "fixture-letters+pat.proxy@pauseai.uk", "gmailMessageId": "gmail-seed-office-acknowledgement", "backend": "gmail", "account": "fixture-letters@pauseai.uk"}'::jsonb FROM seed_proxied
+UNION ALL
+SELECT id, now() - interval '50 days' + interval '2 minutes', 'relayed', '{"from": "\"Testy McTestface MP (via PauseAI)\" <fixture-letters+testy.mctestface.mp@pauseai.uk>", "to": "pat.proxy@example.com", "messageId": "fixture-proxied-acknowledgement-relay@pauseai.uk", "gmailMessageId": "gmail-seed-office-acknowledgement", "backend": "gmail", "account": "fixture-letters@pauseai.uk"}'::jsonb FROM seed_proxied;
 
 -- And Pat's letter to Signy, queued while the letters inbox was at its daily limit.
 INSERT INTO proxies (tag, notable_person_id, created_at)
