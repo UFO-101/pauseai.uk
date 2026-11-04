@@ -4,6 +4,7 @@ import { runSql } from "@/scripts/fresh-database.mjs";
 import { addStaffAccount, logInAsStaff, newestEmail, syncPoliticians } from "../steps";
 import { BASE, emailFrame, expect, frame, story, test } from "./fixtures";
 import { stayOnPage } from "./staff-steps";
+import { scrollSettled } from "./settle";
 
 // Mailings to politicians written on the site: started from New mailing,
 // who it's for chosen on the politicians list, written and saved as a
@@ -206,6 +207,9 @@ test("Rescheduling a mailing", async ({ page, request, flowDatabase }) => {
   story("Change the time opens a calendar to choose another day.");
 
   await page.getByRole("button", { name: copy.changeTime }).click();
+  // Opening its box scrolls the window to show it whole (Bubble.tsx). Clicking Day before that has come to rest
+  // races it, and where the window ends up says whether the calendar has room below the field or opens above it.
+  await scrollSettled(page);
   await page.getByRole("button", { name: copy.day }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await frame(page, "The calendar", { window: true });

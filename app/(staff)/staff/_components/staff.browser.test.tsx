@@ -4465,6 +4465,16 @@ describe("LettersTable, a letter nothing has sent yet", () => {
   });
 });
 
+describe("LettersTable, a letter with no draft", () => {
+  it("has a dash for its own words", async () => {
+    await render(<LettersTable letters={[{ ...exampleLetter, ownWords: null }]} />);
+    const ownWords = [...document.querySelectorAll("thead th")].findIndex(
+      (th) => th.textContent === staffCopy.letters.columns.ownWords,
+    );
+    expect(document.querySelector("tbody tr")!.children[ownWords].textContent).toBe("–");
+  });
+});
+
 describe("LettersTable, a sender not yet a supporter", () => {
   it("shows the name without a link", async () => {
     await render(<LettersTable letters={[{ ...exampleLetter, supporterId: null }]} />);
