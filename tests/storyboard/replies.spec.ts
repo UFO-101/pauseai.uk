@@ -5,6 +5,7 @@ import { TEST_MPS } from "@/lib/test-mps";
 import { runSql } from "@/scripts/fresh-database.mjs";
 import { fakeTurnstile, fillLetter, lookUpTestMp, newestEmail, newestEmailTo, WEBHOOK_AUTH } from "../steps";
 import { editor, newParagraphAboveSignOff } from "./editor-steps";
+import { scrollSettled } from "./settle";
 
 /** As much of Tiptap's editor as a flow drives directly. */
 type EditorHandle = {
@@ -199,7 +200,11 @@ test("Automatic replies", async ({ page, request, flowDatabase }) => {
     from: OFFICE,
     to: JANES_PROXY,
     subject: "Automatic reply: Please back a pause",
-    text: acknowledgement,
+    text: [
+      acknowledgement,
+      "I receive a very large volume of correspondence, and priority is given to constituents.\r\n",
+      "If your matter is urgent, please call my constituency office.\r\n",
+    ].join("\r\n"),
   });
   await readInbox(request);
   await emailFrame(page, sentEmail(flowDatabase, id, "relay"), "The acknowledgement, as Jane gets it");
@@ -243,6 +248,18 @@ test("Automatic replies", async ({ page, request, flowDatabase }) => {
   await expect(entries.first()).toContainText(staffCopy.letters.status.not_relayed);
   await expect(entries.first()).toContainText(history.reasons.over_cap);
   await frame(page, "The letter's history");
+  story(
+    "In the letter and its replies, each automatic reply of more than a paragraph is folded to its first, as the rest is rarely worth reading.",
+  );
+  const folded = page.getByRole("article", { name: "Automatic reply: Please back a pause" });
+  const changes = staffCopy.letterChanges;
+  await folded.getByRole("button", { name: changes.more(2) }).scrollIntoViewIfNeeded();
+  await expect(folded).not.toContainText("constituency office");
+  await frame(page, "The acknowledgement, folded");
+  story("Show as sent unfolds it.");
+  await folded.getByRole("button", { name: changes.asSent }).click();
+  await expect(folded).toContainText("constituency office");
+  await frame(page, "The acknowledgement, as sent");
 });
 
 test("Emails that aren't relayed", async ({ page, request, flowDatabase }) => {
@@ -447,6 +464,10 @@ test("Jane changes the letter", async ({ page, flowDatabase }) => {
   await expect(editor(page)).not.toContainText(meeting);
   await newParagraphAboveSignOff(page);
   await page.keyboard.type("My children ask me about AI every week, and I don't know what to tell them.");
+  // Typing scrolls the window to keep the caret in view, not to the same place each time; the frame is of the
+  // page as a whole, so from its top.
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  await scrollSettled(page);
   await frame(page, "Jane's letter");
   story(
     "She sends it. On the letter's page, staff see only what she changed. The paragraphs she left alone are folded.",

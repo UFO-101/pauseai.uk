@@ -22,8 +22,6 @@ export type LettersSearch = {
   flag: string[];
   /** What sent it, as LETTER_BACKENDS. */
   backend: string[];
-  /** "yes" or "no". */
-  consent: string;
   sort: string;
   dir: string;
   page: string;
@@ -63,8 +61,6 @@ export type LetterFilter = {
   flags?: PoliticianFlag[];
   /** Sent by any of these. */
   backend?: LetterBackend[];
-  /** Whether the sender agreed to hear about events and ways to help. */
-  consent?: boolean;
   /** One supporter's letters (/staff/letters/supporter/[id]). */
   supporterId?: number;
   /** One letter (/staff/letters/[id]). */
@@ -73,11 +69,6 @@ export type LetterFilter = {
   not?: Pick<LetterFilter, NegatableLetterFilter>;
   sort?: SortSpec<LetterSort>;
 };
-
-/** A yes-or-no filter: "yes" or "no", or neither. */
-function yesOrNo(value: string): boolean | undefined {
-  return value === "yes" ? true : value === "no" ? false : undefined;
-}
 
 /** What a campaign's slug looks like, as the campaigns table checks it. */
 const isSlug = (value: string) => /^[a-z0-9]+(-[a-z0-9]+)*$/.test(value);
@@ -91,9 +82,9 @@ export function among<T extends string>(values: string[], known: readonly T[]): 
 export function lettersSearch(
   params: Partial<Record<keyof LettersSearch, ParamValue>>,
 ): LettersSearch & { filter: LetterFilter & { page: number } } {
-  const [status, q, answered, consent, sort, dir, page] = (
-    ["status", "q", "answered", "consent", "sort", "dir", "page"] as const
-  ).map((name) => firstOf(params[name]));
+  const [status, q, answered, sort, dir, page] = (["status", "q", "answered", "sort", "dir", "page"] as const).map(
+    (name) => firstOf(params[name]),
+  );
   const [campaign, flag, backend] = (["campaign", "flag", "backend"] as const).map((name) => valuesOf(params[name]));
   const [campaigns, notCampaigns] = anyAndNone(campaign, (values) => values.filter(isSlug));
   const [flags, notFlags] = anyAndNone(flag, (values) => among(values, POLITICIAN_FLAGS));
@@ -106,7 +97,6 @@ export function lettersSearch(
     campaign: campaigns,
     flags,
     backend: backends,
-    consent: yesOrNo(consent),
     not: notOf({ campaign: notCampaigns, flags: notFlags, backend: notBackends }),
     sort: sorting,
   };
@@ -117,7 +107,6 @@ export function lettersSearch(
     campaign,
     flag,
     backend,
-    consent,
     sort,
     dir,
     page,

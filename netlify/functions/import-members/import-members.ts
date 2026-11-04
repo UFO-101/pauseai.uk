@@ -12,6 +12,6 @@ export default async function importMembers(): Promise<Response> {
   return new Response(body);
 }
 
-// Two minutes after each Luma import (at most 30 seconds) starts, so the two
-// never overlap but share the database's wake (import-luma.ts).
+// At 19 minutes past every hour, two minutes after a Luma import (at most 30
+// seconds) starts, so the two, which both link supporters, never overlap.
 export const config = { schedule: "19 * * * *" };

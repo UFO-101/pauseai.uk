@@ -1,5 +1,6 @@
 // Every group of examples, in the gallery's order: the site's kit first, then
-// the chrome, then each area and page, then the tools and the staff screens.
+// the chrome, then each area and page, then the tools, and last the staff
+// screens, a group for each part of the staff interface.
 // tests/storyboard/gallery.spec.ts pictures them in this order.
 import type { Group } from "../_components/types";
 import { tokens } from "./tokens";
@@ -18,7 +19,12 @@ import { sentiment } from "./sentiment";
 import { tools } from "./tools";
 import { collateral } from "./collateral";
 import { collateralKit } from "./collateral-kit";
-import { staff } from "./staff";
+import { staffKit } from "./staff-kit";
+import { staffSupporters } from "./staff-supporters";
+import { staffLetters } from "./staff-letters";
+import { staffPoliticians } from "./staff-politicians";
+import { staffMailingsEvents } from "./staff-mailings-events";
+import { staffAdmin } from "./staff-admin";
 
 export const GROUPS: Group[] = [
   tokens,
@@ -37,5 +43,10 @@ export const GROUPS: Group[] = [
   tools,
   collateral,
   collateralKit,
-  staff,
+  staffKit,
+  staffSupporters,
+  staffLetters,
+  staffPoliticians,
+  staffMailingsEvents,
+  staffAdmin,
 ];

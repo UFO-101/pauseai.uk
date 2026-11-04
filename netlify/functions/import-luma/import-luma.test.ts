@@ -9,9 +9,9 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllEnvs());
 
-describe("the hourly Luma import function", () => {
-  it("runs every hour, night and day, and starts the background import with the secret", async () => {
-    expect(config.schedule).toBe("17 * * * *");
+describe("the Luma import function", () => {
+  it("runs every 5 minutes, night and day, and starts the background import with the secret", async () => {
+    expect(config.schedule).toBe("2-59/5 * * * *");
     let auth: string | null = null;
     server.use(
       http.post("https://pauseai.uk/.netlify/functions/import-luma-background", ({ request }) => {

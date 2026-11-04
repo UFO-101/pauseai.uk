@@ -36,7 +36,7 @@ import {
 import type { ReplyHandling } from "./letters";
 import { isMachineReply } from "./postmark-webhooks";
 
-// Reading the connected Gmail accounts, hourly: the replies to PauseAI's
+// Reading the connected Gmail accounts, every 5 minutes: the replies to PauseAI's
 // letters and the bounces of them. For each message that arrived since the
 // last read, the site fetches only the few headers that say what it
 // answers; it fetches whole only the messages in our letters' threads, and

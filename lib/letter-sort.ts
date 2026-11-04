@@ -4,14 +4,14 @@ import type { SortColumns } from "./staff-sort";
 // table's headings. It's newest written first unless another is chosen.
 
 export const LETTER_SORTS: SortColumns<
-  "status" | "from" | "to" | "campaign" | "backend" | "consent" | "created" | "sent" | "replied"
+  "status" | "from" | "to" | "campaign" | "ownWords" | "backend" | "created" | "sent" | "replied"
 > = {
   status: "asc",
   from: "asc",
   to: "asc",
   campaign: "asc",
+  ownWords: "desc",
   backend: "asc",
-  consent: "desc",
   created: "desc",
   sent: "desc",
   replied: "desc",
@@ -31,8 +31,8 @@ export const LETTER_COLUMNS: Record<LetterSort, string> = {
   from: "f.name",
   to: "n.name",
   campaign: "c.title",
+  ownWords: "s.own_words",
   backend: '"backend"',
-  consent: "f.contact_consent",
   created: "l.created_at",
   sent: "l.sent_at",
   replied: `coalesce(l.replied_at, ${AUTO_REPLIED_AT})`,

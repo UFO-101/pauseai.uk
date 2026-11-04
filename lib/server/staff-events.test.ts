@@ -69,6 +69,7 @@ const days = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString();
 beforeEach(() => {
   vi.stubEnv("POSTMARK_SERVER_TOKEN", "server-token");
   vi.stubEnv("FIXTURE_NOW", NOW);
+  vi.stubEnv("SITE_ORIGIN", "https://pauseai.uk");
 });
 afterEach(() => vi.unstubAllEnvs());
 
@@ -183,6 +184,8 @@ describeWithDatabase("staff events", () => {
         owner,
         previous,
         by,
+        // The events page, searched for the event, for whoever gets it.
+        link: "https://pauseai.uk/staff/events?q=Event+evt-1",
       });
 
     // A first owner: only them.
@@ -347,6 +350,8 @@ describeWithDatabase("staff events", () => {
       ["sean@pauseai.uk", staffCopy.events.ownerEmail.subject(2, "Event evt-oxford", "sean@pauseai.uk")],
     ]);
     expect(sent[0].TextBody).toContain("https://luma.com/evt-london-2");
+    // For several, the events page filtered to the owner.
+    expect(sent[0].TextBody).toContain("https://pauseai.uk/staff/events?owner=joseph%40pauseai.uk");
   });
 
   it("leaves an event with no owner when its owner by the rules has no account", async () => {

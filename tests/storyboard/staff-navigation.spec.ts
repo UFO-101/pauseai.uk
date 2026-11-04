@@ -214,6 +214,8 @@ test("An MP signs, and /campaigns shows it", async ({ page, request, flowDatabas
 
   // Signed on their page, in the ask's row of the panel beside their details, with a note.
   await page.getByRole("link", { name: "Polly Placeholder" }).click();
+  // Her page, not the list still showing while it loads: no card for the letter is true of both.
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Polly Placeholder");
   const card = page.getByRole("group", { name: PM_LETTER });
   await expect(card).toHaveCount(0);
   await frame(page, "Polly Placeholder's page");

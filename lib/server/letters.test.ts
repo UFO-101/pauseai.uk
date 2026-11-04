@@ -76,9 +76,9 @@ describeWithDatabase("recentLetters", () => {
     );
 
     const letters = await recentLetters();
-    expect(letters.map((l) => [l.id, l.status, l.mpName, l.politicianId, l.isTest, l.contactConsent])).toEqual([
-      [2, "sending", "Testy McTestface MP", mp, true, false],
-      [1, "sent", "Testy McTestface MP", mp, true, false],
+    expect(letters.map((l) => [l.id, l.status, l.mpName, l.politicianId, l.isTest])).toEqual([
+      [2, "sending", "Testy McTestface MP", mp, true],
+      [1, "sent", "Testy McTestface MP", mp, true],
     ]);
     expect((await recentLetters({ politicianId: mp })).map((l) => l.id)).toEqual([2, 1]);
     expect(await recentLetters({ politicianId: mp + 1 })).toEqual([]);
@@ -151,11 +151,6 @@ describeWithDatabase("recentLetters", () => {
     expect(await ids({ flags: ["important", "connection"] })).toEqual([]);
     expect(await ids({ not: { flags: ["test"] } })).toEqual([]);
     expect(await ids({ not: { flags: ["important"] } })).toEqual([2, 1]);
-    await query(
-      "UPDATE form_entries SET contact_consent = true WHERE id = (SELECT entry_id FROM letters_from_supporters WHERE id = 1)",
-    );
-    expect(await ids({ consent: true })).toEqual([1]);
-    expect(await ids({ consent: false })).toEqual([2]);
     expect(await ids({ supporterId: 1 })).toEqual([1]);
     expect(await ids({ supporterId: 2 })).toEqual([]);
     expect(await ids({ letterId: 1 })).toEqual([1]);
@@ -182,6 +177,9 @@ describeWithDatabase("recentLetters", () => {
     expect(await ids({ key: "created", dir: "asc" })).toEqual([1, 2, 3]);
     expect(await ids({ key: "from", dir: "asc" })).toEqual([3, 2, 1]);
     expect(await ids({ key: "from", dir: "desc" })).toEqual([1, 3, 2]);
+    // None has a draft, so none has own words, and they keep the newest first.
+    expect(await ids({ key: "ownWords", dir: "desc" })).toEqual([3, 2, 1]);
+    expect((await recentLetters({})).map((l) => l.ownWords)).toEqual([null, null, null]);
     // Those with none last, either way.
     expect(await ids({ key: "replied", dir: "desc" })).toEqual([3, 2, 1]);
     expect(await ids({ key: "replied", dir: "asc" })).toEqual([3, 2, 1]);
@@ -368,10 +366,17 @@ describeWithDatabase("a letter for its page", () => {
         expect.objectContaining({
           fromAddress: "test-mp@parliament.example",
           fromSupporter: false,
+          auto: false,
           text: "Dear Jane,\n\nThank you for writing to me.",
         }),
       ],
     });
+    // Noted as an automatic reply, it says so.
+    await query(
+      `UPDATE letter_events e SET status = 'auto_reply' FROM letter_replies r
+       WHERE e.letter_id = r.letter_id AND e.status = 'replied' AND e.details->>'gmailMessageId' = r.gmail_message_id`,
+    );
+    expect((await getSupporterLetter(id))!.sent!.messages).toMatchObject([{ auto: true }]);
     // Where the letters inbox isn't set, in a mailbox we don't know.
     vi.stubEnv("LETTERS_INBOX", "");
     expect((await getSupporterLetter(id))!.gmail).toMatchObject({ mailbox: null });

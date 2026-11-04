@@ -155,9 +155,9 @@ function NewestRun({ job, run }: { job: ImportJob; run: AnyImportRun | undefined
 
 /** /staff/import-data: a card per job, each a link to its page, with how its newest run ended. */
 /** The overview's sections, each the jobs that run that often, in this order. */
-const SCHEDULES = ["hourly", "nightly", "oneOff"] as const;
+const SCHEDULES = ["frequent", "hourly", "nightly", "oneOff"] as const;
 
-/** Every job, a card each, under a heading for how often it runs: hourly, nightly, then the one-off imports. */
+/** Every job, a card each, under a heading for how often it runs: every 5 minutes, hourly, nightly, then the one-off imports. */
 export function ImportOverview({
   newest,
   airtableTable,

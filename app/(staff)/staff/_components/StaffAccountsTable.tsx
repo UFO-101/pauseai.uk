@@ -118,8 +118,9 @@ type AddProblem = "not-pauseai" | "exists";
 
 /**
  * The page's main button, Add staff, which opens a box with the address of
- * someone to add, and Add, which gives them an account at once, with no
- * permissions; their row then sets more. An address not at pauseai.uk, or
+ * someone to add, and beside it Add, the box's main button, which gives
+ * them an account at once, with no permissions; their row then sets more.
+ * While the box is open, Add staff looks pressed (Button.module.css). An address not at pauseai.uk, or
  * in the table already, is refused here.
  */
 export function AddStaff({ accounts, add }: { accounts: StaffAccount[]; add: Action }) {
@@ -135,19 +136,29 @@ export function AddStaff({ accounts, add }: { accounts: StaffAccount[]; add: Act
   };
   const submit = (form: FormData) => add(accountForm(address(form), []));
   return (
-    <Bubble id="add-staff" trigger={buttonClass({ variant: "primary", fit: true })} label={copy.addStaff}>
+    <Bubble
+      id="add-staff"
+      trigger={buttonClass({ variant: "primary", fit: true })}
+      label={copy.addStaff}
+      className={styles.addBubble}
+    >
       <form action={submit} onSubmit={check} aria-label={copy.addTitle} className={styles.add}>
-        <TextInput
-          name="email"
-          type="email"
-          required
-          aria-label={copy.addTitle}
-          placeholder={copy.addTitle}
-          aria-invalid={problem !== undefined}
-        />
-        <SubmitButton variant="ghost" size="small" fit>
-          {copy.add}
-        </SubmitButton>
+        <label htmlFor="add-staff-email" className={styles.addLabel}>
+          {copy.addLabel}
+        </label>
+        <div className={styles.addRow}>
+          <TextInput
+            id="add-staff-email"
+            name="email"
+            type="email"
+            required
+            placeholder={copy.addTitle}
+            aria-invalid={problem !== undefined}
+          />
+          <SubmitButton variant="primary" size="small" fit>
+            {copy.add}
+          </SubmitButton>
+        </div>
         {problem && (
           <FieldError announce="alert">{problem === "exists" ? copy.alreadyThere : copy.notPauseai}</FieldError>
         )}

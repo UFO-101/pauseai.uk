@@ -23,12 +23,13 @@ const statusOf = (status: string) => copy.status[status] ?? status;
  * The letters list's columns, as every list's go (docs/style-guide.md):
  * first its status, leading to the letter's page, as a letter has no
  * name; who it was from (leading to their supporter) and their email, and
- * to (leading to the MP's page), the campaign (leading to its page on
- * the site) and what sent it; whether the sender agreed to hear from us; then when it was
- * written, sent and when the MP replied, or failing that, greyed, when an automatic reply came. A letter from the pauseai.info form
- * is written when its sender filled the form in, and sent later, when
- * Airtable's automation emailed it. Each is a sort (lib/letter-sort.ts),
- * newest written first unless another is chosen.
+ * to (leading to the MP's page), the campaign (leading to its page on the
+ * site), how much of the letter is the sender's own words, and what sent
+ * it; then when it was written, sent and when the MP replied, or failing
+ * that, greyed, when an automatic reply came. A letter from the pauseai.info form is written
+ * when its sender filled the form in, and sent later, when Airtable's
+ * automation emailed it. Each is a sort (lib/letter-sort.ts), newest
+ * written first unless another is chosen.
  */
 const columns: (ListColumn<LetterSummary> & { key: LetterSort })[] = [
   {
@@ -72,19 +73,20 @@ const columns: (ListColumn<LetterSummary> & { key: LetterSort })[] = [
     cell: (l) => <CampaignName slug={l.campaign} title={l.campaignTitle} url={l.campaignUrl} />,
   },
   {
+    key: "ownWords",
+    label: copy.columns.ownWords,
+    short: true,
+    text: (l) => (l.ownWords === null ? null : copy.ownWords(l.ownWords)),
+    // A letter with no draft, as from Airtable: a dash.
+    cell: (l) => (l.ownWords === null ? <Muted>–</Muted> : copy.ownWords(l.ownWords)),
+  },
+  {
     key: "backend",
     label: copy.columns.backend,
     short: true,
     text: (l) => l.backend && copy.backends[l.backend],
     // Nothing yet sent it, as for Sent: a dash.
     cell: (l) => (l.backend ? copy.backends[l.backend] : <Muted>–</Muted>),
-  },
-  {
-    key: "consent",
-    label: copy.columns.consent,
-    short: true,
-    text: (l) => l.contactConsent,
-    cell: (l) => (l.contactConsent ? copy.consent.yes : copy.consent.no),
   },
   {
     key: "created",

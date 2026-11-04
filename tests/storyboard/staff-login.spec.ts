@@ -141,7 +141,7 @@ test("Staff accounts", async ({ page, flowDatabase }, testInfo) => {
   story("Add staff asks for a colleague's address.");
   // Added from Add staff, at the top right, at once: an account with no permissions.
   await page.getByRole("button", { name: staffCopy.accounts.addStaff }).click();
-  await page.getByRole("textbox", { name: staffCopy.accounts.addTitle }).fill(colleague);
+  await page.getByRole("textbox", { name: staffCopy.accounts.addLabel }).fill(colleague);
   await frame(page, "Add staff");
   story("Added, the colleague has an account with no permissions.");
   await page.getByRole("button", { name: staffCopy.accounts.add, exact: true }).click();

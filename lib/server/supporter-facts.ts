@@ -5,13 +5,14 @@ import { query, type Queryable } from "./db";
 // supporter so a page can read it for every supporter at once: when they
 // were first seen (the supporter_first_seen view says how). Brought up to date
 // for the supporters whose records were added or removed, and for everyone by
-// each hourly import, which also catches a record that changed.
+// the Luma and members imports, which also catches a record that changed.
 
 /**
  * Sets first seen to what their records now say for the supporters in
  * `only`, or for every supporter, writing only those that changed. Returns
  * how many did. Every supporter takes about a second at 100,000, so only
- * the hourly imports do that; a few take a fraction of a millisecond.
+ * the Luma and members imports do that, and the Luma import at most hourly
+ * when it changed nothing; a few take a fraction of a millisecond.
  */
 export async function refreshSupporterFacts(db?: Queryable, only?: number[]): Promise<number> {
   const rows = await query(

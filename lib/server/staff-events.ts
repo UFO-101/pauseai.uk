@@ -8,8 +8,9 @@ import { logChange } from "./audit";
 import { query, transaction, type Queryable } from "./db";
 import { send } from "./email";
 import { notifyDomain } from "./outside-services/postmark";
+import { staffLink } from "./notifications";
 
-// Our events on Luma, as the hourly import has them (luma-import.ts), for
+// Our events on Luma, as the Luma import has them (luma-import.ts), for
 // the staff interface's events page, and who on staff owns each
 // (event_owners). Only our own: one another calendar runs and ours lists
 // isn't ours to own. When an owner changes, the new owner is emailed,
@@ -119,7 +120,10 @@ export async function eventsPage(
 /**
  * Emails `owner` that they own `ids` now, whoever chose them, copied to
  * `previous`, the owner before, saying `by` gave it to them; or with no
- * `by`, that the rules did. Returns whom it emailed, none if it wasn't sent.
+ * `by`, that the rules did. It links to the staff events page: for one
+ * event, searched for it, which also suits the owner before, Cc'd; for
+ * several, filtered to the owner. Returns whom it emailed, none if it
+ * wasn't sent.
  */
 async function tellOwner(
   owner: string,
@@ -131,6 +135,8 @@ async function tellOwner(
   const cc = previous && previous !== owner ? previous : null;
   const events = await listEvents(ids);
   const copy = staffCopy.events.ownerEmail;
+  const filter = events.length === 1 ? ["q", events[0].name] : ["owner", owner];
+  const link = staffLink(`/staff/events?${new URLSearchParams([filter])}`, undefined);
   const result = await send(
     {
       From: `PauseAI UK <noreply@${notifyDomain()}>`,
@@ -142,6 +148,7 @@ async function tellOwner(
         owner,
         previous,
         by,
+        link,
       }),
       Tag: "staff-alert",
     },

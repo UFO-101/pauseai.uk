@@ -37,13 +37,12 @@ describe("lettersSearch", () => {
     campaign: [],
     flag: [],
     backend: [],
-    consent: "",
     sort: "",
     dir: "",
     page: "",
   };
 
-  it("filters by a status, a search, whether answered, campaigns, the MP's markers, where from and consent, and sorts", () => {
+  it("filters by a status, a search, whether answered, campaigns, the MP's markers, and where from, and sorts", () => {
     expect(
       lettersSearch({
         status: "sent",
@@ -52,7 +51,6 @@ describe("lettersSearch", () => {
         campaign: ["regulate-letter-pm", "!pauseai-info-deepmind"],
         flag: ["test", "!important"],
         backend: ["airtable", "!gmail"],
-        consent: "yes",
         sort: "from",
         dir: "asc",
         page: "2",
@@ -64,7 +62,6 @@ describe("lettersSearch", () => {
       campaign: ["regulate-letter-pm", "!pauseai-info-deepmind"],
       flag: ["test", "!important"],
       backend: ["airtable", "!gmail"],
-      consent: "yes",
       sort: "from",
       dir: "asc",
       page: "2",
@@ -75,18 +72,14 @@ describe("lettersSearch", () => {
         campaign: ["regulate-letter-pm"],
         flags: ["test"],
         backend: ["airtable"],
-        consent: true,
         not: { campaign: ["pauseai-info-deepmind"], flags: ["important"], backend: ["gmail"] },
         sort: { key: "from", dir: "asc" },
         page: 2,
       },
     });
-    expect(
-      lettersSearch({ answered: "no", consent: "no", backend: "postmark", campaign: "support-sobel-bill" }).filter,
-    ).toEqual({
+    expect(lettersSearch({ answered: "no", backend: "postmark", campaign: "support-sobel-bill" }).filter).toEqual({
       ...none,
       answered: "no",
-      consent: false,
       backend: ["postmark"],
       campaign: ["support-sobel-bill"],
     });
@@ -102,7 +95,6 @@ describe("lettersSearch", () => {
         campaign: ["Not A Slug", "!"],
         flag: "nope",
         backend: "nope",
-        consent: "maybe",
         sort: "nope",
       }).filter,
     ).toEqual(none);
