@@ -84,6 +84,29 @@ test("Asks", async ({ page, request, flowDatabase }) => {
   await frame(page, "Its form");
 });
 
+test("An ask's pages", async ({ page, flowDatabase }) => {
+  story("A hundred and fifty politicians have signed. The answers come a hundred to a page.");
+  runSql(
+    flowDatabase,
+    `WITH people AS (
+       INSERT INTO notable_people (kind, airtable_id, name)
+       SELECT 'politician', 'recMany' || n, 'Signer ' || lpad(n::text, 3, '0') FROM generate_series(1, 150) n RETURNING id
+     )
+     INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, updated_by)
+     SELECT id, 'frontier-ai-letter', 'letter', 'signed', 'jo@pauseai.uk' FROM people`,
+  );
+  await logIn(page, flowDatabase, ["supporters"]);
+  await page.goto(`${BASE}/staff/asks/frontier-ai-letter`);
+  await expect(page.getByText(staffCopy.campaigns.politicians(150))).toBeVisible();
+  await frame(page, "The first page");
+
+  story("Next shows the rest, and the answer chosen stays chosen.");
+  await page.getByRole("link", { name: staffCopy.paging.next }).click();
+  await expect(page).toHaveURL(/page=2/);
+  await expect(page.getByRole("link", { name: "Signer 150" })).toBeVisible();
+  await frame(page, "The second page");
+});
+
 test("Sent emails", async ({ page, flowDatabase }) => {
   story("Sent emails lists every email the site has sent: what it was, who it was to and from, and how it went.");
   await sentLetterId(page, flowDatabase, madeUpAddress("Jane Smith", 42));

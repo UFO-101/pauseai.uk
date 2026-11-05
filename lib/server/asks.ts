@@ -88,15 +88,36 @@ const WRITTEN_TO = `written AS (
   WHERE c.ask = $1 OR m.ask = $1 GROUP BY 1
 )`;
 
+/** Who an ask's answers are, from `written`: those of the status $2, all with none, or with "none" those written to who haven't answered. */
+const ANSWERS_FROM = `FROM notable_people n
+    LEFT JOIN politicians p ON p.id = n.id
+    LEFT JOIN ask_statuses s ON s.notable_person_id = n.id AND s.ask = $1
+    LEFT JOIN written w ON w.id = n.id
+  WHERE CASE WHEN $2::text = 'none' THEN w.id IS NOT NULL AND s.status IS NULL
+    ELSE s.status IS NOT NULL AND ($2::text IS NULL OR s.status = $2::text) END`;
+
 /** An ask's own page: its counts, how many written to haven't answered, how it was put, by date, and a page of its answers. */
-export type AskPageData = AskWithCounts & { fixed: boolean; noAnswer: number; ways: AskWay[]; answers: AskAnswer[] };
+export type AskPageData = AskWithCounts & {
+  fixed: boolean;
+  noAnswer: number;
+  ways: AskWay[];
+  answers: AskAnswer[];
+  /** How many answers there are across all the pages, and which page these are. */
+  answersTotal: number;
+  page: number;
+  pages: number;
+  pageSize: number;
+};
+
+/** Answers on a page of an ask's page. */
+const ANSWERS_PAGE_SIZE = 100;
 
 /**
  * The ask with `slug`, for its page, or undefined for none. Its answers are
  * those of `status`, or with none or blank, all; or with "none", those written
- * to who haven't answered, whoever was written to longest ago first.
+ * to who haven't answered, whoever was written to longest ago first; a page at a time.
  */
-export async function askPageData(slug: string, status?: string): Promise<AskPageData | undefined> {
+export async function askPageData(slug: string, status?: string, page = 1): Promise<AskPageData | undefined> {
   const [ask] = await query<AskWithCounts>(
     `SELECT ${ASK_COLUMNS},
        coalesce((SELECT json_object_agg(c.status, c.count) FROM (
@@ -106,7 +127,7 @@ export async function askPageData(slug: string, status?: string): Promise<AskPag
     [slug],
   );
   if (!ask) return undefined;
-  const [ways, answers, [{ noAnswer }]] = await Promise.all([
+  const [ways, answers, [{ total }], [{ noAnswer }]] = await Promise.all([
     query<AskWay>(
       `SELECT * FROM (
          SELECT 'campaign' AS kind, '/staff/campaigns/' || c.slug AS href, c.title, min(l.created_at) AS "from", max(l.created_at) AS "to", count(l.id)::int AS letters
@@ -122,15 +143,15 @@ export async function askPageData(slug: string, status?: string): Promise<AskPag
     query<AskAnswer>(
       `WITH ${WRITTEN_TO}
        SELECT n.id::int AS "politicianId", n.name, p.constituency, p.party, s.status, w.at AS "lastWrittenTo"
-       FROM notable_people n
-         LEFT JOIN politicians p ON p.id = n.id
-         LEFT JOIN ask_statuses s ON s.notable_person_id = n.id AND s.ask = $1
-         LEFT JOIN written w ON w.id = n.id
-       WHERE CASE WHEN $2::text = 'none' THEN w.id IS NOT NULL AND s.status IS NULL
-         ELSE s.status IS NOT NULL AND ($2::text IS NULL OR s.status = $2::text) END
-       ORDER BY CASE WHEN $2::text = 'none' THEN w.at END, n.name LIMIT 200`,
+       ${ANSWERS_FROM}
+       ORDER BY CASE WHEN $2::text = 'none' THEN w.at END, n.name
+       LIMIT ${ANSWERS_PAGE_SIZE} OFFSET ${(page - 1) * ANSWERS_PAGE_SIZE}`,
       [slug, status || null],
     ),
+    query<{ total: number }>(`WITH ${WRITTEN_TO} SELECT count(*)::int AS total ${ANSWERS_FROM}`, [
+      slug,
+      status || null,
+    ]),
     query<{ noAnswer: number }>(
       `WITH ${WRITTEN_TO}
        SELECT count(*)::int AS "noAnswer" FROM written w
@@ -138,7 +159,17 @@ export async function askPageData(slug: string, status?: string): Promise<AskPag
       [slug],
     ),
   ]);
-  return { ...ask, fixed: FIXED_ASKS.includes(slug), noAnswer, ways, answers };
+  return {
+    ...ask,
+    fixed: FIXED_ASKS.includes(slug),
+    noAnswer,
+    ways,
+    answers,
+    answersTotal: total,
+    page,
+    pages: Math.max(1, Math.ceil(total / ANSWERS_PAGE_SIZE)),
+    pageSize: ANSWERS_PAGE_SIZE,
+  };
 }
 
 /** Every campaign, by title. */

@@ -58,6 +58,8 @@ describeWithDatabase("asks and campaigns", () => {
     await write(newer, "2025-08-02");
     await write(older, "2025-08-01");
     const none = (await askPageData("deepmind-letter", "none"))!;
+    expect(none).toMatchObject({ answersTotal: 2, page: 1, pages: 1 });
+    expect((await askPageData("deepmind-letter", "none", 2))!.answers).toEqual([]);
     expect(none.noAnswer).toBe(2);
     expect(none.answers.map((a) => [a.politicianId, a.status])).toEqual([
       [older, null],

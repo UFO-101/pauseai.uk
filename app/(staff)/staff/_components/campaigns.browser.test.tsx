@@ -247,6 +247,15 @@ describe("AskView", () => {
     await expect.element(none()).toBeVisible();
   });
 
+  it("pages through the answers, keeping the answer chosen", async () => {
+    const path = `/staff/asks/${exampleAskPage.slug}`;
+    await render(<AskView ask={{ ...exampleAskPage, answersTotal: 150, pages: 2 }} answer="signed" />);
+    await says(staffCopy.campaigns.politicians(150));
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.paging.next }))
+      .toHaveAttribute("href", `${path}?answer=signed&page=2`);
+  });
+
   it("gives an ask with a date its day", async () => {
     await render(<AskView ask={{ ...exampleAskPage, date: "2026-11-23" }} answer="" />);
     await says("23 Nov 2026");

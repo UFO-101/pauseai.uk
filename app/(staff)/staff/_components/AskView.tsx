@@ -3,13 +3,14 @@ import { Muted } from "@/components/ui/Text";
 import Tag, { type TagTone } from "@/components/ui/Tag";
 import { ASK_STATUSES } from "@/lib/asks";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { filtersPath, pageParam } from "@/lib/staff-search";
 import type { AskAnswer, AskPageData, AskWay } from "@/lib/server/asks";
 import { staffDate } from "@/lib/staff-time";
 import { answeredOf } from "./AsksTable";
 import Band, { BandFact } from "./ui/Band";
 import Counts from "./ui/Counts";
 import Grid, { Card } from "./ui/Grid";
-import { ListTable, type ListColumn } from "./ui/ListFrame";
+import ListFrame, { type ListColumn } from "./ui/ListFrame";
 import Progress from "./ui/Progress";
 import StaffLink from "./ui/StaffLink";
 import SegmentLinks from "./ui/SegmentLinks";
@@ -167,7 +168,18 @@ export default function AskView({ ask, answer }: { ask: AskPageData; answer: str
                   title: key === answer ? page.showAll : undefined,
                 }))}
               />
-              <ListTable columns={answerColumns} rows={ask.answers} rowKey={(a) => a.politicianId} />
+              <ListFrame
+                count={staffCopy.campaigns.politicians(ask.answersTotal)}
+                total={ask.answersTotal}
+                page={ask.page}
+                pages={ask.pages}
+                pageSize={ask.pageSize}
+                href={(n) => filtersPath(path, { answer, page: "" }, pageParam(n))}
+                columns={answerColumns}
+                rows={ask.answers}
+                rowKey={(a) => a.politicianId}
+                empty={page.none}
+              />
               <p>
                 <StaffLink href={`/staff/politicians?ask=${ask.slug}`}>{page.everyone}</StaffLink>
               </p>

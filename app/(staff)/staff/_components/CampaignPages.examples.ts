@@ -84,6 +84,10 @@ export const exampleAskPage: AskPageData = {
   mailings: 1,
   fixed: false,
   noAnswer: 37,
+  answersTotal: 3,
+  page: 1,
+  pages: 1,
+  pageSize: 100,
   ways: [
     {
       kind: "campaign",
