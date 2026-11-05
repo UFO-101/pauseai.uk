@@ -2,6 +2,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { notifications } from "@/tests/notifications";
+import { query } from "./db";
 import {
   currentPress,
   endPress,
