@@ -55,16 +55,49 @@ export async function recordFailure(job: ImportJob, startedBy: string, error: un
 }
 
 /**
- * Runs a job's work, keeping the failure if it throws, then throwing it on
- * for the caller to log. The work records its own success, with what it found.
+ * Runs a job's work, keeping the failure if it throws and ending any press of
+ * it, then throwing it on for the caller to log. The work records its own success, with what it found.
  */
 export async function keepingFailure<T>(job: ImportJob, startedBy: string, work: () => Promise<T>): Promise<T> {
   try {
     return await work();
   } catch (error) {
     await recordFailure(job, startedBy, error);
+    await endPress(job);
     throw error;
   }
+}
+
+/** Longer than any press can run: a background function's 15 minutes. */
+const PRESS_LASTS = "16 minutes";
+
+/** A job's button pressed and not finished. */
+export type JobPress = { startedBy: string; startedAt: string };
+
+/** The press of `job` that's still running, if any. */
+export async function currentPress(job: ImportJob): Promise<JobPress | undefined> {
+  const [press] = await query<JobPress>(
+    `SELECT started_by AS "startedBy", started_at AS "startedAt" FROM job_presses
+     WHERE job = $1 AND started_at > now() - interval '${PRESS_LASTS}'`,
+    [job],
+  );
+  return press;
+}
+
+/** Marks `job` pressed, unless a press of it is still running: says whether it may go ahead. */
+export async function takePress(job: ImportJob, startedBy: string): Promise<boolean> {
+  const taken = await query(
+    `INSERT INTO job_presses (job, started_by) VALUES ($1, $2)
+     ON CONFLICT (job) DO UPDATE SET started_by = $2, started_at = now()
+     WHERE job_presses.started_at <= now() - interval '${PRESS_LASTS}' RETURNING job`,
+    [job, startedBy],
+  );
+  return taken.length > 0;
+}
+
+/** Marks a press of `job` finished. */
+export async function endPress(job: ImportJob): Promise<void> {
+  await query("DELETE FROM job_presses WHERE job = $1", [job]);
 }
 
 /** A job's newest run, if it has ever run. */

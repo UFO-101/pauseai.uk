@@ -556,7 +556,9 @@ a staff member's permissions keep from them must go in `Withheld`, a sealed
 envelope and muted italics, so it looks the same everywhere: a thread they
 can't read, a line of a politician's history with no sender. It's never a link,
 as there's nothing to open. Something simply left out, a missing column or a
-number that isn't linked, needs no words and no `Withheld`.
+number that isn't linked, needs no words and no `Withheld`. Rows a list leaves
+out get one `Withheld` line over it, saying what isn't shown and why: sent emails
+and the audit log, for an admin without `supporters`.
 
 **Columns the filters fix** are left out: a house tab, one party found,
 one status (the politicians table). It's the filters that decide, never

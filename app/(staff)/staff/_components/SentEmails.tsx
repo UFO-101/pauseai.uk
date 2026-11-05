@@ -2,7 +2,13 @@ import { Muted } from "@/components/ui/Text";
 import Tag from "@/components/ui/Tag";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { SentEmail, SentPerson } from "@/lib/server/sent-emails";
-import { filtersPath, pageParam, SENT_EMAIL_LINKS, type SentEmailsSearch } from "@/lib/staff-search";
+import {
+  filtersPath,
+  pageParam,
+  SENT_EMAIL_LINKS,
+  SENT_EMAILS_WITHOUT_SUPPORTERS,
+  type SentEmailsSearch,
+} from "@/lib/staff-search";
 import { SENT_EMAIL_SORTS, type SentEmailSort } from "@/lib/sent-email-sort";
 import { parseSort, sortHref } from "@/lib/staff-sort";
 import { staffTime } from "@/lib/staff-time";
@@ -10,17 +16,21 @@ import SortHeading from "./SortHeading";
 import FilterBar, { type Filter } from "./ui/FilterBar";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
 import StaffLink from "./ui/StaffLink";
+import Withheld from "./ui/Withheld";
 import styles from "./SentEmails.module.css";
 
 const PATH = "/staff/sent-emails";
 const copy = staffCopy.sentEmails;
 
-const filters: Filter[] = [
+/** The filters, their kinds of email only those this staff member may see. */
+const filtersFor = (supporters: boolean): Filter[] => [
   {
     name: "purpose",
     label: copy.filters.purpose,
     repeat: true,
-    options: Object.entries(copy.purposes).map(([value, label]) => ({ value, label })),
+    options: Object.entries(copy.purposes)
+      .filter(([value]) => supporters || SENT_EMAILS_WITHOUT_SUPPORTERS.includes(value))
+      .map(([value, label]) => ({ value, label })),
   },
   {
     name: "backend",
@@ -119,6 +129,7 @@ export default function SentEmails({
   page,
   pageSize,
   search,
+  supporters = true,
 }: {
   emails: SentEmail[];
   total: number;
@@ -126,6 +137,8 @@ export default function SentEmails({
   page: number;
   pageSize: number;
   search: SentEmailsSearch;
+  /** Whether they may see emails to and from supporters; if not, it says they're left out. */
+  supporters?: boolean;
 }) {
   const kept = { ...search, page: "" };
   const { sort, dir, ...filtering } = kept;
@@ -151,7 +164,17 @@ export default function SentEmails({
   return (
     <>
       <h1 className={styles.heading}>{staffCopy.nav.sentEmails}</h1>
-      <FilterBar path={PATH} values={search} search={{ name: "q", label: copy.search }} filters={filters} />
+      {!supporters && (
+        <p>
+          <Withheld>{copy.withheld}</Withheld>
+        </p>
+      )}
+      <FilterBar
+        path={PATH}
+        values={search}
+        search={{ name: "q", label: copy.search }}
+        filters={filtersFor(supporters)}
+      />
       <ListFrame
         count={copy.total(total)}
         total={total}

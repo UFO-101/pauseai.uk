@@ -15,5 +15,6 @@ export default async function SentEmailsPage({
 }) {
   const { permissions } = await requireStaff("admin");
   const { filter, ...search } = sentEmailsSearch(await searchParams);
-  return <SentEmails {...await listSentEmails(filter, permissions.includes("supporters"))} search={search} />;
+  const supporters = permissions.includes("supporters");
+  return <SentEmails {...await listSentEmails(filter, supporters)} search={search} supporters={supporters} />;
 }

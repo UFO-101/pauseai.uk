@@ -6,6 +6,7 @@ import { startOldLettersImport } from "@/lib/server/old-letters-start";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { type ImportJob, importPath } from "@/lib/import-runs";
+import { endPress, takePress } from "@/lib/server/import-runs";
 import { now } from "@/lib/now";
 import { staffBack } from "@/lib/staff-search";
 import {
@@ -127,68 +128,73 @@ function refreshImport(job: ImportJob): void {
 }
 
 /**
- * Runs an import or check, then refreshes its pages. A failure is in the
- * import log, shown on its page like a nightly one, so it's logged rather
- * than crashing the page.
+ * Runs an import or check, unless a press of it is still running, then
+ * refreshes its pages. A failure is in the import log, shown on its page like
+ * a nightly one, so it's logged rather than crashing the page. One `inBackground`
+ * goes on after this, and ends its press itself.
  */
-async function run(job: ImportJob, work: Promise<unknown>): Promise<void> {
-  try {
-    await work;
-  } catch (error) {
-    console.error(error);
+async function run(job: ImportJob, email: string, work: () => Promise<unknown>, inBackground = false): Promise<void> {
+  if (await takePress(job, email)) {
+    try {
+      await work();
+      if (!inBackground) await endPress(job);
+    } catch (error) {
+      console.error(error);
+      await endPress(job);
+    }
   }
   refreshImport(job);
 }
 
 export async function syncNow(): Promise<void> {
   const { email } = await requireStaff();
-  await run("sync-politicians", syncPoliticians(email));
+  await run("sync-politicians", email, () => syncPoliticians(email));
 }
 
 export async function syncEmailsNow(): Promise<void> {
   const { email } = await requireStaff();
-  await run("sync-emails", syncEmails(email));
+  await run("sync-emails", email, () => syncEmails(email));
 }
 
 export async function importWebFormLettersNow(): Promise<void> {
   const { email } = await requireStaff();
-  await run("import-web-form-letters", importWebFormLetters(email));
+  await run("import-web-form-letters", email, () => importWebFormLetters(email));
 }
 
 export async function importGoToParliamentNow(): Promise<void> {
   const { email } = await requireStaff();
-  await run("import-go-to-parliament", importGoToParliament(email));
+  await run("import-go-to-parliament", email, () => importGoToParliament(email));
 }
 
 /** Starts a press of the import of old letters, as a dry run if its box is ticked. */
 export async function importOldLettersNow(form: FormData): Promise<void> {
   const { email } = await requireStaff();
-  await run("import-old-letters", startOldLettersImport(email, form.get("dryRun") === "on"));
+  await run("import-old-letters", email, () => startOldLettersImport(email, form.get("dryRun") === "on"), true);
 }
 
 export async function checkNow(): Promise<void> {
   const { email } = await requireStaff();
-  await run("check-mps", checkMps(email));
+  await run("check-mps", email, () => checkMps(email));
 }
 
 export async function importControlAiNow(): Promise<void> {
   const { email } = await requireStaff();
-  await run("import-controlai", importControlAiLetter(email));
+  await run("import-controlai", email, () => importControlAiLetter(email));
 }
 
 export async function importLumaNow(): Promise<void> {
   const { email } = await requireStaff();
-  await run("import-luma", importLuma(email));
+  await run("import-luma", email, () => importLuma(email));
 }
 
 export async function importMembersNow(): Promise<void> {
   const { email } = await requireStaff();
-  await run("import-members", importMembers(email));
+  await run("import-members", email, () => importMembers(email));
 }
 
 export async function readGmailNow(): Promise<void> {
   const { email } = await requireStaff();
-  await run("read-gmail", readGmail(email));
+  await run("read-gmail", email, () => readGmail(email));
 }
 
 export async function decideSync(form: FormData): Promise<void> {

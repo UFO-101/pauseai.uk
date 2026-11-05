@@ -32,7 +32,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { query } from "./db";
 import { gmailAccess } from "./gmail-accounts";
 import { keepReply, noteAutoReply } from "./gmail-reading";
-import { keepingFailure, recordRun } from "./import-runs";
+import { endPress, keepingFailure, recordRun } from "./import-runs";
 import { wholeTextOf } from "./letter-threads";
 import { messageIds, parseMime } from "./mime";
 import { addressesOn, headerText, keepOneOff, ONE_OFF_HEADERS, rfcIdOf, senderOf } from "./one-off-emails";
@@ -819,6 +819,7 @@ export function importOldLettersChunk({
     result.searchesDone = searchesDone.n;
     result.titles = await countedTitles();
     result.left = await leftToRead(dryRun);
+    if (!more) await endPress(JOB);
     if (runId) {
       await query("UPDATE import_runs SET result = $2 WHERE id = $1", [runId, JSON.stringify(result)]);
       return { runId, more, result };

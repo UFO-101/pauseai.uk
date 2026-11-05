@@ -6,13 +6,13 @@ import { PARLIAMENTARIANS_TABLE_URL } from "@/lib/server/outside-services/airtab
 import { requireStaff } from "@/lib/server/staff-auth";
 import { staffDownload } from "@/lib/server/staff-download";
 
-/** The whole audit log, newest first, in its columns, the details as logged. */
+/** The audit log, as much of it as this staff member may see, newest first, in its columns, the details as logged. */
 export async function GET(request: NextRequest) {
-  const { email } = await requireStaff("admin");
+  const { email, permissions } = await requireStaff("admin");
   return staffDownload(request, email, async () => ({
     what: staffCopy.changes.title,
     filters: [],
     columns: changeColumns(PARLIAMENTARIANS_TABLE_URL),
-    rows: (await recentChanges(1, null)).changes,
+    rows: (await recentChanges(permissions.includes("supporters"), 1, null)).changes,
   }));
 }

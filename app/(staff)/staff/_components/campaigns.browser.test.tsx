@@ -7,6 +7,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { staffTime } from "@/lib/staff-time";
 import type { Mailing } from "@/lib/server/mailings";
 import AskView from "./AskView";
+import ChangesTable from "./ChangesTable";
 import CampaignLetter from "./CampaignLetter";
 import CampaignsOverview, { CampaignAsk, letterRange } from "./CampaignsOverview";
 import CampaignView from "./CampaignView";
@@ -307,6 +308,16 @@ describe("AskView", () => {
   });
 });
 
+describe("ChangesTable, without the supporters permission", () => {
+  it("says entries about supporters are left out", async () => {
+    const log = { changes: [], total: 0, pages: 1, pageSize: 100 };
+    const { rerender } = await render(<ChangesTable log={log} page={1} airtableTable="x" supporters={false} />);
+    await says(staffCopy.changes.withheld);
+    await rerender(<ChangesTable log={log} page={1} airtableTable="x" />);
+    expect(document.body.textContent).not.toContain(staffCopy.changes.withheld);
+  });
+});
+
 describe("the one-off emails", () => {
   const list = () => (
     <OneOffList
@@ -386,6 +397,12 @@ describe("the one-off emails", () => {
 const NO_SEARCH = { q: "", purpose: [], outcome: [], backend: [], link: [], sort: "", dir: "", page: "" };
 
 describe("SentEmails", () => {
+  it("says emails to and from supporters are left out, and offers only the kinds shown, without the permission", async () => {
+    const props = { emails: [], total: 0, pages: 1, page: 1, pageSize: 100, search: NO_SEARCH };
+    await render(<SentEmails {...props} supporters={false} />);
+    await says(staffCopy.sentEmails.withheld);
+  });
+
   it("sorts by each column but its links, keeping the filters, newest first unless another is chosen", async () => {
     const list = (search: Partial<typeof NO_SEARCH>) => (
       <SentEmails

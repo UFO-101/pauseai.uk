@@ -143,6 +143,34 @@ test("No permissions", async ({ page, request, flowDatabase }) => {
   await frame(page, "The MP's page");
 });
 
+test("An admin without Supporters", async ({ page, request, flowDatabase }) => {
+  story("Jane writes to her MP, and her address bounces. An admin who can't see supporters looks at what went out.");
+  await syncPoliticians(request, BASE);
+  const sender = madeUpAddress("Jane Smith", 32);
+  await writeLetter(page, sender);
+  await postBounce(request, sender);
+  await logIn(page, flowDatabase, ["admin"]);
+  const secrets = runSql(
+    flowDatabase,
+    "SELECT name FROM supporter_identity WHERE name <> '' UNION SELECT email FROM supporter_identity",
+  );
+  expect(secrets).toContain(sender);
+  for (const route of ["/staff/sent-emails", "/staff/audit-log", "/staff/audit-log/download?format=json"]) {
+    const body = await (await page.request.get(`${BASE}${route}`)).text();
+    for (const secret of secrets) expect(body, route).not.toContain(secret);
+  }
+
+  story("Sent emails says those to and from supporters aren't shown.");
+  await page.goto(`${BASE}/staff/sent-emails`);
+  await expect(page.getByText(staffCopy.sentEmails.withheld)).toBeVisible();
+  await frame(page, "The sent emails");
+
+  story("So does the audit log, of its entries about supporters.");
+  await page.goto(`${BASE}/staff/audit-log`);
+  await expect(page.getByText(staffCopy.changes.withheld)).toBeVisible();
+  await frame(page, "The audit log");
+});
+
 test("Blocked emails without Supporters", async ({ page, request, flowDatabase }) => {
   story(
     "Jane writes to an MP whose address bounces her letter. Staff without the Supporters permission can't open Letters to MPs or Supporters' blocked emails.",

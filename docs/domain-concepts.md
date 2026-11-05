@@ -667,7 +667,9 @@ Joseph sent, read from his Sent mail. Admins read them at `/staff/sent-emails`
 someone outside PauseAI as their name, linked to their page, through the row's
 letter, or by the address if only one person has it; its outcome, bounced or a
 spam complaint from `email_problems`; a link to its letter and its campaign or
-mailing. A row never shows the email's text.
+mailing. A row never shows the email's text. An admin without `supporters` sees only
+the kinds with no supporter's details on them (`SENT_EMAILS_WITHOUT_SUPPORTERS`),
+and a line saying the rest aren't shown.
 
 Every address an email is to, Cc'd or Bcc'd to has a name with it: the
 person's own name on their own address, `"Jane Smith"
@@ -739,6 +741,11 @@ job's own page (`/staff/import-data/<slug>`, `importPath()` in
 always its newest and a held run (`lib/server/log-retention.ts`, run
 nightly).
 
+Pressing a job's button marks it running (`job_presses`) until it finishes, or
+for 16 minutes if it dies, and its page says so: a second press of that job meanwhile
+starts nothing. The import of old letters holds its press across its background
+function's calls. Scheduled runs don't take a press.
+
 A new job is a name in `IMPORT_JOBS` and the `import_runs` CHECK, a result
 type, a function that records its run, a slug in `IMPORT_SLUGS`, its
 icons (`ImportIcon.tsx`, where it reads from) and description in `ImportJob.tsx`, its button's Server Action in
@@ -787,9 +794,15 @@ status set by `campaign`, `apply MP sync` and the rest, and `import
 signatories from Airtable`. So do `view supporter` entries, from when each
 opening of a supporter's page was logged (`id`).
 
-Details never carry a supporter's name or address: a supporter is named by
-`id`, and an erasure by its reference, so the log stays after the person is
-gone. A politician's details are public, so theirs are logged in full.
+Details don't name a supporter: one is given by `id`, and an erasure by its
+reference, so the log stays after the person is gone. A blocked address may be
+a supporter's, and a download's filters may name one. A politician's details
+are public, so theirs are logged in full.
+
+An admin without `supporters` sees the log, and its download, without the
+entries about a supporter, downloads, or addresses that aren't a politician's
+(`WITHOUT_SUPPORTERS` in `lib/server/audit.ts`), and a line saying so. A new kind
+of change that names a supporter's details needs adding there.
 
 A new kind of change adds a row here and logs itself the same way. If it
 changes a politician, it names `id` or `politicianId` so `politicianHistory`

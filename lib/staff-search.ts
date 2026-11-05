@@ -126,6 +126,15 @@ export function lettersSearch(
 }
 
 /** What a sent email can lead to, which its Links filter finds. */
+/** The kinds of email with no supporter's details on them: all that staff without `supporters` see. */
+export const SENT_EMAILS_WITHOUT_SUPPORTERS: readonly string[] = [
+  "mailing",
+  "mailing-test",
+  "staff-login",
+  "staff-alert",
+  "staff-report",
+];
+
 export const SENT_EMAIL_LINKS = ["letter", "campaign", "mailing"] as const;
 
 /** The sent emails' URL filters. */

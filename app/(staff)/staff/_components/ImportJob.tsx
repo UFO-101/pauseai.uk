@@ -2,6 +2,7 @@ import { Fragment, type ReactNode } from "react";
 import { site } from "@/lib/content/site";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { CONTROLAI_LETTER_PAGE } from "@/lib/controlai-letter";
+import type { JobPress } from "@/lib/server/import-runs";
 import {
   type AnyImportRun,
   IMPORT_JOBS,
@@ -205,6 +206,7 @@ export function ImportOverview({
 export function ImportJobPage({
   job,
   runs,
+  press,
   run,
   decide,
   airtableTable,
@@ -212,6 +214,8 @@ export function ImportJobPage({
 }: {
   job: ImportJob;
   runs: AnyImportRun[];
+  /** A press of it that's still running, which a second press won't add to. */
+  press?: JobPress;
   /** The Server Action that runs the job now. */
   run: (form: FormData) => void | Promise<void>;
   /** Applies or discards a held politician sync. */
@@ -234,6 +238,7 @@ export function ImportJobPage({
       <p>
         <Intro job={job} airtableTable={airtableTable} />
       </p>
+      {press && <Strip tone="amber">{words.running(press.startedBy, staffTime(press.startedAt))}</Strip>}
       <JobActions
         action={run}
         label={ABOUT[job].button}

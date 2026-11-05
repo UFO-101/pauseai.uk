@@ -1658,6 +1658,8 @@ export const staffCopy = {
     noText: "We've lost the text.",
   },
   sentEmails: {
+    // Over the list, for an admin without the supporters permission.
+    withheld: "Emails to and from supporters are not shown, as you don't have the supporters permission.",
     search: "Address or subject",
     total: (n: number) => `${n} ${n === 1 ? "email" : "emails"}`,
     none: "No emails match.",
@@ -1902,6 +1904,9 @@ export const staffCopy = {
     luma: "Luma",
     gmail: "Gmail",
     nightly: "Nightly",
+    // On a job's page, while a press of it is still running.
+    running: (who: string, when: string) =>
+      `⁂ Running, started by ${who} at ${when}. Pressing again won't start another.`,
     frequent: "Every 5 minutes",
     hourly: "Hourly",
     oneOff: "One-off",
@@ -2101,6 +2106,8 @@ export const staffCopy = {
       "Only write notes you'd be happy for them to read (as they can via GDPR). Avoid writing about health, beliefs or private life.",
   },
   changes: {
+    // Over the list, for an admin without the supporters permission.
+    withheld: "Entries about supporters are not shown, as you don't have the supporters permission.",
     title: "Audit log",
     // Over the list: how many entries there are.
     total: (n: number) => `${n} ${n === 1 ? "entry" : "entries"}`,

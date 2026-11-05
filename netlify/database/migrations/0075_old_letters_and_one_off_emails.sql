@@ -157,3 +157,11 @@ INSERT INTO staff_nav_seen (email, page, first_seen_at)
 SELECT a.email, p.page, '2000-01-01'
 FROM staff_accounts a CROSS JOIN unnest(ARRAY['supporters', 'supporterEmails', 'politicians', 'asks', 'mailings',
   'mpEmails', 'events', 'import', 'accounts', 'changes']) AS p (page);
+
+-- A job's button pressed and not finished, so a second press doesn't start
+-- another. A press that dies is ignored once it's older than any can run.
+CREATE TABLE job_presses (
+  job text PRIMARY KEY,
+  started_by text NOT NULL,
+  started_at timestamptz NOT NULL DEFAULT now()
+);

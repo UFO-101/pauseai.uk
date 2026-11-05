@@ -77,6 +77,18 @@ test("The old letters import fails", async ({ page, flowDatabase }) => {
   await frame(page, "A failed run");
 });
 
+test("Pressing while it's running", async ({ page, flowDatabase }) => {
+  story("Someone's press is still running. The job's page says so, and pressing again starts nothing.");
+  await logIn(page, flowDatabase, ["supporters", "admin"]);
+  runSql(flowDatabase, "INSERT INTO job_presses (job, started_by) VALUES ('import-old-letters', 'jo@pauseai.uk')");
+  await page.goto(`${BASE}${importPath("import-old-letters")}`);
+  await expect(page.getByText("jo@pauseai.uk", { exact: false }).first()).toBeVisible();
+  await page.getByRole("button", { name: words.importNow }).click();
+  await expect(page.getByText(staffCopy.runs.status.failed)).toHaveCount(0);
+  expect(runSql(flowDatabase, "SELECT count(*) FROM import_runs WHERE job = 'import-old-letters'")).toEqual(["0"]);
+  await frame(page, "Already running");
+});
+
 test("An old letter's page", async ({ page, request, flowDatabase }) => {
   story("A letter that fits its mailing's text is rebuilt from it, with what it had of its own.");
   await ready(page, flowDatabase, request);

@@ -1,5 +1,6 @@
 import "server-only";
 import type { SentEmailSort } from "@/lib/sent-email-sort";
+import { SENT_EMAILS_WITHOUT_SUPPORTERS } from "@/lib/staff-search";
 import type { SortSpec } from "@/lib/staff-sort";
 import { query } from "./db";
 
@@ -76,12 +77,9 @@ const ONE_POLITICIAN = (
   column: string,
 ) => `(SELECT CASE WHEN count(*) = 1 THEN json_build_object('name', min(n.name), 'href', '/staff/politicians/' || min(n.id)) END
     FROM notable_people n WHERE lower(n.email) = ${column})`;
-const ONE_SUPPORTER = (
-  column: string,
-  supporters: boolean,
-) => `(SELECT CASE WHEN count(DISTINCT k.supporter_id) = 1 THEN json_build_object(
+const ONE_SUPPORTER = (column: string) => `(SELECT CASE WHEN count(DISTINCT k.supporter_id) = 1 THEN json_build_object(
       'name', (SELECT i.name FROM supporter_identity i WHERE i.supporter_id = min(k.supporter_id) AND i.name IS NOT NULL ORDER BY i.seen_at DESC LIMIT 1),
-      'href', ${supporters ? `'/staff/supporters/' || min(k.supporter_id)` : "NULL"}) END
+      'href', '/staff/supporters/' || min(k.supporter_id)) END
     FROM supporter_links k WHERE k.matched_value = ${column} AND ${column} NOT LIKE '%@pauseai.%')`;
 
 /** A page of the send log, newest first, and how many the filter finds. */
@@ -99,12 +97,14 @@ export async function listSentEmails(
     not?.backend ?? null,
     link ?? null,
     not?.link ?? null,
+    supporters ? null : SENT_EMAILS_WITHOUT_SUPPORTERS,
   ];
   const where = `($1::text IS NULL OR e.address ILIKE $1 OR e.subject ILIKE $1 OR e.from_address ILIKE $1)
     AND ($2::text[] IS NULL OR e.purpose = ANY($2)) AND ($3::text[] IS NULL OR ${OUTCOME} = ANY($3))
     AND ($4::text[] IS NULL OR e.backend = ANY($4)) AND ($5::text[] IS NULL OR e.purpose <> ALL($5))
     AND ($6::text[] IS NULL OR ${OUTCOME} <> ALL($6)) AND ($7::text[] IS NULL OR e.backend <> ALL($7))
-    AND ($8::text[] IS NULL OR ${HAS_LINK("$8")}) AND ($9::text[] IS NULL OR NOT ${HAS_LINK("$9")})`;
+    AND ($8::text[] IS NULL OR ${HAS_LINK("$8")}) AND ($9::text[] IS NULL OR NOT ${HAS_LINK("$9")})
+    AND ($10::text[] IS NULL OR e.purpose = ANY($10))`;
   const [emails, [{ total }]] = await Promise.all([
     query<SentEmail>(
       `SELECT e.id::int AS id, e.at, e.purpose, e.imported, e.address, ${OUTCOME} AS outcome, ${PROBLEM} AS problem, e.backend,
@@ -118,7 +118,7 @@ export async function listSentEmails(
          coalesce(
            CASE WHEN lower(n.email) = e.address OR e.purpose IN ('letter', 'mailing') THEN json_build_object('name', n.name, 'href', '/staff/politicians/' || n.id) END,
            CASE WHEN lower(trim(f.email)) = e.address THEN json_build_object('name', f.name, 'href', ${supporters ? `(SELECT '/staff/supporters/' || k.supporter_id FROM supporter_links k WHERE k.form_entry_id = f.id)` : "NULL"}) END,
-           ${ONE_POLITICIAN("e.address")}, ${ONE_SUPPORTER("e.address", supporters)}) AS "to",
+           ${ONE_POLITICIAN("e.address")}, ${supporters ? ONE_SUPPORTER("e.address") : "NULL"}) AS "to",
          CASE WHEN l.kind = 'supporter' AND e.purpose IN ('letter', 'office-notice') THEN json_build_object('name', f.name, 'href', ${supporters ? `(SELECT '/staff/supporters/' || k.supporter_id FROM supporter_links k WHERE k.form_entry_id = f.id)` : "NULL"})
               WHEN l.kind = 'supporter' AND e.purpose = 'relay' AND lower(trim(f.email)) = e.address THEN json_build_object('name', n.name, 'href', '/staff/politicians/' || n.id) END AS "from"
        FROM email_sends e LEFT JOIN letters l ON l.id = e.letter_id LEFT JOIN notable_people n ON n.id = l.notable_person_id

@@ -1308,6 +1308,16 @@ ALTER TABLE public.import_runs ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY 
 );
 
 --
+-- Name: job_presses; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.job_presses (
+    job text NOT NULL,
+    started_by text NOT NULL,
+    started_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
 -- Name: letter_events; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2087,6 +2097,13 @@ ALTER TABLE ONLY public.form_entry_luma
 
 ALTER TABLE ONLY public.import_runs
     ADD CONSTRAINT import_runs_pkey PRIMARY KEY (id);
+
+--
+-- Name: job_presses job_presses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.job_presses
+    ADD CONSTRAINT job_presses_pkey PRIMARY KEY (job);
 
 --
 -- Name: letter_events letter_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -

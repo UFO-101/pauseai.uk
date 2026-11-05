@@ -91,9 +91,10 @@ describeWithDatabase("the sent emails", () => {
     expect(emails[1]).toMatchObject({ to: sender, from: politician });
     expect(emails[0]).toMatchObject({ to: politician, from: sender });
     // An admin without supporters sees their name with no link.
+    // Without the permission, none of a supporter's emails, however it's searched.
     const limited = await listSentEmails({}, false);
-    expect(limited.emails[3].from).toEqual({ name: "Sam Sender", href: null });
-    expect(limited.emails[2].to).toEqual({ name: "Sam Sender", href: null });
+    expect(JSON.stringify(limited)).not.toContain("Sam Sender");
+    expect((await listSentEmails({ search: "Sam" }, false)).total).toBe(0);
   });
 
   it("links a mailing's letter through its mailing, tags an imported one, and a test has no link", async () => {
@@ -244,5 +245,11 @@ describeWithDatabase("the sent emails", () => {
     expect((await sorted("what", "asc")).slice(0, 2)).toEqual(["d@example.com", "a@example.com"]);
     expect((await sorted("backend", "asc"))[0]).toBe("d@example.com");
     expect((await sorted("from", "asc"))[0]).toBe("d@example.com");
+    // A staff email to someone a supporter shares an address with doesn't name them without the permission.
+    const allowed = await listSentEmails({}, false);
+    expect(allowed.emails.map((e) => e.purpose)).not.toContain("letter");
+    expect(allowed.emails.every((e) => e.to === null || e.to.href === null || e.to.href.includes("politicians"))).toBe(
+      true,
+    );
   });
 });

@@ -2441,6 +2441,15 @@ describe("ImportOverview", () => {
 });
 
 describe("ImportJobPage", () => {
+  it("says when a press of it is still running", async () => {
+    const props = { job: "sync-emails" as const, runs: [], run: vi.fn(), decide: vi.fn(), airtableTable: "x" };
+    const press = { startedBy: "jo@pauseai.uk", startedAt: "2026-10-21T11:47:00Z" };
+    const { rerender } = await render(<ImportJobPage {...props} press={press} />);
+    expect(document.body.textContent).toContain(staffCopy.import.running(press.startedBy, staffTime(press.startedAt)));
+    await rerender(<ImportJobPage {...props} />);
+    expect(document.body.textContent).not.toContain(press.startedBy);
+  });
+
   it("leads back to the overview, names the job with its icons and schedule, runs it, and lists every run by day", async () => {
     const run = vi.fn();
     const { fn, sent } = action();
