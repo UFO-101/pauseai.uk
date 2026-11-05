@@ -66,10 +66,14 @@ canvas: https://claude.ai/artifact/1aTdfQjiCGiuN2zesjGBdG
   Gmail; for a text the WhatsApp business account's name, number and
   picture. (A politicians' mailing's Sent from is its second section,
   before the writing, as the letters go in that person's voice.)
-- **A text's words** are an approved template or new words, chosen in
-  Write. New words are sent to WhatsApp for approval from the Send
-  section, and the draft waits, saying so, until they're approved
-  (`plans/supporters-phone.md`, "Templates").
+- **A text's words** are a template WhatsApp has approved, picked in
+  Write, or new words. Scheduling a text on new words sends them for
+  approval and holds the text, "Scheduled, waiting for WhatsApp's
+  approval", on its page and in the list; approved, it goes at the
+  time chosen, or at the next hourly run if that has passed; rejected,
+  it's a draft again with the reason in plain words and what to do,
+  and the writer is emailed, as they are if it's still waiting an hour
+  before it's due (`plans/supporters-phone.md`, "Templates").
 - **Fields a supporter may not have.** No field is everyone's: some have
   no name, most no postcode, so no MP. A politicians' mailing with a
   field some recipients lack can't be scheduled; a message can. Each

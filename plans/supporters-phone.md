@@ -153,15 +153,18 @@ An easy Stop button means people stop rather than block us.
    Meta charges for each delivered message, by category
    ([rate card](https://whatsappbusiness.com/products/platform-pricing/)).
 2. Templates. WhatsApp only sends approved templates, so a text's
-   words are either a template Meta has already approved, chosen from
-   those we have in the writer, or new words, which go through a
-   review stage before the text can be scheduled. A draft with new
-   words has a button to send them for approval; it then waits, with
-   the strip saying so and Schedule greyed, until Meta approves or
-   rejects them, usually within a day, and the writer is emailed
-   either way. Changing the words withdraws the request. An approved
-   template's words can't be changed; choosing New words starts
-   again. The site submits new words to Meta as a template: the `marketing`
+   words are either a template Meta has already approved, picked in
+   the writer from those we have, or new words. Scheduling a text on
+   new words sends them for approval and holds the text until Meta
+   decides, usually within a day: its page and the list say it's
+   scheduled and waiting. Approved, it goes at the time chosen, or at
+   the next hourly run if that has passed. Rejected, it's a draft
+   again, and the writer is emailed, as they are if it's still
+   waiting an hour before it's due. Meta's reasons are codes, so the
+   page says the code's meaning in plain words, and what to do when
+   Meta recommends something. An approved template's words can't be
+   changed; choosing New words starts again. The site submits new
+   words to Meta as a template: the `marketing`
    category (a utility template must be non-promotional and about the
    person's own booking or account, and Meta approves anything else as
    marketing anyway), `en_GB`, a body with named parameters for the
@@ -172,14 +175,13 @@ An easy Stop button means people stop rather than block us.
    rejected as a duplicate
    ([review](https://developers.facebook.com/documentation/business-messaging/whatsapp/templates/template-review)).
    The mailing then waits:
-   - *Pending*: Meta decides within 24 hours, so a mailing can't be
-     scheduled sooner. The site reads the status back hourly and by the
-     `message_template_status_update` webhook.
-   - *Approved*: the mailing can go. Meta may have changed the category
-     to marketing; the site records what it was approved as.
-   - *Rejected*: the mailing shows Meta's reason, and staff change the
-     words and resubmit, as often as needed, or appeal with a sample,
-     decided within 24 hours.
+   - *Pending*: Meta decides within 24 hours. The site reads the status
+     back hourly and by the `message_template_status_update` webhook.
+   - *Approved*: the mailing goes at its time. Meta may have changed the
+     category to marketing; the site records what it was approved as.
+   - *Rejected*: the mailing is a draft again, showing the reason in
+     plain words, and staff change the words and schedule it again, as
+     often as needed, or appeal with a sample, decided within 24 hours.
    - *Paused* or *disabled*, after approval, on blocks, reports or
      low read rates: the mailing stops, and the words must change before
      it goes again.
