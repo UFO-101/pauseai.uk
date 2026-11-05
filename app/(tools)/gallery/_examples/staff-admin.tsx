@@ -181,8 +181,7 @@ const RUNS: Record<ImportJob, Variant> = {
     ),
   },
   "import-old-letters": {
-    label:
-      "A press of the import of old letters, with more to read; a dry run that Gmail stopped; hiding who mail is from",
+    label: "A press of the import of old letters, with more to read; one that Gmail stopped; hiding who mail is from",
     render: () => (
       <StaffPage as="div">
         <Run
@@ -193,7 +192,11 @@ const RUNS: Record<ImportJob, Variant> = {
         <Run
           run={exampleRun(
             "import-old-letters",
-            { ...exampleOldLettersResult, dryRun: true, stoppedBy: "gmail" },
+            {
+              ...exampleOldLettersResult,
+              stoppedBy: "gmail",
+              stoppedWhy: "Gmail answered 403 for /messages/1a2b: Too many",
+            },
             { id: 2, startedBy: "jo@pauseai.uk" },
           )}
           open
@@ -635,10 +638,11 @@ export const staffAdmin: Group = {
       file: "app/(staff)/staff/_components/ImportJob.tsx",
       variants: [
         {
-          label: "Every job: one stopped short, one held, one failed, one never run",
+          label: "Every job: one stopped short, one running, one held, one failed, one never run",
           render: () => (
             <StaffPage as="div">
               <ImportOverview
+                presses={[undefined, { startedBy: "jo@pauseai.uk", startedAt: "2026-10-21T11:47:00Z" }]}
                 newest={[
                   exampleRun(
                     "import-luma",
@@ -682,6 +686,14 @@ export const staffAdmin: Group = {
           render: () => (
             <StaffPage as="div">
               <ImportJobPageExample never />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "A press still running: the earlier runs plain",
+          render: () => (
+            <StaffPage as="div">
+              <ImportJobPageExample running />
             </StaffPage>
           ),
         },

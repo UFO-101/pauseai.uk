@@ -1,4 +1,5 @@
 import type { APIRequestContext, Page } from "@playwright/test";
+import { exampleOldLettersResult } from "@/app/(staff)/staff/_components/CampaignPages.examples";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { importPath } from "@/lib/import-runs";
 import { connectLettersInbox, databaseUrl, runSql } from "@/scripts/fresh-database.mjs";
@@ -29,7 +30,7 @@ async function ready(page: Page, database: string, request: APIRequestContext) {
 }
 
 /** Presses Import old letters, and waits for a new run that's finished. */
-async function press(page: Page, database: string, dryRun = false) {
+async function press(page: Page, database: string) {
   const finished = () =>
     runSql(
       database,
@@ -37,27 +38,21 @@ async function press(page: Page, database: string, dryRun = false) {
     )[0];
   const before = finished();
   await page.goto(`${BASE}${importPath("import-old-letters")}`);
-  if (dryRun) await page.getByRole("checkbox", { name: words.dryRun }).check();
   await page.getByRole("button", { name: words.importNow }).click();
   await expect.poll(finished).not.toBe(before);
   await page.reload();
 }
 
 test("Import old letters", async ({ page, request, flowDatabase }) => {
-  story("Staff run the import as a dry run first. It changes nothing, and reports what it would join, by mailing.");
+  story(
+    "Staff press the import. It joins each letter to its sent email, reads the replies, and keeps the rest as one-off emails.",
+  );
   await ready(page, flowDatabase, request);
   await page.goto(`${BASE}${importPath("import-old-letters")}`);
   await expect(page.getByText(words.never)).toBeVisible();
   await frame(page, "The job's page");
-  await press(page, flowDatabase, true);
-  expect(runSql(flowDatabase, "SELECT count(*) FROM one_off_messages")).toEqual(["0"]);
-  await expect(page.getByRole("heading", { name: words.joined })).toBeVisible();
-  await frame(page, "The dry run's result");
-
-  story(
-    "Then they press it for real. It joins each letter to its sent email, reads the replies, and keeps the rest as one-off emails.",
-  );
   await press(page, flowDatabase);
+  await expect(page.getByRole("heading", { name: words.joined })).toBeVisible();
   await expect(page.getByText("Neil Nobody <neil.nobody@example.com>: Volunteering").first()).toBeVisible();
   await frame(page, "What it did");
 
@@ -80,13 +75,22 @@ test("The import fails", async ({ page, flowDatabase }) => {
 test("A second press", async ({ page, flowDatabase }) => {
   story("The import is already running. Its page says so, and pressing again starts nothing.");
   await logIn(page, flowDatabase, ["supporters", "admin"]);
+  // The run before it stopped short, and this one has saved what it has read so far.
+  const stopped = JSON.stringify(exampleOldLettersResult);
+  runSql(
+    flowDatabase,
+    `INSERT INTO import_runs (job, started_by, status, result, at) VALUES
+       ('import-old-letters', 'jo@pauseai.uk', 'ok', '${stopped}', '2026-11-01T10:00:00Z')`,
+  );
   runSql(flowDatabase, "INSERT INTO job_presses (job, started_by) VALUES ('import-old-letters', 'jo@pauseai.uk')");
   await page.goto(`${BASE}${importPath("import-old-letters")}`);
   await expect(page.getByText("jo@pauseai.uk", { exact: false }).first()).toBeVisible();
   await page.getByRole("button", { name: words.importNow }).click();
   await expect(page.getByText(staffCopy.runs.status.failed)).toHaveCount(0);
-  expect(runSql(flowDatabase, "SELECT count(*) FROM import_runs WHERE job = 'import-old-letters'")).toEqual(["0"]);
+  expect(runSql(flowDatabase, "SELECT count(*) FROM import_runs WHERE job = 'import-old-letters'")).toEqual(["1"]);
   await frame(page, "Already running");
+  await page.goto(`${BASE}/staff/import-data`);
+  await frame(page, "Running, on the list of imports");
 });
 
 test("An old letter's page", async ({ page, request, flowDatabase }) => {

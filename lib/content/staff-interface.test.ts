@@ -161,7 +161,6 @@ it("says one and many of each of the new pages' counts", () => {
     expect(words[0]).not.toBe(words[1]);
   }
   const run = {
-    dryRun: false,
     finished: true,
     read: 1,
     left: 0,
@@ -172,7 +171,7 @@ it("says one and many of each of the new pages' counts", () => {
     postmarkTexts: 0,
   };
   expect(oldLetters.result(run)).toContain("all done");
-  expect(oldLetters.result({ ...run, dryRun: true, finished: false })).not.toContain("all done");
+  expect(oldLetters.result({ ...run, finished: false })).not.toContain("all done");
 });
 
 it("says which inbox the one-off emails are copied to", () => {

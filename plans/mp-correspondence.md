@@ -250,8 +250,6 @@ to press as often as needed, as it skips what's kept.
   from their addresses and domains; the group's mail, by
   `list:policy@pauseai.uk OR list:policy-archive@pauseai.uk`; and policy@'s
   own mail, for the Bcc'd letters since 29 October 2026.
-- **Dry run:** a tick box that writes nothing and reports what would be
-  joined, counts per mailing, and anything not joined.
 
 Its order: make the new mailings, then copy the form letters' text, then
 read each sent email and join it, then read the replies, then keep the
@@ -407,7 +405,7 @@ page to `STAFF_SECTIONS` (`lib/staff-sections.ts`).
    text; a storyboard flow for the job, a legacy letter's page, the one-off
    emails, the account's switch, campaigns, asks, sent emails and the "new"
    tag; a gallery example for each new component; and the CI gate.
-3. **After merging:** one dry run, then real runs. Check the site's Gmail
+3. **After merging:** real runs. Check the site's Gmail
    reads stay clean in the import log.
 
 ### Data protection

@@ -17,7 +17,7 @@ const start = (authorization?: string) =>
     new Request("https://pauseai.uk/.netlify/functions/import-old-letters-background", {
       method: "POST",
       headers: authorization ? { authorization } : {},
-      body: JSON.stringify({ startedBy: "jo@pauseai.uk", dryRun: true }),
+      body: JSON.stringify({ startedBy: "jo@pauseai.uk" }),
     }),
   );
 
@@ -37,10 +37,7 @@ describe("the background import of old letters", () => {
   it("asks the site again until it says it's done, keeping its run", async () => {
     const calls = site(2);
     await start("Bearer s3cret");
-    expect(calls).toEqual([
-      { startedBy: "jo@pauseai.uk", dryRun: true },
-      { startedBy: "jo@pauseai.uk", dryRun: true, runId: 7 },
-    ]);
+    expect(calls).toEqual([{ startedBy: "jo@pauseai.uk" }, { startedBy: "jo@pauseai.uk", runId: 7 }]);
   });
 
   it("does nothing for a call without the secret, or with none set", async () => {

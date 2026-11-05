@@ -362,7 +362,7 @@ describeWithDatabase("staff Server Actions", () => {
         () => new HttpResponse(null, { status: 202 }),
       ),
     );
-    await importOldLettersNow(new FormData());
+    await importOldLettersNow();
     expect(await query("SELECT started_by AS by FROM job_presses")).toEqual([{ by: "jo@pauseai.uk" }]);
     server.use(
       http.post(
@@ -371,13 +371,13 @@ describeWithDatabase("staff Server Actions", () => {
       ),
     );
     await query("DELETE FROM job_presses");
-    await importOldLettersNow(new FormData());
+    await importOldLettersNow();
     expect(await query("SELECT 1 FROM job_presses")).toEqual([]);
   });
 
   it("keeps a failed press of the import of old letters as a failed run, rather than crashing", async () => {
     vi.stubEnv("DATA_FIXTURES", "1");
-    await expect(importOldLettersNow(new FormData())).resolves.toBeUndefined();
+    await expect(importOldLettersNow()).resolves.toBeUndefined();
     expect(await query(`SELECT status, error FROM import_runs WHERE job = 'import-old-letters'`)).toEqual([
       { status: "failed", error: "joseph@pauseai.uk's Gmail isn't connected" },
     ]);
@@ -385,21 +385,12 @@ describeWithDatabase("staff Server Actions", () => {
     vi.stubEnv("DATA_FIXTURES", "");
   });
 
-  it("presses the import of old letters, as a dry run if ticked", async () => {
+  it("presses the import of old letters", async () => {
     vi.stubEnv("DATA_FIXTURES", "1");
-    const form = (values: Record<string, string>) => {
-      const data = new FormData();
-      for (const [name, value] of Object.entries(values)) data.set(name, value);
-      return data;
-    };
     await connectTestGmail("joseph@pauseai.uk");
     await connectTestGmail("policy@pauseai.uk");
-    await importOldLettersNow(form({ dryRun: "on" }));
-    await importOldLettersNow(form({}));
-    const presses = await query<{ dry: string }>(
-      `SELECT result->>'dryRun' AS dry FROM import_runs WHERE job = 'import-old-letters' ORDER BY id`,
-    );
-    expect(presses).toEqual([{ dry: "true" }, { dry: "false" }]);
+    await importOldLettersNow();
+    expect(await query("SELECT 1 FROM import_runs WHERE job = 'import-old-letters'")).toHaveLength(1);
     vi.stubEnv("DATA_FIXTURES", "");
   }, 30_000);
 

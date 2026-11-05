@@ -558,7 +558,7 @@ export const staffKit: Group = {
       file: "app/(staff)/staff/_components/ui/Strip.tsx",
       variants: [
         {
-          label: "Each tone: plain, green, amber, red and dark, with an action at the right",
+          label: "Each tone: plain, green, amber, red, blue and dark, with an action at the right",
           render: () => (
             <StaffPage as="div">
               <div style={{ display: "grid", gap: "8px" }}>
@@ -579,6 +579,9 @@ export const staffKit: Group = {
                 >
                   <span>MP import would change 42 MPs</span>
                   <span>Check it, and approve or decline it.</span>
+                </Strip>
+                <Strip tone="blue">
+                  <span>Running, started by jo@pauseai.uk</span>
                 </Strip>
                 <Strip
                   tone="red"
@@ -825,7 +828,7 @@ export const staffKit: Group = {
           label: "Waiting, and broken",
           render: () => (
             <StaffPage as="div">
-              <AlertIcon tone="amber" /> <AlertIcon tone="red" />
+              <AlertIcon tone="amber" /> <AlertIcon tone="red" /> <AlertIcon tone="blue" />
             </StaffPage>
           ),
         },

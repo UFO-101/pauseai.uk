@@ -2,7 +2,7 @@ import { campaigns } from "@/lib/content/email-your-mp";
 import type { CampaignSummary } from "@/lib/server/campaigns";
 import { describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
-import { page, userEvent } from "vitest/browser";
+import { page } from "vitest/browser";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { staffTime } from "@/lib/staff-time";
 import type { Mailing } from "@/lib/server/mailings";
@@ -24,8 +24,6 @@ import {
   exampleSentEmails,
   exampleVersions,
 } from "./CampaignPages.examples";
-import { ImportJobPage } from "./ImportJob";
-import JobActions from "./JobActions";
 import LetterThread from "./LetterThread";
 import { exampleThread } from "./LetterThread.examples";
 import MailEmail from "./MailEmail";
@@ -492,11 +490,17 @@ describe("the import of old letters' run", () => {
     expect(document.body.textContent).not.toContain(words.stoppedByGmail);
     await rerender(
       <Run
-        run={exampleRun("import-old-letters", { ...exampleOldLettersResult, stoppedBy: "gmail", unreadable: [] })}
+        run={exampleRun("import-old-letters", {
+          ...exampleOldLettersResult,
+          stoppedBy: "gmail",
+          stoppedWhy: "Gmail answered 403: too many",
+          unreadable: [],
+        })}
         open
       />,
     );
     expect(document.body.textContent).toContain(words.stoppedByGmail);
+    expect(document.body.textContent).toContain("Gmail answered 403: too many");
     expect(document.body.textContent).not.toContain("Jane Smith");
     await says(`${words.matchedNothing(1)} ${words.onlyWithSupporters}`);
     await rerender(
@@ -526,24 +530,6 @@ describe("the import of old letters' run", () => {
     await says("unnamed: 1");
     await rerender(<Run run={exampleFailedRun("import-old-letters", "Gmail said no", {})} open />);
     await says("Gmail said no");
-  });
-
-  it("offers its dry run in a box that goes with the press", async () => {
-    const pressed: (string | null)[] = [];
-    await render(
-      <JobActions
-        action={(form) => {
-          pressed.push(form.get("dryRun") as string | null);
-        }}
-        label="Import"
-        tick={{ name: "dryRun", label: "Dry run" }}
-      />,
-    );
-    await userEvent.click(page.getByRole("button", { name: "Import" }));
-    await expect.poll(() => pressed).toEqual([null]);
-    await userEvent.click(page.getByRole("checkbox", { name: "Dry run" }));
-    await userEvent.click(page.getByRole("button", { name: "Import" }));
-    await expect.poll(() => pressed).toEqual([null, "on"]);
   });
 });
 
@@ -644,16 +630,6 @@ describe("PageIntro", () => {
 });
 
 describe("the rest", () => {
-  it("gives the import of old letters its box for a dry run, on its page alone", async () => {
-    const page_ = (job: "import-old-letters" | "check-mps") => (
-      <ImportJobPage job={job} runs={[]} run={() => {}} decide={() => {}} airtableTable="x" />
-    );
-    const { rerender } = await render(page_("import-old-letters"));
-    await expect.element(page.getByRole("checkbox", { name: staffCopy.oldLetters.dryRun })).toBeVisible();
-    await rerender(page_("check-mps"));
-    expect(page.getByRole("checkbox").query()).toBeNull();
-  });
-
   it("lists a politician's one-off emails in their history, one they can't read said so", async () => {
     await render(
       <PoliticianDetails

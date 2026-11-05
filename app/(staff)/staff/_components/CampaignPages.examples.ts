@@ -245,7 +245,6 @@ export const exampleSentEmails: SentEmail[] = [
 
 /** A press of the import that has more to read, with mail that matched nothing, and one Gmail stopped. */
 export const exampleOldLettersResult: OldLettersImportResult = {
-  dryRun: false,
   finished: false,
   listed: 900,
   read: 800,

@@ -336,8 +336,7 @@ show on its page. Each press of its button starts a background function, which
 calls the site again and again for up to 15 minutes, as the site's own calls
 last seconds. Its place is `old_letters_mail`: the Gmail ID of each message it
 has listed, and what became of it, so pressing it again carries on and skips
-what's kept. A dry run keeps its own rows there, writes nothing else, and reports
-what it would join; a real run deletes them. It reads at most two a second, as
+what's kept. It reads at most two a second, as
 Gmail's limit is shared with the site, and stops the moment Gmail refuses.
 
 - **Mailings.** A send is a mailing, so the list shows it and its counts

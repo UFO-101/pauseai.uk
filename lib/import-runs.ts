@@ -243,13 +243,14 @@ export type GoToParliamentImportResult = {
 };
 export type GoToParliamentImport = ImportRun<"import-go-to-parliament", GoToParliamentImportResult>;
 
-/** What a press of the import of old letters did: how far it got, and what it found. A dry run's says what would be done. */
+/** What a press of the import of old letters did: how far it got, and what it found. */
 export type OldLettersImportResult = {
-  dryRun: boolean;
   /** It read everything listed, and did the last steps. */
   finished: boolean;
   /** Why it stopped short: Gmail refused a request. */
   stoppedBy?: "gmail";
+  /** What Gmail said. */
+  stoppedWhy?: string;
   /** How many of its searches it has listed: its place, between its calls. */
   searchesDone?: number;
   /** Messages listed and read this press, and how many are left. */

@@ -2343,7 +2343,9 @@ describe("ImportOverview", () => {
       ran("import-web-form-letters", exampleWebFormResult, { at: "2026-10-20T09:00:00Z" }),
       undefined,
     ];
-    await render(<ImportOverview newest={newest} airtableTable="https://airtable.com/app/tblPoliticians" />);
+    await render(
+      <ImportOverview newest={newest} presses={[]} airtableTable="https://airtable.com/app/tblPoliticians" />,
+    );
     await expect.element(page.getByRole("heading", { level: 1, name: staffCopy.import.pageTitle })).toBeVisible();
     // A heading for each schedule, its jobs' cards under it.
     expect(
@@ -2420,6 +2422,7 @@ describe("ImportOverview", () => {
     const unchanged = ran("import-luma", exampleLumaResult, { status: "unchanged" });
     const { rerender } = await render(
       <ImportOverview
+        presses={[]}
         newest={[undefined, unchanged, undefined, undefined, exampleAppliedSync, undefined, undefined]}
         airtableTable="x"
       />,
@@ -2431,18 +2434,31 @@ describe("ImportOverview", () => {
     expect(status(3)).toMatch(/green/);
     await rerender(
       <ImportOverview
+        presses={[]}
         newest={[undefined, undefined, undefined, undefined, discarded, undefined, undefined]}
         airtableTable="x"
       />,
     );
     expect(status(3)).not.toMatch(/green|amber|red/);
+    await rerender(
+      <ImportOverview
+        newest={[undefined, undefined, undefined, undefined, exampleAppliedSync, undefined, undefined]}
+        presses={[undefined, undefined, undefined, undefined, press]}
+        airtableTable="x"
+      />,
+    );
+    expect(status(3)).toMatch(/blue/);
+    expect(document.body.textContent).toContain(staffCopy.runs.status.running);
+    expect(document.body.textContent).toContain(staffTime(press.startedAt));
   });
 });
+
+/** A press of a job, still running. */
+const press = { startedBy: "jo@pauseai.uk", startedAt: "2026-10-21T11:47:00Z" };
 
 describe("ImportJobPage", () => {
   it("says when a press of it is still running", async () => {
     const props = { job: "sync-emails" as const, runs: [], run: vi.fn(), decide: vi.fn(), airtableTable: "x" };
-    const press = { startedBy: "jo@pauseai.uk", startedAt: "2026-10-21T11:47:00Z" };
     const { rerender } = await render(<ImportJobPage {...props} press={press} />);
     expect(document.body.textContent).toContain(staffCopy.import.running(press.startedBy, staffTime(press.startedAt)));
     await rerender(<ImportJobPage {...props} />);
@@ -3138,6 +3154,17 @@ describe("RunList", () => {
     // The page is one job's, so no run is labelled with it.
     await expect.element(page.getByText(`${jobTitles["check-mps"]} ·`, { exact: false })).not.toBeInTheDocument();
     await rerender(<RunList runs={[]} none="Nothing here" />);
+    const before = ran(
+      "import-luma",
+      { ...exampleLumaResult, stoppedBy: "time" },
+      { id: 1, at: "2026-10-21T11:00:00Z" },
+    );
+    const during = ran("import-luma", exampleLumaResult, { id: 2, at: "2026-10-21T11:48:00Z" });
+    await rerender(<RunList runs={[during, before]} none="Nothing here" press={press} />);
+    expect(document.querySelectorAll("section")).toHaveLength(1);
+    expect(document.querySelector("section")!.parentElement!.className).not.toMatch(/amber/);
+    await rerender(<RunList runs={[during]} none="Nothing here" press={press} />);
+    expect(document.body.textContent).toContain("Nothing here");
     await expect.element(page.getByText("Nothing here")).toBeVisible();
   });
 });

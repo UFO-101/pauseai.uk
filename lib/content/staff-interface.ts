@@ -1714,7 +1714,6 @@ export const staffCopy = {
       after: ". Each run reads for up to 15 minutes and carries on from where the last stopped.",
     },
     importNow: "Import old letters",
-    dryRun: "Dry run: change nothing, and report what happen",
     never: "Not imported yet.",
     // Each mailing the import makes or fills, by its key in lib/old-letters.ts.
     mailingTitles: {
@@ -1733,7 +1732,6 @@ export const staffCopy = {
       "frontier-own": "Frontier AI letter: Joseph's own",
     } as Record<string, string>,
     result: (r: {
-      dryRun: boolean;
       finished: boolean;
       read: number;
       left: number;
@@ -1743,7 +1741,7 @@ export const staffCopy = {
       formTexts: number;
       postmarkTexts: number;
     }) =>
-      `${r.dryRun ? "Dry run: would have read" : "Read"} ${r.read} messages, ${r.left} left${r.finished ? ", all done" : ""}: ${r.formTexts} form letters' and ${r.postmarkTexts} Postmark letters' text, ${r.replies} replies, ${r.autoReplies} automatic replies and ${r.oneOffs} one-off emails.`,
+      `Read ${r.read} messages, ${r.left} left${r.finished ? ", all done" : ""}: ${r.formTexts} form letters' and ${r.postmarkTexts} Postmark letters' text, ${r.replies} replies, ${r.autoReplies} automatic replies and ${r.oneOffs} one-off emails.`,
     stoppedByGmail: "It stopped early because Gmail refused a request. Press again later.",
     unreadable: (n: number) => `Gmail wouldn't give ${n} ${n === 1 ? "message" : "messages"}.`,
     joined: "Joined to their sent emails",
@@ -1853,6 +1851,7 @@ export const staffCopy = {
     status: {
       ok: "Done",
       incomplete: "Incomplete",
+      running: "Running",
       failed: "Failed",
       unchanged: "Unchanged",
       held: "Held",

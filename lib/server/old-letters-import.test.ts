@@ -67,17 +67,17 @@ async function seed() {
   return { polly, dora, mo, morag, deepmind, csrb, edinburgh, debate, august, june, form };
 }
 
-async function run(dryRun = false) {
+async function run() {
   await connectTestGmail("joseph@pauseai.uk");
   await connectTestGmail("policy@pauseai.uk");
-  return importOldLetters("jo@pauseai.uk", dryRun);
+  return importOldLetters("jo@pauseai.uk");
 }
 
-const outcomeOf = async (id: string, dry = false) =>
+const outcomeOf = async (id: string) =>
   (
     await query<{ outcome: string; letterId: number | null }>(
-      `SELECT outcome, letter_id::int AS "letterId" FROM old_letters_mail WHERE gmail_message_id = $1 AND dry_run = $2`,
-      [id, dry],
+      `SELECT outcome, letter_id::int AS "letterId" FROM old_letters_mail WHERE gmail_message_id = $1`,
+      [id],
     )
   )[0];
 
@@ -298,12 +298,12 @@ describeWithDatabase("the import of old letters", () => {
     await connectTestGmail("joseph@pauseai.uk");
     await connectTestGmail("policy@pauseai.uk");
     await query(
-      `INSERT INTO old_letters_mail (dry_run, account, gmail_message_id, source, outcome, quoted) VALUES
-       (false, 'joseph@pauseai.uk', 'quoted1', 'received', 'reply', 'Dear You,
+      `INSERT INTO old_letters_mail (account, gmail_message_id, source, outcome, quoted) VALUES
+       ('joseph@pauseai.uk', 'quoted1', 'received', 'reply', 'Dear You,
 
 Please join 40 of your colleagues.')`,
     );
-    await importOldLetters("jo@pauseai.uk", false);
+    await importOldLetters("jo@pauseai.uk");
     // The press deletes nothing of a real run, so the quote is read, and cleared once used.
     const [mailing] = await query<{ approx: boolean; text: { content: unknown[] } }>(
       `SELECT imported_text_approximate AS approx, imported_text AS text FROM mailings WHERE old_letters_key = 'deepmind-august'`,
@@ -350,11 +350,6 @@ Please join 40 of your colleagues.')`,
     await query(
       `INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id) VALUES ('letter', $1, 'x@parliament.uk', 'sent', 'fixture-postmark-1')`,
       [letter],
-    );
-    const dry = await run(true);
-    expect(dry.postmarkTexts).toBe(1);
-    expect(await query("SELECT 1 FROM letters_from_supporters WHERE id = $1 AND letter IS NOT NULL", [letter])).toEqual(
-      [],
     );
     const real = await run();
     expect(real.postmarkTexts).toBe(1);
@@ -435,35 +430,34 @@ Please join 40 of your colleagues.')`,
     expect(await count()).toEqual(before);
   });
 
-  it("writes nothing on a dry run but its own place, and reports what would be joined", async () => {
+  it("reports what it joined, by mailing", async () => {
     const seeded = await seed();
-    const result = await run(true);
-    expect(result).toMatchObject({ dryRun: true, finished: true });
+    const result = await run();
+    expect(result).toMatchObject({ finished: true, formTexts: 1 });
     expect(result.joined).toMatchObject({ "deepmind-25": 1, csrb: 1, "pauseai-info-frontier-ai": 1 });
     expect(result.added["russell-speak"]).toBe(1);
     expect(result.replies).toBeGreaterThan(0);
-    expect(result.formTexts).toBe(1);
     expect(result.notJoined["deepmind-others"]).toBeGreaterThan(0);
-    expect(await query("SELECT 1 FROM email_sends WHERE imported")).toEqual([]);
-    expect(await query("SELECT 1 FROM letter_replies")).toEqual([]);
-    expect(await query("SELECT 1 FROM one_off_messages")).toEqual([]);
-    expect(await query("SELECT 1 FROM letters_from_supporters WHERE letter IS NOT NULL")).toEqual([]);
-    expect(await query("SELECT 1 FROM letters_from_pauseai WHERE own_text IS NOT NULL")).toEqual([]);
-    expect((await outcomeOf("0a01", true)).letterId).toBe(seeded.deepmind);
-    // The real run clears a dry run's rows.
-    await run();
-    expect(await query("SELECT 1 FROM old_letters_mail WHERE dry_run")).toEqual([]);
+    expect((await outcomeOf("0a01")).letterId).toBe(seeded.deepmind);
   });
 
   it("stops the moment Gmail refuses, saying so, and carries on when pressed again", async () => {
     await seed();
     await connectTestGmail("joseph@pauseai.uk");
     await connectTestGmail("policy@pauseai.uk");
-    server.use(http.get(`${GMAIL}/messages/0a02`, () => new HttpResponse("{}", { status: 403 }), { once: true }));
-    const stopped = await importOldLetters("jo@pauseai.uk", false);
-    expect(stopped).toMatchObject({ stoppedBy: "gmail", finished: false });
+    server.use(
+      http.get(`${GMAIL}/messages/0a02`, () => HttpResponse.json({ error: { message: "Too many" } }, { status: 403 }), {
+        once: true,
+      }),
+    );
+    const stopped = await importOldLetters("jo@pauseai.uk");
+    expect(stopped).toMatchObject({
+      stoppedBy: "gmail",
+      stoppedWhy: "Gmail answered 403 for /messages/0a02: Too many",
+      finished: false,
+    });
     expect(stopped.left).toBeGreaterThan(0);
-    const again = await importOldLetters("jo@pauseai.uk", false);
+    const again = await importOldLetters("jo@pauseai.uk");
     expect(again).toMatchObject({ finished: true, left: 0 });
   });
 
@@ -471,7 +465,7 @@ Please join 40 of your colleagues.')`,
     await seed();
     await connectTestGmail("joseph@pauseai.uk");
     await connectTestGmail("policy@pauseai.uk");
-    const result = await importOldLetters("jo@pauseai.uk", true, 0, 40);
+    const result = await importOldLetters("jo@pauseai.uk", 0, 40);
     expect(result).toMatchObject({ finished: true });
   });
 
@@ -479,11 +473,10 @@ Please join 40 of your colleagues.')`,
     await seed();
     await connectTestGmail("joseph@pauseai.uk");
     await connectTestGmail("policy@pauseai.uk");
-    const first = await importOldLettersChunk({ startedBy: "jo@pauseai.uk", dryRun: true, paceMs: 1, chunkMs: 1 });
+    const first = await importOldLettersChunk({ startedBy: "jo@pauseai.uk", paceMs: 1, chunkMs: 1 });
     expect(first.more).toBe(true);
     const second = await importOldLettersChunk({
       startedBy: "jo@pauseai.uk",
-      dryRun: true,
       runId: first.runId,
       paceMs: 1,
       chunkMs: 60_000,
@@ -498,7 +491,7 @@ Please join 40 of your colleagues.')`,
   it("keeps a failure in the import log", async () => {
     await seed();
     await connectTestGmail("joseph@pauseai.uk");
-    await expect(importOldLetters("jo@pauseai.uk", false)).rejects.toThrow("isn't connected");
+    await expect(importOldLetters("jo@pauseai.uk")).rejects.toThrow("isn't connected");
     const [{ status }] = await query<{ status: string }>(
       "SELECT status FROM import_runs WHERE job = 'import-old-letters'",
     );
@@ -510,7 +503,7 @@ Please join 40 of your colleagues.')`,
     await connectTestGmail("joseph@pauseai.uk");
     await connectTestGmail("policy@pauseai.uk");
     server.use(http.get(`${GMAIL}/messages/0a01`, () => new HttpResponse("{}", { status: 500 }), { once: true }));
-    await expect(importOldLetters("jo@pauseai.uk", false)).rejects.toThrow("Gmail answered 500");
+    await expect(importOldLetters("jo@pauseai.uk")).rejects.toThrow("Gmail answered 500");
   });
 
   it("skips mail gone since it was listed", async () => {
@@ -523,7 +516,7 @@ Please join 40 of your colleagues.')`,
       http.get(`${GMAIL}/messages/0a14`, () => new HttpResponse("{}", { status: 404 })),
       http.get(`${GMAIL}/messages/0a20`, () => new HttpResponse("{}", { status: 404 })),
     );
-    await importOldLetters("jo@pauseai.uk", false);
+    await importOldLetters("jo@pauseai.uk");
     expect((await outcomeOf("0a01")).outcome).toBe("skipped");
     expect((await outcomeOf("0a10")).outcome).toBe("skipped");
   });
@@ -533,7 +526,7 @@ Please join 40 of your colleagues.')`,
     await connectTestGmail("joseph@pauseai.uk");
     await connectTestGmail("policy@pauseai.uk");
     vi.stubEnv("DATA_FIXTURES", "1");
-    await startOldLettersImport("jo@pauseai.uk", true);
+    await startOldLettersImport("jo@pauseai.uk");
     expect(await query("SELECT 1 FROM import_runs WHERE job = 'import-old-letters'")).toHaveLength(1);
     vi.stubEnv("DATA_FIXTURES", "");
     vi.stubEnv("CRON_SECRET", "s3cret");
@@ -544,15 +537,15 @@ Please join 40 of your colleagues.')`,
         return new HttpResponse(null, { status: 202 });
       }),
     );
-    await startOldLettersImport("jo@pauseai.uk", false);
-    expect(body).toEqual({ startedBy: "jo@pauseai.uk", dryRun: false });
+    await startOldLettersImport("jo@pauseai.uk");
+    expect(body).toEqual({ startedBy: "jo@pauseai.uk" });
     server.use(
       http.post(
         "https://pauseai.uk/.netlify/functions/import-old-letters-background",
         () => new HttpResponse(null, { status: 500 }),
       ),
     );
-    await expect(startOldLettersImport("jo@pauseai.uk", false)).rejects.toThrow("returned 500");
+    await expect(startOldLettersImport("jo@pauseai.uk")).rejects.toThrow("returned 500");
     expect(
       await query("SELECT status, started_by AS by FROM import_runs WHERE job = 'import-old-letters'"),
     ).toContainEqual({ status: "failed", by: "jo@pauseai.uk" });

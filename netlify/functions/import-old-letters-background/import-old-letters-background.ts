@@ -12,14 +12,14 @@ const RUN_MS = 14 * 60_000;
 export default async function importOldLettersBackground(request: Request): Promise<void> {
   const secret = `Bearer ${process.env.CRON_SECRET}`;
   if (!process.env.CRON_SECRET || request.headers.get("authorization") !== secret) return;
-  const { startedBy, dryRun } = (await request.json()) as { startedBy: string; dryRun: boolean };
+  const { startedBy } = (await request.json()) as { startedBy: string };
   const until = Date.now() + RUN_MS;
   let runId: number | undefined;
   while (Date.now() < until) {
     const res = await fetch(`${process.env.URL}/api/cron/import-old-letters`, {
       method: "POST",
       headers: { Authorization: secret, "Content-Type": "application/json" },
-      body: JSON.stringify({ startedBy, dryRun, runId }),
+      body: JSON.stringify({ startedBy, runId }),
     });
     const body = await res.text();
     if (!res.ok) throw new Error(`/api/cron/import-old-letters returned ${res.status}: ${body}`);

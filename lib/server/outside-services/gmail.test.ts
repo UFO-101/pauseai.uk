@@ -307,6 +307,18 @@ describe("the Gmail API", () => {
     expect(await gmailHistory("tok", "10")).toBeUndefined();
     server.use(http.get(`${API}/history`, () => new HttpResponse(null, { status: 500 })));
     await expect(gmailHistory("tok", "10")).rejects.toThrow("Gmail answered 500");
+    server.use(http.get(`${API}/history`, () => HttpResponse.json({}, { status: 403 })));
+    await expect(gmailHistory("tok", "10")).rejects.toThrow(/^Gmail answered 403 for \/history$/);
+    server.use(http.get(`${API}/history`, () => HttpResponse.json({ error: {} }, { status: 403 })));
+    await expect(gmailHistory("tok", "10")).rejects.toThrow(/^Gmail answered 403 for \/history$/);
+    server.use(
+      http.get(`${API}/history`, () =>
+        HttpResponse.json({ error: { message: "User-rate limit exceeded" } }, { status: 429 }),
+      ),
+    );
+    await expect(gmailHistory("tok", "10")).rejects.toThrow(
+      "Gmail answered 429 for /history: User-rate limit exceeded",
+    );
   });
 
   it("fetches only the headers asked for, by lowercased name", async () => {

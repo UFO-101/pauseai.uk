@@ -166,10 +166,10 @@ export async function importGoToParliamentNow(): Promise<void> {
   await run("import-go-to-parliament", email, () => importGoToParliament(email));
 }
 
-/** Starts a press of the import of old letters, as a dry run if its box is ticked. */
-export async function importOldLettersNow(form: FormData): Promise<void> {
+/** Starts a press of the import of old letters. */
+export async function importOldLettersNow(): Promise<void> {
   const { email } = await requireStaff();
-  await run("import-old-letters", email, () => startOldLettersImport(email, form.get("dryRun") === "on"), true);
+  await run("import-old-letters", email, () => startOldLettersImport(email), true);
 }
 
 export async function checkNow(): Promise<void> {

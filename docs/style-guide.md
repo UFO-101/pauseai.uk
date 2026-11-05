@@ -338,14 +338,14 @@ lists with their reasons (a popover, the login page's card, a field).
 
 **Surfaces.** Each one means one thing:
 
-| Surface                        | Look                                                       | For                                                                                                               |
-| ------------------------------ | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| The page                       | the background, no box                                     | headings, prose, the history, tables                                                                              |
-| A record (`Card`, the default) | white                                                      | the thing a page is about, or a thing to open: an MP's or a supporter's facts, an import job                      |
-| An aside (`Card look="aside"`) | the second tint, `--surface-2`                             | what sits beside a record: an MP's campaigns, a supporter's mailing lists                                         |
-| A log (`Card look="log"`)      | the palest of the accent: `--accent-light` at 30% on white | a history, each entry ruled from the next                                                                         |
-| A tile                         | white, bordered, an item of an `even` grid                 | sets of like things: the dashboard's numbers                                                                      |
-| A strip (`ui/Strip`)           | the tone's tint, no border, `--radius-md`                  | how something stands: green done or signed, amber waiting, red broken, plain neither; dark, a mode the page is in |
+| Surface                        | Look                                                       | For                                                                                                                                  |
+| ------------------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| The page                       | the background, no box                                     | headings, prose, the history, tables                                                                                                 |
+| A record (`Card`, the default) | white                                                      | the thing a page is about, or a thing to open: an MP's or a supporter's facts, an import job                                         |
+| An aside (`Card look="aside"`) | the second tint, `--surface-2`                             | what sits beside a record: an MP's campaigns, a supporter's mailing lists                                                            |
+| A log (`Card look="log"`)      | the palest of the accent: `--accent-light` at 30% on white | a history, each entry ruled from the next                                                                                            |
+| A tile                         | white, bordered, an item of an `even` grid                 | sets of like things: the dashboard's numbers                                                                                         |
+| A strip (`ui/Strip`)           | the tone's tint, no border, `--radius-md`                  | how something stands: green done or signed, amber waiting, red broken, blue going on now, plain neither; dark, a mode the page is in |
 
 Every card has the same edge, a `1px` `--border` and `--radius-lg`; only
 its fill changes, and only among those three, all warm. Colour stays for

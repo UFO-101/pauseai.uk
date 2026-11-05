@@ -1010,18 +1010,17 @@ INSERT INTO one_off_messages (thread_id, account, gmail_message_id, gmail_thread
   (1, 'joseph@pauseai.uk', 'gmail-one-off-2', 't-coffee', 'fixture-one-off-polly@parliament.uk', '{fixture-one-off-joseph@mail.gmail.com}', 'polly.placeholder.mp@parliament.uk', 'Polly Placeholder', 'Joseph Example <joseph@pauseai.uk>', '', '{joseph@pauseai.uk,polly.placeholder.mp@parliament.uk}', 'Re: Coffee next week?', now() - interval '30 days', false, 'fixture/one-off-polly.eml.gz', 300),
   (2, 'policy@pauseai.uk', 'gmail-one-off-3', 't-forward', 'fixture-one-off-vera@example.com', '{}', 'vera.volunteer@example.com', 'Vera Volunteer', 'PauseAI UK <policy@pauseai.uk>', '', '{vera.volunteer@example.com,policy@pauseai.uk}', 'Fwd: My MP''s answer', now() - interval '20 days', false, 'fixture/one-off-volunteer.eml.gz', 300),
   (3, 'joseph@pauseai.uk', 'gmail-one-off-4', 't-room', 'fixture-one-off-office@parliament.uk', '{}', 'sam.office@parliament.uk', 'Sam Office', 'Joseph Example <joseph@pauseai.uk>', '', '{sam.office@parliament.uk,joseph@pauseai.uk}', 'Room booking request', now() - interval '25 days', false, 'fixture/one-off-office.eml.gz', 300);
--- The import's place: a message of each outcome, one still to read, and a dry run's.
-INSERT INTO old_letters_mail (dry_run, account, gmail_message_id, source, gmail_thread_id, outcome) VALUES
-  (false, 'joseph@pauseai.uk', 'seed-mail-joined', 'sent', 't1', 'joined'),
-  (false, 'joseph@pauseai.uk', 'seed-mail-added', 'sent', 't2', 'added'),
-  (false, 'joseph@pauseai.uk', 'seed-mail-reply', 'received', 't1', 'reply'),
-  (false, 'joseph@pauseai.uk', 'seed-mail-auto', 'received', 't1', 'auto_reply'),
-  (false, 'joseph@pauseai.uk', 'seed-mail-one-off', 'group', 't3', 'one_off'),
-  (false, 'joseph@pauseai.uk', 'seed-mail-thread', 'thread', 't3', 'one_off'),
-  (false, 'policy@pauseai.uk', 'seed-mail-unmatched', 'policy', 't4', 'unmatched'),
-  (false, 'joseph@pauseai.uk', 'seed-mail-skipped', 'sent', 't5', 'skipped'),
-  (false, 'joseph@pauseai.uk', 'seed-mail-waiting', 'sent', 't6', NULL),
-  (true, 'joseph@pauseai.uk', 'seed-mail-joined', 'sent', 't1', 'joined');
+-- The import's place: a message of each outcome, and one still to read.
+INSERT INTO old_letters_mail (account, gmail_message_id, source, gmail_thread_id, outcome) VALUES
+  ('joseph@pauseai.uk', 'seed-mail-joined', 'sent', 't1', 'joined'),
+  ('joseph@pauseai.uk', 'seed-mail-added', 'sent', 't2', 'added'),
+  ('joseph@pauseai.uk', 'seed-mail-reply', 'received', 't1', 'reply'),
+  ('joseph@pauseai.uk', 'seed-mail-auto', 'received', 't1', 'auto_reply'),
+  ('joseph@pauseai.uk', 'seed-mail-one-off', 'group', 't3', 'one_off'),
+  ('joseph@pauseai.uk', 'seed-mail-thread', 'thread', 't3', 'one_off'),
+  ('policy@pauseai.uk', 'seed-mail-unmatched', 'policy', 't4', 'unmatched'),
+  ('joseph@pauseai.uk', 'seed-mail-skipped', 'sent', 't5', 'skipped'),
+  ('joseph@pauseai.uk', 'seed-mail-waiting', 'sent', 't6', NULL);
 -- Mail that matched nothing: one reported, one waiting for today's report.
 INSERT INTO unmatched_mail (account, gmail_message_id, found_at, reported_at) VALUES
   ('policy@pauseai.uk', 'seed-unmatched-1', now() - interval '3 days', now() - interval '2 days'),
@@ -1052,9 +1051,8 @@ ON CONFLICT DO NOTHING;
 -- Joseph's and policy@'s Gmail keep threads; and every state of the import's run.
 INSERT INTO import_runs (at, job, started_by, status, error, result) VALUES
   (now() - interval '50 minutes', 'import-old-letters', 'admin@pauseai.uk', 'failed', 'joseph@pauseai.uk''s Gmail isn''t connected', '{}'),
-  (now() - interval '40 minutes', 'import-old-letters', 'admin@pauseai.uk', 'ok', NULL, '{"dryRun": true, "finished": true, "listed": 9, "read": 9, "left": 0, "requests": 12, "formTexts": 2, "postmarkTexts": 1, "titles": {"russell-speak": "Stuart Russell panel: invitation to speak", "deepmind-25": "DeepMind: join 25 of your colleagues", "deepmind-august": "DeepMind: August, from the personal Gmail", "regulate-letter-pm": "Regulate AI developers now"}, "joined": {"deepmind-25": 2, "regulate-letter-pm": 1}, "added": {"russell-speak": 1}, "notJoined": {"deepmind-august": 1}, "replies": 2, "autoReplies": 2, "oneOffs": 2, "unreadable": [], "unmatched": [{"from": "Neil Nobody <neil.nobody@example.com>", "subject": "Volunteering"}], "templates": 0, "ownText": 0, "repliedSet": 0}'),
-  (now() - interval '30 minutes', 'import-old-letters', 'admin@pauseai.uk', 'ok', NULL, '{"dryRun": false, "finished": false, "stoppedBy": "gmail", "listed": 9, "read": 3, "left": 6, "requests": 5, "formTexts": 2, "postmarkTexts": 0, "titles": {"russell-speak": "Stuart Russell panel: invitation to speak", "deepmind-25": "DeepMind: join 25 of your colleagues", "deepmind-august": "DeepMind: August, from the personal Gmail", "regulate-letter-pm": "Regulate AI developers now"}, "joined": {"deepmind-25": 2}, "added": {}, "notJoined": {}, "replies": 1, "autoReplies": 0, "oneOffs": 0, "unreadable": ["18f0a"], "unmatched": [], "templates": 0, "ownText": 0, "repliedSet": 0}'),
-  (now() - interval '20 minutes', 'import-old-letters', 'admin@pauseai.uk', 'ok', NULL, '{"dryRun": false, "finished": true, "listed": 9, "read": 9, "left": 0, "requests": 14, "formTexts": 2, "postmarkTexts": 1, "titles": {"russell-speak": "Stuart Russell panel: invitation to speak", "deepmind-25": "DeepMind: join 25 of your colleagues", "deepmind-august": "DeepMind: August, from the personal Gmail", "regulate-letter-pm": "Regulate AI developers now"}, "joined": {"deepmind-25": 2, "regulate-letter-pm": 2}, "added": {"russell-speak": 1}, "notJoined": {"deepmind-august": 1}, "replies": 2, "autoReplies": 2, "oneOffs": 3, "unreadable": [], "unmatched": [{"from": "Neil Nobody <neil.nobody@example.com>", "subject": "Volunteering"}], "templates": 2, "ownText": 1, "repliedSet": 1}');
+  (now() - interval '30 minutes', 'import-old-letters', 'admin@pauseai.uk', 'ok', NULL, '{"finished": false, "stoppedBy": "gmail", "listed": 9, "read": 3, "left": 6, "requests": 5, "formTexts": 2, "postmarkTexts": 0, "titles": {"russell-speak": "Stuart Russell panel: invitation to speak", "deepmind-25": "DeepMind: join 25 of your colleagues", "deepmind-august": "DeepMind: August, from the personal Gmail", "regulate-letter-pm": "Regulate AI developers now"}, "joined": {"deepmind-25": 2}, "added": {}, "notJoined": {}, "replies": 1, "autoReplies": 0, "oneOffs": 0, "unreadable": ["18f0a"], "unmatched": [], "templates": 0, "ownText": 0, "repliedSet": 0}'),
+  (now() - interval '20 minutes', 'import-old-letters', 'admin@pauseai.uk', 'ok', NULL, '{"finished": true, "listed": 9, "read": 9, "left": 0, "requests": 14, "formTexts": 2, "postmarkTexts": 1, "titles": {"russell-speak": "Stuart Russell panel: invitation to speak", "deepmind-25": "DeepMind: join 25 of your colleagues", "deepmind-august": "DeepMind: August, from the personal Gmail", "regulate-letter-pm": "Regulate AI developers now"}, "joined": {"deepmind-25": 2, "regulate-letter-pm": 2}, "added": {"russell-speak": 1}, "notJoined": {"deepmind-august": 1}, "replies": 2, "autoReplies": 2, "oneOffs": 3, "unreadable": [], "unmatched": [{"from": "Neil Nobody <neil.nobody@example.com>", "subject": "Volunteering"}], "templates": 2, "ownText": 1, "repliedSet": 1}');
 
 -- A press of a job still running, which its page says.
 INSERT INTO job_presses (job, started_by) VALUES ('import-go-to-parliament', 'jo@pauseai.uk');

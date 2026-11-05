@@ -382,7 +382,12 @@ function OldLettersRun({ run, open, people }: { run: OldLettersImport; open?: bo
       summary={
         <>
           {words.result(result)}
-          {result.stoppedBy === "gmail" && <> {words.stoppedByGmail}</>}
+          {result.stoppedBy === "gmail" && (
+            <>
+              {" "}
+              {words.stoppedByGmail} <Muted>{result.stoppedWhy}</Muted>
+            </>
+          )}
           {result.unreadable.length > 0 && <> {words.unreadable(result.unreadable.length)}</>}
         </>
       }

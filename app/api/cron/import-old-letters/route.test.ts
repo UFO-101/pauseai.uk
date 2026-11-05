@@ -10,7 +10,7 @@ const post = (authorization?: string) =>
     new Request("https://pauseai.uk/api/cron/import-old-letters", {
       method: "POST",
       headers: authorization ? { authorization } : {},
-      body: JSON.stringify({ startedBy: "jo@pauseai.uk", dryRun: true }),
+      body: JSON.stringify({ startedBy: "jo@pauseai.uk" }),
     }),
   );
 

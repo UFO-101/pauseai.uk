@@ -29,6 +29,10 @@
   background: var(--status-red-bg);
 }
 
+.blue {
+  background: var(--status-blue-bg);
+}
+
 /* A mode the page is in: dark, as the bar at the foot of the window is
    while choosing, with its shadow, and light words and links. */
 .dark {
@@ -64,6 +68,10 @@
 
 .red .body > :first-child {
   color: var(--status-red);
+}
+
+.blue .body > :first-child {
+  color: var(--status-blue);
 }
 
 .body > * {
