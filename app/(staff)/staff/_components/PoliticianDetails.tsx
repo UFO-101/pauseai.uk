@@ -157,23 +157,12 @@ function Detail({ change, asks }: { change: PoliticianChange; asks: Ask[] }) {
     case "set status": {
       const ask = asks.find((a) => a.slug === details.ask);
       const label = staffCopy.statuses[text("status")] ?? text("status");
-      // The answer, where the copy puts it, leads to everyone who gave it to the ask.
-      const answer =
-        details.ask && details.status ? (
-          <StaffLink
-            href={`/staff/politicians?ask=${encodeURIComponent(text("ask"))}&answer=${encodeURIComponent(text("status"))}`}
-          >
-            {label}
-          </StaffLink>
-        ) : (
-          label
-        );
       const words = details.status === null ? copy.statusCleared : copy.statusSet(ANSWER);
       const [lead, rest = ""] = words.before.split(ANSWER);
       return (
         <>
           {lead}
-          {words.before.includes(ANSWER) && answer}
+          {words.before.includes(ANSWER) && label}
           {rest}
           {/* Logged by ask, or, before asks, by campaign. The ask leads where it does in the asks card. */}
           {ask ? <AskTitle ask={ask} /> : details.ask ? text("ask") : <CampaignName slug={text("campaign")} />}

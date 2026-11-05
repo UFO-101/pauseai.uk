@@ -1764,9 +1764,8 @@ describe("PoliticianDetails", () => {
     // An answer leads to everyone who gave it, the ask to the letter as in the asks card, PauseAI's email to its
     // mailing, an address to its block.
     const historyList = page.getByRole("list", { name: staffCopy.politician.historyTitle });
-    await expect
-      .element(historyList.getByRole("link", { name: staffCopy.statuses.signed }).first())
-      .toHaveAttribute("href", "/staff/politicians?ask=frontier-ai-letter&answer=signed");
+    // An answer stays plain words, as the asks card beside it has it.
+    expect(historyList.getByRole("link", { name: staffCopy.statuses.signed }).query()).toBeNull();
     await expect
       .element(historyList.getByRole("link", { name: ask("frontier-ai-letter").title }))
       .toHaveAttribute("href", "/staff/asks/frontier-ai-letter");
