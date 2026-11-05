@@ -165,7 +165,7 @@ test("An admin without Supporters", async ({ page, request, flowDatabase }) => {
   await expect(page.getByText(staffCopy.sentEmails.withheld)).toBeVisible();
   await frame(page, "The sent emails");
 
-  story("So does the audit log, of its entries about supporters.");
+  story("The audit log says the same of its entries about supporters.");
   await page.goto(`${BASE}/staff/audit-log`);
   await expect(page.getByText(staffCopy.changes.withheld)).toBeVisible();
   await frame(page, "The audit log");

@@ -19,13 +19,15 @@ test("Campaigns", async ({ page, flowDatabase }) => {
   await expect(page).toHaveURL(`${BASE}/staff/campaigns`);
   await frame(page, "The list of campaigns");
 
-  story("A campaign's page has its letter, with how many changed its wording, beside its letters.");
+  story(
+    "A campaign's page shows the letter people were given, how many changed its wording, and the letters they sent.",
+  );
   await page.getByRole("link", { name: campaigns[0].title }).first().click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(campaigns[0].title);
   await expect(page.getByRole("region", { name: copy.theLetter })).toContainText(campaigns[0].subject);
   await frame(page, "A campaign's page");
 
-  story("Each count shows those letters. None has failed.");
+  story("Each count shows only the letters it counts. None has failed.");
   await page
     .getByRole("link", { name: /failed/ })
     .first()
@@ -42,7 +44,7 @@ test("No answer yet", async ({ page, flowDatabase }) => {
   await expect(page.getByRole("heading", { name: staffCopy.asks.page.howWeAsked })).toBeVisible();
   await expect(page.getByRole("link", { name: campaigns[0].title })).toBeVisible();
 
-  story("No answer shows those written to who haven't answered, whoever was written to longest ago first.");
+  story("No answer lists everyone written to who hasn't answered, longest wait first.");
   const unanswered = page.getByRole("link", { name: new RegExp(`^${staffCopy.statuses.noAnswer} \\d`) });
   await unanswered.click();
   await expect(unanswered).toHaveAttribute("aria-current", "true");
@@ -57,7 +59,7 @@ test("Asks", async ({ page, request, flowDatabase }) => {
   await page.goto(`${BASE}/staff/asks`);
   await frame(page, "The asks");
 
-  story("An ask's page says what they were asked, and joins how we asked with what they answered.");
+  story("An ask's page says what they were asked, how we asked, and what they answered.");
   await page.getByRole("link", { name: "Edinburgh conference" }).first().click();
   await expect(page.getByText(staffCopy.politician.askedThem("PauseAI", "event"))).toBeVisible();
   await expect(page.getByRole("heading", { name: staffCopy.asks.page.howWeAsked })).toBeVisible();
@@ -69,7 +71,7 @@ test("Asks", async ({ page, request, flowDatabase }) => {
   await expect(going).toHaveAttribute("aria-current", "true");
   await frame(page, "Those going");
 
-  story("One staff made can be edited, on a page of its own.");
+  story("An ask staff made can be edited, on its own page.");
   runSql(
     flowDatabase,
     "INSERT INTO asks (slug, title, kind, asked_by) VALUES ('our-letter', 'Our letter', 'letter', '{pauseai}')",
@@ -83,16 +85,14 @@ test("Asks", async ({ page, request, flowDatabase }) => {
 });
 
 test("Sent emails", async ({ page, flowDatabase }) => {
-  story(
-    "An admin sees every email the site has sent, with no heading, as the menu names it: what, to and from whom, and how it went.",
-  );
+  story("Sent emails lists every email the site has sent: what it was, who it was to and from, and how it went.");
   await sentLetterId(page, flowDatabase, madeUpAddress("Jane Smith", 42));
   await logIn(page, flowDatabase, ["admin", "supporters"]);
   await page.goto(`${BASE}/staff/sent-emails`);
   await expect(page.getByRole("link", { name: "Jane Smith" }).first()).toBeVisible();
   await frame(page, "The sent emails");
 
-  story("It searches by address or subject, and filters by what it was.");
+  story("Staff can search by address or subject, and filter by kind.");
   await addFilter(page, staffCopy.sentEmails.filters.purpose, staffCopy.sentEmails.purposes.letter);
   await expect(page).toHaveURL(/purpose=letter/);
   await frame(page, "Only letters");

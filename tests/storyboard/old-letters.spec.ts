@@ -78,7 +78,7 @@ test("The import fails", async ({ page, flowDatabase }) => {
 });
 
 test("A second press", async ({ page, flowDatabase }) => {
-  story("Someone's press is still running. The job's page says so, and pressing again starts nothing.");
+  story("The import is already running. Its page says so, and pressing again starts nothing.");
   await logIn(page, flowDatabase, ["supporters", "admin"]);
   runSql(flowDatabase, "INSERT INTO job_presses (job, started_by) VALUES ('import-old-letters', 'jo@pauseai.uk')");
   await page.goto(`${BASE}${importPath("import-old-letters")}`);
@@ -90,7 +90,7 @@ test("A second press", async ({ page, flowDatabase }) => {
 });
 
 test("An old letter's page", async ({ page, request, flowDatabase }) => {
-  story("A letter that fits its mailing's text is rebuilt from it, with what it had of its own.");
+  story("A letter that matches its mailing's text is rebuilt from that text, plus its own parts.");
   await ready(page, flowDatabase, request);
   await press(page, flowDatabase);
   await page.goto(`${BASE}/staff/mailings`);
@@ -117,7 +117,7 @@ test("An old letter's page", async ({ page, request, flowDatabase }) => {
   await expect(page.getByText("Would you speak?")).toBeVisible();
   await frame(page, "A letter that keeps its own text");
 
-  story("A letter from August, whose text we can't read, is rebuilt from a reply quoting one like it, and says so.");
+  story("We can't read August's letters, so one is rebuilt from a reply quoting a similar letter, and says so.");
   const [polly] = runSql(flowDatabase, "SELECT id FROM notable_people WHERE airtable_id = 'recPlaceholder'");
   const [mailing] = runSql(flowDatabase, "SELECT id FROM mailings WHERE old_letters_key = 'deepmind-august'");
   const [letter] = runSql(
@@ -137,9 +137,7 @@ test("An old letter's page", async ({ page, request, flowDatabase }) => {
 });
 
 test("A form letter's page", async ({ page, request, flowDatabase }) => {
-  story(
-    "A letter through pauseai.info's old form shows only what its writer changed from the form's text then, and its reply.",
-  );
+  story("A letter from pauseai.info's old form shows only what its writer changed, and its reply.");
   await ready(page, flowDatabase, request);
   await press(page, flowDatabase);
   await page.goto(`${BASE}/staff/campaigns/pauseai-info-frontier-ai`);
@@ -157,14 +155,14 @@ test("A form letter's page", async ({ page, request, flowDatabase }) => {
 });
 
 test("One-off emails", async ({ page, request, flowDatabase }) => {
-  story("One-off emails, in the menu, are the threads with politicians that aren't a mailing's or a campaign's.");
+  story("One-off emails are threads with politicians that aren't part of a mailing or campaign.");
   await ready(page, flowDatabase, request);
   await press(page, flowDatabase);
   await page.goto(`${BASE}/staff/one-off`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(oneOff.title);
   await frame(page, "The one-off emails");
 
-  story("A thread is read through, across the mailboxes it was in.");
+  story("A thread shows every message, from whichever mailbox kept it.");
   await page.getByRole("link", { name: "Coffee next week?" }).click();
   await expect(page.getByText("Thursday works.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Polly Placeholder" }).first()).toBeVisible();

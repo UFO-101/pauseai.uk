@@ -543,7 +543,7 @@ test("Old mailings", async ({ page, request, flowDatabase }) => {
 });
 
 test("From a mailing to its ask", async ({ page, request, flowDatabase }) => {
-  story("A mailing names its ask. Following it from the invitation opens the Edinburgh conference's own page.");
+  story("The invitation names its ask. Following it opens the Edinburgh conference's page.");
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   await importEmails(page);

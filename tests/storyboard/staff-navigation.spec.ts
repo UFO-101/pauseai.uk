@@ -300,7 +300,7 @@ test("An MP signs", async ({ page, request, flowDatabase }) => {
 });
 
 test("The new tag", { tag: "@desktop-only" }, async ({ page, flowDatabase }) => {
-  story("A page someone first saw in the last 3 days is marked new; everything they'd seen before isn't.");
+  story("A page someone first saw in the last 3 days is marked new.");
   await logIn(page, flowDatabase, ["admin", "supporters"]);
   const email = runSql(flowDatabase, "SELECT email FROM staff_sessions ORDER BY created_at DESC LIMIT 1")[0];
   runSql(
