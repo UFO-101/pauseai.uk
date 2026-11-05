@@ -413,9 +413,7 @@ test("Mailings", async ({ page, request, flowDatabase }) => {
 });
 
 test("From a mailing to its ask", async ({ page, request, flowDatabase }) => {
-  story(
-    "A mailing names its ask. Following it from the invitation opens the asks page with the Edinburgh conference picked out.",
-  );
+  story("A mailing names its ask. Following it from the invitation opens the Edinburgh conference's own page.");
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/mailings`);
@@ -427,7 +425,8 @@ test("From a mailing to its ask", async ({ page, request, flowDatabase }) => {
   await expect(page).toHaveURL(`${BASE}/staff/asks/edinburgh-conference-2026`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Edinburgh conference");
   await frame(page, "The conference's page");
-  story("Each answer's count is a link to the politicians who gave it. One is going.");
+  story("On the asks page, each answer's count is a link to the politicians who gave it. One is going.");
+  await page.goto(`${BASE}/staff/asks`);
   await page.getByRole("link", { name: staffCopy.asks.count(staffCopy.statuses.going, 1) }).click();
   await expect(page).toHaveURL(/ask=edinburgh-conference-2026&answer=going/);
   await expect(page.getByRole("row").filter({ hasText: "Morag Example" })).toBeVisible();
