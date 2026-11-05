@@ -81,6 +81,7 @@ export const staffCopy = {
     sentEmails: "Sent emails",
     // Beside a page the staff member first saw in the last 3 days.
     newTag: "new",
+    draftTag: "draft",
     supporterEmails: "Blocked emails",
     mpEmails: "Blocked emails",
     logout: "Log out",
@@ -923,6 +924,7 @@ export const staffCopy = {
   // The pages for messages to supporters: from the supporters list, the writer, the list of them and each one's page.
   messagePages: {
     title: "⁂ Messages",
+    noBackend: "This is just the user interface to try it out, there is no backend for sending yet.",
     intro: "⁂ Emails and texts PauseAI sends to supporters who said yes to hearing from us",
     none: "⁂ No messages yet.",
     untitled: "⁂ Untitled message",

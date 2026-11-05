@@ -282,6 +282,7 @@ test("An email sent, and replying", async ({ page, request, flowDatabase }) => {
   const sent = addSent(flowDatabase, "email", "Thank you for marching");
   await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/messages`);
+  await expect(page.getByText(copy.noBackend)).toBeVisible();
   await frame(page, "The list, one sent");
   await page.getByRole("link", { name: "Thank you for marching" }).first().click();
   await expect(page.getByRole("heading", { name: copy.recipientsTitle })).toBeVisible();

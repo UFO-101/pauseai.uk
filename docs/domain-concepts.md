@@ -960,7 +960,7 @@ log entry.
 A new permission is a name in `PERMISSIONS` and the table's `CHECK`, and the
 pages it opens given it in `STAFF_SECTIONS`.
 
-A link in the navigation shows a "new" tag for 3 days after that person first
+A page to try out that can't do its job yet, such as Messages with no backend for sending, has a "draft" tag instead, for everyone. A link in the navigation shows a "new" tag for 3 days after that person first
 sees it (a dot on the folded rail), for any page added to `STAFF_SECTIONS`, with
 nothing else to do. `staff_nav_seen` has a row for each account and page, with
 when they first saw it; the signed-in layout adds those they have none for

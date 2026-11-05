@@ -8,7 +8,7 @@ import { letterFor } from "@/lib/mailing-doc";
 import { named } from "@/lib/named-address";
 import type { MessageCopy } from "@/lib/server/message-pages";
 import { staffTime } from "@/lib/staff-time";
-import { FIELDS_AS_WORDS, TEXT_SENDER_NAME } from "@/lib/supporter-messages";
+import { FIELDS_AS_WORDS, MESSAGE_SENDER, TEXT_SENDER_NAME } from "@/lib/supporter-messages";
 import { MailingLetter } from "./MailingLetter";
 import { copyStatus } from "./MessageView";
 import { ChatBubble, ChatWall } from "./TextBubble";
@@ -23,7 +23,10 @@ const copy = staffCopy.messagePages;
 
 type FormAction = (form: FormData) => void | Promise<void>;
 
-/** The message and every reply: a text as the conversation, an email as the thread. */
+/**
+ * The message and every reply: a text as the conversation, an email as the
+ * thread. A staff member's reply is as the supporter gets it, from PauseAI UK.
+ */
 function Thread({ one, name }: { one: MessageCopy; name: string }) {
   const merge = one.merge ?? FIELDS_AS_WORDS;
   const ours = named(one.fromName, one.sentFrom);
@@ -35,7 +38,12 @@ function Thread({ one, name }: { one: MessageCopy; name: string }) {
           {toText(letterFor(one.body, merge))}
         </ChatBubble>
         {one.replies.map((reply) => (
-          <ChatBubble key={reply.id} who={reply.sentBy ?? name} when={staffTime(reply.at)} ours={Boolean(reply.sentBy)}>
+          <ChatBubble
+            key={reply.id}
+            who={reply.sentBy ? TEXT_SENDER_NAME : name}
+            when={staffTime(reply.at)}
+            ours={Boolean(reply.sentBy)}
+          >
             {reply.body}
           </ChatBubble>
         ))}
@@ -50,7 +58,7 @@ function Thread({ one, name }: { one: MessageCopy; name: string }) {
       {one.replies.map((reply) => (
         <ThreadEmail
           key={reply.id}
-          from={reply.sentBy ? named(reply.sentBy, one.sentFrom) : them}
+          from={reply.sentBy ? named(MESSAGE_SENDER.name, MESSAGE_SENDER.email) : them}
           to={reply.sentBy ? them : ours}
           at={reply.at}
           subject={one.subject}
