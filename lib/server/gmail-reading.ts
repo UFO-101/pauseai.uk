@@ -63,6 +63,8 @@ const HEADERS = [
   "X-Autoreply",
   "X-Autorespond",
   "Precedence",
+  "X-Original-From",
+  "List-Id",
 ];
 
 /**
@@ -315,7 +317,7 @@ async function readMessage(
     if (keepsThreads)
       read.oneOffs =
         (read.oneOffs ?? 0) +
-        ((await keepIfPoliticianThread(account, token, id, account === process.env.POLICY_INBOX?.toLowerCase())) ===
+        ((await keepIfPoliticianThread(account, token, message, account === process.env.POLICY_INBOX?.toLowerCase())) ===
         "kept"
           ? 1
           : 0);

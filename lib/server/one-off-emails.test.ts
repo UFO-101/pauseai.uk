@@ -14,12 +14,13 @@ import {
   keepIfPoliticianThread,
   keepOneOff,
   listOneOffThreads,
+  ONE_OFF_HEADERS,
   oneOffCount,
   politicianOneOffs,
   reportUnmatchedMail,
   supporterOneOffs,
 } from "./one-off-emails";
-import type { GmailMessageHeaders } from "./outside-services/gmail";
+import { gmailMessageHeaders, type GmailMessageHeaders } from "./outside-services/gmail";
 import { politicianBook } from "./politician-book";
 
 const GMAIL = "https://gmail.googleapis.com/gmail/v1/users/me";
@@ -223,10 +224,15 @@ describeWithDatabase("one-off emails", () => {
   });
 
   describe("the regular read", () => {
-    const shared = async (id: string) =>
-      keepIfPoliticianThread("policy@pauseai.uk", "fixture-access:policy@pauseai.uk", id, true);
-    const josephs = async (id: string) =>
-      keepIfPoliticianThread("joseph@pauseai.uk", "fixture-access:joseph@pauseai.uk", id, false);
+    const fetched = (token: string, id: string) => gmailMessageHeaders(token, id, ONE_OFF_HEADERS);
+    const shared = async (id: string) => {
+      const token = "fixture-access:policy@pauseai.uk";
+      return keepIfPoliticianThread("policy@pauseai.uk", token, await fetched(token, id), true);
+    };
+    const josephs = async (id: string) => {
+      const token = "fixture-access:joseph@pauseai.uk";
+      return keepIfPoliticianThread("joseph@pauseai.uk", token, await fetched(token, id), false);
+    };
 
     it("keeps a message by its headers", async () => {
       await addTestPolitician();
@@ -285,11 +291,6 @@ describeWithDatabase("one-off emails", () => {
       expect(await shared("m3")).toBe("ignored");
       expect(await shared("m4")).toBe("ignored");
       expect(await query("SELECT gmail_message_id AS id FROM unmatched_mail")).toEqual([{ id: "m1" }]);
-    });
-
-    it("passes over a message gone since", async () => {
-      server.use(http.get(`${GMAIL}/messages/gone`, () => new HttpResponse("{}", { status: 404 })));
-      expect(await shared("gone")).toBe("ignored");
     });
 
     it("runs in readGmail only for an account that keeps them, and turning it off stops new ones", async () => {

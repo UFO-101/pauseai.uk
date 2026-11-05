@@ -5,7 +5,8 @@ import { query } from "./db";
 // letters Joseph sent that the import read from his Sent mail. A person
 // outside PauseAI shows as their name, linked to their page: through the
 // row's letter where it has one, otherwise by matching the address to one
-// politician or supporter. If several match, the address alone.
+// politician or supporter. If several match, the address alone. Staff and
+// PauseAI's addresses stay plain, whoever else has them.
 
 /** Someone an email's address is: a politician's page, or a supporter's, which an admin without `supporters` sees no link to. */
 export type SentPerson = { name: string; href: string | null };
@@ -59,7 +60,7 @@ const ONE_SUPPORTER = (
 ) => `(SELECT CASE WHEN count(DISTINCT k.supporter_id) = 1 THEN json_build_object(
       'name', (SELECT i.name FROM supporter_identity i WHERE i.supporter_id = min(k.supporter_id) AND i.name IS NOT NULL ORDER BY i.seen_at DESC LIMIT 1),
       'href', ${supporters ? `'/staff/supporters/' || min(k.supporter_id)` : "NULL"}) END
-    FROM supporter_links k WHERE k.matched_value = ${column})`;
+    FROM supporter_links k WHERE k.matched_value = ${column} AND ${column} NOT LIKE '%@pauseai.%')`;
 
 /** A page of the send log, newest first, and how many the filter finds. */
 export async function listSentEmails(

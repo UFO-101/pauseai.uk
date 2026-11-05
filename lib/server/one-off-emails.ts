@@ -167,11 +167,10 @@ async function mergeThreads(into: number, other: number): Promise<void> {
 export async function keepIfPoliticianThread(
   account: string,
   token: string,
-  id: string,
+  message: GmailMessageHeaders,
   shared: boolean,
 ): Promise<"kept" | "unmatched" | "ignored"> {
-  const message = await gmailMessageHeaders(token, id, ONE_OFF_HEADERS).catch(unlessGone);
-  if (!message) return "ignored";
+  const { id } = message;
   const [book, connected] = await Promise.all([politicianBook(), connectedAccounts()]);
   const refs = [...messageIds(message.headers.get("in-reply-to")), ...messageIds(message.headers.get("references"))];
   const [inThread] = await query(

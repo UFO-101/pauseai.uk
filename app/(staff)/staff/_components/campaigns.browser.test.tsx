@@ -33,6 +33,8 @@ import StaffNav from "./StaffNav";
 const copy = staffCopy.campaigns;
 const NOW = "2026-11-05T09:00:00Z";
 const link = (name: string) => page.getByRole("link", { name, exact: true });
+/** Whether the page says `text`, whichever element it's in and however its line wraps. */
+const says = (text: string) => expect.poll(() => document.body.textContent).toContain(text);
 
 describe("CampaignsOverview", () => {
   it("files each under the month of its last letter, the rest under their years, saying who it's from and its ask", async () => {
@@ -58,7 +60,7 @@ describe("CampaignsOverview", () => {
 
   it("says there are none", async () => {
     await render(<CampaignsOverview campaigns={[]} now={NOW} />);
-    await expect.element(page.getByText(copy.none)).toBeVisible();
+    await says(copy.none);
   });
 
   it("says an ask by its kind", async () => {
@@ -72,11 +74,11 @@ describe("CampaignsOverview", () => {
 describe("CampaignLetter", () => {
   it("chooses among versions, each with its subject and text, names as chips", async () => {
     await render(<CampaignLetter versions={exampleVersions} bands={exampleBands} />);
-    await expect.element(page.getByText(exampleVersions[0].subject)).toBeVisible();
-    await expect.element(page.getByText(copy.fields.salutation).first()).toBeVisible();
+    await says(exampleVersions[0].subject);
+    await says(copy.fields.salutation);
     await page.getByRole("combobox").selectOptions("older");
-    await expect.element(page.getByText(exampleVersions[1].subject)).toBeVisible();
-    await expect.element(page.getByText(copy.ownBands(8, 3, 1))).toBeVisible();
+    await says(exampleVersions[1].subject);
+    await says(copy.ownBands(8, 3, 1));
   });
 
   it("with one version, says how many it has, and with no one's own words, no bar", async () => {
@@ -91,7 +93,7 @@ describe("CampaignLetter", () => {
     );
     expect(document.body.textContent).toContain(copy.versionLine(null, 4));
     await rerender(<CampaignLetter versions={[]} bands={exampleBands} />);
-    await expect.element(page.getByText(copy.noText)).toBeVisible();
+    await says(copy.noText);
   });
 });
 
@@ -118,14 +120,14 @@ describe("CampaignView", () => {
   it("says who it's from and to, its ask and how many answered, with its letters", async () => {
     await render(view());
     await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent(exampleCampaign.title);
-    await expect.element(page.getByText(copy.supporters(10))).toBeVisible();
-    await expect.element(page.getByText(copy.politicians(9))).toBeVisible();
-    await expect.element(page.getByText(copy.answeredBar(3, 9))).toBeVisible();
+    await says(copy.supporters(10));
+    await says(copy.politicians(9));
+    await says(copy.answeredBar(3, 9));
     await expect.element(link(exampleCampaign.askTitle!)).toHaveAttribute("href", `/staff/asks/${exampleCampaign.ask}`);
-    await expect.element(page.getByText(`✓ ${staffCopy.statuses.signed}`)).toBeVisible();
-    await expect.element(page.getByText(staffCopy.letters.status.bounced).first()).toBeVisible();
-    await expect.element(page.getByText(staffCopy.letters.status.auto_reply)).toBeVisible();
-    await expect.element(page.getByText("unknown")).toBeVisible();
+    await says(`✓ ${staffCopy.statuses.signed}`);
+    await says(staffCopy.letters.status.bounced);
+    await says(staffCopy.letters.status.auto_reply);
+    await says("unknown");
     await expect
       .element(link(copy.tabs.changed(50)))
       .toHaveAttribute("href", `/staff/campaigns/${exampleCampaign.slug}?tab=changed`);
@@ -149,8 +151,8 @@ describe("AskView", () => {
     const answers = staffCopy.asks.page;
     expect(document.body.textContent).toContain(staffCopy.politician.askedThem("PauseAI", "letter").slice(0, 8));
     await expect.element(link(exampleAskPage.ways[0].title)).toHaveAttribute("href", exampleAskPage.ways[0].href);
-    await expect.element(page.getByText(answers.letters(19))).toBeVisible();
-    await expect.element(page.getByText(answers.bar(3, 40, "letter"))).toBeVisible();
+    await says(answers.letters(19));
+    await says(answers.bar(3, 40, "letter"));
     await expect.element(link(staffCopy.asks.edit)).toHaveAttribute("href", `/staff/asks/${exampleAskPage.slug}/edit`);
     await expect.element(link(answers.all(3))).toBeVisible();
     await expect.element(link("Polly Placeholder")).toHaveAttribute("href", "/staff/politicians/1");
@@ -187,8 +189,8 @@ describe("AskView", () => {
       />,
     );
     await expect.element(link(staffCopy.asks.page.theLink.letter)).toHaveAttribute("target", "_blank");
-    await expect.element(page.getByText(staffCopy.asks.page.noWay)).toBeVisible();
-    await expect.element(page.getByText(staffCopy.asks.page.none)).toBeVisible();
+    await says(staffCopy.asks.page.noWay);
+    await says(staffCopy.asks.page.none);
     expect(document.querySelector("progress")).toBeNull();
     await rerender(
       <AskView
@@ -219,7 +221,7 @@ describe("the one-off emails", () => {
   it("lists each thread, whose it is, and hides what staff can't read", async () => {
     await render(list("pauseai"));
     await expect.element(link(exampleOneOffs[0].subject!)).toHaveAttribute("href", "/staff/mailings/one-off/1");
-    await expect.element(page.getByText(staffCopy.oneOff.noPolitician).first()).toBeVisible();
+    await says(staffCopy.oneOff.noPolitician);
     await expect.element(link(staffCopy.oneOff.hidden)).toBeVisible();
     await expect.element(link(staffCopy.oneOff.noSubject)).toBeVisible();
     await expect
@@ -240,10 +242,10 @@ describe("the one-off emails", () => {
   it("opens a thread's messages, and says when it can't", async () => {
     const { rerender } = await render(<OneOffThreadView thread={exampleOneOffThread} />);
     await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent(exampleOneOffThread.subject!);
-    await expect.element(page.getByText("Could we meet?")).toBeVisible();
-    await expect.element(page.getByText(staffCopy.oneOff.unreadable)).toBeVisible();
+    await says("Could we meet?");
+    await says(staffCopy.oneOff.unreadable);
     await rerender(<OneOffThreadView thread={{ ...exampleHiddenOneOff, messages_: null }} />);
-    await expect.element(page.getByText(staffCopy.oneOff.hidden)).toBeVisible();
+    await says(staffCopy.oneOff.hidden);
     await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent(staffCopy.oneOff.title);
     await rerender(
       <OneOffThreadView
@@ -278,8 +280,8 @@ describe("SentEmails", () => {
     await expect.element(link("Jane Smith").first()).toHaveAttribute("href", "/staff/supporters/5");
     expect(document.body.textContent).toContain("Sam Brown");
     expect(page.getByRole("link", { name: "Sam Brown" }).query()).toBeNull();
-    await expect.element(page.getByText(words.imported)).toBeVisible();
-    await expect.element(page.getByText(words.outcomes.bounced)).toBeVisible();
+    await says(words.imported);
+    await says(words.outcomes.bounced);
     await expect.element(link(words.mailingLink)).toHaveAttribute("href", "/staff/mailings/3");
     await expect
       .element(link(words.campaignLink).first())
@@ -302,8 +304,8 @@ describe("SentEmails", () => {
         search={{ q: "", purpose: [], outcome: [], backend: [], page: "" }}
       />,
     );
-    await expect.element(page.getByText("new-purpose")).toBeVisible();
-    await expect.element(page.getByText("new-outcome")).toBeVisible();
+    await says("new-purpose");
+    await says("new-outcome");
   });
 });
 
@@ -312,11 +314,11 @@ describe("the import of old letters' run", () => {
     const words = staffCopy.oldLetters;
     const run = exampleRun("import-old-letters", exampleOldLettersResult);
     const { rerender } = await render(<Run run={run} open people />);
-    await expect.element(page.getByText(words.result(exampleOldLettersResult))).toBeVisible();
+    await says(words.result(exampleOldLettersResult));
     await expect.element(page.getByRole("heading", { name: words.joined })).toBeVisible();
-    await expect.element(page.getByText(`${words.mailingTitles["deepmind-30-june"]}: 500`)).toBeVisible();
-    await expect.element(page.getByText("form: 40")).toBeVisible();
-    await expect.element(page.getByText("Jane Smith <jane@example.com>: A question")).toBeVisible();
+    await says(`${words.mailingTitles["deepmind-30-june"]}: 500`);
+    await says("form: 40");
+    await says("Jane Smith <jane@example.com>: A question");
     expect(document.body.textContent).toContain(words.unreadable(1));
     expect(document.body.textContent).not.toContain(words.stoppedByGmail);
     await rerender(
@@ -327,7 +329,7 @@ describe("the import of old letters' run", () => {
     );
     expect(document.body.textContent).toContain(words.stoppedByGmail);
     expect(document.body.textContent).not.toContain("Jane Smith");
-    await expect.element(page.getByText(words.onlyWithSupporters(1))).toBeVisible();
+    await says(words.onlyWithSupporters(1));
     await rerender(
       <Run
         run={exampleRun("import-old-letters", {
@@ -342,7 +344,7 @@ describe("the import of old letters' run", () => {
     );
     expect(page.getByRole("heading", { name: words.joined }).query()).toBeNull();
     await rerender(<Run run={exampleFailedRun("import-old-letters", "Gmail said no", {})} open />);
-    await expect.element(page.getByText("Gmail said no")).toBeVisible();
+    await says("Gmail said no");
   });
 
   it("offers its dry run in a box that goes with the press", async () => {
@@ -372,10 +374,16 @@ describe("the rest", () => {
     expect(tagged.map((a) => a.getAttribute("href"))).not.toContain("/staff/supporters");
   });
 
+  it("says in a Gmail read how many one-off emails it kept", async () => {
+    const accounts = [{ account: "policy@pauseai.uk", replies: 0, autoReplies: 0, bounces: 0, oneOffs: 2 }];
+    await render(<Run run={exampleRun("read-gmail", { accounts })} open />);
+    await says(staffCopy.gmailReading.oneOffs(2));
+  });
+
   it("has a row at the foot of the mailings for the one-off emails, even with no mailings", async () => {
     await render(<MailingsOverview groups={[]} now={NOW} oneOffs={3} />);
     await expect.element(link(staffCopy.oneOff.title)).toHaveAttribute("href", "/staff/mailings/one-off");
-    await expect.element(page.getByText(staffCopy.oneOff.threads(3))).toBeVisible();
+    await says(staffCopy.oneOff.threads(3));
   });
 
   it("lets you turn keeping your threads with politicians on or off", async () => {
@@ -384,7 +392,7 @@ describe("the rest", () => {
     const props = { me: "jo@pauseai.uk", account, outcome: "", disconnect: () => {}, setKeepThreads: () => {} };
     const { rerender } = await render(<MyGmail {...props} keepsThreads />);
     await expect.element(page.getByRole("button", { name: words.stopKeeping })).toBeVisible();
-    await expect.element(page.getByText(words.keepOn)).toBeVisible();
+    await says(words.keepOn);
     await rerender(<MyGmail {...props} />);
     await expect.element(page.getByRole("button", { name: words.startKeeping })).toBeVisible();
     await rerender(<MyGmail {...props} lettersInbox />);

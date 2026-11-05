@@ -133,6 +133,15 @@ export const OLD_MAIL: readonly OldMail[] = [
     "I'm away.",
     { "In-Reply-To": "<0a06@mail.gmail.com>", "Auto-Submitted": "auto-replied" },
   ),
+  // A reply quoting an August letter, whose own text we can't read: the only way to know what it said.
+  got(
+    "0a19",
+    "t-august",
+    "2025-08-09T09:00:00.000Z",
+    `Polly Placeholder <${POLLY}>`,
+    `Re: ${DEEPMIND}`,
+    "Thanks for this.\n\nFrom: Joseph Example <joseph@example.com>\nSent: 8 August 2025 09:00\nTo: Polly Placeholder\n\nDear Ms Placeholder,\n\nPlease join 50 of your colleagues.",
+  ),
   // A template of one, for the CSRB send.
   sent(
     "0a06",

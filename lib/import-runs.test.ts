@@ -1,4 +1,5 @@
 import { expect, it } from "vitest";
+import { exampleOldLettersResult } from "@/app/(staff)/staff/_components/CampaignPages.examples";
 import { asList, IMPORT_JOBS, importPath, isImportJob, jobBySlug, runStatus, runTone } from "./import-runs";
 import {
   exampleAppliedSync,
@@ -31,6 +32,8 @@ it("gives each job a page of its own, and finds the job from its page's slug", (
 });
 
 it("says a Luma import that left work for later is incomplete, in place of done or unchanged, but not failed", () => {
+  expect(runStatus(exampleRun("import-old-letters", exampleOldLettersResult))).toBe("incomplete");
+  expect(runStatus(exampleRun("import-old-letters", { ...exampleOldLettersResult, finished: true }))).toBe("ok");
   expect(runStatus(exampleRun("import-luma", { ...exampleLumaResult, stoppedBy: "time" }))).toBe("incomplete");
   const placesFailed = { postcodes: 0, towns: 0, failed: true };
   expect(runStatus(exampleRun("import-luma", { ...exampleLumaResult, places: placesFailed }))).toBe("incomplete");

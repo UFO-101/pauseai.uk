@@ -1207,7 +1207,7 @@ export const staffCopy = {
     none: "No asks yet.",
     columns: {
       ask: "Title",
-      kind: "Kind",
+      kind: "We ask them to",
       date: "Date",
       // Who asks it: supporters, in a campaign's letter, or PauseAI, in a mailing; or both.
       askedBy: "Asked by",
@@ -1560,6 +1560,7 @@ export const staffCopy = {
   // The read every 5 minutes of the connected Gmail accounts for replies to our
   // letters and bounces (lib/server/gmail-reading.ts), on the import page.
   gmailReading: {
+    oneOffs: (n: number) => `⁂ ${n} one-off ${n === 1 ? "email" : "emails"} kept.`,
     title: "Replies and bounces from Gmail",
     intro: {
       before: "Reads the replies to our letters, and their bounces, in each ",
@@ -1624,7 +1625,8 @@ export const staffCopy = {
     to: "⁂ To",
     supporters: (n: number) => `⁂ ${n} ${n === 1 ? "supporter" : "supporters"}`,
     politicians: (n: number) => `⁂ ${n} ${n === 1 ? "politician" : "politicians"}`,
-    lettersTo: (letters: number, politicians: number) => `⁂ ${letters} letters to ${politicians} politicians`,
+    lettersTo: (letters: number, politicians: number) =>
+      `⁂ ${letters} ${letters === 1 ? "letter" : "letters"} to ${politicians} ${politicians === 1 ? "politician" : "politicians"}`,
     theLetter: "⁂ The letter",
     version: "⁂ What people were given",
     versionLine: (from: string | null, n: number) =>

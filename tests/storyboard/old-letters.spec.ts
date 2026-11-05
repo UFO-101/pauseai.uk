@@ -4,8 +4,8 @@ import { importPath } from "@/lib/import-runs";
 import { connectLettersInbox, databaseUrl, runSql } from "@/scripts/fresh-database.mjs";
 import { OUTBOX_DIR } from "../checkout.mjs";
 import { fixtureEnv } from "../fixture-env.mjs";
-import { syncPoliticians } from "../steps";
-import { BASE, expect, frame, story, test } from "./fixtures";
+import { newestEmail, syncPoliticians } from "../steps";
+import { BASE, emailFrame, expect, frame, story, test } from "./fixtures";
 import { logIn } from "./staff-steps";
 
 // The letters written before the site could send them, read from the policy
@@ -27,12 +27,19 @@ async function ready(page: Page, database: string, request: APIRequestContext) {
   await expect(page.getByText(staffCopy.runs.status.ok).first()).toBeVisible();
 }
 
-/** Presses Import old letters, and waits for its result. */
-async function press(page: Page, dryRun = false) {
+/** Presses Import old letters, and waits for a new run that's finished. */
+async function press(page: Page, database: string, dryRun = false) {
+  const finished = () =>
+    runSql(
+      database,
+      `SELECT count(*) FROM import_runs WHERE job = 'import-old-letters' AND result->>'finished' = 'true'`,
+    )[0];
+  const before = finished();
   await page.goto(`${BASE}${importPath("import-old-letters")}`);
   if (dryRun) await page.getByRole("checkbox", { name: words.dryRun }).check();
   await page.getByRole("button", { name: words.importNow }).click();
-  await expect(page.getByText(dryRun ? /would have read/ : /all done/).first()).toBeVisible();
+  await expect.poll(finished).not.toBe(before);
+  await page.reload();
 }
 
 test("Import old letters", async ({ page, request, flowDatabase }) => {
@@ -41,7 +48,7 @@ test("Import old letters", async ({ page, request, flowDatabase }) => {
   await page.goto(`${BASE}${importPath("import-old-letters")}`);
   await expect(page.getByText(words.never)).toBeVisible();
   await frame(page, "The job's page");
-  await press(page, true);
+  await press(page, flowDatabase, true);
   expect(runSql(flowDatabase, "SELECT count(*) FROM one_off_messages")).toEqual(["0"]);
   await expect(page.getByRole("heading", { name: words.joined })).toBeVisible();
   await frame(page, "The dry run's result");
@@ -49,13 +56,13 @@ test("Import old letters", async ({ page, request, flowDatabase }) => {
   story(
     "Then they press it for real. It joins each letter to its sent email, reads the replies, and keeps the rest as one-off emails.",
   );
-  await press(page);
+  await press(page, flowDatabase);
   await expect(page.getByText("Neil Nobody <neil.nobody@example.com>: Volunteering")).toBeVisible();
   await frame(page, "What it did");
 
   story("Pressing it again skips everything it has kept.");
   const kept = runSql(flowDatabase, "SELECT count(*) FROM one_off_messages");
-  await press(page);
+  await press(page, flowDatabase);
   expect(runSql(flowDatabase, "SELECT count(*) FROM one_off_messages")).toEqual(kept);
   await frame(page, "Pressed again");
 });
@@ -63,7 +70,7 @@ test("Import old letters", async ({ page, request, flowDatabase }) => {
 test("An old letter's page", async ({ page, request, flowDatabase }) => {
   story("A letter that fits its mailing's text is rebuilt from it, with what it had of its own.");
   await ready(page, flowDatabase, request);
-  await press(page);
+  await press(page, flowDatabase);
   await page.goto(`${BASE}/staff/mailings`);
   await frame(page, "The mailings, with those the import made");
 
@@ -81,12 +88,30 @@ test("An old letter's page", async ({ page, request, flowDatabase }) => {
   await expect(page.getByText("Thank you, I'll think about it.")).toBeVisible();
   await frame(page, "A letter and the politician's reply");
 
-  story("One the site can't read the text of, from August, is rebuilt from others like it, and says so.");
+  story("A letter that was each its own keeps its whole text.");
   await page.goto(`${BASE}/staff/mailings`);
-  await page.getByRole("link", { name: words.mailingTitles["russell-speak"] }).click();
+  await page.getByRole("link", { name: words.mailingTitles["russell-speak"] }).first().click();
   await page.getByRole("link", { name: staffCopy.mailingPages.theLetter }).first().click();
   await expect(page.getByText("Would you speak?")).toBeVisible();
   await frame(page, "A letter that keeps its own text");
+
+  story("A letter from August, whose text we can't read, is rebuilt from a reply quoting one like it, and says so.");
+  const [polly] = runSql(flowDatabase, "SELECT id FROM notable_people WHERE airtable_id = 'recPlaceholder'");
+  const [mailing] = runSql(flowDatabase, "SELECT id FROM mailings WHERE old_letters_key = 'deepmind-august'");
+  const [letter] = runSql(
+    flowDatabase,
+    `WITH made AS (INSERT INTO letters (kind, notable_person_id, status, created_at, sent_at)
+       VALUES ('pauseai', ${polly}, 'sent', '2025-08-08 09:00+00', '2025-08-08 09:00+00') RETURNING id)
+     INSERT INTO letters_from_pauseai (id, mailing_id, merge_values)
+     SELECT id, ${mailing}, '{"values":{"greeting":"Dear Ms Placeholder,","colleagues":"50"},"meets":[]}' FROM made RETURNING id`,
+  );
+  await page.goto(`${BASE}/staff/mailings/${mailing}`);
+  await expect(page.getByText(staffCopy.letterThread.approximate)).toBeVisible();
+  await frame(page, "August's mailing, approximate");
+  await page.goto(`${BASE}/staff/mailings/${mailing}/letters/${letter}`);
+  await expect(page.getByText(staffCopy.letterThread.approximate)).toBeVisible();
+  await expect(page.getByText("Please join 50 of your colleagues.")).toBeVisible();
+  await frame(page, "A letter from August");
 });
 
 test("A form letter's page", async ({ page, request, flowDatabase }) => {
@@ -94,7 +119,7 @@ test("A form letter's page", async ({ page, request, flowDatabase }) => {
     "A letter through pauseai.info's old form shows only what its writer changed from the form's text then, and its reply.",
   );
   await ready(page, flowDatabase, request);
-  await press(page);
+  await press(page, flowDatabase);
   await page.goto(`${BASE}/staff/campaigns/pauseai-info-frontier-ai`);
   await frame(page, "Its campaign's page");
   await page
@@ -103,15 +128,16 @@ test("A form letter's page", async ({ page, request, flowDatabase }) => {
     .first()
     .getByRole("link", { name: staffCopy.mailingPages.theLetter })
     .click();
-  await expect(page.getByText("I wrote this bit myself", { exact: false })).toBeVisible();
-  await expect(page.getByText("I have signed.", { exact: false })).toBeVisible();
+  const letter = page.getByRole("region", { name: staffCopy.letterThread.title });
+  await expect(letter).toContainText("my children");
+  await expect(letter).toContainText("I have signed.");
   await frame(page, "The letter's changes, and the reply");
 });
 
 test("One-off emails", async ({ page, request, flowDatabase }) => {
   story("The mailings list ends with the threads with politicians that aren't a mailing's or a campaign's.");
   await ready(page, flowDatabase, request);
-  await press(page);
+  await press(page, flowDatabase);
   await page.goto(`${BASE}/staff/mailings`);
   await page.getByRole("link", { name: oneOff.title }).click();
   await expect(page).toHaveURL(`${BASE}/staff/mailings/one-off`);
@@ -160,4 +186,18 @@ test("Keeping your threads", async ({ page, flowDatabase }) => {
   await frame(page, "Kept");
   await page.getByRole("button", { name: oneOff.stopKeeping }).click();
   await expect(page.getByText(oneOff.keepOff)).toBeVisible();
+});
+
+test("Mail that matches nothing", async ({ page, request, flowDatabase }) => {
+  story(
+    "Mail in policy@ that isn't about a politician isn't kept, but staff get a list of it, once a day, by sender and subject.",
+  );
+  await ready(page, flowDatabase, request);
+  runSql(flowDatabase, "INSERT INTO unmatched_mail (account, gmail_message_id) VALUES ('policy@pauseai.uk', '0b02')");
+  await page.goto(`${BASE}${importPath("read-gmail")}`);
+  await page.getByRole("button", { name: staffCopy.gmailReading.readNow }).click();
+  await expect.poll(() => newestEmail((email) => email.Subject === oneOff.unmatchedAlert.subject(1))).toBeTruthy();
+  const report = newestEmail((email) => email.Subject === oneOff.unmatchedAlert.subject(1))!;
+  expect(report.TextBody).toContain("Are you hiring?");
+  await emailFrame(page, report, "The email staff get");
 });

@@ -310,13 +310,23 @@ export async function getPauseaiLetter(mailingId: number, id: number): Promise<P
 }
 
 /**
- * A supporter's letter `id`, for its page, or undefined if there's none:
- * PauseAI's letters have theirs under their mailing. One from the letters
- * inbox is kept here, and found there by its Message-ID. Another's copy is the one
- * Bcc'd to the policy inbox, found by the Message-ID of the newest send
- * Postmark made of it, or, for one copied from Airtable, by its MP's
- * address and when it went; in its members' mail for one sent while the
+ * Where to find a letter's copy Bcc'd to the policy inbox: by the Message-ID of
+ * the newest send Postmark made of it, or, for one copied from Airtable, by its
+ * MP's address and when it went; in its members' mail for one sent while the
  * policy inbox was a Google Group (POLICY_GMAIL_SINCE).
+ */
+function policyCopy(postmarkId: string | null, mpEmail: string | null, sentAt: string | null): GmailFind | null {
+  const search = postmarkId ? postmarkSearch(postmarkId) : sentAt && mpEmail && sentNearSearch(mpEmail, sentAt);
+  if (!search) return null;
+  const group = sentAt !== null && new Date(sentAt) < POLICY_GMAIL_SINCE;
+  return { mailbox: process.env.POLICY_INBOX || null, search, ...(group ? { inPolicyGroup: true as const } : {}) };
+}
+
+/**
+ * A supporter's letter `id`, for its page, or undefined if there's none:
+ * PauseAI's letters have theirs under their mailing. One with its text kept
+ * shows it, and is found by the Message-ID it went with where it has one, or
+ * else by its copy in the policy inbox (policyCopy).
  */
 export async function getSupporterLetter(id: number): Promise<SupporterLetterDetails | undefined> {
   const [letter] = await recentLetters({ letterId: id });
@@ -355,16 +365,14 @@ export async function getSupporterLetter(id: number): Promise<SupporterLetterDet
       draft,
       messages: await threadMessages(id),
     };
-    const gmail = rfcId ? { mailbox: sentBy ?? lettersInbox() ?? null, search: messageIdSearch(rfcId) } : null;
+    const gmail = rfcId
+      ? { mailbox: sentBy ?? lettersInbox() ?? null, search: messageIdSearch(rfcId) }
+      : postmarkId
+        ? policyCopy(postmarkId, mpEmail, letter.sentAt)
+        : null;
     return { ...letter, kind: "supporter", subject, mpEmail, campaignAsk, gmail, forwards, sent };
   }
-  const search = postmarkId
-    ? postmarkSearch(postmarkId)
-    : letter.sentAt && mpEmail && sentNearSearch(mpEmail, letter.sentAt);
-  const group = letter.sentAt !== null && new Date(letter.sentAt) < POLICY_GMAIL_SINCE;
-  const gmail = search
-    ? { mailbox: process.env.POLICY_INBOX || null, search, ...(group ? { inPolicyGroup: true as const } : {}) }
-    : null;
+  const gmail = policyCopy(postmarkId, mpEmail, letter.sentAt);
   return { ...letter, kind: "supporter", subject, mpEmail, campaignAsk, gmail, forwards, sent: null };
 }
 
