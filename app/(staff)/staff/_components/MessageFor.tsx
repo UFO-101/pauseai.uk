@@ -22,7 +22,7 @@ export function MessageWho({
 }) {
   const words = [staffCopy.messagePages.channels[channel], ...supporterWords(supportersSearch(params), choices)];
   return (
-    <ul className={parts.pills} aria-label={staffCopy.messagePages.facts.who}>
+    <ul className={parts.pills} aria-label={staffCopy.mailingPages.whoLabel}>
       {words.map((word) => (
         <li key={word}>{word}</li>
       ))}

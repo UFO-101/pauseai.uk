@@ -820,7 +820,7 @@ export const staffCopy = {
   },
   mailings: {
     title: "Mailings",
-    intro: "Emails PauseAI sends to many notable people at once.",
+    intro: "Emails PauseAI sends to many notable people at once",
     none: "No mailings yet.",
     // Over the list: how many there are.
     total: (n: number) => `${n} ${n === 1 ? "mailing" : "mailings"}`,
@@ -923,6 +923,7 @@ export const staffCopy = {
   // The pages for messages to supporters: from the supporters list, the writer, the list of them and each one's page.
   messagePages: {
     title: "⁂ Messages",
+    intro: "⁂ Emails and texts PauseAI sends to supporters who said yes to hearing from us",
     none: "⁂ No messages yet.",
     untitled: "⁂ Untitled message",
     // In the supporters list's count row.
@@ -1087,8 +1088,6 @@ export const staffCopy = {
     } as Record<string, string>,
     recipientsTitle: "⁂ Recipients",
     recipientsCount: (n: number) => `⁂ ${n} ${n === 1 ? "recipient" : "recipients"}`,
-    // Under who it's for, in its band, so someone landing on the page can see who they are.
-    supportersCount: (n: number) => `⁂ ${n} ${n === 1 ? "supporter" : "supporters"}`,
     noRecipients: "⁂ No recipients here.",
     columns: { who: "⁂ Supporter", status: "⁂ Status" },
     erased: "⁂ Erased",
@@ -1119,7 +1118,6 @@ export const staffCopy = {
       replies: "⁂ Replies",
       supporter: "⁂ Supporter",
       from: "⁂ From",
-      who: "⁂ Who it's for",
     },
     lastAnswered: (by: string) => `⁂ last answered by ${by}`,
     threadTitle: "⁂ Message and reply",
@@ -1393,7 +1391,7 @@ export const staffCopy = {
   // The asks page: each ask, its kind and date, and how many gave each answer.
   asks: {
     title: "Asks",
-    intro: "What we ask notable people to do, either by writing to them or by meeting them.",
+    intro: "What we ask notable people to do, either by writing to them or by meeting them",
     edit: "Edit",
     // The form, adding an ask or editing one; the new one's title is the asks page's button to it, too.
     newTitle: "New ask",
@@ -1599,7 +1597,7 @@ export const staffCopy = {
       mps: "Politicians' blocked emails",
       supporters: "Supporters' blocked emails",
     },
-    intro: "Nothing is sent to these addresses until they're unblocked.",
+    intro: "Nothing is sent to these addresses until they're unblocked",
     // Over the list: how many are blocked, of those the filters find.
     count: (n: number) => `${n} blocked ${n === 1 ? "address" : "addresses"}`,
     // Instead of the table, when no address is blocked, or none of the cause filtered for.
@@ -1902,7 +1900,7 @@ export const staffCopy = {
   // The one-off import of the meetings for Go to Parliament.
   campaigns: {
     title: "Campaigns",
-    intro: "Letters supporters write to politicians, through a form on the site.",
+    intro: "Letters supporters write to politicians, through a form on the site",
     none: "No campaigns yet.",
     fromSupporters: "From supporters",
     noLetters: "No letters",
@@ -2054,7 +2052,7 @@ export const staffCopy = {
   oneOff: {
     // The page's title, and a thread's way back.
     title: "One-off emails",
-    intro: (inbox: string) => `Threads copied to ${inbox} that aren't part of a mailing or a campaign.`,
+    intro: (inbox: string) => `Threads copied to ${inbox} that aren't part of a mailing or a campaign`,
     threads: (n: number) => `${n} ${n === 1 ? "thread" : "threads"}`,
     none: "No one-off emails yet.",
     columns: {

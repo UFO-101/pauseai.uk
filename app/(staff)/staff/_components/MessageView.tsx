@@ -18,6 +18,7 @@ import {
   type MessageChannel,
 } from "@/lib/supporter-messages";
 import ChannelIcon from "./ChannelIcon";
+import MailEmail from "./MailEmail";
 import MailingFiles from "./MailingFiles";
 import { MailingLetter } from "./MailingLetter";
 import { MailingStanding, MailingWhen } from "./MailingView";
@@ -72,6 +73,11 @@ export function copyStatus(
   return { words: copy.statuses[status], tone: status === "failed" ? "red" : undefined };
 }
 
+/** Whether a copy went, so has a page of its own with its replies. */
+export function copyWent(copyOf: Pick<MessageRecipient, "status" | "skipReason">): boolean {
+  return !copyOf.skipReason && !["scheduled", "cancelled"].includes(copyOf.status);
+}
+
 /** A recipient's columns: who, and where they are; then how it went, when, and the way to their copy's page. */
 function recipientColumns(message: MessageSummary): ListColumn<MessageRecipient>[] {
   return [
@@ -99,7 +105,7 @@ function recipientColumns(message: MessageSummary): ListColumn<MessageRecipient>
           <span className={styles.stack}>
             <Tag tone={tone}>{words}</Tag>
             {r.sentAt && <Muted>{staffDate(r.sentAt)}</Muted>}
-            {!r.skipReason && !["scheduled", "cancelled"].includes(r.status) && (
+            {copyWent(r) && (
               <StaffLink href={`/staff/messages/${message.id}/${r.copyId}`}>{copy.messageAndReply}</StaffLink>
             )}
           </span>
@@ -130,33 +136,23 @@ function MessageWords({ written }: { written: WrittenMessage }) {
   };
   return (
     <Card span={3} look="aside" title={copy.emailTitle} id="words-title">
-      <div className={view.email}>
-        <dl className={view.headers}>
-          <dt>{copy.headers.from}</dt>
-          <dd>{written.fromName ? `${written.fromName} <${written.sentFrom}>` : written.sentFrom}</dd>
-          <dt>{copy.headers.to}</dt>
-          <dd>
-            <Muted>{staffCopy.mailingPages.toEach}</Muted>
-          </dd>
-          <dt>{copy.subject}</dt>
-          <dd>
-            <strong>{written.subject}</strong>
-          </dd>
-        </dl>
-        <div className={view.body}>
-          <MailingLetter doc={written.body} fields={FIELD_WORDS} conditions={conditions} />
-          {written.attachments.length > 0 && (
-            <MailingFiles files={written.attachments} base={`/staff/messages/${written.id}/files`} />
-          )}
-        </div>
-      </div>
+      <MailEmail
+        from={written.fromName ? `${written.fromName} <${written.sentFrom}>` : written.sentFrom}
+        to={<Muted>{staffCopy.mailingPages.toEach}</Muted>}
+        subject={written.subject}
+      >
+        <MailingLetter doc={written.body} fields={FIELD_WORDS} conditions={conditions} />
+        {written.attachments.length > 0 && (
+          <MailingFiles files={written.attachments} base={`/staff/messages/${written.id}/files`} />
+        )}
+      </MailEmail>
     </Card>
   );
 }
 
 /**
- * A message's page, once scheduled: a band of its title, when it went and
- * who sent it, who from, and who it was for, with its counts, each leading to
+ * A message's page, once scheduled: a band of its title, who from, who it was
+ * for, and when it went and who sent it, with its counts, each leading to
  * those recipients; where it stands, and while WhatsApp hasn't approved its
  * words, that; then the email or text beside its recipients.
  */
@@ -196,13 +192,13 @@ export default function MessageView({
         }
         aside={!scheduled && <Counts counts={counts} />}
       >
-        <MailingWhen mailing={summary} written={written} />
         <BandFact label={copy.facts.from} detail={`${written.fromName}, ${copy.byBackend[written.channel]}`}>
           {written.sentFrom}
         </BandFact>
-        <BandFact label={copy.facts.who} detail={copy.supportersCount(summary.to)}>
+        <BandFact label={staffCopy.mailingPages.to} detail={staffCopy.campaigns.supporters(summary.to)}>
           {who}
         </BandFact>
+        <MailingWhen mailing={summary} written={written} />
       </Band>
       {summary.waiting && <Strip tone="amber">{copy.waitingStrip}</Strip>}
       <MailingStanding

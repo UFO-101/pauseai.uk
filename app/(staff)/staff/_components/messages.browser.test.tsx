@@ -513,7 +513,7 @@ describe("a message's page", () => {
       .toHaveAttribute("href", "/staff/messages/5?tab=delivered");
     await expect.element(page.getByRole("link", { name: copy.counts.read })).not.toBeInTheDocument();
     await expect.element(page.getByText(copy.emailTitle)).toBeVisible();
-    await expect.element(page.getByText(copy.supportersCount(290), { exact: true })).toBeVisible();
+    await expect.element(page.getByText(staffCopy.campaigns.supporters(290), { exact: true })).toBeVisible();
     await expect
       .element(page.getByRole("link", { name: "Jane Example" }))
       .toHaveAttribute("href", "/staff/supporters/7");
@@ -670,7 +670,7 @@ describe("MessageFor", () => {
     await render(
       <MessageWho channel="text" params={{ contact: "phone:luma-calendar:yes" }} choices={exampleSupporterChoices} />,
     );
-    const pills = page.getByRole("list", { name: copy.facts.who }).getByRole("listitem");
+    const pills = page.getByRole("list", { name: staffCopy.mailingPages.whoLabel }).getByRole("listitem");
     await expect.element(pills.first()).toHaveTextContent(copy.channels.text);
   });
 });
@@ -818,10 +818,26 @@ describe("SupporterMessages", () => {
             read: false,
             replies: [],
           },
+          {
+            copyId: 23,
+            messageId: 7,
+            title: "Stopped",
+            channel: "email",
+            status: "cancelled",
+            skipReason: null,
+            sentAt: null,
+            read: false,
+            replies: [],
+          },
         ]}
       />,
     );
-    await expect.element(page.getByRole("link", { name: "March day" })).toHaveAttribute("href", "/staff/messages/5/21");
+    await expect.element(page.getByRole("link", { name: "March day" })).toHaveAttribute("href", "/staff/messages/5");
+    await expect
+      .element(page.getByRole("link", { name: copy.messageAndReply }).first())
+      .toHaveAttribute("href", "/staff/messages/5/21");
+    // One went to each of the two that went; the one stopped has no page of its own.
+    await expect.poll(() => page.getByRole("link", { name: copy.messageAndReply }).elements().length).toBe(2);
     await expect.element(page.getByText(/Great, thanks/)).toBeVisible();
     await expect.element(page.getByRole("link", { name: copy.untitled })).toBeVisible();
   });

@@ -24,11 +24,11 @@ export type LoggedChange = AuditEntry & { politician: Named | null; supporter: N
 const POLITICIAN_ACTIONS = ["add politician", "edit politician", "remove politician", "delete politician"];
 
 /**
- * The entries staff without `supporters` see: not those about a supporter,
+ * The entries staff without `supporters` see: not those about a supporter or a message to them,
  * nor downloads, whose filters may name one, nor an address that isn't a politician's.
  */
 const WITHOUT_SUPPORTERS = `NOT (
-  action = ANY(ARRAY['view supporter', 'erase supporter', 'download supporters', 'download letters', 'download blocked emails'])
+  action = ANY(ARRAY['view supporter', 'erase supporter', 'download supporters', 'download letters', 'download blocked emails', 'create message', 'schedule message', 'stop message', 'reply to message'])
   OR details ? 'supporterId'
   OR (action = ANY(ARRAY['block address', 'unblock address'])
     AND NOT EXISTS (SELECT 1 FROM notable_people n WHERE lower(n.email) = lower(details->>'address')))

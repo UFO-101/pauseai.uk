@@ -3,7 +3,7 @@ import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { SupporterMessageRow } from "@/lib/server/message-pages";
 import { staffDate } from "@/lib/staff-time";
-import { MessageChannelName, copyStatus } from "./MessageView";
+import { MessageChannelName, copyStatus, copyWent } from "./MessageView";
 import { ListTable, type ListColumn } from "./ui/ListFrame";
 import StaffLink from "./ui/StaffLink";
 import details from "./Details.module.css";
@@ -17,7 +17,7 @@ const COLUMNS: ListColumn<SupporterMessageRow>[] = [
     label: copy.supporterColumns.message,
     cell: (m) => (
       <span className={styles.stack}>
-        <StaffLink href={`/staff/messages/${m.messageId}/${m.copyId}`}>{m.title || copy.untitled}</StaffLink>
+        <StaffLink href={`/staff/messages/${m.messageId}`}>{m.title || copy.untitled}</StaffLink>
         <Muted>
           <MessageChannelName channel={m.channel} />
           {m.sentAt && staffDate(m.sentAt)}
@@ -31,7 +31,14 @@ const COLUMNS: ListColumn<SupporterMessageRow>[] = [
     short: true,
     cell: (m) => {
       const { words, tone } = copyStatus(m, m.channel);
-      return <Tag tone={tone}>{words}</Tag>;
+      return (
+        <span className={styles.stack}>
+          <Tag tone={tone}>{words}</Tag>
+          {copyWent(m) && (
+            <StaffLink href={`/staff/messages/${m.messageId}/${m.copyId}`}>{copy.messageAndReply}</StaffLink>
+          )}
+        </span>
+      );
     },
   },
   {
@@ -49,7 +56,7 @@ const COLUMNS: ListColumn<SupporterMessageRow>[] = [
   },
 ];
 
-/** The messages a supporter was sent, newest first, with their replies, each leading to its page. */
+/** The messages a supporter was sent, newest first, with their replies: each name leads to the message, and its link to this supporter's copy. */
 export default function SupporterMessages({ messages }: { messages: SupporterMessageRow[] }) {
   return (
     <section aria-labelledby="messages">

@@ -266,7 +266,7 @@ test("Changing who a message goes to", async ({ page, request, flowDatabase }) =
   await page.goto(url.toString());
   await bar.getByRole("button", { name: copy.useThese(EMAILABLE) }).click();
   await expect(page).toHaveURL(draft);
-  await expect(page.getByRole("list", { name: copy.facts.who })).toContainText("fixture");
+  await expect(page.getByRole("list", { name: staffCopy.mailingPages.whoLabel })).toContainText("fixture");
   await frame(page, "The draft, to those found");
   story("Cancel at the top goes back and changes nothing.");
   await page.getByRole("link", { name: mailingCopy.changeWho }).click();
