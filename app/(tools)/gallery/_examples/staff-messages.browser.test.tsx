@@ -20,7 +20,9 @@ it("logs a draft's actions in the writer's example", async () => {
   await render(<MessageWriterExample kind="email" />);
   await page.getByLabelText(copy.subject).fill("Changed");
   await page.getByRole("button", { name: copy.sendTest }).click();
-  await expect.element(page.getByRole("list", { name: "Event log" })).toHaveTextContent("saveMessage");
+  const log = page.getByRole("list", { name: "Event log" }).getByRole("listitem");
+  await expect.element(log.nth(0)).toHaveTextContent('saveMessage(3, 4, {"subject":"Changed"})');
+  await expect.element(log.nth(1)).toHaveTextContent('sendMessageTestNow(3, 7, "jo@pauseai.uk")');
 });
 
 it("draws each kind of writer", async () => {
