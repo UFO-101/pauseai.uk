@@ -429,7 +429,7 @@ describeWithDatabase("staff Server Actions", () => {
         await expectRedirect(() => saveAskNow(reception({ slug: "winter-reception-dec-2026", title: "Reception" }))),
       ).toBe("/staff/asks?notice=saved");
       expect(await expectRedirect(() => saveAskNow(reception({ slug: "frontier-ai-letter" })))).toBe(
-        "/staff/asks/frontier-ai-letter?notice=fixed&back=%2Fstaff%2Fasks",
+        "/staff/asks/frontier-ai-letter/edit?notice=fixed&back=%2Fstaff%2Fasks",
       );
       expect(await expectRedirect(() => saveAskNow(form({ title: "", kind: "event" })))).toBe(
         "/staff/asks/new?notice=invalid&back=%2Fstaff%2Fasks",
@@ -439,7 +439,7 @@ describeWithDatabase("staff Server Actions", () => {
     it("deletes an ask, or goes back to its form saying why not, or to the asks if it's gone", async () => {
       await expectRedirect(() => saveAskNow(reception()));
       expect(await expectRedirect(() => deleteAskNow(form({ slug: "frontier-ai-letter" })))).toBe(
-        "/staff/asks/frontier-ai-letter?notice=fixed&back=%2Fstaff%2Fasks",
+        "/staff/asks/frontier-ai-letter/edit?notice=fixed&back=%2Fstaff%2Fasks",
       );
       expect(await expectRedirect(() => deleteAskNow(form({ slug: "winter-reception-dec-2026" })))).toBe(
         "/staff/asks?notice=deleted",

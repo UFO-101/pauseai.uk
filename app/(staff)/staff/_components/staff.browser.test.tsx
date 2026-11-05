@@ -18,7 +18,7 @@ import EmailBlocksTable, { blockColumns } from "./EmailBlocksTable";
 import { exampleBlock, exampleComplaint, exampleGmailBlock, exampleProblems } from "./EmailBlocksTable.examples";
 import EmailProblemsTable from "./EmailProblemsTable";
 import { exampleChanges } from "./ChangesTable.examples";
-import LettersTable, { LettersList, letterColumns, letterDownloadColumns } from "./LettersTable";
+import LettersTable, { letterDownloadColumns } from "./LettersTable";
 import { historyOf, LetterHistory } from "./LetterHistory";
 import FindInGmail from "./FindInGmail";
 import {
@@ -150,7 +150,7 @@ describe("StaffNav", () => {
     );
     // Without supporters, the Supporters section has no page to show, so it hides.
     expect(nav.querySelector('a[href="/staff/supporters"]')).toBeNull();
-    expect(nav.querySelector('a[href="/staff/letters"]')).toBeNull();
+    expect(nav.querySelector('a[href="/staff/campaigns"]')).toBeNull();
     // On a phone, a dropdown instead: the current page, with the groups, the email and the way out under it once opened.
     const menu = page.getByRole("group");
     expect((menu.element() as HTMLDetailsElement).open).toBe(false);
@@ -198,15 +198,15 @@ describe("StaffNav", () => {
     expect(document.querySelector("summary")!.textContent).toBe(staffCopy.me.title);
   });
 
-  it("shows the Supporters section, Letters in it, to someone with supporters", async () => {
-    await render(<StaffNav email="jo@pauseai.uk" permissions={["supporters"]} current="letters" />);
+  it("shows the Supporters section, Campaigns in it, to someone with supporters", async () => {
+    await render(<StaffNav email="jo@pauseai.uk" permissions={["supporters"]} current="campaigns" />);
     const nav = document.querySelector("nav")!;
     const supporters = [...nav.querySelectorAll("section")].find(
       (section) => section.querySelector("h2")?.textContent === staffCopy.nav.sections.supporters,
     )!;
     expect([...supporters.querySelectorAll("a")].map((a) => a.getAttribute("href"))).toEqual([
       "/staff/supporters",
-      "/staff/letters",
+      "/staff/campaigns",
       "/staff/supporters/blocked-emails",
     ]);
   });
@@ -224,7 +224,7 @@ describe("StaffNav in the signed-in pages' layout", () => {
     expect(menu().open).toBe(true);
     navigation.pathname = "/staff/letters/7";
     await rerender(nav());
-    expect(current()).toBe(staffCopy.nav.letters);
+    expect(current()).toBe(staffCopy.nav.campaigns);
     expect(menu().open).toBe(false);
   });
 
@@ -399,7 +399,7 @@ describe("StaffDashboard", () => {
     expect(page.getByRole("img").all()).toHaveLength(2);
     // The whole tile is the link; a tile with no page isn't one.
     const tileLink = (text: string) => page.getByText(text).element().closest("a");
-    expect(tileLink(copy.metrics.lettersReplied(3))?.getAttribute("href")).toBe("/staff/letters?answered=yes");
+    expect(tileLink(copy.metrics.lettersReplied(3))?.getAttribute("href")).toBe("/staff/campaigns");
     expect(tileLink(copy.metrics.supportersAdded(176))?.getAttribute("href")).toBe("/staff/supporters");
     expect(tileLink(copy.metrics.eventsHeld(9))).toBeNull();
 
@@ -4569,12 +4569,6 @@ describe("the lists' paging", () => {
     await expect
       .element(page.getByRole("link", { name: staffCopy.paging.next }))
       .toHaveAttribute("href", "/staff/audit-log?page=3");
-    await rerender(
-      <LettersList letters={[exampleLetter]} total={150} pages={2} pageSize={100} search={emptyLettersSearch} />,
-    );
-    await expect
-      .element(page.getByRole("link", { name: staffCopy.paging.next }))
-      .toHaveAttribute("href", "/staff/letters?page=2");
   });
 });
 
@@ -4605,7 +4599,7 @@ describe("each list's download values and contact cards", () => {
   it("letters: the campaign by its title, the campaigns table's once it's gone, and the history", () => {
     const row = values(letterDownloadColumns, exampleLetter);
     expect(row.campaign).toBe(campaignBySlug(exampleLetter.campaign)?.title);
-    expect(values(letterColumns(), { ...exampleLetter, campaign: "gone", campaignTitle: "Gone" }).campaign).toBe(
+    expect(values(letterDownloadColumns, { ...exampleLetter, campaign: "gone", campaignTitle: "Gone" }).campaign).toBe(
       "Gone",
     );
     expect(typeof row.history).toBe("string");
@@ -4926,7 +4920,7 @@ describe("LetterFilters", () => {
       backend: "!airtable",
     });
     void filter;
-    await render(<LetterFilters search={search} campaigns={exampleLetterCampaigns} />);
+    await render(<LetterFilters path="/staff/letters" search={search} campaigns={exampleLetterCampaigns} />);
     await expect.element(page.getByRole("searchbox", { name: copy.search })).toHaveValue("jane");
     // In the columns' order; a campaign the list doesn't offer by its slug.
     expect(chips()).toEqual([
@@ -4941,31 +4935,6 @@ describe("LetterFilters", () => {
       staffCopy.politicians.flags.important,
       "/staff/letters?status=sent&q=jane&campaign=support-sobel-bill&campaign=%21pauseai-info-frontier-ai&flag=test&flag=important&backend=%21airtable",
     ]);
-  });
-});
-
-describe("LettersList headings", () => {
-  it("sort the list, keeping its filters, newest written first unless another is chosen", async () => {
-    const heading = (name: string) => page.getByRole("link", { name, exact: true });
-    const copy = staffCopy.letters.columns;
-    const list = (search: Partial<typeof emptyLettersSearch>) => (
-      <LettersList
-        letters={[exampleLetter]}
-        total={1}
-        pages={1}
-        pageSize={100}
-        search={{ ...emptyLettersSearch, ...search }}
-      />
-    );
-    const { rerender } = await render(list({ q: "x", page: "2" }));
-    await expect.element(heading(copy.created)).toHaveAttribute("href", "/staff/letters?q=x&sort=created&dir=asc");
-    expect(heading(copy.created).element().closest("th")!.getAttribute("aria-sort")).toBe("descending");
-    await expect.element(heading(copy.from)).toHaveAttribute("href", "/staff/letters?q=x&sort=from&dir=asc");
-    await rerender(list({ campaign: ["regulate-letter-pm"], sort: "sent", dir: "asc" }));
-    await expect
-      .element(heading(copy.sent))
-      .toHaveAttribute("href", "/staff/letters?campaign=regulate-letter-pm&sort=sent&dir=desc");
-    expect(heading(copy.sent).element().closest("th")!.getAttribute("aria-sort")).toBe("ascending");
   });
 });
 

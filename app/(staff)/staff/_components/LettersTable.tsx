@@ -5,15 +5,10 @@ import { campaignBySlug } from "@/lib/email-your-mp";
 import type { DownloadColumn } from "@/lib/staff-list";
 import { staffTime } from "@/lib/staff-time";
 import type { LetterSummary } from "@/lib/server/letters";
-import { LETTER_SORTS, type LetterSort } from "@/lib/letter-sort";
-import { filtersPath, pageParam, type LettersSearch } from "@/lib/staff-search";
-import { parseSort, sortHref } from "@/lib/staff-sort";
-import SortHeading from "./SortHeading";
-import ListFrame, { ListTable, type ListColumn } from "./ui/ListFrame";
+import { ListTable, type ListColumn } from "./ui/ListFrame";
 import { Muted } from "@/components/ui/Text";
 import Tag from "@/components/ui/Tag";
 
-const PATH = "/staff/letters";
 const copy = staffCopy.letters;
 
 /** A letter's status, in words. */
@@ -31,7 +26,7 @@ const statusOf = (status: string) => copy.status[status] ?? status;
  * automation emailed it. Each is a sort (lib/letter-sort.ts), newest
  * written first unless another is chosen.
  */
-const columns: (ListColumn<LetterSummary> & { key: LetterSort })[] = [
+const columns: ListColumn<LetterSummary>[] = [
   {
     key: "status",
     label: copy.columns.status,
@@ -121,30 +116,6 @@ const columns: (ListColumn<LetterSummary> & { key: LetterSort })[] = [
   },
 ];
 
-/**
- * The list's columns; with the list's filters and sort as typed, each
- * heading sorts the list by its column, keeping the filters.
- */
-export function letterColumns(search?: LettersSearch): ListColumn<LetterSummary>[] {
-  if (!search) return columns;
-  const { sort, dir, page, ...filters } = search;
-  void page;
-  const current = parseSort(LETTER_SORTS, "created", sort, dir);
-  return columns.map((column) => ({
-    ...column,
-    heading: (
-      <SortHeading
-        key={column.key}
-        sortKey={column.key}
-        current={current}
-        href={sortHref(PATH, filters, LETTER_SORTS, current, column.key)}
-      >
-        {column.label}
-      </SortHeading>
-    ),
-  }));
-}
-
 /** The list's columns for a download, with each change of status, which its page shows. */
 export const letterDownloadColumns: DownloadColumn<LetterSummary>[] = [
   ...columns,
@@ -159,36 +130,4 @@ export const letterDownloadColumns: DownloadColumn<LetterSummary>[] = [
 export default function LettersTable({ letters }: { letters: LetterSummary[] }) {
   if (letters.length === 0) return <p>{copy.none}</p>;
   return <ListTable columns={columns} rows={letters} rowKey={(l) => l.id} />;
-}
-
-/** The letters page's list, in the list frame: how many, its downloads, the letters and the way through the pages. */
-export function LettersList({
-  letters,
-  total,
-  pages,
-  pageSize,
-  search,
-}: {
-  letters: LetterSummary[];
-  total: number;
-  pages: number;
-  pageSize: number;
-  search: LettersSearch;
-}) {
-  const filters = { ...search, page: "" };
-  return (
-    <ListFrame
-      count={copy.total(total)}
-      total={total}
-      page={Number(search.page) || 1}
-      pages={pages}
-      pageSize={pageSize}
-      href={(n) => filtersPath(PATH, filters, pageParam(n))}
-      download={(format) => filtersPath(`${PATH}/download`, filters, { format })}
-      columns={letterColumns(search)}
-      rows={letters}
-      rowKey={(l) => l.id}
-      empty={copy.none}
-    />
-  );
 }

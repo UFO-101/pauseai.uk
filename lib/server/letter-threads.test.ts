@@ -72,6 +72,7 @@ describeWithDatabase("letter threads", () => {
     );
     await keep(id, "a.eml.gz", "Subject: Re\r\n\r\nThanks,\r\nPolly\r\n", "2026-11-02T12:00:00Z");
     expect(await letterThread(mailing, id)).toEqual({
+      approximate: false,
       mailingTitle: "AI",
       subject: "AI safety",
       to: { name: "Polly Placeholder", email: "polly.placeholder.mp@parliament.uk" },

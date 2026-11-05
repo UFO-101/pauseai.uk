@@ -305,7 +305,7 @@ async function tellOfLateLetters(request: Request | undefined): Promise<void> {
   const why = staffCopy.letters.detail.reasons[(await cannotSend(2)) ?? "failed"];
   await notifyStaff(
     words.subject(late.length, LATE_HOURS),
-    words.body(late.length, LATE_HOURS, why, staffLink("/staff/letters?status=queued", request)),
+    words.body(late.length, LATE_HOURS, why, staffLink("/staff/campaigns", request)),
     late[0].id,
   );
 }

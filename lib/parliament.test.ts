@@ -15,18 +15,21 @@ describe("fetchCurrentMps", () => {
         name: "Ms Dora Dummy",
         constituency: "Hackney North and Stoke Newington",
         emails: ["mp90001.office@parliament.uk"],
+        websites: [],
       },
       {
         parliamentId: 90002,
         name: "Polly Placeholder",
         constituency: "Cities of London and Westminster",
         emails: ["mp90002.office@parliament.uk"],
+        websites: [],
       },
       {
         parliamentId: 90003,
         name: "Mo Example",
         constituency: "Manchester Central",
         emails: ["mp90003.office@parliament.uk"],
+        websites: [],
       },
     ]);
   });
@@ -49,6 +52,24 @@ describe("fetchCurrentMps", () => {
       ),
     );
     expect((await fetchCurrentMps(getJson))[0].emails).toEqual(["a@parliament.uk", "b@example.org"]);
+  });
+
+  it("keeps each web address, and skips other lines", async () => {
+    server.use(
+      http.get(`${MEMBERS_API}/Members/Search`, () =>
+        HttpResponse.json({ items: [{ value: member }], totalResults: 1 }),
+      ),
+      http.get(`${MEMBERS_API}/Members/1/Contact`, () =>
+        HttpResponse.json({
+          value: [
+            { isWebAddress: true, line1: " https://tulip.example " },
+            { isWebAddress: true, line1: null },
+            { isWebAddress: false, line1: "House of Commons" },
+          ],
+        }),
+      ),
+    );
+    expect((await fetchCurrentMps(getJson))[0].websites).toEqual(["https://tulip.example"]);
   });
 
   it("pages through the list, 20 at a time, and asks only for sitting MPs", async () => {

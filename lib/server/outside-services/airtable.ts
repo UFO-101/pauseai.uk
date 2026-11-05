@@ -248,6 +248,7 @@ const WEB_FORM_FIELDS = [
   "Invalid, can't send",
   "Campaign",
   "Contact consent",
+  "Message",
 ] as const;
 
 export type WebFormLetterToImport = {
@@ -267,6 +268,8 @@ export type WebFormLetterToImport = {
   invalid: boolean;
   /** "Contact consent": ticked Yes. Blank, as on every letter before the box was added, is no. */
   consent: boolean;
+  /** The letter as the sender left it. */
+  message: string;
 };
 
 /** Every letter in the old form's table. */
@@ -285,6 +288,7 @@ export async function fetchWebFormLetters(token: string): Promise<WebFormLetterT
     spam: ticked(record, "Spam"),
     invalid: ticked(record, "Invalid, can't send"),
     consent: text(record, "Contact consent") === "Yes",
+    message: text(record, "Message"),
   }));
 }
 

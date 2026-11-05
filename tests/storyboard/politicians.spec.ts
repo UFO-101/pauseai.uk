@@ -540,15 +540,11 @@ test("pauseai.info's letters and Go to Parliament's meetings", async ({ page, re
   ).toBeVisible();
   await frame(page, "The old form's letters, imported");
 
-  story("On the letters page they're marked as sent by Airtable, and each campaign links to its letter.");
-  // On the letters page, marked as from the old form; the sender a supporter from it.
-  await page.goto(`${BASE}/staff/letters`);
-  await expect(page.getByRole("cell", { name: staffCopy.letters.backends.airtable, exact: true })).toHaveCount(3);
-  await expect(page.getByRole("link", { name: "DeepMind letter, from pauseai.info" }).first()).toHaveAttribute(
-    "href",
-    "https://pauseai.uk/campaigns/dear-sir-demis-2025",
-  );
-  await frame(page, "The letters page");
+  story("Each old campaign has its letters, on its own page.");
+  await page.goto(`${BASE}/staff/campaigns`);
+  await page.getByRole("link", { name: "DeepMind letter, from pauseai.info" }).first().click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("DeepMind letter, from pauseai.info");
+  await frame(page, "An old campaign's page");
   story("Each sender is now a supporter, from the old form.");
   await page.getByRole("link", { name: "Dee Deepmind" }).first().click();
   await expect(page.getByText(staffCopy.supporters.sources["web-form"]).first()).toBeVisible();

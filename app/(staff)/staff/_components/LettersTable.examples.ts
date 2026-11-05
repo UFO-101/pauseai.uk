@@ -18,6 +18,9 @@ export const exampleLetter: LetterSummary = {
   mpName: "Testy McTestface MP",
   politicianId: 3,
   isTest: true,
+  constituency: "Testington",
+  party: "Example Party",
+  answer: null,
   ownWords: 0.18,
   backend: "postmark",
   createdAt: "2026-10-12T09:00:00Z",
@@ -322,6 +325,7 @@ export const examplePauseaiLetterDetails: PauseaiLetterDetails = {
 
 /** The letters page's filters and sort, all blank. */
 export const emptyLettersSearch: LettersSearch = {
+  tab: "",
   status: "",
   q: "",
   answered: "",

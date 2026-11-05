@@ -3,14 +3,14 @@ import type { Permission } from "./staff-permissions";
 // The staff interface's pages, in sections, for the navigation. A page with
 // a permission shows only to those who have it, and requires it
 // (requireStaff(permission)), as do the pages under it: a supporter's page
-// is under Supporters, a letter's under Letters. A section shows the pages
+// is under Supporters, a letter's under Campaigns. A section shows the pages
 // you can open, and hides when there are none.
 // tests/checks/staff-auth.test.ts checks every page asks for what its place
 // here says.
 
 export type StaffPageId =
   | "supporters"
-  | "letters"
+  | "campaigns"
   | "events"
   | "supporterEmails"
   | "politicians"
@@ -19,7 +19,8 @@ export type StaffPageId =
   | "mpEmails"
   | "import"
   | "accounts"
-  | "changes";
+  | "changes"
+  | "sentEmails";
 export type StaffSectionId = "supporters" | "events" | "politicians" | "admin";
 
 /**
@@ -37,7 +38,8 @@ const STAFF_SECTIONS: readonly StaffSection[] = [
     pages: [
       // A supporter's letters are a page of the supporter's.
       { id: "supporters", href: "/staff/supporters", permission: "supporters", under: ["/staff/letters/supporter"] },
-      { id: "letters", href: "/staff/letters", permission: "supporters" },
+      // A letter's page stays at /staff/letters/[id], and shows in Campaigns.
+      { id: "campaigns", href: "/staff/campaigns", permission: "supporters", under: ["/staff/letters"] },
       { id: "supporterEmails", href: "/staff/supporters/blocked-emails", permission: "supporters" },
     ],
   },
@@ -61,6 +63,7 @@ const STAFF_SECTIONS: readonly StaffSection[] = [
       { id: "import", href: "/staff/import-data" },
       { id: "accounts", href: "/staff/accounts", permission: "admin" },
       { id: "changes", href: "/staff/audit-log", permission: "admin" },
+      { id: "sentEmails", href: "/staff/sent-emails", permission: "admin" },
     ],
   },
 ];
@@ -71,6 +74,11 @@ export function sectionsFor(permissions: readonly Permission[]): StaffSection[] 
     ...section,
     pages: section.pages.filter((page) => !page.permission || permissions.includes(page.permission)),
   })).filter((section) => section.pages.length > 0);
+}
+
+/** The IDs of the pages a staff member with `permissions` can open. */
+export function pagesFor(permissions: readonly Permission[]): StaffPageId[] {
+  return sectionsFor(permissions).flatMap((section) => section.pages.map((page) => page.id));
 }
 
 /**
@@ -86,3 +94,6 @@ export function staffPageOf(path: string): StaffPageLink | undefined {
     .filter(({ length }) => length > 0)
     .sort((a, b) => b.length - a.length)[0]?.page;
 }
+
+/** How long a page shows as new after someone first saw it. */
+export const NEW_FOR_DAYS = 3;

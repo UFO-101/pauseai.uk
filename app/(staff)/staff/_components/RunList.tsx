@@ -10,6 +10,8 @@ type Props = {
   /** What to say when there are none. */
   none: string;
   decide?: Decide;
+  /** Whether they may see who mail that matched nothing is from. */
+  people?: boolean;
 };
 
 /**
@@ -18,7 +20,7 @@ type Props = {
  * how it ended, and unfolded however long its detail. The older ones are
  * plain, folded when long.
  */
-export default function RunList({ runs, none, decide }: Props) {
+export default function RunList({ runs, none, decide, people }: Props) {
   if (runs.length === 0) return <p>{none}</p>;
   return runs.map((run, i) => {
     const day = staffDate(run.at);
@@ -27,7 +29,7 @@ export default function RunList({ runs, none, decide }: Props) {
       <Fragment key={run.id}>
         {(i === 0 || staffDate(runs[i - 1].at) !== day) && <h2>{day}</h2>}
         <div className={tone && styles[tone]}>
-          <Run run={run} decide={decide} open={i === 0} />
+          <Run run={run} decide={decide} open={i === 0} people={people} />
         </div>
       </Fragment>
     );

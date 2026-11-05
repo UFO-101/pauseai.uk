@@ -4,6 +4,8 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import { contactState } from "@/lib/contact-permissions";
 import type { BlocksFilter } from "@/lib/server/email";
+import type { SentEmailsFilter } from "@/lib/server/sent-emails";
+import { ONE_OFF_FILTERS, type OneOffFilter } from "@/lib/one-off";
 import { campaignBySlug } from "@/lib/email-your-mp";
 import { LETTER_SORTS, type LetterSort } from "@/lib/letter-sort";
 import { POLITICIAN_FLAGS, type PoliticianFlag } from "@/lib/politician-filters";
@@ -11,7 +13,12 @@ import { parseSort, type SortSpec } from "@/lib/staff-sort";
 import { EVENT_SORTS, type EventFilter } from "@/lib/staff-events-list";
 import { isSupporterBadge, NEAR_MILES, SUPPORTER_SORTS, type SupporterFilter } from "@/lib/supporters";
 
+/** The tabs of a campaign's letters, but All. */
+export const LETTER_TABS = ["changed", "replied", "failed"] as const;
+export type LetterTab = (typeof LETTER_TABS)[number];
+
 export type LettersSearch = {
+  tab: string;
   status: string;
   q: string;
   /** As LETTER_REPLIES. */
@@ -55,6 +62,8 @@ export type LetterFilter = {
   search?: string;
   /** What came back to it. */
   answered?: LetterReply;
+  /** Which of a campaign's tabs: those whose text was changed, replied to, or failed. */
+  tab?: LetterTab;
   /** In any of these campaigns, by slug. */
   campaign?: string[];
   /** To an MP with any of these markers. */
@@ -82,9 +91,9 @@ export function among<T extends string>(values: string[], known: readonly T[]): 
 export function lettersSearch(
   params: Partial<Record<keyof LettersSearch, ParamValue>>,
 ): LettersSearch & { filter: LetterFilter & { page: number } } {
-  const [status, q, answered, sort, dir, page] = (["status", "q", "answered", "sort", "dir", "page"] as const).map(
-    (name) => firstOf(params[name]),
-  );
+  const [tab, status, q, answered, sort, dir, page] = (
+    ["tab", "status", "q", "answered", "sort", "dir", "page"] as const
+  ).map((name) => firstOf(params[name]));
   const [campaign, flag, backend] = (["campaign", "flag", "backend"] as const).map((name) => valuesOf(params[name]));
   const [campaigns, notCampaigns] = anyAndNone(campaign, (values) => values.filter(isSlug));
   const [flags, notFlags] = anyAndNone(flag, (values) => among(values, POLITICIAN_FLAGS));
@@ -94,6 +103,7 @@ export function lettersSearch(
     status: among([status], LETTER_STATUSES)[0],
     search: q.trim() || undefined,
     answered: among([answered], LETTER_REPLIES)[0],
+    tab: among([tab], LETTER_TABS)[0],
     campaign: campaigns,
     flags,
     backend: backends,
@@ -101,6 +111,7 @@ export function lettersSearch(
     sort: sorting,
   };
   return {
+    tab,
     status,
     q,
     answered,
@@ -112,6 +123,48 @@ export function lettersSearch(
     page,
     filter: { ...filter, page: pageNumber(page) },
   };
+}
+
+/** The sent emails' URL filters. */
+export type SentEmailsSearch = { q: string; purpose: string[]; outcome: string[]; backend: string[]; page: string };
+
+/** Reads the sent emails' URL. */
+export function sentEmailsSearch(
+  params: Partial<Record<keyof SentEmailsSearch, ParamValue>>,
+): SentEmailsSearch & { filter: SentEmailsFilter } {
+  const q = firstOf(params.q);
+  const page = firstOf(params.page);
+  const [purpose, outcome, backend] = (["purpose", "outcome", "backend"] as const).map((name) =>
+    valuesOf(params[name]),
+  );
+  const [purposes, notPurposes] = anyAndNone(purpose, (values) => values);
+  const [outcomes, notOutcomes] = anyAndNone(outcome, (values) => values);
+  const [backends, notBackends] = anyAndNone(backend, (values) => values);
+  return {
+    q,
+    purpose,
+    outcome,
+    backend,
+    page,
+    filter: {
+      search: q.trim() || undefined,
+      purpose: purposes,
+      outcome: outcomes,
+      backend: backends,
+      not: notOf({ purpose: notPurposes, outcome: notOutcomes, backend: notBackends }),
+      page: pageNumber(page),
+    },
+  };
+}
+
+/** The one-off emails' URL filter, as ONE_OFF_FILTERS, and its page. */
+export function oneOffSearch(params: { who?: ParamValue; page?: ParamValue }): {
+  who: string;
+  filter: OneOffFilter | undefined;
+  page: number;
+} {
+  const who = firstOf(params.who);
+  return { who, filter: among([who], ONE_OFF_FILTERS)[0], page: pageNumber(firstOf(params.page)) };
 }
 
 /** A mailing's ID from its page's URL: a whole number, or undefined. */

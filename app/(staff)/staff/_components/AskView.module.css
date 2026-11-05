@@ -1,0 +1,36 @@
+/* An ask's page: its band, where it stands, then how we asked beside its answers, a gap apart. */
+.page {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* Each campaign or mailing that put it: when, what, how many letters. */
+.ways {
+  margin: 0;
+  padding: 0;
+  font-size: var(--text-sm);
+  list-style: none;
+}
+
+.ways li {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-3);
+  align-items: baseline;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.ways li:last-child {
+  border-bottom: 0;
+}
+
+@media (max-width: 760px) {
+  .ways li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .ways li > :first-child {
+    grid-column: 1 / -1;
+  }
+}

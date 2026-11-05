@@ -611,8 +611,8 @@ describe("LetterView", () => {
     const supporters = { ...exampleSupporterLetterDetails, campaignAsk: exampleAsks[0]!.slug };
     await view({ letter: supporters, politician: { ...politician, isTest: true } });
     await expect
-      .element(page.getByRole("navigation").getByRole("link", { name: staffCopy.nav.letters }))
-      .toHaveAttribute("href", "/staff/letters");
+      .element(page.getByRole("navigation").getByRole("link", { name: supporters.campaignTitle }))
+      .toHaveAttribute("href", `/staff/campaigns/${supporters.campaign}`);
     await expect
       .element(page.getByRole("heading", { level: 1 }))
       .toHaveTextContent(staffCopy.letters.oneTitle(supporters.senderName, supporters.mpName));

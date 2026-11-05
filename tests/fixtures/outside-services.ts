@@ -27,6 +27,7 @@ import stripeCheckoutSessions from "./stripe-checkout-sessions.json";
 import stripePaymentIntents from "./stripe-payment-intents.json";
 import { failingResponse } from "./failing-services";
 import { historyIdOf, keepSent, lettersInboxResponse, lettersMailbox } from "./letters-inbox";
+import { oldMailResponse } from "./old-letters-mailbox";
 
 /** A UUID-shaped id that depends only on `text`. */
 /** Every UUID in some text. */
@@ -302,8 +303,8 @@ const SENT_GMAIL = ((globalThis as { fixtureSentGmail?: Map<string, string> }).f
 
 // Google's OAuth and Gmail, for any account. A token names its account
 // (lib/server/outside-services/gmail.ts makes the code "fixture:<account>"),
-// so the profile says whose it is. A mailbox has no messages: the tests
-// that read one give their own.
+// so the profile says whose it is. A mailbox has no messages, but joseph@'s
+// and policy@'s (old-letters-mailbox.ts): the tests that read one give their own.
 function googleResponse(
   hostname: string,
   pathname: string,
@@ -327,6 +328,8 @@ function googleResponse(
   const path = pathname.replace(/^\/gmail\/v1\/users\/me/, "");
   const inbox = letters && lettersInboxResponse(path, params, init, scope);
   if (inbox) return inbox;
+  const old = oldMailResponse(account, path, params);
+  if (old) return old;
   if (pathname.endsWith("/profile")) {
     return json({ emailAddress: account, historyId: String(letters ? historyIdOf(lettersMailbox(scope)) : 1000) });
   }

@@ -4,6 +4,7 @@ import { buttonClass } from "@/components/ui/Button";
 import Tag, { type TagTone } from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
 import { askHref } from "@/lib/asks";
+import { checkMailingDoc } from "@/lib/mailing-doc";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { answerLabels, POLITICIAN_FIELDS } from "@/lib/mailing-fields";
 import type { Ask } from "@/lib/server/asks";
@@ -20,6 +21,7 @@ import Band, { BandFact } from "./ui/Band";
 import Counts from "./ui/Counts";
 import Grid, { Card } from "./ui/Grid";
 import Progress from "./ui/Progress";
+import Strip from "./ui/Strip";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
 import Bubble from "./ui/Bubble";
 import styles from "./MailingView.module.css";
@@ -203,6 +205,32 @@ function When({ mailing, written }: { mailing: Mailing; written?: WrittenMailing
 }
 
 /**
+ * The text of a mailing from before the site could send: the template the
+ * import rebuilt, with its fields as chips, and said so if it's only
+ * approximate; or that there's none.
+ */
+function ImportedText({ mailing }: { mailing: Mailing }) {
+  const doc = checkMailingDoc(mailing.importedText);
+  if (!doc) return <p>{staffCopy.mailings.noText}</p>;
+  return (
+    <div className={styles.email}>
+      <dl className={styles.headers}>
+        <dt>{copy.from}</dt>
+        <dd>{mailing.sentFrom ?? staffCopy.mailings.notRecorded}</dd>
+        <dt>{copy.subject}</dt>
+        <dd>
+          <strong>{mailing.importedSubject}</strong>
+        </dd>
+      </dl>
+      <div className={styles.body}>
+        {mailing.importedTextApproximate && <Strip tone="amber">{staffCopy.letterThread.approximate}</Strip>}
+        <MailingLetter doc={doc} fields={staffCopy.mailings.importedFields} conditions={{}} />
+      </div>
+    </div>
+  );
+}
+
+/**
  * A mailing's page, once scheduled: a band of its title, when it went and
  * who sent it, who from, its ask and who it was for, with its counts, each
  * leading to those recipients; where it stands (Standing); then the email,
@@ -255,13 +283,13 @@ export default function MailingView({
       >
         <When mailing={mailing} written={written} />
         <BandFact label={copy.from} detail={written?.fromName}>
-          {written ? written.sentFrom : staffCopy.mailings.imported}
+          {written ? written.sentFrom : (mailing.sentFrom ?? staffCopy.mailings.imported)}
         </BandFact>
-        <BandFact label={staffCopy.mailings.fields.ask}>
+        <BandFact label={mailing.askKind ? staffCopy.asks.askTo[mailing.askKind] : staffCopy.mailings.fields.ask}>
           {mailing.ask && <StaffLink href={askHref(mailing.ask)}>{mailing.askTitle}</StaffLink>}
         </BandFact>
-        <BandFact label={copy.whoLabel} detail={who && staffCopy.mailings.recipientsCount(mailing.to)}>
-          {who ?? staffCopy.mailings.recipientsCount(mailing.to)}
+        <BandFact label={copy.to} detail={who && staffCopy.campaigns.politicians(mailing.to)}>
+          {who ?? staffCopy.campaigns.politicians(mailing.to)}
         </BandFact>
       </Band>
       <Standing mailing={mailing} written={written} stop={stop} reschedule={reschedule} />
@@ -291,7 +319,7 @@ export default function MailingView({
           </Card>
         ) : (
           <Card span={3} look="aside" title={copy.emailTitle} id="email-title">
-            <p>{staffCopy.mailings.noText}</p>
+            <ImportedText mailing={mailing} />
           </Card>
         )}
         <Card span={3} as="div">

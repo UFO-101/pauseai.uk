@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type AirtableMp, checkAgainstParliament, plainName } from "./mp-check";
+import { type AirtableMp, checkAgainstParliament, domainOf, ownDomains, plainName } from "./mp-check";
 import type { ParliamentMp } from "./parliament";
 
 const ours = (constituency: string, name: string, email: string | null): AirtableMp => ({ name, constituency, email });
@@ -8,6 +8,7 @@ const theirs = (constituency: string, name: string, emails: string[]): Parliamen
   name,
   constituency,
   emails,
+  websites: [],
 });
 
 describe("plainName", () => {
@@ -93,5 +94,23 @@ describe("checkAgainstParliament", () => {
         [theirs("West Tyrone", "Órfhlaith Begley", [])],
       ),
     ).toEqual([]);
+  });
+});
+
+describe("a politician's own domains", () => {
+  it("reads a domain from an email or web address, without www", () => {
+    expect(domainOf("Office@Tulip.Example")).toBe("tulip.example");
+    expect(domainOf("https://www.tulip.example/about?x=1")).toBe("tulip.example");
+    expect(domainOf("tulip.example/about")).toBe("tulip.example");
+    expect(domainOf("nothing")).toBeUndefined();
+  });
+
+  it("keeps one held by one politician, leaving out parliaments, parties and social media", () => {
+    const domains = ownDomains([
+      { id: 1, addresses: ["a@tulip.example", "https://facebook.com/x", "b@parliament.uk", "https://www.labour.org.uk/a", "nothing"] },
+      { id: 2, addresses: ["https://shared.example"] },
+      { id: 3, addresses: ["x@shared.example", "y@gmail.com"] },
+    ]);
+    expect(domains).toEqual(new Map([["tulip.example", 1]]));
   });
 });

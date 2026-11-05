@@ -2,6 +2,8 @@
 
 // The staff interface's Server Actions. Each is a public endpoint, so each
 // calls requireStaff() before anything else (tests/checks/staff-auth.test.ts).
+import { setKeepPoliticianThreads } from "@/lib/server/gmail-accounts";
+import { startOldLettersImport } from "@/lib/server/old-letters-start";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { type ImportJob, importPath } from "@/lib/import-runs";
@@ -159,6 +161,20 @@ export async function importGoToParliamentNow(): Promise<void> {
   await run("import-go-to-parliament", importGoToParliament(email));
 }
 
+/** Starts a press of the import of old letters, as a dry run if its box is ticked. */
+export async function importOldLettersNow(form: FormData): Promise<void> {
+  const { email } = await requireStaff();
+  await startOldLettersImport(email, form.get("dryRun") === "on");
+  revalidatePath(importPath("import-old-letters"));
+}
+
+/** Turns keeping my threads with politicians on or off, for my own account. */
+export async function setKeepThreadsNow(form: FormData): Promise<void> {
+  const { email } = await requireStaff();
+  await setKeepPoliticianThreads(email, form.get("keep") === "on");
+  revalidatePath("/staff/me");
+}
+
 export async function checkNow(): Promise<void> {
   const { email } = await requireStaff();
   await run("check-mps", checkMps(email));
@@ -279,7 +295,7 @@ export async function disconnectMyGmail(): Promise<void> {
 function afterAsk(slug: string, back: string, result: { saved: boolean; reason?: string }, saved: string): never {
   revalidatePath("/staff/asks");
   if (result.reason === "gone") redirect("/staff/asks?notice=gone");
-  const form = slug ? `/staff/asks/${slug}` : "/staff/asks/new";
+  const form = slug ? `/staff/asks/${slug}/edit` : "/staff/asks/new";
   const [path, query = ""] = (result.saved ? back : form).split("?");
   const params = new URLSearchParams(query);
   params.set("notice", result.saved ? saved : result.reason!);

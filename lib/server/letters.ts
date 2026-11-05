@@ -58,6 +58,10 @@ export type LetterSummary = {
   mpName: string;
   politicianId: number;
   isTest: boolean;
+  /** The politician's seat and party, and their answer to the campaign's ask, if any. */
+  constituency: string | null;
+  party: string | null;
+  answer: string | null;
   /** The share of its words, from 0 to 1, that weren't in the campaign's draft; none for one with no draft, as from Airtable. */
   ownWords: number | null;
   /** What sent it; none for one of this site's never sent. */
@@ -120,6 +124,7 @@ async function letterRows({
   campaign,
   flags,
   backend,
+  tab,
   supporterId,
   letterId,
   politicianId,
@@ -138,7 +143,8 @@ async function letterRows({
     .join(" ");
   return query<LetterSummary & { total: number }>(
     `SELECT l.id::int AS id, s.campaign, c.title AS "campaignTitle", c.url AS "campaignUrl", l.status, f.name AS "senderName", f.email AS "senderEmail",
-       n.name AS "mpName", n.id::int AS "politicianId", p.is_test AS "isTest", s.own_words AS "ownWords", ${BACKEND} AS backend, l.created_at AS "createdAt", l.sent_at AS "sentAt", l.replied_at AS "repliedAt",
+       n.name AS "mpName", n.id::int AS "politicianId", p.is_test AS "isTest", p.constituency, p.party,
+       (SELECT st.status FROM ask_statuses st WHERE st.notable_person_id = n.id AND st.ask = c.ask) AS answer, s.own_words AS "ownWords", ${BACKEND} AS backend, l.created_at AS "createdAt", l.sent_at AS "sentAt", l.replied_at AS "repliedAt",
        ${AUTO_REPLIED_AT} AS "autoRepliedAt",
        (SELECT k.supporter_id::int FROM supporter_links k WHERE k.form_entry_id = s.entry_id) AS "supporterId",
        coalesce((SELECT json_agg(json_build_object('at', e.at, 'status', e.status, 'details', e.details) ORDER BY e.at DESC, e.id DESC)
@@ -156,7 +162,9 @@ async function letterRows({
        AND ($8::text[] IS NULL OR s.campaign = ANY($8))
        AND ($10::text[] IS NULL OR s.campaign <> ALL($10))
        AND ($11::text[] IS NULL OR ${BACKEND} = ANY($11))
-       AND ($12::text[] IS NULL OR (${BACKEND} = ANY($12)) IS NOT TRUE) ${flagConditions}
+       AND ($12::text[] IS NULL OR (${BACKEND} = ANY($12)) IS NOT TRUE)
+       AND ($13::text IS NULL OR CASE $13 WHEN 'changed' THEN s.own_words > 0 WHEN 'replied' THEN l.replied_at IS NOT NULL
+         ELSE l.status IN ('not_sent', 'bounced') END) ${flagConditions}
      ORDER BY ${LETTER_COLUMNS[sort.key]} ${sort.dir === "asc" ? "ASC" : "DESC"} NULLS LAST, l.created_at DESC, l.id DESC
      LIMIT $2 OFFSET $9`,
     [
@@ -172,6 +180,7 @@ async function letterRows({
       not?.campaign ?? null,
       backend ?? null,
       not?.backend ?? null,
+      tab ?? null,
     ],
   );
 }
@@ -211,10 +220,10 @@ export type SupporterLetterDetails = LetterSummary & {
   /** Every forward of a reply to it, oldest first. */
   forwards: LetterForward[];
   /**
-   * For one from the letters inbox: its text as sent, and the draft it was
+   * For one with its text kept: its text as sent, and the draft it was
    * written from, if kept; then every
-   * message both ways through the proxies, oldest first. Null for others,
-   * whose text isn't kept.
+   * message of its thread, oldest first. Null for others, whose text isn't
+   * kept.
    */
   sent: { text: string; draft: string | null; messages: ThreadMessage[] } | null;
 };
@@ -312,10 +321,11 @@ export async function getPauseaiLetter(mailingId: number, id: number): Promise<P
 export async function getSupporterLetter(id: number): Promise<SupporterLetterDetails | undefined> {
   const [letter] = await recentLetters({ letterId: id });
   if (!letter) return undefined;
-  const [{ subject, postmarkId, rfcId, mpEmail, campaignAsk, forwards, doc, draft }] = await query<{
+  const [{ subject, postmarkId, rfcId, sentBy, mpEmail, campaignAsk, forwards, doc, draft }] = await query<{
     subject: string;
     postmarkId: string | null;
     rfcId: string | null;
+    sentBy: string | null;
     mpEmail: string | null;
     campaignAsk: string | null;
     forwards: LetterForward[];
@@ -326,6 +336,8 @@ export async function getSupporterLetter(id: number): Promise<SupporterLetterDet
        AND e.outcome = 'sent' ORDER BY e.at DESC, e.id DESC LIMIT 1) AS "postmarkId",
        (SELECT e.rfc_message_id FROM email_sends e WHERE e.letter_id = s.id AND e.purpose = 'letter'
         AND e.outcome = 'sent' ORDER BY e.at DESC, e.id DESC LIMIT 1) AS "rfcId",
+       (SELECT e.sender FROM email_sends e WHERE e.letter_id = s.id AND e.purpose = 'letter' AND e.imported
+        ORDER BY e.at DESC, e.id DESC LIMIT 1) AS "sentBy",
        s.letter AS doc, s.draft, n.email AS "mpEmail",
        coalesce((SELECT json_agg(json_build_object('at', e.at, 'address', e.address, 'outcome', e.outcome) ORDER BY e.at, e.id)
                  FROM email_sends e WHERE e.letter_id = s.id AND e.purpose = 'forwarded-reply'), '[]') AS forwards
@@ -336,13 +348,14 @@ export async function getSupporterLetter(id: number): Promise<SupporterLetterDet
   );
   const sentDoc = checkDoc(doc);
   if (sentDoc) {
-    // From the letters inbox: kept here, and found there by the Message-ID it went with.
+    // Kept here, and found in the mailbox it went from by the Message-ID it went with: the letters inbox, or for one the
+    // import read, Joseph's.
     const sent = {
       text: toText(sentDoc),
       draft,
       messages: await threadMessages(id),
     };
-    const gmail = rfcId ? { mailbox: lettersInbox() ?? null, search: messageIdSearch(rfcId) } : null;
+    const gmail = rfcId ? { mailbox: sentBy ?? lettersInbox() ?? null, search: messageIdSearch(rfcId) } : null;
     return { ...letter, kind: "supporter", subject, mpEmail, campaignAsk, gmail, forwards, sent };
   }
   const search = postmarkId

@@ -12,7 +12,7 @@ describe("sectionsFor", () => {
       ["admin", ["import"]],
     ]);
     expect(pages(["supporters"])).toEqual([
-      ["supporters", ["supporters", "letters", "supporterEmails"]],
+      ["supporters", ["supporters", "campaigns", "supporterEmails"]],
       ["politicians", ["politicians", "asks", "mailings", "mpEmails"]],
       ["events", ["events"]],
       ["admin", ["import"]],
@@ -20,7 +20,7 @@ describe("sectionsFor", () => {
     expect(pages(["admin"])).toEqual([
       ["politicians", ["politicians", "asks", "mailings", "mpEmails"]],
       ["events", ["events"]],
-      ["admin", ["import", "accounts", "changes"]],
+      ["admin", ["import", "accounts", "changes", "sentEmails"]],
     ]);
   });
 });
@@ -31,7 +31,8 @@ describe("staffPageOf", () => {
     expect(staffPageOf("/staff/supporters/[id]/erase")?.id).toBe("supporters");
     expect(staffPageOf("/staff/supporters/blocked-emails")?.id).toBe("supporterEmails");
     expect(staffPageOf("/staff/letters/supporter/[id]")?.id).toBe("supporters");
-    expect(staffPageOf("/staff/letters/[id]")?.id).toBe("letters");
+    expect(staffPageOf("/staff/letters/[id]")?.id).toBe("campaigns");
+    expect(staffPageOf("/staff/campaigns/[slug]")?.id).toBe("campaigns");
     expect(staffPageOf("/staff/politicians/[id]")).toEqual({ id: "politicians", href: "/staff/politicians" });
     expect(staffPageOf("/staff/lettersx")).toBeUndefined();
     expect(staffPageOf("/staff")).toBeUndefined();

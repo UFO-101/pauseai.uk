@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
-import { letterFilters } from "../../../_components/LetterFilters";
-import { letterDownloadColumns } from "../../../_components/LettersTable";
-import { filterWords } from "../../../_components/ui/FilterBar";
+import { letterFilters } from "../../../../_components/LetterFilters";
+import { letterDownloadColumns } from "../../../../_components/LettersTable";
+import { filterWords } from "../../../../_components/ui/FilterBar";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { listCampaigns } from "@/lib/server/asks";
 import { recentLetters } from "@/lib/server/letters";
@@ -14,16 +14,17 @@ import { lettersSearch } from "@/lib/staff-search";
  * its filters; each download goes in the audit log, as its senders are
  * supporters.
  */
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { email } = await requireStaff("supporters");
+  const { slug } = await params;
   return staffDownload(
     request,
     email,
-    async (params) => {
+    async (query) => {
       const {
         filter: { page, ...filter },
         ...search
-      } = lettersSearch(params);
+      } = lettersSearch({ ...query, campaign: slug });
       void page;
       return {
         what: staffCopy.letters.title,

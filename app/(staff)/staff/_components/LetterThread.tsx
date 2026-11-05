@@ -8,6 +8,7 @@ import LetterChanges, { FoldedAutoReply } from "./LetterChanges";
 import ThreadEmail from "./ThreadEmail";
 import { MailingLetter } from "./MailingLetter";
 import StaffLink from "./ui/StaffLink";
+import Strip from "./ui/Strip";
 import styles from "./LetterThread.module.css";
 
 const copy = staffCopy.letterThread;
@@ -55,7 +56,14 @@ export default function LetterThread({ thread, link }: { thread: Thread; link?: 
         subject={thread.subject || thread.mailingTitle}
         missing={!kept}
       >
-        {thread.letter ? <MailingLetter doc={thread.letter} /> : <NoText note={copy.noText} link={link} />}
+        {thread.letter ? (
+          <>
+            {thread.approximate && <Strip tone="amber">{copy.approximate}</Strip>}
+            <MailingLetter doc={thread.letter} />
+          </>
+        ) : (
+          <NoText note={copy.noText} link={link} />
+        )}
       </ThreadEmail>
       {thread.messages.map((message) => (
         <ThreadEmail

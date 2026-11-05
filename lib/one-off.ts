@@ -1,0 +1,78 @@
+import { addressesIn, quotedHeaders } from "./old-letters";
+
+// One-off emails: threads with a politician that aren't a letter of a
+// campaign or mailing. What counts as one, and who a thread's people are
+// (lib/server/one-off-emails.ts keeps them).
+
+/** Parliaments' own domains: an address on one, or a subdomain of one, counts whoever it is. */
+export const PARLIAMENT_DOMAINS = [
+  "parliament.uk",
+  "parliament.scot",
+  "senedd.wales",
+  "senedd.cymru",
+  "niassembly.gov.uk",
+] as const;
+
+/**
+ * PauseAI's addresses besides the connected Gmails: kept by hand, as Gmail's
+ * API can't tell an alias from another address.
+ */
+export const PAUSEAI_ALIASES: readonly string[] = ["joseph@pauseai.info", "info@pauseai.info"];
+
+/** What the site knows of politicians' addresses: each they have or have had, and each domain of one's own, with whose. */
+export type PoliticianBook = { addresses: Map<string, number[]>; domains: Map<string, number> };
+
+const domainOf = (address: string) => address.slice(address.lastIndexOf("@") + 1);
+
+/** Whether an address is on a parliament's domain or a subdomain of one. */
+export function onParliamentDomain(address: string): boolean {
+  const domain = domainOf(address);
+  return PARLIAMENT_DOMAINS.some((d) => domain === d || domain.endsWith(`.${d}`));
+}
+
+/** The politicians an address is, by name or by their own domain. */
+export function politiciansOf(book: PoliticianBook, address: string): number[] {
+  const known = book.addresses.get(address);
+  if (known) return known;
+  const owner = book.domains.get(domainOf(address));
+  return owner === undefined ? [] : [owner];
+}
+
+/** What a message's addresses say of it: whether it counts as a thread with a politician, and whose. */
+export function politiciansIn(book: PoliticianBook, addresses: string[]): { counts: boolean; people: number[] } {
+  const people = [...new Set(addresses.flatMap((address) => politiciansOf(book, address)))];
+  return { counts: people.length > 0 || addresses.some(onParliamentDomain), people };
+}
+
+/** The addresses in the blocks a message quotes or forwards: From, To and Cc. */
+export function quotedAddresses(text: string): string[] {
+  return quotedHeaders(text).flatMap((quote) => addressesIn(`${quote.from} ${quote.to} ${quote.cc}`));
+}
+
+/** Whether an address is one of PauseAI's: a connected Gmail or an alias. */
+export function isPauseaiAddress(address: string, connected: readonly string[]): boolean {
+  return connected.includes(address) || PAUSEAI_ALIASES.includes(address);
+}
+
+/** Whether a sender makes its thread "Someone else": neither a politician, nor on a parliament's domain, nor PauseAI's. */
+export function isSomeoneElse(book: PoliticianBook, address: string, connected: readonly string[]): boolean {
+  return !isPauseaiAddress(address, connected) && !politiciansIn(book, [address]).counts;
+}
+
+/** Which of the one-off emails a list shows: all, those only between politicians and PauseAI, or those with someone else. */
+export const ONE_OFF_FILTERS = ["pauseai", "someone-else"] as const;
+export type OneOffFilter = (typeof ONE_OFF_FILTERS)[number];
+
+/**
+ * Mail the site recognises as nothing a person need look at, in a shared
+ * mailbox: its own forwards and sign-in codes, bounces, spam and Gmail's own
+ * mail.
+ */
+export function isRecognisedMail(from: string, labels: readonly string[]): boolean {
+  if (labels.includes("SPAM") || labels.includes("TRASH")) return true;
+  return (
+    /^(mailer-daemon|postmaster)@/.test(from) ||
+    /@(notify\.pauseai\.uk|google\.com|accounts\.google\.com|googlegroups\.com)$/.test(from) ||
+    /^noreply@/.test(from)
+  );
+}

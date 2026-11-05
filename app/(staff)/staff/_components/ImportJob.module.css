@@ -26,3 +26,10 @@
 .heading {
   margin: 0;
 }
+
+/* A job's button, with a box to tick over it if it has one. */
+.job {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}

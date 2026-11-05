@@ -11,6 +11,7 @@ import {
   importControlAiNow,
   importGoToParliamentNow,
   importLumaNow,
+  importOldLettersNow,
   importMembersNow,
   importWebFormLettersNow,
   readGmailNow,
@@ -22,7 +23,7 @@ import { ImportJobPage } from "../../../_components/ImportJob";
 type Params = { params: Promise<{ job: string }> };
 
 /** Each job's button: the Server Action that runs it now. */
-const RUN_NOW: Record<ImportJob, () => Promise<void>> = {
+const RUN_NOW: Record<ImportJob, (form: FormData) => Promise<void>> = {
   "import-luma": importLumaNow,
   "sync-politicians": syncNow,
   "sync-emails": syncEmailsNow,
@@ -32,6 +33,7 @@ const RUN_NOW: Record<ImportJob, () => Promise<void>> = {
   "import-controlai": importControlAiNow,
   "import-members": importMembersNow,
   "read-gmail": readGmailNow,
+  "import-old-letters": importOldLettersNow,
 };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
@@ -41,7 +43,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 /** One import or check: what it does, its button, and every run it has made, newest first. */
 export default async function ImportJobRoute({ params }: Params) {
-  await requireStaff();
+  const { permissions } = await requireStaff();
   const job = found(jobBySlug((await params).job));
   const runs = await listRuns(job);
   return (
@@ -52,6 +54,7 @@ export default async function ImportJobRoute({ params }: Params) {
         run={RUN_NOW[job]}
         decide={decideSync}
         airtableTable={PARLIAMENTARIANS_TABLE_URL}
+        people={permissions.includes("supporters")}
       />
     </>
   );

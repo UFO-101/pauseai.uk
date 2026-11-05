@@ -8,7 +8,22 @@ import EmailProblemsTable from "@/app/(staff)/staff/_components/EmailProblemsTab
 import CampaignName from "@/app/(staff)/staff/_components/CampaignName";
 import LetterFilters from "@/app/(staff)/staff/_components/LetterFilters";
 import LetterLink from "@/app/(staff)/staff/_components/LetterLink";
-import LettersTable, { LettersList } from "@/app/(staff)/staff/_components/LettersTable";
+import LettersTable from "@/app/(staff)/staff/_components/LettersTable";
+import CampaignLetter from "@/app/(staff)/staff/_components/CampaignLetter";
+import CampaignsOverview, { CampaignAsk } from "@/app/(staff)/staff/_components/CampaignsOverview";
+import CampaignView from "@/app/(staff)/staff/_components/CampaignView";
+import OneOffList, { OneOffTable } from "@/app/(staff)/staff/_components/OneOffList";
+import OneOffThreadView from "@/app/(staff)/staff/_components/OneOffThreadView";
+import {
+  exampleBands,
+  exampleCampaign,
+  exampleCampaignEmpty,
+  exampleCampaignNoAsk,
+  exampleHiddenOneOff,
+  exampleOneOffs,
+  exampleOneOffThread,
+  exampleVersions,
+} from "@/app/(staff)/staff/_components/CampaignPages.examples";
 import {
   emptyLettersSearch,
   exampleAutoRepliedLetterDetails,
@@ -295,20 +310,175 @@ export const staffLetters: Group = {
       ],
     },
     {
-      name: "LettersList",
-      file: "app/(staff)/staff/_components/LettersTable.tsx",
+      name: "CampaignsOverview",
+      file: "app/(staff)/staff/_components/CampaignsOverview.tsx",
       variants: [
         {
-          label: "The letters page's list: how many, Download, and the pages",
+          label: "Campaigns under the months of their last letters, with and without an ask",
           render: () => (
             <StaffPage as="div">
-              <LettersList
-                letters={[exampleLetter]}
-                total={150}
-                pages={2}
-                pageSize={100}
-                search={{ ...emptyLettersSearch, page: "2" }}
+              <CampaignsOverview
+                campaigns={[exampleCampaign, exampleCampaignNoAsk, exampleCampaignEmpty]}
+                now="2026-11-05T09:00:00Z"
               />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "With none",
+          render: () => (
+            <StaffPage as="div">
+              <CampaignsOverview campaigns={[]} now="2026-11-05T09:00:00Z" />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "CampaignAsk",
+      file: "app/(staff)/staff/_components/CampaignsOverview.tsx",
+      variants: [
+        {
+          label: "With an ask, and with none",
+          render: () => (
+            <StaffPage as="div">
+              <p>
+                <CampaignAsk campaign={exampleCampaign} />
+              </p>
+              <p>
+                <CampaignAsk campaign={exampleCampaignNoAsk} />
+              </p>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "CampaignLetter",
+      file: "app/(staff)/staff/_components/CampaignLetter.tsx",
+      variants: [
+        {
+          label: "Several versions, and how much people changed them",
+          render: () => (
+            <StaffPage as="div">
+              <CampaignLetter versions={exampleVersions} bands={exampleBands} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "One version, nothing changed",
+          render: () => (
+            <StaffPage as="div">
+              <CampaignLetter
+                versions={exampleVersions.slice(0, 1)}
+                bands={{ under: 0, middle: 0, over: 0, changed: 0 }}
+              />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "No text",
+          render: () => (
+            <StaffPage as="div">
+              <CampaignLetter versions={[]} bands={{ under: 0, middle: 0, over: 0, changed: 0 }} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "CampaignView",
+      file: "app/(staff)/staff/_components/CampaignView.tsx",
+      variants: [
+        {
+          label: "With an ask",
+          render: () => (
+            <StaffPage as="div">
+              <CampaignView
+                campaign={exampleCampaign}
+                versions={exampleVersions}
+                bands={exampleBands}
+                letters={{
+                  letters: [exampleLetter, { ...exampleLetter, id: 2, status: "sent", answer: "signed" }],
+                  total: 150,
+                  pages: 2,
+                  pageSize: 100,
+                }}
+                search={emptyLettersSearch}
+                tabCounts={{ all: 150, changed: 50, replied: 2, failed: 1 }}
+              />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "With no ask",
+          render: () => (
+            <StaffPage as="div">
+              <CampaignView
+                campaign={exampleCampaignNoAsk}
+                versions={[]}
+                bands={exampleBands}
+                letters={{ letters: [], total: 0, pages: 1, pageSize: 100 }}
+                search={emptyLettersSearch}
+                tabCounts={{ all: 0, changed: 0, replied: 0, failed: 0 }}
+              />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "OneOffList",
+      file: "app/(staff)/staff/_components/OneOffList.tsx",
+      variants: [
+        {
+          label: "A thread with PauseAI, one with someone else, and one hidden",
+          render: () => (
+            <StaffPage as="div">
+              <OneOffList
+                threads={[...exampleOneOffs, exampleHiddenOneOff]}
+                total={3}
+                page={1}
+                pages={1}
+                pageSize={100}
+                who=""
+              />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "OneOffTable",
+      file: "app/(staff)/staff/_components/OneOffList.tsx",
+      variants: [
+        {
+          label: "On a person's page",
+          render: () => (
+            <StaffPage as="div">
+              <OneOffTable threads={exampleOneOffs} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "OneOffThreadView",
+      file: "app/(staff)/staff/_components/OneOffThreadView.tsx",
+      variants: [
+        {
+          label: "A thread of two, one unreadable",
+          render: () => (
+            <StaffPage as="div">
+              <OneOffThreadView thread={exampleOneOffThread} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Hidden from staff without supporters",
+          render: () => (
+            <StaffPage as="div">
+              <OneOffThreadView thread={{ ...exampleHiddenOneOff, messages_: null }} />
             </StaffPage>
           ),
         },
@@ -514,6 +684,7 @@ export const staffLetters: Group = {
           render: () => (
             <StaffPage as="div">
               <LetterFilters
+                path="/staff/campaigns/regulate-letter-pm"
                 search={{
                   ...emptyLettersSearch,
                   status: "bounced",

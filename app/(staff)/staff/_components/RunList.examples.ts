@@ -9,6 +9,7 @@ import {
   type LumaImportResult,
   type MembersImportResult,
   type MpCheckResult,
+  type OldLettersImportResult,
   NIGHTLY,
   type PoliticianSync,
   type PoliticianSyncResult,
@@ -26,6 +27,7 @@ type Results = {
   "read-gmail": GmailReadResult;
   "import-web-form-letters": WebFormImportResult;
   "import-go-to-parliament": GoToParliamentImportResult;
+  "import-old-letters": OldLettersImportResult;
 };
 type RunOf<Job extends ImportJob> = Extract<AnyImportRun, { job: Job }>;
 

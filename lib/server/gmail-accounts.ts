@@ -160,10 +160,26 @@ async function forgetRevoked(email: string): Promise<void> {
 }
 
 /** The connected accounts and where reading each last got to. */
-export async function gmailReadingState(): Promise<{ email: string; historyId: string }[]> {
-  return query<{ email: string; historyId: string }>(
-    `SELECT email, gmail_history_id AS "historyId" FROM staff_accounts WHERE gmail_token IS NOT NULL ORDER BY email`,
+export async function gmailReadingState(): Promise<{ email: string; historyId: string; keepsThreads: boolean }[]> {
+  return query<{ email: string; historyId: string; keepsThreads: boolean }>(
+    `SELECT email, gmail_history_id AS "historyId", keep_politician_threads AS "keepsThreads"
+     FROM staff_accounts WHERE gmail_token IS NOT NULL ORDER BY email`,
   );
+}
+
+/** Whether the site keeps `email`'s threads with politicians. */
+export async function keepsPoliticianThreads(email: string): Promise<boolean> {
+  const [row] = await query<{ keeps: boolean }>(
+    "SELECT keep_politician_threads AS keeps FROM staff_accounts WHERE email = $1",
+    [email.toLowerCase()],
+  );
+  return Boolean(row?.keeps);
+}
+
+/** Turns keeping `email`'s threads with politicians on or off; those already kept stay. Logs it. */
+export async function setKeepPoliticianThreads(email: string, keep: boolean): Promise<void> {
+  await query("UPDATE staff_accounts SET keep_politician_threads = $2 WHERE email = $1", [email.toLowerCase(), keep]);
+  await logChange(email, "set keep politician threads", { email: email.toLowerCase(), keep });
 }
 
 /** Where reading an account got to. */

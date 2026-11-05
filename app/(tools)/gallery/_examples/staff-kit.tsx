@@ -81,7 +81,8 @@ const PAGES: Record<StaffPageName, true> = {
   home: true,
   me: true,
   supporters: true,
-  letters: true,
+  campaigns: true,
+  sentEmails: true,
   events: true,
   supporterEmails: true,
   politicians: true,
@@ -113,7 +114,7 @@ export const staffKit: Group = {
         {
           label: "With the navigation beside it",
           render: () => (
-            <StaffPage as="div" nav={<StaffNav email="jo@pauseai.uk" permissions={["admin"]} current="letters" />}>
+            <StaffPage as="div" nav={<StaffNav email="jo@pauseai.uk" permissions={["admin"]} current="campaigns" />}>
               <h1>Letters</h1>
               <p>The page takes the width beside the sidebar.</p>
             </StaffPage>
@@ -267,7 +268,8 @@ export const staffKit: Group = {
                   [
                     "home",
                     "supporters",
-                    "letters",
+                    "campaigns",
+                    "sentEmails",
                     "supporterEmails",
                     "politicians",
                     "asks",
@@ -577,7 +579,19 @@ export const staffKit: Group = {
           label: "With the supporters permission",
           render: () => (
             <StaffPage as="div">
-              <StaffNav email="jo@pauseai.uk" permissions={["supporters"]} current="letters" />
+              <StaffNav email="jo@pauseai.uk" permissions={["supporters"]} current="campaigns" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "With pages they first saw in the last few days marked new",
+          render: () => (
+            <StaffPage as="div">
+              <StaffNav
+                email="jo@pauseai.uk"
+                permissions={["supporters", "admin"]}
+                fresh={["campaigns", "sentEmails"]}
+              />
             </StaffPage>
           ),
         },

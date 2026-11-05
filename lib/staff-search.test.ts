@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  oneOffSearch,
+  sentEmailsSearch,
   accountsSearch,
   askFormSearch,
   staffBack,
@@ -17,11 +19,46 @@ import {
   supportersSearch,
 } from "./staff-search";
 
+describe("sentEmailsSearch and oneOffSearch", () => {
+  it("reads the sent emails' filters and search, those to leave out apart", () => {
+    const { filter, ...typed } = sentEmailsSearch({
+      q: " jane ",
+      purpose: ["letter", "!relay"],
+      outcome: "sent",
+      backend: "!gmail",
+      page: "2",
+    });
+    expect(typed).toEqual({ q: " jane ", purpose: ["letter", "!relay"], outcome: ["sent"], backend: ["!gmail"], page: "2" });
+    expect(filter).toEqual({
+      search: "jane",
+      purpose: ["letter"],
+      outcome: ["sent"],
+      backend: undefined,
+      not: { purpose: ["relay"], backend: ["gmail"] },
+      page: 2,
+    });
+    expect(sentEmailsSearch({}).filter).toEqual({
+      search: undefined,
+      purpose: undefined,
+      outcome: undefined,
+      backend: undefined,
+      not: undefined,
+      page: 1,
+    });
+  });
+
+  it("reads who's in the one-off emails, leaving out anything else", () => {
+    expect(oneOffSearch({ who: "pauseai", page: "3" })).toEqual({ who: "pauseai", filter: "pauseai", page: 3 });
+    expect(oneOffSearch({ who: "someone" })).toEqual({ who: "someone", filter: undefined, page: 1 });
+  });
+});
+
 describe("lettersSearch", () => {
   const none = {
     status: undefined,
     search: undefined,
     answered: undefined,
+    tab: undefined,
     campaign: undefined,
     flags: undefined,
     backend: undefined,
@@ -31,6 +68,7 @@ describe("lettersSearch", () => {
     page: 1,
   };
   const blank = {
+    tab: "",
     status: "",
     q: "",
     answered: "",
@@ -56,6 +94,7 @@ describe("lettersSearch", () => {
         page: "2",
       }),
     ).toEqual({
+      tab: "",
       status: "sent",
       q: " jane ",
       answered: "yes",

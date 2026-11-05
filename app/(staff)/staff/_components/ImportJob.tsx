@@ -42,6 +42,7 @@ const SOURCES: Record<ImportJob, ImportSource> = {
   "import-controlai": "web",
   "import-members": "airtable",
   "read-gmail": "gmail",
+  "import-old-letters": "gmail",
 };
 
 /** The check that changes nothing, said so in a lozenge after its name. */
@@ -114,6 +115,12 @@ const ABOUT: Record<
     href: "/staff/me",
     button: staffCopy.gmailReading.readNow,
     none: staffCopy.gmailReading.never,
+  },
+  "import-old-letters": {
+    intro: staffCopy.oldLetters.intro,
+    href: "/staff/mailings/one-off",
+    button: staffCopy.oldLetters.importNow,
+    none: staffCopy.oldLetters.never,
   },
 };
 
@@ -201,14 +208,17 @@ export function ImportJobPage({
   run,
   decide,
   airtableTable,
+  people = false,
 }: {
   job: ImportJob;
   runs: AnyImportRun[];
   /** The Server Action that runs the job now. */
-  run: () => void | Promise<void>;
+  run: (form: FormData) => void | Promise<void>;
   /** Applies or discards a held politician sync. */
   decide: Decide;
   airtableTable: string;
+  /** Whether they may see who mail that matched nothing is from. */
+  people?: boolean;
 }): ReactNode {
   return (
     <>
@@ -224,8 +234,12 @@ export function ImportJobPage({
       <p>
         <Intro job={job} airtableTable={airtableTable} />
       </p>
-      <JobActions action={run} label={ABOUT[job].button} />
-      <RunList runs={runs} none={ABOUT[job].none} decide={decide} />
+      <JobActions
+        action={run}
+        label={ABOUT[job].button}
+        tick={job === "import-old-letters" ? { name: "dryRun", label: staffCopy.oldLetters.dryRun } : undefined}
+      />
+      <RunList runs={runs} none={ABOUT[job].none} decide={decide} people={people} />
     </>
   );
 }

@@ -922,3 +922,123 @@ INSERT INTO letter_events (letter_id, at, status, details)
 SELECT id, due_at - interval '1 day', 'scheduled', '{}' FROM seed_sending;
 INSERT INTO letter_events (letter_id, at, status, details)
 SELECT id, due_at, 'sent', jsonb_build_object('from', 'jo@pauseai.uk') FROM seed_sending WHERE n = 1;
+
+-- ------------------------------------------------- the old letters' text
+
+-- What the import of old letters (lib/server/old-letters-import.ts) keeps,
+-- one of each: a form letter's text, its draft the form's version live then,
+-- as each band of own words; a Postmark letter's from its copy; and the emails
+-- that went, tagged imported. The mailings it makes, with their templates, are
+-- below. Last, so no ID above moves.
+UPDATE letters_from_supporters SET
+  letter = '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Dear Ms Placeholder"}]},{"type":"paragraph","content":[{"type":"text","text":"I am a resident of Cities of London and Westminster and a supporter of PauseAI."}]},{"type":"paragraph","content":[{"type":"text","text":"I wrote this bit myself, as I worry about my children."}]},{"type":"paragraph","content":[{"type":"text","text":"Wendy Webform"}]}]}',
+  draft = E'Dear Ms Placeholder\n\nI am a resident of Cities of London and Westminster and a supporter of PauseAI.\n\nWendy Webform',
+  draft_approximate = false, own_words = 0.4
+WHERE airtable_id = 'recWebWendyFrontier';
+UPDATE letters_from_supporters SET
+  letter = '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Dear Ms Dummy"}]},{"type":"paragraph","content":[{"type":"text","text":"Please hold AI companies liable."}]},{"type":"paragraph","content":[{"type":"text","text":"Wendy Webform"}]}]}',
+  draft = E'Dear Ms Dummy\n\nPlease hold AI companies liable.\n\nWendy Webform',
+  draft_approximate = false, own_words = 0
+WHERE airtable_id = 'recWebWendyLiability';
+UPDATE letters_from_supporters SET
+  letter = '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Please, Lord Seedling, sign. I have thought hard about this, and I write as a parent, a teacher and a voter who has never written before."}]}]}',
+  draft = E'Dear Lord Seedling\n\nWould you be willing to co-sign an open letter?\n\nDee Deepmind',
+  draft_approximate = false, own_words = 0.9
+WHERE airtable_id = 'recWebDee';
+-- A form letter's email, as Joseph's mailbox had it, and an automatic reply to one.
+INSERT INTO email_sends (at, purpose, letter_id, address, outcome, message_id, backend, sender, rfc_message_id, gmail_thread_id, subject, from_address, imported)
+SELECT l.sent_at, 'letter', s.id, lower(n.email), 'sent', 'gmail-old-form-' || s.id, 'gmail', 'joseph@pauseai.uk', 'old-form-' || s.id || '@mail.gmail.com', 'thread-old-form-' || s.id, s.subject, 'joseph@pauseai.uk', true
+FROM letters_from_supporters s JOIN letters l USING (id) JOIN notable_people n ON n.id = l.notable_person_id
+WHERE s.airtable_id IN ('recWebWendyFrontier', 'recWebWendyLiability') AND n.email IS NOT NULL;
+INSERT INTO letter_events (letter_id, at, status, details)
+SELECT s.id, l.sent_at + interval '1 minute', 'auto_reply', jsonb_build_object('from', lower(n.email), 'gmailMessageId', 'gmail-old-auto')
+FROM letters_from_supporters s JOIN letters l USING (id) JOIN notable_people n ON n.id = l.notable_person_id
+WHERE s.airtable_id = 'recWebWendyLiability';
+
+-- A Postmark letter's text, from its copy Bcc'd to the policy inbox.
+UPDATE letters_from_supporters SET letter = '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Dear MP, please back the bill. This is the letter as Postmark sent it."}]}]}'
+WHERE id = (SELECT min(id) FROM letters_from_supporters WHERE postmark_mailbox IS NOT NULL);
+
+-- The mailings the import of old letters makes, each kind of text: one of a
+-- template, with one letter that fits and one that doesn't; one each its own;
+-- and August's, rebuilt from quotes, approximate, with no sent email.
+INSERT INTO mailings (title, subject, ask, airtable_sent_between, audience, channel, state, sent_from, old_letters_key, imported_text, imported_text_approximate) VALUES
+  ('DeepMind: join 25 of your colleagues', 'Request to co-sign letter on Google''s breach of AI safety pledges', 'deepmind-letter', '[2025-07-08,2025-07-23)', 'politicians', 'email', 'sent', 'joseph@pauseai.info', 'deepmind-25',
+   '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"field","attrs":{"field":"greeting"}}]},{"type":"paragraph","content":[{"type":"text","text":"Google broke its promise. Please join 25 of your colleagues."}]},{"type":"paragraph","content":[{"type":"field","attrs":{"field":"own"}}]},{"type":"paragraph","content":[{"type":"text","text":"Thank you for your consideration,"}]}]}', false),
+  ('DeepMind: August, from the personal Gmail', 'Request to co-sign letter on Google''s breach of AI safety pledges', 'deepmind-letter', '[2025-08-06,2025-08-23)', 'politicians', 'email', 'sent', NULL, 'deepmind-august',
+   '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"field","attrs":{"field":"greeting"}}]},{"type":"paragraph","content":[{"type":"text","text":"Please join "},{"type":"field","attrs":{"field":"colleagues"}},{"type":"text","text":" of your colleagues."}]}]}', true),
+  ('Stuart Russell panel: invitation to speak', 'Invitation to speak on panel with Professor Stuart Russell', NULL, '[2026-06-15,2026-08-04)', 'politicians', 'email', 'sent', 'joseph@pauseai.info', 'russell-speak', NULL, false);
+CREATE TEMP TABLE seed_old (politician text, key text, sent interval, merge_values jsonb, own_text text, reply text) ON COMMIT DROP;
+INSERT INTO seed_old VALUES
+  ('recPlaceholder', 'deepmind-25', '480 days', '{"values":{"greeting":"Dear Ms Placeholder,","own":"You spoke so well on the Bill."},"meets":[]}', NULL, NULL),
+  ('recDummy', 'deepmind-25', '481 days', NULL, E'Dear Ms Dummy,\n\nA letter that fits no template.\n\nThank you for your consideration,', NULL),
+  ('recPlaceholder', 'deepmind-august', '455 days', '{"values":{"greeting":"Dear Ms Placeholder,","colleagues":"50"},"meets":[]}', NULL, NULL),
+  ('recDummy', 'russell-speak', '120 days', NULL, E'Dear Ms Dummy,\n\nWould you speak on a panel with Professor Russell?\n\nJoseph', 'fixture/morag-edinburgh.eml.gz');
+CREATE TEMP TABLE seeded_old ON COMMIT DROP AS
+SELECT nextval(pg_get_serial_sequence('letters', 'id')) AS id, o.* FROM seed_old o;
+INSERT INTO letters (id, kind, notable_person_id, status, created_at, sent_at, replied_at) OVERRIDING SYSTEM VALUE
+SELECT o.id, 'pauseai', n.id, 'sent', now() - o.sent, now() - o.sent, CASE WHEN o.reply IS NOT NULL THEN now() - o.sent + interval '1 day' END
+FROM seeded_old o JOIN notable_people n ON n.airtable_id = o.politician;
+INSERT INTO letters_from_pauseai (id, mailing_id, merge_values, own_text)
+SELECT o.id, m.id, o.merge_values, o.own_text FROM seeded_old o JOIN mailings m ON m.old_letters_key = o.key;
+-- The sent emails of those Joseph sent, imported. August's has none.
+INSERT INTO email_sends (at, purpose, letter_id, address, outcome, message_id, backend, sender, rfc_message_id, gmail_thread_id, subject, from_address, imported)
+SELECT now() - o.sent, 'mailing', o.id, lower(n.email), 'sent', 'gmail-old-' || o.id, 'gmail', 'joseph@pauseai.uk', 'old-' || o.id || '@mail.gmail.com', 'thread-old-' || o.id, m.subject, m.sent_from, true
+FROM seeded_old o JOIN notable_people n ON n.airtable_id = o.politician JOIN mailings m ON m.old_letters_key = o.key
+WHERE m.sent_from IS NOT NULL;
+-- A person's reply to one, kept whole; our answer; an automatic reply to another.
+INSERT INTO letter_replies (letter_id, account, gmail_message_id, gmail_thread_id, rfc_message_id, from_address, from_name, subject, at, from_us, blob_key, size)
+SELECT o.id, 'joseph@pauseai.uk', 'gmail-old-reply-' || o.id, 'thread-old-' || o.id, 'old-reply-' || o.id || '@parliament.uk', lower(n.email), n.name, 'Re: Invitation to speak on panel with Professor Stuart Russell', now() - o.sent + interval '1 day', false, o.reply, 400
+FROM seeded_old o JOIN notable_people n ON n.airtable_id = o.politician WHERE o.reply IS NOT NULL;
+INSERT INTO letter_events (letter_id, at, status, details)
+SELECT o.id, now() - o.sent + interval '1 minute', 'auto_reply', jsonb_build_object('from', lower(n.email), 'gmailMessageId', 'gmail-old-auto-' || o.id)
+FROM seeded_old o JOIN notable_people n ON n.airtable_id = o.politician WHERE o.key = 'deepmind-25';
+
+-- One-off emails, one of each: a thread only between PauseAI and a politician;
+-- a thread with someone else in it, a volunteer forwarding what their MP said,
+-- with an unknown-to-us sender; and a Parliament address we can't tie to anyone.
+INSERT INTO one_off_threads (id, subject, someone_else, latest_at) OVERRIDING SYSTEM VALUE VALUES
+  (1, 'Coffee next week?', false, now() - interval '30 days'),
+  (2, 'Fwd: My MP''s answer', true, now() - interval '20 days'),
+  (3, 'Room booking request', false, now() - interval '25 days');
+SELECT setval(pg_get_serial_sequence('one_off_threads', 'id'), 3);
+INSERT INTO one_off_thread_people (thread_id, notable_person_id)
+SELECT t, n.id FROM (VALUES (1), (2)) AS ts (t) JOIN notable_people n ON n.airtable_id = 'recPlaceholder';
+INSERT INTO one_off_messages (thread_id, account, gmail_message_id, gmail_thread_id, rfc_message_id, in_reply_to, from_address, from_name, to_line, cc_line, addresses, subject, at, from_us, blob_key, size) VALUES
+  (1, 'joseph@pauseai.uk', 'gmail-one-off-1', 't-coffee', 'fixture-one-off-joseph@mail.gmail.com', '{}', 'joseph@pauseai.uk', 'Joseph Example', 'Polly Placeholder <polly.placeholder.mp@parliament.uk>', '', '{joseph@pauseai.uk,polly.placeholder.mp@parliament.uk}', 'Coffee next week?', now() - interval '31 days', true, 'fixture/one-off-joseph.eml.gz', 300),
+  (1, 'joseph@pauseai.uk', 'gmail-one-off-2', 't-coffee', 'fixture-one-off-polly@parliament.uk', '{fixture-one-off-joseph@mail.gmail.com}', 'polly.placeholder.mp@parliament.uk', 'Polly Placeholder', 'Joseph Example <joseph@pauseai.uk>', '', '{joseph@pauseai.uk,polly.placeholder.mp@parliament.uk}', 'Re: Coffee next week?', now() - interval '30 days', false, 'fixture/one-off-polly.eml.gz', 300),
+  (2, 'policy@pauseai.uk', 'gmail-one-off-3', 't-forward', 'fixture-one-off-vera@example.com', '{}', 'vera.volunteer@example.com', 'Vera Volunteer', 'PauseAI UK <policy@pauseai.uk>', '', '{vera.volunteer@example.com,policy@pauseai.uk}', 'Fwd: My MP''s answer', now() - interval '20 days', false, 'fixture/one-off-volunteer.eml.gz', 300),
+  (3, 'joseph@pauseai.uk', 'gmail-one-off-4', 't-room', 'fixture-one-off-office@parliament.uk', '{}', 'sam.office@parliament.uk', 'Sam Office', 'Joseph Example <joseph@pauseai.uk>', '', '{sam.office@parliament.uk,joseph@pauseai.uk}', 'Room booking request', now() - interval '25 days', false, 'fixture/one-off-office.eml.gz', 300);
+-- Mail that matched nothing: one reported, one waiting for today's report.
+INSERT INTO unmatched_mail (account, gmail_message_id, found_at, reported_at) VALUES
+  ('policy@pauseai.uk', 'seed-unmatched-1', now() - interval '3 days', now() - interval '2 days'),
+  ('policy@pauseai.uk', 'seed-unmatched-2', now() - interval '1 hour', NULL);
+-- A politician's own domain.
+INSERT INTO politician_domains (domain, notable_person_id)
+SELECT 'pollyplaceholder.example', id FROM notable_people WHERE airtable_id = 'recPlaceholder';
+-- Each thing the send log's list can show: a sign-in, an alert and a report;
+-- a refused and a failed send; a bounced email and a complained-of one.
+INSERT INTO email_sends (at, purpose, address, outcome, message_id, backend, subject, from_address) VALUES
+  (now() - interval '2 hours', 'staff-login', 'jo@pauseai.uk', 'sent', 'seed-log-login', 'postmark', 'Confirm sign in to PauseAI UK', 'noreply@notify.pauseai.uk'),
+  (now() - interval '3 hours', 'staff-alert', 'notification@pauseai.uk', 'sent', 'seed-log-alert', 'postmark', 'An import was held', 'noreply@notify.pauseai.uk'),
+  (now() - interval '4 hours', 'staff-report', 'notification@pauseai.uk', 'sent', 'seed-log-report', 'postmark', 'Emails in policy@ matched no politician', 'noreply@notify.pauseai.uk'),
+  (now() - interval '5 hours', 'staff-alert', 'someone.blocked@example.com', 'refused', NULL, 'postmark', 'Refused as this address is blocked', 'noreply@notify.pauseai.uk'),
+  (now() - interval '6 hours', 'staff-alert', 'failing@example.com', 'failed', NULL, 'postmark', 'Postmark would not take this', 'noreply@notify.pauseai.uk'),
+  (now() - interval '7 hours', 'staff-alert', 'bouncing@example.com', 'sent', 'seed-log-bounced', 'postmark', 'One that bounced', 'noreply@notify.pauseai.uk'),
+  (now() - interval '8 hours', 'staff-alert', 'complaining@example.com', 'sent', 'seed-log-complained', 'postmark', 'One marked as spam', 'noreply@notify.pauseai.uk'),
+  (now() - interval '9 hours', 'mailing-test', 'jo@pauseai.uk', 'sent', 'seed-log-test', 'postmark', 'Please make the Millennium Dome into a giant pause button', 'jo@pauseai.uk'),
+  (now() - interval '10 hours', 'supporter-notice', 'jane.seed@example.com', 'sent', 'seed-log-notice', 'postmark', 'Your letter hasn''t reached your MP', 'write.to@pauseai.uk'),
+  (now() - interval '11 hours', 'office-notice', 'polly.placeholder.mp@parliament.uk', 'sent', 'seed-log-office', 'postmark', 'A reply couldn''t be passed on', 'write.to@pauseai.uk');
+INSERT INTO email_problems (at, address, message_id, kind, reason, can_reset) VALUES
+  (now() - interval '7 hours', 'bouncing@example.com', 'seed-log-bounced', 'hard', 'No such mailbox', true),
+  (now() - interval '8 hours', 'complaining@example.com', 'seed-log-complained', 'complaint', 'Marked as spam', false);
+-- The new tag: the migration's pages for each account here, so only the pages it didn't name show as new.
+INSERT INTO staff_nav_seen (email, page, first_seen_at)
+SELECT a.email, p.page, '2000-01-01' FROM staff_accounts a CROSS JOIN unnest(ARRAY['supporters', 'supporterEmails', 'politicians', 'asks', 'mailings', 'mpEmails', 'events', 'import', 'accounts', 'changes']) AS p (page)
+ON CONFLICT DO NOTHING;
+-- Joseph's and policy@'s Gmail keep threads; and every state of the import's run.
+INSERT INTO import_runs (at, job, started_by, status, error, result) VALUES
+  (now() - interval '50 minutes', 'import-old-letters', 'admin@pauseai.uk', 'failed', 'joseph@pauseai.uk''s Gmail isn''t connected', '{}'),
+  (now() - interval '40 minutes', 'import-old-letters', 'admin@pauseai.uk', 'ok', NULL, '{"dryRun": true, "finished": true, "listed": 9, "read": 9, "left": 0, "requests": 12, "formTexts": 2, "postmarkTexts": 1, "joined": {"deepmind-25": 2, "form": 1}, "added": {"russell-speak": 1}, "notJoined": {"deepmind-august": 1}, "replies": 2, "autoReplies": 2, "oneOffs": 2, "unreadable": [], "unmatched": [{"from": "Neil Nobody <neil.nobody@example.com>", "subject": "Volunteering"}], "templates": 0, "ownText": 0, "repliedSet": 0}'),
+  (now() - interval '30 minutes', 'import-old-letters', 'admin@pauseai.uk', 'ok', NULL, '{"dryRun": false, "finished": false, "stoppedBy": "gmail", "listed": 9, "read": 3, "left": 6, "requests": 5, "formTexts": 2, "postmarkTexts": 0, "joined": {"deepmind-25": 2}, "added": {}, "notJoined": {}, "replies": 1, "autoReplies": 0, "oneOffs": 0, "unreadable": ["18f0a"], "unmatched": [], "templates": 0, "ownText": 0, "repliedSet": 0}'),
+  (now() - interval '20 minutes', 'import-old-letters', 'admin@pauseai.uk', 'ok', NULL, '{"dryRun": false, "finished": true, "listed": 9, "read": 9, "left": 0, "requests": 14, "formTexts": 2, "postmarkTexts": 1, "joined": {"deepmind-25": 2, "form": 2}, "added": {"russell-speak": 1}, "notJoined": {"deepmind-august": 1}, "replies": 2, "autoReplies": 2, "oneOffs": 3, "unreadable": [], "unmatched": [{"from": "Neil Nobody <neil.nobody@example.com>", "subject": "Volunteering"}], "templates": 2, "ownText": 1, "repliedSet": 1}');

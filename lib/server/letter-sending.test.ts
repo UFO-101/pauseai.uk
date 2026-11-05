@@ -88,7 +88,7 @@ describeWithDatabase("the letters inbox's queue", () => {
     const words = staffCopy.notifications.lettersWaiting;
     const why = staffCopy.letters.detail.reasons.not_connected;
     expect(sent.map((email) => [email.Subject, email.TextBody])).toEqual([
-      [words.subject(1, 3), words.body(1, 3, why, "https://pauseai.uk/staff/letters?status=queued")],
+      [words.subject(1, 3), words.body(1, 3, why, "https://pauseai.uk/staff/campaigns")],
     ]);
     expect(await query("SELECT letter_id::int AS id FROM email_sends WHERE purpose = 'staff-alert'")).toEqual([{ id }]);
     // Sent, then another waits as long: told again. With room to send, but Gmail failing, it says so.
@@ -101,7 +101,7 @@ describeWithDatabase("the letters inbox's queue", () => {
     await sendLetterQueue(Date.now() + 10_000);
     expect(sent.map((email) => email.TextBody)).toEqual([
       expect.anything(),
-      words.body(1, 3, staffCopy.letters.detail.reasons.failed, "https://pauseai.uk/staff/letters?status=queued"),
+      words.body(1, 3, staffCopy.letters.detail.reasons.failed, "https://pauseai.uk/staff/campaigns"),
     ]);
   });
 

@@ -1,7 +1,7 @@
 import "server-only";
 import { gunzipSync } from "node:zlib";
 import { checkMailingDoc, letterFor, type MailingRecipientValues } from "@/lib/mailing-doc";
-import type { LetterDoc } from "@/lib/letter-format";
+import { docFromMarkup, type LetterDoc } from "@/lib/letter-format";
 import { replyText } from "@/lib/reply-text";
 import { query } from "./db";
 import { decodeWords, firstOfType, parseMime, partText } from "./mime";
@@ -40,6 +40,8 @@ export type LetterThread = {
   sentAt: string | null;
   /** The letter as it went; null for one imported, whose text we don't have. */
   letter: LetterDoc | null;
+  /** The letter's text is rebuilt from replies quoting others like it, not what they received. */
+  approximate: boolean;
   /** The account it went from and the name it was from, and its Gmail thread if Gmail sent it. */
   sentFrom: string | null;
   fromName: string | null;
@@ -104,16 +106,26 @@ function textOf(message: ReturnType<typeof parseMime>): string | null {
   return html ? replyText(htmlText(partText(html))) : null;
 }
 
+/** A message's whole text, the mail it quotes included: its plain text if it has one, else its HTML's; empty if neither. */
+export function wholeTextOf(message: ReturnType<typeof parseMime>): string {
+  const plain = firstOfType(message, "text/plain");
+  if (plain) return partText(plain).replace(/\r\n/g, "\n").trim();
+  const html = firstOfType(message, "text/html");
+  return html ? htmlText(partText(html)) : "";
+}
+
 /** One of a mailing's letters and its thread; undefined if the mailing has no such letter. */
 export async function letterThread(mailingId: number, letterId: number): Promise<LetterThread | undefined> {
   const [row] = await query<
     Omit<LetterThread, "letter" | "messages"> & {
       body: unknown;
       mergeValues: MailingRecipientValues | null;
+      ownText: string | null;
     }
   >(
     `SELECT m.title AS "mailingTitle", m.subject, json_build_object('name', n.name, 'email', n.email) AS "to",
-       l.sent_at AS "sentAt", m.body, p.merge_values AS "mergeValues",
+       l.sent_at AS "sentAt", coalesce(m.body, m.imported_text) AS body, p.merge_values AS "mergeValues", p.own_text AS "ownText",
+       m.imported_text_approximate AS approximate,
        m.sent_from AS "sentFrom",
        -- With no name of its own, it went in the Gmail's, as that was when it last connected.
        coalesce(nullif(m.from_name, ''), (SELECT a.gmail_name FROM staff_accounts a WHERE a.email = m.sent_from)) AS "fromName",
@@ -125,11 +137,11 @@ export async function letterThread(mailingId: number, letterId: number): Promise
     [mailingId, letterId],
   );
   if (!row) return undefined;
-  const { body: stored, mergeValues, ...thread } = row;
+  const { body: stored, mergeValues, ownText, ...thread } = row;
   const body = checkMailingDoc(stored);
   return {
     ...thread,
-    letter: body && mergeValues ? letterFor(body, mergeValues) : null,
+    letter: ownText ? docFromMarkup(ownText) : body && mergeValues ? letterFor(body, mergeValues) : null,
     messages: await threadMessages(letterId),
   };
 }

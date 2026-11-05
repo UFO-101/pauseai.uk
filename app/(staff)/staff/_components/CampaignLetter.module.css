@@ -1,0 +1,48 @@
+/* A campaign's text: which version, its subject and words, then how much was people's own. */
+.letter {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.subject {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.own {
+  display: grid;
+  gap: var(--space-1);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-strong);
+}
+
+.own h3 {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+/* The three bands side by side, sized by how many are in each. */
+.bar {
+  display: flex;
+  gap: 2px;
+  height: 10px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+}
+
+.bar i {
+  display: block;
+  flex-basis: 0;
+}
+
+.bar i[data-band="under"] {
+  background: var(--border-strong);
+}
+
+.bar i[data-band="middle"] {
+  background: var(--accent-light);
+}
+
+.bar i[data-band="over"] {
+  background: var(--accent);
+}

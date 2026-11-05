@@ -12,7 +12,8 @@
         "Campaign": "Frontier AI letter",
         "Form Submitted Timestamp": "2026-09-25T09:00:00.000Z",
         "Email Sent Time": "2026-09-25T09:01:00.000Z",
-        "Contact consent": "Yes"
+        "Contact consent": "Yes",
+        "Message": "Dear Ms Placeholder\n\nI'm a resident of Cities of London and Westminster and a supporter of **PauseAI**, a civic movement.\n\nI wrote this bit myself, as I worry about my children's future.\n\nThank you for your consideration,\n\nWendy Webform\n\nEC1A 1BB"
       }
     },
     {
@@ -26,7 +27,8 @@
         "Subject": "AI companies should be liable",
         "Campaign": "Liability letter",
         "Form Submitted Timestamp": "2025-08-01T09:00:00.000Z",
-        "Email Sent Time": "2025-08-01T09:02:00.000Z"
+        "Email Sent Time": "2025-08-01T09:02:00.000Z",
+        "Message": "Dear Ms Dummy\n\nPlease hold AI companies liable.\n\nWendy Webform\n\nEC1A 1BB"
       }
     },
     {
@@ -41,7 +43,8 @@
         "Campaign": "Frontier AI letter",
         "Form Submitted Timestamp": "2026-10-01T09:00:00.000Z",
         "Email Sent Time": "2026-10-01T09:01:00.000Z",
-        "Contact consent": "No"
+        "Contact consent": "No",
+        "Message": "Dear Ms Placeholder\n\nPlease sign the letter.\n\nWendy Webform"
       }
     },
     {
@@ -55,7 +58,8 @@
         "Subject": "Dear Sir Demis",
         "Campaign": "DeepMind letter",
         "Email Sent Time": "2025-07-20T09:00:30.000Z",
-        "Contact consent": "No"
+        "Contact consent": "No",
+        "Message": "Dear Lord Seedling\n\nWould you be willing to co-sign an open letter?\n\nDee Deepmind\n\nM1 1AE"
       }
     },
     {

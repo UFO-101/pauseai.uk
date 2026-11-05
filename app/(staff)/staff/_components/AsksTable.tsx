@@ -1,7 +1,6 @@
-import { AskTitle } from "./AskLine";
 import { buttonClass } from "@/components/ui/Button";
 import styles from "./AsksTable.module.css";
-import { ASK_STATUSES, FIXED_ASKS } from "@/lib/asks";
+import { ASK_STATUSES, askHref, FIXED_ASKS } from "@/lib/asks";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { AskWithCounts } from "@/lib/server/asks";
 import { staffDate } from "@/lib/staff-time";
@@ -20,10 +19,23 @@ function AskedBy({ ask }: { ask: AskWithCounts }) {
 /** The answers an ask's kind allows that some politicians gave. */
 const answersOf = (ask: AskWithCounts) => ASK_STATUSES[ask.kind].filter((status) => ask.counts[status]);
 
+/** How many politicians gave any answer. */
+export const answeredOf = (ask: AskWithCounts) =>
+  Object.values(ask.counts).reduce((total: number, n) => total + (n ?? 0), 0);
+
+/** The campaigns and mailings that put it, in words. */
+const howAsked = (ask: AskWithCounts) =>
+  [
+    ask.campaigns ? copy.page.way(ask.campaigns, "campaign") : "",
+    ask.mailings ? copy.page.way(ask.mailings, "mailing") : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
 /**
- * The asks' columns: its kind, title and date, who asks it, and how many
+ * The asks' columns: its kind, title and date, who asks it, how many
  * politicians gave each answer its kind allows, each count linked to the
- * politicians who gave it.
+ * politicians who gave it; how many were written to, how many answered, and how they were asked.
  */
 export const askColumns: ListColumn<AskWithCounts>[] = [
   {
@@ -33,7 +45,12 @@ export const askColumns: ListColumn<AskWithCounts>[] = [
     text: (a) => copy.kinds[a.kind],
     cell: (a) => copy.kinds[a.kind],
   },
-  { key: "ask", label: copy.columns.ask, text: (a) => a.title, cell: (a) => <AskTitle ask={a} /> },
+  {
+    key: "ask",
+    label: copy.columns.ask,
+    text: (a) => a.title,
+    cell: (a) => <StaffLink href={askHref(a.slug)}>{a.title}</StaffLink>,
+  },
   {
     key: "date",
     label: copy.columns.date,
@@ -68,6 +85,26 @@ export const askColumns: ListColumn<AskWithCounts>[] = [
         ))
       ),
   },
+  {
+    key: "writtenTo",
+    label: copy.columns.writtenTo,
+    short: true,
+    text: (a) => String(a.writtenTo),
+    cell: (a) => (a.writtenTo ? a.writtenTo.toLocaleString("en-GB") : <Muted>–</Muted>),
+  },
+  {
+    key: "answered",
+    label: copy.columns.answered,
+    short: true,
+    text: (a) => String(answeredOf(a)),
+    cell: (a) => answeredOf(a).toLocaleString("en-GB"),
+  },
+  {
+    key: "how",
+    label: copy.columns.how,
+    text: (a) => howAsked(a),
+    cell: (a) => howAsked(a) || <Muted>–</Muted>,
+  },
 ];
 
 /** Each ask's Edit, but for those the code names, which staff can't change. */
@@ -77,7 +114,10 @@ const editColumn: ListColumn<AskWithCounts> = {
   end: true,
   cell: (a) =>
     !FIXED_ASKS.includes(a.slug) && (
-      <StaffLink className={buttonClass({ variant: "ghost", size: "small", fit: true })} href={`/staff/asks/${a.slug}`}>
+      <StaffLink
+        className={buttonClass({ variant: "ghost", size: "small", fit: true })}
+        href={`/staff/asks/${a.slug}/edit`}
+      >
         {copy.edit}
       </StaffLink>
     ),

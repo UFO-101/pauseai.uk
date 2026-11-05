@@ -154,7 +154,7 @@ test("Blocked emails without Supporters", async ({ page, request, flowDatabase }
   expect(await bounce.json()).toEqual({ recorded: true });
 
   await logIn(page, flowDatabase);
-  for (const closed of ["/staff/letters", "/staff/supporters/blocked-emails"]) {
+  for (const closed of ["/staff/campaigns", "/staff/supporters/blocked-emails"]) {
     await page.goto(`${BASE}${closed}`);
     await expect(page).toHaveURL(`${BASE}/staff`);
   }

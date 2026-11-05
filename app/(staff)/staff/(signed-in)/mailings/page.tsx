@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { mailingsPage } from "@/lib/server/mailings";
+import { oneOffCount } from "@/lib/server/one-off-emails";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { newMailing } from "../../mailing-actions";
 import MailingsOverview from "../../_components/MailingsOverview";
@@ -25,7 +26,7 @@ export default async function MailingsPage() {
       >
         {staffCopy.mailings.title}
       </PageTitle>
-      <MailingsOverview {...await mailingsPage()} />
+      <MailingsOverview {...await mailingsPage()} oneOffs={await oneOffCount()} />
     </>
   );
 }

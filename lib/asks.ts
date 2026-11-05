@@ -26,8 +26,8 @@ export function asksDone(statuses: Record<string, { status: AskStatus }>): numbe
   return Object.values(statuses).filter((answer) => DONE_STATUSES.includes(answer.status)).length;
 }
 
-/** Where an ask's name leads: its row on the asks page, picked out and scrolled to (AsksTable). */
-export const askHref = (slug: string) => `/staff/asks?ask=${slug}#${slug}`;
+/** Where an ask's name leads: its own page. */
+export const askHref = (slug: string) => `/staff/asks/${slug}`;
 
 /** PauseAI's frontier AI letter to the Prime Minister. */
 export const FRONTIER_AI_LETTER_ASK = "frontier-ai-letter";

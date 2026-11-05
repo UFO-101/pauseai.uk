@@ -286,9 +286,9 @@ CREATE TABLE public.letters_from_supporters (
     own_words real,
     copy_state text,
     CONSTRAINT letters_from_supporters_copy_state_check CHECK ((copy_state = ANY (ARRAY['queued'::text, 'sending'::text, 'sent'::text, 'held'::text]))),
-    CONSTRAINT letters_from_supporters_draft CHECK ((((draft IS NULL) = (draft_approximate IS NULL)) AND ((draft IS NULL) = (own_words IS NULL)) AND ((draft IS NULL) OR (proxy_id IS NOT NULL)))),
+    CONSTRAINT letters_from_supporters_draft CHECK ((((draft IS NULL) = (draft_approximate IS NULL)) AND ((draft IS NULL) = (own_words IS NULL)))),
     CONSTRAINT letters_from_supporters_kind_check CHECK ((kind = 'supporter'::text)),
-    CONSTRAINT letters_from_supporters_letter CHECK ((((proxy_id IS NULL) = (letter IS NULL)) AND ((proxy_id IS NULL) = (copy_state IS NULL)))),
+    CONSTRAINT letters_from_supporters_letter CHECK ((((proxy_id IS NULL) OR (letter IS NOT NULL)) AND ((proxy_id IS NULL) = (copy_state IS NULL)))),
     CONSTRAINT letters_from_supporters_own_words_check CHECK (((own_words >= (0)::double precision) AND (own_words <= (1)::double precision))),
     CONSTRAINT letters_from_supporters_sent_by CHECK ((num_nonnulls(postmark_mailbox, airtable_id, proxy_id) = 1))
 );
@@ -1214,8 +1214,12 @@ CREATE TABLE public.email_sends (
     sender text,
     rfc_message_id text,
     gmail_thread_id text,
+    subject text,
+    from_address text,
+    imported boolean DEFAULT false NOT NULL,
     CONSTRAINT email_sends_backend_check CHECK ((backend = ANY (ARRAY['postmark'::text, 'gmail'::text]))),
     CONSTRAINT email_sends_check CHECK (((outcome = 'sent'::text) = (message_id IS NOT NULL))),
+    CONSTRAINT email_sends_from_address_check CHECK ((from_address = lower(from_address))),
     CONSTRAINT email_sends_gmail_sender CHECK (((backend = 'postmark'::text) OR (sender IS NOT NULL))),
     CONSTRAINT email_sends_outcome_check CHECK ((outcome = ANY (ARRAY['sent'::text, 'refused'::text, 'failed'::text]))),
     CONSTRAINT email_sends_purpose_check CHECK ((purpose = ANY (ARRAY['letter'::text, 'forwarded-reply'::text, 'staff-login'::text, 'staff-alert'::text, 'mailing'::text, 'mailing-test'::text, 'letter-copy'::text, 'relay'::text, 'supporter-notice'::text, 'office-notice'::text, 'staff-report'::text]))),
@@ -1286,7 +1290,7 @@ CREATE TABLE public.import_runs (
     decided_by text,
     decided_at timestamp with time zone,
     CONSTRAINT import_runs_check CHECK (((status = 'failed'::text) = (error IS NOT NULL))),
-    CONSTRAINT import_runs_job_check CHECK ((job = ANY (ARRAY['sync-politicians'::text, 'check-mps'::text, 'import-controlai'::text, 'import-signatories'::text, 'import-luma'::text, 'import-members'::text, 'sync-emails'::text, 'import-web-form-letters'::text, 'import-go-to-parliament'::text, 'read-gmail'::text]))),
+    CONSTRAINT import_runs_job_check CHECK ((job = ANY (ARRAY['sync-politicians'::text, 'check-mps'::text, 'import-controlai'::text, 'import-signatories'::text, 'import-luma'::text, 'import-members'::text, 'sync-emails'::text, 'import-web-form-letters'::text, 'import-go-to-parliament'::text, 'read-gmail'::text, 'import-old-letters'::text]))),
     CONSTRAINT import_runs_status_check CHECK ((status = ANY (ARRAY['ok'::text, 'failed'::text, 'unchanged'::text, 'held'::text, 'applied'::text, 'discarded'::text])))
 );
 
@@ -1408,6 +1412,7 @@ CREATE TABLE public.letters_from_pauseai (
     personalised boolean DEFAULT false NOT NULL,
     merge_values jsonb,
     skip_reason text,
+    own_text text,
     CONSTRAINT letters_from_pauseai_kind_check CHECK ((kind = 'pauseai'::text)),
     CONSTRAINT letters_from_pauseai_skip_reason_check CHECK ((skip_reason = ANY (ARRAY['blocked'::text, 'left-office'::text, 'no-email'::text])))
 );
@@ -1499,12 +1504,16 @@ CREATE TABLE public.mailings (
     version integer DEFAULT 1 NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     opened_at timestamp with time zone DEFAULT now() NOT NULL,
+    imported_text jsonb,
+    imported_text_approximate boolean DEFAULT false NOT NULL,
+    old_letters_key text,
     CONSTRAINT mailings_audience_check CHECK ((audience = ANY (ARRAY['politicians'::text, 'supporters'::text]))),
     CONSTRAINT mailings_box_or_dates CHECK (((airtable_field IS NULL) OR (airtable_sent_between IS NULL))),
     CONSTRAINT mailings_channel_check CHECK ((channel = ANY (ARRAY['email'::text, 'text'::text, 'whatsapp'::text]))),
     CONSTRAINT mailings_created_by_check CHECK ((created_by = lower(created_by))),
     CONSTRAINT mailings_imported_or_written CHECK ((((airtable_field IS NOT NULL) OR (airtable_sent_between IS NOT NULL)) = ((body IS NULL) AND (filter IS NULL) AND (created_by IS NULL)))),
     CONSTRAINT mailings_imported_sent CHECK (((body IS NOT NULL) OR (state = 'sent'::text))),
+    CONSTRAINT mailings_imported_text CHECK (((imported_text IS NULL) OR (body IS NULL))),
     CONSTRAINT mailings_politicians_by_email CHECK (((audience = 'supporters'::text) OR (channel = 'email'::text))),
     CONSTRAINT mailings_scheduled_complete CHECK (((body IS NULL) OR (state = 'draft'::text) OR ((due_at IS NOT NULL) AND (sent_from IS NOT NULL) AND (from_name IS NOT NULL)))),
     CONSTRAINT mailings_sent_from_check CHECK ((sent_from = lower(sent_from))),
@@ -1637,6 +1646,99 @@ ALTER TABLE public.notes ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 );
 
 --
+-- Name: old_letters_mail; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.old_letters_mail (
+    dry_run boolean NOT NULL,
+    account text NOT NULL,
+    gmail_message_id text NOT NULL,
+    source text NOT NULL,
+    gmail_thread_id text,
+    rfc_message_id text,
+    letter_id bigint,
+    mailing_key text,
+    outcome text,
+    quoted text,
+    CONSTRAINT old_letters_mail_account_check CHECK ((account = lower(account))),
+    CONSTRAINT old_letters_mail_outcome_check CHECK ((outcome = ANY (ARRAY['joined'::text, 'added'::text, 'reply'::text, 'auto_reply'::text, 'one_off'::text, 'unmatched'::text, 'skipped'::text, 'not_joined'::text]))),
+    CONSTRAINT old_letters_mail_source_check CHECK ((source = ANY (ARRAY['sent'::text, 'received'::text, 'group'::text, 'policy'::text, 'thread'::text])))
+);
+
+--
+-- Name: one_off_messages; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.one_off_messages (
+    id bigint NOT NULL,
+    thread_id bigint NOT NULL,
+    account text NOT NULL,
+    gmail_message_id text NOT NULL,
+    gmail_thread_id text NOT NULL,
+    rfc_message_id text,
+    in_reply_to text[] DEFAULT '{}'::text[] NOT NULL,
+    from_address text NOT NULL,
+    from_name text DEFAULT ''::text NOT NULL,
+    to_line text DEFAULT ''::text NOT NULL,
+    cc_line text DEFAULT ''::text NOT NULL,
+    addresses text[] NOT NULL,
+    subject text DEFAULT ''::text NOT NULL,
+    at timestamp with time zone NOT NULL,
+    from_us boolean NOT NULL,
+    blob_key text NOT NULL,
+    size integer NOT NULL,
+    CONSTRAINT one_off_messages_account_check CHECK ((account = lower(account))),
+    CONSTRAINT one_off_messages_from_address_check CHECK ((from_address = lower(from_address))),
+    CONSTRAINT one_off_messages_size_check CHECK ((size >= 0))
+);
+
+--
+-- Name: one_off_messages_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.one_off_messages ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.one_off_messages_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
+-- Name: one_off_thread_people; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.one_off_thread_people (
+    thread_id bigint NOT NULL,
+    notable_person_id bigint NOT NULL
+);
+
+--
+-- Name: one_off_threads; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.one_off_threads (
+    id bigint NOT NULL,
+    subject text DEFAULT ''::text NOT NULL,
+    someone_else boolean DEFAULT false NOT NULL,
+    latest_at timestamp with time zone NOT NULL
+);
+
+--
+-- Name: one_off_threads_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.one_off_threads ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.one_off_threads_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
 -- Name: opt_outs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -1647,6 +1749,17 @@ ALTER TABLE public.opt_outs ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
     NO MINVALUE
     NO MAXVALUE
     CACHE 1
+);
+
+--
+-- Name: politician_domains; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.politician_domains (
+    domain text NOT NULL,
+    notable_person_id bigint NOT NULL,
+    seen_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT politician_domains_domain_check CHECK ((domain = lower(domain)))
 );
 
 --
@@ -1711,6 +1824,7 @@ CREATE TABLE public.staff_accounts (
     gmail_connected_at timestamp with time zone,
     gmail_history_id text,
     gmail_name text,
+    keep_politician_threads boolean DEFAULT false NOT NULL,
     CONSTRAINT staff_accounts_email_check CHECK ((email = lower(email))),
     CONSTRAINT staff_accounts_email_pauseai CHECK ((email ~ '^[^@[:space:]]+@pauseai\.uk$'::text)),
     CONSTRAINT staff_accounts_gmail_check CHECK ((((gmail_token IS NULL) = (gmail_connected_at IS NULL)) AND ((gmail_token IS NOT NULL) OR (gmail_history_id IS NULL)))),
@@ -1730,6 +1844,16 @@ CREATE TABLE public.staff_login_links (
     browser_hash text,
     remember boolean DEFAULT false NOT NULL,
     next text DEFAULT '/staff'::text NOT NULL
+);
+
+--
+-- Name: staff_nav_seen; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.staff_nav_seen (
+    email text NOT NULL,
+    page text NOT NULL,
+    first_seen_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 --
@@ -1840,6 +1964,18 @@ UNION ALL
     supporters_added.longitude,
     supporters_added.phones
    FROM public.supporters_added() supporters_added(id, name, emails, email, phone, postcode, sources, luma_follows, first_seen_at, last_active_at, events, letters, member, place, basis, given, country, latitude, longitude, phones);
+
+--
+-- Name: unmatched_mail; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.unmatched_mail (
+    account text NOT NULL,
+    gmail_message_id text NOT NULL,
+    found_at timestamp with time zone DEFAULT now() NOT NULL,
+    reported_at timestamp with time zone,
+    CONSTRAINT unmatched_mail_account_check CHECK ((account = lower(account)))
+);
 
 --
 -- Name: ask_kind_statuses ask_kind_statuses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2108,6 +2244,13 @@ ALTER TABLE ONLY public.mailings
     ADD CONSTRAINT mailings_airtable_field_key UNIQUE (airtable_field);
 
 --
+-- Name: mailings mailings_old_letters_key_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.mailings
+    ADD CONSTRAINT mailings_old_letters_key_key UNIQUE (old_letters_key);
+
+--
 -- Name: mailings mailings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2192,6 +2335,48 @@ ALTER TABLE ONLY public.notes
     ADD CONSTRAINT notes_pkey PRIMARY KEY (id);
 
 --
+-- Name: old_letters_mail old_letters_mail_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.old_letters_mail
+    ADD CONSTRAINT old_letters_mail_pkey PRIMARY KEY (dry_run, account, gmail_message_id);
+
+--
+-- Name: one_off_messages one_off_messages_account_gmail_message_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.one_off_messages
+    ADD CONSTRAINT one_off_messages_account_gmail_message_id_key UNIQUE (account, gmail_message_id);
+
+--
+-- Name: one_off_messages one_off_messages_blob_key_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.one_off_messages
+    ADD CONSTRAINT one_off_messages_blob_key_key UNIQUE (blob_key);
+
+--
+-- Name: one_off_messages one_off_messages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.one_off_messages
+    ADD CONSTRAINT one_off_messages_pkey PRIMARY KEY (id);
+
+--
+-- Name: one_off_thread_people one_off_thread_people_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.one_off_thread_people
+    ADD CONSTRAINT one_off_thread_people_pkey PRIMARY KEY (thread_id, notable_person_id);
+
+--
+-- Name: one_off_threads one_off_threads_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.one_off_threads
+    ADD CONSTRAINT one_off_threads_pkey PRIMARY KEY (id);
+
+--
 -- Name: opt_outs opt_outs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2204,6 +2389,13 @@ ALTER TABLE ONLY public.opt_outs
 
 ALTER TABLE ONLY public.opt_outs
     ADD CONSTRAINT opt_outs_source_source_ref_key UNIQUE (source, source_ref);
+
+--
+-- Name: politician_domains politician_domains_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.politician_domains
+    ADD CONSTRAINT politician_domains_pkey PRIMARY KEY (domain);
 
 --
 -- Name: politicians politicians_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2269,6 +2461,13 @@ ALTER TABLE ONLY public.staff_login_links
     ADD CONSTRAINT staff_login_links_pkey PRIMARY KEY (token_hash);
 
 --
+-- Name: staff_nav_seen staff_nav_seen_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.staff_nav_seen
+    ADD CONSTRAINT staff_nav_seen_pkey PRIMARY KEY (email, page);
+
+--
 -- Name: staff_sessions staff_sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2316,6 +2515,13 @@ ALTER TABLE ONLY public.supporter_merges
 
 ALTER TABLE ONLY public.supporters
     ADD CONSTRAINT supporters_pkey PRIMARY KEY (id);
+
+--
+-- Name: unmatched_mail unmatched_mail_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.unmatched_mail
+    ADD CONSTRAINT unmatched_mail_pkey PRIMARY KEY (account, gmail_message_id);
 
 --
 -- Name: ask_statuses_ask; Type: INDEX; Schema: public; Owner: -
@@ -2370,6 +2576,18 @@ CREATE UNIQUE INDEX email_problems_gmail ON public.email_problems USING btree (g
 --
 
 CREATE INDEX email_sends_address ON public.email_sends USING btree (address, at DESC);
+
+--
+-- Name: email_sends_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX email_sends_at ON public.email_sends USING btree (at DESC, id DESC);
+
+--
+-- Name: email_sends_imported_thread; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX email_sends_imported_thread ON public.email_sends USING btree (sender, gmail_thread_id) WHERE imported;
 
 --
 -- Name: email_sends_letter; Type: INDEX; Schema: public; Owner: -
@@ -2546,10 +2764,76 @@ CREATE INDEX notes_notable_person ON public.notes USING btree (notable_person_id
 CREATE INDEX notes_supporter ON public.notes USING btree (supporter_id) WHERE (supporter_id IS NOT NULL);
 
 --
+-- Name: old_letters_mail_letter; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX old_letters_mail_letter ON public.old_letters_mail USING btree (letter_id);
+
+--
+-- Name: old_letters_mail_rfc; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX old_letters_mail_rfc ON public.old_letters_mail USING btree (dry_run, rfc_message_id) WHERE (letter_id IS NOT NULL);
+
+--
+-- Name: old_letters_mail_thread; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX old_letters_mail_thread ON public.old_letters_mail USING btree (dry_run, account, gmail_thread_id) WHERE (letter_id IS NOT NULL);
+
+--
+-- Name: old_letters_mail_waiting; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX old_letters_mail_waiting ON public.old_letters_mail USING btree (dry_run, source) WHERE (outcome IS NULL);
+
+--
+-- Name: one_off_messages_addresses; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX one_off_messages_addresses ON public.one_off_messages USING gin (addresses);
+
+--
+-- Name: one_off_messages_gmail_thread; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX one_off_messages_gmail_thread ON public.one_off_messages USING btree (account, gmail_thread_id);
+
+--
+-- Name: one_off_messages_rfc; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX one_off_messages_rfc ON public.one_off_messages USING btree (rfc_message_id) WHERE (rfc_message_id IS NOT NULL);
+
+--
+-- Name: one_off_messages_thread; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX one_off_messages_thread ON public.one_off_messages USING btree (thread_id, at);
+
+--
+-- Name: one_off_thread_people_person; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX one_off_thread_people_person ON public.one_off_thread_people USING btree (notable_person_id);
+
+--
+-- Name: one_off_threads_latest; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX one_off_threads_latest ON public.one_off_threads USING btree (latest_at DESC, id DESC);
+
+--
 -- Name: opt_outs_open; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX opt_outs_open ON public.opt_outs USING btree (channel, address, list) WHERE (resubscribed_at IS NULL);
+
+--
+-- Name: politician_domains_person; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX politician_domains_person ON public.politician_domains USING btree (notable_person_id);
 
 --
 -- Name: politicians_commons_constituency; Type: INDEX; Schema: public; Owner: -
@@ -2604,6 +2888,12 @@ CREATE INDEX supporters_list_active ON public.supporters_list USING btree (last_
 --
 
 CREATE UNIQUE INDEX supporters_list_id ON public.supporters_list USING btree (id);
+
+--
+-- Name: unmatched_mail_waiting; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX unmatched_mail_waiting ON public.unmatched_mail USING btree (found_at) WHERE (reported_at IS NULL);
 
 --
 -- Name: ask_statuses ask_statuses_ask_ask_kind_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -2830,6 +3120,41 @@ ALTER TABLE ONLY public.notes
     ADD CONSTRAINT notes_supporter_id_fkey FOREIGN KEY (supporter_id) REFERENCES public.supporters(id) ON DELETE CASCADE;
 
 --
+-- Name: old_letters_mail old_letters_mail_letter_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.old_letters_mail
+    ADD CONSTRAINT old_letters_mail_letter_id_fkey FOREIGN KEY (letter_id) REFERENCES public.letters(id) ON DELETE SET NULL;
+
+--
+-- Name: one_off_messages one_off_messages_thread_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.one_off_messages
+    ADD CONSTRAINT one_off_messages_thread_id_fkey FOREIGN KEY (thread_id) REFERENCES public.one_off_threads(id) ON DELETE CASCADE;
+
+--
+-- Name: one_off_thread_people one_off_thread_people_notable_person_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.one_off_thread_people
+    ADD CONSTRAINT one_off_thread_people_notable_person_id_fkey FOREIGN KEY (notable_person_id) REFERENCES public.notable_people(id) ON DELETE CASCADE;
+
+--
+-- Name: one_off_thread_people one_off_thread_people_thread_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.one_off_thread_people
+    ADD CONSTRAINT one_off_thread_people_thread_id_fkey FOREIGN KEY (thread_id) REFERENCES public.one_off_threads(id) ON DELETE CASCADE;
+
+--
+-- Name: politician_domains politician_domains_notable_person_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.politician_domains
+    ADD CONSTRAINT politician_domains_notable_person_id_fkey FOREIGN KEY (notable_person_id) REFERENCES public.notable_people(id) ON DELETE CASCADE;
+
+--
 -- Name: politicians politicians_notable_person_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2842,6 +3167,13 @@ ALTER TABLE ONLY public.politicians
 
 ALTER TABLE ONLY public.proxies
     ADD CONSTRAINT proxies_notable_person_id_fkey FOREIGN KEY (notable_person_id) REFERENCES public.notable_people(id) ON DELETE CASCADE;
+
+--
+-- Name: staff_nav_seen staff_nav_seen_email_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.staff_nav_seen
+    ADD CONSTRAINT staff_nav_seen_email_fkey FOREIGN KEY (email) REFERENCES public.staff_accounts(email) ON DELETE CASCADE;
 
 --
 -- Name: supporter_links supporter_links_form_entry_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -

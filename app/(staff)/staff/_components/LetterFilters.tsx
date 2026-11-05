@@ -8,8 +8,8 @@ const copy = staffCopy.letters;
 
 /**
  * The letters list's filters, in the table's columns' order: whether it was
- * delivered, the MP's markers, `campaigns` (every one, by title), what sent
- * it and what came back to it. All but the status and reply repeat.
+ * delivered, the MP's markers, `campaigns` (every one, by title; none on one
+ * campaign's own page), what sent it and what came back to it. All but the status and reply repeat.
  */
 export function letterFilters(campaigns: Pick<CampaignRow, "slug" | "title">[]): Filter[] {
   return [
@@ -24,12 +24,16 @@ export function letterFilters(campaigns: Pick<CampaignRow, "slug" | "title">[]):
       repeat: true,
       options: POLITICIAN_FLAGS.map((flag) => ({ value: flag, label: staffCopy.politicians.flags[flag] })),
     },
-    {
-      name: "campaign",
-      label: copy.columns.campaign,
-      repeat: true,
-      options: campaigns.map((campaign) => ({ value: campaign.slug, label: campaign.title })),
-    },
+    ...(campaigns.length
+      ? [
+          {
+            name: "campaign",
+            label: copy.columns.campaign,
+            repeat: true,
+            options: campaigns.map((campaign) => ({ value: campaign.slug, label: campaign.title })),
+          },
+        ]
+      : []),
     {
       name: "backend",
       label: copy.columns.backend,
@@ -44,17 +48,19 @@ export function letterFilters(campaigns: Pick<CampaignRow, "slug" | "title">[]):
   ];
 }
 
-/** Which letters the letters page lists: by a search of the sender and MP, then its filters. */
+/** Which of a campaign's letters its page lists: by a search of the sender and MP, then its filters. */
 export default function LetterFilters({
+  path,
   search,
   campaigns,
 }: {
+  path: string;
   search: LettersSearch;
   campaigns: Pick<CampaignRow, "slug" | "title">[];
 }) {
   return (
     <FilterBar
-      path="/staff/letters"
+      path={path}
       values={search}
       search={{ name: "q", label: copy.search }}
       filters={letterFilters(campaigns)}

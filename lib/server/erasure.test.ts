@@ -87,6 +87,7 @@ describeWithDatabase("eraseSupporter", () => {
       members: 1,
       proxies: 0,
       messages: 0,
+      oneOffs: 0,
     });
     expect(await query("SELECT 1 FROM supporters WHERE id = $1", [id])).toEqual([]);
     expect(await query("SELECT 1 FROM luma_people WHERE user_id = 'usr-fixture-1'")).toEqual([]);
@@ -126,6 +127,7 @@ describeWithDatabase("eraseSupporter", () => {
           members: 1,
           proxies: 0,
           messages: 0,
+          oneOffs: 0,
         },
       },
     ]);
@@ -176,6 +178,7 @@ describeWithDatabase("eraseSupporter", () => {
       expect(await eraseSupporter(id, "ICO-124", "jo@pauseai.uk")).toMatchObject({
         letters: 1,
         proxies: 1,
+        oneOffs: 0,
         messages: 4,
       });
       expect(await query("SELECT tag FROM proxies")).toEqual([{ tag: "testy.mctestface.mp" }]);

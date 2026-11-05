@@ -25,11 +25,13 @@ What a letter said is kept where we need it to do the job. A supporter's
 letter to their MP, and every message between them and the MP's office,
 are kept whole, as the site relays them ("Letters", below); they can show
 the supporter's political opinions and personal circumstances, so only
-staff with `supporters` see them, and erasure deletes them. For letters
-sent before the letters inbox, neither's text is kept: only who, when, and
-what happened to it. A letter PauseAI sends a politician, and their reply,
-are kept in full, since they're our own words and a public figure's answer
-in their public role.
+staff with `supporters` see them, and erasure deletes them. Letters sent
+before the letters inbox have their text too, from Airtable's copy or the one
+Bcc'd to the policy team, once imported ("The import of old letters", below).
+A letter PauseAI sends a politician, and their reply, are kept in full, since
+they're our own words and a public figure's answer in their public role. So
+is every other thread with a politician in the policy team's mailboxes
+("One-off emails", below).
 
 ## Notable people and politicians
 
@@ -99,7 +101,11 @@ ControlAI's letter to the Prime Minister from its PDF (`updated_by`
 letters, ControlAI's campaign statement and the conference Airtable records (`airtable`, `AIRTABLE_ASKS`); the one-off
 Go to Parliament import its meetings (`airtable`,
 `lib/server/go-to-parliament-import.ts`). `/staff/asks` lists the asks, newest
-first, who asks each, and how many gave each answer.
+first, who asks each, how many gave each answer, how many were written to and
+how they were asked. An ask's own page (`/staff/asks/[slug]`) says what they
+were asked in a politician's page's words, then lists the campaigns and
+mailings that put it, by date, beside its answers. It has no letters of its
+own. Its form is at `/staff/asks/[slug]/edit`.
 
 ## Campaigns
 
@@ -116,6 +122,15 @@ is one nobody has done, and there's always one to move on to.
 
 A new campaign is an entry in that list, its row in a migration, its page
 in `app/(site)/campaigns/<slug>/`, and a link in the nav.
+
+Staff see them as a mailing, from supporters rather than PauseAI: `/staff/campaigns`
+lists them under the month of each one's most recent letter, with a mailing's
+counts, and a campaign's page (`/staff/campaigns/[slug]`, `lib/server/campaigns.ts`)
+has its header, how many answered its ask, "The letter" with each version of its
+text and how much people changed it, and "Letters", with their search, filters
+and download. A version is the code's text for a campaign in that list, and for
+pauseai.info's old ones each commit of its form live when a letter was written
+(`FORM_VERSIONS` in `lib/content/pauseai-info-form.ts`).
 
 ## Letters
 
@@ -134,10 +149,12 @@ adds what its kind has, joined as notable people are:
   before it went by Postmark from an address of their own on
   `letters.pauseai.uk` (`postmark_mailbox`), with the sender on Cc, and a
   reply to that address is still forwarded to the sender and the policy
-  team (`forwardReply`, `lib/server/postmark-webhooks.ts`); their text
-  isn't kept. The letters sent through pauseai.info's old form were
-  imported once from Airtable (`lib/server/web-form-import.ts`), keyed by
-  the record, with neither.
+  team (`forwardReply`, `lib/server/postmark-webhooks.ts`). The letters sent
+  through pauseai.info's old form were imported once from Airtable
+  (`lib/server/web-form-import.ts`), keyed by the record, with neither. Both
+  have their text in `letter` once the import of old letters has run, a form
+  letter with the form's text live then in `draft`, so its page shows what its
+  writer changed as a letter through the letters inbox does.
 - **PauseAI's letter** (`letters_from_pauseai`): one person's letter of a mailing
   (`mailings`), which may make an ask. Those sent before the site could send
   them are copied nightly from Airtable's Emails table
@@ -311,6 +328,76 @@ token is kept encrypted (`GMAIL_TOKEN_KEY`), and deleted on disconnecting.
   included. Gmail has no link into a delegated mailbox. A supporter's
   letter's page has the same, for its copy in `POLICY_INBOX`.
 
+### The import of old letters
+
+A one-off job (`import-old-letters`, `lib/server/old-letters-import.ts`, its
+rules in `lib/old-letters.ts`) reads the letters written before the site could
+send them from Joseph's and policy@'s mail, so each one's text, diff and replies
+show on its page. Each press of its button starts a background function, which
+calls the site again and again for up to 15 minutes, as the site's own calls
+last seconds. Its place is `old_letters_mail`: the Gmail ID of each message it
+has listed, and what became of it, so pressing it again carries on and skips
+what's kept. A dry run keeps its own rows there, writes nothing else, and reports
+what it would join; a real run deletes them. It reads at most two a second, as
+Gmail's limit is shared with the site, and stops the moment Gmail refuses.
+
+- **Mailings.** A send is a mailing, so the list shows it and its counts
+  (`OLD_MAILINGS`): DeepMind's told apart by the phrases in their text, the
+  documentary's by subject and text. A new one has its dates in
+  `airtable_sent_between`, as the constraints need. The Emails sync places a new
+  record in the first dated mailing by ID, so it stays with the first.
+- **Joining.** A letter joins a sent email to the politician's address, sent from
+  25 minutes before its time in production to 5 seconds after it (`joinSent`). A
+  sent email with no letter is one if its subject says so (`mailingOfNewLetter`).
+- **What's stored.** A mailing's template in `imported_text`, in `body`'s format,
+  its subject and who it went from; each letter that fits it, its greeting and own
+  paragraph in `merge_values`, and one that doesn't, its whole text in `own_text`.
+  Its sent email is an `email_sends` row with `imported`, its real date, Message-ID
+  and Gmail thread, so the site's regular read joins later replies and bounces to
+  it, and as it keeps its date it doesn't count against `GMAIL_DAILY_LIMIT`.
+- **Replies** (`placeReply`): by Gmail thread or a Message-ID the letter's email
+  has, the politician plus its subject, for an automatic one the time, then a form
+  letter's sender in the text, and when stuck the original it quotes. A person's is
+  kept whole, an automatic one is an event on the letter. Anything else is a
+  one-off email.
+- **Letters whose text we can't read.** The August 2025 DeepMind letters went from
+  Joseph's personal Gmail. Their template is rebuilt from replies quoting one,
+  marked `imported_text_approximate`, and a letter's page says it's not what they
+  received. Those quotes say "join 40" until 7 August and "join 50" from the 8th,
+  so its number goes by its date.
+
+## One-off emails
+
+Threads with a politician that aren't a letter of a campaign or mailing: Joseph's
+own emails, a volunteer copying policy@, an MP writing to us. Kept whole, in
+Netlify Blobs with a row in `one_off_messages`, in `one_off_threads`, by
+`lib/server/one-off-emails.ts`; read-only at `/staff/mailings/one-off`, the last
+row of the mailings list, and on the politician's and supporter's pages.
+
+- **What counts** (`lib/one-off.ts`): a message with an address a politician has
+  or has had (past ones from the audit log), one on a politician's own domain, or
+  one on a parliament's. Politicians' own domains (`politician_domains`) come from
+  the nightly check against Parliament's Members API, which saves those it lists,
+  if only one politician has it and it isn't a party's or social media's. One
+  message is kept once by its Message-ID, and threaded across mailboxes by
+  In-Reply-To and References, as each has its own Gmail thread IDs. A thread that
+  counts is kept whole.
+- **Quotes.** The forwarded or quoted From, Sent, To and Cc also say a thread is
+  with a politician. As volunteers forward their emails to us, policy@ and the
+  group's archive, which are shared mail, are searched this way. Joseph's other
+  mail isn't: it's found by its headers alone, to keep the rest of it private.
+- **New threads.** `keep_politician_threads` on a staff account, on for policy@ and
+  joseph@, has the regular read keep that account's threads by the same rule. Its
+  owner turns it off on `/staff/me`, which stops new ones and leaves those kept.
+- **Mail that matches nothing,** in policy@ and the group's archive, isn't kept,
+  only its Gmail ID (`unmatched_mail`), to list its sender and subject, read again
+  from Gmail, in an email to the notification inbox at most once a day. The import
+  lists what it finds on its results instead, for staff with `supporters`.
+- **Who sees what.** A thread is "PauseAI" if every sender in it is a politician, on
+  a parliament's domain, or one of PauseAI's accounts (the connected Gmails, and
+  `PAUSEAI_ALIASES`), and "Someone else" if anyone else appears. Staff without
+  `supporters` see the name and text of "PauseAI" threads only.
+
 ## Form entries
 
 One person filling in one of our forms once (`form_entries`): their name,
@@ -408,9 +495,10 @@ supporters near somewhere would use it too.
 from their page (`lib/server/erasure.ts`), under the request's reference.
 For each source, what that source holds goes: a form entry, with its
 letter, the letter's events and the copies of replies forwarded to the
-sender, and for one from the letters inbox, the supporter's proxy, every
+sender, its row in the send log keeping only that a letter went to that MP, and for one from the letters inbox, the supporter's proxy, every
 message kept and its blob, its mail there moved to Trash; a Luma user with their
-registrations and contact; a member's record. What stays is what exists to stop us mailing
+registrations and contact; a member's record; every one-off email with their
+address on it, and its blob. What stays is what exists to stop us mailing
 the address: `email_problems`,
 `email_blocks` and `opt_outs`. The Luma user's ID goes in `luma_erased`,
 which the import skips, so they never come back; a new Luma account later
@@ -574,7 +662,13 @@ goes through `send()` with its purpose: `letter`, `letter-copy`, `relay`,
 logged (`email_sends`): when, why, to whom, whether it went, and which
 backend sent it, Postmark or a connected Gmail, a staff member's or the
 letters inbox ("Mailings to politicians" and "Letters through the letters
-inbox", above).
+inbox", above), its subject and its From address. An `imported` row is a letter
+Joseph sent, read from his Sent mail. Admins read them at `/staff/sent-emails`
+(`lib/server/sent-emails.ts`), with no visible heading, as the menu names it:
+someone outside PauseAI as their name, linked to their page, through the row's
+letter, or by the address if only one person has it; its outcome, bounced or a
+spam complaint from `email_problems`; a link to its letter and its campaign or
+mailing. A row never shows the email's text.
 
 Every address an email is to, Cc'd or Bcc'd to has a name with it: the
 person's own name on their own address, `"Jane Smith"
@@ -633,7 +727,7 @@ opt-outs ("Opt-outs", above) as well as the blocks here.
 A job that copies data in from outside: the politician sync, the Emails
 sync, the check against Parliament, the ControlAI letter, the Luma import,
 the members import, and the one-off imports of pauseai.info's web form
-letters and Go to Parliament's meetings (`IMPORT_JOBS` in
+letters, Go to Parliament's meetings and old letters (`IMPORT_JOBS` in
 `lib/import-runs.ts`). Each runs on a schedule or when
 staff press its button, and
 every run is recorded (`import_runs`): when, who started it (`nightly` or a
@@ -682,6 +776,7 @@ blocked addresses. Nothing else about reading is logged.
 | `apply politician sync`, `hold politician sync`, `apply held politician sync`, `discard held politician sync` | `sync`, staff                  | Each sync's outcome, and each decision on a held one                        | counts, or the run's `id`                                    |
 | `copy PauseAI emails`                                                                                         | `sync`                         | The Emails sync adds any                                                    | `added`                                                      |
 | `import web form letters`                                                                                     | staff                          | The one-off import of pauseai.info's letters                                | counts                                                       |
+| `set keep politician threads`                                                                                 | staff                          | An account turns keeping its threads with politicians on or off             | `email`, `keep`                                              |
 | `import Go to Parliament`                                                                                     | staff                          | The one-off import of its meetings                                          | counts                                                       |
 | `import ControlAI letter`                                                                                     | `controlai`                    | A read of the letter that set or cleared any status                         | counts                                                       |
 | `block address`, `unblock address`                                                                            | `postmark`, staff              | A bounce or complaint blocks an address; staff unblock it                   | `address`, and the `kind` or the `note`                      |
@@ -724,7 +819,7 @@ an MP's page, Politicians' blocked emails, imports).
 Permissions open more (`lib/staff-permissions.ts`): `supporters` every page
 with a member of the public's details (supporters, letters, who wrote to
 which MP, Supporters' blocked emails), `admin` the accounts page and the
-audit log. `admin` doesn't include `supporters`. An MP's page is the one
+audit log and the sent emails. `admin` doesn't include `supporters`. An MP's page is the one
 page that shows less without a permission: without `supporters`, its
 letters come from a query that doesn't select their senders, so none reach
 the browser. `admin@pauseai.uk` starts with an account and the admin
@@ -750,6 +845,14 @@ log entry.
 
 A new permission is a name in `PERMISSIONS` and the table's `CHECK`, and the
 pages it opens given it in `STAFF_SECTIONS`.
+
+A link in the navigation shows a "new" tag for 3 days after that person first
+sees it (a dot on the folded rail), for any page added to `STAFF_SECTIONS`, with
+nothing else to do. `staff_nav_seen` has a row for each account and page, with
+when they first saw it; the signed-in layout adds those they have none for
+(`lib/server/staff-nav-seen.ts`). A new account has none, so its pages are marked
+as long since seen; a permission gained opens pages that are new to them. The
+layout is kept between pages, so the tag goes at the next full page load.
 
 ## The public site's content
 

@@ -11,6 +11,8 @@ import { addNoteNow, deleteNoteNow, editNoteNow } from "../../../actions";
 import EraseLink from "../../../_components/EraseLink";
 import Notes from "../../../_components/Notes";
 import SupporterDetails from "../../../_components/SupporterDetails";
+import { supporterOneOffs } from "@/lib/server/one-off-emails";
+import { OneOffTable } from "../../../_components/OneOffList";
 import Breadcrumb from "../../../_components/Breadcrumb";
 
 type Params = { params: Promise<{ id: string }> };
@@ -31,13 +33,17 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 export default async function SupporterPage({ params }: Params) {
   const staff = await requireStaff("supporters");
   const supporter = await supporterOf(params);
-  const notes = await notesOn({ supporterId: supporter.summary.id });
+  const [notes, oneOffs] = await Promise.all([
+    notesOn({ supporterId: supporter.summary.id }),
+    supporterOneOffs(supporter.summary.id),
+  ]);
   return (
     <>
       <Breadcrumb href="/staff/supporters">{staffCopy.nav.supporters}</Breadcrumb>
       <SupporterDetails
         supporter={supporter}
         erase={<EraseLink supporterId={supporter.summary.id} />}
+        oneOffs={<OneOffTable threads={oneOffs} />}
         notes={
           <Notes
             notes={notes}

@@ -1,3 +1,4 @@
+import { campaigns } from "@/lib/content/email-your-mp";
 import type { Page } from "@playwright/test";
 import { marchSignupCopy } from "@/lib/content/march-signup";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -362,8 +363,8 @@ test("A letter writer's page", async ({ page, request, flowDatabase }) => {
   await sendLetter(page, TEST_MPS[0]);
 
   await logInWithSupporters(page, flowDatabase);
-  await page.goto(`${BASE}/staff/letters`);
-  await page.getByRole("row").filter({ hasText: sender }).getByRole("link", { name: "Jane Smith" }).click();
+  await page.goto(`${BASE}/staff/campaigns/${campaigns[0].slug}`);
+  await page.getByRole("row").filter({ hasText: "Jane Smith" }).getByRole("link", { name: "Jane Smith" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Jane Smith");
   await expect(page.getByText(`1 ${copy.detail.lettersCounted(1)}`)).toBeVisible();
   await expect(

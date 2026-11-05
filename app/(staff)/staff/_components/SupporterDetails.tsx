@@ -288,11 +288,14 @@ export default function SupporterDetails({
   supporter,
   erase,
   notes,
+  oneOffs,
 }: {
   supporter: Details;
   erase?: ReactNode;
   /** The notes card (Notes), under their letters. */
   notes?: ReactNode;
+  /** Their one-off emails (OneOffTable). */
+  oneOffs?: ReactNode;
 }) {
   const { summary, activity, permissions, letters } = supporter;
   const usable = new Set(permissions.filter((p) => p.channel === "phone" && p.send !== "no").map((p) => p.address));
@@ -324,6 +327,7 @@ export default function SupporterDetails({
               <p className={styles.none}>{copy.detail.noLetters}</p>
             )}
           </section>
+          {oneOffs}
           {notes}
         </div>
       </Grid>

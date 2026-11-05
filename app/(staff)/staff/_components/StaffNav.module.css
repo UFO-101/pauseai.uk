@@ -301,3 +301,33 @@ button.page:hover {
     font-weight: 500;
   }
 }
+
+/* The "new" tag beside a page's name, and on the folded rail, a dot in its place. */
+.new {
+  display: inline-block;
+  margin-left: var(--space-1);
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--status-blue-bg);
+  color: var(--status-blue);
+  font-size: 10px;
+  font-weight: 700;
+  vertical-align: 1px;
+}
+
+.newDot {
+  display: none;
+}
+
+@media (min-width: 861px) {
+  :global(:root[data-staff-nav="folded"]) .sidebar .newDot {
+    display: block;
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-pill);
+    background: var(--status-blue);
+  }
+}

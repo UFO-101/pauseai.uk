@@ -12,6 +12,8 @@ import {
   examplePolitician,
   examplePoliticiansPage,
 } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
+import AskView from "@/app/(staff)/staff/_components/AskView";
+import { exampleAskPage } from "@/app/(staff)/staff/_components/CampaignPages.examples";
 import AsksTable from "@/app/(staff)/staff/_components/AsksTable";
 import { AskLead, AskPreview, AskTitle } from "@/app/(staff)/staff/_components/AskLine";
 import type { Group } from "../_components/types";
@@ -383,6 +385,40 @@ export const staffPoliticians: Group = {
           render: () => (
             <StaffPage as="div">
               <AskFormExample ask="fixed" />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "AskView",
+      file: "app/(staff)/staff/_components/AskView.tsx",
+      variants: [
+        {
+          label: "A letter, asked by a campaign and a mailing, answered",
+          render: () => (
+            <StaffPage as="div">
+              <AskView ask={exampleAskPage} answer="" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "An event the code names, with no answers and nothing that put it",
+          render: () => (
+            <StaffPage as="div">
+              <AskView
+                ask={{
+                  ...exampleAskPage,
+                  kind: "event",
+                  url: "/events",
+                  fixed: true,
+                  counts: {},
+                  writtenTo: 0,
+                  ways: [],
+                  answers: [],
+                }}
+                answer=""
+              />
             </StaffPage>
           ),
         },

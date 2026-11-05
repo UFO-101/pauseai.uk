@@ -1,30 +1,28 @@
 import type { Metadata } from "next";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { found } from "@/lib/found";
-import { askToEdit } from "@/lib/server/asks";
+import { askPageData } from "@/lib/server/asks";
 import { requireStaff } from "@/lib/server/staff-auth";
-import { askFormSearch, type ParamValue } from "@/lib/staff-search";
-import { deleteAskNow, saveAskNow } from "../../../actions";
-import AskForm from "../../../_components/AskForm";
+import { firstOf, type ParamValue } from "@/lib/staff-search";
+import AskView from "../../../_components/AskView";
 import Breadcrumb from "../../../_components/Breadcrumb";
 
-type Params = { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, ParamValue>> };
+type Params = { params: Promise<{ slug: string }>; searchParams: Promise<{ answer?: ParamValue }> };
 
 export async function generateMetadata({ params }: Pick<Params, "params">): Promise<Metadata> {
   await requireStaff();
-  return { title: staffCopy.asks.editTitle(found(await askToEdit((await params).slug)).title) };
+  return { title: found(await askPageData((await params).slug)).title };
 }
 
-/** An ask, to change or delete. */
+/** An ask: what they were asked, how we asked, and their answers. */
 export default async function AskPage({ params, searchParams }: Params) {
   await requireStaff();
-  const ask = found(await askToEdit((await params).slug));
-  const { back, notice } = askFormSearch(await searchParams);
+  const answer = firstOf((await searchParams).answer);
+  const ask = found(await askPageData((await params).slug, answer || undefined));
   return (
     <>
       <Breadcrumb href="/staff/asks">{staffCopy.asks.title}</Breadcrumb>
-      <h1>{staffCopy.asks.editTitle(ask.title)}</h1>
-      <AskForm ask={ask} back={back} notice={notice} save={saveAskNow} remove={deleteAskNow} />
+      <AskView ask={ask} answer={answer} />
     </>
   );
 }

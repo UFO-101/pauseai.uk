@@ -10,6 +10,7 @@ import { FieldChanges } from "./AuditDetail";
 import type { FieldChange } from "@/lib/field-changes";
 import { importPath } from "@/lib/import-runs";
 import type { EmailBlock } from "@/lib/server/email";
+import type { OneOffThreadRow } from "@/lib/server/one-off-emails";
 import type { LetterSummary, PauseaiLetter, PoliticianLetters, UnsignedLetter } from "@/lib/server/letters";
 import type { Politician, PoliticianChange } from "@/lib/server/politicians";
 import { staffDate, staffTime } from "@/lib/staff-time";
@@ -329,6 +330,7 @@ export default function PoliticianDetails({
   unblock,
   letters,
   pauseaiLetters = [],
+  oneOffs = [],
   history,
   airtableTable,
   notes,
@@ -344,6 +346,8 @@ export default function PoliticianDetails({
   letters: PoliticianLetters;
   /** PauseAI's letters to them. */
   pauseaiLetters?: PauseaiLetter[];
+  /** Their one-off emails. */
+  oneOffs?: OneOffThreadRow[];
   history: PoliticianChange[];
   /** Airtable's table of MPs, which the server knows; an MP's record there is under it. */
   airtableTable: string;
@@ -353,6 +357,18 @@ export default function PoliticianDetails({
   const entries: Entry[] = [
     ...letterEntries(letters),
     ...pauseaiEntries(pauseaiLetters),
+    ...oneOffs.map((thread) => ({
+      key: `one-off-${thread.id}`,
+      at: thread.latestAt,
+      what: (
+        <>
+          {staffCopy.oneOff.title}:{" "}
+          <StaffLink href={`/staff/mailings/one-off/${thread.id}`}>
+            {thread.subject ?? staffCopy.oneOff.hidden}
+          </StaffLink>
+        </>
+      ),
+    })),
     ...(notes?.notes ?? []).map((note) => ({
       key: `note-${note.id}`,
       at: note.createdAt,

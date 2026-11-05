@@ -79,7 +79,7 @@ function Row({ mailing, year }: { mailing: MailingSummary; year: string }) {
   const href = `/staff/mailings/${mailing.id}`;
   // Its name, as a mail app shows it, before its address; with no name of its own, the address alone.
   const from = mailing.imported
-    ? staffCopy.mailings.imported
+    ? (mailing.sentFrom ?? staffCopy.mailings.imported)
     : named(mailing.fromName === mailing.sentFrom ? null : mailing.fromName, mailing.sentFrom);
   return (
     <li className={styles.row}>
@@ -95,7 +95,8 @@ function Row({ mailing, year }: { mailing: MailingSummary; year: string }) {
           {mailing.ask && (
             <>
               {from ? " · " : ""}
-              {staffCopy.mailings.columns.ask} <StaffLink href={askHref(mailing.ask)}>{mailing.askTitle}</StaffLink>
+              {staffCopy.asks.askTo[mailing.askKind!]}{" "}
+              <StaffLink href={askHref(mailing.ask)}>{mailing.askTitle}</StaffLink>
             </>
           )}
         </Muted>
@@ -110,12 +111,22 @@ function Row({ mailing, year }: { mailing: MailingSummary; year: string }) {
 /**
  * The list of mailings, in its groups (mailingGroups): what's coming up,
  * then the months and years of those sent, each mailing a row that shows
- * only what matters at its stage. Nothing on it changes a mailing: that's
+ * only what matters at its stage, and at its foot a row leading to the
+ * one-off emails. Nothing on it changes a mailing: that's
  * done on the mailing's own page, on purpose. It's as wide as the grid,
  * not the window.
  */
-export default function MailingsOverview({ groups, now }: { groups: MailingGroup[]; now: string }) {
-  if (groups.length === 0) {
+export default function MailingsOverview({
+  groups,
+  now,
+  oneOffs = 0,
+}: {
+  groups: MailingGroup[];
+  now: string;
+  /** How many one-off email threads there are, for the last row, which leads to them. */
+  oneOffs?: number;
+}) {
+  if (groups.length === 0 && oneOffs === 0) {
     return (
       <p>
         <Muted>{staffCopy.mailings.none}</Muted>
@@ -137,6 +148,20 @@ export default function MailingsOverview({ groups, now }: { groups: MailingGroup
             </ul>
           </section>
         ))}
+        {oneOffs > 0 && (
+          <ul className={styles.rows}>
+            <li className={styles.row}>
+              <span className={styles.when} />
+              <span className={styles.what}>
+                <StaffLink href="/staff/mailings/one-off" className={styles.title}>
+                  {staffCopy.oneOff.title}
+                </StaffLink>
+                <Muted>{staffCopy.oneOff.rowDetail}</Muted>
+              </span>
+              <span className={styles.standing}>{staffCopy.oneOff.threads(oneOffs)}</span>
+            </li>
+          </ul>
+        )}
       </div>
     </Grid>
   );
