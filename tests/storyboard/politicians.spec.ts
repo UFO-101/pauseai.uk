@@ -71,7 +71,7 @@ test("A note on a politician", async ({ page, request, flowDatabase }) => {
   await frame(page, "The note in Polly's history");
 });
 
-test("Answering a new ask", async ({ page, request, flowDatabase }) => {
+test("An answer to a new ask", async ({ page, request, flowDatabase }) => {
   story(
     "Staff have added an ask of their own, a letter about a giant pause button. Polly has no answer to it yet, so it isn't among her asks.",
   );
@@ -105,7 +105,7 @@ test("Answering a new ask", async ({ page, request, flowDatabase }) => {
   await frame(page, "The answer, saved");
 });
 
-test("Clearing an answer", async ({ page, request, flowDatabase }) => {
+test("Recording a no, then clearing it", async ({ page, request, flowDatabase }) => {
   story("Polly hasn't answered the letter to the Prime Minister, so it has no row among her asks.");
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
