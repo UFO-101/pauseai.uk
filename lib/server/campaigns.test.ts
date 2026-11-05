@@ -77,8 +77,8 @@ describeWithDatabase("campaigns", () => {
     await letter("2026-10-03T12:00:00Z", null);
     const { versions, changed } = await campaignVersions(slug);
     expect(versions.map((v) => [v.key, v.letters])).toEqual([
-      ["d9416004", 3],
-      ["9dbb9d06", 2],
+      ["1857068e", 3],
+      ["77b82616", 2],
     ]);
     expect(changed).toBe(3);
     expect((await campaignVersions("no-such-campaign")).versions).toEqual([]);

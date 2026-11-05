@@ -196,6 +196,13 @@ describe("the form's versions", () => {
     expect(formVersionAt(new Date(committed + 10 * 60_000))).toBe(second);
   });
 
+  it("has no version with the words and subject of the one before, which would show as the same letter twice", () => {
+    FORM_VERSIONS.forEach((version, i) => {
+      const before = FORM_VERSIONS[i - 1];
+      if (before) expect([version.subject, version.text]).not.toEqual([before.subject, before.text]);
+    });
+  });
+
   it("fills in a version's names", () => {
     const version = { ...FORM_VERSIONS[0], text: "Dear {salutation}, of {constituency}\n\n**{name}**\n\n{postcode}" };
     expect(formDraft(version, { salutation: "Ms D", constituency: "Seat", name: "Jane", postcode: "m1 1ae" })).toBe(
