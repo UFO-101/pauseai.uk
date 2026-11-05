@@ -121,7 +121,7 @@ test("Filtering supporters", async ({ page, request, flowDatabase }) => {
   await frame(page, "The list, by name, Z to A");
 });
 
-test("Not at an event", async ({ page, request, flowDatabase }) => {
+test("Supporters not at an event", async ({ page, request, flowDatabase }) => {
   story(
     "Staff want the supporters who weren't at the London March. Except offers the filters that can leave people out.",
   );
