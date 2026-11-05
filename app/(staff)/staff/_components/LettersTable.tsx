@@ -1,7 +1,6 @@
 import StaffLink from "./ui/StaffLink";
 import CampaignName from "./CampaignName";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { campaignBySlug } from "@/lib/email-your-mp";
 import { staffTime } from "@/lib/staff-time";
 import type { LetterSummary } from "@/lib/server/letters";
 import { ListTable, type ListColumn } from "./ui/ListFrame";
@@ -30,13 +29,11 @@ const columns: ListColumn<LetterSummary>[] = [
     key: "status",
     label: copy.columns.status,
     short: true,
-    text: (l) => statusOf(l.status),
     cell: (l) => <StaffLink href={`/staff/letters/${l.id}`}>{statusOf(l.status)}</StaffLink>,
   },
   {
     key: "from",
     label: copy.columns.from,
-    text: (l) => `${l.senderName} <${l.senderEmail}>`,
     cell: (l) => (
       <>
         {l.supporterId === null ? (
@@ -52,7 +49,6 @@ const columns: ListColumn<LetterSummary>[] = [
   {
     key: "to",
     label: copy.columns.to,
-    text: (l) => l.mpName,
     cell: (l) => (
       <>
         <StaffLink href={`/staff/politicians/${l.politicianId}`}>{l.mpName}</StaffLink>{" "}
@@ -63,14 +59,12 @@ const columns: ListColumn<LetterSummary>[] = [
   {
     key: "campaign",
     label: copy.columns.campaign,
-    text: (l) => campaignBySlug(l.campaign)?.title ?? l.campaignTitle,
     cell: (l) => <CampaignName slug={l.campaign} title={l.campaignTitle} />,
   },
   {
     key: "ownWords",
     label: copy.columns.ownWords,
     short: true,
-    text: (l) => (l.ownWords === null ? null : copy.ownWords(l.ownWords)),
     // A letter with no draft, as from Airtable: a dash.
     cell: (l) => (l.ownWords === null ? <Muted>–</Muted> : copy.ownWords(l.ownWords)),
   },
@@ -78,7 +72,6 @@ const columns: ListColumn<LetterSummary>[] = [
     key: "backend",
     label: copy.columns.backend,
     short: true,
-    text: (l) => l.backend && copy.backends[l.backend],
     // Nothing yet sent it, as for Sent: a dash.
     cell: (l) => (l.backend ? copy.backends[l.backend] : <Muted>–</Muted>),
   },
@@ -86,21 +79,18 @@ const columns: ListColumn<LetterSummary>[] = [
     key: "created",
     label: copy.columns.created,
     short: true,
-    text: (l) => l.createdAt,
     cell: (l) => staffTime(l.createdAt),
   },
   {
     key: "sent",
     label: copy.columns.sent,
     short: true,
-    text: (l) => l.sentAt,
     cell: (l) => (l.sentAt ? staffTime(l.sentAt) : <Muted>–</Muted>),
   },
   {
     key: "replied",
     label: copy.columns.replied,
     short: true,
-    text: (l) => l.repliedAt ?? (l.autoRepliedAt && `${copy.status.auto_reply} ${l.autoRepliedAt}`),
     cell: (l) =>
       l.repliedAt
         ? staffTime(l.repliedAt)
