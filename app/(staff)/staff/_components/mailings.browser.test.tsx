@@ -235,7 +235,7 @@ describe("MailingsOverview", () => {
     const mailing = { ...exampleMailings[0], imported: true, sentFrom: null, oldLetters: true };
     await render(
       <MailingsOverview
-        groups={mailingGroups({ drafts: [], scheduled: [], sending: [], sent: [mailing] }, now)}
+        groups={mailingGroups({ drafts: [], comingUp: [], sent: [mailing] }, new Date(now))}
         now={now}
       />,
     );
