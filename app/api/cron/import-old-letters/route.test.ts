@@ -10,7 +10,6 @@ const post = (authorization?: string) =>
     new Request("https://pauseai.uk/api/cron/import-old-letters", {
       method: "POST",
       headers: authorization ? { authorization } : {},
-      body: JSON.stringify({ startedBy: "jo@pauseai.uk", dryRun: true }),
     }),
   );
 
@@ -24,14 +23,14 @@ describeWithDatabase("POST /api/cron/import-old-letters", () => {
   });
   afterEach(() => vi.unstubAllEnvs());
 
-  it("does some of a press, for the background function", async () => {
+  it("does a run, for the background function", async () => {
     await connectTestGmail("joseph@pauseai.uk");
     await connectTestGmail("policy@pauseai.uk");
     // Nothing to read, so it's done at once at its real pace.
     server.use(http.get("https://gmail.googleapis.com/gmail/v1/users/me/messages", () => HttpResponse.json({})));
     const res = await post("Bearer s3cret");
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ runId: 1, more: false });
+    expect(await res.json()).toMatchObject({ finished: true, left: 0 });
   });
 
   it("refuses a call without the secret", async () => {

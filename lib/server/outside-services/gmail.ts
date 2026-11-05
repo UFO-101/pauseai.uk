@@ -123,7 +123,12 @@ async function api<T>(accessToken: string, path: string, init: RequestInit = {})
     headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json", ...init.headers },
     cache: "no-store",
   });
-  if (!res.ok) throw new GmailError(`Gmail answered ${res.status} for ${path.split("?")[0]}`, res.status);
+  if (!res.ok) {
+    // Google's own words say which limit it was, and often when to retry.
+    const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
+    const reason = body?.error?.message ? `: ${body.error.message}` : "";
+    throw new GmailError(`Gmail answered ${res.status} for ${path.split("?")[0]}${reason}`, res.status);
+  }
   return (await res.json()) as T;
 }
 

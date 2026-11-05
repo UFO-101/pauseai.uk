@@ -55,20 +55,19 @@ export async function recordFailure(job: ImportJob, startedBy: string, error: un
 }
 
 /**
- * Runs a job's work, keeping the failure if it throws and ending any press of
- * it, then throwing it on for the caller to log. The work records its own success, with what it found.
+ * Runs a job's work, keeping the failure if it throws, then throwing it on for
+ * the caller to log. The work records its own success, with what it found.
  */
 export async function keepingFailure<T>(job: ImportJob, startedBy: string, work: () => Promise<T>): Promise<T> {
   try {
     return await work();
   } catch (error) {
     await recordFailure(job, startedBy, error);
-    await endPress(job);
     throw error;
   }
 }
 
-/** Longer than any press can run: a background function's 15 minutes. */
+/** Longer than any press can run, so one that died is ignored. */
 const PRESS_LASTS = "16 minutes";
 
 /** A job's button pressed and not finished. */

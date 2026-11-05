@@ -1,4 +1,5 @@
 import type { APIRequestContext, Page } from "@playwright/test";
+import { exampleOldLettersResult } from "@/app/(staff)/staff/_components/CampaignPages.examples";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { importPath } from "@/lib/import-runs";
 import { connectLettersInbox, databaseUrl, runSql } from "@/scripts/fresh-database.mjs";
@@ -29,7 +30,7 @@ async function ready(page: Page, database: string, request: APIRequestContext) {
 }
 
 /** Presses Import old letters, and waits for a new run that's finished. */
-async function press(page: Page, database: string, dryRun = false) {
+async function press(page: Page, database: string) {
   const finished = () =>
     runSql(
       database,
@@ -37,27 +38,21 @@ async function press(page: Page, database: string, dryRun = false) {
     )[0];
   const before = finished();
   await page.goto(`${BASE}${importPath("import-old-letters")}`);
-  if (dryRun) await page.getByRole("checkbox", { name: words.dryRun }).check();
   await page.getByRole("button", { name: words.importNow }).click();
   await expect.poll(finished).not.toBe(before);
   await page.reload();
 }
 
 test("Import old letters", async ({ page, request, flowDatabase }) => {
-  story("Staff run the import as a dry run first. It changes nothing, and reports what it would join, by mailing.");
+  story(
+    "Staff press the import. It joins each letter to its sent email, reads the replies, and keeps the rest as one-off emails.",
+  );
   await ready(page, flowDatabase, request);
   await page.goto(`${BASE}${importPath("import-old-letters")}`);
   await expect(page.getByText(words.never)).toBeVisible();
   await frame(page, "The job's page");
-  await press(page, flowDatabase, true);
-  expect(runSql(flowDatabase, "SELECT count(*) FROM one_off_messages")).toEqual(["0"]);
-  await expect(page.getByRole("heading", { name: words.joined })).toBeVisible();
-  await frame(page, "The dry run's result");
-
-  story(
-    "Then they press it for real. It joins each letter to its sent email, reads the replies, and keeps the rest as one-off emails.",
-  );
   await press(page, flowDatabase);
+  await expect(page.getByRole("heading", { name: words.joined })).toBeVisible();
   await expect(page.getByText("Neil Nobody <neil.nobody@example.com>: Volunteering").first()).toBeVisible();
   await frame(page, "What it did");
 
@@ -80,13 +75,119 @@ test("The import fails", async ({ page, flowDatabase }) => {
 test("A second press", async ({ page, flowDatabase }) => {
   story("The import is already running. Its page says so, and pressing again starts nothing.");
   await logIn(page, flowDatabase, ["supporters", "admin"]);
+  // The run before it stopped short.
+  const stopped = JSON.stringify(exampleOldLettersResult).replaceAll("'", "''");
+  runSql(
+    flowDatabase,
+    `INSERT INTO import_runs (job, started_by, status, result, at) VALUES ('import-old-letters', 'jo@pauseai.uk', 'ok', '${stopped}', '2026-11-01T10:00:00Z')`,
+  );
   runSql(flowDatabase, "INSERT INTO job_presses (job, started_by) VALUES ('import-old-letters', 'jo@pauseai.uk')");
   await page.goto(`${BASE}${importPath("import-old-letters")}`);
   await expect(page.getByText("jo@pauseai.uk", { exact: false }).first()).toBeVisible();
   await page.getByRole("button", { name: words.importNow }).click();
   await expect(page.getByText(staffCopy.runs.status.failed)).toHaveCount(0);
-  expect(runSql(flowDatabase, "SELECT count(*) FROM import_runs WHERE job = 'import-old-letters'")).toEqual(["0"]);
+  expect(runSql(flowDatabase, "SELECT count(*) FROM import_runs WHERE job = 'import-old-letters'")).toEqual(["1"]);
   await frame(page, "Already running");
+  await page.goto(`${BASE}/staff/import-data`);
+  await frame(page, "Running, on the list of imports");
+});
+
+/** A result of the import, in SQL, with `extra` over a routine run's. */
+const lettersResult = (extra: object) =>
+  JSON.stringify({
+    ...exampleOldLettersResult,
+    finished: false,
+    listed: 0,
+    read: 38,
+    left: 6120,
+    joined: { "deepmind-25": 35 },
+    added: {},
+    notJoined: {},
+    replies: 2,
+    autoReplies: 1,
+    oneOffs: 1,
+    formTexts: 0,
+    unreadable: [],
+    unmatched: [],
+    ...extra,
+  }).replaceAll("'", "''");
+
+/** `count` runs of the job on its schedule, five minutes apart, the newest `from` before now. */
+const runsOf = (database: string, job: string, count: number, from: string, result: string, status = "ok") =>
+  runSql(
+    database,
+    `INSERT INTO import_runs (job, started_by, status, result, at)
+     SELECT '${job}', 'nightly', '${status}', '${result}', now() - interval '${from}' - n * interval '5 minutes' FROM generate_series(0, ${count - 1}) n`,
+  );
+
+test("The import running by itself", async ({ page, flowDatabase }) => {
+  story(
+    "Every 5 minutes the import reads a little more. Its page says how far it has got, its recent runs a row each, the older ones folded, and anything worth reading shown whole.",
+  );
+  await logIn(page, flowDatabase, ["supporters", "admin"]);
+  runSql(
+    flowDatabase,
+    `INSERT INTO old_letters_mail (account, gmail_message_id, gmail_thread_id, source, outcome, mailing_key)
+     SELECT 'joseph@pauseai.uk', 'm' || n, 't' || n, 'sent', CASE WHEN n <= 300 THEN 'joined' WHEN n <= 340 THEN 'reply' WHEN n <= 360 THEN 'one_off' END, CASE WHEN n <= 200 THEN 'deepmind-25' WHEN n <= 300 THEN 'csrb' END
+     FROM generate_series(1, 1000) n`,
+  );
+  runsOf(flowDatabase, "import-old-letters", 1, "0 minutes", lettersResult({ read: 40, left: 640 }));
+  runsOf(flowDatabase, "import-old-letters", 8, "5 minutes", lettersResult({}));
+  runsOf(
+    flowDatabase,
+    "import-old-letters",
+    1,
+    "45 minutes",
+    lettersResult({
+      read: 12,
+      stoppedBy: "gmail",
+      stoppedWhy: "Gmail answered 403 for /messages/0a02: User-rate limit exceeded",
+    }),
+  );
+  runsOf(flowDatabase, "import-old-letters", 3, "50 minutes", lettersResult({}));
+  runsOf(flowDatabase, "import-old-letters", 1, "65 minutes", lettersResult({ unreadable: ["18f0a"] }));
+  runsOf(flowDatabase, "import-old-letters", 30, "70 minutes", lettersResult({}));
+  await page.goto(`${BASE}${importPath("import-old-letters")}`);
+  await expect(page.getByRole("progressbar")).toBeVisible();
+  await frame(page, "How far it has got, and its recent runs");
+
+  story("The totals open to say what it has joined, by mailing.");
+  await page
+    .getByText(words.progress.totals({ joined: "300", replies: "40", autoReplies: "0", oneOffs: "20" }))
+    .click();
+  await expect(page.getByText(`${words.mailingTitles["deepmind-25"]}: 200`)).toBeVisible();
+  await frame(page, "What it has joined, by mailing");
+
+  story("Older runs are folded into a line, which opens.");
+  await page
+    .locator("summary", { hasText: /no problems/ })
+    .first()
+    .click();
+  await frame(page, "An older stretch, opened");
+
+  story("It's listed with the imports that run every 5 minutes.");
+  await page.goto(`${BASE}/staff/import-data`);
+  await frame(page, "On the list of imports");
+});
+
+test("The import finishes", async ({ page, flowDatabase }) => {
+  story("The last run reads what's left, and says what it couldn't join. After that the schedule does nothing more.");
+  await logIn(page, flowDatabase, ["supporters", "admin"]);
+  runSql(
+    flowDatabase,
+    `INSERT INTO old_letters_mail (account, gmail_message_id, gmail_thread_id, source, outcome)
+     SELECT 'joseph@pauseai.uk', 'm' || n, 't' || n, 'sent', 'joined' FROM generate_series(1, 500) n`,
+  );
+  runsOf(flowDatabase, "import-old-letters", 4, "5 minutes", lettersResult({}));
+  runsOf(
+    flowDatabase,
+    "import-old-letters",
+    1,
+    "0 minutes",
+    lettersResult({ finished: true, left: 0, notJoined: exampleOldLettersResult.notJoined }),
+  );
+  await page.goto(`${BASE}${importPath("import-old-letters")}`);
+  await frame(page, "All read");
 });
 
 test("An old letter's page", async ({ page, request, flowDatabase }) => {

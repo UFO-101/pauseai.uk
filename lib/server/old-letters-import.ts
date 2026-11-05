@@ -1,6 +1,6 @@
 import "server-only";
 import { docFromMarkup, toText } from "@/lib/letter-format";
-import type { OldLettersImportResult } from "@/lib/import-runs";
+import { type ImportJob, NIGHTLY, type OldLettersImportResult, type OldLettersProgress } from "@/lib/import-runs";
 import { ownWords } from "@/lib/letter-changes";
 import {
   addressesIn,
@@ -29,10 +29,10 @@ import {
   type PoliticianBook,
 } from "@/lib/one-off";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { query } from "./db";
+import { query, transaction } from "./db";
 import { gmailAccess } from "./gmail-accounts";
 import { keepReply, noteAutoReply } from "./gmail-reading";
-import { endPress, keepingFailure, recordRun } from "./import-runs";
+import { keepingFailure, recordRun } from "./import-runs";
 import { wholeTextOf } from "./letter-threads";
 import { messageIds, parseMime } from "./mime";
 import { addressesOn, headerText, keepOneOff, ONE_OFF_HEADERS, rfcIdOf, senderOf } from "./one-off-emails";
@@ -51,16 +51,15 @@ import { connectedAccounts, politicianBook } from "./politician-book";
 import { isMachineReply } from "./postmark-webhooks";
 import { htmlAsText } from "./old-letters-text";
 
-// The one-off import of the letters written before the site could send them
-// (import-old-letters): each press starts a background function, which calls
-// importOldLettersChunk again and again, as the site's own functions last only
-// seconds, for up to 15 minutes. Its place is kept in old_letters_mail, so
-// pressing it again takes up what's left and skips what's kept. Its order:
-// make the mailings, copy the form letters' text, read each sent email and
-// join it, read the replies, keep the one-off emails, then the templates and
-// replied_at. A dry run has rows of its own in old_letters_mail, and writes
-// nothing else. Gmail's limit is shared with the site, so it reads at most two
-// a second, and stops the moment Gmail refuses.
+// The import of the letters written before the site could send them
+// (import-old-letters): a run every 5 minutes, and one for each press of its
+// button. Each reads for seconds, as Gmail's limit is shared with the site, and
+// carries on from where the last stopped: old_letters_mail has what's read, and
+// the last run how far listing got. Once one finishes, the schedule does nothing
+// more; a press goes through it all again, skipping what's kept. Its order: make
+// the mailings, copy the form letters' text, read each sent email and join it,
+// read the replies, keep the one-off emails, then the templates and replied_at.
+// It reads at most two a second, and stops the moment Gmail refuses.
 
 const JOB = "import-old-letters";
 
@@ -71,8 +70,8 @@ const POLICY = "policy@pauseai.uk";
 /** The gap between Gmail requests: at most 2 a second. */
 const PACE_MS = 500;
 
-/** How long one call of the site works, well inside what a function is given. */
-const CHUNK_MS = 20_000;
+/** How long a run reads, well inside what a function is given. */
+const READ_MS = 20_000;
 
 /** The group's mail, as Gmail lists it. */
 const GROUP_SEARCH = "list:policy@pauseai.uk OR list:policy-archive@pauseai.uk";
@@ -80,27 +79,12 @@ const GROUP_SEARCH = "list:policy@pauseai.uk OR list:policy-archive@pauseai.uk";
 /** How many addresses a Gmail search names at once. */
 const ADDRESSES_A_SEARCH = 30;
 
-/** The whole of a run's reading: its place within listing, and what it found. */
-export type ChunkOptions = {
-  startedBy: string;
-  dryRun: boolean;
-  /** The run it continues, once its first call has made it. */
-  runId?: number;
-  /** For tests, how long to wait between Gmail requests, and to work for. */
-  paceMs?: number;
-  chunkMs?: number;
-};
-
-/** What one call did: its run, and whether there's more to do. */
-export type ChunkResult = { runId: number; more: boolean; result: OldLettersImportResult };
-
 /** Why reading stopped short. */
-class ChunkOver extends Error {}
+class TimeUp extends Error {}
 
 /** A fresh run's account of itself. */
-function emptyResult(dryRun: boolean): OldLettersImportResult {
+function emptyResult(): OldLettersImportResult {
   return {
-    dryRun,
     finished: false,
     listed: 0,
     read: 0,
@@ -123,21 +107,20 @@ function emptyResult(dryRun: boolean): OldLettersImportResult {
 }
 
 type Reader = {
-  /** Waits its turn, and stops the chunk once its time is up. */
+  /** Waits its turn, and stops the run once its time is up. */
   turn(): Promise<void>;
   book: PoliticianBook;
   connected: string[];
   tokens: Map<string, string>;
-  dryRun: boolean;
   result: OldLettersImportResult;
 };
 
-/** Waits for each Gmail request's turn, and stops the call when its time is up. */
+/** Waits for each Gmail request's turn, and stops the run when its time is up. */
 function pacer(paceMs: number, until: number, result: OldLettersImportResult) {
   let next = 0;
   return async () => {
     const at = Date.now();
-    if (at >= until) throw new ChunkOver();
+    if (at >= until) throw new TimeUp();
     if (next > at) await new Promise((resolve) => setTimeout(resolve, next - at));
     next = Math.max(at, next) + paceMs;
     result.requests++;
@@ -177,10 +160,10 @@ async function list(reader: Reader, searchesDone: { n: number }): Promise<void> 
     const { account, source, q } = searches[searchesDone.n];
     const found = await searchAllGmail(reader.tokens.get(account)!, q, reader.turn);
     await query(
-      `INSERT INTO old_letters_mail (dry_run, account, gmail_message_id, gmail_thread_id, source)
-       SELECT $1, $2, id, thread, $3 FROM unnest($4::text[], $5::text[]) AS m (id, thread)
+      `INSERT INTO old_letters_mail (account, gmail_message_id, gmail_thread_id, source)
+       SELECT $1, id, thread, $2 FROM unnest($3::text[], $4::text[]) AS m (id, thread)
        ON CONFLICT DO NOTHING`,
-      [reader.dryRun, account, source, found.map((m) => m.id), found.map((m) => m.threadId)],
+      [account, source, found.map((m) => m.id), found.map((m) => m.threadId)],
     );
     reader.result.listed += found.length;
     searchesDone.n++;
@@ -245,7 +228,6 @@ async function copyFormTexts(reader: Reader): Promise<void> {
       postcode: row.postcode,
     });
     reader.result.formTexts++;
-    if (reader.dryRun) continue;
     await query(
       `UPDATE letters_from_supporters SET letter = $2, draft = $3, draft_approximate = false, own_words = $4 WHERE id = $1`,
       [row.id, JSON.stringify(doc), draft, ownWords(draft, toText(doc))],
@@ -325,8 +307,8 @@ async function candidatesFor(reader: Reader, people: number[], at: Date) {
        LEFT JOIN letters_from_supporters s ON s.id = l.id AND l.kind = 'supporter' LEFT JOIN form_entries f ON f.id = s.entry_id
      WHERE l.notable_person_id = ANY($1::bigint[]) AND coalesce(l.sent_at, l.created_at) BETWEEN $2 AND $3
        AND (p.airtable_id IS NOT NULL OR s.airtable_id IS NOT NULL)
-       AND NOT EXISTS (SELECT 1 FROM old_letters_mail o WHERE o.dry_run = $4 AND o.letter_id = l.id AND o.outcome = 'joined')`,
-    [people, from, to, reader.dryRun],
+       AND NOT EXISTS (SELECT 1 FROM old_letters_mail o WHERE o.letter_id = l.id AND o.outcome = 'joined')`,
+    [people, from, to],
   );
 }
 
@@ -339,12 +321,12 @@ async function letterByThread(
   const refs = [...messageIds(message.headers.get("in-reply-to")), ...messageIds(message.headers.get("references"))];
   const [row] = await query<{ id: number }>(
     `SELECT id::int AS id FROM (
-       SELECT letter_id AS id, 1 AS rank FROM old_letters_mail WHERE dry_run = $1 AND letter_id IS NOT NULL AND rfc_message_id = ANY($2::text[])
-       UNION ALL SELECT letter_id, 2 FROM old_letters_mail WHERE dry_run = $1 AND letter_id IS NOT NULL AND account = $3 AND gmail_thread_id = $4 AND source = 'sent'
-       UNION ALL SELECT letter_id, 3 FROM email_sends WHERE letter_id IS NOT NULL AND purpose = 'mailing' AND (rfc_message_id = ANY($2::text[]) OR (sender = $3 AND gmail_thread_id = $4))
-       UNION ALL SELECT letter_id, 4 FROM letter_replies WHERE rfc_message_id = ANY($2::text[])
+       SELECT letter_id AS id, 1 AS rank FROM old_letters_mail WHERE letter_id IS NOT NULL AND rfc_message_id = ANY($1::text[])
+       UNION ALL SELECT letter_id, 2 FROM old_letters_mail WHERE letter_id IS NOT NULL AND account = $2 AND gmail_thread_id = $3 AND source = 'sent'
+       UNION ALL SELECT letter_id, 3 FROM email_sends WHERE letter_id IS NOT NULL AND purpose = 'mailing' AND (rfc_message_id = ANY($1::text[]) OR (sender = $2 AND gmail_thread_id = $3))
+       UNION ALL SELECT letter_id, 4 FROM letter_replies WHERE rfc_message_id = ANY($1::text[])
      ) found ORDER BY rank LIMIT 1`,
-    [reader.dryRun, refs, account, message.threadId],
+    [refs, account, message.threadId],
   );
   return row?.id;
 }
@@ -357,8 +339,6 @@ async function asOneOff(
   raw?: Buffer,
   people: number[] = [],
 ): Promise<Handled> {
-  reader.result.oneOffs++;
-  if (reader.dryRun) return { outcome: "one_off" };
   const token = reader.tokens.get(account)!;
   await reader.turn();
   const whole = raw ?? (await gmailRawMessage(token, message.id));
@@ -366,10 +346,11 @@ async function asOneOff(
   await reader.turn();
   const siblings = await gmailThreadMessageIds(token, message.threadId);
   await query(
-    `INSERT INTO old_letters_mail (dry_run, account, gmail_message_id, gmail_thread_id, source)
-     SELECT false, $1, id, $2, 'thread' FROM unnest($3::text[]) AS id ON CONFLICT DO NOTHING`,
+    `INSERT INTO old_letters_mail (account, gmail_message_id, gmail_thread_id, source)
+     SELECT $1, id, $2, 'thread' FROM unnest($3::text[]) AS id ON CONFLICT DO NOTHING`,
     [account, message.threadId, siblings],
   );
+  reader.result.oneOffs++;
   return { outcome: "one_off" };
 }
 
@@ -389,14 +370,12 @@ async function handleSent(reader: Reader, account: string, id: string): Promise<
   if (isReplySubject(subject, message.headers.get("in-reply-to"))) {
     const letter = await letterByThread(reader, account, message);
     if (letter) {
+      await reader.turn();
+      await keepReply(account, reader.tokens.get(account)!, letter, message, {
+        from: senderOf(message.headers),
+        fromUs: true,
+      });
       reader.result.replies++;
-      if (!reader.dryRun) {
-        await reader.turn();
-        await keepReply(account, reader.tokens.get(account)!, letter, message, {
-          from: senderOf(message.headers),
-          fromUs: true,
-        });
-      }
       return { outcome: "reply", letterId: letter, rfc };
     }
     return { ...(await asOneOff(reader, account, message)), rfc };
@@ -410,25 +389,22 @@ async function handleSent(reader: Reader, account: string, id: string): Promise<
     const row = candidates.find((c) => c.id === letter.id)!;
     if (row.kind === "supporter") {
       count(reader.result.joined, row.campaign!);
-      if (!reader.dryRun) await recordSent(letter.id, "letter", account, message, address(), from, rfc);
+      await recordSent(letter.id, "letter", account, message, address(), from, rfc);
       return { outcome: "joined", letterId: letter.id, rfc };
     }
     const key = mailingOfLetter(row.field, subject, text, at);
     count(reader.result.joined, key);
-    if (!reader.dryRun) {
-      await query("UPDATE letters_from_pauseai SET mailing_id = $2, own_text = $3 WHERE id = $1", [
-        letter.id,
-        await mailingIdOf(key),
-        text,
-      ]);
-      await recordSent(letter.id, "mailing", account, message, address(), from, rfc);
-    }
+    await query("UPDATE letters_from_pauseai SET mailing_id = $2, own_text = $3 WHERE id = $1", [
+      letter.id,
+      await mailingIdOf(key),
+      text,
+    ]);
+    await recordSent(letter.id, "mailing", account, message, address(), from, rfc);
     return { outcome: "joined", letterId: letter.id, mailingKey: key, rfc };
   }
   const key = people.length ? mailingOfNewLetter(subject, text, at) : undefined;
   if (key) {
     count(reader.result.added, key);
-    if (reader.dryRun) return { outcome: "added", mailingKey: key, rfc };
     const [{ id: letterId }] = await query<{ id: number }>(
       `INSERT INTO letters (kind, notable_person_id, status, created_at, sent_at) VALUES ('pauseai', $1, 'sent', $2, $2) RETURNING id::int AS id`,
       [people[0], at],
@@ -493,7 +469,7 @@ async function handlePoliticianMessage(
   if (automatic) {
     if (!letter) return { ...(await asOneOff(reader, account, message, undefined, people)), rfc };
     reader.result.autoReplies++;
-    if (!reader.dryRun) await noteAutoReply(letter, message);
+    await noteAutoReply(letter, message);
     return { outcome: "auto_reply", letterId: letter, rfc };
   }
   await reader.turn();
@@ -501,9 +477,8 @@ async function handlePoliticianMessage(
   const text = wholeTextOf(parseMime(raw.toString("latin1")));
   letter ??= placeReply(letters, { at, subject, automatic, text, group })?.id;
   if (!letter) return { ...(await asOneOff(reader, account, message, raw, people)), rfc };
+  await keepReply(account, token, letter, message, { raw, from: senderOf(message.headers), fromUs: false });
   reader.result.replies++;
-  if (!reader.dryRun)
-    await keepReply(account, token, letter, message, { raw, from: senderOf(message.headers), fromUs: false });
   const quoted =
     AUGUST_SUBJECT.test(subject) && /join \d+ of your/.test(text.replace(/\s+/g, " ")) ? quotedLetter(text) : undefined;
   return { outcome: "reply", letterId: letter, rfc, quoted };
@@ -517,14 +492,14 @@ function quotedLetter(text: string): string {
 }
 
 /** Whether a message is a copy of a mail already handled, by its Message-ID. */
-async function seenElsewhere(reader: Reader, rfc: string | null): Promise<boolean> {
+async function seenElsewhere(rfc: string | null): Promise<boolean> {
   if (!rfc) return false;
   const [row] = await query(
-    `SELECT 1 FROM old_letters_mail WHERE dry_run = $1 AND rfc_message_id = $2 AND outcome IS NOT NULL
-     UNION ALL SELECT 1 FROM letter_replies WHERE rfc_message_id = $2
-     UNION ALL SELECT 1 FROM email_sends WHERE rfc_message_id = $2
+    `SELECT 1 FROM old_letters_mail WHERE rfc_message_id = $1 AND outcome IS NOT NULL
+     UNION ALL SELECT 1 FROM letter_replies WHERE rfc_message_id = $1
+     UNION ALL SELECT 1 FROM email_sends WHERE rfc_message_id = $1
      LIMIT 1`,
-    [reader.dryRun, rfc],
+    [rfc],
   );
   return !!row;
 }
@@ -544,14 +519,13 @@ async function keepPostmarkCopy(
     [postmarkId],
   );
   if (!letter) return { outcome: "skipped", rfc };
-  reader.result.postmarkTexts++;
-  if (reader.dryRun) return { outcome: "skipped", letterId: letter.id, rfc };
   await reader.turn();
   const raw = await gmailRawMessage(reader.tokens.get(account)!, message.id);
   await query("UPDATE letters_from_supporters SET letter = $2 WHERE id = $1 AND letter IS NULL", [
     letter.id,
     JSON.stringify(docFromMarkup(wholeTextOf(parseMime(raw.toString("latin1"))))),
   ]);
+  reader.result.postmarkTexts++;
   return { outcome: "skipped", letterId: letter.id, rfc };
 }
 
@@ -565,7 +539,7 @@ async function handleReceived(reader: Reader, account: string, id: string, sourc
     const copy = rfc ? await keepPostmarkCopy(reader, account, message, rfc) : undefined;
     if (copy) return copy;
   }
-  if (await seenElsewhere(reader, rfc)) return { outcome: "skipped", rfc };
+  if (await seenElsewhere(rfc)) return { outcome: "skipped", rfc };
   const from = senderOf(message.headers).address;
   const isPolitician = politiciansIn(reader.book, [from]).counts;
   const { people } = politiciansIn(reader.book, addressesOn(message.headers));
@@ -617,25 +591,23 @@ async function handleOne(reader: Reader, account: string, id: string, source: st
   }
 }
 
-/** Works through what's listed, oldest first in each mailbox, sent mail before replies, until the call's time is up. */
+/** Works through what's listed, oldest first in each mailbox, sent mail before replies, until the run's time is up. */
 async function readQueue(reader: Reader): Promise<void> {
   for (;;) {
     const batch = await query<{ account: string; id: string; source: string }>(
       `SELECT account, gmail_message_id AS id, source FROM old_letters_mail
-       WHERE dry_run = $1 AND outcome IS NULL
+       WHERE outcome IS NULL
        ORDER BY array_position(ARRAY['sent', 'received', 'group', 'policy', 'thread'], source),
          length(gmail_message_id), gmail_message_id
        LIMIT 20`,
-      [reader.dryRun],
     );
     if (!batch.length) return;
     for (const { account, id, source } of batch) {
       const handled = await handleOne(reader, account, id, source);
       await query(
-        `UPDATE old_letters_mail SET outcome = $4, letter_id = $5, mailing_key = $6, rfc_message_id = $7, quoted = $8
-         WHERE dry_run = $1 AND account = $2 AND gmail_message_id = $3`,
+        `UPDATE old_letters_mail SET outcome = $3, letter_id = $4, mailing_key = $5, rfc_message_id = $6, quoted = $7
+         WHERE account = $1 AND gmail_message_id = $2`,
         [
-          reader.dryRun,
           account,
           id,
           handled.outcome,
@@ -656,8 +628,7 @@ async function placeUnjoined(reader: Reader): Promise<void> {
     `SELECT count(*) FILTER (WHERE l.sent_at >= '2025-08-06')::int AS august, count(*) FILTER (WHERE l.sent_at < '2025-08-06')::int AS others
      FROM letters_from_pauseai p JOIN letters l USING (id) JOIN mailings m ON m.id = p.mailing_id
      WHERE m.old_letters_key = 'deepmind-others'
-       AND NOT EXISTS (SELECT 1 FROM old_letters_mail o WHERE o.dry_run = $1 AND o.letter_id = l.id AND o.outcome = 'joined')`,
-    [reader.dryRun],
+       AND NOT EXISTS (SELECT 1 FROM old_letters_mail o WHERE o.letter_id = l.id AND o.outcome = 'joined')`,
   );
   reader.result.notJoined["deepmind-august"] = row.august;
   reader.result.notJoined["deepmind-others"] = row.others;
@@ -666,12 +637,10 @@ async function placeUnjoined(reader: Reader): Promise<void> {
      FROM letters l LEFT JOIN letters_from_pauseai p ON p.id = l.id LEFT JOIN mailings m ON m.id = p.mailing_id
        LEFT JOIN letters_from_supporters s ON s.id = l.id
      WHERE (p.airtable_id IS NOT NULL OR s.airtable_id IS NOT NULL) AND coalesce(m.old_letters_key, '') <> 'deepmind-others'
-       AND NOT EXISTS (SELECT 1 FROM old_letters_mail o WHERE o.dry_run = $1 AND o.letter_id = l.id AND o.outcome = 'joined')
+       AND NOT EXISTS (SELECT 1 FROM old_letters_mail o WHERE o.letter_id = l.id AND o.outcome = 'joined')
      GROUP BY 1`,
-    [reader.dryRun],
   );
   for (const { key, total } of notJoined) reader.result.notJoined[key] = total;
-  if (reader.dryRun) return;
   const others = await mailingIdOf("deepmind-others");
   const august = await mailingIdOf("deepmind-august");
   const moved = await query<{ id: number; at: Date; salutation: string }>(
@@ -693,7 +662,6 @@ async function placeUnjoined(reader: Reader): Promise<void> {
 
 /** Each mailing's template, from its letters' own text; each letter that fits it then keeps only what's its own. */
 async function buildTemplates(reader: Reader): Promise<void> {
-  if (reader.dryRun) return;
   for (const mailing of OLD_MAILINGS) {
     const id = await mailingIdOf(mailing.key);
     const sent = await query<{ fromAddress: string; subject: string }>(
@@ -709,7 +677,9 @@ async function buildTemplates(reader: Reader): Promise<void> {
     }
     if (!mailing.template) continue;
     const letters = await query<{ id: number; text: string }>(
-      "SELECT id::int AS id, own_text AS text FROM letters_from_pauseai WHERE mailing_id = $1 AND own_text IS NOT NULL",
+      // Only a mailing with no template yet: after that, only the letters that didn't fit have their text.
+      `SELECT id::int AS id, own_text AS text FROM letters_from_pauseai
+       WHERE mailing_id = $1 AND own_text IS NOT NULL AND (SELECT imported_text IS NULL FROM mailings WHERE id = $1)`,
       [id],
     );
     const template = letters.length ? templateOf(letters.map((letter) => letter.text)) : undefined;
@@ -728,9 +698,7 @@ async function buildTemplates(reader: Reader): Promise<void> {
       ]);
     }
   }
-  const quotes = await query<{ quoted: string }>(
-    "SELECT quoted FROM old_letters_mail WHERE dry_run = false AND quoted IS NOT NULL",
-  );
+  const quotes = await query<{ quoted: string }>("SELECT quoted FROM old_letters_mail WHERE quoted IS NOT NULL");
   const august = augustTemplate(quotes.map((row) => row.quoted));
   if (august) {
     reader.result.templates++;
@@ -745,7 +713,6 @@ async function buildTemplates(reader: Reader): Promise<void> {
 
 /** The last step: each letter with a person's reply is marked with when the first came. */
 async function setRepliedAt(reader: Reader): Promise<void> {
-  if (reader.dryRun) return;
   const set = await query(
     `UPDATE letters l SET replied_at = least(l.replied_at, first.at)
      FROM (SELECT letter_id, min(at) AS at FROM letter_replies WHERE NOT from_us GROUP BY letter_id) first
@@ -756,77 +723,115 @@ async function setRepliedAt(reader: Reader): Promise<void> {
 }
 
 /** What's still to read. */
-async function leftToRead(dryRun: boolean): Promise<number> {
+async function leftToRead(): Promise<number> {
   const [{ left }] = await query<{ left: number }>(
-    "SELECT count(*)::int AS left FROM old_letters_mail WHERE dry_run = $1 AND outcome IS NULL",
-    [dryRun],
+    "SELECT count(*)::int AS left FROM old_letters_mail WHERE outcome IS NULL",
   );
   return left;
 }
 
+/** The newest run that didn't fail, which says where the next carries on. */
+async function lastRun(): Promise<OldLettersImportResult | undefined> {
+  const [last] = await query<{ result: OldLettersImportResult }>(
+    `SELECT result FROM import_runs WHERE job = $1 AND status <> 'failed' ORDER BY at DESC, id DESC LIMIT 1`,
+    [JOB],
+  );
+  return last?.result;
+}
+
+/** As far as a run gets in its time, keeping its place and its run. Gmail refusing stops it there, with the reason in its result. */
+async function readSome(startedBy: string, paceMs: number, readMs: number): Promise<OldLettersImportResult> {
+  const last = await lastRun();
+  if (startedBy === NIGHTLY && last?.finished) return last;
+  const carrying = last?.finished === false ? last : undefined;
+  const result = emptyResult();
+  const searchesDone = { n: carrying?.searchesDone ?? 0 };
+  const reader: Reader = {
+    turn: pacer(paceMs, Date.now() + readMs, result),
+    book: await politicianBook(),
+    connected: await connectedAccounts(),
+    tokens: new Map([
+      [JOSEPH, await gmailAccess(JOSEPH)],
+      [POLICY, await gmailAccess(POLICY)],
+    ]),
+    result,
+  };
+  try {
+    if (!carrying) {
+      await makeMailings();
+      await copyFormTexts(reader);
+    }
+    await list(reader, searchesDone);
+    await readQueue(reader);
+    await placeUnjoined(reader);
+    await buildTemplates(reader);
+    await setRepliedAt(reader);
+    result.finished = true;
+  } catch (error) {
+    if (error instanceof GmailError && (error.status === 403 || error.status === 429)) {
+      console.error(error);
+      result.stoppedBy = "gmail";
+      result.stoppedWhy = error.message;
+    } else if (!(error instanceof TimeUp)) throw error;
+  }
+  result.searchesDone = searchesDone.n;
+  result.titles = await countedTitles();
+  result.left = await leftToRead();
+  await recordRun(JOB, startedBy, "ok", result);
+  return result;
+}
+
 /**
- * One call's work on a press of the import: as far as it gets in its time,
- * keeping its place, and saying whether there's more. It says so in its run,
- * which each call of a press adds to. Gmail refusing stops the press there
- * with the reason in its result, as its limit is the site's too.
+ * A run of the import, keeping it in the log. Only one runs at a time: a second
+ * started meanwhile, a press during a scheduled run, stops at once, leaving no
+ * record. The transaction only holds that lock, so what's read stays kept
+ * whatever becomes of the run.
  */
-export function importOldLettersChunk({
-  startedBy,
-  dryRun,
-  runId,
-  paceMs = PACE_MS,
-  chunkMs = CHUNK_MS,
-}: ChunkOptions): Promise<ChunkResult> {
-  return keepingFailure(JOB, startedBy, async () => {
-    const [earlier] = runId
-      ? await query<{ result: OldLettersImportResult }>("SELECT result FROM import_runs WHERE id = $1", [runId])
-      : [];
-    const result: OldLettersImportResult = earlier?.result ?? emptyResult(dryRun);
-    const until = Date.now() + chunkMs;
-    const searchesDone = { n: result.searchesDone ?? 0 };
-    const reader: Reader = {
-      turn: pacer(paceMs, until, result),
-      book: await politicianBook(),
-      connected: await connectedAccounts(),
-      tokens: new Map([
-        [JOSEPH, await gmailAccess(JOSEPH)],
-        [POLICY, await gmailAccess(POLICY)],
-      ]),
-      dryRun,
-      result,
-    };
-    let more = false;
-    try {
-      if (!runId) {
-        if (!dryRun) {
-          await query("DELETE FROM old_letters_mail WHERE dry_run");
-          await makeMailings();
-        }
-        await copyFormTexts(reader);
-      }
-      await list(reader, searchesDone);
-      await readQueue(reader);
-      await placeUnjoined(reader);
-      await buildTemplates(reader);
-      await setRepliedAt(reader);
-      result.finished = true;
-    } catch (error) {
-      if (error instanceof ChunkOver) more = true;
-      else if (error instanceof GmailError && (error.status === 403 || error.status === 429))
-        result.stoppedBy = "gmail";
-      else throw error;
-    }
-    result.searchesDone = searchesDone.n;
-    result.titles = await countedTitles();
-    result.left = await leftToRead(dryRun);
-    if (!more) await endPress(JOB);
-    if (runId) {
-      await query("UPDATE import_runs SET result = $2 WHERE id = $1", [runId, JSON.stringify(result)]);
-      return { runId, more, result };
-    }
-    const id = await recordRun(JOB, startedBy, "ok", result);
-    return { runId: id, more, result };
-  });
+export function importOldLetters(
+  startedBy: string,
+  paceMs = process.env.DATA_FIXTURES === "1" ? 0 : PACE_MS,
+  readMs = READ_MS,
+): Promise<OldLettersImportResult> {
+  return keepingFailure(JOB, startedBy, () =>
+    transaction(async (db) => {
+      const [{ locked }] = await query<{ locked: boolean }>(
+        "SELECT pg_try_advisory_xact_lock(hashtext($1)) AS locked",
+        [JOB],
+        db,
+      );
+      return locked ? readSome(startedBy, paceMs, readMs) : emptyResult();
+    }),
+  );
+}
+
+/** How far a job has got, for its page: only the import of old letters says. */
+export async function jobProgress(job: ImportJob): Promise<OldLettersProgress | undefined> {
+  return job === JOB ? oldLettersProgress() : undefined;
+}
+
+/** How far the import has got, over all its runs, from what it has kept of each message. */
+async function oldLettersProgress(): Promise<OldLettersProgress> {
+  const [counts] = await query<Omit<OldLettersProgress, "refusals" | "byMailing" | "titles">>(
+    `SELECT count(*) FILTER (WHERE outcome IS NOT NULL)::int AS read, count(*) FILTER (WHERE outcome IS NULL)::int AS left,
+       count(*) FILTER (WHERE outcome IN ('joined', 'added'))::int AS joined, count(*) FILTER (WHERE outcome = 'reply')::int AS replies,
+       count(*) FILTER (WHERE outcome = 'auto_reply')::int AS "autoReplies", count(*) FILTER (WHERE outcome = 'one_off')::int AS "oneOffs"
+     FROM old_letters_mail`,
+  );
+  const [{ refusals }] = await query<{ refusals: number }>(
+    `SELECT count(*)::int AS refusals FROM import_runs WHERE job = $1 AND result->>'stoppedBy' = 'gmail'`,
+    [JOB],
+  );
+  const mailings = await query<{ key: string; total: number }>(
+    `SELECT coalesce(o.mailing_key, s.campaign) AS key, count(*)::int AS total
+     FROM old_letters_mail o LEFT JOIN letters_from_supporters s ON s.id = o.letter_id
+     WHERE o.outcome IN ('joined', 'added') GROUP BY 1 ORDER BY 2 DESC, 1`,
+  );
+  return {
+    ...counts,
+    refusals,
+    byMailing: Object.fromEntries(mailings.map(({ key, total }) => [key, total])),
+    titles: await countedTitles(),
+  };
 }
 
 /** What the result's counts are called: the mailings and campaigns they're under, by key. */
@@ -836,16 +841,4 @@ async function countedTitles(): Promise<Record<string, string>> {
      UNION ALL SELECT slug, title FROM campaigns`,
   );
   return { ...Object.fromEntries(rows.map(({ key, title }) => [key, title])), ...staffCopy.oldLetters.mailingTitles };
-}
-
-/** The whole of a press, in one call, as a fixture build does it: no background functions there. */
-export async function importOldLetters(
-  startedBy: string,
-  dryRun: boolean,
-  paceMs = 0,
-  chunkMs = CHUNK_MS,
-): Promise<OldLettersImportResult> {
-  let chunk = await importOldLettersChunk({ startedBy, dryRun, paceMs, chunkMs });
-  while (chunk.more) chunk = await importOldLettersChunk({ startedBy, dryRun, runId: chunk.runId, paceMs, chunkMs });
-  return chunk.result;
 }

@@ -27,9 +27,7 @@
   margin: 0;
 }
 
-/* A job's button, with a box to tick over it if it has one. */
-.job {
-  display: grid;
-  gap: var(--space-2);
-  justify-items: start;
+/* A press still running, set off from the job's box and button under it. */
+.running {
+  margin-block-end: var(--space-4);
 }

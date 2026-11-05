@@ -10,7 +10,7 @@ type Props = {
   /** The job's own summary of what the run found. Not shown for a failed run, whose error is. */
   summary: ReactNode;
   lines?: number;
-  /** Starts unfolded, however long its detail (ResultBox). */
+  /** Whether it starts unfolded, whatever its detail's length; left out, it goes by `lines` (ResultBox). */
   open?: boolean;
   actions?: ReactNode;
   children?: ReactNode;

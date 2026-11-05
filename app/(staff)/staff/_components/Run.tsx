@@ -16,6 +16,7 @@ import {
 } from "@/lib/import-runs";
 import type { MpProblem } from "@/lib/mp-check";
 import { changeCount, type Renamed, type SyncedPolitician } from "@/lib/politician-sync";
+import CountsByMailing from "./CountsByMailing";
 import RunBox from "./RunBox";
 import { Muted } from "@/components/ui/Text";
 import Withheld from "./ui/Withheld";
@@ -333,32 +334,6 @@ function GmailRun({ run, open }: { run: GmailReading; open?: boolean }) {
   );
 }
 
-/** Counts by mailing, or a form letter's campaign, as a list under its heading; nothing with none. */
-function CountsByMailing({
-  heading,
-  counts,
-  titles,
-}: {
-  heading: string;
-  counts: Record<string, number>;
-  titles?: Record<string, string>;
-}) {
-  const rows = Object.entries(counts).filter(([, n]) => n > 0);
-  if (rows.length === 0) return null;
-  return (
-    <>
-      <h4>{heading}</h4>
-      <ul>
-        {rows.map(([key, n]) => (
-          <li key={key}>
-            {titles?.[key] ?? key}: {n}
-          </li>
-        ))}
-      </ul>
-    </>
-  );
-}
-
 /**
  * A press of the import of old letters: what it did and how much is left;
  * what it joined by mailing, and what it couldn't; and the mail that matched
@@ -382,7 +357,12 @@ function OldLettersRun({ run, open, people }: { run: OldLettersImport; open?: bo
       summary={
         <>
           {words.result(result)}
-          {result.stoppedBy === "gmail" && <> {words.stoppedByGmail}</>}
+          {result.stoppedBy === "gmail" && (
+            <>
+              {" "}
+              {words.stoppedByGmail} <Muted>{result.stoppedWhy}</Muted>
+            </>
+          )}
           {result.unreadable.length > 0 && <> {words.unreadable(result.unreadable.length)}</>}
         </>
       }
@@ -411,7 +391,7 @@ function OldLettersRun({ run, open, people }: { run: OldLettersImport; open?: bo
   );
 }
 
-/** One run from the import log, as its job's page shows it; `open` starts its detail unfolded, however long. `people`: who mail that matched nothing is from may show. */
+/** One run from the import log, as its job's page shows it; `open` says whether its detail starts unfolded, and left out, its length does. `people`: who mail that matched nothing is from may show. */
 export default function Run({
   run,
   decide,

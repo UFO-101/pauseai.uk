@@ -45,7 +45,7 @@ export const JOB_SCHEDULES: Record<ImportJob, "frequent" | "hourly" | "nightly" 
   "sync-emails": "oneOff",
   "import-web-form-letters": "oneOff",
   "import-go-to-parliament": "oneOff",
-  "import-old-letters": "oneOff",
+  "import-old-letters": "frequent",
   "check-mps": "nightly",
   "import-controlai": "nightly",
 };
@@ -243,16 +243,32 @@ export type GoToParliamentImportResult = {
 };
 export type GoToParliamentImport = ImportRun<"import-go-to-parliament", GoToParliamentImportResult>;
 
-/** What a press of the import of old letters did: how far it got, and what it found. A dry run's says what would be done. */
+/** How far the import of old letters has got, over all its runs. */
+export type OldLettersProgress = {
+  read: number;
+  left: number;
+  joined: number;
+  replies: number;
+  autoReplies: number;
+  oneOffs: number;
+  /** Runs Gmail stopped, of those the log still has. */
+  refusals: number;
+  /** What's joined or added, by mailing or form letter's campaign, and what they're called. */
+  byMailing: Record<string, number>;
+  titles: Record<string, string>;
+};
+
+/** What a run of the import of old letters did: how far it got, and what it found. */
 export type OldLettersImportResult = {
-  dryRun: boolean;
   /** It read everything listed, and did the last steps. */
   finished: boolean;
   /** Why it stopped short: Gmail refused a request. */
   stoppedBy?: "gmail";
+  /** What Gmail said. */
+  stoppedWhy?: string;
   /** How many of its searches it has listed: its place, between its calls. */
   searchesDone?: number;
-  /** Messages listed and read this press, and how many are left. */
+  /** Messages listed and read this run, and how many are left. */
   listed: number;
   read: number;
   left: number;
@@ -309,7 +325,7 @@ export function runStatus(run: AnyImportRun): string {
   if (run.job === "import-luma" && run.status !== "failed" && lumaRunIncomplete(run.result)) return "incomplete";
   // Emails held back for a mailing nobody has added yet.
   if (run.job === "sync-emails" && run.status !== "failed" && run.result.unplaced.length > 0) return "incomplete";
-  // Left to read: press it again.
+  // Left to read: a later run carries on.
   if (run.job === "import-old-letters" && run.status !== "failed" && !run.result.finished) return "incomplete";
   if (run.job === "read-gmail" && run.status !== "failed") {
     // An account that couldn't be read, a disconnected one among them, or mail in the letters inbox a person

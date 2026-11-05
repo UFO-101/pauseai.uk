@@ -338,14 +338,14 @@ lists with their reasons (a popover, the login page's card, a field).
 
 **Surfaces.** Each one means one thing:
 
-| Surface                        | Look                                                       | For                                                                                                               |
-| ------------------------------ | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| The page                       | the background, no box                                     | headings, prose, the history, tables                                                                              |
-| A record (`Card`, the default) | white                                                      | the thing a page is about, or a thing to open: an MP's or a supporter's facts, an import job                      |
-| An aside (`Card look="aside"`) | the second tint, `--surface-2`                             | what sits beside a record: an MP's campaigns, a supporter's mailing lists                                         |
-| A log (`Card look="log"`)      | the palest of the accent: `--accent-light` at 30% on white | a history, each entry ruled from the next                                                                         |
-| A tile                         | white, bordered, an item of an `even` grid                 | sets of like things: the dashboard's numbers                                                                      |
-| A strip (`ui/Strip`)           | the tone's tint, no border, `--radius-md`                  | how something stands: green done or signed, amber waiting, red broken, plain neither; dark, a mode the page is in |
+| Surface                        | Look                                                       | For                                                                                                                                  |
+| ------------------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| The page                       | the background, no box                                     | headings, prose, the history, tables                                                                                                 |
+| A record (`Card`, the default) | white                                                      | the thing a page is about, or a thing to open: an MP's or a supporter's facts, an import job                                         |
+| An aside (`Card look="aside"`) | the second tint, `--surface-2`                             | what sits beside a record: an MP's campaigns, a supporter's mailing lists                                                            |
+| A log (`Card look="log"`)      | the palest of the accent: `--accent-light` at 30% on white | a history, each entry ruled from the next                                                                                            |
+| A tile                         | white, bordered, an item of an `even` grid                 | sets of like things: the dashboard's numbers                                                                                         |
+| A strip (`ui/Strip`)           | the tone's tint, no border, `--radius-md`                  | how something stands: green done or signed, amber waiting, red broken, blue going on now, plain neither; dark, a mode the page is in |
 
 Every card has the same edge, a `1px` `--border` and `--radius-lg`; only
 its fill changes, and only among those three, all warm. Colour stays for
@@ -582,7 +582,7 @@ images in cards none (full bleed).
 
 Cards use a `1px solid var(--border)` border. On hover, borders shift to `var(--border-strong)`. No heavy/coloured borders except for active/focus states.
 
-A box that shows a state says so with its tint: the background is the status colour's `-bg` token (`--status-red-bg`, `--status-amber-bg`, `--status-green-bg`), and the words can take the status colour. On staff pages that's a strip, with no border (above, "Staff pages"); a past run in a job's history keeps the ordinary border. Never a thick edge on one side: on a rounded corner it bends into a wedge. Only the current state is coloured. A history of past runs or events is plain, so the one thing in colour is the thing that's true now.
+A box that shows a state says so with its tint: the background is the status colour's `-bg` token (`--status-red-bg`, `--status-amber-bg`, `--status-green-bg`), and the words can take the status colour. On staff pages that's a strip, with no border (above, "Staff pages"); a past run in a job's history keeps the ordinary border. Never a thick edge on one side: on a rounded corner it bends into a wedge. Only the current state is coloured. A history of past runs or events is plain, so the one thing in colour is the thing that's true now. The exception is a job that runs every 5 minutes: among hundreds of runs a failure or refusal would be lost, so it stays tinted (`lib/run-log.ts`).
 
 ---
 

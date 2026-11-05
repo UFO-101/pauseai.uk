@@ -144,7 +144,13 @@ describe("the lists' counts", () => {
 });
 
 it("says one and many of each of the new pages' counts", () => {
-  const { campaigns, oneOff, oldLetters, gmailReading, asks } = staffCopy;
+  const { campaigns, oneOff, oldLetters, gmailReading, asks, runs } = staffCopy;
+  expect(runs.quiet("09:00", "09:00", 1)).toContain("09:00: 1 run,");
+  expect(runs.quiet("09:00", "09:05", 2)).toContain("09:00–09:05: 2 runs,");
+  expect(runs.stretch("09:00", "09:00", 1)).toContain("09:00: 1 run,");
+  expect(runs.stretch("09:00", "09:05", 2)).toContain("09:00–09:05: 2 runs,");
+  expect(oldLetters.progress.refusals(1)).toContain("1 run.");
+  expect(oldLetters.progress.refusals(2)).toContain("2 runs.");
   for (const words of [
     [campaigns.supporters(1), campaigns.supporters(2)],
     [campaigns.politicians(1), campaigns.politicians(2)],
@@ -161,7 +167,6 @@ it("says one and many of each of the new pages' counts", () => {
     expect(words[0]).not.toBe(words[1]);
   }
   const run = {
-    dryRun: false,
     finished: true,
     read: 1,
     left: 0,
@@ -172,7 +177,7 @@ it("says one and many of each of the new pages' counts", () => {
     postmarkTexts: 0,
   };
   expect(oldLetters.result(run)).toContain("all done");
-  expect(oldLetters.result({ ...run, dryRun: true, finished: false })).not.toContain("all done");
+  expect(oldLetters.result({ ...run, finished: false })).not.toContain("all done");
 });
 
 it("says which inbox the one-off emails are copied to", () => {

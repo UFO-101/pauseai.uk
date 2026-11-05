@@ -105,7 +105,7 @@ test("No permissions", async ({ page, request, flowDatabase }) => {
      INSERT INTO one_off_messages (thread_id, account, gmail_message_id, gmail_thread_id, from_address, from_name, addresses, subject, at, from_us, blob_key, size)
      VALUES (${thread}, 'policy@pauseai.uk', 'leak-1', 't', '${sender}', 'Jane Smith', ARRAY['${sender}'], '${sender}', now(), false, 'fixture/one-off-volunteer.eml.gz', 1);
      INSERT INTO import_runs (job, started_by, status, result) VALUES ('import-old-letters', 'x', 'ok',
-       '{"dryRun": false, "finished": true, "read": 1, "left": 0, "replies": 0, "autoReplies": 0, "oneOffs": 0, "formTexts": 0, "postmarkTexts": 0, "joined": {}, "added": {}, "notJoined": {}, "unreadable": [], "unmatched": [{"from": "${sender}", "subject": "x"}]}');`,
+       '{"finished": true, "read": 1, "left": 0, "replies": 0, "autoReplies": 0, "oneOffs": 0, "formTexts": 0, "postmarkTexts": 0, "joined": {}, "added": {}, "notJoined": {}, "unreadable": [], "unmatched": [{"from": "${sender}", "subject": "x"}]}');`,
   );
   // The route list's examples of letters and asks are the fixture database's.
   const routes = [

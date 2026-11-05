@@ -21,6 +21,15 @@ const send = (raw: string, scope?: string, account?: string) =>
   );
 
 beforeEach(() => resetLettersInbox());
+
+it("gives a message the same ID whatever its worker has sent before it", () => {
+  const idOf = (number: number) => {
+    resetLettersInbox();
+    deliverToLettersInbox(`Message-ID: <test-${number}@parliament.example>\r\n\r\nBody`);
+    return lettersMailbox().messages[0].id;
+  };
+  expect(idOf(1)).toBe(idOf(99));
+});
 afterEach(() => vi.unstubAllEnvs());
 
 describe("the fake letters inbox", () => {

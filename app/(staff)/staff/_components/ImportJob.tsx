@@ -6,6 +6,7 @@ import type { JobPress } from "@/lib/server/import-runs";
 import {
   type AnyImportRun,
   IMPORT_JOBS,
+  type OldLettersProgress,
   JOB_SCHEDULES,
   type ImportJob,
   importPath,
@@ -19,6 +20,7 @@ import styles from "./ImportJob.module.css";
 import ImportCard, { ImportCards } from "./ImportCard";
 import ImportIcon, { type ImportSource } from "./ImportIcon";
 import JobActions from "./JobActions";
+import OldLettersProgressBar from "./OldLettersProgressBar";
 import type { Decide } from "./Run";
 import RunList from "./RunList";
 import Tag from "@/components/ui/Tag";
@@ -144,8 +146,17 @@ function Intro({ job, airtableTable }: { job: ImportJob; airtableTable: string }
   );
 }
 
-/** How a job's newest run ended, and when, in a strip tinted to match (ui/Strip); or that it has never run. */
-function NewestRun({ job, run }: { job: ImportJob; run: AnyImportRun | undefined }) {
+/** That a press of the job is running, or how its newest run ended, and when, in a strip tinted to match (ui/Strip); or that it has never run. */
+function NewestRun({ job, run, press }: { job: ImportJob; run: AnyImportRun | undefined; press?: JobPress }) {
+  if (press)
+    return (
+      <Strip tone="blue" icon={false}>
+        <span className={styles.line}>
+          {staffCopy.runs.status.running}
+          <span className={styles.when}>{staffTime(press.startedAt)}</span>
+        </span>
+      </Strip>
+    );
   if (!run)
     return (
       // A job that has never run: said plainly, not as a status in bold.
@@ -168,10 +179,13 @@ const SCHEDULES = ["frequent", "hourly", "nightly", "oneOff"] as const;
 /** Every job, a card each, under a heading for how often it runs: every 5 minutes, hourly, nightly, then the one-off imports. */
 export function ImportOverview({
   newest,
+  presses,
   airtableTable,
 }: {
   /** Each job's newest run, in IMPORT_JOBS order; undefined for one that has never run. */
   newest: (AnyImportRun | undefined)[];
+  /** Each job's press that's still running, in the same order. */
+  presses: (JobPress | undefined)[];
   airtableTable: string;
 }) {
   return (
@@ -191,7 +205,7 @@ export function ImportOverview({
                   tags={<CheckOnly job={job} />}
                   intro={<Intro job={job} airtableTable={airtableTable} />}
                 >
-                  <NewestRun job={job} run={newest[i]} />
+                  <NewestRun job={job} run={newest[i]} press={presses[i]} />
                 </ImportCard>
               ) : null,
             )}
@@ -202,7 +216,7 @@ export function ImportOverview({
   );
 }
 
-/** One job's page: the way back, its icon, name, how often it runs and whether it only checks, what it does, its button, then every run it has made, newest first, the newest tinted by how it ended. */
+/** One job's page: the way back, its icon, name, how often it runs and whether it only checks, what it does, its button, then every run it has made, newest first. */
 export function ImportJobPage({
   job,
   runs,
@@ -211,6 +225,7 @@ export function ImportJobPage({
   decide,
   airtableTable,
   people = false,
+  progress,
 }: {
   job: ImportJob;
   runs: AnyImportRun[];
@@ -223,6 +238,8 @@ export function ImportJobPage({
   airtableTable: string;
   /** Whether they may see who mail that matched nothing is from. */
   people?: boolean;
+  /** How far the import of old letters has got, on its page. */
+  progress?: OldLettersProgress;
 }): ReactNode {
   return (
     <>
@@ -238,13 +255,16 @@ export function ImportJobPage({
       <p>
         <Intro job={job} airtableTable={airtableTable} />
       </p>
-      {press && <Strip tone="amber">{words.running(press.startedBy, staffTime(press.startedAt))}</Strip>}
-      <JobActions
-        action={run}
-        label={ABOUT[job].button}
-        tick={job === "import-old-letters" ? { name: "dryRun", label: staffCopy.oldLetters.dryRun } : undefined}
-      />
-      <RunList runs={runs} none={ABOUT[job].none} decide={decide} people={people} />
+      {press && (
+        <div className={styles.running}>
+          <Strip tone="blue">
+            <span>{words.running(press.startedBy, staffTime(press.startedAt))}</span>
+          </Strip>
+        </div>
+      )}
+      <JobActions action={run} label={ABOUT[job].button} />
+      {progress && <OldLettersProgressBar progress={progress} />}
+      <RunList runs={runs} none={ABOUT[job].none} decide={decide} people={people} press={press} />
     </>
   );
 }

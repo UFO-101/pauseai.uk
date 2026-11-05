@@ -1,4 +1,4 @@
-/* The newest run, the job's state now, tinted by how it ended: its box keeps the ordinary border. */
+/* A run tinted by how it ended, the newest or a problem further down: its box keeps the ordinary border. */
 .green > section {
   background: var(--status-green-bg);
 }
@@ -9,4 +9,13 @@
 
 .red > section {
   background: var(--status-red-bg);
+}
+
+/* Rows too far down to show, a line until opened. */
+.stretch {
+  margin-block: var(--space-3);
+}
+
+.stretch summary {
+  cursor: pointer;
 }

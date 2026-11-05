@@ -55,11 +55,18 @@ async function fillIn(page: Page, email: string) {
  * scroll-padding puts it (styles/base.css), not by scrollIntoView.
  */
 async function formAtTop(page: Page): Promise<void> {
-  await page.locator("form").evaluate((form) => {
-    const clearance = document.querySelector("header")!.offsetHeight + 13;
-    window.scrollTo({ top: window.scrollY + form.getBoundingClientRect().top - clearance, behavior: "instant" });
-  });
-  await scrollSettled(page);
+  const form = page.locator("form");
+  // Placed again until it stays: the page can still shift a few pixels once it's placed.
+  await expect(async () => {
+    const clearance = await form.evaluate((el) => {
+      const below = document.querySelector("header")!.offsetHeight + 13;
+      window.scrollTo({ top: window.scrollY + el.getBoundingClientRect().top - below, behavior: "instant" });
+      return below;
+    });
+    await scrollSettled(page);
+    await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 100)));
+    expect(await form.evaluate((el) => Math.round(el.getBoundingClientRect().top))).toBe(clearance);
+  }).toPass();
 }
 
 /**

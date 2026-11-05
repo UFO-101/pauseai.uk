@@ -237,21 +237,19 @@ of them if it can't be told which. Replies join by rules 2 and 3 above.
 
 ### The import job
 
-One one-off job on `/staff/import-data`, "Import old letters". It's safe
-to press as often as needed, as it skips what's kept.
+One job on `/staff/import-data`, "Import old letters", run every 5 minutes
+as Luma's is, and when pressed. It's safe to run as often as needed, as it
+skips what's kept.
 
-- **Each press** starts a background function with up to 15 minutes,
-  following `import-luma-background`, and shows on the job's page what it
-  did and how much is left. It stops early the moment Gmail refuses.
-- **Its pace** is at most 2 requests a second, which allows about 1,700
-  in a run. It uses the site's stored tokens for joseph@ and policy@.
-- **In all:** about 10,000 messages, so about 6 presses.
+- **Each run** reads for 20 seconds and shows on the job's page what it did
+  and how much is left. It stops early the moment Gmail refuses.
+- **Its pace** is at most 2 requests a second, so 40 in a run. It uses the
+  site's stored tokens for joseph@ and policy@.
+- **In all:** about 10,000 messages, so one or two days.
 - **What it reads:** Joseph's Sent mail to politicians; what he received
   from their addresses and domains; the group's mail, by
   `list:policy@pauseai.uk OR list:policy-archive@pauseai.uk`; and policy@'s
   own mail, for the Bcc'd letters since 29 October 2026.
-- **Dry run:** a tick box that writes nothing and reports what would be
-  joined, counts per mailing, and anything not joined.
 
 Its order: make the new mailings, then copy the form letters' text, then
 read each sent email and join it, then read the replies, then keep the
@@ -407,7 +405,7 @@ page to `STAFF_SECTIONS` (`lib/staff-sections.ts`).
    text; a storyboard flow for the job, a legacy letter's page, the one-off
    emails, the account's switch, campaigns, asks, sent emails and the "new"
    tag; a gallery example for each new component; and the CI gate.
-3. **After merging:** one dry run, then real runs. Check the site's Gmail
+3. **After merging:** real runs. Check the site's Gmail
    reads stay clean in the import log.
 
 ### Data protection

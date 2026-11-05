@@ -46,7 +46,10 @@ import {
 import AsksTable, { askColumns } from "./AsksTable";
 import ResultBox, { OPEN_UP_TO } from "./ResultBox";
 import { ImportJobPage, ImportOverview } from "./ImportJob";
+import { exampleOldLettersResult } from "./CampaignPages.examples";
+import OldLettersProgressBar from "./OldLettersProgressBar";
 import RunList from "./RunList";
+import RunRows from "./RunRows";
 import {
   exampleAppliedSync,
   exampleControlAiResult,
@@ -2343,7 +2346,9 @@ describe("ImportOverview", () => {
       ran("import-web-form-letters", exampleWebFormResult, { at: "2026-10-20T09:00:00Z" }),
       undefined,
     ];
-    await render(<ImportOverview newest={newest} airtableTable="https://airtable.com/app/tblPoliticians" />);
+    await render(
+      <ImportOverview newest={newest} presses={[]} airtableTable="https://airtable.com/app/tblPoliticians" />,
+    );
     await expect.element(page.getByRole("heading", { level: 1, name: staffCopy.import.pageTitle })).toBeVisible();
     // A heading for each schedule, its jobs' cards under it.
     expect(
@@ -2354,34 +2359,34 @@ describe("ImportOverview", () => {
     ).toEqual([staffCopy.import.frequent, staffCopy.import.hourly, staffCopy.import.nightly, staffCopy.import.oneOff]);
     const cards = [...document.querySelectorAll("section")];
     expect(cards.map((card) => card.querySelector("h3 a")!.getAttribute("href"))).toEqual([
+      "/staff/import-data/old-letters",
       "/staff/import-data/luma",
       "/staff/import-data/gmail",
       "/staff/import-data/members",
       "/staff/import-data/politicians",
       "/staff/import-data/mp-check",
       "/staff/import-data/controlai",
-      "/staff/import-data/old-letters",
       "/staff/import-data/emails",
       "/staff/import-data/web-form-letters",
       "/staff/import-data/go-to-parliament",
     ]);
     expect(cards.map((card) => card.querySelector("h3 a")!.textContent)).toEqual([
+      jobTitles["import-old-letters"],
       jobTitles["import-luma"],
       jobTitles["read-gmail"],
       jobTitles["import-members"],
       jobTitles["sync-politicians"],
       jobTitles["check-mps"],
       jobTitles["import-controlai"],
-      jobTitles["import-old-letters"],
       jobTitles["sync-emails"],
       jobTitles["import-web-form-letters"],
       jobTitles["import-go-to-parliament"],
     ]);
     // Under the name, how the newest run ended, tinted to match.
     const status = (i: number) => cards[i].querySelector("h3")!.parentElement!.nextElementSibling!.firstElementChild!;
-    expect(status(0).textContent).toBe(`${staffCopy.runs.status.incomplete}21 Oct 2026, 11:17`);
+    expect(status(1).textContent).toBe(`${staffCopy.runs.status.incomplete}21 Oct 2026, 11:17`);
     // The Emails sync held some back, so it's amber too.
-    expect([0, 1, 2, 3, 4, 5, 7, 8].map((i) => status(i).className.match(/green|amber|red/)?.[0])).toEqual([
+    expect([1, 2, 3, 4, 5, 6, 7, 8].map((i) => status(i).className.match(/green|amber|red/)?.[0])).toEqual([
       "amber",
       "green",
       "green",
@@ -2395,19 +2400,19 @@ describe("ImportOverview", () => {
     expect(status(9).className).not.toMatch(/green|amber|red/);
     // The Airtable jobs link the table they read; the politicians' sync also says the test MPs stay.
     const link = (i: number) => cards[i].querySelector(":scope > p a")!.getAttribute("href");
-    expect(link(3)).toBe("https://airtable.com/app/tblPoliticians");
-    expect(cards[3].querySelector(":scope > p")!.textContent).toContain(staffCopy.syncs.testMps);
+    expect(link(4)).toBe("https://airtable.com/app/tblPoliticians");
+    expect(cards[4].querySelector(":scope > p")!.textContent).toContain(staffCopy.syncs.testMps);
     expect([7, 8, 9].map(link)).toEqual([
       "https://airtable.com/app/tblp4nH5Jymq48rcm",
       "https://airtable.com/app/tblkzjrRHiZiqMDGR",
       "https://airtable.com/app/tblminXS1xSuBbEjz",
     ]);
-    expect(cards[4].querySelector(":scope > p")!.textContent).not.toContain(staffCopy.syncs.testMps);
+    expect(cards[5].querySelector(":scope > p")!.textContent).not.toContain(staffCopy.syncs.testMps);
     // The members come from the join form; Gmail's card leads to where it's connected.
-    expect(link(2)).toBe("https://pauseai.info/join");
-    expect(link(1)).toBe("/staff/me");
+    expect(link(3)).toBe("https://pauseai.info/join");
+    expect(link(2)).toBe("/staff/me");
     // The MP check says it changes nothing, after its name.
-    expect(cards[4].querySelector("h3")!.textContent).toBe(`${jobTitles["check-mps"]}${staffCopy.import.checkOnly}`);
+    expect(cards[5].querySelector("h3")!.textContent).toBe(`${jobTitles["check-mps"]}${staffCopy.import.checkOnly}`);
     expect(cards[7].querySelector("h3")!.textContent).toBe(jobTitles["sync-emails"]);
   });
 
@@ -2420,6 +2425,7 @@ describe("ImportOverview", () => {
     const unchanged = ran("import-luma", exampleLumaResult, { status: "unchanged" });
     const { rerender } = await render(
       <ImportOverview
+        presses={[]}
         newest={[undefined, unchanged, undefined, undefined, exampleAppliedSync, undefined, undefined]}
         airtableTable="x"
       />,
@@ -2427,26 +2433,57 @@ describe("ImportOverview", () => {
     const status = (i: number) =>
       document.querySelectorAll("section")[i].querySelector("h3")!.parentElement!.nextElementSibling!.firstElementChild!
         .className;
-    expect(status(0)).toMatch(/green/);
-    expect(status(3)).toMatch(/green/);
+    expect(status(1)).toMatch(/green/);
+    expect(status(4)).toMatch(/green/);
     await rerender(
       <ImportOverview
+        presses={[]}
         newest={[undefined, undefined, undefined, undefined, discarded, undefined, undefined]}
         airtableTable="x"
       />,
     );
-    expect(status(3)).not.toMatch(/green|amber|red/);
+    expect(status(4)).not.toMatch(/green|amber|red/);
+    await rerender(
+      <ImportOverview
+        newest={[undefined, undefined, undefined, undefined, exampleAppliedSync, undefined, undefined]}
+        presses={[undefined, undefined, undefined, undefined, press]}
+        airtableTable="x"
+      />,
+    );
+    expect(status(4)).toMatch(/blue/);
+    expect(document.body.textContent).toContain(staffCopy.runs.status.running);
+    expect(document.body.textContent).toContain(staffTime(press.startedAt));
   });
 });
+
+/** A press of a job, still running. */
+const press = { startedBy: "jo@pauseai.uk", startedAt: "2026-10-21T11:47:00Z" };
 
 describe("ImportJobPage", () => {
   it("says when a press of it is still running", async () => {
     const props = { job: "sync-emails" as const, runs: [], run: vi.fn(), decide: vi.fn(), airtableTable: "x" };
-    const press = { startedBy: "jo@pauseai.uk", startedAt: "2026-10-21T11:47:00Z" };
     const { rerender } = await render(<ImportJobPage {...props} press={press} />);
     expect(document.body.textContent).toContain(staffCopy.import.running(press.startedBy, staffTime(press.startedAt)));
     await rerender(<ImportJobPage {...props} />);
     expect(document.body.textContent).not.toContain(press.startedBy);
+    expect(document.querySelector("progress")).toBeNull();
+    await rerender(
+      <ImportJobPage
+        {...props}
+        progress={{
+          read: 1,
+          left: 2,
+          joined: 1,
+          replies: 0,
+          autoReplies: 0,
+          oneOffs: 0,
+          refusals: 0,
+          byMailing: {},
+          titles: {},
+        }}
+      />,
+    );
+    expect(document.querySelector("progress")).not.toBeNull();
   });
 
   it("leads back to the overview, names the job with its icons and schedule, runs it, and lists every run by day", async () => {
@@ -2811,6 +2848,107 @@ describe("RunList", () => {
     await expect.element(page.getByText("Seat 1: MP 1", { exact: true })).toBeVisible();
   });
 
+  it("lays out a job that runs often: rows, a line for quiet runs, and older rows folded", async () => {
+    const letters = staffCopy.oldLetters.columns;
+    const minutes = (n: number) => `2026-11-03T12:${String(59 - n).padStart(2, "0")}:00Z`;
+    const row = (id: number) =>
+      ran(
+        "import-old-letters",
+        { ...exampleOldLettersResult, unmatched: [], unreadable: [], formTexts: 0, read: 100 + id },
+        { id, at: minutes(id) },
+      );
+    const quiet = (id: number) => ran("import-luma", exampleLumaResult, { id, at: minutes(id), status: "unchanged" });
+    const { rerender } = await render(<RunList runs={Array.from({ length: 16 }, (_, i) => row(i))} none="None" />);
+    await expect.element(page.getByRole("cell", { name: letters.joined })).toBeVisible();
+    await expect.element(page.getByRole("cell", { name: "101", exact: true })).toBeVisible();
+    await expect.element(page.getByText(staffCopy.runs.stretch("12:44", "12:46", 3))).toBeVisible();
+    await expect.element(page.getByText("115", { exact: true })).not.toBeVisible();
+    await page.getByText(staffCopy.runs.stretch("12:44", "12:46", 3)).click();
+    await expect.element(page.getByText("115", { exact: true })).toBeVisible();
+    await rerender(<RunList runs={[quiet(0), quiet(1), quiet(2)]} none="None" />);
+    await expect.element(page.getByText(staffCopy.runs.quiet("12:57", "12:58", 2))).toBeVisible();
+  });
+
+  it("keeps a failure plain further down on a job that runs rarely", async () => {
+    await render(
+      <RunList
+        runs={[ran("check-mps", { problems: [] }, { id: 1 }), failed("check-mps", "boom", { id: 2 })]}
+        none="None"
+      />,
+    );
+    const [, second] = page.getByRole("status").all();
+    expect(second.element().closest("section")!.parentElement!.className).toBe("");
+    expect(getComputedStyle(second.element().closest("section")!).backgroundColor).toBe("rgba(0, 0, 0, 0)");
+  });
+
+  it("shows Luma's and Gmail's routine runs as rows, a Gmail read saying only the accounts that had anything", async () => {
+    const luma = ran("import-luma", { ...exampleLumaResult, hostsChanged: undefined, guestsChanged: 77 }, { id: 1 });
+    const { rerender } = await render(<RunRows runs={[luma]} />);
+    await expect.element(page.getByRole("cell", { name: "77", exact: true })).toBeVisible();
+    await rerender(<RunRows runs={[ran("import-luma", { ...exampleLumaResult, hostsChanged: 55 }, { id: 2 })]} />);
+    await expect.element(page.getByRole("cell", { name: "55", exact: true })).toBeVisible();
+    const account = (email: string, extra = {}) => ({
+      account: email,
+      replies: 0,
+      autoReplies: 0,
+      bounces: 0,
+      ...extra,
+    });
+    const accounts = [
+      account("silent@pauseai.uk"),
+      account("joseph@pauseai.uk", { replies: 1 }),
+      account("policy@pauseai.uk", { oneOffs: 2 }),
+      account("write.to@pauseai.uk", { relayed: 3, spam: 0, uncertain: 0 }),
+    ];
+    await rerender(<RunRows runs={[ran("read-gmail", { accounts }, { id: 3 })]} />);
+    const text = document.body.textContent!;
+    expect(text).not.toContain("silent@pauseai.uk");
+    expect(text).toContain(staffCopy.gmailReading.account(accounts[1]));
+    expect(text).toContain(staffCopy.gmailReading.oneOffs(2));
+    expect(text).toContain(staffCopy.lettersInbox.result({ relayed: 3, spam: 0, uncertain: 0 }));
+  });
+
+  it("says how far the import of old letters has got, or nothing before it has listed anything", async () => {
+    const words = staffCopy.oldLetters.progress;
+    const progress = {
+      read: 2842,
+      left: 6120,
+      joined: 2510,
+      replies: 212,
+      autoReplies: 24,
+      oneOffs: 96,
+      refusals: 0,
+      byMailing: { "deepmind-25": 2510 },
+      titles: { "deepmind-25": "The 25" },
+    };
+    const { rerender } = await render(<OldLettersProgressBar progress={{ ...progress, read: 0, left: 0 }} />);
+    expect(document.querySelector("progress")).toBeNull();
+    await rerender(<OldLettersProgressBar progress={progress} />);
+    await expect.element(page.getByText(words.counts("2,842", "6,120"))).toBeVisible();
+    expect(document.body.textContent).not.toContain(words.refusals(1));
+    const totals = words.totals({ joined: "2,510", replies: "212", autoReplies: "24", oneOffs: "96" });
+    await page.getByText(totals).click();
+    await expect.element(page.getByText("The 25: 2510")).toBeVisible();
+    await rerender(<OldLettersProgressBar progress={{ ...progress, refusals: 1 }} />);
+    expect(document.body.textContent).toContain(words.refusals(1));
+  });
+
+  it("unfolds only the newest runs, and while a press runs, not the newest one if it's long", async () => {
+    const sync = (id: number, added: number[], at = "2026-10-21T11:00:00Z"): PoliticianSync =>
+      ran("sync-politicians", { changes: { added: added.map((n) => mp(n)), removed: [], changed: [] } }, { id, at });
+    const opens = () =>
+      page
+        .getByRole("group")
+        .all()
+        .map((fold) => (fold.element() as HTMLDetailsElement).open);
+    const short = [1, 2, 3, 4, 5, 6].map((id) => sync(id, [id]));
+    const { rerender } = await render(<RunList runs={short} none="None" />);
+    expect(opens()).toEqual([true, true, true, true, true, false]);
+    const long = sync(7, [1, 2, 3, 4, 5, 6]);
+    await rerender(<RunList runs={[long, ...short]} none="None" press={press} />);
+    expect(opens().slice(0, 2)).toEqual([false, true]);
+  });
+
   it("shows a failed or unchanged sync as one line, and a held one without buttons where nothing can be decided", async () => {
     const unchanged: PoliticianSync = ran(
       "sync-politicians",
@@ -3102,10 +3240,9 @@ describe("RunList", () => {
       .toHaveTextContent(
         `${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.frequent} · ${staffCopy.runs.error("Luma answered 500")}`,
       );
-    // Only the newest run is tinted, by how it ended; an older failure is plain.
+    // The newest run is tinted by how it ended; a failure further down stays tinted on a job that runs this often.
     expect(first.element().closest("section")!.parentElement!.className).toMatch(/green/);
-    expect(second.element().closest("section")!.parentElement!.className).toBe("");
-    expect(getComputedStyle(second.element().closest("section")!).backgroundColor).toBe("rgba(0, 0, 0, 0)");
+    expect(second.element().closest("section")!.parentElement!.className).toMatch(/red/);
   });
 
   it("says why a Luma import stopped early, as incomplete in place of done, tinted amber as the newest run", async () => {
@@ -3138,7 +3275,14 @@ describe("RunList", () => {
     // The page is one job's, so no run is labelled with it.
     await expect.element(page.getByText(`${jobTitles["check-mps"]} ·`, { exact: false })).not.toBeInTheDocument();
     await rerender(<RunList runs={[]} none="Nothing here" />);
-    await expect.element(page.getByText("Nothing here")).toBeVisible();
+    const before = ran(
+      "import-luma",
+      { ...exampleLumaResult, stoppedBy: "time" },
+      { id: 1, at: "2026-10-21T11:00:00Z" },
+    );
+    const during = ran("import-luma", exampleLumaResult, { id: 2, at: "2026-10-21T11:48:00Z" });
+    await rerender(<RunList runs={[before, during]} none="Nothing here" press={press} />);
+    expect(document.querySelector("section")!.parentElement!.className).not.toMatch(/amber/);
   });
 });
 

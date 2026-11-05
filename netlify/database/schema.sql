@@ -1660,7 +1660,6 @@ ALTER TABLE public.notes ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 --
 
 CREATE TABLE public.old_letters_mail (
-    dry_run boolean NOT NULL,
     account text NOT NULL,
     gmail_message_id text NOT NULL,
     source text NOT NULL,
@@ -2355,7 +2354,7 @@ ALTER TABLE ONLY public.notes
 --
 
 ALTER TABLE ONLY public.old_letters_mail
-    ADD CONSTRAINT old_letters_mail_pkey PRIMARY KEY (dry_run, account, gmail_message_id);
+    ADD CONSTRAINT old_letters_mail_pkey PRIMARY KEY (account, gmail_message_id);
 
 --
 -- Name: one_off_messages one_off_messages_account_gmail_message_id_key; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2789,19 +2788,19 @@ CREATE INDEX old_letters_mail_letter ON public.old_letters_mail USING btree (let
 -- Name: old_letters_mail_rfc; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX old_letters_mail_rfc ON public.old_letters_mail USING btree (dry_run, rfc_message_id) WHERE (letter_id IS NOT NULL);
+CREATE INDEX old_letters_mail_rfc ON public.old_letters_mail USING btree (rfc_message_id) WHERE (letter_id IS NOT NULL);
 
 --
 -- Name: old_letters_mail_thread; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX old_letters_mail_thread ON public.old_letters_mail USING btree (dry_run, account, gmail_thread_id) WHERE (letter_id IS NOT NULL);
+CREATE INDEX old_letters_mail_thread ON public.old_letters_mail USING btree (account, gmail_thread_id) WHERE (letter_id IS NOT NULL);
 
 --
 -- Name: old_letters_mail_waiting; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX old_letters_mail_waiting ON public.old_letters_mail USING btree (dry_run, source) WHERE (outcome IS NULL);
+CREATE INDEX old_letters_mail_waiting ON public.old_letters_mail USING btree (source) WHERE (outcome IS NULL);
 
 --
 -- Name: one_off_messages_addresses; Type: INDEX; Schema: public; Owner: -

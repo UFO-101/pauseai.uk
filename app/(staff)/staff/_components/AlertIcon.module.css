@@ -13,3 +13,7 @@
 .red {
   color: var(--status-red);
 }
+
+.blue {
+  color: var(--status-blue);
+}

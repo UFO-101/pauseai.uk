@@ -1,4 +1,5 @@
 import { staffCopy } from "@/lib/content/staff-interface";
+import { NIGHTLY } from "@/lib/import-runs";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
@@ -11,9 +12,8 @@ import {
 } from "@/tests/database";
 import { stubLettersInboxEnv } from "@/tests/gmail-sends";
 import { sentToday } from "./gmail-accounts";
-import { query } from "./db";
-import { importOldLetters, importOldLettersChunk, politicianSearches } from "./old-letters-import";
-import { startOldLettersImport } from "./old-letters-start";
+import { query, transaction } from "./db";
+import { importOldLetters, jobProgress, politicianSearches } from "./old-letters-import";
 
 const GMAIL = "https://gmail.googleapis.com/gmail/v1/users/me";
 
@@ -67,26 +67,28 @@ async function seed() {
   return { polly, dora, mo, morag, deepmind, csrb, edinburgh, debate, august, june, form };
 }
 
-async function run(dryRun = false) {
+async function run() {
   await connectTestGmail("joseph@pauseai.uk");
   await connectTestGmail("policy@pauseai.uk");
-  return importOldLetters("jo@pauseai.uk", dryRun);
+  return importOldLetters("jo@pauseai.uk", 0);
 }
 
-const outcomeOf = async (id: string, dry = false) =>
+const outcomeOf = async (id: string) =>
   (
     await query<{ outcome: string; letterId: number | null }>(
-      `SELECT outcome, letter_id::int AS "letterId" FROM old_letters_mail WHERE gmail_message_id = $1 AND dry_run = $2`,
-      [id, dry],
+      `SELECT outcome, letter_id::int AS "letterId" FROM old_letters_mail WHERE gmail_message_id = $1`,
+      [id],
     )
   )[0];
 
 describeWithDatabase("the import of old letters", () => {
   useTestDatabase();
-  beforeEach(() => {
+  beforeEach(async () => {
     stubLettersInboxEnv();
     vi.stubEnv("GMAIL_TOKEN_KEY", Buffer.alloc(32, 7).toString("base64"));
     vi.stubEnv("AIRTABLE_TOKEN", "fixture");
+    // The mailings it fills outlast each test, and it keeps a template it has made.
+    await query("UPDATE mailings SET imported_text = NULL WHERE old_letters_key IS NOT NULL");
   });
   afterEach(() => vi.unstubAllEnvs());
 
@@ -298,12 +300,12 @@ describeWithDatabase("the import of old letters", () => {
     await connectTestGmail("joseph@pauseai.uk");
     await connectTestGmail("policy@pauseai.uk");
     await query(
-      `INSERT INTO old_letters_mail (dry_run, account, gmail_message_id, source, outcome, quoted) VALUES
-       (false, 'joseph@pauseai.uk', 'quoted1', 'received', 'reply', 'Dear You,
+      `INSERT INTO old_letters_mail (account, gmail_message_id, source, outcome, quoted) VALUES
+       ('joseph@pauseai.uk', 'quoted1', 'received', 'reply', 'Dear You,
 
 Please join 40 of your colleagues.')`,
     );
-    await importOldLetters("jo@pauseai.uk", false);
+    await importOldLetters("jo@pauseai.uk", 0);
     // The press deletes nothing of a real run, so the quote is read, and cleared once used.
     const [mailing] = await query<{ approx: boolean; text: { content: unknown[] } }>(
       `SELECT imported_text_approximate AS approx, imported_text AS text FROM mailings WHERE old_letters_key = 'deepmind-august'`,
@@ -350,11 +352,6 @@ Please join 40 of your colleagues.')`,
     await query(
       `INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id) VALUES ('letter', $1, 'x@parliament.uk', 'sent', 'fixture-postmark-1')`,
       [letter],
-    );
-    const dry = await run(true);
-    expect(dry.postmarkTexts).toBe(1);
-    expect(await query("SELECT 1 FROM letters_from_supporters WHERE id = $1 AND letter IS NOT NULL", [letter])).toEqual(
-      [],
     );
     const real = await run();
     expect(real.postmarkTexts).toBe(1);
@@ -419,6 +416,34 @@ Please join 40 of your colleagues.')`,
     ]);
   });
 
+  it("keeps a mailing's template when pressed again, though only the letters that didn't fit have their text", async () => {
+    await seed();
+    await run();
+    const templates = () => query("SELECT old_letters_key AS key, imported_text AS text FROM mailings ORDER BY id");
+    const before = await templates();
+    await run();
+    expect(await templates()).toEqual(before);
+  });
+
+  it("says how far it has got, over all its runs", async () => {
+    expect(await jobProgress("import-luma")).toBeUndefined();
+    expect(await jobProgress("import-old-letters")).toMatchObject({ read: 0, left: 0, refusals: 0, byMailing: {} });
+    await seed();
+    await run();
+    const progress = await jobProgress("import-old-letters");
+    expect(progress).toMatchObject({ left: 0, refusals: 0 });
+    expect(progress!.read).toBeGreaterThan(0);
+    expect(progress!.joined).toBeGreaterThan(0);
+    expect(progress!.replies).toBeGreaterThan(0);
+    expect(progress!.oneOffs).toBeGreaterThan(0);
+    expect(progress!.byMailing).toMatchObject({ "deepmind-25": 2, csrb: 1, "pauseai-info-frontier-ai": 1 });
+    expect(progress!.titles["deepmind-25"]).toBe(staffCopy.oldLetters.mailingTitles["deepmind-25"]);
+    await query(
+      `INSERT INTO import_runs (job, started_by, status, result) VALUES ('import-old-letters', 'nightly', 'ok', '{"stoppedBy":"gmail"}')`,
+    );
+    expect((await jobProgress("import-old-letters"))?.refusals).toBe(1);
+  });
+
   it("skips what's kept when pressed again", async () => {
     await seed();
     await run();
@@ -435,70 +460,78 @@ Please join 40 of your colleagues.')`,
     expect(await count()).toEqual(before);
   });
 
-  it("writes nothing on a dry run but its own place, and reports what would be joined", async () => {
+  it("reports what it joined, by mailing", async () => {
     const seeded = await seed();
-    const result = await run(true);
-    expect(result).toMatchObject({ dryRun: true, finished: true });
+    const result = await run();
+    expect(result).toMatchObject({ finished: true, formTexts: 1 });
     expect(result.joined).toMatchObject({ "deepmind-25": 1, csrb: 1, "pauseai-info-frontier-ai": 1 });
     expect(result.added["russell-speak"]).toBe(1);
     expect(result.replies).toBeGreaterThan(0);
-    expect(result.formTexts).toBe(1);
     expect(result.notJoined["deepmind-others"]).toBeGreaterThan(0);
-    expect(await query("SELECT 1 FROM email_sends WHERE imported")).toEqual([]);
-    expect(await query("SELECT 1 FROM letter_replies")).toEqual([]);
-    expect(await query("SELECT 1 FROM one_off_messages")).toEqual([]);
-    expect(await query("SELECT 1 FROM letters_from_supporters WHERE letter IS NOT NULL")).toEqual([]);
-    expect(await query("SELECT 1 FROM letters_from_pauseai WHERE own_text IS NOT NULL")).toEqual([]);
-    expect((await outcomeOf("0a01", true)).letterId).toBe(seeded.deepmind);
-    // The real run clears a dry run's rows.
-    await run();
-    expect(await query("SELECT 1 FROM old_letters_mail WHERE dry_run")).toEqual([]);
+    expect((await outcomeOf("0a01")).letterId).toBe(seeded.deepmind);
   });
 
   it("stops the moment Gmail refuses, saying so, and carries on when pressed again", async () => {
     await seed();
     await connectTestGmail("joseph@pauseai.uk");
     await connectTestGmail("policy@pauseai.uk");
-    server.use(http.get(`${GMAIL}/messages/0a02`, () => new HttpResponse("{}", { status: 403 }), { once: true }));
-    const stopped = await importOldLetters("jo@pauseai.uk", false);
-    expect(stopped).toMatchObject({ stoppedBy: "gmail", finished: false });
-    expect(stopped.left).toBeGreaterThan(0);
-    const again = await importOldLetters("jo@pauseai.uk", false);
-    expect(again).toMatchObject({ finished: true, left: 0 });
-  });
-
-  it("carries on through more calls when a press's time is up", async () => {
-    await seed();
-    await connectTestGmail("joseph@pauseai.uk");
-    await connectTestGmail("policy@pauseai.uk");
-    const result = await importOldLetters("jo@pauseai.uk", true, 0, 40);
-    expect(result).toMatchObject({ finished: true });
-  });
-
-  it("works in calls, each keeping its place in one run, when its time is up", async () => {
-    await seed();
-    await connectTestGmail("joseph@pauseai.uk");
-    await connectTestGmail("policy@pauseai.uk");
-    const first = await importOldLettersChunk({ startedBy: "jo@pauseai.uk", dryRun: true, paceMs: 1, chunkMs: 1 });
-    expect(first.more).toBe(true);
-    const second = await importOldLettersChunk({
-      startedBy: "jo@pauseai.uk",
-      dryRun: true,
-      runId: first.runId,
-      paceMs: 1,
-      chunkMs: 60_000,
-    });
-    expect(second).toMatchObject({ runId: first.runId, more: false });
-    const runs = await query<{ finished: boolean }>(
-      `SELECT (result->>'finished')::boolean AS finished FROM import_runs WHERE job = 'import-old-letters'`,
+    server.use(
+      http.get(`${GMAIL}/messages/0a02`, () => HttpResponse.json({ error: { message: "Too many" } }, { status: 403 }), {
+        once: true,
+      }),
     );
-    expect(runs).toEqual([{ finished: true }]);
+    const stopped = await importOldLetters("jo@pauseai.uk", 0);
+    expect(stopped).toMatchObject({
+      stoppedBy: "gmail",
+      stoppedWhy: "Gmail answered 403 for /messages/0a02: Too many",
+      finished: false,
+    });
+    expect(stopped.left).toBeGreaterThan(0);
+    const again = await importOldLetters("jo@pauseai.uk", 0);
+    expect(again).toMatchObject({ finished: true, left: 0, listed: 0 });
+  });
+
+  it("carries on from where the last run stopped when its time is up, without listing again", async () => {
+    await seed();
+    await connectTestGmail("joseph@pauseai.uk");
+    await connectTestGmail("policy@pauseai.uk");
+    let last = await importOldLetters("jo@pauseai.uk", 0, 40);
+    let runs = 1;
+    while (!last.finished) {
+      last = await importOldLetters("jo@pauseai.uk", 0, 40);
+      runs++;
+    }
+    expect(runs).toBeGreaterThan(1);
+    expect(await query("SELECT 1 FROM import_runs WHERE job = 'import-old-letters'")).toHaveLength(runs);
+    expect(last.left).toBe(0);
+  });
+
+  it("does nothing on its schedule once finished, while a press goes through it all again", async () => {
+    await seed();
+    await connectTestGmail("joseph@pauseai.uk");
+    await connectTestGmail("policy@pauseai.uk");
+    const runs = () => query("SELECT 1 FROM import_runs WHERE job = 'import-old-letters'");
+    await expect(importOldLetters(NIGHTLY, 0, 60_000)).resolves.toMatchObject({ finished: true });
+    expect(await runs()).toHaveLength(1);
+    await expect(importOldLetters(NIGHTLY, 0, 60_000)).resolves.toMatchObject({ finished: true });
+    expect(await runs()).toHaveLength(1);
+    await expect(importOldLetters("jo@pauseai.uk", 0)).resolves.toMatchObject({ finished: true, read: 0 });
+    expect(await runs()).toHaveLength(2);
+  });
+
+  it("stops at once, leaving no record, while another run is going", async () => {
+    const result = await transaction(async (db) => {
+      await query("SELECT pg_advisory_xact_lock(hashtext('import-old-letters'))", [], db);
+      return importOldLetters("jo@pauseai.uk", 0);
+    });
+    expect(result).toMatchObject({ finished: false, read: 0 });
+    expect(await query("SELECT 1 FROM import_runs WHERE job = 'import-old-letters'")).toEqual([]);
   });
 
   it("keeps a failure in the import log", async () => {
     await seed();
     await connectTestGmail("joseph@pauseai.uk");
-    await expect(importOldLetters("jo@pauseai.uk", false)).rejects.toThrow("isn't connected");
+    await expect(importOldLetters("jo@pauseai.uk", 0)).rejects.toThrow("isn't connected");
     const [{ status }] = await query<{ status: string }>(
       "SELECT status FROM import_runs WHERE job = 'import-old-letters'",
     );
@@ -510,7 +543,7 @@ Please join 40 of your colleagues.')`,
     await connectTestGmail("joseph@pauseai.uk");
     await connectTestGmail("policy@pauseai.uk");
     server.use(http.get(`${GMAIL}/messages/0a01`, () => new HttpResponse("{}", { status: 500 }), { once: true }));
-    await expect(importOldLetters("jo@pauseai.uk", false)).rejects.toThrow("Gmail answered 500");
+    await expect(importOldLetters("jo@pauseai.uk", 0)).rejects.toThrow("Gmail answered 500");
   });
 
   it("skips mail gone since it was listed", async () => {
@@ -523,39 +556,9 @@ Please join 40 of your colleagues.')`,
       http.get(`${GMAIL}/messages/0a14`, () => new HttpResponse("{}", { status: 404 })),
       http.get(`${GMAIL}/messages/0a20`, () => new HttpResponse("{}", { status: 404 })),
     );
-    await importOldLetters("jo@pauseai.uk", false);
+    await importOldLetters("jo@pauseai.uk", 0);
     expect((await outcomeOf("0a01")).outcome).toBe("skipped");
     expect((await outcomeOf("0a10")).outcome).toBe("skipped");
-  });
-
-  it("starts a press: the whole of it on a fixture build, or a background function", async () => {
-    await seed();
-    await connectTestGmail("joseph@pauseai.uk");
-    await connectTestGmail("policy@pauseai.uk");
-    vi.stubEnv("DATA_FIXTURES", "1");
-    await startOldLettersImport("jo@pauseai.uk", true);
-    expect(await query("SELECT 1 FROM import_runs WHERE job = 'import-old-letters'")).toHaveLength(1);
-    vi.stubEnv("DATA_FIXTURES", "");
-    vi.stubEnv("CRON_SECRET", "s3cret");
-    let body: unknown;
-    server.use(
-      http.post("https://pauseai.uk/.netlify/functions/import-old-letters-background", async ({ request }) => {
-        body = await request.json();
-        return new HttpResponse(null, { status: 202 });
-      }),
-    );
-    await startOldLettersImport("jo@pauseai.uk", false);
-    expect(body).toEqual({ startedBy: "jo@pauseai.uk", dryRun: false });
-    server.use(
-      http.post(
-        "https://pauseai.uk/.netlify/functions/import-old-letters-background",
-        () => new HttpResponse(null, { status: 500 }),
-      ),
-    );
-    await expect(startOldLettersImport("jo@pauseai.uk", false)).rejects.toThrow("returned 500");
-    expect(
-      await query("SELECT status, started_by AS by FROM import_runs WHERE job = 'import-old-letters'"),
-    ).toContainEqual({ status: "failed", by: "jo@pauseai.uk" });
   });
 });
 

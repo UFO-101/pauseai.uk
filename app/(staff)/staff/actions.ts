@@ -2,7 +2,7 @@
 
 // The staff interface's Server Actions. Each is a public endpoint, so each
 // calls requireStaff() before anything else (tests/checks/staff-auth.test.ts).
-import { startOldLettersImport } from "@/lib/server/old-letters-start";
+import { importOldLetters } from "@/lib/server/old-letters-import";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { type ImportJob, importPath } from "@/lib/import-runs";
@@ -130,16 +130,15 @@ function refreshImport(job: ImportJob): void {
 /**
  * Runs an import or check, unless a press of it is still running, then
  * refreshes its pages. A failure is in the import log, shown on its page like
- * a nightly one, so it's logged rather than crashing the page. One `inBackground`
- * goes on after this, and ends its press itself.
+ * a nightly one, so it's logged rather than crashing the page.
  */
-async function run(job: ImportJob, email: string, work: () => Promise<unknown>, inBackground = false): Promise<void> {
+async function run(job: ImportJob, email: string, work: () => Promise<unknown>): Promise<void> {
   if (await takePress(job, email)) {
     try {
       await work();
-      if (!inBackground) await endPress(job);
     } catch (error) {
       console.error(error);
+    } finally {
       await endPress(job);
     }
   }
@@ -166,10 +165,9 @@ export async function importGoToParliamentNow(): Promise<void> {
   await run("import-go-to-parliament", email, () => importGoToParliament(email));
 }
 
-/** Starts a press of the import of old letters, as a dry run if its box is ticked. */
-export async function importOldLettersNow(form: FormData): Promise<void> {
+export async function importOldLettersNow(): Promise<void> {
   const { email } = await requireStaff();
-  await run("import-old-letters", email, () => startOldLettersImport(email, form.get("dryRun") === "on"), true);
+  await run("import-old-letters", email, () => importOldLetters(email));
 }
 
 export async function checkNow(): Promise<void> {
