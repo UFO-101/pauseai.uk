@@ -91,6 +91,19 @@ test("No permissions", async ({ page, request, flowDatabase }) => {
     flowDatabase,
     "SELECT '/staff/mailings/' || mailing_id || '/letters/' || id FROM letters_from_pauseai ORDER BY id LIMIT 1",
   );
+  // A one-off email Jane sent her MP, and mail matching nothing: their names and addresses stay hidden too.
+  const [thread] = runSql(
+    flowDatabase,
+    `INSERT INTO one_off_threads (subject, someone_else, latest_at) VALUES ('${sender}', true, now()) RETURNING id`,
+  );
+  runSql(
+    flowDatabase,
+    `INSERT INTO one_off_thread_people (thread_id, notable_person_id) VALUES (${thread}, ${testyId});
+     INSERT INTO one_off_messages (thread_id, account, gmail_message_id, gmail_thread_id, from_address, from_name, addresses, subject, at, from_us, blob_key, size)
+     VALUES (${thread}, 'policy@pauseai.uk', 'leak-1', 't', '${sender}', 'Jane Smith', ARRAY['${sender}'], '${sender}', now(), false, 'fixture/one-off-volunteer.eml.gz', 1);
+     INSERT INTO import_runs (job, started_by, status, result) VALUES ('import-old-letters', 'x', 'ok',
+       '{"dryRun": false, "finished": true, "read": 1, "left": 0, "replies": 0, "autoReplies": 0, "oneOffs": 0, "formTexts": 0, "postmarkTexts": 0, "joined": {}, "added": {}, "notJoined": {}, "unreadable": [], "unmatched": [{"from": "${sender}", "subject": "x"}]}');`,
+  );
   // The route list's examples of letters and asks are the fixture database's.
   const routes = [
     ...ROUTES.filter(
@@ -98,9 +111,11 @@ test("No permissions", async ({ page, request, flowDatabase }) => {
         route.startsWith("/staff") &&
         !route.startsWith("/staff/login") &&
         !route.includes("/letters/1") &&
-        !/^\/staff\/(asks\/|mailings\/\d+\/letters)/.test(route),
+        !/^\/staff\/(asks\/|mailings\/(\d+\/letters|one-off\/\d))/.test(route),
     ),
     "/staff/asks/frontier-ai-letter",
+    "/staff/asks/frontier-ai-letter/edit",
+    `/staff/mailings/one-off/${thread}`,
     pauseaiLetter,
     ...IMPORT_JOBS.map(importPath),
     `/staff/politicians/${testyId}`,
