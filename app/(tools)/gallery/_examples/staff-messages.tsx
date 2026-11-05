@@ -1,16 +1,10 @@
 // The staff interface's messages to supporters: from the supporters list, the
 // writer, the list of them, each one's page, and one copy with its replies.
+import { NeedsContactFilter } from "@/app/(staff)/staff/_components/MessageSupporters";
+import { MailingWhen } from "@/app/(staff)/staff/_components/MailingView";
+import { MessageWho } from "@/app/(staff)/staff/_components/MessageFor";
+import { MessageChannelName } from "@/app/(staff)/staff/_components/MessageView";
 import {
-  ChoosingMessageFrame,
-  MessageSupporters,
-  NeedsContactFilter,
-} from "@/app/(staff)/staff/_components/MessageSupporters";
-import { MailingStanding, MailingWhen } from "@/app/(staff)/staff/_components/MailingView";
-import MessageCopyView from "@/app/(staff)/staff/_components/MessageCopyView";
-import MessageFor, { MessageWho } from "@/app/(staff)/staff/_components/MessageFor";
-import MessageView, { MessageChannelName } from "@/app/(staff)/staff/_components/MessageView";
-import {
-  exampleMessageCopy,
   exampleMessageData,
   exampleMessageSent,
   exampleMessageSummary,
@@ -23,12 +17,19 @@ import StaffPage from "@/app/(staff)/staff/_components/ui/StaffPage";
 import { mailingGroups } from "@/lib/mailing-groups";
 import { supportersSearch } from "@/lib/staff-search";
 import type { Group } from "../_components/types";
-import { DraftTitleExample, MessageWriterExample, TemplatePickerExample } from "./staff-messages.client";
+import {
+  ChoosingMessageFrameExample,
+  DraftTitleExample,
+  MailingStandingExample,
+  MessageCopyViewExample,
+  MessageForExample,
+  MessageSupportersExample,
+  MessageViewExample,
+  MessageWriterExample,
+  TemplatePickerExample,
+} from "./staff-messages.client";
 
-const C = "app/(staff)/staff/_components";
-const nothing = async () => {};
 const now = "2026-11-05T12:00:00Z";
-const yes = supportersSearch({ contact: "email:pauseai-updates:yes", near: "LS1" });
 const groups = mailingGroups(
   {
     drafts: [{ ...exampleMessageSummary, id: 3, state: "draft" as const, title: "Events near you", to: 412 }],
@@ -66,14 +67,13 @@ export const staffMessages: Group = {
   examples: [
     {
       name: "MessageSupporters",
-      file: `${C}/MessageSupporters.tsx`,
+      file: "app/(staff)/staff/_components/MessageSupporters.tsx",
       variants: [
         {
           label: "With a Contact filter answered yes, then without one: dashed",
           render: () => (
             <StaffPage as="div">
-              <MessageSupporters search={yes} total={430} action={nothing} />
-              <MessageSupporters search={supportersSearch({ near: "LS1" })} total={1180} action={nothing} />
+              <MessageSupportersExample />
             </StaffPage>
           ),
         },
@@ -81,7 +81,7 @@ export const staffMessages: Group = {
     },
     {
       name: "NeedsContactFilter",
-      file: `${C}/MessageSupporters.tsx`,
+      file: "app/(staff)/staff/_components/MessageSupporters.tsx",
       variants: [
         {
           label: "What pressing the dashed button says",
@@ -95,20 +95,13 @@ export const staffMessages: Group = {
     },
     {
       name: "ChoosingMessageFrame",
-      file: `${C}/MessageSupporters.tsx`,
+      file: "app/(staff)/staff/_components/MessageSupporters.tsx",
       variants: [
         {
           label: "Change who: the dark strip at the top and, in place of the bar at the foot, how the filters stand",
           render: () => (
             <StaffPage as="div">
-              <ChoosingMessageFrame
-                choosing={{ id: 3, title: "Events near you", channel: "email", topic: "pauseai-updates" }}
-                search={yes}
-                total={430}
-                keep={nothing}
-              >
-                <p>The list.</p>
-              </ChoosingMessageFrame>
+              <ChoosingMessageFrameExample />
             </StaffPage>
           ),
         },
@@ -116,7 +109,7 @@ export const staffMessages: Group = {
     },
     {
       name: "MessageWriter",
-      file: `${C}/MessageWriter.tsx`,
+      file: "app/(staff)/staff/_components/MessageWriter.tsx",
       variants: [
         {
           label: "A draft email",
@@ -170,7 +163,7 @@ export const staffMessages: Group = {
     },
     {
       name: "TemplatePicker",
-      file: `${C}/TemplatePicker.tsx`,
+      file: "app/(staff)/staff/_components/TemplatePicker.tsx",
       variants: [
         {
           label: "Five, with a search and Show all",
@@ -184,7 +177,7 @@ export const staffMessages: Group = {
     },
     {
       name: "DraftTitle",
-      file: `${C}/DraftWriter.tsx`,
+      file: "app/(staff)/staff/_components/DraftWriter.tsx",
       variants: [
         {
           label: "With whether it's saved",
@@ -198,7 +191,7 @@ export const staffMessages: Group = {
     },
     {
       name: "Numbered",
-      file: `${C}/DraftWriter.tsx`,
+      file: "app/(staff)/staff/_components/DraftWriter.tsx",
       variants: [
         {
           label: "A section's title, as in the draft above",
@@ -212,7 +205,7 @@ export const staffMessages: Group = {
     },
     {
       name: "MessagesOverview",
-      file: `${C}/MessagesOverview.tsx`,
+      file: "app/(staff)/staff/_components/MessagesOverview.tsx",
       variants: [
         {
           label: "Emails and texts together",
@@ -234,7 +227,7 @@ export const staffMessages: Group = {
     },
     {
       name: "MessageChannelName",
-      file: `${C}/MessageView.tsx`,
+      file: "app/(staff)/staff/_components/MessageView.tsx",
       variants: [
         {
           label: "Each channel",
@@ -249,24 +242,13 @@ export const staffMessages: Group = {
     },
     {
       name: "MessageView",
-      file: `${C}/MessageView.tsx`,
+      file: "app/(staff)/staff/_components/MessageView.tsx",
       variants: [
         {
           label: "An email sent",
           render: () => (
             <StaffPage as="div">
-              <MessageView
-                data={exampleMessageSent}
-                who={
-                  <MessageWho
-                    channel="email"
-                    params={exampleMessageData.filter.params}
-                    choices={exampleSupporterChoices}
-                  />
-                }
-                stop={nothing}
-                reschedule={nothing}
-              />
+              <MessageViewExample kind="email" />
             </StaffPage>
           ),
         },
@@ -274,27 +256,7 @@ export const staffMessages: Group = {
           label: "A text sent",
           render: () => (
             <StaffPage as="div">
-              <MessageView
-                data={{
-                  ...exampleMessageSent,
-                  summary: { ...exampleMessageSummary, channel: "text", read: 240 },
-                  written: {
-                    ...exampleMessageSent.written,
-                    channel: "text",
-                    sentFrom: "+447700900000",
-                    body: exampleMessageCopy.body,
-                  },
-                }}
-                who={
-                  <MessageWho
-                    channel="text"
-                    params={{ contact: "phone:luma-calendar:yes" }}
-                    choices={exampleSupporterChoices}
-                  />
-                }
-                stop={nothing}
-                reschedule={nothing}
-              />
+              <MessageViewExample kind="text" />
             </StaffPage>
           ),
         },
@@ -302,29 +264,7 @@ export const staffMessages: Group = {
           label: "A text scheduled, waiting for WhatsApp's approval",
           render: () => (
             <StaffPage as="div">
-              <MessageView
-                data={{
-                  ...exampleMessageSent,
-                  summary: { ...exampleMessageSummary, channel: "text", state: "scheduled", waiting: true },
-                  written: {
-                    ...exampleMessageSent.written,
-                    channel: "text",
-                    state: "scheduled",
-                    sentFrom: "+447700900000",
-                    body: exampleMessageCopy.body,
-                    dueAt: "2026-11-07T07:18:00Z",
-                  },
-                }}
-                who={
-                  <MessageWho
-                    channel="text"
-                    params={{ contact: "phone:luma-calendar:yes" }}
-                    choices={exampleSupporterChoices}
-                  />
-                }
-                stop={nothing}
-                reschedule={nothing}
-              />
+              <MessageViewExample kind="waiting" />
             </StaffPage>
           ),
         },
@@ -332,25 +272,13 @@ export const staffMessages: Group = {
     },
     {
       name: "MessageFor",
-      file: `${C}/MessageFor.tsx`,
+      file: "app/(staff)/staff/_components/MessageFor.tsx",
       variants: [
         {
           label: "As it stands: here, sent",
           render: () => (
             <StaffPage as="div">
-              <MessageFor
-                data={exampleMessageSent}
-                actions={{
-                  save: async () => undefined,
-                  attach: async () => undefined,
-                  detach: async () => ({ saved: true, version: 1, attachments: [] }),
-                  sendTest: async () => undefined,
-                  schedule: async () => ({ scheduled: true }),
-                  deleteDraft: nothing,
-                  stop: nothing,
-                  reschedule: nothing,
-                }}
-              />
+              <MessageForExample />
             </StaffPage>
           ),
         },
@@ -358,7 +286,7 @@ export const staffMessages: Group = {
     },
     {
       name: "MessageWho",
-      file: `${C}/MessageFor.tsx`,
+      file: "app/(staff)/staff/_components/MessageFor.tsx",
       variants: [
         {
           label: "Its channel, then the filter's words",
@@ -372,18 +300,13 @@ export const staffMessages: Group = {
     },
     {
       name: "MailingStanding",
-      file: `${C}/MailingView.tsx`,
+      file: "app/(staff)/staff/_components/MailingView.tsx",
       variants: [
         {
           label: "Sending, with Stop sending",
           render: () => (
             <StaffPage as="div">
-              <MailingStanding
-                mailing={exampleMessageSummary}
-                written={{ ...exampleMessageSent.written, state: "sending" }}
-                stop={nothing}
-                reschedule={nothing}
-              />
+              <MailingStandingExample />
             </StaffPage>
           ),
         },
@@ -391,7 +314,7 @@ export const staffMessages: Group = {
     },
     {
       name: "MailingWhen",
-      file: `${C}/MailingView.tsx`,
+      file: "app/(staff)/staff/_components/MailingView.tsx",
       variants: [
         {
           label: "When it went",
@@ -405,13 +328,13 @@ export const staffMessages: Group = {
     },
     {
       name: "MessageCopyView",
-      file: `${C}/MessageCopyView.tsx`,
+      file: "app/(staff)/staff/_components/MessageCopyView.tsx",
       variants: [
         {
           label: "A text, as the conversation",
           render: () => (
             <StaffPage as="div">
-              <MessageCopyView one={exampleMessageCopy} reply={nothing} />
+              <MessageCopyViewExample />
             </StaffPage>
           ),
         },
@@ -419,17 +342,7 @@ export const staffMessages: Group = {
           label: "An email, as the thread",
           render: () => (
             <StaffPage as="div">
-              <MessageCopyView
-                one={{
-                  ...exampleMessageCopy,
-                  channel: "email",
-                  subject: "Thank you for marching",
-                  sentFrom: "hello@pauseai.uk",
-                  address: "jane@example.com",
-                  readAt: null,
-                }}
-                reply={nothing}
-              />
+              <MessageCopyViewExample email />
             </StaffPage>
           ),
         },
@@ -437,7 +350,7 @@ export const staffMessages: Group = {
     },
     {
       name: "SupporterMessages",
-      file: `${C}/SupporterMessages.tsx`,
+      file: "app/(staff)/staff/_components/SupporterMessages.tsx",
       variants: [
         {
           label: "Those they were sent, with their replies",
@@ -477,7 +390,7 @@ export const staffMessages: Group = {
     },
     {
       name: "TextBubble",
-      file: `${C}/TextBubble.tsx`,
+      file: "app/(staff)/staff/_components/TextBubble.tsx",
       variants: [
         {
           label: "A text with its Stop button",
@@ -487,7 +400,7 @@ export const staffMessages: Group = {
     },
     {
       name: "ChatWall",
-      file: `${C}/TextBubble.tsx`,
+      file: "app/(staff)/staff/_components/TextBubble.tsx",
       variants: [
         {
           label: "A conversation",
@@ -506,7 +419,7 @@ export const staffMessages: Group = {
     },
     {
       name: "ChatBubble",
-      file: `${C}/TextBubble.tsx`,
+      file: "app/(staff)/staff/_components/TextBubble.tsx",
       variants: [
         {
           label: "Theirs",

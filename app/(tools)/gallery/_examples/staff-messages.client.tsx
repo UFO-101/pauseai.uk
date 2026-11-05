@@ -3,16 +3,26 @@
 // The interactive examples of the pages of messages to supporters.
 import { useState } from "react";
 import { Numbered, DraftTitle } from "@/app/(staff)/staff/_components/DraftWriter";
+import { MailingStanding } from "@/app/(staff)/staff/_components/MailingView";
+import MessageCopyView from "@/app/(staff)/staff/_components/MessageCopyView";
+import MessageFor, { MessageWho } from "@/app/(staff)/staff/_components/MessageFor";
+import { ChoosingMessageFrame, MessageSupporters } from "@/app/(staff)/staff/_components/MessageSupporters";
+import MessageView from "@/app/(staff)/staff/_components/MessageView";
 import MessageWriter, { type MessageWriterActions } from "@/app/(staff)/staff/_components/MessageWriter";
 import {
+  exampleMessageCopy,
   exampleMessageData,
   exampleMessageEmail,
+  exampleMessageSent,
+  exampleMessageSummary,
+  exampleSupporterChoices,
   exampleMessageText,
   exampleTemplates,
   exampleTextWords,
 } from "@/app/(staff)/staff/_components/MessageWriter.examples";
 import TemplatePicker from "@/app/(staff)/staff/_components/TemplatePicker";
 import { Muted } from "@/components/ui/Text";
+import { supportersSearch } from "@/lib/staff-search";
 import { Logged } from "../_components/wiring";
 
 function messageActions(log: (name: string) => (...args: unknown[]) => void): MessageWriterActions {
@@ -108,4 +118,119 @@ export function DraftTitleExample() {
       </h2>
     </>
   );
+}
+
+const nothing = async () => {};
+const yes = supportersSearch({ contact: "email:pauseai-updates:yes", near: "LS1" });
+
+/** Message N supporters with a Contact filter answered yes, then without one: dashed. */
+export function MessageSupportersExample() {
+  return (
+    <>
+      <MessageSupporters search={yes} total={430} action={nothing} />
+      <MessageSupporters search={supportersSearch({ near: "LS1" })} total={1180} action={nothing} />
+    </>
+  );
+}
+
+/** The list choosing who a draft goes to. */
+export function ChoosingMessageFrameExample() {
+  return (
+    <ChoosingMessageFrame
+      choosing={{ id: 3, title: "Events near you", channel: "email", topic: "pauseai-updates" }}
+      search={yes}
+      total={430}
+      keep={nothing}
+    >
+      <p>The list.</p>
+    </ChoosingMessageFrame>
+  );
+}
+
+/** A message's page: an email sent, a text sent, or a text scheduled, waiting for approval. */
+export function MessageViewExample({ kind }: { kind: "email" | "text" | "waiting" }) {
+  const text = {
+    channel: "text" as const,
+    sentFrom: "+447700900000",
+    body: exampleMessageCopy.body,
+  };
+  const data =
+    kind === "email"
+      ? exampleMessageSent
+      : kind === "text"
+        ? {
+            ...exampleMessageSent,
+            summary: { ...exampleMessageSummary, channel: "text" as const, read: 240 },
+            written: { ...exampleMessageSent.written, ...text },
+          }
+        : {
+            ...exampleMessageSent,
+            summary: { ...exampleMessageSummary, channel: "text" as const, state: "scheduled" as const, waiting: true },
+            written: {
+              ...exampleMessageSent.written,
+              ...text,
+              state: "scheduled" as const,
+              dueAt: "2026-11-07T07:18:00Z",
+            },
+          };
+  return (
+    <MessageView
+      data={data}
+      who={
+        <MessageWho
+          channel={data.written.channel}
+          params={exampleMessageData.filter.params}
+          choices={exampleSupporterChoices}
+        />
+      }
+      stop={nothing}
+      reschedule={nothing}
+    />
+  );
+}
+
+/** A message's page, as it stands: here, sent. */
+export function MessageForExample() {
+  return (
+    <MessageFor
+      data={exampleMessageSent}
+      actions={{
+        save: async () => undefined,
+        attach: async () => undefined,
+        detach: async () => ({ saved: true, version: 1, attachments: [] }),
+        sendTest: async () => undefined,
+        schedule: async () => ({ scheduled: true }),
+        deleteDraft: nothing,
+        stop: nothing,
+        reschedule: nothing,
+      }}
+    />
+  );
+}
+
+/** One sending, with Stop sending. */
+export function MailingStandingExample() {
+  return (
+    <MailingStanding
+      mailing={exampleMessageSummary}
+      written={{ ...exampleMessageSent.written, state: "sending" }}
+      stop={nothing}
+      reschedule={nothing}
+    />
+  );
+}
+
+/** Message and reply: a text as the conversation, or an email as the thread. */
+export function MessageCopyViewExample({ email = false }: { email?: boolean }) {
+  const one = email
+    ? {
+        ...exampleMessageCopy,
+        channel: "email" as const,
+        subject: "Thank you for marching",
+        sentFrom: "hello@pauseai.uk",
+        address: "jane@example.com",
+        readAt: null,
+      }
+    : exampleMessageCopy;
+  return <MessageCopyView one={one} reply={nothing} />;
 }
