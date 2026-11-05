@@ -58,7 +58,11 @@ export default function LetterThread({ thread, link }: { thread: Thread; link?: 
       >
         {thread.letter ? (
           <>
-            {thread.approximate && <Strip tone="amber">{copy.approximate}</Strip>}
+            {thread.approximate && (
+              <div className={styles.approximate}>
+                <Strip tone="amber">{copy.approximate}</Strip>
+              </div>
+            )}
             <MailingLetter doc={thread.letter} />
           </>
         ) : (

@@ -353,15 +353,22 @@ describeWithDatabase("staff Server Actions", () => {
   });
 
   it("holds a press in the background until the import of old letters ends it", async () => {
-    vi.stubEnv("URL", "https://pauseai.uk");
+    vi.stubEnv("DATA_FIXTURES", "");
+    vi.stubEnv("SITE_ORIGIN", "https://pauseai.uk");
     vi.stubEnv("CRON_SECRET", "s3cret");
     server.use(
-      http.post("*/.netlify/functions/import-old-letters-background", () => new HttpResponse(null, { status: 202 })),
+      http.post(
+        "https://pauseai.uk/.netlify/functions/import-old-letters-background",
+        () => new HttpResponse(null, { status: 202 }),
+      ),
     );
     await importOldLettersNow(new FormData());
     expect(await query("SELECT started_by AS by FROM job_presses")).toEqual([{ by: "jo@pauseai.uk" }]);
     server.use(
-      http.post("*/.netlify/functions/import-old-letters-background", () => new HttpResponse(null, { status: 500 })),
+      http.post(
+        "https://pauseai.uk/.netlify/functions/import-old-letters-background",
+        () => new HttpResponse(null, { status: 500 }),
+      ),
     );
     await query("DELETE FROM job_presses");
     await importOldLettersNow(new FormData());

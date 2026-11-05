@@ -43,3 +43,8 @@
   font-size: var(--text-sm);
   font-style: italic;
 }
+
+/* A rebuilt letter's note, set off from the letter's first line. */
+.approximate {
+  margin-bottom: var(--space-4);
+}
