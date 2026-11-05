@@ -1,10 +1,11 @@
+import { staffCopy } from "@/lib/content/staff-interface";
 import type { MailingDoc } from "@/lib/mailing-doc";
 import type { MessageTemplate, WrittenMessage } from "@/lib/server/message-drafts";
 import type { MessageCopy, MessagePageData, MessageSummary, MessageWriterData } from "@/lib/server/message-pages";
 import type { SupporterChoices } from "@/lib/server/supporters";
 
 /** An email with a first name, a part only for those with a local group, and their MP. */
-export const exampleMessageWords: MailingDoc = {
+const exampleMessageWords: MailingDoc = {
   type: "doc",
   content: [
     {
@@ -128,13 +129,25 @@ export const exampleMessageData: MessageWriterData = {
   conditions: [
     {
       id: "has:localGroup",
-      label: "⁂ have a local group",
+      label: staffCopy.messagePages.conditions.localGroup.label,
       covers: 272,
       group: "What we know",
       option: "A local group",
     },
-    { id: "has:mp", label: "⁂ have an MP", covers: 151, group: "What we know", option: "Their MP" },
-    { id: "volunteer:yes", label: "⁂ volunteer", covers: 120, group: "Volunteering", option: "Volunteers" },
+    {
+      id: "has:mp",
+      label: staffCopy.messagePages.conditions.mp.label,
+      covers: 151,
+      group: "What we know",
+      option: "Their MP",
+    },
+    {
+      id: "volunteer:yes",
+      label: staffCopy.messagePages.conditions.volunteer.label,
+      covers: 120,
+      group: "Volunteering",
+      option: "Volunteers",
+    },
   ],
   senders: [
     { email: "jo@pauseai.uk", name: "Jo Example", connectedAt: "2026-10-01T10:00:00Z", sentToday: 12, remaining: 1988 },

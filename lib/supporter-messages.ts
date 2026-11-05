@@ -31,7 +31,6 @@ export function messageTerms(contact: ParamValue | undefined): MessageTerms | un
 
 /** The merge fields of a message to supporters. No one has all of them, so each has a fallback. */
 export const MESSAGE_FIELDS = ["firstName", "localGroup", "mp"] as const;
-export type MessageField = (typeof MESSAGE_FIELDS)[number];
 
 /** Each merge field's words, as a template's row and a title say it. */
 export const FIELD_WORDS: Record<string, string> = staffCopy.messagePages.fieldWords;
@@ -58,7 +57,7 @@ export const MESSAGE_SENDER = { name: "PauseAI UK", email: "hello@pauseai.uk" };
 export const TEXT_SENDER_NAME = "PauseAI UK";
 
 /** How long after its time a text may still go, a fixed limit nobody sets. */
-export const TEXT_SENDS_FOR_DAYS = 3;
+const TEXT_SENDS_FOR_DAYS = 3;
 
 /** When a text due at `dueAt` stops sending, as an ISO string. */
 export function textStopsAt(dueAt: string): string {
@@ -74,10 +73,10 @@ export function textReplyUntil(lastFromThem: string | null): string | null {
 }
 
 /** What an email costs by Postmark's broadcast stream, in dollars (https://postmarkapp.com/pricing). */
-export const EMAIL_DOLLARS_EACH = 0.00125;
+const EMAIL_DOLLARS_EACH = 0.00125;
 
 /** What a text costs when delivered, in pence, for a marketing message to the UK (https://whatsappbusiness.com/products/platform-pricing/). */
-export const TEXT_PENCE_EACH = 4.4;
+const TEXT_PENCE_EACH = 4.4;
 
 /** What `n` messages by `channel` cost, in words. */
 export function messageCost(channel: MessageChannel, n: number): string {

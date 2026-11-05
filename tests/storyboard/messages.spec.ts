@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { staffTime } from "@/lib/staff-time";
 import { runSql } from "@/scripts/fresh-database.mjs";
 import { addStaffAccount, importLuma, logInAsStaff, newestEmail } from "../steps";
 import { BASE, emailFrame, expect, frame, story, test } from "./fixtures";
@@ -14,6 +15,10 @@ const copy = staffCopy.messagePages;
 const mailingCopy = staffCopy.mailingPages;
 const EMAIL = "contact=email%3Aluma-calendar%3Ayes";
 const TEXT = "contact=phone%3Aluma-calendar%3Ayes";
+/** How many of the fixture's supporters each filter finds, and how many there are. */
+const EMAILABLE = 3;
+const TEXTABLE = 1;
+const EVERYONE = 7;
 const WORDS =
   '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Hi "}, {"type": "field", "attrs": {"field": "firstName"}}, {"type": "text", "text": ", the march meets at 11:00 at Parliament Square."}]}]}';
 
@@ -26,9 +31,9 @@ async function logIn(page: Page, database: string) {
 }
 
 /** Starts a message from the supporters list, with these filters, and opens the writer. */
-async function startFromList(page: Page, filters: string) {
+async function startFromList(page: Page, filters: string, n: number) {
   await page.goto(`${BASE}/staff/supporters?${filters}`);
-  await page.getByRole("button", { name: /⁂ Message \d+ supporter/ }).click();
+  await page.getByRole("button", { name: copy.messageButton(n) }).click();
   await expect(page).toHaveURL(/\/staff\/messages\/\d+$/);
 }
 
@@ -94,17 +99,17 @@ test("Messaging supporters by email", async ({ page, request, flowDatabase }) =>
   await page.goto(`${BASE}/staff/supporters`);
   await frame(page, "The supporters list, Message dashed");
   story("Pressing it says which filter to add.");
-  await page.getByRole("link", { name: /⁂ Message \d+ supporter/ }).click();
+  await page.getByRole("link", { name: copy.messageButton(EVERYONE) }).click();
   await expect(page.getByText(copy.needsContact)).toBeVisible();
   await frame(page, "It says which filter to add");
   story(
     "With the Contact filter on those who can be emailed, answered yes, the button is live, counting who it finds.",
   );
   await page.goto(`${BASE}/staff/supporters?${EMAIL}`);
-  await expect(page.getByRole("button", { name: /⁂ Message \d+ supporter/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: copy.messageButton(EMAILABLE) })).toBeVisible();
   await frame(page, "The list, ready to message");
   story("It makes a draft to them and opens the writer: by email, from PauseAI UK, with who's left out.");
-  await page.getByRole("button", { name: /⁂ Message \d+ supporter/ }).click();
+  await page.getByRole("button", { name: copy.messageButton(EMAILABLE) }).click();
   await expect(page).toHaveURL(/\/staff\/messages\/\d+$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.newTitle.email);
   await frame(page, "The new email");
@@ -138,7 +143,7 @@ test("Messaging supporters by email", async ({ page, request, flowDatabase }) =>
   const send = page.getByRole("region", { name: copy.sections.send });
   await send.scrollIntoViewIfNeeded();
   await frame(page, "What will go, and what it costs", { window: true });
-  await send.getByRole("button", { name: /⁂ Schedule/ }).click();
+  await send.getByRole("button", { name: copy.schedule(EMAILABLE, "email") }).click();
   await expect(page.getByRole("button", { name: mailingCopy.unschedule })).toBeVisible();
   await frame(page, "The email, scheduled");
   story("It's in the list of messages, under Coming up.");
@@ -159,7 +164,7 @@ test("A text on an approved template", async ({ page, request, flowDatabase }) =
   await importLuma(request, BASE);
   addTemplates(flowDatabase);
   await logIn(page, flowDatabase);
-  await startFromList(page, TEXT);
+  await startFromList(page, TEXT, TEXTABLE);
   await expect(page.getByRole("group", { name: copy.templatesLabel })).toBeVisible();
   await frame(page, "The new text, its templates to choose from");
   story("There are more than five, so Show all shows the rest, and the search finds by name or words.");
@@ -178,12 +183,12 @@ test("A text on an approved template", async ({ page, request, flowDatabase }) =
   await frame(page, "A template chosen");
   story("They choose the hour. Grey under it says when it would stop sending.");
   await page.getByLabel(mailingCopy.hour, { exact: false }).selectOption("14");
-  await expect(page.getByText(/⁂ Will automatically stop sending/)).toBeVisible();
+  await expect(page.getByText(copy.stopsOn("Mon 19 Oct at 14:18"))).toBeVisible();
   await expect(page.getByRole("status").first()).toHaveText(mailingCopy.savePill.saved);
   const send = page.getByRole("region", { name: copy.sections.send });
   await send.scrollIntoViewIfNeeded();
   await frame(page, "When, and what it costs", { window: true });
-  await send.getByRole("button", { name: /⁂ Schedule/ }).click();
+  await send.getByRole("button", { name: copy.schedule(TEXTABLE, "text") }).click();
   await expect(page.getByRole("button", { name: mailingCopy.unschedule })).toBeVisible();
   await expect(page.getByText(copy.waitingStrip)).toHaveCount(0);
   await frame(page, "The text, scheduled");
@@ -196,7 +201,7 @@ test("A text on new words", async ({ page, request, flowDatabase }) => {
   await importLuma(request, BASE);
   addTemplates(flowDatabase);
   await logIn(page, flowDatabase);
-  await startFromList(page, TEXT);
+  await startFromList(page, TEXT, TEXTABLE);
   await page.getByRole("radio", { name: new RegExp(copy.newTemplate) }).click();
   const words = page.getByRole("textbox", { name: copy.newTemplate });
   await words.click();
@@ -207,7 +212,7 @@ test("A text on new words", async ({ page, request, flowDatabase }) => {
   await frame(page, "New words, and what they need");
   story("Scheduling sends them for approval. The text holds, and says so on its page.");
   const send = page.getByRole("region", { name: copy.sections.send });
-  await send.getByRole("button", { name: /once approved/ }).click();
+  await send.getByRole("button", { name: copy.scheduleOnceApproved(TEXTABLE) }).click();
   await expect(page.getByText(copy.waitingStrip)).toBeVisible();
   await frame(page, "Scheduled, waiting for WhatsApp's approval");
   story("And in the list.");
@@ -235,7 +240,7 @@ test("Changing who a message goes to", async ({ page, request, flowDatabase }) =
   );
   await importLuma(request, BASE);
   await logIn(page, flowDatabase);
-  await startFromList(page, EMAIL);
+  await startFromList(page, EMAIL, EMAILABLE);
   await page.getByLabel(copy.subject).fill("Change me");
   await expect(page.getByRole("status").first()).toHaveText(mailingCopy.savePill.saved);
   const draft = page.url();
@@ -243,13 +248,13 @@ test("Changing who a message goes to", async ({ page, request, flowDatabase }) =
   await expect(page.getByText(copy.choosing("Change me"))).toBeVisible();
   const bar = page.getByRole("region", { name: copy.choosingLabel });
   await expect(bar).toBeVisible();
-  await expect(page.getByRole("button", { name: /⁂ Message \d+ supporter/ })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: copy.messageButton(EMAILABLE) })).toHaveCount(0);
   await frame(page, "The list, choosing for the draft", { window: true });
   story("There are no ticks: they narrow the filters, here to one search, and the bar counts who that finds.");
   const url = new URL(page.url());
   url.searchParams.set("q", "fixture");
   await page.goto(url.toString());
-  await expect(bar.getByRole("button", { name: /⁂ Use these/ })).toBeVisible();
+  await expect(bar.getByRole("button", { name: copy.useThese(EMAILABLE) })).toBeVisible();
   await frame(page, "Narrowed", { window: true });
   story("Take off the Contact filter and the bar says it's needed, as the message's channel and topic are fixed.");
   const without = new URL(page.url());
@@ -259,7 +264,7 @@ test("Changing who a message goes to", async ({ page, request, flowDatabase }) =
   await frame(page, "Without its Contact filter", { window: true });
   story("Back with the filter, the orange button keeps them for the draft.");
   await page.goto(url.toString());
-  await bar.getByRole("button", { name: /⁂ Use these/ }).click();
+  await bar.getByRole("button", { name: copy.useThese(EMAILABLE) }).click();
   await expect(page).toHaveURL(draft);
   await expect(page.getByRole("list", { name: copy.facts.who })).toContainText("fixture");
   await frame(page, "The draft, to those found");
@@ -315,7 +320,7 @@ test("A text sent, and the conversation", async ({ page, request, flowDatabase }
     "Someone replied. Their copy shows the conversation, and a reply is free for 24 hours after their last message.",
   );
   await page.goto(`${BASE}/staff/messages/${sent.id}/${sent.copy}`);
-  await expect(page.getByText(/⁂ Free to reply until/)).toBeVisible();
+  await expect(page.getByText(copy.replyWindow(staffTime("2026-10-17T09:30:00Z")))).toBeVisible();
   await frame(page, "The conversation");
   await page.getByLabel(copy.reply).fill("Yes, dogs are welcome.");
   await page.getByRole("button", { name: copy.sendReply.text }).click();

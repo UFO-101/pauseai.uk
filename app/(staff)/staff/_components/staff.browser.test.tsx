@@ -212,6 +212,7 @@ describe("StaffNav", () => {
     )!;
     expect([...supporters.querySelectorAll("a")].map((a) => a.getAttribute("href"))).toEqual([
       "/staff/supporters",
+      "/staff/messages",
       "/staff/campaigns",
       "/staff/supporters/blocked-emails",
     ]);

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { TextInput } from "@/components/ui/Controls";
+import { Radio, TextInput } from "@/components/ui/Controls";
 import { Field } from "@/components/ui/Field";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -62,7 +62,7 @@ export default function TemplatePicker({
       <div className={styles.templates}>
         {shown.map((one) => (
           <label key={one.id} className={styles.template}>
-            <input type="radio" name="template" value={one.id} onChange={() => onChoose(one)} />
+            <Radio name="template" value={one.id} onChange={() => onChoose(one)} />
             <span className={styles.templateText}>
               <strong>{one.name}</strong>
               <span>{firstWords(one.body, FIELD_WORDS)}</span>
@@ -83,7 +83,7 @@ export default function TemplatePicker({
           </div>
         )}
         <label className={`${styles.template} ${styles.newTemplate}`}>
-          <input type="radio" name="template" value="new" onChange={onNew} />
+          <Radio name="template" value="new" onChange={onNew} />
           <span className={styles.templateText}>
             <strong>{copy.newTemplate}</strong>
             <Muted>{copy.newTemplateHow}</Muted>

@@ -905,6 +905,19 @@ SELECT id, sent_at, 'sent' FROM messages WHERE status <> 'skipped'
 UNION ALL
 SELECT id, sent_at + interval '1 minute', CASE status WHEN 'delivered' THEN 'delivered' ELSE 'failed' END FROM messages WHERE status <> 'skipped';
 
+-- The first supporter's reply to it, and our answer.
+INSERT INTO message_replies (message_id, at, body, sent_by)
+SELECT id, sent_at + r.after, r.body, r.by FROM messages_to_supporters, (VALUES
+  (interval '1 hour', 'Is the Leeds meetup on this month?', NULL::text),
+  (interval '2 hours', 'Yes, on the 29th.', 'jo@pauseai.uk')) r (after, body, by)
+WHERE status = 'delivered';
+
+-- WhatsApp's templates for a text: approved, as made here and in WhatsApp Manager.
+INSERT INTO message_templates (name, body, status, created_by, approved_at)
+SELECT t.name, b.body, 'approved', t.by, now() - t.ago FROM seed_letter b, (VALUES
+  ('March day reminder', 'jo@pauseai.uk', interval '10 days'),
+  ('Local group meetup', NULL, interval '30 days')) t (name, by, ago);
+
 -- A mailing to politicians sending, a third of the way: one of its three
 -- letters sent, two to go. It goes from Jo's Gmail, which isn't connected
 -- here, so the hourly job leaves it as it is. Last, so no ID above moves.
