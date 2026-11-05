@@ -966,7 +966,7 @@ export const staffCopy = {
     hasFirstName: "⁂ have a first name",
     // The numbered sections of a draft.
     sections: { who: "⁂ To", write: "⁂ Write", preview: "⁂ Preview", from: "⁂ From", when: "⁂ When", send: "⁂ Send" },
-    willGet: (n: number) => `⁂ ${n} will get it.`,
+    willGet: (n: number) => `⁂ ${n} ${n === 1 ? "supporter" : "supporters"} will get it.`,
     leftOut: (found: number, counts: { reason: string; n: number }[]) =>
       `⁂ Of ${found} the filters find, ${counts.reduce((all, one) => all + one.n, 0)} are left out: ${counts.map((one) => `${one.n} ${one.reason}`).join(", ")}.`,
     leftOutCounted: {

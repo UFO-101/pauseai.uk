@@ -3,7 +3,7 @@
 The UK weekly, and smaller mailings such as one to a local group, sent
 from pauseai.uk instead of CiviCRM, so each email can be personal, with
 events near the reader and their MP, and the UK controls its list. This
-uses the staff pages in `plans/mailings.md`, and is one pull request,
+uses the staff pages at `/staff/messages`, and is one pull request,
 once we can read CiviCRM's unsubscribes.
 
 ## Now
@@ -224,8 +224,8 @@ Each stop is a row in `opt_outs` with its source (`link`,
 and what it stops: one topic, or every email. From then on
 `contact_permission()` says no for it, `contact_unsubscribes` lists it
 on the supporter's page, and every message is checked just before it's
-sent, so one scheduled before the stop is skipped with the reason
-(`plans/mailings.md`). It's kept after erasure. A resubscribe must come
+sent, so one scheduled before the stop is skipped with the reason.
+It's kept after erasure. A resubscribe must come
 from the person, with the words of the box they ticked; nothing a staff
 member records can reopen one.
 

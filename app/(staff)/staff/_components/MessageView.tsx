@@ -187,7 +187,9 @@ export default function MessageView({
         title={written.title || copy.untitled}
         tag={
           written.state === "sending" ? undefined : (
-            <Tag tone={scheduled ? "blue" : undefined}>{staffCopy.mailingPages.states[written.state]}</Tag>
+            <Tag tone={scheduled ? "blue" : undefined}>
+              {summary.waiting ? copy.waiting : staffCopy.mailingPages.states[written.state]}
+            </Tag>
           )
         }
         aside={!scheduled && <Counts counts={counts} />}

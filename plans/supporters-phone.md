@@ -1,7 +1,7 @@
 # Texts to supporters
 
-Messages to supporters by text, on the staff pages in
-`plans/mailings.md`. A message is by email or by text. A text is sent
+Messages to supporters by text, on the staff pages at
+`/staff/messages`. A message is by email or by text. A text is sent
 by WhatsApp, and perhaps later by SMS to numbers not on WhatsApp.
 Two pull requests, and an optional third:
 
@@ -69,7 +69,7 @@ Each stop is a row in `opt_outs` with a new source (`whatsapp-webhook`,
 `sms-provider`, `reply` or `staff`), so `contact_permission()` says no
 for every topic from then on and `contact_unsubscribes` lists it, and
 every text is checked just before it's sent, so one scheduled before
-the stop is skipped with the reason (`plans/mailings.md`). It's kept
+the stop is skipped with the reason. It's kept
 after erasure. A resume in WhatsApp's settings closes the stop it
 made; a new yes, on a form or to staff, closes any.
 

@@ -594,6 +594,7 @@ describe("a message's page", () => {
     };
     await render(<MessageView data={data} who={who} {...actions} />);
     await expect.element(page.getByText(copy.waitingStrip)).toBeVisible();
+    await expect.element(page.getByText(copy.waiting, { exact: true })).toBeVisible();
     await expect.element(page.getByText(ONCE_APPROVED)).toBeVisible();
     await expect.element(page.getByText(stopsFor("2026-11-07T07:18:00Z"))).toBeVisible();
     await expect.element(page.getByRole("link", { name: copy.counts.delivered })).not.toBeInTheDocument();
@@ -607,6 +608,7 @@ describe("a message's page", () => {
     };
     await render(<MessageView data={data} who={who} {...actions} />);
     await expect.element(page.getByText(copy.waitingStrip)).not.toBeInTheDocument();
+    await expect.element(page.getByText(copy.waiting, { exact: true })).not.toBeInTheDocument();
     await expect.element(page.getByText(ONCE_APPROVED)).not.toBeInTheDocument();
   });
 
