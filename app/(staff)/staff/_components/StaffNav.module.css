@@ -307,8 +307,10 @@ button.page:hover {
   }
 }
 
-/* The "new" tag beside a page's name, and on the folded rail, a dot in its place. */
-.new {
+/* The "new" tag beside a page's name, and on the folded rail, a dot in its place;
+   and the "draft" tag there, grey, as it isn't news. */
+.new,
+.draft {
   display: inline-block;
   margin-left: var(--space-1);
   padding: 0 6px;
@@ -318,6 +320,11 @@ button.page:hover {
   font-size: 10px;
   font-weight: 700;
   vertical-align: 1px;
+}
+
+.draft {
+  background: var(--border);
+  color: var(--text-secondary);
 }
 
 .newDot {

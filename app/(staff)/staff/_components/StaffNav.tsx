@@ -96,7 +96,7 @@ export default function StaffNav({ email, permissions = [], current: shown, fres
               <span className={styles.label}>
                 {staffCopy.nav[page.id]}
                 {page.draft ? (
-                  <span className={styles.new}>{staffCopy.nav.draftTag}</span>
+                  <span className={styles.draft}>{staffCopy.nav.draftTag}</span>
                 ) : (
                   fresh.includes(page.id) && <span className={styles.new}>{staffCopy.nav.newTag}</span>
                 )}
