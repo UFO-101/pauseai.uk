@@ -99,7 +99,7 @@ export default function PrivacyPolicy() {
       </p>
 
       <p>
-        ⁂ If you copy us into an email to your MP or another politician, or forward us one, we keep it, with your name,
+        If you copy us into an email to your MP or another politician, or forward us one, we keep it, with your name,
         email address and what you wrote, so that we can see what has been said to them. The same goes for letters you
         sent through our earlier form, and replies to them. We delete these when you ask us to erase your data.
       </p>

@@ -205,6 +205,6 @@ describeWithDatabase("connected Gmail accounts", () => {
     await query("INSERT INTO staff_accounts (email, added_by) VALUES ('samuel.whitlock@pauseai.uk', 'test')");
     await saveHistoryId(JO, "9");
     await saveHistoryId("samuel.whitlock@pauseai.uk", "9");
-    expect(await gmailReadingState()).toEqual([{ email: JO, historyId: "9", keepsThreads: false }]);
+    expect(await gmailReadingState()).toEqual([{ email: JO, historyId: "9" }]);
   });
 });

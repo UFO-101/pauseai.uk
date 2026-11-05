@@ -1,15 +1,18 @@
+import { campaigns } from "@/lib/content/email-your-mp";
+import type { CampaignSummary } from "@/lib/server/campaigns";
 import { describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { staffTime } from "@/lib/staff-time";
 import type { Mailing } from "@/lib/server/mailings";
 import AskView from "./AskView";
 import CampaignLetter from "./CampaignLetter";
-import CampaignsOverview, { CampaignAsk } from "./CampaignsOverview";
+import CampaignsOverview, { CampaignAsk, letterRange } from "./CampaignsOverview";
 import CampaignView from "./CampaignView";
 import {
   exampleAskPage,
-  exampleBands,
+  exampleChanged,
   exampleCampaign,
   exampleCampaignEmpty,
   exampleCampaignNoAsk,
@@ -24,15 +27,19 @@ import { ImportJobPage } from "./ImportJob";
 import JobActions from "./JobActions";
 import LetterThread from "./LetterThread";
 import { exampleThread } from "./LetterThread.examples";
+import MailEmail from "./MailEmail";
 import MailingView from "./MailingView";
 import { exampleMailing } from "./MailingsTable.examples";
 import PoliticianDetails from "./PoliticianDetails";
 import { examplePolitician } from "./PoliticianTable.examples";
 import { emptyLettersSearch, exampleLetter } from "./LettersTable.examples";
-import MailingsOverview from "./MailingsOverview";
 import MyGmail from "./MyGmail";
 import OneOffList, { OneOffTable } from "./OneOffList";
 import OneOffThreadView from "./OneOffThreadView";
+import ListFrame from "./ui/ListFrame";
+import PageIntro from "./ui/PageIntro";
+import Withheld from "./ui/Withheld";
+import Tabs from "./ui/Tabs";
 import Run from "./Run";
 import { exampleRun, exampleFailedRun } from "./RunList.examples";
 import SentEmails from "./SentEmails";
@@ -45,30 +52,39 @@ const link = (name: string) => page.getByRole("link", { name, exact: true });
 const says = (text: string) => expect.poll(() => document.body.textContent).toContain(text);
 
 describe("CampaignsOverview", () => {
-  it("files each under the month of its last letter, the rest under their years, saying who it's from and its ask", async () => {
+  it("files each under the month of its last letter, the rest under their years, those with none first, saying who it's from and its ask", async () => {
     await render(
       <CampaignsOverview campaigns={[exampleCampaign, exampleCampaignNoAsk, exampleCampaignEmpty]} now={NOW} />,
     );
+    expect(document.querySelector(`a[href="/staff/campaigns/${exampleCampaign.slug}?tab=replied"]`)).not.toBeNull();
     const headings = page
       .getByRole("heading", { level: 2 })
       .all()
       .map((h) => h.element().textContent);
-    expect(headings).toEqual(["November 2026", "October 2026", "2025"]);
+    expect(headings).toEqual(["October 2026", "2025"]);
     await expect
       .element(link(exampleCampaign.title))
       .toHaveAttribute("href", `/staff/campaigns/${exampleCampaign.slug}`);
     await expect.element(link(exampleCampaign.askTitle!)).toHaveAttribute("href", `/staff/asks/${exampleCampaign.ask}`);
-    expect(document.body.textContent).toContain(
-      `${copy.fromSupporters} · ${copy.started} 18 Jun · ${copy.lettersTo(12, 9)}`,
-    );
-    expect(document.body.textContent).toContain(`${copy.lastLetter("22 Oct")}`);
-    expect(document.body.textContent).toContain(copy.lastLetter("17 Jun 2025"));
+    expect(document.body.textContent).toContain(`${copy.fromSupporters} · ${copy.lettersTo(12, 9)}`);
+    expect(document.body.textContent).toContain("18 Jun – 22 Oct");
+    expect(document.body.textContent).toContain("20 May – 17 Jun 2025");
+    // Those with no letters come first, under no month.
+    expect(document.querySelector("li")!.textContent).toContain(copy.noLetters);
     expect(document.body.textContent).toContain(staffCopy.asks.noAsk);
   });
 
   it("says there are none", async () => {
     await render(<CampaignsOverview campaigns={[]} now={NOW} />);
     await says(copy.none);
+  });
+
+  it("gives letters' days as a range, a year only once, and one day alone", () => {
+    expect(letterRange("2026-11-01T09:00:00Z", "2026-11-05T09:00:00Z", "2026")).toBe("1 Nov – 5 Nov");
+    expect(letterRange("2026-11-05T09:00:00Z", "2026-11-05T10:00:00Z", "2026")).toBe("5 Nov");
+    expect(letterRange("2025-07-23T09:00:00Z", "2025-09-30T09:00:00Z", "2026")).toBe("23 Jul – 30 Sep 2025");
+    expect(letterRange("2025-12-01T09:00:00Z", "2026-01-05T09:00:00Z", "2026")).toBe("1 Dec 2025 – 5 Jan");
+    expect(letterRange("2025-07-23T09:00:00Z", "2025-07-23T09:00:00Z", "2026")).toBe("23 Jul 2025");
   });
 
   it("says an ask by its kind", async () => {
@@ -80,28 +96,60 @@ describe("CampaignsOverview", () => {
 });
 
 describe("CampaignLetter", () => {
+  it("leads to those who changed the wording, when anyone did", async () => {
+    const { rerender } = await render(<CampaignLetter changedHref="/changed" versions={exampleVersions} changed={3} />);
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.campaigns.changedLink(3) }))
+      .toHaveAttribute("href", "/changed");
+    await rerender(<CampaignLetter changedHref="/changed" versions={exampleVersions} changed={0} />);
+    expect(page.getByRole("link").query()).toBeNull();
+  });
+
   it("chooses among versions, each with its subject and text, names as chips", async () => {
-    await render(<CampaignLetter versions={exampleVersions} bands={exampleBands} />);
+    await render(<CampaignLetter changedHref="/changed" versions={exampleVersions} changed={exampleChanged} />);
     await says(exampleVersions[0].subject);
     await says(copy.fields.salutation);
     await page.getByRole("combobox").selectOptions("older");
     await says(exampleVersions[1].subject);
-    await says(copy.ownBands(8, 3, 1));
   });
 
-  it("with one version, says how many it has, and with no one's own words, no bar", async () => {
-    await render(
-      <CampaignLetter versions={exampleVersions.slice(1)} bands={{ under: 0, middle: 0, over: 0, changed: 0 }} />,
-    );
+  it("with one version, says how many it has, and with no one changing the wording, no link", async () => {
+    await render(<CampaignLetter changedHref="/changed" versions={exampleVersions.slice(1)} changed={0} />);
     expect(page.getByRole("combobox").query()).toBeNull();
     expect(document.body.textContent).toContain(copy.versionLine("18 Jun 2026", 8));
-    expect(document.body.textContent).not.toContain(copy.ownTitle);
     const { rerender } = await render(
-      <CampaignLetter versions={[{ ...exampleVersions[0], from: null }]} bands={exampleBands} />,
+      <CampaignLetter
+        changedHref="/changed"
+        versions={[{ ...exampleVersions[0], from: null }]}
+        changed={exampleChanged}
+      />,
     );
     expect(document.body.textContent).toContain(copy.versionLine(null, 4));
-    await rerender(<CampaignLetter versions={[]} bands={exampleBands} />);
+    await rerender(<CampaignLetter changedHref="/changed" versions={[]} changed={exampleChanged} />);
     await says(copy.noText);
+  });
+});
+
+describe("CampaignView's public page", () => {
+  const view = (campaign: CampaignSummary) => (
+    <CampaignView
+      campaign={campaign}
+      versions={exampleVersions}
+      changed={0}
+      letters={{ letters: [], total: 0, pages: 1, pageSize: 100 }}
+      search={emptyLettersSearch}
+    />
+  );
+
+  it("leads to the campaign on the site, else where its letter is kept, else says there's none", async () => {
+    const see = () => page.getByRole("link", { name: staffCopy.campaigns.seePublicPage });
+    const code = campaigns[0];
+    const { rerender } = await render(view({ ...exampleCampaign, slug: code.slug }));
+    await expect.element(see()).toHaveAttribute("href", `/campaigns/${code.slug}`);
+    await rerender(view({ ...exampleCampaign, slug: "gone", url: "https://example.org/letter.pdf" }));
+    await expect.element(see()).toHaveAttribute("href", "https://example.org/letter.pdf");
+    await rerender(view({ ...exampleCampaign, slug: "gone", url: null }));
+    expect(see().query()).toBeNull();
   });
 });
 
@@ -118,10 +166,9 @@ describe("CampaignView", () => {
     <CampaignView
       campaign={campaign}
       versions={exampleVersions}
-      bands={exampleBands}
+      changed={exampleChanged}
       letters={{ letters, total: 150, pages: 2, pageSize: 100 }}
       search={search}
-      tabCounts={{ all: 150, changed: 50, replied: 2, failed: 1 }}
     />
   );
 
@@ -130,14 +177,14 @@ describe("CampaignView", () => {
     await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent(exampleCampaign.title);
     await says(copy.supporters(10));
     await says(copy.politicians(9));
-    await says(copy.answeredBar(3, 9));
+    await says(staffCopy.mailingPages.answeredBar(3, 9));
     await expect.element(link(exampleCampaign.askTitle!)).toHaveAttribute("href", `/staff/asks/${exampleCampaign.ask}`);
     await says(`✓ ${staffCopy.statuses.signed}`);
     await says(staffCopy.letters.status.bounced);
     await says(staffCopy.letters.status.auto_reply);
     await says("unknown");
     await expect
-      .element(link(copy.tabs.changed(50)))
+      .element(page.getByRole("link", { name: copy.changedLink(exampleChanged) }))
       .toHaveAttribute("href", `/staff/campaigns/${exampleCampaign.slug}?tab=changed`);
     await expect
       .element(page.getByRole("link", { name: staffCopy.paging.next }))
@@ -162,8 +209,41 @@ describe("AskView", () => {
     await says(answers.letters(19));
     await says(answers.bar(3, 40, "letter"));
     await expect.element(link(staffCopy.asks.edit)).toHaveAttribute("href", `/staff/asks/${exampleAskPage.slug}/edit`);
-    await expect.element(link(answers.all(3))).toBeVisible();
+    expect(page.getByRole("link", { name: new RegExp(answers.answered) }).query()).toBeNull();
     await expect.element(link("Polly Placeholder")).toHaveAttribute("href", "/staff/politicians/1");
+  });
+
+  it("shows those who gave an answer, or none, from its pill, and pressed again, them all", async () => {
+    const path = `/staff/asks/${exampleAskPage.slug}`;
+    const pill = (words: string, n: number) => page.getByRole("link", { name: `${words} ${n}`, exact: true });
+    const signed = () => pill(staffCopy.statuses.signed, exampleAskPage.counts.signed!);
+    const none = () => pill(staffCopy.statuses.noAnswer, exampleAskPage.noAnswer);
+    const { rerender } = await render(<AskView ask={exampleAskPage} answer="" />);
+    await expect.element(signed()).toHaveAttribute("href", `${path}?answer=signed`);
+    await expect.element(signed()).not.toHaveAttribute("aria-current");
+    await expect.element(none()).toHaveAttribute("href", `${path}?answer=none`);
+    await says(staffCopy.asks.page.lastWrittenTo);
+    await rerender(<AskView ask={exampleAskPage} answer="signed" />);
+    await expect.element(signed()).toHaveAttribute("href", path);
+    await expect.element(signed()).toHaveAttribute("aria-current", "true");
+    await expect.element(signed()).toHaveAttribute("title", staffCopy.asks.page.showAll);
+    // Someone written to with no answer, and no one left unanswered: no pill for it.
+    await rerender(
+      <AskView
+        ask={{
+          ...exampleAskPage,
+          answers: [{ ...exampleAskPage.answers[0], status: null }],
+        }}
+        answer="none"
+      />,
+    );
+    await expect.element(none()).toHaveAttribute("aria-current", "true");
+    await says(staffCopy.statuses.noAnswer);
+    await rerender(<AskView ask={{ ...exampleAskPage, noAnswer: 0 }} answer="" />);
+    expect(page.getByRole("link", { name: new RegExp(staffCopy.statuses.noAnswer) }).query()).toBeNull();
+    // Nobody has answered, but some were written to: the pill still shows them.
+    await rerender(<AskView ask={{ ...exampleAskPage, counts: {}, answers: [] }} answer="" />);
+    await expect.element(none()).toBeVisible();
   });
 
   it("gives an ask with a date its day", async () => {
@@ -220,29 +300,39 @@ describe("AskView", () => {
 });
 
 describe("the one-off emails", () => {
-  const list = (who = "") => (
+  const list = () => (
     <OneOffList
       threads={[...exampleOneOffs, exampleHiddenOneOff, { ...exampleOneOffs[0], id: 3, subject: "" }]}
       total={150}
       page={1}
       pages={2}
       pageSize={100}
-      who={who}
     />
   );
 
-  it("lists each thread, whose it is, and hides what staff can't read", async () => {
-    await render(list("pauseai"));
-    await expect.element(link(exampleOneOffs[0].subject!)).toHaveAttribute("href", "/staff/mailings/one-off/1");
+  it("lists each thread, whose it is and when to the minute, and hides what staff can't read", async () => {
+    await render(list());
+    await says(staffTime(exampleOneOffs[0].latestAt));
+    for (const column of ["messages", "participants", "answered", "mailbox"] as const) {
+      await expect.element(page.getByRole("columnheader", { name: staffCopy.oneOff.columns[column] })).toBeVisible();
+    }
+    await says(exampleOneOffs[0].mailboxes!.join(", "));
+    await says(exampleOneOffs[0].participants!.join(", "));
+    const cellsOf = (row: number) =>
+      [...document.querySelectorAll("tbody tr")][row].querySelectorAll("td")[3].textContent;
+    expect([cellsOf(0), cellsOf(1), cellsOf(2)]).toEqual([
+      staffCopy.oneOff.answers.yes,
+      staffCopy.oneOff.answers.no,
+      "–",
+    ]);
+    await expect.element(link(exampleOneOffs[0].subject!)).toHaveAttribute("href", "/staff/one-off/1");
     await says(staffCopy.oneOff.noPolitician);
-    await expect.element(link(staffCopy.oneOff.hidden)).toBeVisible();
+    await says(staffCopy.oneOff.hidden);
+    expect(link(staffCopy.oneOff.hidden).query()).toBeNull();
     await expect.element(link(staffCopy.oneOff.noSubject)).toBeVisible();
     await expect
-      .element(link(staffCopy.oneOff.filters["someone-else"]))
-      .toHaveAttribute("href", "/staff/mailings/one-off?who=someone-else");
-    await expect
       .element(page.getByRole("link", { name: staffCopy.paging.next }))
-      .toHaveAttribute("href", "/staff/mailings/one-off?who=pauseai&page=2");
+      .toHaveAttribute("href", "/staff/one-off?page=2");
   });
 
   it("on a person's page, shows nothing with none", async () => {
@@ -257,6 +347,12 @@ describe("the one-off emails", () => {
     await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent(exampleOneOffThread.subject!);
     await says("Could we meet?");
     await says(staffCopy.oneOff.unreadable);
+    for (const name of ["Placeholder, Polly", "polly.placeholder.mp@parliament.uk"]) {
+      await expect.element(link(name)).toHaveAttribute("href", "/staff/politicians/1");
+    }
+    await says("Jane Smith <jane.smith@example.com>");
+    await says("someone@example.com");
+    expect(link("Joseph Example").query()).toBeNull();
     await rerender(<OneOffThreadView thread={{ ...exampleHiddenOneOff, messages_: null }} />);
     await says(staffCopy.oneOff.hidden);
     await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent(staffCopy.oneOff.title);
@@ -265,31 +361,50 @@ describe("the one-off emails", () => {
         thread={{
           ...exampleOneOffThread,
           subject: "",
-          people: [...exampleOneOffThread.people, { id: 9, name: "Dora" }],
-          someoneElse: true,
         }}
       />,
     );
     await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent(staffCopy.oneOff.noSubject);
-    expect(document.body.textContent).toContain(", Dora");
   });
 });
 
+const NO_SEARCH = { q: "", purpose: [], outcome: [], backend: [], link: [], sort: "", dir: "", page: "" };
+
 describe("SentEmails", () => {
-  it("has a heading only for a screen reader, each person linked if they can be, imported tagged, and links through its letter", async () => {
-    await render(
+  it("sorts by each column but its links, keeping the filters, newest first unless another is chosen", async () => {
+    const list = (search: Partial<typeof NO_SEARCH>) => (
       <SentEmails
         emails={exampleSentEmails}
-        total={150}
-        pages={2}
+        total={4}
+        pages={1}
         page={1}
         pageSize={100}
-        search={{ q: "", purpose: [], outcome: [], backend: [], page: "" }}
-      />,
+        search={{ ...NO_SEARCH, ...search }}
+      />
+    );
+    const words = staffCopy.sentEmails.columns;
+    const heading = (name: string) => page.getByRole("link", { name, exact: false });
+    const { rerender } = await render(list({ q: "x" }));
+    await expect.element(heading(words.when)).toHaveAttribute("href", "/staff/sent-emails?q=x&sort=when&dir=asc");
+    await expect.element(heading(words.subject)).toHaveAttribute("href", "/staff/sent-emails?q=x&sort=subject&dir=asc");
+    expect(page.getByRole("link", { name: words.links }).query()).toBeNull();
+    expect(heading(words.when).element().closest("th")!.getAttribute("aria-sort")).toBe("descending");
+    await rerender(list({ sort: "subject", dir: "asc" }));
+    await expect.element(heading(words.subject)).toHaveAttribute("href", "/staff/sent-emails?sort=subject&dir=desc");
+    expect(heading(words.subject).element().closest("th")!.getAttribute("aria-sort")).toBe("ascending");
+  });
+
+  it("has a heading only for a screen reader, each person linked if they can be, imported tagged, and links through its letter", async () => {
+    await render(
+      <SentEmails emails={exampleSentEmails} total={150} pages={2} page={1} pageSize={100} search={NO_SEARCH} />,
     );
     const heading = page.getByRole("heading", { level: 1 }).element() as HTMLElement;
     expect(heading.getBoundingClientRect().width).toBeLessThanOrEqual(1);
     const words = staffCopy.sentEmails;
+    expect([...document.querySelectorAll("th")].map((th) => th.textContent!.replace(/[ ▲▼]+$/, ""))).toEqual(
+      Object.values(words.columns),
+    );
+    await says(words.backends.postmark);
     await expect.element(link("Jane Smith").first()).toHaveAttribute("href", "/staff/supporters/5");
     expect(document.body.textContent).toContain("Sam Brown");
     expect(page.getByRole("link", { name: "Sam Brown" }).query()).toBeNull();
@@ -314,7 +429,7 @@ describe("SentEmails", () => {
         pages={1}
         page={1}
         pageSize={100}
-        search={{ q: "", purpose: [], outcome: [], backend: [], page: "" }}
+        search={NO_SEARCH}
       />,
     );
     await says("new-purpose");
@@ -342,7 +457,7 @@ describe("the import of old letters' run", () => {
     );
     expect(document.body.textContent).toContain(words.stoppedByGmail);
     expect(document.body.textContent).not.toContain("Jane Smith");
-    await says(words.onlyWithSupporters(1));
+    await says(`${words.matchedNothing(1)} ${words.onlyWithSupporters}`);
     await rerender(
       <Run
         run={exampleRun("import-old-letters", {
@@ -413,6 +528,68 @@ describe("an imported mailing's text", () => {
   });
 });
 
+describe("the rule over a list", () => {
+  it("is the tabs', with none of the list's own to double it", async () => {
+    await render(
+      <>
+        <Tabs label="Which" current="a" tabs={[{ key: "a", label: "A", href: "/a" }]} />
+        <ListFrame
+          count="1 row"
+          total={1}
+          page={1}
+          pages={1}
+          pageSize={1}
+          columns={[{ key: "one", label: "One", cell: (row: string) => row }]}
+          rows={["Row"]}
+          rowKey={(row) => row}
+          empty="None"
+        />
+      </>,
+    );
+    const bar = page.getByText("1 row").element().parentElement!.parentElement!;
+    expect(getComputedStyle(bar).borderTopWidth).toBe("0px");
+    expect(getComputedStyle(page.getByRole("navigation", { name: "Which" }).element()).boxShadow).not.toBe("none");
+  });
+});
+
+describe("MailEmail", () => {
+  it("shows who it's from and to where it's said, always its subject, then its body", async () => {
+    const { rerender } = await render(
+      <MailEmail from="jo@pauseai.uk" to="Each politician" subject="A subject">
+        The letter
+      </MailEmail>,
+    );
+    const terms = () => [...document.querySelectorAll("dt")].map((dt) => dt.textContent);
+    const words = staffCopy.mailingPages;
+    expect(terms()).toEqual([words.from, words.to, words.subject]);
+    await says("The letter");
+    await rerender(<MailEmail subject="A subject">The letter</MailEmail>);
+    expect(terms()).toEqual([words.subject]);
+  });
+});
+
+describe("Withheld", () => {
+  it("says what's kept back beside its envelope, and links nowhere", async () => {
+    await render(<Withheld>Kept back</Withheld>);
+    await says("Kept back");
+    expect(document.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+    expect(page.getByRole("link").query()).toBeNull();
+  });
+});
+
+describe("PageIntro", () => {
+  it("is quieter than the page's text", async () => {
+    await render(
+      <div>
+        <p>The page</p>
+        <PageIntro>What this page is</PageIntro>
+      </div>,
+    );
+    const colour = (text: string) => getComputedStyle(page.getByText(text).element()).color;
+    expect(colour("What this page is")).not.toBe(colour("The page"));
+  });
+});
+
 describe("the rest", () => {
   it("gives the import of old letters its box for a dry run, on its page alone", async () => {
     const page_ = (job: "import-old-letters" | "check-mps") => (
@@ -433,13 +610,20 @@ describe("the rest", () => {
         block={undefined}
         unblock={() => {}}
         letters={{ senders: false, letters: [] }}
-        oneOffs={[exampleOneOffs[0], exampleHiddenOneOff]}
+        oneOffs={[exampleOneOffs[0], exampleHiddenOneOff, { ...exampleOneOffs[0], id: 3, subject: "" }]}
         history={[]}
         airtableTable="x"
       />,
     );
-    await expect.element(link(exampleOneOffs[0].subject!)).toHaveAttribute("href", "/staff/mailings/one-off/1");
-    await expect.element(link(staffCopy.oneOff.hidden)).toBeVisible();
+    await expect.element(link(exampleOneOffs[0].subject!)).toHaveAttribute("href", "/staff/one-off/1");
+    await expect.element(link(staffCopy.oneOff.noSubject)).toHaveAttribute("href", "/staff/one-off/3");
+    await says(staffCopy.oneOff.hidden);
+    expect(link(staffCopy.oneOff.hidden).query()).toBeNull();
+  });
+
+  it("has the one-off emails in the menu, under Politicians", async () => {
+    await render(<StaffNav email="jo@pauseai.uk" permissions={[]} />);
+    expect(document.querySelector('nav a[href="/staff/one-off"]')?.textContent).toContain(staffCopy.nav.oneOff);
   });
 
   it("marks new pages in the navigation", async () => {
@@ -455,22 +639,17 @@ describe("the rest", () => {
     await says(staffCopy.gmailReading.oneOffs(2));
   });
 
-  it("has a row at the foot of the mailings for the one-off emails, even with no mailings", async () => {
-    await render(<MailingsOverview groups={[]} now={NOW} oneOffs={3} />);
-    await expect.element(link(staffCopy.oneOff.title)).toHaveAttribute("href", "/staff/mailings/one-off");
-    await says(staffCopy.oneOff.threads(3));
-  });
-
-  it("lets you turn keeping your threads with politicians on or off", async () => {
-    const words = staffCopy.oneOff;
+  it("says when threads with politicians are kept from your Gmail", async () => {
     const account = { email: "jo@pauseai.uk", name: "Jo", connectedAt: NOW, sentToday: 0, remaining: 1800 };
-    const props = { me: "jo@pauseai.uk", account, outcome: "", disconnect: () => {}, setKeepThreads: () => {} };
+    const props = { me: "jo@pauseai.uk", account, outcome: "", disconnect: () => {} };
     const { rerender } = await render(<MyGmail {...props} keepsThreads />);
-    await expect.element(page.getByRole("button", { name: words.stopKeeping })).toBeVisible();
-    await says(words.keepOn);
+    await says(staffCopy.oneOff.kept.before);
+    await expect.element(link(staffCopy.oneOff.title)).toHaveAttribute("href", "/staff/one-off");
     await rerender(<MyGmail {...props} />);
-    await expect.element(page.getByRole("button", { name: words.startKeeping })).toBeVisible();
+    expect(link(staffCopy.oneOff.title).query()).toBeNull();
+    await says(staffCopy.oneOff.notKept.before);
+    await expect.element(link(staffCopy.mailings.title)).toHaveAttribute("href", "/staff/mailings");
     await rerender(<MyGmail {...props} lettersInbox />);
-    expect(page.getByText(words.keepOff).query()).toBeNull();
+    expect(link(staffCopy.mailings.title).query()).toBeNull();
   });
 });

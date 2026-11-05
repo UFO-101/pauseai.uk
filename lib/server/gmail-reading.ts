@@ -11,6 +11,7 @@ import { readLettersInbox } from "./letters-inbox-reading";
 import { notifyStaff, staffLink } from "./notifications";
 import { gmailAccess, gmailReadingState, saveGmailName, saveHistoryId } from "./gmail-accounts";
 import { keepingFailure, recordRun } from "./import-runs";
+import { keepsPoliticianThreads } from "@/lib/one-off";
 import { keepIfPoliticianThread, reportUnmatchedMail } from "./one-off-emails";
 import {
   allParts,
@@ -44,7 +45,7 @@ import { isMachineReply } from "./postmark-webhooks";
 // bounces. A politician's reply, or our answer to it, is kept whole
 // (letter_replies, and the message in Netlify Blobs); an automatic reply is
 // only noted on the letter; a bounce is recorded as Postmark's are. Anything
-// else, in an account that keeps them, may be a one-off email
+// else, in a mailbox whose threads are kept, may be a one-off email
 // (one-off-emails.ts). Each run is in the import log as "read-gmail".
 
 const JOB = "read-gmail";
@@ -292,14 +293,7 @@ async function recordBounce(
 }
 
 /** Reads one message: a bounce, a reply to a letter, or something else, left alone; one gone since, skipped. */
-async function readMessage(
-  account: string,
-  token: string,
-  id: string,
-  read: GmailRead,
-  request: Request | undefined,
-  keepsThreads: boolean,
-) {
+async function readMessage(account: string, token: string, id: string, read: GmailRead, request: Request | undefined) {
   const message = await gmailMessageHeaders(token, id, HEADERS).catch(unlessGone);
   if (!message) return;
   const from = fromAddress(message.headers.get("from")).address;
@@ -314,7 +308,7 @@ async function readMessage(
   if (kept || (await isOurLetter(account, message))) return;
   const letterId = await letterAnswered(account, message);
   if (!letterId) {
-    if (keepsThreads)
+    if (keepsPoliticianThreads(account))
       read.oneOffs =
         (read.oneOffs ?? 0) +
         ((await keepIfPoliticianThread(
@@ -340,12 +334,7 @@ async function readMessage(
  * The letters inbox is read as its own (letters-inbox-reading.ts): all its
  * mail is ours, and its bounces come to it rather than in a thread.
  */
-async function readAccount(
-  account: string,
-  historyId: string,
-  keepsThreads: boolean,
-  request: Request | undefined,
-): Promise<GmailRead> {
+async function readAccount(account: string, historyId: string, request: Request | undefined): Promise<GmailRead> {
   let read: GmailRead = { account, replies: 0, autoReplies: 0, bounces: 0 };
   const token = await gmailAccess(account);
   const letters = account === lettersInbox();
@@ -362,7 +351,7 @@ async function readAccount(
     read = await readLettersInbox(account, token, history.messageIds, read, request);
   } else {
     const ids = new Set([...history.messageIds, ...(await searchGmail(token, BOUNCE_SEARCH))]);
-    for (const id of ids) await readMessage(account, token, id, read, request, keepsThreads);
+    for (const id of ids) await readMessage(account, token, id, read, request);
   }
   await saveHistoryId(account, history.historyId);
   // Its name, as Gmail has it now: renamed since it was connected, or connected before the site kept it.
@@ -425,9 +414,9 @@ async function alertNotUnderstood(accounts: GmailRead[], request: Request | unde
 export function readGmail(startedBy: string, request?: Request): Promise<GmailReadResult> {
   return keepingFailure(JOB, startedBy, async () => {
     const accounts: GmailRead[] = [];
-    for (const { email, historyId, keepsThreads } of await gmailReadingState()) {
+    for (const { email, historyId } of await gmailReadingState()) {
       try {
-        accounts.push(await readAccount(email, historyId, keepsThreads, request));
+        accounts.push(await readAccount(email, historyId, request));
       } catch (error) {
         console.error(`Couldn't read ${email}'s Gmail:`, error);
         const disconnected = error instanceof GmailError && error.revoked;

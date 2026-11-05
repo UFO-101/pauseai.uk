@@ -2,7 +2,6 @@ import StaffLink from "./ui/StaffLink";
 import CampaignName from "./CampaignName";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { campaignBySlug } from "@/lib/email-your-mp";
-import type { DownloadColumn } from "@/lib/staff-list";
 import { staffTime } from "@/lib/staff-time";
 import type { LetterSummary } from "@/lib/server/letters";
 import { ListTable, type ListColumn } from "./ui/ListFrame";
@@ -65,7 +64,7 @@ const columns: ListColumn<LetterSummary>[] = [
     key: "campaign",
     label: copy.columns.campaign,
     text: (l) => campaignBySlug(l.campaign)?.title ?? l.campaignTitle,
-    cell: (l) => <CampaignName slug={l.campaign} title={l.campaignTitle} url={l.campaignUrl} />,
+    cell: (l) => <CampaignName slug={l.campaign} title={l.campaignTitle} />,
   },
   {
     key: "ownWords",
@@ -113,16 +112,6 @@ const columns: ListColumn<LetterSummary>[] = [
               {staffTime(l.autoRepliedAt)}
             </Muted>
           ),
-  },
-];
-
-/** The list's columns for a download, with each change of status, which its page shows. */
-export const letterDownloadColumns: DownloadColumn<LetterSummary>[] = [
-  ...columns,
-  {
-    key: "history",
-    label: copy.columns.history,
-    text: (l) => l.events.map((event) => `${event.at} ${statusOf(event.status)}`).join("; "),
   },
 ];
 

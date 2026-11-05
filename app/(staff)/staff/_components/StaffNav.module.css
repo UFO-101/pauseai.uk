@@ -70,6 +70,11 @@
   flex: none;
 }
 
+/* A page's name and its "new" tag stay on one line: the page is only as wide as they need. */
+.page .label {
+  white-space: nowrap;
+}
+
 button.page {
   padding: 0;
   border: 0;
@@ -320,11 +325,16 @@ button.page:hover {
 }
 
 @media (min-width: 861px) {
+  /* The icon's page is what the dot sits on the corner of. */
+  :global(:root[data-staff-nav="folded"]) .sidebar .page:has(.newDot) {
+    position: relative;
+  }
+
   :global(:root[data-staff-nav="folded"]) .sidebar .newDot {
     display: block;
     position: absolute;
-    top: 2px;
-    right: 2px;
+    top: var(--space-1);
+    right: var(--space-1);
     width: 8px;
     height: 8px;
     border-radius: var(--radius-pill);

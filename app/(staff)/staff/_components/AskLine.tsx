@@ -1,24 +1,18 @@
 import StaffLink from "./ui/StaffLink";
+import { askHref } from "@/lib/asks";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { Ask } from "@/lib/server/asks";
 import { staffDate } from "@/lib/staff-time";
 import styles from "./Details.module.css";
 
-/** The ask's title, linked to the letter or the event if we know where it is; another site's in a new tab. */
-export function AskTitle({ ask }: { ask: Ask }) {
-  if (!ask.url) return ask.title;
-  return ask.url.startsWith("/") ? (
-    <StaffLink href={ask.url}>{ask.title}</StaffLink>
-  ) : (
-    <a href={ask.url} target="_blank" rel="noreferrer">
-      {ask.title}
-    </a>
-  );
+/** The ask's title, leading to its page. */
+export function AskTitle({ ask }: { ask: Pick<Ask, "slug" | "title"> }) {
+  return <StaffLink href={askHref(ask.slug)}>{ask.title}</StaffLink>;
 }
 
 /**
  * An ask as a politician's page leads into it: who asked them to do what,
- * and when, then its title, linked to the letter or the event.
+ * and when, then its title, leading to its page.
  */
 export function AskLead({ ask }: { ask: Ask }) {
   const who = new Intl.ListFormat("en-GB").format(ask.askedBy.map((asker) => staffCopy.asks.askedBy[asker]));

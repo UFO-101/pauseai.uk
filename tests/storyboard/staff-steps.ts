@@ -3,6 +3,7 @@ import { longDay } from "@/lib/calendar-days";
 import { DATE_PICKER_WORDS } from "@/lib/content/date-picker";
 import { campaigns } from "@/lib/content/email-your-mp";
 import { TEST_MPS } from "@/lib/test-mps";
+import { staffCopy } from "@/lib/content/staff-interface";
 import { runSql } from "@/scripts/fresh-database.mjs";
 import { ROUTES } from "../routes";
 import {
@@ -179,4 +180,11 @@ export async function chooseDay(page: Page, label: string, day: string) {
   const target = calendar.getByRole("button", { name: new RegExp(`^${longDay(day)}`) });
   while (!(await target.isVisible())) await calendar.getByRole("button", { name: DATE_PICKER_WORDS.later }).click();
   await target.click();
+}
+
+/** Presses Import emails now on its page, as the staff member logged in, and waits for the run. */
+export async function importEmails(page: Page) {
+  await page.goto(`${BASE}/staff/import-data/emails`);
+  await page.getByRole("button", { name: staffCopy.pauseaiEmails.importNow }).click();
+  await expect(page.getByText(staffCopy.runs.status.incomplete).first()).toBeVisible();
 }

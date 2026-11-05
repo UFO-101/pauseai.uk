@@ -6,9 +6,11 @@ import { Field } from "@/components/ui/Field";
 import { Muted } from "@/components/ui/Text";
 import { campaignTextDoc } from "@/lib/campaign-versions";
 import { staffCopy } from "@/lib/content/staff-interface";
-import type { CampaignVersion, OwnWordsBands } from "@/lib/server/campaigns";
+import type { CampaignVersion } from "@/lib/server/campaigns";
 import { staffDate } from "@/lib/staff-time";
+import MailEmail from "./MailEmail";
 import { MailingLetter } from "./MailingLetter";
+import StaffLink from "./ui/StaffLink";
 import styles from "./CampaignLetter.module.css";
 
 const copy = staffCopy.campaigns;
@@ -16,51 +18,51 @@ const copy = staffCopy.campaigns;
 /**
  * "The letter" of a campaign's page: what people were given, a version
  * chosen from the list if there's been more than one, with its subject and
- * its text, its names as chips; then how much of their letters, in all of
- * them, was their own.
+ * its text, its names as chips. Beside how many letters there are, a link to
+ * those that changed the wording, in all versions.
  */
-export default function CampaignLetter({ versions, bands }: { versions: CampaignVersion[]; bands: OwnWordsBands }) {
+export default function CampaignLetter({
+  versions,
+  changed,
+  changedHref,
+}: {
+  versions: CampaignVersion[];
+  changed: number;
+  changedHref: string;
+}) {
   const [key, setKey] = useState(versions[0]?.key ?? "");
   const version = versions.find((one) => one.key === key);
   const line = (one: CampaignVersion) => copy.versionLine(one.from && staffDate(one.from), one.letters);
-  const total = bands.under + bands.middle + bands.over;
   return (
     <div className={styles.letter}>
-      {versions.length > 1 ? (
-        <Field label={copy.version}>
-          <Select value={key} onChange={(event) => setKey(event.target.value)}>
-            {versions.map((one) => (
-              <option key={one.key} value={one.key}>
-                {line(one)}
-              </option>
-            ))}
-          </Select>
-        </Field>
-      ) : (
-        version && <Muted>{line(version)}</Muted>
-      )}
+      <div className={styles.head}>
+        {versions.length > 1 ? (
+          <Field label={copy.version}>
+            <Select value={key} onChange={(event) => setKey(event.target.value)}>
+              {versions.map((one) => (
+                <option key={one.key} value={one.key}>
+                  {line(one)}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        ) : (
+          version && <Muted>{line(version)}</Muted>
+        )}
+        {changed > 0 && <StaffLink href={changedHref}>{copy.changedLink(changed)}</StaffLink>}
+      </div>
       {version ? (
-        <>
-          <p className={styles.subject}>
-            <strong>{copy.subject}:</strong> {version.subject}
-          </p>
+        <MailEmail
+          from={<Muted>{copy.fromEach}</Muted>}
+          to={<Muted>{staffCopy.mailingPages.toEach}</Muted>}
+          subject={version.subject}
+        >
           <MailingLetter doc={campaignTextDoc(version.text)} fields={copy.fields} conditions={{}} />
-        </>
+        </MailEmail>
       ) : (
         <p>
           <Muted>{copy.noText}</Muted>
         </p>
-      )}
-      {total > 0 && (
-        <div className={styles.own}>
-          <h3>{copy.ownTitle}</h3>
-          <div className={styles.bar} aria-hidden="true">
-            <i data-band="under" style={{ flexGrow: bands.under }} />
-            <i data-band="middle" style={{ flexGrow: bands.middle }} />
-            <i data-band="over" style={{ flexGrow: bands.over }} />
-          </div>
-          <Muted>{copy.ownBands(bands.under, bands.middle, bands.over)}</Muted>
-        </div>
       )}
     </div>
   );

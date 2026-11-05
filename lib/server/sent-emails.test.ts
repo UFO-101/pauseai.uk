@@ -1,5 +1,6 @@
 import { expect, it, vi } from "vitest";
 import { addTestLetter, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import type { SentEmailSort } from "@/lib/sent-email-sort";
 import { query } from "./db";
 import { send } from "./email";
 import { recordProblem } from "./email";
@@ -133,6 +134,41 @@ describeWithDatabase("the sent emails", () => {
     expect(emails[1]).toMatchObject({ fromAddress: "jo@pauseai.uk", letterHref: null, to: null });
   });
 
+  it("finds those with a letter, a campaign or a mailing to lead to, or leaves them out", async () => {
+    const polly = await addTestPolitician();
+    const campaign = await addTestLetter({ politicianId: polly });
+    const [{ id: mailing }] = await query<{ id: number }>(
+      `INSERT INTO letters (kind, notable_person_id, status) VALUES ('pauseai', $1, 'sent') RETURNING id::int AS id`,
+      [polly],
+    );
+    await query("INSERT INTO letters_from_pauseai (id, mailing_id) SELECT $1, id FROM mailings LIMIT 1", [mailing]);
+    await log({
+      purpose: "letter",
+      letter_id: campaign,
+      address: "a@example.com",
+      outcome: "sent",
+      message_id: "1",
+      at: "2026-01-03",
+    });
+    await log({
+      purpose: "mailing",
+      letter_id: mailing,
+      address: "b@example.com",
+      outcome: "sent",
+      message_id: "2",
+      at: "2026-01-02",
+    });
+    await log({ purpose: "staff-login", address: "c@example.com", outcome: "sent", message_id: "3", at: "2026-01-01" });
+    const list = async (filter: Parameters<typeof listSentEmails>[0]) =>
+      (await listSentEmails(filter, true)).emails.map((e) => e.address);
+    expect(await list({ link: ["letter"] })).toEqual(["a@example.com", "b@example.com"]);
+    expect(await list({ link: ["campaign"] })).toEqual(["a@example.com"]);
+    expect(await list({ link: ["mailing"] })).toEqual(["b@example.com"]);
+    expect(await list({ link: ["campaign", "mailing"] })).toEqual(["a@example.com", "b@example.com"]);
+    expect(await list({ not: { link: ["letter"] } })).toEqual(["c@example.com"]);
+    expect((await listSentEmails({ link: ["campaign"] }, true)).total).toBe(1);
+  });
+
   it("matches an address with no letter to one politician or supporter, or says only the address if several", async () => {
     const polly = await addTestPolitician();
     await addTestPolitician({ name: "Twin", email: "shared@parliament.uk", airtableId: "a" });
@@ -198,5 +234,15 @@ describeWithDatabase("the sent emails", () => {
     expect(await list({ backend: ["gmail"] })).toEqual(["d@example.com"]);
     expect(await list({ not: { backend: ["gmail"] } })).toHaveLength(3);
     expect((await listSentEmails({ page: 2 }, true)).emails).toEqual([]);
+    // Sorted, those with nothing to sort by last, whichever way.
+    const sorted = (key: SentEmailSort, dir: "asc" | "desc") => list({ sort: { key, dir } });
+    expect(await sorted("when", "asc")).toEqual(["c@example.com", "b@example.com", "a@example.com", "d@example.com"]);
+    expect(await sorted("to", "desc")).toEqual(["d@example.com", "c@example.com", "b@example.com", "a@example.com"]);
+    expect((await sorted("subject", "asc")).slice(0, 2)).toEqual(["a@example.com", "b@example.com"]);
+    expect((await sorted("subject", "desc")).slice(-2)).toEqual(["d@example.com", "c@example.com"]);
+    expect((await sorted("outcome", "asc"))[0]).toBe("a@example.com");
+    expect((await sorted("what", "asc")).slice(0, 2)).toEqual(["d@example.com", "a@example.com"]);
+    expect((await sorted("backend", "desc"))[0]).toBe("d@example.com");
+    expect((await sorted("from", "asc"))[0]).toBe("d@example.com");
   });
 });

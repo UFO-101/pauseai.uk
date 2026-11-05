@@ -3,7 +3,7 @@ import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { runSql } from "@/scripts/fresh-database.mjs";
 import { addFilter, addStaffAccount, changeFilter, logInAsStaff, syncPoliticians } from "../steps";
 import { BASE, expect, frame, story, test } from "./fixtures";
-import { chooseDay, PM_LETTER } from "./staff-steps";
+import { chooseDay, importEmails, PM_LETTER } from "./staff-steps";
 
 // The politicians from Airtable: every body, their answers to the asks, and
 // PauseAI's emails to them, as the nightly sync copies them from the fixture
@@ -391,6 +391,7 @@ test("Mailings", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   const mailings = staffCopy.mailings;
+  await importEmails(page);
   await page.goto(`${BASE}/staff/mailings`);
   const invitation = "Edinburgh Conference Nov 26 Invitation";
   await expect(page.getByRole("listitem").filter({ hasText: invitation })).toContainText(mailings.imported);
@@ -489,19 +490,18 @@ test("A new ask", async ({ page, flowDatabase }) => {
 
 test("PauseAI's emails to politicians", async ({ page, request, flowDatabase }) => {
   story(
-    "Each morning's import copies PauseAI's emails to politicians from Airtable. Its page shows five copied, and one left out, as it belongs to no mailing we know.",
+    "Staff press Import emails now, which copies PauseAI's emails to politicians from Airtable. Its page shows five copied, and one left out, as it belongs to no mailing we know.",
   );
   await syncPoliticians(request, BASE);
   // With no permissions: PauseAI's letters are the politicians section's.
   await logIn(page, flowDatabase);
-  // The nightly sync copied them; the button finds nothing new.
-  await page.goto(`${BASE}/staff/import-data/emails`);
+  await importEmails(page);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(jobTitles["sync-emails"]);
   await expect(page.getByText("recEmailNewBox", { exact: false }).first()).toBeVisible();
   await frame(page, "The emails import's page");
-  story("Import emails now runs it again.");
+  story("Pressing it again finds nothing new.");
   await page.getByRole("button", { name: staffCopy.pauseaiEmails.importNow }).click();
-  await expect(page.getByText(staffCopy.runs.status.incomplete).first()).toBeVisible();
+  await expect(page.getByText(staffCopy.runs.status.incomplete)).toHaveCount(2);
   expect(runSql(flowDatabase, "SELECT count(*) FROM letters_from_pauseai")).toEqual(["5"]);
 
   story("Each email is in its politician's history, and has its own page under its mailing.");

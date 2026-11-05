@@ -542,6 +542,9 @@ Please join 40 of your colleagues.')`,
       ),
     );
     await expect(startOldLettersImport("jo@pauseai.uk", false)).rejects.toThrow("returned 500");
+    expect(
+      await query("SELECT status, started_by AS by FROM import_runs WHERE job = 'import-old-letters'"),
+    ).toContainEqual({ status: "failed", by: "jo@pauseai.uk" });
   });
 });
 

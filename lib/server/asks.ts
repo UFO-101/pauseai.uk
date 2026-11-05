@@ -73,13 +73,29 @@ export type AskAnswer = {
   name: string;
   constituency: string | null;
   party: string | null;
-  status: AskStatus;
+  /** Null for someone written to who hasn't answered. */
+  status: AskStatus | null;
+  /** When a campaign or mailing that put the ask last wrote to them; null if none has. */
+  lastWrittenTo: string | null;
 };
 
-/** An ask's own page: its counts, how it was put, by date, and a page of its answers. */
-export type AskPageData = AskWithCounts & { fixed: boolean; ways: AskWay[]; answers: AskAnswer[] };
+/** Who the campaigns and mailings that put ask $1 wrote to, and when they last did. */
+const WRITTEN_TO = `written AS (
+  SELECT l.notable_person_id AS id, max(coalesce(l.sent_at, l.created_at)) AS at
+  FROM letters l
+    LEFT JOIN letters_from_supporters s ON s.id = l.id LEFT JOIN campaigns c ON c.slug = s.campaign
+    LEFT JOIN letters_from_pauseai p ON p.id = l.id LEFT JOIN mailings m ON m.id = p.mailing_id
+  WHERE c.ask = $1 OR m.ask = $1 GROUP BY 1
+)`;
 
-/** The ask with `slug`, for its page, its answers those of `status`, or with none or blank, all; or undefined for none. */
+/** An ask's own page: its counts, how many written to haven't answered, how it was put, by date, and a page of its answers. */
+export type AskPageData = AskWithCounts & { fixed: boolean; noAnswer: number; ways: AskWay[]; answers: AskAnswer[] };
+
+/**
+ * The ask with `slug`, for its page, or undefined for none. Its answers are
+ * those of `status`, or with none or blank, all; or with "none", those written
+ * to who haven't answered, whoever was written to longest ago first.
+ */
 export async function askPageData(slug: string, status?: string): Promise<AskPageData | undefined> {
   const [ask] = await query<AskWithCounts>(
     `SELECT ${ASK_COLUMNS},
@@ -90,7 +106,7 @@ export async function askPageData(slug: string, status?: string): Promise<AskPag
     [slug],
   );
   if (!ask) return undefined;
-  const [ways, answers] = await Promise.all([
+  const [ways, answers, [{ noAnswer }]] = await Promise.all([
     query<AskWay>(
       `SELECT * FROM (
          SELECT 'campaign' AS kind, '/staff/campaigns/' || c.slug AS href, c.title, min(l.created_at) AS "from", max(l.created_at) AS "to", count(l.id)::int AS letters
@@ -104,13 +120,25 @@ export async function askPageData(slug: string, status?: string): Promise<AskPag
       [slug],
     ),
     query<AskAnswer>(
-      `SELECT n.id::int AS "politicianId", n.name, p.constituency, p.party, s.status
-       FROM ask_statuses s JOIN notable_people n ON n.id = s.notable_person_id LEFT JOIN politicians p ON p.id = n.id
-       WHERE s.ask = $1 AND ($2::text IS NULL OR s.status = $2) ORDER BY n.name LIMIT 200`,
+      `WITH ${WRITTEN_TO}
+       SELECT n.id::int AS "politicianId", n.name, p.constituency, p.party, s.status, w.at AS "lastWrittenTo"
+       FROM notable_people n
+         LEFT JOIN politicians p ON p.id = n.id
+         LEFT JOIN ask_statuses s ON s.notable_person_id = n.id AND s.ask = $1
+         LEFT JOIN written w ON w.id = n.id
+       WHERE CASE WHEN $2::text = 'none' THEN w.id IS NOT NULL AND s.status IS NULL
+         ELSE s.status IS NOT NULL AND ($2::text IS NULL OR s.status = $2::text) END
+       ORDER BY CASE WHEN $2::text = 'none' THEN w.at END, n.name LIMIT 200`,
       [slug, status || null],
     ),
+    query<{ noAnswer: number }>(
+      `WITH ${WRITTEN_TO}
+       SELECT count(*)::int AS "noAnswer" FROM written w
+       WHERE NOT EXISTS (SELECT 1 FROM ask_statuses s WHERE s.notable_person_id = w.id AND s.ask = $1)`,
+      [slug],
+    ),
   ]);
-  return { ...ask, fixed: FIXED_ASKS.includes(slug), ways, answers };
+  return { ...ask, fixed: FIXED_ASKS.includes(slug), noAnswer, ways, answers };
 }
 
 /** Every campaign, by title. */

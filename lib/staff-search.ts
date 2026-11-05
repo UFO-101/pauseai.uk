@@ -5,16 +5,16 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { contactState } from "@/lib/contact-permissions";
 import type { BlocksFilter } from "@/lib/server/email";
 import type { SentEmailsFilter } from "@/lib/server/sent-emails";
-import { ONE_OFF_FILTERS, type OneOffFilter } from "@/lib/one-off";
 import { campaignBySlug } from "@/lib/email-your-mp";
 import { LETTER_SORTS, type LetterSort } from "@/lib/letter-sort";
+import { SENT_EMAIL_SORTS } from "@/lib/sent-email-sort";
 import { POLITICIAN_FLAGS, type PoliticianFlag } from "@/lib/politician-filters";
 import { parseSort, type SortSpec } from "@/lib/staff-sort";
 import { EVENT_SORTS, type EventFilter } from "@/lib/staff-events-list";
 import { isSupporterBadge, NEAR_MILES, SUPPORTER_SORTS, type SupporterFilter } from "@/lib/supporters";
 
-/** The tabs of a campaign's letters, but All. */
-export const LETTER_TABS = ["changed", "replied", "failed"] as const;
+/** Which of a campaign's letters its counts can show: those that arrived, failed, were replied to, whose politician answered its ask, or whose text was changed. */
+export const LETTER_TABS = ["sent", "failed", "replied", "answered", "changed"] as const;
 export type LetterTab = (typeof LETTER_TABS)[number];
 
 export type LettersSearch = {
@@ -42,7 +42,7 @@ export const LETTER_BACKENDS = ["airtable", "postmark", "gmail"] as const;
 export type LetterBackend = (typeof LETTER_BACKENDS)[number];
 
 /** Whether a letter was delivered: the statuses a supporter's letter can have. */
-export const LETTER_STATUSES = ["queued", "sending", "sent", "not_sent", "bounced", "spam_complaint"] as const;
+const LETTER_STATUSES = ["queued", "sending", "sent", "not_sent", "bounced", "spam_complaint"] as const;
 
 /**
  * What came back to a letter: a written reply, only an automatic one (an
@@ -62,7 +62,7 @@ export type LetterFilter = {
   search?: string;
   /** What came back to it. */
   answered?: LetterReply;
-  /** Which of a campaign's tabs: those whose text was changed, replied to, or failed. */
+  /** Which of a campaign's counts it's showing. */
   tab?: LetterTab;
   /** In any of these campaigns, by slug. */
   campaign?: string[];
@@ -125,8 +125,20 @@ export function lettersSearch(
   };
 }
 
+/** What a sent email can lead to, which its Links filter finds. */
+export const SENT_EMAIL_LINKS = ["letter", "campaign", "mailing"] as const;
+
 /** The sent emails' URL filters. */
-export type SentEmailsSearch = { q: string; purpose: string[]; outcome: string[]; backend: string[]; page: string };
+export type SentEmailsSearch = {
+  q: string;
+  purpose: string[];
+  outcome: string[];
+  backend: string[];
+  link: string[];
+  sort: string;
+  dir: string;
+  page: string;
+};
 
 /** Reads the sent emails' URL. */
 export function sentEmailsSearch(
@@ -134,37 +146,34 @@ export function sentEmailsSearch(
 ): SentEmailsSearch & { filter: SentEmailsFilter } {
   const q = firstOf(params.q);
   const page = firstOf(params.page);
-  const [purpose, outcome, backend] = (["purpose", "outcome", "backend"] as const).map((name) =>
+  const [sort, dir] = [firstOf(params.sort), firstOf(params.dir)];
+  const [purpose, outcome, backend, link] = (["purpose", "outcome", "backend", "link"] as const).map((name) =>
     valuesOf(params[name]),
   );
   const [purposes, notPurposes] = anyAndNone(purpose, (values) => values);
   const [outcomes, notOutcomes] = anyAndNone(outcome, (values) => values);
   const [backends, notBackends] = anyAndNone(backend, (values) => values);
+  const [links, notLinks] = anyAndNone(link, (values) => among(values, SENT_EMAIL_LINKS));
   return {
     q,
     purpose,
     outcome,
     backend,
+    link,
+    sort,
+    dir,
     page,
     filter: {
       search: q.trim() || undefined,
+      sort: parseSort(SENT_EMAIL_SORTS, "when", sort, dir),
       purpose: purposes,
       outcome: outcomes,
       backend: backends,
-      not: notOf({ purpose: notPurposes, outcome: notOutcomes, backend: notBackends }),
+      link: links,
+      not: notOf({ purpose: notPurposes, outcome: notOutcomes, backend: notBackends, link: notLinks }),
       page: pageNumber(page),
     },
   };
-}
-
-/** The one-off emails' URL filter, as ONE_OFF_FILTERS, and its page. */
-export function oneOffSearch(params: { who?: ParamValue; page?: ParamValue }): {
-  who: string;
-  filter: OneOffFilter | undefined;
-  page: number;
-} {
-  const who = firstOf(params.who);
-  return { who, filter: among([who], ONE_OFF_FILTERS)[0], page: pageNumber(firstOf(params.page)) };
 }
 
 /** A mailing's ID from its page's URL: a whole number, or undefined. */

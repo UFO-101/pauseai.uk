@@ -1,3 +1,4 @@
+import { AskTitle } from "./AskLine";
 import StaffLink from "./ui/StaffLink";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { POLITICIAN_SORTS, type PoliticianSort } from "@/lib/politician-sort";
@@ -164,7 +165,9 @@ export function politicianColumns(asks: Ask[], search: Params = {}): ListColumn<
             {answered(p).map((ask) => (
               <li key={ask.slug}>
                 <strong>{staffCopy.statuses[p.statuses[ask.slug].status]}</strong>{" "}
-                <span className={styles.ask}>{ask.title}</span>
+                <span className={styles.ask}>
+                  <AskTitle ask={ask} />
+                </span>
               </li>
             ))}
           </ul>

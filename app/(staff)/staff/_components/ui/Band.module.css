@@ -47,12 +47,12 @@
   font-size: var(--text-lg);
 }
 
-/* The facts, with what's aside level with their tops. */
+/* The facts, with what's aside level with their bottoms. */
 .row {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3) var(--space-6);
-  align-items: flex-start;
+  align-items: flex-end;
 }
 
 .facts {

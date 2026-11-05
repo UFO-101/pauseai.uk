@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { found } from "@/lib/found";
-import { campaignTabCounts, campaignVersions, getCampaignSummary } from "@/lib/server/campaigns";
+import { campaignVersions, getCampaignSummary } from "@/lib/server/campaigns";
 import { listLetters } from "@/lib/server/letters";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { lettersSearch, type LettersSearch, type ParamValue } from "@/lib/staff-search";
@@ -24,22 +24,11 @@ export default async function CampaignPage({ params, searchParams }: Params) {
   const { slug } = await params;
   const campaign = found(await getCampaignSummary(slug));
   const { filter, ...search } = lettersSearch({ ...(await searchParams), campaign: slug });
-  const [letters, { versions, bands }, tabCounts] = await Promise.all([
-    listLetters(filter),
-    campaignVersions(slug),
-    campaignTabCounts(slug),
-  ]);
+  const [letters, { versions, changed }] = await Promise.all([listLetters(filter), campaignVersions(slug)]);
   return (
     <>
       <Breadcrumb href="/staff/campaigns">{staffCopy.campaigns.title}</Breadcrumb>
-      <CampaignView
-        campaign={campaign}
-        versions={versions}
-        bands={bands}
-        letters={letters}
-        search={search}
-        tabCounts={tabCounts}
-      />
+      <CampaignView campaign={campaign} versions={versions} changed={changed} letters={letters} search={search} />
     </>
   );
 }

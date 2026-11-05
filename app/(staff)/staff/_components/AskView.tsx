@@ -12,7 +12,7 @@ import Grid, { Card } from "./ui/Grid";
 import { ListTable, type ListColumn } from "./ui/ListFrame";
 import Progress from "./ui/Progress";
 import StaffLink from "./ui/StaffLink";
-import Tabs from "./ui/Tabs";
+import SegmentLinks from "./ui/SegmentLinks";
 import styles from "./AskView.module.css";
 
 const copy = staffCopy.asks;
@@ -57,7 +57,18 @@ const answerColumns: ListColumn<AskAnswer>[] = [
     key: "answer",
     label: page.answer,
     short: true,
-    cell: (a) => <Tag tone={ANSWER_TONES[a.status]}>{staffCopy.statuses[a.status]}</Tag>,
+    cell: (a) =>
+      a.status ? (
+        <Tag tone={ANSWER_TONES[a.status]}>{staffCopy.statuses[a.status]}</Tag>
+      ) : (
+        <Muted>{staffCopy.statuses.noAnswer}</Muted>
+      ),
+  },
+  {
+    key: "lastWrittenTo",
+    label: page.lastWrittenTo,
+    short: true,
+    cell: (a) => (a.lastWrittenTo ? staffDate(a.lastWrittenTo) : <Muted>–</Muted>),
   },
 ];
 
@@ -71,12 +82,10 @@ export default function AskView({ ask, answer }: { ask: AskPageData; answer: str
   const path = `/staff/asks/${ask.slug}`;
   const answers = ASK_STATUSES[ask.kind].filter((status) => ask.counts[status]);
   const answered = answeredOf(ask);
-  const toneOf = (status: string) => (status === "signed" || status === "going" ? ("green" as const) : undefined);
   return (
     <div className={styles.page}>
       <Band
         title={ask.title}
-        subtitle={askedLine(ask)}
         corner={
           !ask.fixed && (
             <StaffLink className={buttonClass({ variant: "ghost", size: "small", fit: true })} href={`${path}/edit`}>
@@ -89,16 +98,11 @@ export default function AskView({ ask, answer }: { ask: AskPageData; answer: str
             counts={[
               { key: "writtenTo", n: ask.writtenTo, label: page.writtenTo },
               { key: "answered", n: answered, label: page.answered },
-              ...answers.map((status) => ({
-                key: status,
-                n: ask.counts[status]!,
-                label: staffCopy.statuses[status].toLowerCase(),
-                tone: toneOf(status),
-              })),
             ]}
           />
         }
       >
+        <BandFact label={page.asked}>{askedLine(ask)}</BandFact>
         <BandFact label={ask.kind === "letter" ? page.started : page.on}>{ask.date && staffDate(ask.date)}</BandFact>
         <BandFact label={page.readIt[ask.kind]}>
           {ask.url &&
@@ -142,23 +146,26 @@ export default function AskView({ ask, answer }: { ask: AskPageData; answer: str
           )}
         </Card>
         <Card span={3} as="div" title={page.answersTitle} id="answers">
-          {answered === 0 ? (
+          {answered === 0 && ask.noAnswer === 0 ? (
             <p>
               <Muted>{page.none}</Muted>
             </p>
           ) : (
             <>
-              <Tabs
+              {/* Each shows those who gave that answer; pressed again, everyone. */}
+              <SegmentLinks
                 label={page.answersTitle}
-                current={answer || "all"}
-                tabs={[
-                  { key: "all", label: page.all(answered), href: path },
-                  ...answers.map((status) => ({
-                    key: status,
-                    label: `${staffCopy.statuses[status]} ${ask.counts[status]}`,
-                    href: `${path}?answer=${status}`,
-                  })),
-                ]}
+                links={[
+                  ...answers.map((status) => [status, staffCopy.statuses[status], ask.counts[status]!, false] as const),
+                  ...(ask.noAnswer ? [["none", staffCopy.statuses.noAnswer, ask.noAnswer, true] as const] : []),
+                ].map(([key, words, n, quiet]) => ({
+                  key,
+                  words: `${words} ${n}`,
+                  href: key === answer ? path : `${path}?answer=${key}`,
+                  quiet,
+                  current: key === answer,
+                  title: key === answer ? page.showAll : undefined,
+                }))}
               />
               <ListTable columns={answerColumns} rows={ask.answers} rowKey={(a) => a.politicianId} />
               <p>

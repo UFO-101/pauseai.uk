@@ -6,16 +6,16 @@ import EmailBlockFilters from "@/app/(staff)/staff/_components/EmailBlockFilters
 import { exampleProblems } from "@/app/(staff)/staff/_components/EmailBlocksTable.examples";
 import EmailProblemsTable from "@/app/(staff)/staff/_components/EmailProblemsTable";
 import CampaignName from "@/app/(staff)/staff/_components/CampaignName";
-import LetterFilters from "@/app/(staff)/staff/_components/LetterFilters";
 import LetterLink from "@/app/(staff)/staff/_components/LetterLink";
 import LettersTable from "@/app/(staff)/staff/_components/LettersTable";
+import MailEmail from "@/app/(staff)/staff/_components/MailEmail";
 import CampaignLetter from "@/app/(staff)/staff/_components/CampaignLetter";
 import CampaignsOverview, { CampaignAsk } from "@/app/(staff)/staff/_components/CampaignsOverview";
 import CampaignView from "@/app/(staff)/staff/_components/CampaignView";
 import OneOffList, { OneOffTable } from "@/app/(staff)/staff/_components/OneOffList";
 import OneOffThreadView from "@/app/(staff)/staff/_components/OneOffThreadView";
 import {
-  exampleBands,
+  exampleChanged,
   exampleCampaign,
   exampleCampaignEmpty,
   exampleCampaignNoAsk,
@@ -28,7 +28,6 @@ import {
   emptyLettersSearch,
   exampleAutoRepliedLetterDetails,
   exampleLetter,
-  exampleLetterCampaigns,
   examplePauseaiLetterDetails,
   exampleOlderRepliedLetterDetails,
   exampleProxiedLetterDetails,
@@ -354,6 +353,25 @@ export const staffLetters: Group = {
       ],
     },
     {
+      name: "MailEmail",
+      file: "app/(staff)/staff/_components/MailEmail.tsx",
+      variants: [
+        {
+          label: "From and to, and a subject alone",
+          render: () => (
+            <StaffPage as="div">
+              <MailEmail from="jo@pauseai.uk" to="Each politician" subject="A subject">
+                <p>The letter.</p>
+              </MailEmail>
+              <MailEmail subject="Only a subject">
+                <p>The letter.</p>
+              </MailEmail>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
       name: "CampaignLetter",
       file: "app/(staff)/staff/_components/CampaignLetter.tsx",
       variants: [
@@ -361,7 +379,7 @@ export const staffLetters: Group = {
           label: "Several versions, and how much people changed them",
           render: () => (
             <StaffPage as="div">
-              <CampaignLetter versions={exampleVersions} bands={exampleBands} />
+              <CampaignLetter changedHref="#changed" versions={exampleVersions} changed={exampleChanged} />
             </StaffPage>
           ),
         },
@@ -369,10 +387,7 @@ export const staffLetters: Group = {
           label: "One version, nothing changed",
           render: () => (
             <StaffPage as="div">
-              <CampaignLetter
-                versions={exampleVersions.slice(0, 1)}
-                bands={{ under: 0, middle: 0, over: 0, changed: 0 }}
-              />
+              <CampaignLetter changedHref="#changed" versions={exampleVersions.slice(0, 1)} changed={0} />
             </StaffPage>
           ),
         },
@@ -380,7 +395,7 @@ export const staffLetters: Group = {
           label: "No text",
           render: () => (
             <StaffPage as="div">
-              <CampaignLetter versions={[]} bands={{ under: 0, middle: 0, over: 0, changed: 0 }} />
+              <CampaignLetter changedHref="#changed" versions={[]} changed={0} />
             </StaffPage>
           ),
         },
@@ -397,7 +412,7 @@ export const staffLetters: Group = {
               <CampaignView
                 campaign={exampleCampaign}
                 versions={exampleVersions}
-                bands={exampleBands}
+                changed={exampleChanged}
                 letters={{
                   letters: [exampleLetter, { ...exampleLetter, id: 2, status: "sent", answer: "signed" }],
                   total: 150,
@@ -405,7 +420,6 @@ export const staffLetters: Group = {
                   pageSize: 100,
                 }}
                 search={emptyLettersSearch}
-                tabCounts={{ all: 150, changed: 50, replied: 2, failed: 1 }}
               />
             </StaffPage>
           ),
@@ -417,10 +431,9 @@ export const staffLetters: Group = {
               <CampaignView
                 campaign={exampleCampaignNoAsk}
                 versions={[]}
-                bands={exampleBands}
+                changed={exampleChanged}
                 letters={{ letters: [], total: 0, pages: 1, pageSize: 100 }}
                 search={emptyLettersSearch}
-                tabCounts={{ all: 0, changed: 0, replied: 0, failed: 0 }}
               />
             </StaffPage>
           ),
@@ -441,7 +454,6 @@ export const staffLetters: Group = {
                 page={1}
                 pages={1}
                 pageSize={100}
-                who=""
               />
             </StaffPage>
           ),
@@ -664,36 +676,13 @@ export const staffLetters: Group = {
       file: "app/(staff)/staff/_components/CampaignName.tsx",
       variants: [
         {
-          label: "A campaign linked to its page, and one no longer run, by its slug",
+          label: "Leading to its page, by its name or its slug; and plain, for staff who can't open it",
           render: () => (
             <StaffPage as="div">
               <p>
-                <CampaignName slug={pm.slug} /> · <CampaignName slug="old-campaign" />
+                <CampaignName slug={pm.slug} /> · <CampaignName slug="old-campaign" /> ·{" "}
+                <CampaignName slug={pm.slug} linked={false} />
               </p>
-            </StaffPage>
-          ),
-        },
-      ],
-    },
-    {
-      name: "LetterFilters",
-      file: "app/(staff)/staff/_components/LetterFilters.tsx",
-      variants: [
-        {
-          label: "One status, a campaign and consent picked",
-          render: () => (
-            <StaffPage as="div">
-              <LetterFilters
-                path="/staff/campaigns/regulate-letter-pm"
-                search={{
-                  ...emptyLettersSearch,
-                  status: "bounced",
-                  flag: ["!test"],
-                  campaign: ["regulate-letter-pm", "pauseai-info-frontier-ai"],
-                  backend: ["!airtable"],
-                }}
-                campaigns={exampleLetterCampaigns}
-              />
             </StaffPage>
           ),
         },

@@ -1,20 +1,20 @@
 import { Muted } from "@/components/ui/Text";
 import Tag from "@/components/ui/Tag";
+import { askHref } from "@/lib/asks";
 import { staffCopy } from "@/lib/content/staff-interface";
-import type { CampaignSummary, CampaignVersion, OwnWordsBands } from "@/lib/server/campaigns";
+import { campaignBySlug, campaignPath } from "@/lib/email-your-mp";
+import type { CampaignSummary, CampaignVersion } from "@/lib/server/campaigns";
 import type { LetterSummary } from "@/lib/server/letters";
 import { filtersPath, pageParam, type LettersSearch } from "@/lib/staff-search";
 import { staffDate } from "@/lib/staff-time";
 import CampaignLetter from "./CampaignLetter";
 import { CampaignAsk, campaignCounts } from "./CampaignsOverview";
-import LetterFilters from "./LetterFilters";
 import Band, { BandFact } from "./ui/Band";
 import Counts from "./ui/Counts";
 import Grid, { Card } from "./ui/Grid";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
 import Progress from "./ui/Progress";
 import StaffLink from "./ui/StaffLink";
-import Tabs from "./ui/Tabs";
 import styles from "./MailingView.module.css";
 
 const copy = staffCopy.campaigns;
@@ -82,36 +82,59 @@ const campaignLetterColumns: ListColumn<LetterSummary>[] = [
 export type CampaignPageProps = {
   campaign: CampaignSummary;
   versions: CampaignVersion[];
-  bands: OwnWordsBands;
+  changed: number;
   letters: { letters: LetterSummary[]; total: number; pages: number; pageSize: number };
   search: LettersSearch;
-  tabCounts: { all: number; changed: number; replied: number; failed: number };
 };
+
+/** Where the public reads a campaign: its page on the site, or where its letter is kept; nothing if neither. */
+function PublicPage({ campaign }: { campaign: CampaignSummary }) {
+  const code = campaignBySlug(campaign.slug);
+  if (code) return <StaffLink href={campaignPath(code)}>{copy.seePublicPage}</StaffLink>;
+  if (!campaign.url) return <Muted>–</Muted>;
+  return (
+    <a href={campaign.url} target="_blank" rel="noreferrer">
+      {copy.seePublicPage}
+    </a>
+  );
+}
 
 /**
  * A campaign's page, in a mailing's shape: its band of who it's from and to,
- * with its counts; how many answered its ask; then "The letter" beside
+ * what it asks and when, with its counts; how many answered its ask; then "The letter" beside
  * "Letters", as "The email" is beside "Recipients".
  */
-export default function CampaignView({ campaign, versions, bands, letters, search, tabCounts }: CampaignPageProps) {
+export default function CampaignView({ campaign, versions, changed, letters, search }: CampaignPageProps) {
   const path = `/staff/campaigns/${campaign.slug}`;
   const { page, ...filters } = search;
   void page;
-  const tabHref = (tab: string) => filtersPath(path, { ...filters, tab });
+  // Each count shows those it counts; pressed again, it shows them all.
+  const counts = campaignCounts(campaign).map((count) => {
+    const current = count.key === search.tab;
+    return {
+      ...count,
+      href: filtersPath(path, { ...filters, tab: current ? "" : count.key }),
+      current,
+      title: current ? copy.showAll : undefined,
+    };
+  });
   return (
     <div className={styles.page}>
-      <Band title={campaign.title} aside={<Counts counts={campaignCounts(campaign)} />}>
+      <Band title={campaign.title} aside={<Counts counts={counts} />}>
         <BandFact label={copy.from}>{copy.supporters(campaign.supporters)}</BandFact>
-        <BandFact label={copy.last}>{campaign.lastAt && staffDate(campaign.lastAt)}</BandFact>
-        <BandFact label={copy.started}>{campaign.firstAt && staffDate(campaign.firstAt)}</BandFact>
+        <BandFact label={copy.to}>{copy.politicians(campaign.politicians)}</BandFact>
         <BandFact label={campaign.ask ? staffCopy.asks.askTo[campaign.askKind!] : staffCopy.mailings.fields.ask}>
           {campaign.ask ? (
-            <StaffLink href={`/staff/asks/${campaign.ask}`}>{campaign.askTitle}</StaffLink>
+            <StaffLink href={askHref(campaign.ask)}>{campaign.askTitle}</StaffLink>
           ) : (
             <CampaignAsk campaign={campaign} />
           )}
         </BandFact>
-        <BandFact label={copy.to}>{copy.politicians(campaign.politicians)}</BandFact>
+        <BandFact label={copy.started}>{campaign.firstAt && staffDate(campaign.firstAt)}</BandFact>
+        <BandFact label={copy.last}>{campaign.lastAt && staffDate(campaign.lastAt)}</BandFact>
+        <BandFact label={copy.publicPage}>
+          <PublicPage campaign={campaign} />
+        </BandFact>
       </Band>
       {campaign.ask && (
         <Grid>
@@ -123,30 +146,24 @@ export default function CampaignView({ campaign, versions, bands, letters, searc
               label={staffCopy.mailingPages.counts.answered}
               big
             >
-              {copy.answeredBar(campaign.answered, campaign.politicians)}
+              {staffCopy.mailingPages.answeredBar(campaign.answered, campaign.politicians)}
             </Progress>
           </Card>
         </Grid>
       )}
       <Grid>
         <Card span={3} look="aside" title={copy.theLetter} id="campaign-letter">
-          <CampaignLetter versions={versions} bands={bands} />
+          <CampaignLetter
+            versions={versions}
+            changed={changed}
+            changedHref={filtersPath(path, { ...filters, tab: "changed" })}
+          />
         </Card>
         <Card span={3} as="div">
           <div className={styles.recipientsHead}>
-            <h2>{copy.lettersTitle}</h2>
+            <h2>{search.tab ? copy.tabs[search.tab as keyof typeof copy.tabs] : copy.lettersTitle}</h2>
+            {search.tab && <StaffLink href={filtersPath(path, { ...filters, tab: "" })}>{copy.showAll}</StaffLink>}
           </div>
-          <LetterFilters path={path} search={search} campaigns={[]} />
-          <Tabs
-            label={copy.tabsLabel}
-            current={search.tab || "all"}
-            tabs={[
-              { key: "all", label: copy.tabs.all(tabCounts.all), href: tabHref("") },
-              { key: "changed", label: copy.tabs.changed(tabCounts.changed), href: tabHref("changed") },
-              { key: "replied", label: copy.tabs.replied(tabCounts.replied), href: tabHref("replied") },
-              { key: "failed", label: copy.tabs.failed(tabCounts.failed), href: tabHref("failed") },
-            ]}
-          />
           <ListFrame
             count={staffCopy.letters.total(letters.total)}
             total={letters.total}
@@ -154,7 +171,6 @@ export default function CampaignView({ campaign, versions, bands, letters, searc
             pages={letters.pages}
             pageSize={letters.pageSize}
             href={(n) => filtersPath(path, { ...filters, page: "" }, pageParam(n))}
-            download={(format) => filtersPath(`${path}/download`, { ...filters, page: "" }, { format })}
             columns={campaignLetterColumns}
             rows={letters.letters}
             rowKey={(l) => l.id}

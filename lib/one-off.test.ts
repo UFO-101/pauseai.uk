@@ -3,7 +3,12 @@ import {
   isPauseaiAddress,
   isRecognisedMail,
   isSomeoneElse,
+  keepsPoliticianThreads,
+  mailboxes,
   onParliamentDomain,
+  participants,
+  politicianAddresses,
+  politicianAnswered,
   politiciansIn,
   politiciansOf,
   quotedAddresses,
@@ -71,5 +76,60 @@ describe("mail the site recognises", () => {
     expect(isRecognisedMail("a@notify.pauseai.uk", [])).toBe(true);
     expect(isRecognisedMail("noreply@x.uk", [])).toBe(true);
     expect(isRecognisedMail("x@example.com", ["INBOX"])).toBe(false);
+  });
+});
+
+describe("a header's line", () => {
+  it("reads names and addresses, a comma in quotes being part of a name", () => {
+    expect(mailboxes('"Placeholder, Polly" <Polly@Parliament.uk>, jane@example.com, Sam <sam@example.com>,')).toEqual([
+      { name: "Placeholder, Polly", address: "polly@parliament.uk" },
+      { name: "", address: "jane@example.com" },
+      { name: "Sam", address: "sam@example.com" },
+    ]);
+  });
+
+  it("keeps words with no address as a name, and finds nothing on an empty line", () => {
+    expect(mailboxes("undisclosed-recipients:;")).toEqual([{ name: "undisclosed-recipients:;", address: "" }]);
+    expect(mailboxes("")).toEqual([]);
+  });
+
+  it("says which politician an address is, unless several share it", () => {
+    expect(
+      politicianAddresses(book, [
+        "polly@gmail.com",
+        "shared@parliament.uk",
+        "someone@tulip.example",
+        "jane@example.com",
+      ]),
+    ).toEqual({ "polly@gmail.com": 1, "someone@tulip.example": 4 });
+  });
+});
+
+describe("whether a politician answered", () => {
+  it("counts a politician or a parliament's address after the first message, and no one else", () => {
+    expect(politicianAnswered(book, ["joseph@pauseai.uk", "polly@gmail.com"])).toBe(true);
+    expect(politicianAnswered(book, ["joseph@pauseai.uk", "office@parliament.uk"])).toBe(true);
+    expect(politicianAnswered(book, ["polly@gmail.com", "joseph@pauseai.uk"])).toBe(false);
+    expect(politicianAnswered(book, ["polly@gmail.com"])).toBe(false);
+  });
+});
+
+describe("a thread's participants", () => {
+  it("lists each sender once, in the order they first wrote, by name or else address", () => {
+    expect(
+      participants([
+        { name: "Joseph", address: "joseph@pauseai.uk" },
+        { name: "", address: "polly@parliament.uk" },
+        { name: "Joseph", address: "joseph@pauseai.uk" },
+      ]),
+    ).toEqual(["Joseph", "polly@parliament.uk"]);
+  });
+});
+
+describe("which mailboxes are kept", () => {
+  it("keeps policy@'s and Joseph's threads with politicians, and no one else's", () => {
+    expect(keepsPoliticianThreads("policy@pauseai.uk")).toBe(true);
+    expect(keepsPoliticianThreads("Joseph@pauseai.uk")).toBe(true);
+    expect(keepsPoliticianThreads("jo@pauseai.uk")).toBe(false);
   });
 });

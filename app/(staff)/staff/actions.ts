@@ -2,7 +2,6 @@
 
 // The staff interface's Server Actions. Each is a public endpoint, so each
 // calls requireStaff() before anything else (tests/checks/staff-auth.test.ts).
-import { setKeepPoliticianThreads } from "@/lib/server/gmail-accounts";
 import { startOldLettersImport } from "@/lib/server/old-letters-start";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -164,15 +163,7 @@ export async function importGoToParliamentNow(): Promise<void> {
 /** Starts a press of the import of old letters, as a dry run if its box is ticked. */
 export async function importOldLettersNow(form: FormData): Promise<void> {
   const { email } = await requireStaff();
-  await startOldLettersImport(email, form.get("dryRun") === "on");
-  revalidatePath(importPath("import-old-letters"));
-}
-
-/** Turns keeping my threads with politicians on or off, for my own account. */
-export async function setKeepThreadsNow(form: FormData): Promise<void> {
-  const { email } = await requireStaff();
-  await setKeepPoliticianThreads(email, form.get("keep") === "on");
-  revalidatePath("/staff/me");
+  await run("import-old-letters", startOldLettersImport(email, form.get("dryRun") === "on"));
 }
 
 export async function checkNow(): Promise<void> {

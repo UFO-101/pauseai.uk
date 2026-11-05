@@ -38,6 +38,31 @@ describeWithDatabase("asks and campaigns", () => {
     expect(ask!.answers.map((a) => a.status).sort()).toEqual(["declined", "signed"]);
     expect((await askPageData("deepmind-letter", "signed"))!.answers.map((a) => a.politicianId)).toEqual([polly]);
     expect((await askPageData("deepmind-letter", ""))!.answers).toHaveLength(2);
+    // Those written to with no answer: only someone written to counts, and only until they answer, oldest first.
+    expect(ask!.noAnswer).toBe(0);
+    expect(ask!.answers.find((a) => a.politicianId === polly)?.lastWrittenTo).not.toBeNull();
+    expect(ask!.answers.find((a) => a.politicianId === dora)?.lastWrittenTo).toBeNull();
+    const write = async (person: number, sentAt: string) => {
+      const [{ id: letter }] = await query<{ id: number }>(
+        `INSERT INTO letters (kind, notable_person_id, status, sent_at) VALUES ('pauseai', $1, 'sent', $2) RETURNING id::int AS id`,
+        [person, sentAt],
+      );
+      await query(
+        `INSERT INTO letters_from_pauseai (id, mailing_id) SELECT $1, id FROM mailings WHERE ask = 'deepmind-letter' LIMIT 1`,
+        [letter],
+      );
+    };
+    const newer = await addTestPolitician({ name: "Newer", email: "newer@parliament.uk", airtableId: "newer" });
+    const older = await addTestPolitician({ name: "Older", email: "older@parliament.uk", airtableId: "older" });
+    await addTestPolitician({ name: "Unwritten", email: "unwritten@parliament.uk", airtableId: "unwritten" });
+    await write(newer, "2025-08-02");
+    await write(older, "2025-08-01");
+    const none = (await askPageData("deepmind-letter", "none"))!;
+    expect(none.noAnswer).toBe(2);
+    expect(none.answers.map((a) => [a.politicianId, a.status])).toEqual([
+      [older, null],
+      [newer, null],
+    ]);
     expect(await askPageData("no-such-ask")).toBeUndefined();
     await addAsk({ title: "Ours", kind: "letter", date: null, url: null, askedBy: [] }, "jo@pauseai.uk");
     expect((await askPageData("ours"))!.fixed).toBe(false);

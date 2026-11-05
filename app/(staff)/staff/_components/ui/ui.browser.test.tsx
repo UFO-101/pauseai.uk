@@ -14,7 +14,7 @@ import NavFold from "./NavFold";
 import FormPending from "./FormPending";
 import PageTitle from "./PageTitle";
 import Band, { BandFact } from "./Band";
-import Counts from "./Counts";
+import Counts, { countsOpening } from "./Counts";
 import DownloadMenu from "./DownloadMenu";
 import Grid, { Card, Column } from "./Grid";
 import Progress from "./Progress";
@@ -786,12 +786,9 @@ describe("Counts", () => {
     expect(colour("0")).toBe(colour("–"));
   });
 
-  it("small, the whole box one link, named", async () => {
-    await render(
-      <Counts small href="/mailing" label="How it went" counts={[{ key: "sent", n: 4, label: "sent", href: "/x" }]} />,
-    );
-    await expect.element(page.getByRole("link", { name: "How it went" })).toHaveAttribute("href", "/mailing");
-    expect(page.getByRole("link").all()).toHaveLength(1);
+  it("in a list's row, each opens its page with its own tab chosen", async () => {
+    await render(<Counts small counts={countsOpening("/mailing", [{ key: "sent", n: 4, label: "sent" }])} />);
+    await expect.element(page.getByRole("link", { name: "4 sent" })).toHaveAttribute("href", "/mailing?tab=sent");
   });
 });
 

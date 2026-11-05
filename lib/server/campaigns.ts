@@ -63,23 +63,13 @@ export async function getCampaignSummary(slug: string): Promise<CampaignSummary 
 /** A version of a campaign's text, with how many letters were written from it. */
 export type CampaignVersion = { key: string; from: string | null; letters: number; subject: string; text: string };
 
-/** How much of their letters people wrote themselves, in bands, and how many changed the text at all. */
-export type OwnWordsBands = { under: number; middle: number; over: number; changed: number };
-
-/** A campaign's letters' dates and own words: what its versions and bands are counted from. */
-export async function campaignVersions(slug: string): Promise<{ versions: CampaignVersion[]; bands: OwnWordsBands }> {
+/** A campaign's versions, counted from its letters' dates, and how many of its letters changed the wording. */
+export async function campaignVersions(slug: string): Promise<{ versions: CampaignVersion[]; changed: number }> {
   const rows = await query<{ at: Date; own: number | null }>(
     `SELECT l.created_at AS at, s.own_words AS own FROM letters_from_supporters s JOIN letters l USING (id) WHERE s.campaign = $1`,
     [slug],
   );
-  const bands: OwnWordsBands = { under: 0, middle: 0, over: 0, changed: 0 };
-  for (const { own } of rows) {
-    if (own === null) continue;
-    if (own < 0.1) bands.under++;
-    else if (own <= 0.5) bands.middle++;
-    else bands.over++;
-    if (own > 0) bands.changed++;
-  }
+  const changed = rows.filter(({ own }) => (own ?? 0) > 0).length;
   const code = campaignBySlug(slug);
   if (code) {
     const text = code.letter({
@@ -88,7 +78,7 @@ export async function campaignVersions(slug: string): Promise<{ versions: Campai
       senderName: "{name}",
       statuses: {},
     });
-    return { versions: [{ key: slug, from: null, letters: rows.length, subject: code.subject, text }], bands };
+    return { versions: [{ key: slug, from: null, letters: rows.length, subject: code.subject, text }], changed };
   }
   const counted = new Map<string, number>();
   for (const { at } of rows) {
@@ -104,18 +94,5 @@ export async function campaignVersions(slug: string): Promise<{ versions: Campai
       text: version.text,
     }))
     .reverse();
-  return { versions, bands };
-}
-
-/** The tabs of a campaign's letters, and how many are in each. */
-export async function campaignTabCounts(
-  slug: string,
-): Promise<{ all: number; changed: number; replied: number; failed: number }> {
-  const [row] = await query<{ all: number; changed: number; replied: number; failed: number }>(
-    `SELECT count(*)::int AS all, count(*) FILTER (WHERE s.own_words > 0)::int AS changed, count(l.replied_at)::int AS replied,
-       count(*) FILTER (WHERE l.status IN ${FAILED})::int AS failed
-     FROM letters_from_supporters s JOIN letters l USING (id) WHERE s.campaign = $1`,
-    [slug],
-  );
-  return row;
+  return { versions, changed };
 }

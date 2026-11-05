@@ -5,6 +5,7 @@ import { requireStaff } from "@/lib/server/staff-auth";
 import { emailsSearch, filtersPath } from "@/lib/staff-search";
 import { unblockAddress } from "../../../actions";
 import EmailBlockFilters from "../../../_components/EmailBlockFilters";
+import PageIntro from "../../../_components/ui/PageIntro";
 import EmailBlocksTable from "../../../_components/EmailBlocksTable";
 import EmailProblemsTable from "../../../_components/EmailProblemsTable";
 
@@ -19,7 +20,7 @@ export default async function MpEmailsPage({ searchParams }: { searchParams: Pro
   return (
     <>
       <h1>{staffCopy.emails.titles.mps}</h1>
-      <p>{staffCopy.emails.intro}</p>
+      <PageIntro>{staffCopy.emails.intro}</PageIntro>
       <EmailBlockFilters q={q} kind={kind} action="/staff/politicians/blocked-emails" />
       <EmailBlocksTable
         blocks={blocks}

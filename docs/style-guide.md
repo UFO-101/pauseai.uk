@@ -543,6 +543,21 @@ its name. Fold, at its foot, folds it to a rail of the icons on wider
 screens, the sections a rule apart, each name showing beside its icon on
 hover or focus; the browser remembers it (`lib/staff-nav.ts`).
 
+**A thing's name leads to it.** Wherever the name of something with a page of
+its own is shown, such as a campaign, an ask or a politician, it links to that
+page, so a thing that looks the same goes to the same place. A number can go
+elsewhere, to a filter or a list of what it counts. A link to somewhere else
+has words of its own ("See it", not the name). Two exceptions: a name in a
+choice, such as a menu's option, picks it instead; and for staff who can't open
+the page, the name is plain.
+
+**What a permission hides** (`ui/Withheld`). Words standing in for something
+a staff member's permissions keep from them must go in `Withheld`, a sealed
+envelope and muted italics, so it looks the same everywhere: a thread they
+can't read, a line of a politician's history with no sender. It's never a link,
+as there's nothing to open. Something simply left out, a missing column or a
+number that isn't linked, needs no words and no `Withheld`.
+
 **Columns the filters fix** are left out: a house tab, one party found,
 one status (the politicians table). It's the filters that decide, never
 the rows on the page, which may agree by chance; a choice left out fixes

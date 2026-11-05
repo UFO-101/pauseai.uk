@@ -127,8 +127,7 @@ Staff see them as a mailing, from supporters rather than PauseAI: `/staff/campai
 lists them under the month of each one's most recent letter, with a mailing's
 counts, and a campaign's page (`/staff/campaigns/[slug]`, `lib/server/campaigns.ts`)
 has its header, how many answered its ask, "The letter" with each version of its
-text and how much people changed it, and "Letters", with their search, filters
-and download. A version is the code's text for a campaign in that list, and for
+text and how much people changed it, and "Letters", which its counts choose among. A version is the code's text for a campaign in that list, and for
 pauseai.info's old ones each commit of its form live when a letter was written
 (`FORM_VERSIONS` in `lib/content/pauseai-info-form.ts`).
 
@@ -157,7 +156,7 @@ adds what its kind has, joined as notable people are:
   writer changed as a letter through the letters inbox does.
 - **PauseAI's letter** (`letters_from_pauseai`): one person's letter of a mailing
   (`mailings`), which may make an ask. Those sent before the site could send
-  them are copied nightly from Airtable's Emails table
+  them are copied from Airtable's Emails table, when staff press its import
   (`lib/server/emails-sync.ts`): who, when, and whether it was
   personalised, but no text. Each mailing there is a
   tick box, named by `mailings.airtable_field`; an email with no box we know
@@ -371,8 +370,8 @@ Gmail's limit is shared with the site, and stops the moment Gmail refuses.
 Threads with a politician that aren't a letter of a campaign or mailing: Joseph's
 own emails, a volunteer copying policy@, an MP writing to us. Kept whole, in
 Netlify Blobs with a row in `one_off_messages`, in `one_off_threads`, by
-`lib/server/one-off-emails.ts`; read-only at `/staff/mailings/one-off`, the last
-row of the mailings list, and on the politician's and supporter's pages.
+`lib/server/one-off-emails.ts`; read-only at `/staff/one-off`, in the
+navigation under Politicians, and on the politician's and supporter's pages.
 
 - **What counts** (`lib/one-off.ts`): a message with an address a politician has
   or has had (past ones from the audit log), one on a politician's own domain, or
@@ -386,17 +385,17 @@ row of the mailings list, and on the politician's and supporter's pages.
   with a politician. As volunteers forward their emails to us, policy@ and the
   group's archive, which are shared mail, are searched this way. Joseph's other
   mail isn't: it's found by its headers alone, to keep the rest of it private.
-- **New threads.** `keep_politician_threads` on a staff account, on for policy@ and
-  joseph@, has the regular read keep that account's threads by the same rule. Its
-  owner turns it off on `/staff/me`, which stops new ones and leaves those kept.
+- **New threads.** The regular read keeps policy@'s and joseph@'s threads by the
+  same rule (`keepsPoliticianThreads`), and `/staff/me` says so once they're
+  connected. Everyone else copies policy@ into theirs.
 - **Mail that matches nothing,** in policy@ and the group's archive, isn't kept,
   only its Gmail ID (`unmatched_mail`), to list its sender and subject, read again
   from Gmail, in an email to the notification inbox at most once a day. The import
   lists what it finds on its results instead, for staff with `supporters`.
-- **Who sees what.** A thread is "PauseAI" if every sender in it is a politician, on
-  a parliament's domain, or one of PauseAI's accounts (the connected Gmails, and
-  `PAUSEAI_ALIASES`), and "Someone else" if anyone else appears. Staff without
-  `supporters` see the name and text of "PauseAI" threads only.
+- **Who sees what.** Staff without `supporters` see the name and text of a thread
+  only if every sender in it is a politician, on a parliament's domain, or one of
+  PauseAI's accounts (the connected Gmails, and `PAUSEAI_ALIASES`). Anyone else
+  writing in it (`someone_else`) hides it from them.
 
 ## Form entries
 
@@ -453,7 +452,7 @@ records (`supporter_first_seen`), is kept on the supporter
 (`lib/server/supporter-facts.ts`), which `linkSupporters()` runs, so the
 staff home counts new supporters by it without working it out each time. Only staff with the `supporters` permission see them
 (`/staff/supporters`), and each download of a list of them (supporters,
-letters, their blocked addresses) is an audit log entry.
+their blocked addresses) is an audit log entry.
 
 Where they come from:
 
@@ -776,7 +775,6 @@ blocked addresses. Nothing else about reading is logged.
 | `apply politician sync`, `hold politician sync`, `apply held politician sync`, `discard held politician sync` | `sync`, staff                  | Each sync's outcome, and each decision on a held one                        | counts, or the run's `id`                                    |
 | `copy PauseAI emails`                                                                                         | `sync`                         | The Emails sync adds any                                                    | `added`                                                      |
 | `import web form letters`                                                                                     | staff                          | The one-off import of pauseai.info's letters                                | counts                                                       |
-| `set keep politician threads`                                                                                 | staff                          | An account turns keeping its threads with politicians on or off             | `email`, `keep`                                              |
 | `import Go to Parliament`                                                                                     | staff                          | The one-off import of its meetings                                          | counts                                                       |
 | `import ControlAI letter`                                                                                     | `controlai`                    | A read of the letter that set or cleared any status                         | counts                                                       |
 | `block address`, `unblock address`                                                                            | `postmark`, staff              | A bounce or complaint blocks an address; staff unblock it                   | `address`, and the `kind` or the `note`                      |

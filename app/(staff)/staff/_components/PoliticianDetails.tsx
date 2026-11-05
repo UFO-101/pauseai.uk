@@ -19,6 +19,7 @@ import Band, { BandFact } from "./ui/Band";
 import Counts from "./ui/Counts";
 import Grid, { Card, Column } from "./ui/Grid";
 import Strip from "./ui/Strip";
+import Withheld from "./ui/Withheld";
 import { NationShape, Rosette, StatusDot } from "./PoliticianIcons";
 import UnblockForm from "./UnblockForm";
 import NoteHistory from "./NoteHistory";
@@ -53,7 +54,7 @@ function Sender({ letter }: { letter: LetterSummary }) {
       )}
       <Muted>
         {" · "}
-        <CampaignName slug={letter.campaign} title={letter.campaignTitle} url={letter.campaignUrl} />
+        <CampaignName slug={letter.campaign} title={letter.campaignTitle} />
       </Muted>
     </>
   );
@@ -64,7 +65,7 @@ function Unsigned({ letter, status }: { letter: UnsignedLetter; status: boolean 
   return (
     <Muted>
       {" · "}
-      <CampaignName slug={letter.campaign} title={letter.campaignTitle} url={letter.campaignUrl} />
+      <CampaignName slug={letter.campaign} title={letter.campaignTitle} linked={false} />
       {status && <> · {staffCopy.letters.status[letter.status] ?? letter.status}</>}
     </Muted>
   );
@@ -85,11 +86,11 @@ function letterEntries({ senders, letters }: PoliticianLetters): Entry[] {
       lines(
         letter,
         <>
-          {copy.history.unsignedLetter}
+          <Withheld>{copy.history.unsignedLetter}</Withheld>
           <Unsigned letter={letter} status />
         </>,
         <>
-          {copy.history["unsigned-letter-replied"]}
+          <Withheld>{copy.history["unsigned-letter-replied"]}</Withheld>
           <Unsigned letter={letter} status={false} />
         </>,
       ),
@@ -363,9 +364,11 @@ export default function PoliticianDetails({
       what: (
         <>
           {staffCopy.oneOff.title}:{" "}
-          <StaffLink href={`/staff/mailings/one-off/${thread.id}`}>
-            {thread.subject ?? staffCopy.oneOff.hidden}
-          </StaffLink>
+          {thread.subject === null ? (
+            <Withheld>{staffCopy.oneOff.hidden}</Withheld>
+          ) : (
+            <StaffLink href={`/staff/one-off/${thread.id}`}>{thread.subject || staffCopy.oneOff.noSubject}</StaffLink>
+          )}
         </>
       ),
     })),

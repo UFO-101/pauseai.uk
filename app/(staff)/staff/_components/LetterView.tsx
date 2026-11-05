@@ -41,9 +41,7 @@ function AskCard({
   setStatus: SetStatus;
 }) {
   if (!ask && letter.kind === "pauseai") return null;
-  const campaign = letter.kind === "supporter" && (
-    <CampaignName slug={letter.campaign} title={letter.campaignTitle} url={letter.campaignUrl} />
-  );
+  const campaign = letter.kind === "supporter" && <CampaignName slug={letter.campaign} title={letter.campaignTitle} />;
   return (
     <Card look="aside" title={ask ? staffCopy.mailings.fields.ask : staffCopy.letters.columns.campaign} id="ask-title">
       {ask ? (

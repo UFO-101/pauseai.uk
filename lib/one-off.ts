@@ -4,6 +4,14 @@ import { addressesIn, quotedHeaders } from "./old-letters";
 // campaign or mailing. What counts as one, and who a thread's people are
 // (lib/server/one-off-emails.ts keeps them).
 
+/** The mailboxes whose threads with politicians the regular read keeps: the shared one, and Joseph's, as he's agreed. */
+const KEPT_MAILBOXES: readonly string[] = ["policy@pauseai.uk", "joseph@pauseai.uk"];
+
+/** Whether the regular read keeps an account's threads with politicians. */
+export function keepsPoliticianThreads(account: string): boolean {
+  return KEPT_MAILBOXES.includes(account.toLowerCase());
+}
+
 /** Parliaments' own domains: an address on one, or a subdomain of one, counts whoever it is. */
 export const PARLIAMENT_DOMAINS = [
   "parliament.uk",
@@ -49,19 +57,46 @@ export function quotedAddresses(text: string): string[] {
   return quotedHeaders(text).flatMap((quote) => addressesIn(`${quote.from} ${quote.to} ${quote.cc}`));
 }
 
+/** Whether a politician or a parliament's address wrote after a thread's first message, given its senders in order. */
+export function politicianAnswered(book: PoliticianBook, senders: string[]): boolean {
+  return politiciansIn(book, senders.slice(1)).counts;
+}
+
+/** Who wrote in a thread, each once, in the order they first wrote, given its senders in order. */
+export function participants(senders: { name: string; address: string }[]): string[] {
+  return [...new Set(senders.map(({ name, address }) => name || address))];
+}
+
+/** The people on a header's line, name and address, reading commas inside quotes as part of a name. */
+export function mailboxes(line: string): { name: string; address: string }[] {
+  const parts = line.match(/(?:"[^"]*"|<[^>]*>|[^,])+/g) ?? [];
+  return parts
+    .filter((part) => part.trim())
+    .map((part) => {
+      const address = addressesIn(part)[0] ?? "";
+      const name = part
+        .replace(/<[^>]*>/, "")
+        .trim()
+        .replace(/^"|"$/g, "");
+      return { name: name.toLowerCase() === address ? "" : name, address };
+    });
+}
+
+/** Which politician each address is, leaving out one that several share, as it can't say whose. */
+export function politicianAddresses(book: PoliticianBook, addresses: string[]): Record<string, number> {
+  const known = addresses.map((address) => [address, politiciansOf(book, address)] as const);
+  return Object.fromEntries(known.filter(([, ids]) => ids.length === 1).map(([address, [id]]) => [address, id]));
+}
+
 /** Whether an address is one of PauseAI's: a connected Gmail or an alias. */
 export function isPauseaiAddress(address: string, connected: readonly string[]): boolean {
   return connected.includes(address) || PAUSEAI_ALIASES.includes(address);
 }
 
-/** Whether a sender makes its thread "Someone else": neither a politician, nor on a parliament's domain, nor PauseAI's. */
+/** Whether a sender hides its thread from staff without `supporters`: neither a politician, nor on a parliament's domain, nor PauseAI's. */
 export function isSomeoneElse(book: PoliticianBook, address: string, connected: readonly string[]): boolean {
   return !isPauseaiAddress(address, connected) && !politiciansIn(book, [address]).counts;
 }
-
-/** Which of the one-off emails a list shows: all, those only between politicians and PauseAI, or those with someone else. */
-export const ONE_OFF_FILTERS = ["pauseai", "someone-else"] as const;
-export type OneOffFilter = (typeof ONE_OFF_FILTERS)[number];
 
 /**
  * Mail the site recognises as nothing a person need look at, in a shared

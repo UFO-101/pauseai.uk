@@ -51,7 +51,6 @@ export type LetterSummary = {
   /** The campaign's title, as the campaigns table has it. */
   campaignTitle: string;
   /** Where an old campaign's letter can be read, as the campaigns table has it. */
-  campaignUrl: string | null;
   status: string;
   senderName: string;
   senderEmail: string;
@@ -142,7 +141,7 @@ async function letterRows({
     .map((condition) => `AND ${condition}`)
     .join(" ");
   return query<LetterSummary & { total: number }>(
-    `SELECT l.id::int AS id, s.campaign, c.title AS "campaignTitle", c.url AS "campaignUrl", l.status, f.name AS "senderName", f.email AS "senderEmail",
+    `SELECT l.id::int AS id, s.campaign, c.title AS "campaignTitle", l.status, f.name AS "senderName", f.email AS "senderEmail",
        n.name AS "mpName", n.id::int AS "politicianId", p.is_test AS "isTest", p.constituency, p.party,
        (SELECT st.status FROM ask_statuses st WHERE st.notable_person_id = n.id AND st.ask = c.ask) AS answer, s.own_words AS "ownWords", ${BACKEND} AS backend, l.created_at AS "createdAt", l.sent_at AS "sentAt", l.replied_at AS "repliedAt",
        ${AUTO_REPLIED_AT} AS "autoRepliedAt",
@@ -164,6 +163,8 @@ async function letterRows({
        AND ($11::text[] IS NULL OR ${BACKEND} = ANY($11))
        AND ($12::text[] IS NULL OR (${BACKEND} = ANY($12)) IS NOT TRUE)
        AND ($13::text IS NULL OR CASE $13 WHEN 'changed' THEN s.own_words > 0 WHEN 'replied' THEN l.replied_at IS NOT NULL
+         WHEN 'sent' THEN l.status IN ('sent', 'spam_complaint')
+         WHEN 'answered' THEN EXISTS (SELECT 1 FROM ask_statuses st WHERE st.notable_person_id = n.id AND st.ask = c.ask)
          ELSE l.status IN ('not_sent', 'bounced') END) ${flagConditions}
      ORDER BY ${LETTER_COLUMNS[sort.key]} ${sort.dir === "asc" ? "ASC" : "DESC"} NULLS LAST, l.created_at DESC, l.id DESC
      LIMIT $2 OFFSET $9`,
@@ -379,7 +380,7 @@ export async function getSupporterLetter(id: number): Promise<SupporterLetterDet
 /** A letter on an MP's page for staff without `supporters`: what happened to it, and nothing of who wrote it. */
 export type UnsignedLetter = Pick<
   LetterSummary,
-  "id" | "campaign" | "campaignTitle" | "campaignUrl" | "status" | "createdAt" | "repliedAt"
+  "id" | "campaign" | "campaignTitle" | "status" | "createdAt" | "repliedAt"
 >;
 
 /** An MP's letters: with their senders, or without. */
@@ -389,7 +390,7 @@ export type PoliticianLetters =
 /** The letters to a politician, newest first, selecting nothing of their senders, so none reach the page. */
 async function unsignedLetters(politicianId: number, limit = 200): Promise<UnsignedLetter[]> {
   return query<UnsignedLetter>(
-    `SELECT l.id::int AS id, s.campaign, c.title AS "campaignTitle", c.url AS "campaignUrl", l.status, l.created_at AS "createdAt", l.replied_at AS "repliedAt"
+    `SELECT l.id::int AS id, s.campaign, c.title AS "campaignTitle", l.status, l.created_at AS "createdAt", l.replied_at AS "repliedAt"
      FROM letters_from_supporters s JOIN letters l ON l.id = s.id JOIN campaigns c ON c.slug = s.campaign
      WHERE l.notable_person_id = $1 ORDER BY l.created_at DESC, l.id DESC LIMIT $2`,
     [politicianId, limit],

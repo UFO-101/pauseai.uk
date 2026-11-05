@@ -4,22 +4,26 @@ import type { GmailAccount } from "@/lib/server/gmail-accounts";
 import { staffDate } from "@/lib/staff-time";
 import { GmailConnect, GmailOutcome, SentToday } from "./GmailConnect";
 import styles from "./MyGmail.module.css";
+import StaffLink from "./ui/StaffLink";
 
 const copy = staffCopy.gmail;
 
-/** Whether threads with politicians are kept from your Gmail, and the button that changes it. */
-function KeepThreads({ keeps, action }: { keeps: boolean; action: (form: FormData) => void | Promise<void> }) {
+/** What's kept from this mailbox: all its threads with politicians, or only replies to what's sent from here. */
+function KeptNote({ keeps }: { keeps: boolean }) {
   const words = staffCopy.oneOff;
+  const { before, after } = keeps ? words.kept : words.notKept;
   return (
-    <form action={action} aria-label={words.keepLabel}>
-      <p>
-        <strong>{keeps ? words.keepOn : words.keepOff}</strong> {words.keepHelp}
-      </p>
-      {!keeps && <input type="hidden" name="keep" value="on" />}
-      <SubmitButton variant="ghost" size="small" fit>
-        {keeps ? words.stopKeeping : words.startKeeping}
-      </SubmitButton>
-    </form>
+    <p>
+      <em>
+        {before}{" "}
+        {keeps ? (
+          <StaffLink href="/staff/one-off">{words.title}</StaffLink>
+        ) : (
+          <StaffLink href="/staff/mailings">{staffCopy.mailings.title}</StaffLink>
+        )}
+        {after}
+      </em>
+    </p>
   );
 }
 
@@ -37,7 +41,6 @@ export default function MyGmail({
   outcome,
   disconnect,
   keepsThreads = false,
-  setKeepThreads,
 }: {
   /** Who's logged in. */
   me: string;
@@ -47,9 +50,8 @@ export default function MyGmail({
   /** How connecting ended, if Google has just sent you back. */
   outcome: string;
   disconnect: (form: FormData) => void | Promise<void>;
-  /** Whether threads with politicians are kept from it, and what changes that; for a connected account. */
+  /** Whether threads with politicians are kept from it. */
   keepsThreads?: boolean;
-  setKeepThreads?: (form: FormData) => void | Promise<void>;
 }) {
   return (
     <>
@@ -66,11 +68,11 @@ export default function MyGmail({
         <GmailOutcome outcome={outcome} me={me} lettersInbox={lettersInbox} />
         {account ? (
           <>
+            {!lettersInbox && <KeptNote keeps={keepsThreads} />}
             <p>
               {copy.connected(staffDate(account.connectedAt))}{" "}
               <SentToday sent={account.sentToday} lettersInbox={lettersInbox} />
             </p>
-            {setKeepThreads && !lettersInbox && <KeepThreads keeps={keepsThreads} action={setKeepThreads} />}
             <form action={disconnect}>
               <SubmitButton variant="ghost" size="small" fit>
                 {copy.disconnect}

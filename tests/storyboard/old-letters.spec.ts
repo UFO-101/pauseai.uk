@@ -4,9 +4,9 @@ import { importPath } from "@/lib/import-runs";
 import { connectLettersInbox, databaseUrl, runSql } from "@/scripts/fresh-database.mjs";
 import { OUTBOX_DIR } from "../checkout.mjs";
 import { fixtureEnv } from "../fixture-env.mjs";
-import { newestEmail, syncPoliticians } from "../steps";
+import { addStaffAccount, logInAsStaff, newestEmail, syncPoliticians } from "../steps";
 import { BASE, emailFrame, expect, frame, story, test } from "./fixtures";
-import { logIn } from "./staff-steps";
+import { importEmails, logIn } from "./staff-steps";
 
 // The letters written before the site could send them, read from the policy
 // team's mailboxes, and every other thread with a politician. Each flow on its
@@ -22,6 +22,7 @@ async function ready(page: Page, database: string, request: APIRequestContext) {
   for (const email of ["joseph@pauseai.uk", "policy@pauseai.uk"])
     connectLettersInbox(databaseUrl(database), email, key);
   await logIn(page, database, ["supporters", "admin"]);
+  await importEmails(page);
   await page.goto(`${BASE}${importPath("import-web-form-letters")}`);
   await page.getByRole("button", { name: staffCopy.webForm.importNow }).click();
   await expect(page.getByText(staffCopy.runs.status.ok).first()).toBeVisible();
@@ -65,6 +66,15 @@ test("Import old letters", async ({ page, request, flowDatabase }) => {
   await press(page, flowDatabase);
   expect(runSql(flowDatabase, "SELECT count(*) FROM one_off_messages")).toEqual(kept);
   await frame(page, "Pressed again");
+});
+
+test("The old letters import fails", async ({ page, flowDatabase }) => {
+  story("Joseph's Gmail isn't connected, so the import can't read it. The press shows as a failed run, saying why.");
+  await logIn(page, flowDatabase, ["supporters", "admin"]);
+  await page.goto(`${BASE}${importPath("import-old-letters")}`);
+  await page.getByRole("button", { name: words.importNow }).click();
+  await expect(page.getByText("joseph@pauseai.uk's Gmail isn't connected")).toBeVisible();
+  await frame(page, "A failed run");
 });
 
 test("An old letter's page", async ({ page, request, flowDatabase }) => {
@@ -135,24 +145,17 @@ test("A form letter's page", async ({ page, request, flowDatabase }) => {
 });
 
 test("One-off emails", async ({ page, request, flowDatabase }) => {
-  story("The mailings list ends with the threads with politicians that aren't a mailing's or a campaign's.");
+  story("One-off emails, in the menu, are the threads with politicians that aren't a mailing's or a campaign's.");
   await ready(page, flowDatabase, request);
   await press(page, flowDatabase);
-  await page.goto(`${BASE}/staff/mailings`);
-  await page.getByRole("link", { name: oneOff.title }).click();
-  await expect(page).toHaveURL(`${BASE}/staff/mailings/one-off`);
+  await page.goto(`${BASE}/staff/one-off`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(oneOff.title);
   await frame(page, "The one-off emails");
 
-  story("They can be filtered to those only with PauseAI, or with someone else in them.");
-  await page.getByRole("link", { name: oneOff.filters["someone-else"] }).click();
-  await expect(page.getByRole("link", { name: "Fwd: My MP's answer" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Coffee next week?" })).toHaveCount(0);
-  await frame(page, "With someone else in them");
-
   story("A thread is read through, across the mailboxes it was in.");
-  await page.getByRole("link", { name: oneOff.all }).click();
   await page.getByRole("link", { name: "Coffee next week?" }).click();
   await expect(page.getByText("Thursday works.")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Polly Placeholder" }).first()).toBeVisible();
   await frame(page, "A thread");
 
   story("A politician's page lists theirs.");
@@ -163,29 +166,26 @@ test("One-off emails", async ({ page, request, flowDatabase }) => {
 
   story("Staff without the supporters permission can't read a thread with someone else in it, or see who.");
   await logIn(page, flowDatabase, []);
-  await page.goto(`${BASE}/staff/mailings/one-off`);
+  await page.goto(`${BASE}/staff/one-off`);
   await expect(page.getByText("Vera Volunteer")).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Coffee next week?" })).toBeVisible();
   await frame(page, "Without the permission");
   const [hidden] = runSql(flowDatabase, "SELECT id FROM one_off_threads WHERE someone_else LIMIT 1");
-  await page.goto(`${BASE}/staff/mailings/one-off/${hidden}`);
+  await page.goto(`${BASE}/staff/one-off/${hidden}`);
   await expect(page.getByText(oneOff.hidden)).toBeVisible();
   await frame(page, "A thread they can't read");
 });
 
-test("Keeping your threads", async ({ page, flowDatabase }) => {
-  story("Your own page says whether threads with politicians are kept from your Gmail, and turns it off, or on.");
-  await logIn(page, flowDatabase, []);
+test("Keeping Joseph's threads", async ({ page, flowDatabase }) => {
+  story(
+    "Threads with politicians are kept from policy@ and Joseph's mailboxes. His own page says so, once it's connected.",
+  );
+  addStaffAccount(flowDatabase, "joseph@pauseai.uk");
+  await logInAsStaff(page, BASE, "joseph@pauseai.uk");
   await page.goto(`${BASE}/staff/me`);
   await page.getByRole("link", { name: staffCopy.gmail.connect }).click();
-  await expect(page.getByText(staffCopy.gmail.outcomes.connected)).toBeVisible();
-  await expect(page.getByText(oneOff.keepOff)).toBeVisible();
-  await frame(page, "Not kept");
-  await page.getByRole("button", { name: oneOff.startKeeping }).click();
-  await expect(page.getByText(oneOff.keepOn)).toBeVisible();
+  await expect(page.getByText(oneOff.kept.before)).toBeVisible();
   await frame(page, "Kept");
-  await page.getByRole("button", { name: oneOff.stopKeeping }).click();
-  await expect(page.getByText(oneOff.keepOff)).toBeVisible();
 });
 
 test("Mail that matches nothing", async ({ page, request, flowDatabase }) => {

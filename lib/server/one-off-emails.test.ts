@@ -6,7 +6,6 @@ import { stubLettersInboxEnv } from "@/tests/gmail-sends";
 import { query } from "./db";
 import { eraseSupporter } from "./erasure";
 import { addFormEntry } from "./form-entries";
-import { keepsPoliticianThreads, setKeepPoliticianThreads } from "./gmail-accounts";
 import { readGmail } from "./gmail-reading";
 import {
   deleteOneOffBlobs,
@@ -15,7 +14,7 @@ import {
   keepOneOff,
   listOneOffThreads,
   ONE_OFF_HEADERS,
-  oneOffCount,
+  oneOffInbox,
   politicianOneOffs,
   reportUnmatchedMail,
   supporterOneOffs,
@@ -101,6 +100,14 @@ async function keep(mail: Mail & { at?: number }, account = "policy@pauseai.uk",
   );
 }
 
+it("names the inbox one-off emails are copied to: POLICY_INBOX, or its usual address", () => {
+  vi.stubEnv("POLICY_INBOX", "policy@example.org");
+  expect(oneOffInbox()).toBe("policy@example.org");
+  vi.stubEnv("POLICY_INBOX", "");
+  expect(oneOffInbox()).toBe("policy@pauseai.uk");
+  vi.unstubAllEnvs();
+});
+
 describeWithDatabase("one-off emails", () => {
   useTestDatabase();
   beforeEach(() => {
@@ -162,22 +169,22 @@ describeWithDatabase("one-off emails", () => {
     const all = await listOneOffThreads(["supporters"]);
     expect(all.threads.map((t) => t.subject)).toEqual(["Theirs", "Ours"]);
     expect(all.threads[0]).toMatchObject({
-      from: "Vera",
+      participants: ["Vera"],
       someoneElse: true,
       messages: 1,
       people: [{ id: polly, name: "Polly Placeholder" }],
     });
     expect(all.total).toBe(2);
-    expect((await listOneOffThreads(["supporters"], { filter: "pauseai" })).threads.map((t) => t.subject)).toEqual([
-      "Ours",
-    ]);
-    expect((await listOneOffThreads(["supporters"], { filter: "someone-else" })).threads.map((t) => t.subject)).toEqual(
-      ["Theirs"],
-    );
     const limited = await listOneOffThreads([]);
-    expect(limited.threads[0]).toMatchObject({ subject: null, from: null, someoneElse: true });
-    expect(limited.threads[1]).toMatchObject({ subject: "Ours", from: "Polly" });
-    expect(await oneOffCount()).toBe(2);
+    expect(limited.threads[0]).toMatchObject({
+      subject: null,
+      participants: null,
+      mailboxes: null,
+      answered: null,
+      someoneElse: true,
+    });
+    expect(limited.threads[1]).toMatchObject({ subject: "Ours", participants: ["Polly"], answered: false });
+    expect(limited.threads[1].mailboxes).toHaveLength(1);
   });
 
   it("opens a thread's messages, its text from its blob; for staff without supporters, not one with someone else", async () => {
@@ -186,6 +193,7 @@ describeWithDatabase("one-off emails", () => {
     const theirs = (await keep({ id: "b", from: "vera@example.com", text: "Private." }))!;
     const thread = await getOneOffThread(ours, []);
     expect(thread?.messages_?.[0]).toMatchObject({ fromAddress: POLLY, text: "Thanks." });
+    expect(thread?.messages_?.[0].politicians[POLLY]).toBeTypeOf("number");
     expect((await getOneOffThread(theirs, ["supporters"]))?.messages_?.[0].text).toBe("Private.");
     expect(await getOneOffThread(theirs, [])).toMatchObject({ subject: null, messages_: null });
     expect(await getOneOffThread(99, ["supporters"])).toBeUndefined();
@@ -293,11 +301,10 @@ describeWithDatabase("one-off emails", () => {
       expect(await query("SELECT gmail_message_id AS id FROM unmatched_mail")).toEqual([{ id: "m1" }]);
     });
 
-    it("runs in readGmail only for an account that keeps them, and turning it off stops new ones", async () => {
+    it("runs in readGmail only for a mailbox whose threads are kept", async () => {
       await addTestPolitician();
       await connectTestGmail("policy@pauseai.uk");
       vi.stubEnv("POLICY_INBOX", "policy@pauseai.uk");
-      await query("UPDATE staff_accounts SET keep_politician_threads = true WHERE email = 'policy@pauseai.uk'");
       mailbox({ id: "m1", from: POLLY }, { id: "m2", from: "stranger@example.com" });
       const history = () =>
         server.use(
@@ -312,13 +319,12 @@ describeWithDatabase("one-off emails", () => {
       history();
       const { accounts } = await readGmail("nightly");
       expect(accounts[0].oneOffs).toBe(1);
-      expect(await oneOffCount()).toBe(1);
-      await setKeepPoliticianThreads("policy@pauseai.uk", false);
-      expect(await keepsPoliticianThreads("policy@pauseai.uk")).toBe(false);
+      expect(await threads()).toHaveLength(1);
       await query("DELETE FROM one_off_threads");
+      await query("UPDATE staff_accounts SET gmail_token = NULL WHERE email = 'policy@pauseai.uk'");
+      await connectTestGmail("jo@pauseai.uk");
       await readGmail("nightly");
-      expect(await oneOffCount()).toBe(0);
-      expect(await keepsPoliticianThreads("nobody@pauseai.uk")).toBe(false);
+      expect(await threads()).toHaveLength(0);
     });
   });
 

@@ -32,9 +32,11 @@ const howAsked = (ask: AskWithCounts) =>
     .join(" · ");
 
 /**
- * The asks' columns: its kind, title and date, who asks it, how many
- * politicians gave each answer its kind allows, each count linked to the
- * politicians who gave it; how many were written to, how many answered, and how they were asked.
+ * The asks' columns, as the style guide orders them, but that the kind leads,
+ * read with the title as a sentence: "We ask them to" sign this. Who asks it
+ * and how; how many politicians gave each answer its kind allows,
+ * each count linked to the politicians who gave it; how many were written to
+ * and how many answered; its date.
  */
 export const askColumns: ListColumn<AskWithCounts>[] = [
   {
@@ -51,17 +53,16 @@ export const askColumns: ListColumn<AskWithCounts>[] = [
     cell: (a) => <StaffLink href={askHref(a.slug)}>{a.title}</StaffLink>,
   },
   {
-    key: "date",
-    label: copy.columns.date,
-    short: true,
-    text: (a) => a.date,
-    cell: (a) => a.date && staffDate(a.date),
-  },
-  {
     key: "askedBy",
     label: copy.columns.askedBy,
     text: (a) => a.askedBy.map((asker) => copy.askedBy[asker]).join("; "),
     cell: (a) => <AskedBy ask={a} />,
+  },
+  {
+    key: "how",
+    label: copy.columns.how,
+    text: (a) => howAsked(a),
+    cell: (a) => howAsked(a) || <Muted>–</Muted>,
   },
   {
     key: "answers",
@@ -99,10 +100,11 @@ export const askColumns: ListColumn<AskWithCounts>[] = [
     cell: (a) => answeredOf(a).toLocaleString("en-GB"),
   },
   {
-    key: "how",
-    label: copy.columns.how,
-    text: (a) => howAsked(a),
-    cell: (a) => howAsked(a) || <Muted>–</Muted>,
+    key: "date",
+    label: copy.columns.date,
+    short: true,
+    text: (a) => a.date,
+    cell: (a) => a.date && staffDate(a.date),
   },
 ];
 

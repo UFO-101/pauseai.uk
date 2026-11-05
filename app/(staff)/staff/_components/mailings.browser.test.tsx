@@ -249,10 +249,8 @@ describe("MailingsOverview", () => {
     // Sending: its bar, leading to it.
     await expect.element(page.getByRole("progressbar", { name: copy.sentLabel })).toHaveAttribute("value", "214");
     await expect.element(page.getByText(copy.sendingBar(209, 650))).toBeVisible();
-    // Sent: its box of counts, one link to it, the day without this year; answered only with an ask.
-    await expect
-      .element(page.getByRole("link", { name: copy.countsLabel("Invitation: AI safety conference, Edinburgh") }))
-      .toHaveAttribute("href", "/staff/mailings/4");
+    // Sent: each count opens it with that tab chosen, the day without this year; answered only with an ask.
+    expect(document.querySelector('a[href="/staff/mailings/4?tab=failed"]')).not.toBeNull();
     await expect.element(row("AI safety conference")).toMatchTextContent("20 Oct");
     await expect.element(row("AI safety conference")).not.toMatchTextContent("20 Oct 2026");
     await expect.element(row("Ben Lake").first()).not.toMatchTextContent(copy.counts.answered);
@@ -328,7 +326,7 @@ describe("MailingView", () => {
     await expect.element(page.getByText(copy.answeredBar(3, 12))).toBeVisible();
     await expect.element(page.getByRole("progressbar", { name: copy.counts.answered })).toHaveAttribute("value", "3");
     // The band: when, by whom, from where, the ask, and who it was for.
-    await expect.element(page.getByText("20 Oct 2026, 08:00")).toBeVisible();
+    await expect.element(page.getByText("20 Oct 2026", { exact: true })).toBeVisible();
     await expect.element(page.getByText(copy.by(written.createdBy))).toBeVisible();
     await expect.element(page.getByText("jo@pauseai.uk", { exact: true })).toBeVisible();
     await expect.element(page.getByText("who")).toBeVisible();
@@ -533,7 +531,7 @@ describe("MailingView, for a mailing imported from Airtable", () => {
     await imported({ ask: null });
     await expect.element(page.getByRole("heading", { level: 1 })).toMatchTextContent(exampleMailing.title);
     await expect.element(page.getByText(mailings.imported).first()).toBeVisible();
-    await expect.element(page.getByText("1 Oct 2026, 09:00")).toBeVisible();
+    await expect.element(page.getByText("1 Oct 2026", { exact: true })).toBeVisible();
     await expect.element(page.getByText(staffCopy.campaigns.politicians(4))).toBeVisible();
     await expect.element(page.getByText(mailings.noText)).toBeVisible();
     await expect.element(page.getByRole("row").filter({ hasText: "Polly" })).toMatchTextContent(mailings.personalised);

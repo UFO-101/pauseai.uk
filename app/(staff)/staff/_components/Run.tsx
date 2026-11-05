@@ -18,6 +18,7 @@ import type { MpProblem } from "@/lib/mp-check";
 import { changeCount, type Renamed, type SyncedPolitician } from "@/lib/politician-sync";
 import RunBox from "./RunBox";
 import { Muted } from "@/components/ui/Text";
+import Withheld from "./ui/Withheld";
 import Table from "@/components/ui/Table";
 
 /** The Server Action that applies or discards a held politician sync. */
@@ -394,7 +395,9 @@ function OldLettersRun({ run, open, people }: { run: OldLettersImport; open?: bo
             </ul>
           </>
         ) : (
-          <p>{words.onlyWithSupporters(result.unmatched.length)}</p>
+          <p>
+            {words.matchedNothing(result.unmatched.length)} <Withheld>{words.onlyWithSupporters}</Withheld>
+          </p>
         ))}
     </RunBox>
   );

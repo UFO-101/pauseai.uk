@@ -5,6 +5,7 @@ import { asksWithCounts } from "@/lib/server/asks";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { askFormSearch, firstOf, type ParamValue } from "@/lib/staff-search";
 import AsksTable from "../../_components/AsksTable";
+import PageIntro from "../../_components/ui/PageIntro";
 import PageTitle from "../../_components/ui/PageTitle";
 import StaffLink from "../../_components/ui/StaffLink";
 
@@ -26,7 +27,7 @@ export default async function AsksPage({ searchParams }: { searchParams: Promise
       >
         {staffCopy.asks.title}
       </PageTitle>
-      <p>{staffCopy.asks.intro}</p>
+      <PageIntro>{staffCopy.asks.intro}</PageIntro>
       <AsksTable asks={asks} notice={notice} picked={firstOf(params.ask)} />
     </>
   );

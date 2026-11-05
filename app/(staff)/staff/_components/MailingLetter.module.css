@@ -35,9 +35,13 @@
   margin-bottom: 0;
 }
 
+/* A lozenge, as the editor's list of fields draws them (.fieldLozenge). */
 .field {
-  padding: 0 var(--space-1);
-  border-radius: var(--radius-sm);
+  display: inline-block;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-sm);
+  line-height: 1.3;
   background: var(--status-blue-bg);
   color: var(--status-blue);
   font-weight: 600;

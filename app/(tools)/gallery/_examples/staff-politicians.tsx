@@ -335,17 +335,11 @@ export const staffPoliticians: Group = {
       file: "app/(staff)/staff/_components/AskLine.tsx",
       variants: [
         {
-          label: "Linked to another site, to a page of ours, and not linked",
+          label: "Leading to its page",
           render: () => (
             <StaffPage as="div">
               <p>
                 <AskTitle ask={exampleAsks[0]} />
-              </p>
-              <p>
-                <AskTitle ask={{ ...exampleAsks[2], url: "/campaigns/dear-sir-demis-2025" }} />
-              </p>
-              <p>
-                <AskTitle ask={exampleAsks[1]} />
               </p>
             </StaffPage>
           ),

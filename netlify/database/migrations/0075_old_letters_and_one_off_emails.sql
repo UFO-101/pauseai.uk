@@ -51,10 +51,6 @@ UPDATE email_sends e SET subject = s.subject,
 FROM letters_from_supporters s LEFT JOIN proxies p ON p.id = s.proxy_id
 WHERE e.letter_id = s.id AND e.purpose = 'letter';
 
--- Whether the site's regular read keeps this account's threads with politicians.
-ALTER TABLE staff_accounts ADD COLUMN keep_politician_threads boolean NOT NULL DEFAULT false;
-UPDATE staff_accounts SET keep_politician_threads = true WHERE email IN ('policy@pauseai.uk', 'joseph@pauseai.uk');
-
 -- An office may write from a politician's own domain, which also says whose
 -- thread it is: only one held by one politician, as Parliament lists them.
 CREATE TABLE politician_domains (

@@ -426,8 +426,6 @@ export default function PoliticiansList({
           rows={list.politicians}
           rowKey={(p) => p.id}
           empty={search.tab === "ticked" ? mailingCopy.pickedNone : copy.none}
-          // The ticked tab has no filter bar, so the tabs' rule is the one over it.
-          ruled={search.tab !== "ticked"}
         />
       )}
       {list.otherHouses > 0 && (

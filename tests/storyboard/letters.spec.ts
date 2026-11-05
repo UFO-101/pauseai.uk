@@ -1,6 +1,6 @@
 import { campaigns, copy } from "@/lib/content/email-your-mp";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { addFilter, changeFilter, fakeTurnstile, lookUpTestMp, newestEmail, openLookup } from "../steps";
+import { fakeTurnstile, lookUpTestMp, newestEmail, openLookup } from "../steps";
 import { BASE, emailFrame, expect, madeUpAddress, frame, story, test } from "./fixtures";
 import { TEST_MPS } from "@/lib/test-mps";
 import { sentEmail } from "./letters-inbox-steps";
@@ -39,21 +39,21 @@ test("Filtering letters", async ({ page, request, flowDatabase }) => {
   await expect(janes).toContainText(staffCopy.letters.status.sent);
   await expect(sams).toContainText(staffCopy.letters.status.bounced);
   await frame(page, "The campaign's letters");
-  story("Staff filter by status, to the bounced letters.");
-
-  await addFilter(page, staffCopy.letters.columns.status, staffCopy.letters.status.bounced);
-  await expect(page).toHaveURL(/\/staff\/campaigns\/.*status=bounced/);
+  story("The failed count shows only the letter that bounced, and pressed again, all of them.");
+  await page
+    .getByRole("link", { name: /failed/ })
+    .first()
+    .click();
+  await expect(page).toHaveURL(/tab=failed/);
   await expect(sams).toBeVisible();
   await expect(janes).toHaveCount(0);
-  await frame(page, "Bounced letters");
+  await frame(page, "The letters that failed");
 
-  story("Clear filters shows both letters again, the newest first.");
-  await page.getByRole("link", { name: staffCopy.resetFilters }).click();
-  await expect(page).toHaveURL(`${BASE}/staff/campaigns/${campaigns[0].slug}`);
+  await page.getByRole("link", { name: staffCopy.campaigns.showAll }).click();
   await expect(janes).toBeVisible();
   await expect(sams).toBeVisible();
   await expect(page.getByRole("row").nth(1)).toContainText("Sam Smith");
-  await frame(page, "The campaign's letters, cleared");
+  await frame(page, "All the letters again");
 });
 
 test("Replies to letters", async ({ page, request, flowDatabase }) => {
@@ -80,37 +80,15 @@ test("Replies to letters", async ({ page, request, flowDatabase }) => {
   await expect(janes).toContainText(copy.status.auto_reply);
   await expect(sams).not.toContainText(copy.status.auto_reply);
   await frame(page, "The campaign's letters");
-  story("So the Status filter offers only whether a letter was delivered.");
-
-  // The Status filter offers only whether a letter was delivered.
-  await page.getByRole("button", { name: staffCopy.filters.add }).click();
-  const status = page
-    .locator("[popover]:popover-open details")
-    .filter({ has: page.locator("summary", { hasText: new RegExp(`^${copy.columns.status}$`) }) });
-  await status.locator("summary").click();
-  await expect(status.getByRole("link", { name: copy.status.sent, exact: true })).toBeVisible();
-  await expect(status.getByRole("link", { name: copy.status.auto_reply, exact: true })).toHaveCount(0);
-  await frame(page, "The Status filter", { window: true });
-  await page.keyboard.press("Escape");
-  story("The Replied filter finds letters by what came back. Automatic reply only finds Jane's.");
-
-  await addFilter(page, copy.columns.replied, copy.answered.auto);
-  await expect(page).toHaveURL(/answered=auto/);
-  await expect(janes).toBeVisible();
-  await expect(sams).toHaveCount(0);
-  await frame(page, "Letters with only an automatic reply");
-  story("Written reply finds Sam's.");
-
-  await changeFilter(page, `${copy.columns.replied}: ${copy.answered.auto}`, copy.answered.yes);
-  await expect(page).toHaveURL(/answered=yes/);
+  story("The replied count shows Sam's, as an automatic reply doesn't count.");
+  await page
+    .getByRole("link", { name: /replied/ })
+    .first()
+    .click();
+  await expect(page).toHaveURL(/tab=replied/);
   await expect(sams).toBeVisible();
   await expect(janes).toHaveCount(0);
-  await frame(page, "Letters with a written reply");
-  story("No reply finds none.");
-
-  await changeFilter(page, `${copy.columns.replied}: ${copy.answered.yes}`, copy.answered.no);
-  await expect(page.getByText(copy.none)).toBeVisible();
-  await frame(page, "Letters with no reply");
+  await frame(page, "The letters with a reply");
 });
 
 test("A letter's page", async ({ page, flowDatabase }) => {
@@ -209,9 +187,9 @@ test("A letter bounces", async ({ page, request, flowDatabase }) => {
   await expect(page.locator(":popover-open")).toContainText('"reason"');
   await frame(page, "What the bounce said", { window: true });
   await page.keyboard.press("Escape");
-  story("Campaigns in the menu is marked, and leads to the list of campaigns.");
-  await page.getByRole("link", { name: staffCopy.nav.campaigns }).first().click();
-  await expect(page).toHaveURL(`${BASE}/staff/campaigns`);
+  story("The way back leads to the letter's campaign.");
+  await page.getByRole("link", { name: campaigns[0].title }).first().click();
+  await expect(page).toHaveURL(`${BASE}/staff/campaigns/${campaigns[0].slug}`);
 });
 
 test("Unblocking an MP's address", async ({ page, request, flowDatabase }) => {

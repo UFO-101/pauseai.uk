@@ -4,8 +4,8 @@ import { found } from "@/lib/found";
 import { getOneOffThread } from "@/lib/server/one-off-emails";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { letterId } from "@/lib/staff-search";
-import Breadcrumb from "../../../../_components/Breadcrumb";
-import OneOffThreadView from "../../../../_components/OneOffThreadView";
+import Breadcrumb from "../../../_components/Breadcrumb";
+import OneOffThreadView from "../../../_components/OneOffThreadView";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -17,7 +17,7 @@ export default async function OneOffThreadPage({ params }: Params) {
   const thread = found(await getOneOffThread(found(letterId((await params).id)), permissions));
   return (
     <>
-      <Breadcrumb href="/staff/mailings/one-off">{staffCopy.oneOff.title}</Breadcrumb>
+      <Breadcrumb href="/staff/one-off">{staffCopy.oneOff.title}</Breadcrumb>
       <OneOffThreadView thread={thread} />
     </>
   );

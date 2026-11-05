@@ -111,11 +111,11 @@ test("No permissions", async ({ page, request, flowDatabase }) => {
         route.startsWith("/staff") &&
         !route.startsWith("/staff/login") &&
         !route.includes("/letters/1") &&
-        !/^\/staff\/(asks\/|mailings\/(\d+\/letters|one-off\/\d))/.test(route),
+        !/^\/staff\/(asks\/|mailings\/\d+\/letters|one-off\/\d)/.test(route),
     ),
     "/staff/asks/frontier-ai-letter",
     "/staff/asks/frontier-ai-letter/edit",
-    `/staff/mailings/one-off/${thread}`,
+    `/staff/one-off/${thread}`,
     pauseaiLetter,
     ...IMPORT_JOBS.map(importPath),
     `/staff/politicians/${testyId}`,

@@ -1,5 +1,5 @@
 import type { AskPageData } from "@/lib/server/asks";
-import type { CampaignSummary, CampaignVersion, OwnWordsBands } from "@/lib/server/campaigns";
+import type { CampaignSummary, CampaignVersion } from "@/lib/server/campaigns";
 import type { OneOffThread, OneOffThreadRow } from "@/lib/server/one-off-emails";
 import type { SentEmail } from "@/lib/server/sent-emails";
 import type { OldLettersImportResult } from "@/lib/import-runs";
@@ -72,7 +72,7 @@ export const exampleVersions: CampaignVersion[] = [
   },
 ];
 
-export const exampleBands: OwnWordsBands = { under: 8, middle: 3, over: 1, changed: 6 };
+export const exampleChanged = 6;
 
 /** An ask a campaign and a mailing put, signed and declined. */
 export const exampleAskPage: AskPageData = {
@@ -82,6 +82,7 @@ export const exampleAskPage: AskPageData = {
   campaigns: 1,
   mailings: 1,
   fixed: false,
+  noAnswer: 37,
   ways: [
     {
       kind: "campaign",
@@ -101,8 +102,15 @@ export const exampleAskPage: AskPageData = {
     },
   ],
   answers: [
-    { politicianId: 1, name: "Polly Placeholder", constituency: "Seat One", party: "Example Party", status: "signed" },
-    { politicianId: 2, name: "Dee Dummy", constituency: null, party: null, status: "declined" },
+    {
+      politicianId: 1,
+      name: "Polly Placeholder",
+      constituency: "Seat One",
+      party: "Example Party",
+      status: "signed",
+      lastWrittenTo: "2026-10-01T09:00:00Z",
+    },
+    { politicianId: 2, name: "Dee Dummy", constituency: null, party: null, status: "declined", lastWrittenTo: null },
   ],
 };
 
@@ -115,7 +123,9 @@ export const exampleOneOffs: OneOffThreadRow[] = [
     latestAt: "2026-10-20T09:00:00Z",
     messages: 2,
     people: [{ id: 1, name: "Polly Placeholder" }],
-    from: "Polly Placeholder",
+    participants: ["Joseph Example", "Polly Placeholder"],
+    mailboxes: ["joseph@pauseai.uk", "policy@pauseai.uk"],
+    answered: true,
   },
   {
     id: 2,
@@ -124,12 +134,20 @@ export const exampleOneOffs: OneOffThreadRow[] = [
     latestAt: "2026-10-19T09:00:00Z",
     messages: 1,
     people: [],
-    from: "Jane Smith",
+    participants: ["Jane Smith"],
+    mailboxes: ["policy@pauseai.uk"],
+    answered: false,
   },
 ];
 
 /** A thread as staff without `supporters` see one with someone else in it. */
-export const exampleHiddenOneOff: OneOffThreadRow = { ...exampleOneOffs[1], subject: null, from: null };
+export const exampleHiddenOneOff: OneOffThreadRow = {
+  ...exampleOneOffs[1],
+  subject: null,
+  participants: null,
+  mailboxes: null,
+  answered: null,
+};
 
 export const exampleOneOffThread: OneOffThread = {
   ...exampleOneOffs[0],
@@ -139,10 +157,11 @@ export const exampleOneOffThread: OneOffThread = {
       at: "2026-10-19T09:00:00Z",
       fromName: "Joseph Example",
       fromAddress: "joseph@pauseai.uk",
-      to: "polly.placeholder.mp@parliament.uk",
+      to: '"Placeholder, Polly" <polly.placeholder.mp@parliament.uk>, Jane Smith <jane.smith@example.com>',
       cc: "",
       subject: "Meeting about the bill",
       account: "joseph@pauseai.uk",
+      politicians: { "polly.placeholder.mp@parliament.uk": 1 },
       text: "Dear Polly,\n\nCould we meet?",
     },
     {
@@ -154,6 +173,7 @@ export const exampleOneOffThread: OneOffThread = {
       cc: "someone@example.com",
       subject: "Re: Meeting about the bill",
       account: "joseph@pauseai.uk",
+      politicians: { "polly.placeholder.mp@parliament.uk": 1 },
       text: null,
     },
   ],

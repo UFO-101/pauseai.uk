@@ -14,6 +14,7 @@ import { filtersPath, pageParam } from "@/lib/staff-search";
 import { londonWhen, staffDate, staffTime } from "@/lib/staff-time";
 import { ChangeTimeForm } from "./DueTime";
 import { StopMailing } from "./MailingButtons";
+import MailEmail from "./MailEmail";
 import MailingFiles from "./MailingFiles";
 import { MailingLetter } from "./MailingLetter";
 import { mailingCounts } from "./MailingsOverview";
@@ -199,7 +200,7 @@ function When({ mailing, written }: { mailing: Mailing; written?: WrittenMailing
   }
   return (
     <BandFact label={staffCopy.mailings.fields.sentAt} detail={by}>
-      {mailing.sentAt ? staffTime(mailing.sentAt) : staffCopy.mailings.notSent}
+      {mailing.sentAt ? staffDate(mailing.sentAt) : staffCopy.mailings.notSent}
     </BandFact>
   );
 }
@@ -213,26 +214,16 @@ function ImportedText({ mailing }: { mailing: Mailing }) {
   const doc = checkMailingDoc(mailing.importedText);
   if (!doc) return <p>{staffCopy.mailings.noText}</p>;
   return (
-    <div className={styles.email}>
-      <dl className={styles.headers}>
-        <dt>{copy.from}</dt>
-        <dd>{mailing.sentFrom ?? staffCopy.mailings.notRecorded}</dd>
-        <dt>{copy.subject}</dt>
-        <dd>
-          <strong>{mailing.importedSubject}</strong>
-        </dd>
-      </dl>
-      <div className={styles.body}>
-        {mailing.importedTextApproximate && <Strip tone="amber">{staffCopy.letterThread.approximate}</Strip>}
-        <MailingLetter doc={doc} fields={staffCopy.mailings.importedFields} conditions={{}} />
-      </div>
-    </div>
+    <MailEmail from={mailing.sentFrom ?? staffCopy.mailings.notRecorded} subject={mailing.importedSubject}>
+      {mailing.importedTextApproximate && <Strip tone="amber">{staffCopy.letterThread.approximate}</Strip>}
+      <MailingLetter doc={doc} fields={staffCopy.mailings.importedFields} conditions={{}} />
+    </MailEmail>
   );
 }
 
 /**
- * A mailing's page, once scheduled: a band of its title, when it went and
- * who sent it, who from, its ask and who it was for, with its counts, each
+ * A mailing's page, once scheduled: a band of its title, who from, who it was
+ * for, its ask, and when it went and who sent it, with its counts, each
  * leading to those recipients; where it stands (Standing); then the email,
  * white on an aside, as a mail app shows it, beside its recipients, of all of them or those a count chose. One
  * imported from Airtable, with no `written`, has only what Airtable kept:
@@ -281,41 +272,31 @@ export default function MailingView({
         }
         aside={state !== "scheduled" && <Counts counts={counts} />}
       >
-        <When mailing={mailing} written={written} />
         <BandFact label={copy.from} detail={written?.fromName}>
           {written ? written.sentFrom : (mailing.sentFrom ?? staffCopy.mailings.imported)}
-        </BandFact>
-        <BandFact label={mailing.askKind ? staffCopy.asks.askTo[mailing.askKind] : staffCopy.mailings.fields.ask}>
-          {mailing.ask && <StaffLink href={askHref(mailing.ask)}>{mailing.askTitle}</StaffLink>}
         </BandFact>
         <BandFact label={copy.to} detail={who && staffCopy.campaigns.politicians(mailing.to)}>
           {who ?? staffCopy.campaigns.politicians(mailing.to)}
         </BandFact>
+        <BandFact label={mailing.askKind ? staffCopy.asks.askTo[mailing.askKind] : staffCopy.mailings.fields.ask}>
+          {mailing.ask && <StaffLink href={askHref(mailing.ask)}>{mailing.askTitle}</StaffLink>}
+        </BandFact>
+        <When mailing={mailing} written={written} />
       </Band>
       <Standing mailing={mailing} written={written} stop={stop} reschedule={reschedule} />
       <Grid>
         {written ? (
           <Card span={3} look="aside" title={copy.emailTitle} id="email-title">
-            <div className={styles.email}>
-              <dl className={styles.headers}>
-                <dt>{copy.from}</dt>
-                <dd>{written.fromName ? `${written.fromName} <${written.sentFrom}>` : written.sentFrom}</dd>
-                <dt>{copy.to}</dt>
-                <dd>
-                  <Muted>{copy.toEach}</Muted>
-                </dd>
-                <dt>{copy.subject}</dt>
-                <dd>
-                  <strong>{written.subject}</strong>
-                </dd>
-              </dl>
-              <div className={styles.body}>
-                <MailingLetter doc={written.body} {...letterLabels(asks)} />
-                {written.attachments.length > 0 && (
-                  <MailingFiles files={written.attachments} base={`/staff/mailings/${written.id}/files`} />
-                )}
-              </div>
-            </div>
+            <MailEmail
+              from={written.fromName ? `${written.fromName} <${written.sentFrom}>` : written.sentFrom}
+              to={<Muted>{copy.toEach}</Muted>}
+              subject={written.subject}
+            >
+              <MailingLetter doc={written.body} {...letterLabels(asks)} />
+              {written.attachments.length > 0 && (
+                <MailingFiles files={written.attachments} base={`/staff/mailings/${written.id}/files`} />
+              )}
+            </MailEmail>
           </Card>
         ) : (
           <Card span={3} look="aside" title={copy.emailTitle} id="email-title">

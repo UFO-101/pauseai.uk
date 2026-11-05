@@ -4,7 +4,6 @@ import { page, userEvent, type Locator } from "vitest/browser";
 import { ASK_STATUSES } from "@/lib/asks";
 import { campaignBySlug } from "@/lib/email-your-mp";
 import { campaigns } from "@/lib/content/email-your-mp";
-import { campaignPath } from "@/lib/email-your-mp";
 import { importPath } from "@/lib/import-runs";
 import { registrationStatus, type SupporterRow } from "@/lib/supporters";
 import type { DownloadColumn } from "@/lib/staff-list";
@@ -18,7 +17,7 @@ import EmailBlocksTable, { blockColumns } from "./EmailBlocksTable";
 import { exampleBlock, exampleComplaint, exampleGmailBlock, exampleProblems } from "./EmailBlocksTable.examples";
 import EmailProblemsTable from "./EmailProblemsTable";
 import { exampleChanges } from "./ChangesTable.examples";
-import LettersTable, { letterDownloadColumns } from "./LettersTable";
+import LettersTable from "./LettersTable";
 import { historyOf, LetterHistory } from "./LetterHistory";
 import FindInGmail from "./FindInGmail";
 import {
@@ -27,7 +26,7 @@ import {
   exampleRepliedLetterDetails,
   exampleSupporterLetterDetails,
 } from "./LettersTable.examples";
-import { exampleLetter, exampleLetterCampaigns } from "./LettersTable.examples";
+import { exampleLetter } from "./LettersTable.examples";
 import JobActions from "./JobActions";
 import LoginCard from "./LoginCard";
 import LoginForm from "./LoginForm";
@@ -91,7 +90,6 @@ import SubscriptionBadges, { subscriptionWords } from "./SubscriptionBadges";
 import SupporterBadges, { supporterBadgeWords } from "./SupporterBadges";
 import SupporterDetails from "./SupporterDetails";
 import SupporterFilters, { SUBSCRIPTION_ORDER, supporterWords } from "./SupporterFilters";
-import LetterFilters from "./LetterFilters";
 import SupportersTable, { supporterColumns, supporterContact } from "./SupportersTable";
 import {
   exampleBlockedPermissions,
@@ -102,7 +100,7 @@ import {
 } from "./SupportersTable.examples";
 import PermissionTiles from "./PermissionTiles";
 import { CHANNELS, topicsOf, type Reason, type Topic } from "@/lib/contact-permissions";
-import { lettersSearch, supportersSearch } from "@/lib/staff-search";
+import { supportersSearch } from "@/lib/staff-search";
 import Table from "@/components/ui/Table";
 
 const [pm, bill] = campaigns;
@@ -1676,7 +1674,6 @@ describe("PoliticianDetails", () => {
               supporterId: null,
               campaign: "old-campaign",
               campaignTitle: "Old campaign, from pauseai.info",
-              campaignUrl: null,
               status: "mislaid",
               createdAt: "2026-07-01T08:00:00Z",
               repliedAt: null,
@@ -1772,7 +1769,7 @@ describe("PoliticianDetails", () => {
       .toHaveAttribute("href", "/staff/politicians?ask=frontier-ai-letter&answer=signed");
     await expect
       .element(historyList.getByRole("link", { name: ask("frontier-ai-letter").title }))
-      .toHaveAttribute("href", ask("frontier-ai-letter").url!);
+      .toHaveAttribute("href", "/staff/asks/frontier-ai-letter");
     await expect
       .element(page.getByRole("link", { name: "Example Mailing" }).first())
       .toHaveAttribute("href", "/staff/mailings/3");
@@ -1783,12 +1780,14 @@ describe("PoliticianDetails", () => {
     await expect
       .element(page.getByRole("link", { name: staffCopy.letters.status.bounced }))
       .toHaveAttribute("href", `/staff/letters/${exampleLetter.id}`);
-    // Each campaign it names links to its public page; one no longer run is its slug, plain.
+    // Each campaign it names leads to its page here.
     const list = page.getByRole("list", { name: staffCopy.politician.historyTitle });
     const links = list.getByRole("link", { name: pm.title, exact: true }).all();
     expect(links.length).toBeGreaterThan(1);
-    for (const link of links) await expect.element(link).toHaveAttribute("href", campaignPath(pm));
-    await expect.element(list.getByRole("link", { name: "Old campaign, from pauseai.info" })).not.toBeInTheDocument();
+    for (const link of links) await expect.element(link).toHaveAttribute("href", `/staff/campaigns/${pm.slug}`);
+    await expect
+      .element(list.getByRole("link", { name: "Old campaign, from pauseai.info" }))
+      .toHaveAttribute("href", "/staff/campaigns/old-campaign");
     await expect.element(list.getByRole("link", { name: "gone" })).not.toBeInTheDocument();
   });
 
@@ -1823,7 +1822,6 @@ describe("PoliticianDetails", () => {
               id: 2,
               campaign: pm.slug,
               campaignTitle: pm.title,
-              campaignUrl: null,
               status: "sent",
               createdAt: "2026-10-13T08:00:00Z",
               repliedAt: "2026-10-15T09:00:00Z",
@@ -1832,7 +1830,6 @@ describe("PoliticianDetails", () => {
               id: 1,
               campaign: "old-campaign",
               campaignTitle: "Old campaign, from pauseai.info",
-              campaignUrl: "https://example.org/old-campaign.pdf",
               status: "mislaid",
               createdAt: "2026-07-01T08:00:00Z",
               repliedAt: null,
@@ -1856,10 +1853,8 @@ describe("PoliticianDetails", () => {
       `1 May 2026, 08:00${copy["pauseai-letter"]} Example Mailing · made-up`,
     ]);
     expect(list.element().querySelector('a[href^="/staff/letters"]')).toBeNull();
-    // An old campaign with a URL leads to its letter, in a tab of its own.
-    const old = list.getByRole("link", { name: "Old campaign, from pauseai.info" });
-    await expect.element(old).toHaveAttribute("href", "https://example.org/old-campaign.pdf");
-    await expect.element(old).toHaveAttribute("target", "_blank");
+    // Without `supporters`, whose campaign pages these are, a campaign's name is plain.
+    expect(list.getByRole("link", { name: "Old campaign, from pauseai.info" }).query()).toBeNull();
     // PauseAI's letters lead to their pages under their mailing, for anyone.
     await expect
       .element(list.getByRole("link", { name: "made-up" }))
@@ -1891,10 +1886,10 @@ describe("PoliticianDetails", () => {
     const answer = (group: typeof letter) => group.element().querySelector("[class*=answer]")!;
     expect(answer(letter).textContent).toBe(`${staffCopy.statuses.signed}1 Oct 2026${staffCopy.politician.edit}`);
     expect(answer(letter).className).toMatch(/yes/);
-    // The ask's title links to the letter; who asked it and when.
+    // The ask's title leads to its page; who asked it and when.
     await expect
       .element(letter.getByRole("link", { name: ask("frontier-ai-letter").title }))
-      .toHaveAttribute("href", ask("frontier-ai-letter").url);
+      .toHaveAttribute("href", "/staff/asks/frontier-ai-letter");
     await expect
       .element(
         letter.getByText(
@@ -2363,24 +2358,24 @@ describe("ImportOverview", () => {
       "/staff/import-data/gmail",
       "/staff/import-data/members",
       "/staff/import-data/politicians",
-      "/staff/import-data/emails",
       "/staff/import-data/mp-check",
       "/staff/import-data/controlai",
+      "/staff/import-data/old-letters",
+      "/staff/import-data/emails",
       "/staff/import-data/web-form-letters",
       "/staff/import-data/go-to-parliament",
-      "/staff/import-data/old-letters",
     ]);
     expect(cards.map((card) => card.querySelector("h3 a")!.textContent)).toEqual([
       jobTitles["import-luma"],
       jobTitles["read-gmail"],
       jobTitles["import-members"],
       jobTitles["sync-politicians"],
-      jobTitles["sync-emails"],
       jobTitles["check-mps"],
       jobTitles["import-controlai"],
+      jobTitles["import-old-letters"],
+      jobTitles["sync-emails"],
       jobTitles["import-web-form-letters"],
       jobTitles["import-go-to-parliament"],
-      jobTitles["import-old-letters"],
     ]);
     // Under the name, how the newest run ended, tinted to match.
     const status = (i: number) => cards[i].querySelector("h3")!.parentElement!.nextElementSibling!.firstElementChild!;
@@ -2407,13 +2402,13 @@ describe("ImportOverview", () => {
       "https://airtable.com/app/tblkzjrRHiZiqMDGR",
       "https://airtable.com/app/tblminXS1xSuBbEjz",
     ]);
-    expect(cards[5].querySelector(":scope > p")!.textContent).not.toContain(staffCopy.syncs.testMps);
+    expect(cards[4].querySelector(":scope > p")!.textContent).not.toContain(staffCopy.syncs.testMps);
     // The members come from the join form; Gmail's card leads to where it's connected.
     expect(link(2)).toBe("https://pauseai.info/join");
     expect(link(1)).toBe("/staff/me");
     // The MP check says it changes nothing, after its name.
-    expect(cards[5].querySelector("h3")!.textContent).toBe(`${jobTitles["check-mps"]}${staffCopy.import.checkOnly}`);
-    expect(cards[4].querySelector("h3")!.textContent).toBe(jobTitles["sync-emails"]);
+    expect(cards[4].querySelector("h3")!.textContent).toBe(`${jobTitles["check-mps"]}${staffCopy.import.checkOnly}`);
+    expect(cards[7].querySelector("h3")!.textContent).toBe(jobTitles["sync-emails"]);
   });
 
   it("shows an applied run, and one that changed nothing, in green, and one discarded plainly", async () => {
@@ -2518,7 +2513,7 @@ describe("AsksTable", () => {
     expect(document.getElementById(exampleAsks[0].slug)!.hasAttribute("aria-current")).toBe(false);
   });
 
-  it("lists each ask: its kind, title linked to the letter or event, date, who asks it, and each answer's count, linked to who gave it", async () => {
+  it("lists each ask: its kind, title linked to its page, who asks it, how, each answer's count, linked to who gave it", async () => {
     await render(<AsksTable asks={exampleAsksWithCounts} />);
     const row = (title: string) => page.getByRole("row").filter({ hasText: title });
     const cells = (title: string) =>
@@ -2530,8 +2525,8 @@ describe("AsksTable", () => {
     expect(cells(exampleAsks[0].title)).toEqual([
       copy.kinds.event,
       exampleAsks[0].title,
-      "1 Nov 2026",
       copy.askedBy.pauseai,
+      copy.page.way(1, "mailing"),
       // The answers in the order the kind lists them.
       [
         copy.count(staffCopy.statuses.going, 3),
@@ -2540,27 +2535,28 @@ describe("AsksTable", () => {
       ].join(" · "),
       "186",
       "54",
-      copy.page.way(1, "mailing"),
+      "1 Nov 2026",
       // The code names it, so it has no Edit.
       "",
     ]);
     // Asked by nobody we record.
-    expect(cells(exampleAsks[1].title)[3]).toBe("");
+    expect(cells(exampleAsks[1].title)[2]).toBe("");
     // No date; asked by both.
     expect(cells(exampleAsks[3].title)).toEqual([
       copy.kinds.letter,
       exampleAsks[3].title,
-      "",
       `${copy.askedBy.supporters}${copy.askedBy.pauseai}`,
+      `${copy.page.way(1, "campaign")} · ${copy.page.way(2, "mailing")}`,
       [copy.count(staffCopy.statuses.signed, 10), copy.count(staffCopy.statuses.declined, 2)].join(" · "),
       "40",
       "12",
-      `${copy.page.way(1, "campaign")} · ${copy.page.way(2, "mailing")}`,
+      "",
       "",
     ]);
     expect(cells(exampleAsks[2].title)[4]).toBe(copy.noAnswers);
     // Nobody written to, nor any way of asking.
-    expect(cells(exampleAsks[1].title).slice(5, 8)).toEqual(["–", "5", "–"]);
+    expect(cells(exampleAsks[1].title)[3]).toBe("–");
+    expect(cells(exampleAsks[1].title).slice(5, 7)).toEqual(["–", "5"]);
     // Each leads to its own page.
     await expect
       .element(row(exampleAsks[0].title).getByRole("link", { name: exampleAsks[0].title }))
@@ -3240,7 +3236,6 @@ describe("LettersTable", () => {
             id: 2,
             campaign: "gone",
             campaignTitle: "Gone, from pauseai.info",
-            campaignUrl: null,
             status: "odd",
             isTest: false,
             backend: "airtable",
@@ -3257,10 +3252,10 @@ describe("LettersTable", () => {
     // What sent each: Postmark, or for one sent through pauseai.info's old form, Airtable.
     await expect.element(page.getByRole("cell", { name: staffCopy.letters.backends.postmark })).toBeVisible();
     await expect.element(page.getByRole("cell", { name: staffCopy.letters.backends.airtable })).toBeVisible();
-    // The campaign leads to its page on the site, the MP to their page, the sender to their supporter.
+    // The campaign leads to its page here, the MP to their page, the sender to their supporter.
     await expect
       .element(page.getByRole("link", { name: pm.title }).first())
-      .toHaveAttribute("href", `/campaigns/${pm.slug}`);
+      .toHaveAttribute("href", `/staff/campaigns/${pm.slug}`);
     await expect
       .element(page.getByRole("link", { name: letter.mpName }).first())
       .toHaveAttribute("href", "/staff/politicians/3");
@@ -3945,7 +3940,7 @@ describe("SupporterDetails", () => {
       .toHaveAttribute("href", "/staff/politicians/1");
     await expect
       .element(history.getByRole("link", { name: campaigns[0].title }).first())
-      .toHaveAttribute("href", campaignPath(campaigns[0]));
+      .toHaveAttribute("href", `/staff/campaigns/${campaigns[0].slug}`);
     expect(history.element().textContent).toContain(
       `${copy.detail.kinds.letter} Polly Placeholder ${copy.detail.about} ${campaigns[0].title} · ${staffCopy.letters.status.sent}`,
     );
@@ -3965,7 +3960,6 @@ describe("SupporterDetails", () => {
               kind: "letter",
               title: "old-campaign",
               campaignTitle: "Old campaign, from pauseai.info",
-              campaignUrl: null,
               detail: "Gone MP",
               href: null,
               status: "mislaid",
@@ -4051,7 +4045,6 @@ describe("SupporterDetails", () => {
               politicianId: 9,
               campaign: "gone-campaign",
               campaignTitle: "Gone campaign",
-              campaignUrl: null,
               status: "odd",
             },
           ],
@@ -4073,7 +4066,6 @@ describe("SupporterDetails", () => {
               kind: "luma-registered",
               title: "Thing",
               campaignTitle: null,
-              campaignUrl: null,
               detail: "waitlist",
               href: null,
               status: null,
@@ -4084,7 +4076,6 @@ describe("SupporterDetails", () => {
               kind: "luma-registered",
               title: "Other",
               campaignTitle: null,
-              campaignUrl: null,
               detail: "session",
               href: null,
               status: null,
@@ -4095,7 +4086,6 @@ describe("SupporterDetails", () => {
               kind: "luma-registered",
               title: "Bare",
               campaignTitle: null,
-              campaignUrl: null,
               detail: null,
               href: null,
               status: null,
@@ -4106,7 +4096,6 @@ describe("SupporterDetails", () => {
               kind: "opted-out",
               title: "other-list",
               campaignTitle: null,
-              campaignUrl: null,
               detail: null,
               href: null,
               status: null,
@@ -4117,7 +4106,6 @@ describe("SupporterDetails", () => {
               kind: "resubscribed",
               title: null,
               campaignTitle: null,
-              campaignUrl: null,
               detail: "x@example.com",
               href: null,
               status: null,
@@ -4128,7 +4116,6 @@ describe("SupporterDetails", () => {
               kind: "letter",
               title: "gone-campaign",
               campaignTitle: "Gone campaign",
-              campaignUrl: null,
               detail: "An MP",
               href: null,
               status: "sent",
@@ -4139,7 +4126,6 @@ describe("SupporterDetails", () => {
               kind: "letter",
               title: null,
               campaignTitle: null,
-              campaignUrl: null,
               detail: "No campaign MP",
               href: null,
               status: null,
@@ -4150,7 +4136,6 @@ describe("SupporterDetails", () => {
               kind: "letter-replied",
               title: null,
               campaignTitle: null,
-              campaignUrl: null,
               detail: null,
               href: null,
               status: null,
@@ -4299,7 +4284,6 @@ describe("SupporterDetails, a march sign-up", () => {
     kind: "form-entry" as const,
     title: "march-2026-11",
     campaignTitle: null,
-    campaignUrl: null,
     detail: "nl",
     href: null,
     status: "skipped",
@@ -4602,26 +4586,6 @@ describe("each list's download values and contact cards", () => {
     );
   });
 
-  it("letters: the campaign by its title, the campaigns table's once it's gone, and the history", () => {
-    const row = values(letterDownloadColumns, exampleLetter);
-    expect(row.campaign).toBe(campaignBySlug(exampleLetter.campaign)?.title);
-    expect(values(letterDownloadColumns, { ...exampleLetter, campaign: "gone", campaignTitle: "Gone" }).campaign).toBe(
-      "Gone",
-    );
-    expect(typeof row.history).toBe("string");
-    // Its own words as a percentage, or nothing for a letter with no draft.
-    expect(row.ownWords).toBe("18%");
-    expect(values(letterDownloadColumns, { ...exampleLetter, ownWords: null }).ownWords).toBeNull();
-    // When the MP replied, or failing that, when an automatic reply came, said so.
-    expect(row.replied).toBeNull();
-    expect(values(letterDownloadColumns, { ...exampleLetter, repliedAt: "2026-10-13T09:00:00Z" }).replied).toBe(
-      "2026-10-13T09:00:00Z",
-    );
-    expect(values(letterDownloadColumns, { ...exampleLetter, autoRepliedAt: "2026-10-12T11:00:00Z" }).replied).toBe(
-      `${staffCopy.letters.status.auto_reply} 2026-10-12T11:00:00Z`,
-    );
-  });
-
   it("politicians: every column, and as cards, with what they have", async () => {
     const rows = [
       { ...examplePolitician, firstActivityAt: "2026-09-01T00:00:00Z", lastActivityAt: "2026-10-01T00:00:00Z" },
@@ -4912,35 +4876,6 @@ describe("PoliticianFilters, chosen more than once", () => {
     );
     const chip = `${staffCopy.politicians.flag}: ${staffCopy.politicians.flags.important}`;
     expect((await menu(chip)).find(([text]) => text === staffCopy.filters.remove)![1]).toBe("/staff/politicians");
-  });
-});
-
-describe("LetterFilters", () => {
-  it("has a chip for each filter on, and the rest under + Filter", async () => {
-    const copy = staffCopy.letters;
-    const { filter, ...search } = lettersSearch({
-      q: "jane",
-      status: "sent",
-      campaign: ["support-sobel-bill", "!pauseai-info-frontier-ai"],
-      flag: "test",
-      backend: "!airtable",
-    });
-    void filter;
-    await render(<LetterFilters path="/staff/letters" search={search} campaigns={exampleLetterCampaigns} />);
-    await expect.element(page.getByRole("searchbox", { name: copy.search })).toHaveValue("jane");
-    // In the columns' order; a campaign the list doesn't offer by its slug.
-    expect(chips()).toEqual([
-      `${copy.columns.status}: ${copy.status.sent}`,
-      `${copy.mpFlag}: ${staffCopy.politicians.flags.test}`,
-      `${copy.columns.campaign}: support-sobel-bill`,
-      staffCopy.filters.notChip(copy.columns.campaign, exampleLetterCampaigns[1].title),
-      staffCopy.filters.notChip(copy.columns.backend, copy.backends.airtable),
-    ]);
-    const add = await menu(staffCopy.filters.add);
-    expect(add).toContainEqual([
-      staffCopy.politicians.flags.important,
-      "/staff/letters?status=sent&q=jane&campaign=support-sobel-bill&campaign=%21pauseai-info-frontier-ai&flag=test&flag=important&backend=%21airtable",
-    ]);
   });
 });
 

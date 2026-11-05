@@ -5,6 +5,7 @@ import type { MpProblem } from "./mp-check";
 import type { PoliticianChanges, PoliticianRecord, Renamed } from "./politician-sync";
 
 export const IMPORT_JOBS = [
+  "import-old-letters",
   "import-luma",
   "import-members",
   "read-gmail",
@@ -14,7 +15,6 @@ export const IMPORT_JOBS = [
   "import-controlai",
   "import-web-form-letters",
   "import-go-to-parliament",
-  "import-old-letters",
 ] as const;
 export type ImportJob = (typeof IMPORT_JOBS)[number];
 
@@ -42,7 +42,7 @@ export const JOB_SCHEDULES: Record<ImportJob, "frequent" | "hourly" | "nightly" 
   "import-members": "hourly",
   "read-gmail": "frequent",
   "sync-politicians": "nightly",
-  "sync-emails": "nightly",
+  "sync-emails": "oneOff",
   "import-web-form-letters": "oneOff",
   "import-go-to-parliament": "oneOff",
   "import-old-letters": "oneOff",

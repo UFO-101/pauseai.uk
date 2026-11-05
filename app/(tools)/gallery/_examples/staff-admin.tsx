@@ -229,7 +229,7 @@ export const staffAdmin: Group = {
                 pages={1}
                 page={1}
                 pageSize={100}
-                search={{ q: "", purpose: [], outcome: [], backend: [], page: "" }}
+                search={{ q: "", purpose: [], outcome: [], backend: [], link: [], sort: "", dir: "", page: "" }}
               />
             </StaffPage>
           ),

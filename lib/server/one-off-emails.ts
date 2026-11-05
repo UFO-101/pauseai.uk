@@ -5,9 +5,11 @@ import {
   isPauseaiAddress,
   isRecognisedMail,
   isSomeoneElse,
+  participants,
+  politicianAddresses,
+  politicianAnswered,
   politiciansIn,
   quotedAddresses,
-  type OneOffFilter,
   type PoliticianBook,
 } from "@/lib/one-off";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -44,6 +46,11 @@ export const ONE_OFF_HEADERS = [
   "X-Autorespond",
   "Precedence",
 ];
+
+/** The shared inbox one-off emails are copied to, as the page says: POLICY_INBOX, or else its usual address. */
+export function oneOffInbox(): string {
+  return process.env.POLICY_INBOX || "policy@pauseai.uk";
+}
 
 /** A header's text, decoded; blank if the message hasn't one. */
 export function headerText(headers: Map<string, string>, name: string): string {
@@ -232,7 +239,7 @@ export async function reportUnmatchedMail(token: (account: string) => Promise<st
   const words = staffCopy.oneOff.unmatchedAlert;
   await notifyStaff(
     words.subject(lines.length),
-    words.body(lines, staffLink("/staff/mailings/one-off", undefined)),
+    words.body(lines, staffLink("/staff/one-off", undefined)),
     null,
     "staff-report",
   );
@@ -247,8 +254,12 @@ export type OneOffThreadRow = {
   latestAt: string;
   messages: number;
   people: { id: number; name: string }[];
-  /** The first sender who isn't a politician or PauseAI's, or else its first sender; null when hidden. */
-  from: string | null;
+  /** Who wrote in it, each once, in the order they first wrote; null when hidden. */
+  participants: string[] | null;
+  /** The mailboxes it was read from; null when hidden. */
+  mailboxes: string[] | null;
+  /** Whether a politician wrote after its first message; null when hidden. */
+  answered: boolean | null;
 };
 
 const PAGE_SIZE = 100;
@@ -256,28 +267,43 @@ const PAGE_SIZE = 100;
 const PEOPLE = `coalesce((SELECT json_agg(json_build_object('id', n.id, 'name', n.name) ORDER BY n.name)
     FROM one_off_thread_people tp JOIN notable_people n ON n.id = tp.notable_person_id WHERE tp.thread_id = t.id), '[]')`;
 
+type Sender = { name: string; address: string };
+
 /** One-off threads, newest first, matching `where`: with permission, everything; otherwise, a thread with someone else in it shows only that it's there. */
 async function threadRows(where: string, params: unknown[], supporters: boolean, limit: number, offset: number) {
   const visible = (column: string) => (supporters ? column : `CASE WHEN t.someone_else THEN NULL ELSE ${column} END`);
-  return query<OneOffThreadRow>(
-    `SELECT t.id::int AS id, ${visible("t.subject")} AS subject, t.someone_else AS "someoneElse", t.latest_at AS "latestAt",
+  const [rows, book] = await Promise.all([
+    query<Omit<OneOffThreadRow, "answered" | "participants"> & { senders: Sender[] | null }>(
+      `SELECT t.id::int AS id, ${visible("t.subject")} AS subject, t.someone_else AS "someoneElse", t.latest_at AS "latestAt",
        (SELECT count(*)::int FROM one_off_messages m WHERE m.thread_id = t.id) AS messages, ${PEOPLE} AS people,
-       ${visible(`(SELECT coalesce(nullif(m.from_name, ''), m.from_address) FROM one_off_messages m WHERE m.thread_id = t.id ORDER BY m.at, m.id LIMIT 1)`)} AS "from"
+       ${visible("(SELECT array_agg(DISTINCT m.account ORDER BY m.account) FROM one_off_messages m WHERE m.thread_id = t.id)")} AS mailboxes,
+       ${visible("(SELECT json_agg(json_build_object('name', m.from_name, 'address', m.from_address) ORDER BY m.at, m.id) FROM one_off_messages m WHERE m.thread_id = t.id)")} AS senders
      FROM one_off_threads t WHERE ${where} ORDER BY t.latest_at DESC, t.id DESC LIMIT ${limit} OFFSET ${offset}`,
-    params,
-  );
+      params,
+    ),
+    politicianBook(),
+  ]);
+  return rows.map(({ senders, ...row }) => ({
+    ...row,
+    participants: senders && participants(senders),
+    answered:
+      senders &&
+      politicianAnswered(
+        book,
+        senders.map((sender) => sender.address),
+      ),
+  }));
 }
 
 /** A page of the one-off emails. */
 export async function listOneOffThreads(
   permissions: readonly Permission[],
-  { filter, page = 1 }: { filter?: OneOffFilter; page?: number } = {},
+  page = 1,
 ): Promise<{ threads: OneOffThreadRow[]; total: number; pages: number; page: number; pageSize: number }> {
-  const where = filter === "pauseai" ? "NOT t.someone_else" : filter === "someone-else" ? "t.someone_else" : "true";
   const supporters = permissions.includes("supporters");
   const [threads, [{ total }]] = await Promise.all([
-    threadRows(where, [], supporters, PAGE_SIZE, (page - 1) * PAGE_SIZE),
-    query<{ total: number }>(`SELECT count(*)::int AS total FROM one_off_threads t WHERE ${where}`),
+    threadRows("true", [], supporters, PAGE_SIZE, (page - 1) * PAGE_SIZE),
+    query<{ total: number }>("SELECT count(*)::int AS total FROM one_off_threads"),
   ]);
   return { threads, total, page, pageSize: PAGE_SIZE, pages: Math.max(1, Math.ceil(total / PAGE_SIZE)) };
 }
@@ -318,6 +344,8 @@ export type OneOffMessage = {
   cc: string;
   subject: string;
   account: string;
+  /** Which politician each address in its From, To and Cc is. */
+  politicians: Record<string, number>;
   text: string | null;
 };
 
@@ -333,22 +361,21 @@ export async function getOneOffThread(
   const [row] = await threadRows("t.id = $1", [id], supporters, 1, 0);
   if (!row) return undefined;
   if (row.someoneElse && !supporters) return { ...row, messages_: null };
-  const rows = await query<Omit<OneOffMessage, "text"> & { blobKey: string }>(
+  const rows = await query<Omit<OneOffMessage, "text" | "politicians"> & { blobKey: string }>(
     `SELECT id::int AS id, at, from_name AS "fromName", from_address AS "fromAddress", to_line AS "to", cc_line AS cc,
        subject, account, blob_key AS "blobKey"
      FROM one_off_messages WHERE thread_id = $1 ORDER BY at, id`,
     [id],
   );
+  const book = await politicianBook();
   const messages = await Promise.all(
-    rows.map(async ({ blobKey, ...message }) => ({ ...message, text: (await messageContent(blobKey)).text })),
+    rows.map(async ({ blobKey, ...message }) => ({
+      ...message,
+      politicians: politicianAddresses(book, [message.fromAddress, ...addressesIn(`${message.to} ${message.cc}`)]),
+      text: (await messageContent(blobKey)).text,
+    })),
   );
   return { ...row, messages_: messages };
-}
-
-/** How many threads there are, for the mailings list's row. */
-export async function oneOffCount(): Promise<number> {
-  const [{ total }] = await query<{ total: number }>("SELECT count(*)::int AS total FROM one_off_threads");
-  return total;
 }
 
 /**

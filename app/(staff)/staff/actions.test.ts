@@ -7,7 +7,7 @@ import { getPolitician } from "@/lib/server/politicians";
 import { createSession } from "@/lib/server/staff-auth";
 import { saveStaffAccount } from "@/lib/server/staff-accounts";
 import { FIXED_ASKS } from "@/lib/asks";
-import { gmailAccounts, keepsPoliticianThreads } from "@/lib/server/gmail-accounts";
+import { gmailAccounts } from "@/lib/server/gmail-accounts";
 import { addTestPolitician, connectTestGmail, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { expectRedirect, requestCookies } from "@/tests/next-headers";
 import {
@@ -24,7 +24,6 @@ import {
   importControlAiNow,
   importGoToParliamentNow,
   importOldLettersNow,
-  setKeepThreadsNow,
   importWebFormLettersNow,
   syncEmailsNow,
   importLumaNow,
@@ -341,7 +340,17 @@ describeWithDatabase("staff Server Actions", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data/go-to-parliament");
   });
 
-  it("presses the import of old letters, as a dry run if ticked, and turns keeping threads on and off", async () => {
+  it("keeps a failed press of the import of old letters as a failed run, rather than crashing", async () => {
+    vi.stubEnv("DATA_FIXTURES", "1");
+    await expect(importOldLettersNow(new FormData())).resolves.toBeUndefined();
+    expect(await query(`SELECT status, error FROM import_runs WHERE job = 'import-old-letters'`)).toEqual([
+      { status: "failed", error: "joseph@pauseai.uk's Gmail isn't connected" },
+    ]);
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data/old-letters");
+    vi.stubEnv("DATA_FIXTURES", "");
+  });
+
+  it("presses the import of old letters, as a dry run if ticked", async () => {
     vi.stubEnv("DATA_FIXTURES", "1");
     const form = (values: Record<string, string>) => {
       const data = new FormData();
@@ -356,10 +365,6 @@ describeWithDatabase("staff Server Actions", () => {
       `SELECT result->>'dryRun' AS dry FROM import_runs WHERE job = 'import-old-letters' ORDER BY id`,
     );
     expect(presses).toEqual([{ dry: "true" }, { dry: "false" }]);
-    await setKeepThreadsNow(form({ keep: "on" }));
-    expect(await keepsPoliticianThreads("jo@pauseai.uk")).toBe(true);
-    await setKeepThreadsNow(form({}));
-    expect(await keepsPoliticianThreads("jo@pauseai.uk")).toBe(false);
     vi.stubEnv("DATA_FIXTURES", "");
   }, 30_000);
 

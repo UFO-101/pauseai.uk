@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import { addTestLetter, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
-import { campaignTabCounts, campaignVersions, getCampaignSummary, listCampaignSummaries } from "./campaigns";
+import { campaignVersions, getCampaignSummary, listCampaignSummaries } from "./campaigns";
 import { query } from "./db";
 
 describeWithDatabase("campaigns", () => {
@@ -47,7 +47,6 @@ describeWithDatabase("campaigns", () => {
     const all = await listCampaignSummaries();
     expect(all[0].slug).toBe(slug);
     expect(all.find((c) => c.slug === "support-sobel-bill")?.letters).toBe(0);
-    expect(await campaignTabCounts(slug)).toEqual({ all: 3, changed: 0, replied: 1, failed: 1 });
   });
 
   it("gives a site campaign its one text, with its names to fill in", async () => {
@@ -76,12 +75,12 @@ describeWithDatabase("campaigns", () => {
     await letter("2026-10-01T12:00:00Z", 0.3);
     await letter("2026-10-02T12:00:00Z", 0.9);
     await letter("2026-10-03T12:00:00Z", null);
-    const { versions, bands } = await campaignVersions(slug);
+    const { versions, changed } = await campaignVersions(slug);
     expect(versions.map((v) => [v.key, v.letters])).toEqual([
       ["d9416004", 3],
       ["9dbb9d06", 2],
     ]);
-    expect(bands).toEqual({ under: 2, middle: 1, over: 1, changed: 3 });
+    expect(changed).toBe(3);
     expect((await campaignVersions("no-such-campaign")).versions).toEqual([]);
   });
 });

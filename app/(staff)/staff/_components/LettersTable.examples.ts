@@ -11,7 +11,6 @@ export const exampleLetter: LetterSummary = {
   id: 1,
   campaign: pm.slug,
   campaignTitle: pm.title,
-  campaignUrl: null,
   status: "bounced",
   senderName: "Jane Smith",
   senderEmail: "jane@example.com",
@@ -336,9 +335,3 @@ export const emptyLettersSearch: LettersSearch = {
   dir: "",
   page: "",
 };
-
-/** The campaigns the letters page's Campaign filter offers: one of this site's and one of pauseai.info's. */
-export const exampleLetterCampaigns = [
-  { slug: pm.slug, title: pm.title },
-  { slug: "pauseai-info-frontier-ai", title: "Frontier AI letter, from pauseai.info" },
-];

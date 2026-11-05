@@ -1,0 +1,20 @@
+/* Set apart from a page's other muted words by its envelope and italics. */
+.withheld {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* Its bottom edge on the first line's baseline. */
+.envelope {
+  flex: none;
+  width: 1.25em;
+  height: 1.25em;
+  margin-top: 0.11em;
+}
+
+.seal {
+  fill: var(--accent);
+}

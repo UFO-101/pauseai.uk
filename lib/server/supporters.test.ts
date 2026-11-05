@@ -792,7 +792,6 @@ describeWithDatabase("members as supporters", () => {
       kind: "member-joined",
       title: "Volunteer",
       campaignTitle: null,
-      campaignUrl: null,
       detail: "pauseai.uk",
       href: "https://airtable.com/appWPTGqZmUcs3NWu/tblL1icZBhTV1gQ9o/recJane",
       status: null,

@@ -6,8 +6,7 @@ import { keepingFailure, recordRun } from "./import-runs";
 import { airtableToken, fetchEmails, fetchTestPoliticianIds } from "./outside-services/airtable";
 
 // Copies PauseAI's emails to politicians from Airtable's Emails table
-// into letters_from_pauseai, nightly (app/api/cron/sync-politicians, after the
-// politicians) or when staff ask, each run in the import log as
+// into letters_from_pauseai when staff ask, each run in the import log as
 // "sync-emails". An email is added once, by its record's ID, as a letter of
 // the mailing whose tick box is ticked, or with no box ticked, of the one
 // whose dates it was sent in (a mailing with no box, such as summer 2025's),
@@ -21,7 +20,7 @@ import { airtableToken, fetchEmails, fetchTestPoliticianIds } from "./outside-se
 
 const JOB = "sync-emails";
 
-/** Copies the emails not copied yet, keeping the run. `startedBy` is NIGHTLY or the staff member's email. */
+/** Copies the emails not copied yet, keeping the run. `startedBy` is the staff member's email. */
 export function syncEmails(startedBy: string): Promise<EmailSyncResult> {
   return keepingFailure(JOB, startedBy, async () => {
     const mailings = await query<{ id: number; field: string | null; from: Date | null; before: Date | null }>(

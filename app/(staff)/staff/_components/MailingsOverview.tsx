@@ -8,7 +8,7 @@ import { mailingWhen } from "@/lib/mailing-groups";
 import type { MailingSummary } from "@/lib/server/mailings";
 import { named } from "@/lib/named-address";
 import { londonWhenShort, staffDate } from "@/lib/staff-time";
-import Counts from "./ui/Counts";
+import Counts, { countsOpening } from "./ui/Counts";
 import Grid, { spanClass } from "./ui/Grid";
 import Progress from "./ui/Progress";
 import styles from "./MailingsOverview.module.css";
@@ -71,7 +71,7 @@ function Standing({ mailing, href }: { mailing: MailingSummary; href: string }) 
       </StaffLink>
     );
   }
-  return <Counts counts={mailingCounts(mailing)} href={href} label={copy.countsLabel(mailing.title)} small />;
+  return <Counts counts={countsOpening(href, mailingCounts(mailing))} small />;
 }
 
 /** One mailing, a row: when; its title, leading to it, over who it's from, name and address, and its ask; how it stands. */
@@ -111,22 +111,12 @@ function Row({ mailing, year }: { mailing: MailingSummary; year: string }) {
 /**
  * The list of mailings, in its groups (mailingGroups): what's coming up,
  * then the months and years of those sent, each mailing a row that shows
- * only what matters at its stage, and at its foot a row leading to the
- * one-off emails. Nothing on it changes a mailing: that's
+ * only what matters at its stage. Nothing on it changes a mailing: that's
  * done on the mailing's own page, on purpose. It's as wide as the grid,
  * not the window.
  */
-export default function MailingsOverview({
-  groups,
-  now,
-  oneOffs = 0,
-}: {
-  groups: MailingGroup[];
-  now: string;
-  /** How many one-off email threads there are, for the last row, which leads to them. */
-  oneOffs?: number;
-}) {
-  if (groups.length === 0 && oneOffs === 0) {
+export default function MailingsOverview({ groups, now }: { groups: MailingGroup[]; now: string }) {
+  if (groups.length === 0) {
     return (
       <p>
         <Muted>{staffCopy.mailings.none}</Muted>
@@ -148,20 +138,6 @@ export default function MailingsOverview({
             </ul>
           </section>
         ))}
-        {oneOffs > 0 && (
-          <ul className={styles.rows}>
-            <li className={styles.row}>
-              <span className={styles.when} />
-              <span className={styles.what}>
-                <StaffLink href="/staff/mailings/one-off" className={styles.title}>
-                  {staffCopy.oneOff.title}
-                </StaffLink>
-                <Muted>{staffCopy.oneOff.rowDetail}</Muted>
-              </span>
-              <span className={styles.standing}>{staffCopy.oneOff.threads(oneOffs)}</span>
-            </li>
-          </ul>
-        )}
       </div>
     </Grid>
   );
