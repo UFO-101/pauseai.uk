@@ -11,6 +11,8 @@ import { readLettersInbox } from "./letters-inbox-reading";
 import { notifyStaff, staffLink } from "./notifications";
 import { gmailAccess, gmailReadingState, saveGmailName, saveHistoryId } from "./gmail-accounts";
 import { keepingFailure, recordRun } from "./import-runs";
+import { keepsPoliticianThreads } from "@/lib/one-off";
+import { keepIfPoliticianThread, reportUnmatchedMail } from "./one-off-emails";
 import {
   allParts,
   decodeWords,
@@ -42,8 +44,9 @@ import { isMachineReply } from "./postmark-webhooks";
 // answers; it fetches whole only the messages in our letters' threads, and
 // bounces. A politician's reply, or our answer to it, is kept whole
 // (letter_replies, and the message in Netlify Blobs); an automatic reply is
-// only noted on the letter; a bounce is recorded as Postmark's are. Each
-// run is in the import log as "read-gmail".
+// only noted on the letter; a bounce is recorded as Postmark's are. Anything
+// else, in a mailbox whose threads are kept, may be a one-off email
+// (one-off-emails.ts). Each run is in the import log as "read-gmail".
 
 const JOB = "read-gmail";
 
@@ -61,6 +64,8 @@ const HEADERS = [
   "X-Autoreply",
   "X-Autorespond",
   "Precedence",
+  "X-Original-From",
+  "List-Id",
 ];
 
 /**
@@ -88,9 +93,9 @@ async function letterAnswered(account: string, message: GmailMessageHeaders): Pr
   const refs = [...messageIds(message.headers.get("in-reply-to")), ...messageIds(message.headers.get("references"))];
   const [row] = await query<{ letterId: number }>(
     `SELECT letter_id::int AS "letterId" FROM (
-       SELECT letter_id, 1 AS rank FROM email_sends WHERE purpose = 'mailing' AND rfc_message_id = ANY($1)
+       SELECT letter_id, 1 AS rank FROM email_sends WHERE (purpose = 'mailing' OR imported) AND rfc_message_id = ANY($1)
        UNION ALL SELECT letter_id, 2 FROM letter_replies WHERE rfc_message_id = ANY($1)
-       UNION ALL SELECT letter_id, 3 FROM email_sends WHERE purpose = 'mailing' AND sender = $2 AND gmail_thread_id = $3
+       UNION ALL SELECT letter_id, 3 FROM email_sends WHERE (purpose = 'mailing' OR imported) AND sender = $2 AND gmail_thread_id = $3
        UNION ALL SELECT letter_id, 4 FROM letter_replies WHERE account = $2 AND gmail_thread_id = $3
      ) found WHERE letter_id IS NOT NULL ORDER BY rank LIMIT 1`,
     [refs, account, message.threadId],
@@ -113,16 +118,27 @@ async function isOurLetter(account: string, message: GmailMessageHeaders): Promi
   return !!row;
 }
 
-/** Keeps a message in a letter's thread whole, and marks the letter replied to if the politician wrote it. */
-async function keepReply(
+/** What keepReply is told beyond the message, by a reader that knows more: see there. */
+type KeepReplyOptions = { raw?: Buffer; from?: { address: string; name: string }; fromUs?: boolean };
+
+/**
+ * Keeps a message in a letter's thread whole, and marks the letter replied
+ * to if the politician wrote it. `from` is who wrote it, if the From says
+ * otherwise; `raw` the message, if it's been read already; `fromUs` whether
+ * it's one of ours, by default if it's from the account.
+ */
+export async function keepReply(
   account: string,
   token: string,
   letterId: number,
   message: GmailMessageHeaders,
+  {
+    raw: read,
+    from = fromAddress(message.headers.get("from")),
+    fromUs = from.address === account,
+  }: KeepReplyOptions = {},
 ): Promise<void> {
-  const raw = await gmailRawMessage(token, message.id);
-  const from = fromAddress(message.headers.get("from"));
-  const fromUs = from.address === account;
+  const raw = read ?? (await gmailRawMessage(token, message.id));
   const at = new Date(Number(message.internalDate));
   const key = `${account}/${message.id}.eml.gz`;
   await saveLetterReply(key, gzipSync(raw));
@@ -148,8 +164,9 @@ async function keepReply(
   );
   if (!kept || fromUs) return;
   await query("UPDATE letters SET replied_at = coalesce(replied_at, $2) WHERE id = $1", [letterId, at]);
-  await query("INSERT INTO letter_events (letter_id, status, details) VALUES ($1, 'replied', $2)", [
+  await query("INSERT INTO letter_events (letter_id, at, status, details) VALUES ($1, $2, 'replied', $3)", [
     letterId,
+    at,
     JSON.stringify({
       from: from.address,
       name: from.name,
@@ -175,15 +192,16 @@ function addressed(message: GmailMessageHeaders) {
   return { to: line("to"), cc: line("cc"), replyTo: line("reply-to"), handling };
 }
 
-/** Notes an automatic reply on its letter, once. */
-async function noteAutoReply(letterId: number, message: GmailMessageHeaders): Promise<boolean> {
+/** Notes an automatic reply on its letter, once, as of when it arrived. */
+export async function noteAutoReply(letterId: number, message: GmailMessageHeaders): Promise<boolean> {
   const [seen] = await query(
     "SELECT 1 FROM letter_events WHERE letter_id = $1 AND status = 'auto_reply' AND details->>'gmailMessageId' = $2",
     [letterId, message.id],
   );
   if (seen) return false;
-  await query("INSERT INTO letter_events (letter_id, status, details) VALUES ($1, 'auto_reply', $2)", [
+  await query("INSERT INTO letter_events (letter_id, at, status, details) VALUES ($1, $2, 'auto_reply', $3)", [
     letterId,
+    new Date(Number(message.internalDate)),
     JSON.stringify({
       from: fromAddress(message.headers.get("from")).address,
       ...addressed(message),
@@ -289,7 +307,20 @@ async function readMessage(account: string, token: string, id: string, read: Gma
   ]);
   if (kept || (await isOurLetter(account, message))) return;
   const letterId = await letterAnswered(account, message);
-  if (!letterId) return;
+  if (!letterId) {
+    if (keepsPoliticianThreads(account))
+      read.oneOffs =
+        (read.oneOffs ?? 0) +
+        ((await keepIfPoliticianThread(
+          account,
+          token,
+          message,
+          account === process.env.POLICY_INBOX?.toLowerCase(),
+        )) === "kept"
+          ? 1
+          : 0);
+    return;
+  }
   if (isMachineReply((name) => message.headers.get(name), message.headers.get("subject") ?? "")) {
     if (await noteAutoReply(letterId, message)) read.autoReplies++;
     return;
@@ -402,6 +433,7 @@ export function readGmail(startedBy: string, request?: Request): Promise<GmailRe
     const found = accounts.some(
       (a) =>
         a.replies + a.autoReplies + a.bounces > 0 ||
+        a.oneOffs ||
         a.relayed ||
         a.spam ||
         a.notUnderstood?.length ||
@@ -411,6 +443,7 @@ export function readGmail(startedBy: string, request?: Request): Promise<GmailRe
     await recordRun(JOB, startedBy, found ? "ok" : "unchanged", { accounts });
     await alertNotUnderstood(accounts, request);
     await alertUnreadable(accounts, request);
+    await reportUnmatchedMail(gmailAccess);
     return { accounts };
   });
 }

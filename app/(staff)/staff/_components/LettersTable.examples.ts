@@ -11,13 +11,15 @@ export const exampleLetter: LetterSummary = {
   id: 1,
   campaign: pm.slug,
   campaignTitle: pm.title,
-  campaignUrl: null,
   status: "bounced",
   senderName: "Jane Smith",
   senderEmail: "jane@example.com",
   mpName: "Testy McTestface MP",
   politicianId: 3,
   isTest: true,
+  constituency: "Testington",
+  party: "Example Party",
+  answer: null,
   ownWords: 0.18,
   backend: "postmark",
   createdAt: "2026-10-12T09:00:00Z",
@@ -322,6 +324,7 @@ export const examplePauseaiLetterDetails: PauseaiLetterDetails = {
 
 /** The letters page's filters and sort, all blank. */
 export const emptyLettersSearch: LettersSearch = {
+  tab: "",
   status: "",
   q: "",
   answered: "",
@@ -332,9 +335,3 @@ export const emptyLettersSearch: LettersSearch = {
   dir: "",
   page: "",
 };
-
-/** The campaigns the letters page's Campaign filter offers: one of this site's and one of pauseai.info's. */
-export const exampleLetterCampaigns = [
-  { slug: pm.slug, title: pm.title },
-  { slug: "pauseai-info-frontier-ai", title: "Frontier AI letter, from pauseai.info" },
-];

@@ -1,4 +1,5 @@
 import { isOfficialName } from "./constituencies";
+import { onParliamentDomain } from "./one-off";
 import type { ParliamentMp } from "./parliament";
 
 // Where Airtable's MPs disagree with Parliament's Members API, or with the
@@ -60,4 +61,34 @@ export function checkAgainstParliament(airtable: AirtableMp[], parliament: Parli
     }
   }
   return problems;
+}
+
+/** Domains that say nothing of whose a thread is: social media, parties, and mail anyone can have. */
+const SHARED_DOMAIN =
+  /(^|\.)(facebook|twitter|x|instagram|linkedin|youtube|tiktok|threads|bsky|gmail|googlemail|hotmail|outlook|yahoo|icloud|aol|btinternet|labour|conservatives|libdems|greenparty|snp|plaid|reform|reformparty|dup|sinnfein|alliance|sdlp|uup|linktr|wordpress|wixsite)\.(com|org|org\.uk|uk|co\.uk|net|scot|cymru|ee|app|social)$/;
+
+/** A web or email address's domain, without a leading www, lowercased; undefined if it has none. */
+export function domainOf(address: string): string | undefined {
+  const text = address.trim().toLowerCase();
+  const domain = text.includes("@")
+    ? text.slice(text.lastIndexOf("@") + 1)
+    : text.replace(/^[a-z]+:\/\//, "").split(/[/?#]/)[0];
+  return domain.includes(".") ? domain.replace(/^www\./, "") : undefined;
+}
+
+/**
+ * Each domain of a politician's own, by their ID, from their listed email
+ * and web addresses: not a parliament's, a party's or social media, and held
+ * by only one of them.
+ */
+export function ownDomains(people: { id: number; addresses: string[] }[]): Map<string, number> {
+  const holders = new Map<string, Set<number>>();
+  for (const { id, addresses } of people) {
+    for (const address of addresses) {
+      const domain = domainOf(address);
+      if (!domain || SHARED_DOMAIN.test(domain) || onParliamentDomain(`x@${domain}`)) continue;
+      holders.set(domain, (holders.get(domain) ?? new Set()).add(id));
+    }
+  }
+  return new Map([...holders].filter(([, ids]) => ids.size === 1).map(([domain, ids]) => [domain, [...ids][0]]));
 }

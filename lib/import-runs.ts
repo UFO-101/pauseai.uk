@@ -5,6 +5,7 @@ import type { MpProblem } from "./mp-check";
 import type { PoliticianChanges, PoliticianRecord, Renamed } from "./politician-sync";
 
 export const IMPORT_JOBS = [
+  "import-old-letters",
   "import-luma",
   "import-members",
   "read-gmail",
@@ -28,6 +29,7 @@ const IMPORT_SLUGS: Record<ImportJob, string> = {
   "sync-emails": "emails",
   "import-web-form-letters": "web-form-letters",
   "import-go-to-parliament": "go-to-parliament",
+  "import-old-letters": "old-letters",
   "check-mps": "mp-check",
   "import-controlai": "controlai",
   "import-members": "members",
@@ -40,9 +42,10 @@ export const JOB_SCHEDULES: Record<ImportJob, "frequent" | "hourly" | "nightly" 
   "import-members": "hourly",
   "read-gmail": "frequent",
   "sync-politicians": "nightly",
-  "sync-emails": "nightly",
+  "sync-emails": "oneOff",
   "import-web-form-letters": "oneOff",
   "import-go-to-parliament": "oneOff",
+  "import-old-letters": "oneOff",
   "check-mps": "nightly",
   "import-controlai": "nightly",
 };
@@ -168,6 +171,8 @@ export type GmailRead = {
   replies: number;
   autoReplies: number;
   bounces: number;
+  /** One-off emails kept, as threads with politicians, in an account that keeps them. */
+  oneOffs?: number;
   /** The mailbox's history had gone, so it was searched instead. */
   restarted?: boolean;
   /** Why it couldn't be read. Read again next time, from where it got to, unless it was disconnected. */
@@ -238,6 +243,44 @@ export type GoToParliamentImportResult = {
 };
 export type GoToParliamentImport = ImportRun<"import-go-to-parliament", GoToParliamentImportResult>;
 
+/** What a press of the import of old letters did: how far it got, and what it found. A dry run's says what would be done. */
+export type OldLettersImportResult = {
+  dryRun: boolean;
+  /** It read everything listed, and did the last steps. */
+  finished: boolean;
+  /** Why it stopped short: Gmail refused a request. */
+  stoppedBy?: "gmail";
+  /** How many of its searches it has listed: its place, between its calls. */
+  searchesDone?: number;
+  /** Messages listed and read this press, and how many are left. */
+  listed: number;
+  read: number;
+  left: number;
+  requests: number;
+  /** Form letters' and Postmark letters' texts copied. */
+  formTexts: number;
+  postmarkTexts: number;
+  /** Letters joined to their sent emails, added from them, and not joined, by mailing, or for a form letter its campaign. */
+  joined: Record<string, number>;
+  added: Record<string, number>;
+  notJoined: Record<string, number>;
+  /** What those are called, by the key each is counted under. */
+  titles?: Record<string, string>;
+  replies: number;
+  autoReplies: number;
+  oneOffs: number;
+  /** Gmail IDs of messages Gmail wouldn't give. */
+  unreadable: string[];
+  /** Mail in policy@ and the group's archive that matched nothing, which only staff with supporters see. */
+  unmatched: { from: string; subject: string }[];
+  /** Mailings given a template, and letters that keep their own text as they don't fit theirs. */
+  templates: number;
+  ownText: number;
+  /** Letters with a person's reply newly marked. */
+  repliedSet: number;
+};
+export type OldLettersImport = ImportRun<"import-old-letters", OldLettersImportResult>;
+
 export type AnyImportRun =
   | PoliticianSync
   | EmailSync
@@ -247,7 +290,8 @@ export type AnyImportRun =
   | MembersImport
   | GmailReading
   | WebFormImport
-  | GoToParliamentImport;
+  | GoToParliamentImport
+  | OldLettersImport;
 
 /** Whether a Luma run left work for later: it was cut short, or postcodes.io failed. */
 function lumaRunIncomplete(result: LumaImportResult): boolean {
@@ -265,6 +309,8 @@ export function runStatus(run: AnyImportRun): string {
   if (run.job === "import-luma" && run.status !== "failed" && lumaRunIncomplete(run.result)) return "incomplete";
   // Emails held back for a mailing nobody has added yet.
   if (run.job === "sync-emails" && run.status !== "failed" && run.result.unplaced.length > 0) return "incomplete";
+  // Left to read: press it again.
+  if (run.job === "import-old-letters" && run.status !== "failed" && !run.result.finished) return "incomplete";
   if (run.job === "read-gmail" && run.status !== "failed") {
     // An account that couldn't be read, a disconnected one among them, or mail in the letters inbox a person
     // has to look at.

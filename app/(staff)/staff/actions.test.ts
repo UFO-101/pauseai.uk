@@ -23,6 +23,7 @@ import {
   eraseSupporterNow,
   importControlAiNow,
   importGoToParliamentNow,
+  importOldLettersNow,
   importWebFormLettersNow,
   syncEmailsNow,
   importLumaNow,
@@ -339,6 +340,69 @@ describeWithDatabase("staff Server Actions", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data/go-to-parliament");
   });
 
+  it("starts nothing while a press of the job is running, and takes over one older than any can run", async () => {
+    const runs = () => query("SELECT 1 FROM import_runs WHERE job = 'sync-emails'");
+    await query("INSERT INTO job_presses (job, started_by) VALUES ('sync-emails', 'sam@pauseai.uk')");
+    await syncEmailsNow();
+    expect(await runs()).toHaveLength(0);
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data/emails");
+    await query("UPDATE job_presses SET started_at = now() - interval '17 minutes'");
+    await syncEmailsNow();
+    expect(await runs()).toHaveLength(1);
+    expect(await query("SELECT 1 FROM job_presses")).toEqual([]);
+  });
+
+  it("holds a press in the background until the import of old letters ends it", async () => {
+    vi.stubEnv("DATA_FIXTURES", "");
+    vi.stubEnv("SITE_ORIGIN", "https://pauseai.uk");
+    vi.stubEnv("CRON_SECRET", "s3cret");
+    server.use(
+      http.post(
+        "https://pauseai.uk/.netlify/functions/import-old-letters-background",
+        () => new HttpResponse(null, { status: 202 }),
+      ),
+    );
+    await importOldLettersNow(new FormData());
+    expect(await query("SELECT started_by AS by FROM job_presses")).toEqual([{ by: "jo@pauseai.uk" }]);
+    server.use(
+      http.post(
+        "https://pauseai.uk/.netlify/functions/import-old-letters-background",
+        () => new HttpResponse(null, { status: 500 }),
+      ),
+    );
+    await query("DELETE FROM job_presses");
+    await importOldLettersNow(new FormData());
+    expect(await query("SELECT 1 FROM job_presses")).toEqual([]);
+  });
+
+  it("keeps a failed press of the import of old letters as a failed run, rather than crashing", async () => {
+    vi.stubEnv("DATA_FIXTURES", "1");
+    await expect(importOldLettersNow(new FormData())).resolves.toBeUndefined();
+    expect(await query(`SELECT status, error FROM import_runs WHERE job = 'import-old-letters'`)).toEqual([
+      { status: "failed", error: "joseph@pauseai.uk's Gmail isn't connected" },
+    ]);
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data/old-letters");
+    vi.stubEnv("DATA_FIXTURES", "");
+  });
+
+  it("presses the import of old letters, as a dry run if ticked", async () => {
+    vi.stubEnv("DATA_FIXTURES", "1");
+    const form = (values: Record<string, string>) => {
+      const data = new FormData();
+      for (const [name, value] of Object.entries(values)) data.set(name, value);
+      return data;
+    };
+    await connectTestGmail("joseph@pauseai.uk");
+    await connectTestGmail("policy@pauseai.uk");
+    await importOldLettersNow(form({ dryRun: "on" }));
+    await importOldLettersNow(form({}));
+    const presses = await query<{ dry: string }>(
+      `SELECT result->>'dryRun' AS dry FROM import_runs WHERE job = 'import-old-letters' ORDER BY id`,
+    );
+    expect(presses).toEqual([{ dry: "true" }, { dry: "false" }]);
+    vi.stubEnv("DATA_FIXTURES", "");
+  }, 30_000);
+
   it("endStaffSessionsNow ends an account's sessions, as an admin, going back to the page", async () => {
     await createSession("samuel.whitlock@pauseai.uk");
     const end = () => endStaffSessionsNow(form({ email: "samuel.whitlock@pauseai.uk" }));
@@ -429,7 +493,7 @@ describeWithDatabase("staff Server Actions", () => {
         await expectRedirect(() => saveAskNow(reception({ slug: "winter-reception-dec-2026", title: "Reception" }))),
       ).toBe("/staff/asks?notice=saved");
       expect(await expectRedirect(() => saveAskNow(reception({ slug: "frontier-ai-letter" })))).toBe(
-        "/staff/asks/frontier-ai-letter?notice=fixed&back=%2Fstaff%2Fasks",
+        "/staff/asks/frontier-ai-letter/edit?notice=fixed&back=%2Fstaff%2Fasks",
       );
       expect(await expectRedirect(() => saveAskNow(form({ title: "", kind: "event" })))).toBe(
         "/staff/asks/new?notice=invalid&back=%2Fstaff%2Fasks",
@@ -439,7 +503,7 @@ describeWithDatabase("staff Server Actions", () => {
     it("deletes an ask, or goes back to its form saying why not, or to the asks if it's gone", async () => {
       await expectRedirect(() => saveAskNow(reception()));
       expect(await expectRedirect(() => deleteAskNow(form({ slug: "frontier-ai-letter" })))).toBe(
-        "/staff/asks/frontier-ai-letter?notice=fixed&back=%2Fstaff%2Fasks",
+        "/staff/asks/frontier-ai-letter/edit?notice=fixed&back=%2Fstaff%2Fasks",
       );
       expect(await expectRedirect(() => deleteAskNow(form({ slug: "winter-reception-dec-2026" })))).toBe(
         "/staff/asks?notice=deleted",

@@ -12,9 +12,10 @@ import { linkSupporters } from "./supporters";
 // Airtable's "Web form emails" for an automation to send: each a letter, and
 // its sender a form entry of the "web-form" form, so they become supporters. Each run is in the
 // import log, as "import-web-form-letters"; running it again adds nothing
-// twice. Never the message: only who, to whom, when, the subject and the
-// consent box, which before 23 September 2026 the form didn't have, so a
-// blank one is no. The form asked for no address.
+// twice. Only who, to whom, when, the subject and the consent box, which before
+// 23 September 2026 the form didn't have, so a blank one is no: the import of
+// old letters copies the message (old-letters-import.ts). The form asked for no
+// address.
 
 const JOB = "import-web-form-letters";
 

@@ -1,3 +1,4 @@
+import { filtersPath } from "@/lib/staff-search";
 import StaffLink from "./StaffLink";
 import styles from "./Counts.module.css";
 
@@ -17,24 +18,17 @@ export type Count = {
   title?: string;
 };
 
+/** Counts that each open `path` with their own tab already chosen. */
+export function countsOpening<T extends Count>(path: string, counts: T[]): T[] {
+  return counts.map((count) => ({ ...count, href: filtersPath(path, { tab: count.key }) }));
+}
+
 /**
  * Numbers side by side in one white box, each over its label, a 0 or a
  * dash grey (a supporter's events and letters, how a mailing went). Each
- * leads where its `href` says; or with `href` on the box, the whole box
- * leads there. `small` in a list's row.
+ * leads where its `href` says. `small` in a list's row.
  */
-export default function Counts({
-  counts,
-  href,
-  small = false,
-  label,
-}: {
-  counts: Count[];
-  href?: string;
-  small?: boolean;
-  /** What the box is, for a screen reader, when the box is one link. */
-  label?: string;
-}) {
+export default function Counts({ counts, small = false }: { counts: Count[]; small?: boolean }) {
   const cells = counts.map((count) => {
     const inner = (
       <>
@@ -44,7 +38,7 @@ export default function Counts({
         {count.label}
       </>
     );
-    return count.href && !href ? (
+    return count.href ? (
       <StaffLink
         key={count.key}
         href={count.href}
@@ -60,12 +54,5 @@ export default function Counts({
       </span>
     );
   });
-  const className = small ? `${styles.counts} ${styles.small}` : styles.counts;
-  return href ? (
-    <StaffLink href={href} className={className} aria-label={label}>
-      {cells}
-    </StaffLink>
-  ) : (
-    <div className={className}>{cells}</div>
-  );
+  return <div className={small ? `${styles.counts} ${styles.small}` : styles.counts}>{cells}</div>;
 }

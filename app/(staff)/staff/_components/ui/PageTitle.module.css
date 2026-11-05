@@ -8,6 +8,12 @@
   column-gap: var(--space-4);
 }
 
+/* First on the page, it starts where a title with no row does: StaffPage takes
+   the margin off the first thing on the page, which here is the row, not the title. */
+.title:first-child h1 {
+  margin-top: 0;
+}
+
 /* The page's buttons, together at the right. */
 .actions {
   display: flex;

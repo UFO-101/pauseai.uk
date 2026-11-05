@@ -17,6 +17,31 @@ afterEach(() => vi.unstubAllEnvs());
 describeWithDatabase("checkMps", () => {
   useTestDatabase();
 
+  it("keeps each MP's own domains, by their constituency, and forgets one no longer listed", async () => {
+    await syncPoliticians(NIGHTLY);
+    await query(
+      `INSERT INTO politician_domains (domain, notable_person_id) SELECT 'old.example', id FROM notable_people LIMIT 1`,
+    );
+    server.use(
+      http.get(`${MEMBERS_API}/Members/90002/Contact`, () =>
+        HttpResponse.json({
+          value: [{ isWebAddress: true, line1: "https://www.polly.example" }, { email: "a@parliament.uk" }],
+        }),
+      ),
+      http.get(`${MEMBERS_API}/Members/90001/Contact`, () =>
+        HttpResponse.json({ value: [{ email: "someone@notours.example" }] }),
+      ),
+    );
+    await query(
+      "UPDATE politicians SET constituency = 'Elsewhere' WHERE constituency = 'Hackney North and Stoke Newington'",
+    );
+    await checkMps("jo@pauseai.uk");
+    const rows = await query<{ domain: string; name: string }>(
+      `SELECT d.domain, n.name FROM politician_domains d JOIN notable_people n ON n.id = d.notable_person_id`,
+    );
+    expect(rows).toEqual([{ domain: "polly.example", name: "Polly Placeholder" }]);
+  });
+
   it("compares the MPs copied from Airtable with Parliament's, and keeps what it finds", async () => {
     await syncPoliticians(NIGHTLY);
     expect(await recentChecks()).toEqual([]);

@@ -430,8 +430,8 @@ that changes it: those, or an account's permissions.
 
 Where a row has a page of its own, the first column leads to it, so
 there's one place to click to open it: a supporter's or politician's
-name. A row with no name, such as a letter, starts with what leads to it
-instead, its status, before who it's from and to. A list read by time
+name. A row with no name, such as a letter, starts with its status, then a
+link to it ("Letter →"), before who it's from and to. A list read by time
 starts with when instead. In a log, newest first, when is all there is
 to it: the audit log, an import's runs, a history. Something that
 happens on a day, such as an event, is named by its date as much as its
@@ -542,6 +542,26 @@ checking exactly what was recorded or a field the words don't cover yet.
 its name. Fold, at its foot, folds it to a rail of the icons on wider
 screens, the sections a rule apart, each name showing beside its icon on
 hover or focus; the browser remembers it (`lib/staff-nav.ts`).
+
+**A thing's name leads to it.** Wherever the name of something with a page of
+its own is shown, such as a campaign, an ask or a politician, it links to that
+page, so a thing that looks the same goes to the same place. A number can go
+elsewhere, to a filter or a list of what it counts. A link to somewhere else
+has words of its own ("See it", not the name). A letter or email with no name of its own is
+opened by "Letter →", everywhere, and its status stays plain words beside it, so
+a status never looks like a link; a politician's answer in their history is plain too. A one-off thread has its subject as its name,
+so that's what opens it. Two exceptions: a name in a
+choice, such as a menu's option, picks it instead; and for staff who can't open
+the page, the name is plain.
+
+**What a permission hides** (`ui/Withheld`). Words standing in for something
+a staff member's permissions keep from them must go in `Withheld`, a sealed
+envelope and muted italics, so it looks the same everywhere: a thread they
+can't read, a line of a politician's history with no sender. It's never a link,
+as there's nothing to open. Something simply left out, a missing column or a
+number that isn't linked, needs no words and no `Withheld`. Rows a list leaves
+out get one `Withheld` line over it, saying what isn't shown and why: sent emails
+and the audit log, for an admin without `supporters`.
 
 **Columns the filters fix** are left out: a house tab, one party found,
 one status (the politicians table). It's the filters that decide, never

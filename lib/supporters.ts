@@ -82,12 +82,13 @@ export type SupporterActivity = {
   /** A letter's campaign's title, as the campaigns table has it; null for every other kind. */
   campaignTitle: string | null;
   /** Where an old campaign's letter can be read, as the campaigns table has it; null for one in code, one with none, and every other kind. */
-  campaignUrl: string | null;
   /** Who or what it was with: the event's status, the MP's name, the site they joined on, or the address. */
   detail: string | null;
   href: string | null;
   /** A letter's status; null for every other kind. */
   status: string | null;
+  /** A letter's ID, for a link to it; null for every other kind. */
+  letterId?: number | null;
   /** When the event starts, for a registration or hosting, where the supporter's page reads it; null for an event no longer copied. */
   eventAt?: string | null;
 };
@@ -120,7 +121,6 @@ export type SupporterLetter = {
   /** The campaign's title, as the campaigns table has it. */
   campaignTitle: string;
   /** Where an old campaign's letter can be read, as the campaigns table has it. */
-  campaignUrl: string | null;
   status: string;
 };
 

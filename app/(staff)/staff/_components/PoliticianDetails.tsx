@@ -10,6 +10,7 @@ import { FieldChanges } from "./AuditDetail";
 import type { FieldChange } from "@/lib/field-changes";
 import { importPath } from "@/lib/import-runs";
 import type { EmailBlock } from "@/lib/server/email";
+import type { OneOffThreadRow } from "@/lib/server/one-off-emails";
 import type { LetterSummary, PauseaiLetter, PoliticianLetters, UnsignedLetter } from "@/lib/server/letters";
 import type { Politician, PoliticianChange } from "@/lib/server/politicians";
 import { staffDate, staffTime } from "@/lib/staff-time";
@@ -18,6 +19,7 @@ import Band, { BandFact } from "./ui/Band";
 import Counts from "./ui/Counts";
 import Grid, { Card, Column } from "./ui/Grid";
 import Strip from "./ui/Strip";
+import Withheld from "./ui/Withheld";
 import { NationShape, Rosette, StatusDot } from "./PoliticianIcons";
 import UnblockForm from "./UnblockForm";
 import NoteHistory from "./NoteHistory";
@@ -52,7 +54,7 @@ function Sender({ letter }: { letter: LetterSummary }) {
       )}
       <Muted>
         {" · "}
-        <CampaignName slug={letter.campaign} title={letter.campaignTitle} url={letter.campaignUrl} />
+        <CampaignName slug={letter.campaign} title={letter.campaignTitle} />
       </Muted>
     </>
   );
@@ -63,7 +65,7 @@ function Unsigned({ letter, status }: { letter: UnsignedLetter; status: boolean 
   return (
     <Muted>
       {" · "}
-      <CampaignName slug={letter.campaign} title={letter.campaignTitle} url={letter.campaignUrl} />
+      <CampaignName slug={letter.campaign} title={letter.campaignTitle} linked={false} />
       {status && <> · {staffCopy.letters.status[letter.status] ?? letter.status}</>}
     </Muted>
   );
@@ -71,7 +73,7 @@ function Unsigned({ letter, status }: { letter: UnsignedLetter; status: boolean 
 
 /**
  * The letters as history: each written, and each answered, as its own
- * line. With their senders, each names who wrote it, its status linked to
+ * line. With their senders, each names who wrote it, its status, and a link to
  * the letter's page; without, only the campaign and the status.
  */
 function letterEntries({ senders, letters }: PoliticianLetters): Entry[] {
@@ -84,11 +86,11 @@ function letterEntries({ senders, letters }: PoliticianLetters): Entry[] {
       lines(
         letter,
         <>
-          {copy.history.unsignedLetter}
+          <Withheld>{copy.history.unsignedLetter}</Withheld>
           <Unsigned letter={letter} status />
         </>,
         <>
-          {copy.history["unsigned-letter-replied"]}
+          <Withheld>{copy.history["unsigned-letter-replied"]}</Withheld>
           <Unsigned letter={letter} status={false} />
         </>,
       ),
@@ -101,9 +103,9 @@ function letterEntries({ senders, letters }: PoliticianLetters): Entry[] {
         {copy.history.letter} <Sender letter={letter} />
         <Muted>
           {" · "}
-          <StaffLink href={`/staff/letters/${letter.id}`}>
-            {staffCopy.letters.status[letter.status] ?? letter.status}
-          </StaffLink>
+          {staffCopy.letters.status[letter.status] ?? letter.status}
+          {" · "}
+          <StaffLink href={`/staff/letters/${letter.id}`}>{staffCopy.mailingPages.theLetter}</StaffLink>
         </Muted>
       </>,
       <>
@@ -115,7 +117,7 @@ function letterEntries({ senders, letters }: PoliticianLetters): Entry[] {
 
 /**
  * PauseAI's letters, each a line: the mailing, whether it was personalised,
- * and how it stands, leading to the letter's page under its mailing.
+ * how it stands, and a link to the letter's page under its mailing.
  */
 function pauseaiEntries(letters: PauseaiLetter[]): Entry[] {
   return letters.map((letter) => ({
@@ -128,8 +130,10 @@ function pauseaiEntries(letters: PauseaiLetter[]): Entry[] {
         <Muted>
           {letter.personalised && ` · ${copy.personalised}`}
           {" · "}
+          {staffCopy.letters.status[letter.status] ?? letter.status}
+          {" · "}
           <StaffLink href={`/staff/mailings/${letter.mailingId}/letters/${letter.id}`}>
-            {staffCopy.letters.status[letter.status] ?? letter.status}
+            {staffCopy.mailingPages.theLetter}
           </StaffLink>
         </Muted>
       </>
@@ -153,23 +157,12 @@ function Detail({ change, asks }: { change: PoliticianChange; asks: Ask[] }) {
     case "set status": {
       const ask = asks.find((a) => a.slug === details.ask);
       const label = staffCopy.statuses[text("status")] ?? text("status");
-      // The answer, where the copy puts it, leads to everyone who gave it to the ask.
-      const answer =
-        details.ask && details.status ? (
-          <StaffLink
-            href={`/staff/politicians?ask=${encodeURIComponent(text("ask"))}&answer=${encodeURIComponent(text("status"))}`}
-          >
-            {label}
-          </StaffLink>
-        ) : (
-          label
-        );
       const words = details.status === null ? copy.statusCleared : copy.statusSet(ANSWER);
       const [lead, rest = ""] = words.before.split(ANSWER);
       return (
         <>
           {lead}
-          {words.before.includes(ANSWER) && answer}
+          {words.before.includes(ANSWER) && label}
           {rest}
           {/* Logged by ask, or, before asks, by campaign. The ask leads where it does in the asks card. */}
           {ask ? <AskTitle ask={ask} /> : details.ask ? text("ask") : <CampaignName slug={text("campaign")} />}
@@ -329,6 +322,7 @@ export default function PoliticianDetails({
   unblock,
   letters,
   pauseaiLetters = [],
+  oneOffs = [],
   history,
   airtableTable,
   notes,
@@ -344,6 +338,8 @@ export default function PoliticianDetails({
   letters: PoliticianLetters;
   /** PauseAI's letters to them. */
   pauseaiLetters?: PauseaiLetter[];
+  /** Their one-off emails. */
+  oneOffs?: OneOffThreadRow[];
   history: PoliticianChange[];
   /** Airtable's table of MPs, which the server knows; an MP's record there is under it. */
   airtableTable: string;
@@ -353,6 +349,20 @@ export default function PoliticianDetails({
   const entries: Entry[] = [
     ...letterEntries(letters),
     ...pauseaiEntries(pauseaiLetters),
+    ...oneOffs.map((thread) => ({
+      key: `one-off-${thread.id}`,
+      at: thread.latestAt,
+      what: (
+        <>
+          {staffCopy.oneOff.title}:{" "}
+          {thread.subject === null ? (
+            <Withheld>{staffCopy.oneOff.hidden}</Withheld>
+          ) : (
+            <StaffLink href={`/staff/one-off/${thread.id}`}>{thread.subject || staffCopy.oneOff.noSubject}</StaffLink>
+          )}
+        </>
+      ),
+    })),
     ...(notes?.notes ?? []).map((note) => ({
       key: `note-${note.id}`,
       at: note.createdAt,

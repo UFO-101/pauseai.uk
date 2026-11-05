@@ -4,14 +4,21 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import { contactState } from "@/lib/contact-permissions";
 import type { BlocksFilter } from "@/lib/server/email";
+import type { SentEmailsFilter } from "@/lib/server/sent-emails";
 import { campaignBySlug } from "@/lib/email-your-mp";
 import { LETTER_SORTS, type LetterSort } from "@/lib/letter-sort";
+import { SENT_EMAIL_SORTS } from "@/lib/sent-email-sort";
 import { POLITICIAN_FLAGS, type PoliticianFlag } from "@/lib/politician-filters";
 import { parseSort, type SortSpec } from "@/lib/staff-sort";
 import { EVENT_SORTS, type EventFilter } from "@/lib/staff-events-list";
 import { isSupporterBadge, NEAR_MILES, SUPPORTER_SORTS, type SupporterFilter } from "@/lib/supporters";
 
+/** Which of a campaign's letters its counts can show: those that arrived, failed, were replied to, whose politician answered its ask, or whose text was changed. */
+export const LETTER_TABS = ["sent", "failed", "replied", "answered", "changed"] as const;
+export type LetterTab = (typeof LETTER_TABS)[number];
+
 export type LettersSearch = {
+  tab: string;
   status: string;
   q: string;
   /** As LETTER_REPLIES. */
@@ -35,7 +42,7 @@ export const LETTER_BACKENDS = ["airtable", "postmark", "gmail"] as const;
 export type LetterBackend = (typeof LETTER_BACKENDS)[number];
 
 /** Whether a letter was delivered: the statuses a supporter's letter can have. */
-export const LETTER_STATUSES = ["queued", "sending", "sent", "not_sent", "bounced", "spam_complaint"] as const;
+const LETTER_STATUSES = ["queued", "sending", "sent", "not_sent", "bounced", "spam_complaint"] as const;
 
 /**
  * What came back to a letter: a written reply, only an automatic one (an
@@ -55,6 +62,8 @@ export type LetterFilter = {
   search?: string;
   /** What came back to it. */
   answered?: LetterReply;
+  /** Which of a campaign's counts it's showing. */
+  tab?: LetterTab;
   /** In any of these campaigns, by slug. */
   campaign?: string[];
   /** To an MP with any of these markers. */
@@ -82,9 +91,9 @@ export function among<T extends string>(values: string[], known: readonly T[]): 
 export function lettersSearch(
   params: Partial<Record<keyof LettersSearch, ParamValue>>,
 ): LettersSearch & { filter: LetterFilter & { page: number } } {
-  const [status, q, answered, sort, dir, page] = (["status", "q", "answered", "sort", "dir", "page"] as const).map(
-    (name) => firstOf(params[name]),
-  );
+  const [tab, status, q, answered, sort, dir, page] = (
+    ["tab", "status", "q", "answered", "sort", "dir", "page"] as const
+  ).map((name) => firstOf(params[name]));
   const [campaign, flag, backend] = (["campaign", "flag", "backend"] as const).map((name) => valuesOf(params[name]));
   const [campaigns, notCampaigns] = anyAndNone(campaign, (values) => values.filter(isSlug));
   const [flags, notFlags] = anyAndNone(flag, (values) => among(values, POLITICIAN_FLAGS));
@@ -94,6 +103,7 @@ export function lettersSearch(
     status: among([status], LETTER_STATUSES)[0],
     search: q.trim() || undefined,
     answered: among([answered], LETTER_REPLIES)[0],
+    tab: among([tab], LETTER_TABS)[0],
     campaign: campaigns,
     flags,
     backend: backends,
@@ -101,6 +111,7 @@ export function lettersSearch(
     sort: sorting,
   };
   return {
+    tab,
     status,
     q,
     answered,
@@ -111,6 +122,66 @@ export function lettersSearch(
     dir,
     page,
     filter: { ...filter, page: pageNumber(page) },
+  };
+}
+
+/** What a sent email can lead to, which its Links filter finds. */
+/** The kinds of email with no supporter's details on them: all that staff without `supporters` see. */
+export const SENT_EMAILS_WITHOUT_SUPPORTERS: readonly string[] = [
+  "mailing",
+  "mailing-test",
+  "staff-login",
+  "staff-alert",
+  "staff-report",
+];
+
+export const SENT_EMAIL_LINKS = ["letter", "campaign", "mailing"] as const;
+
+/** The sent emails' URL filters. */
+export type SentEmailsSearch = {
+  q: string;
+  purpose: string[];
+  outcome: string[];
+  backend: string[];
+  link: string[];
+  sort: string;
+  dir: string;
+  page: string;
+};
+
+/** Reads the sent emails' URL. */
+export function sentEmailsSearch(
+  params: Partial<Record<keyof SentEmailsSearch, ParamValue>>,
+): SentEmailsSearch & { filter: SentEmailsFilter } {
+  const q = firstOf(params.q);
+  const page = firstOf(params.page);
+  const [sort, dir] = [firstOf(params.sort), firstOf(params.dir)];
+  const [purpose, outcome, backend, link] = (["purpose", "outcome", "backend", "link"] as const).map((name) =>
+    valuesOf(params[name]),
+  );
+  const [purposes, notPurposes] = anyAndNone(purpose, (values) => values);
+  const [outcomes, notOutcomes] = anyAndNone(outcome, (values) => values);
+  const [backends, notBackends] = anyAndNone(backend, (values) => values);
+  const [links, notLinks] = anyAndNone(link, (values) => among(values, SENT_EMAIL_LINKS));
+  return {
+    q,
+    purpose,
+    outcome,
+    backend,
+    link,
+    sort,
+    dir,
+    page,
+    filter: {
+      search: q.trim() || undefined,
+      sort: parseSort(SENT_EMAIL_SORTS, "when", sort, dir),
+      purpose: purposes,
+      outcome: outcomes,
+      backend: backends,
+      link: links,
+      not: notOf({ purpose: notPurposes, outcome: notOutcomes, backend: notBackends, link: notLinks }),
+      page: pageNumber(page),
+    },
   };
 }
 

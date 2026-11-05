@@ -246,7 +246,7 @@ your machine. You need no keys:
 4. The letter is sent: it's the newest `.eml` file in `tmp/outbox/`, with its PDFs
    attached. Open it in a mail app or a text editor.
 
-`/staff/letters` shows it, once you've logged in with the `supporters`
+`/staff/campaigns` shows it, on its campaign's page, once you've logged in with the `supporters`
 permission.
 
 To see a campaign's page move on to the next, look up ZZ99ZS instead: that

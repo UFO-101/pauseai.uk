@@ -162,7 +162,8 @@ async function forgetRevoked(email: string): Promise<void> {
 /** The connected accounts and where reading each last got to. */
 export async function gmailReadingState(): Promise<{ email: string; historyId: string }[]> {
   return query<{ email: string; historyId: string }>(
-    `SELECT email, gmail_history_id AS "historyId" FROM staff_accounts WHERE gmail_token IS NOT NULL ORDER BY email`,
+    `SELECT email, gmail_history_id AS "historyId"
+     FROM staff_accounts WHERE gmail_token IS NOT NULL ORDER BY email`,
   );
 }
 

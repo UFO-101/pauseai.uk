@@ -299,7 +299,7 @@ test("Emails that aren't relayed", async ({ page, request, flowDatabase }) => {
   await frame(page, "The dashboard");
 });
 
-test("The letter bounces", async ({ page, request, flowDatabase }) => {
+test("Jane's letter bounces", async ({ page, request, flowDatabase }) => {
   story("Jane writes to an MP whose address bounces her letter. The address is blocked, and staff get an email.");
   const sender = madeUpAddress("Jane Smith", 36);
   const id = await sentLetterId(page, flowDatabase, sender, bouncy);

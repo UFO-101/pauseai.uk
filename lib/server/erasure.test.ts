@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { http, HttpResponse } from "msw";
+import { server } from "@/tests/fixtures/msw";
 import { query } from "@/lib/server/db";
 import { docFromMarkup } from "@/lib/letter-format";
 import { addTestLetter, addTestMp, connectTestGmail, describeWithDatabase, useTestDatabase } from "@/tests/database";
@@ -87,6 +89,7 @@ describeWithDatabase("eraseSupporter", () => {
       members: 1,
       proxies: 0,
       messages: 0,
+      oneOffs: 0,
     });
     expect(await query("SELECT 1 FROM supporters WHERE id = $1", [id])).toEqual([]);
     expect(await query("SELECT 1 FROM luma_people WHERE user_id = 'usr-fixture-1'")).toEqual([]);
@@ -126,6 +129,7 @@ describeWithDatabase("eraseSupporter", () => {
           members: 1,
           proxies: 0,
           messages: 0,
+          oneOffs: 0,
         },
       },
     ]);
@@ -176,6 +180,7 @@ describeWithDatabase("eraseSupporter", () => {
       expect(await eraseSupporter(id, "ICO-124", "jo@pauseai.uk")).toMatchObject({
         letters: 1,
         proxies: 1,
+        oneOffs: 0,
         messages: 4,
       });
       expect(await query("SELECT tag FROM proxies")).toEqual([{ tag: "testy.mctestface.mp" }]);
@@ -196,8 +201,55 @@ describeWithDatabase("eraseSupporter", () => {
     });
   });
 
+  it("is done all the same when a one-off email's blob can't be deleted, saying so", async () => {
+    stubLettersInboxEnv();
+    const mp = await addTestMp();
+    const id = await janeWithEverything(mp);
+    const [{ email }] = await query<{ email: string }>(
+      "SELECT matched_value AS email FROM supporter_links WHERE supporter_id = $1 LIMIT 1",
+      [id],
+    );
+    const [{ thread }] = await query<{ thread: number }>(
+      "INSERT INTO one_off_threads (latest_at) VALUES (now()) RETURNING id::int AS thread",
+    );
+    await query(
+      `INSERT INTO one_off_messages (thread_id, account, gmail_message_id, gmail_thread_id, from_address, addresses, at, from_us, blob_key, size)
+       VALUES ($1, 'policy@pauseai.uk', 'g', 't', $2, ARRAY[$2], now(), false, 'one-off/x', 1)`,
+      [thread, email],
+    );
+    server.use(http.delete("https://blobs.fixture.invalid/*", () => new HttpResponse(null, { status: 500 })));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(await eraseSupporter(id, "ICO-9", "jo@pauseai.uk")).toMatchObject({ oneOffs: 1 });
+    expect(console.error).toHaveBeenCalledWith(
+      "Couldn't delete an erased supporter's one-off emails:",
+      expect.anything(),
+    );
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+    expect(await query("SELECT 1 FROM one_off_threads")).toEqual([]);
+  });
+
   it("does nothing for a supporter that doesn't exist", async () => {
     expect(await eraseSupporter(999, "ref", "jo@pauseai.uk")).toBeUndefined();
     expect(await query("SELECT count(*)::int AS n FROM audit_log")).toEqual([{ n: 0 }]);
+  });
+
+  it("keeps a letter's row in the send log, without who could be named by it, and the one-off emails with their address go", async () => {
+    const mp = await addTestMp();
+    const id = await janeWithEverything(mp);
+    const [{ letter }] = await query<{ letter: number }>(
+      `SELECT s.id::int AS letter FROM letters_from_supporters s JOIN supporter_links k ON k.form_entry_id = s.entry_id
+       WHERE k.supporter_id = $1 LIMIT 1`,
+      [id],
+    );
+    await query(
+      `INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id, subject, from_address)
+       VALUES ('letter', $1, 'mp@parliament.uk', 'sent', 'kept-1', 'Her own subject', 'jane.smith@letters.example')`,
+      [letter],
+    );
+    await eraseSupporter(id, "ICO-2", "jo@pauseai.uk");
+    expect(
+      await query("SELECT letter_id, subject, from_address, address FROM email_sends WHERE message_id = 'kept-1'"),
+    ).toEqual([{ letter_id: null, subject: null, from_address: null, address: "mp@parliament.uk" }]);
   });
 });

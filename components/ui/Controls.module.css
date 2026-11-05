@@ -93,7 +93,8 @@
   cursor: pointer;
 }
 
-.segment[aria-checked="true"] {
+.segment[aria-checked="true"],
+.segment[aria-current] {
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent);
   font-weight: 600;
@@ -105,7 +106,8 @@
   color: var(--text-secondary);
 }
 
-.quiet[aria-checked="true"] {
+.quiet[aria-checked="true"],
+.quiet[aria-current] {
   color: var(--text);
 }
 

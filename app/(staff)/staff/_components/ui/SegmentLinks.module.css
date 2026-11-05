@@ -1,0 +1,9 @@
+/* Close over the list they choose for. */
+.links {
+  display: flex;
+  margin-bottom: var(--space-3);
+}
+
+.links a {
+  text-decoration: none;
+}

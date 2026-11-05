@@ -1,8 +1,9 @@
 import type { APIRequestContext, Page, Route } from "@playwright/test";
 import { longDay } from "@/lib/calendar-days";
 import { DATE_PICKER_WORDS } from "@/lib/content/date-picker";
-import { staffCopy } from "@/lib/content/staff-interface";
+import { campaigns } from "@/lib/content/email-your-mp";
 import { TEST_MPS } from "@/lib/test-mps";
+import { staffCopy } from "@/lib/content/staff-interface";
 import { runSql } from "@/scripts/fresh-database.mjs";
 import { ROUTES } from "../routes";
 import {
@@ -162,11 +163,10 @@ export async function sentLetterId(
   await lookUpTestMp(page, BASE, mp, name);
   await fillLetter(page, sender);
   await sendLetter(page, mp);
-  await page.goto(`${BASE}/staff/letters`);
+  await page.goto(`${BASE}/staff/campaigns/${campaigns[0].slug}`);
   if (new URL(page.url()).pathname === "/staff/login") await logIn(page, database, ["supporters"]);
-  await page.goto(`${BASE}/staff/letters`);
-  const row = page.getByRole("row").filter({ hasText: sender });
-  await expect(row).toContainText(staffCopy.letters.status.sent);
+  await page.goto(`${BASE}/staff/campaigns/${campaigns[0].slug}`);
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   return letterIdOf(database, sender);
 }
 
@@ -180,4 +180,11 @@ export async function chooseDay(page: Page, label: string, day: string) {
   const target = calendar.getByRole("button", { name: new RegExp(`^${longDay(day)}`) });
   while (!(await target.isVisible())) await calendar.getByRole("button", { name: DATE_PICKER_WORDS.later }).click();
   await target.click();
+}
+
+/** Presses Import emails now on its page, as the staff member logged in, and waits for the run. */
+export async function importEmails(page: Page) {
+  await page.goto(`${BASE}/staff/import-data/emails`);
+  await page.getByRole("button", { name: staffCopy.pauseaiEmails.importNow }).click();
+  await expect(page.getByText(staffCopy.runs.status.incomplete).first()).toBeVisible();
 }

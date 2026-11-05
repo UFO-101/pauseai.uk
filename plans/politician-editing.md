@@ -17,7 +17,7 @@ also read that base (`lib/server/outside-services/airtable.ts`).
 | Airtable                                                | Replaced by                                       |
 | ------------------------------------------------------- | ------------------------------------------------- |
 | Name, body, constituency, party, country, email, status | The official sources, every night                 |
-| Salutation                                              | Staff, with a new politician's made from the name |
+| Salutation                                              | Staff, with a new politician's drafted by an LLM  |
 | Notes, Recommended                                      | A note in their history, from Airtable            |
 | Important target, Personal connection                   | Staff                                             |
 | Signed Frontier AI Letter, Edinburgh conference         | Staff                                             |
@@ -34,7 +34,13 @@ The members import reads a different base, Stichting PauseAI's
 
 Each politician stores the ID their legislature gives them, so someone
 who leaves and comes back, or moves from one house to another, stays
-one record.
+one record. Alongside it, a column for each standard key that other
+sources use, so a politician can be matched to them without a name
+lookup: a Wikipedia article title, a TheyWorkForYou person ID, and
+whatever else turns up (Wikidata, Democracy Club). TheyWorkForYou's
+[people data](https://www.theyworkforyou.com/api/) already links its
+MPs, Lords, MSPs and MLAs to their Wikipedia articles and official IDs,
+so it can fill those columns in one pass.
 
 | Body                | Source                                                                                              | ID                                                               |
 | ------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
@@ -50,6 +56,12 @@ All four give each member's name, party, constituency and email.
   (`lib/server/mp-check.ts`). It also gives the reason a membership
   ended. Its `nameAddressAs` field is mostly empty, so it can't give
   salutations.
+- Joseph made the salutations in Airtable with an LLM: for each
+  politician it searched for information about the person and chose the
+  salutation from what it found. The site can do the same for a new
+  politician, but from a fixed source rather than a web search: their
+  Wikipedia article, found by the key above, has the title, honorifics
+  and peerage the salutation depends on. Staff check and correct it.
 - The Scottish Parliament gives emails and parties from separate
   endpoints, keyed by `PersonID`.
 - The NI Assembly gives emails from `GetAllMemberContactDetails_JSON`,
@@ -59,12 +71,23 @@ All four give each member's name, party, constituency and email.
   their terms of office. It worked in a browser, but refused our
   requests with a 403.
 
+- Politicians' own domains, which show whose office a thread with an email
+  address on one is from (`plans/mp-correspondence.md`), come with each
+  body's sync. A domain counts only if it belongs to one politician, and
+  social media and party sites are skipped. The Scottish Parliament's
+  `websites` and `emailaddresses` endpoints have them: up to 53 of its 129
+  current members list a site that isn't parliament.scot's, a count that
+  includes party sites, social media and malformed links. The Senedd's
+  `additionalcontactinfo` has few, mostly social media. The NI Assembly's contact details have only its own domains.
+
 ## Steps
 
-1. Add each body's ID to `politicians`, unique within the body. Match
-   the politicians we have to the official lists once, by name, body
-   and constituency, and list any that don't match so staff can match
-   them by hand.
+1. Add each body's ID to `politicians`, unique within the body, and a
+   column per standard key (Wikipedia title, TheyWorkForYou person ID).
+   Match the politicians we have to the official lists once, by name,
+   body and constituency, and list any that don't match so staff can
+   match them by hand. Fill the standard keys from TheyWorkForYou's
+   data, which links each person to their official ID.
 2. Replace the Airtable copy in `sync-politicians` with a nightly update
    from the official sources, folding in the checks in `mp-check.ts`. It
    adds new members, marks those who have left with the reason, and
@@ -75,7 +98,10 @@ All four give each member's name, party, constituency and email.
 3. Let staff edit a politician's salutation and markers (important
    target, personal connection), and add people who aren't in any
    official list (house `other`). A change of their office status needs
-   the date it happened and a note.
+   the date it happened and a note. A new politician's salutation is
+   drafted by an LLM from their Wikipedia article, as Joseph's were in
+   Airtable, and marked as a draft until staff have checked it; without
+   an article, it's made from the name.
 4. The asks page shows how many politicians received a letter about
    each ask, from a mailing or a campaign.
 5. Read ControlAI's statement every night from
@@ -100,3 +126,6 @@ All four give each member's name, party, constituency and email.
 1. If the Senedd refuses requests from Netlify as well, we could ask
    the Senedd to allow us, use another source such as TheyWorkForYou,
    or let staff keep its 96 members up to date by hand.
+2. Which standard keys to store beyond Wikipedia and TheyWorkForYou,
+   and whether to make the salutation from Wikipedia alone or let the
+   LLM search as Joseph's did.

@@ -334,9 +334,8 @@ describe("AskForm", () => {
     await expect
       .element(preview().getByText(`${staffCopy.politician.askedThem(copy.askedBy.supporters, "event")} · 9 Dec 2026`))
       .toBeVisible();
-    await expect
-      .element(preview().getByRole("link", { name: "Winter reception" }))
-      .toHaveAttribute("href", "https://luma.com/winter");
+    await expect.element(preview().getByText("Winter reception")).toBeVisible();
+    expect(preview().getByRole("link").query()).toBeNull();
     await page.getByRole("button", { name: copy.save }).click();
     await expect.poll(() => save.mock.calls.length).toBe(1);
     const sent = save.mock.calls[0][0] as FormData;

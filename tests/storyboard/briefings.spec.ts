@@ -5,7 +5,7 @@ import { BASE, expect, frame, test } from "./fixtures";
 // the first briefing, with its charts and its numbered sources.
 const briefing = briefings[0];
 
-test("The Campaigns menu leads to the briefings", { tag: "@desktop-only" }, async ({ page }) => {
+test("The menu to briefings", { tag: "@desktop-only" }, async ({ page }) => {
   await page.goto(`${BASE}/`);
   const trigger = page.getByRole("link", { name: "Campaigns", exact: true });
   // Opened by focus, not hover: a frame moves the pointer away first, which
@@ -20,7 +20,7 @@ test("The Campaigns menu leads to the briefings", { tag: "@desktop-only" }, asyn
   await frame(page, "the briefings, from the menu");
 });
 
-test("Read a briefing: its charts, a source, and back", async ({ page }) => {
+test("Read a briefing", async ({ page }) => {
   await page.goto(`${BASE}/campaigns/briefings`);
   await page.getByRole("link", { name: new RegExp(briefing.title) }).click();
   await expect(page).toHaveURL(`${BASE}/campaigns/briefings/${briefing.slug}`);

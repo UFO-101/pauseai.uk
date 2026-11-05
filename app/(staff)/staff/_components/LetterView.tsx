@@ -41,9 +41,7 @@ function AskCard({
   setStatus: SetStatus;
 }) {
   if (!ask && letter.kind === "pauseai") return null;
-  const campaign = letter.kind === "supporter" && (
-    <CampaignName slug={letter.campaign} title={letter.campaignTitle} url={letter.campaignUrl} />
-  );
+  const campaign = letter.kind === "supporter" && <CampaignName slug={letter.campaign} title={letter.campaignTitle} />;
   return (
     <Card look="aside" title={ask ? staffCopy.mailings.fields.ask : staffCopy.letters.columns.campaign} id="ask-title">
       {ask ? (
@@ -71,7 +69,7 @@ function AskCard({
  * `children`, the letter as an email and its replies (LetterThread), beside
  * what it asks (AskCard), as wide as a politician's page has it, and what
  * happened to it. The thread says who it's from and to and when, so nothing
- * repeats it. A supporter's goes back to the letters list, PauseAI's to its
+ * repeats it. A supporter's goes back to its campaign, PauseAI's to its
  * mailing.
  */
 export default function LetterView({
@@ -92,7 +90,7 @@ export default function LetterView({
   const ask = asks.find((one) => one.slug === slug);
   const back =
     letter.kind === "supporter"
-      ? { href: "/staff/letters", label: staffCopy.nav.letters }
+      ? { href: `/staff/campaigns/${letter.campaign}`, label: letter.campaignTitle }
       : { href: `/staff/mailings/${letter.mailingId}`, label: letter.mailing };
   const personalised = letter.kind === "pauseai" && letter.personalised && staffCopy.mailings.personalised;
   const about = [politician.constituency, politician.party, personalised];

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { keepsPoliticianThreads } from "@/lib/one-off";
 import { gmailAccount } from "@/lib/server/gmail-accounts";
 import { isLettersInboxAddress } from "@/lib/server/letters-inbox";
 import { listSessions, requireStaff } from "@/lib/server/staff-auth";
@@ -27,6 +28,7 @@ export default async function MePage({ searchParams }: { searchParams: Promise<R
         account={account}
         outcome={firstOf((await searchParams).gmail)}
         disconnect={disconnectMyGmail}
+        keepsThreads={keepsPoliticianThreads(email)}
       />
     </>
   );

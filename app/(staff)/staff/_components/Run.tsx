@@ -10,6 +10,7 @@ import {
   type GmailReading,
   type GoToParliamentImport,
   type MpCheck,
+  type OldLettersImport,
   type PoliticianSync,
   type WebFormImport,
 } from "@/lib/import-runs";
@@ -17,6 +18,7 @@ import type { MpProblem } from "@/lib/mp-check";
 import { changeCount, type Renamed, type SyncedPolitician } from "@/lib/politician-sync";
 import RunBox from "./RunBox";
 import { Muted } from "@/components/ui/Text";
+import Withheld from "./ui/Withheld";
 import Table from "@/components/ui/Table";
 
 /** The Server Action that applies or discards a held politician sync. */
@@ -305,6 +307,7 @@ function GmailRun({ run, open }: { run: GmailReading; open?: boolean }) {
             {words.account(a)}
             {a.relayed !== undefined &&
               ` ${inbox.result({ relayed: a.relayed, spam: a.spam!, uncertain: a.uncertain! })}`}
+            {!!a.oneOffs && ` ${words.oneOffs(a.oneOffs)}`}
             {a.restarted && ` ${words.restarted}`}
             {a.error && <Muted> {a.disconnected ? words.disconnected : words.failed(a.error)}</Muted>}
             {!!a.notUnderstood?.length && (
@@ -330,8 +333,96 @@ function GmailRun({ run, open }: { run: GmailReading; open?: boolean }) {
   );
 }
 
-/** One run from the import log, as its job's page shows it; `open` starts its detail unfolded, however long. */
-export default function Run({ run, decide, open }: { run: AnyImportRun; decide?: Decide; open?: boolean }) {
+/** Counts by mailing, or a form letter's campaign, as a list under its heading; nothing with none. */
+function CountsByMailing({
+  heading,
+  counts,
+  titles,
+}: {
+  heading: string;
+  counts: Record<string, number>;
+  titles?: Record<string, string>;
+}) {
+  const rows = Object.entries(counts).filter(([, n]) => n > 0);
+  if (rows.length === 0) return null;
+  return (
+    <>
+      <h4>{heading}</h4>
+      <ul>
+        {rows.map(([key, n]) => (
+          <li key={key}>
+            {titles?.[key] ?? key}: {n}
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
+/**
+ * A press of the import of old letters: what it did and how much is left;
+ * what it joined by mailing, and what it couldn't; and the mail that matched
+ * nothing, by sender and subject, only to staff who see supporters, as its
+ * senders are people.
+ */
+function OldLettersRun({ run, open, people }: { run: OldLettersImport; open?: boolean; people?: boolean }) {
+  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} />;
+  const words = staffCopy.oldLetters;
+  const { result } = run;
+  const lines =
+    Object.keys(result.joined).length +
+    Object.keys(result.added).length +
+    Object.keys(result.notJoined).length +
+    result.unmatched.length;
+  return (
+    <RunBox
+      run={run}
+      open={open}
+      lines={lines}
+      summary={
+        <>
+          {words.result(result)}
+          {result.stoppedBy === "gmail" && <> {words.stoppedByGmail}</>}
+          {result.unreadable.length > 0 && <> {words.unreadable(result.unreadable.length)}</>}
+        </>
+      }
+    >
+      <CountsByMailing heading={words.joined} counts={result.joined} titles={result.titles} />
+      <CountsByMailing heading={words.added} counts={result.added} titles={result.titles} />
+      <CountsByMailing heading={words.notJoined} counts={result.notJoined} titles={result.titles} />
+      {result.unmatched.length > 0 &&
+        (people ? (
+          <>
+            <h4>{words.unmatched}</h4>
+            <ul>
+              {result.unmatched.map((mail, i) => (
+                <li key={i}>
+                  {mail.from}: {mail.subject}
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          <p>
+            {words.matchedNothing(result.unmatched.length)} <Withheld>{words.onlyWithSupporters}</Withheld>
+          </p>
+        ))}
+    </RunBox>
+  );
+}
+
+/** One run from the import log, as its job's page shows it; `open` starts its detail unfolded, however long. `people`: who mail that matched nothing is from may show. */
+export default function Run({
+  run,
+  decide,
+  open,
+  people,
+}: {
+  run: AnyImportRun;
+  decide?: Decide;
+  open?: boolean;
+  people?: boolean;
+}) {
   switch (run.job) {
     case "sync-politicians":
       return <SyncRun run={run} decide={decide} open={open} />;
@@ -351,5 +442,7 @@ export default function Run({ run, decide, open }: { run: AnyImportRun; decide?:
       return <MembersRun run={run} open={open} />;
     case "read-gmail":
       return <GmailRun run={run} open={open} />;
+    case "import-old-letters":
+      return <OldLettersRun run={run} open={open} people={people} />;
   }
 }

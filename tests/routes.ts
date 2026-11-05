@@ -21,6 +21,9 @@ export const DYNAMIC_EXAMPLES: Record<string, string> = {
   // Without a session this redirects to the login page, which is what the
   // smoke test sees.
   "/staff/asks/[slug]": "/staff/asks/winter-reception-dec-2026",
+  "/staff/asks/[slug]/edit": "/staff/asks/winter-reception-dec-2026/edit",
+  "/staff/campaigns/[slug]": "/staff/campaigns/regulate-letter-pm",
+  "/staff/one-off/[id]": "/staff/one-off/1",
   "/staff/import-data/[job]": "/staff/import-data/luma",
   "/staff/letters/[id]": "/staff/letters/1",
   "/staff/letters/supporter/[id]": "/staff/letters/supporter/1",

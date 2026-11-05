@@ -4,6 +4,7 @@ import { buttonClass } from "@/components/ui/Button";
 import Tag, { type TagTone } from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
 import { askHref } from "@/lib/asks";
+import { checkMailingDoc } from "@/lib/mailing-doc";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { answerLabels, POLITICIAN_FIELDS } from "@/lib/mailing-fields";
 import type { Ask } from "@/lib/server/asks";
@@ -13,6 +14,7 @@ import { filtersPath, pageParam } from "@/lib/staff-search";
 import { londonWhen, staffDate, staffTime } from "@/lib/staff-time";
 import { ChangeTimeForm } from "./DueTime";
 import { StopMailing } from "./MailingButtons";
+import MailEmail from "./MailEmail";
 import MailingFiles from "./MailingFiles";
 import { MailingLetter } from "./MailingLetter";
 import { mailingCounts } from "./MailingsOverview";
@@ -20,6 +22,7 @@ import Band, { BandFact } from "./ui/Band";
 import Counts from "./ui/Counts";
 import Grid, { Card } from "./ui/Grid";
 import Progress from "./ui/Progress";
+import Strip from "./ui/Strip";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
 import Bubble from "./ui/Bubble";
 import styles from "./MailingView.module.css";
@@ -197,14 +200,30 @@ function When({ mailing, written }: { mailing: Mailing; written?: WrittenMailing
   }
   return (
     <BandFact label={staffCopy.mailings.fields.sentAt} detail={by}>
-      {mailing.sentAt ? staffTime(mailing.sentAt) : staffCopy.mailings.notSent}
+      {mailing.sentAt ? staffDate(mailing.sentAt) : staffCopy.mailings.notSent}
     </BandFact>
   );
 }
 
 /**
- * A mailing's page, once scheduled: a band of its title, when it went and
- * who sent it, who from, its ask and who it was for, with its counts, each
+ * The text of a mailing from before the site could send: the template the
+ * import rebuilt, with its fields as chips, and said so if it's only
+ * approximate; or that there's none.
+ */
+function ImportedText({ mailing }: { mailing: Mailing }) {
+  const doc = checkMailingDoc(mailing.importedText);
+  if (!doc) return <p>{staffCopy.mailings.noText}</p>;
+  return (
+    <MailEmail from={mailing.sentFrom ?? staffCopy.mailings.notRecorded} subject={mailing.importedSubject}>
+      {mailing.importedTextApproximate && <Strip tone="amber">{staffCopy.letterThread.approximate}</Strip>}
+      <MailingLetter doc={doc} fields={staffCopy.mailings.importedFields} conditions={{}} />
+    </MailEmail>
+  );
+}
+
+/**
+ * A mailing's page, once scheduled: a band of its title, who from, who it was
+ * for, its ask, and when it went and who sent it, with its counts, each
  * leading to those recipients; where it stands (Standing); then the email,
  * white on an aside, as a mail app shows it, beside its recipients, of all of them or those a count chose. One
  * imported from Airtable, with no `written`, has only what Airtable kept:
@@ -253,45 +272,37 @@ export default function MailingView({
         }
         aside={state !== "scheduled" && <Counts counts={counts} />}
       >
-        <When mailing={mailing} written={written} />
         <BandFact label={copy.from} detail={written?.fromName}>
-          {written ? written.sentFrom : staffCopy.mailings.imported}
+          {written
+            ? written.sentFrom
+            : (mailing.sentFrom ?? (mailing.oldLetters ? staffCopy.mailings.notRecorded : staffCopy.mailings.imported))}
         </BandFact>
-        <BandFact label={staffCopy.mailings.fields.ask}>
+        <BandFact label={copy.to} detail={who && staffCopy.campaigns.politicians(mailing.to)}>
+          {who ?? staffCopy.campaigns.politicians(mailing.to)}
+        </BandFact>
+        <BandFact label={mailing.askKind ? staffCopy.asks.askTo[mailing.askKind] : staffCopy.mailings.fields.ask}>
           {mailing.ask && <StaffLink href={askHref(mailing.ask)}>{mailing.askTitle}</StaffLink>}
         </BandFact>
-        <BandFact label={copy.whoLabel} detail={who && staffCopy.mailings.recipientsCount(mailing.to)}>
-          {who ?? staffCopy.mailings.recipientsCount(mailing.to)}
-        </BandFact>
+        <When mailing={mailing} written={written} />
       </Band>
       <Standing mailing={mailing} written={written} stop={stop} reschedule={reschedule} />
       <Grid>
         {written ? (
           <Card span={3} look="aside" title={copy.emailTitle} id="email-title">
-            <div className={styles.email}>
-              <dl className={styles.headers}>
-                <dt>{copy.from}</dt>
-                <dd>{written.fromName ? `${written.fromName} <${written.sentFrom}>` : written.sentFrom}</dd>
-                <dt>{copy.to}</dt>
-                <dd>
-                  <Muted>{copy.toEach}</Muted>
-                </dd>
-                <dt>{copy.subject}</dt>
-                <dd>
-                  <strong>{written.subject}</strong>
-                </dd>
-              </dl>
-              <div className={styles.body}>
-                <MailingLetter doc={written.body} {...letterLabels(asks)} />
-                {written.attachments.length > 0 && (
-                  <MailingFiles files={written.attachments} base={`/staff/mailings/${written.id}/files`} />
-                )}
-              </div>
-            </div>
+            <MailEmail
+              from={written.fromName ? `${written.fromName} <${written.sentFrom}>` : written.sentFrom}
+              to={<Muted>{copy.toEach}</Muted>}
+              subject={written.subject}
+            >
+              <MailingLetter doc={written.body} {...letterLabels(asks)} />
+              {written.attachments.length > 0 && (
+                <MailingFiles files={written.attachments} base={`/staff/mailings/${written.id}/files`} />
+              )}
+            </MailEmail>
           </Card>
         ) : (
           <Card span={3} look="aside" title={copy.emailTitle} id="email-title">
-            <p>{staffCopy.mailings.noText}</p>
+            <ImportedText mailing={mailing} />
           </Card>
         )}
         <Card span={3} as="div">

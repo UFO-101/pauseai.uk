@@ -19,7 +19,7 @@ const REVOKE_URL = "https://oauth2.googleapis.com/revoke";
 const API = "https://gmail.googleapis.com/gmail/v1/users/me";
 const USERINFO = "https://openidconnect.googleapis.com/v1/userinfo";
 
-/** What the site asks for: to send as the account, and to read it (it reads only replies to our letters, and bounces). */
+/** What the site asks for: to send as the account, and to read it (it reads only replies to our letters, bounces and, while the account keeps them, threads with politicians). */
 const GMAIL_SCOPES = [
   "https://www.googleapis.com/auth/gmail.send",
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -319,6 +319,72 @@ export async function gmailMessageId(accessToken: string, id: string): Promise<s
 export async function gmailRawMessage(accessToken: string, id: string): Promise<Buffer> {
   const message = await api<{ raw: string }>(accessToken, `/messages/${id}?format=raw`);
   return Buffer.from(message.raw, "base64url");
+}
+
+/** A message's headers and text parts, without its attachments, which `format=full` leaves out; the names of those. */
+export type GmailFullMessage = GmailMessageHeaders & { plain: string; html: string; files: string[] };
+
+type GmailPart = {
+  mimeType?: string;
+  filename?: string;
+  body?: { data?: string };
+  parts?: GmailPart[];
+  headers?: { name: string; value: string }[];
+};
+
+/** A message's headers and its text, as the API gives them without its attachments. */
+export async function gmailFullMessage(accessToken: string, id: string): Promise<GmailFullMessage> {
+  const message = await api<{
+    id: string;
+    threadId: string;
+    labelIds?: string[];
+    internalDate: string;
+    payload?: GmailPart;
+  }>(accessToken, `/messages/${id}?format=full`);
+  const found = { plain: "", html: "", files: [] as string[] };
+  const walk = (part: GmailPart) => {
+    const text = part.body?.data ? Buffer.from(part.body.data, "base64url").toString("utf8") : "";
+    if (part.filename) found.files.push(part.filename);
+    else if (part.mimeType === "text/plain") found.plain += text;
+    else if (part.mimeType === "text/html") found.html += text;
+    (part.parts ?? []).forEach(walk);
+  };
+  if (message.payload) walk(message.payload);
+  return {
+    id: message.id,
+    threadId: message.threadId,
+    labelIds: message.labelIds ?? [],
+    internalDate: message.internalDate,
+    headers: new Map((message.payload?.headers ?? []).map((h) => [h.name.toLowerCase(), h.value])),
+    ...found,
+  };
+}
+
+/** The IDs of every message a Gmail search finds, and their threads, oldest first, a page of 500 at a time. */
+export async function searchAllGmail(
+  accessToken: string,
+  q: string,
+  beforeEachPage: () => Promise<void> = async () => {},
+): Promise<{ id: string; threadId: string }[]> {
+  const found: { id: string; threadId: string }[] = [];
+  let pageToken: string | undefined;
+  do {
+    await beforeEachPage();
+    const params = new URLSearchParams({ q, maxResults: "500", ...(pageToken && { pageToken }) });
+    const page = await api<{ messages?: { id: string; threadId: string }[]; nextPageToken?: string }>(
+      accessToken,
+      `/messages?${params}`,
+    );
+    found.push(...(page.messages ?? []));
+    pageToken = page.nextPageToken;
+  } while (pageToken);
+  return found.reverse();
+}
+
+/** The IDs of every message in a thread. */
+export async function gmailThreadMessageIds(accessToken: string, threadId: string): Promise<string[]> {
+  const thread = await api<{ messages?: { id: string }[] }>(accessToken, `/threads/${threadId}?format=minimal`);
+  return (thread.messages ?? []).map((message) => message.id);
 }
 
 /** The IDs of the messages a Gmail search finds, as many as `max`. */

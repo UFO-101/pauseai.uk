@@ -15,6 +15,9 @@ import StaffNav, { type StaffPage as StaffPageName } from "@/app/(staff)/staff/_
 import Breadcrumb from "@/app/(staff)/staff/_components/Breadcrumb";
 import NotIcon from "@/app/(staff)/staff/_components/ui/NotIcon";
 import ListFrame, { ListTable, type ListColumn } from "@/app/(staff)/staff/_components/ui/ListFrame";
+import SegmentLinks from "@/app/(staff)/staff/_components/ui/SegmentLinks";
+import PageIntro from "@/app/(staff)/staff/_components/ui/PageIntro";
+import Withheld from "@/app/(staff)/staff/_components/ui/Withheld";
 import ChoiceSearch from "@/app/(staff)/staff/_components/ui/ChoiceSearch";
 import NavFold from "@/app/(staff)/staff/_components/ui/NavFold";
 import FormPending from "@/app/(staff)/staff/_components/ui/FormPending";
@@ -24,7 +27,7 @@ import SortHeading from "@/app/(staff)/staff/_components/SortHeading";
 import Table from "@/components/ui/Table";
 import StaffPage from "@/app/(staff)/staff/_components/ui/StaffPage";
 import Band, { BandFact } from "@/app/(staff)/staff/_components/ui/Band";
-import Counts from "@/app/(staff)/staff/_components/ui/Counts";
+import Counts, { countsOpening } from "@/app/(staff)/staff/_components/ui/Counts";
 import DownloadMenu from "@/app/(staff)/staff/_components/ui/DownloadMenu";
 import Grid, { Card, Column } from "@/app/(staff)/staff/_components/ui/Grid";
 import Progress from "@/app/(staff)/staff/_components/ui/Progress";
@@ -81,12 +84,14 @@ const PAGES: Record<StaffPageName, true> = {
   home: true,
   me: true,
   supporters: true,
-  letters: true,
+  campaigns: true,
+  sentEmails: true,
   events: true,
   supporterEmails: true,
   politicians: true,
   asks: true,
   mailings: true,
+  oneOff: true,
   mpEmails: true,
   import: true,
   changes: true,
@@ -113,7 +118,7 @@ export const staffKit: Group = {
         {
           label: "With the navigation beside it",
           render: () => (
-            <StaffPage as="div" nav={<StaffNav email="jo@pauseai.uk" permissions={["admin"]} current="letters" />}>
+            <StaffPage as="div" nav={<StaffNav email="jo@pauseai.uk" permissions={["admin"]} current="campaigns" />}>
               <h1>Letters</h1>
               <p>The page takes the width beside the sidebar.</p>
             </StaffPage>
@@ -267,11 +272,13 @@ export const staffKit: Group = {
                   [
                     "home",
                     "supporters",
-                    "letters",
+                    "campaigns",
+                    "sentEmails",
                     "supporterEmails",
                     "politicians",
                     "asks",
                     "mailings",
+                    "oneOff",
                     "mpEmails",
                     "import",
                     "accounts",
@@ -282,6 +289,59 @@ export const staffKit: Group = {
                   <NavIcon key={id} id={id} />
                 ))}
               </p>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "SegmentLinks",
+      file: "app/(staff)/staff/_components/ui/SegmentLinks.tsx",
+      variants: [
+        {
+          label: "Choosing what a list shows, one chosen and one of nothing",
+          render: () => (
+            <StaffPage as="div">
+              <SegmentLinks
+                label="Answers"
+                links={[
+                  { key: "signed", words: "Signed 4", href: "#signed" },
+                  { key: "declined", words: "Declined 2", href: "#declined", current: true, title: "Show them all" },
+                  { key: "none", words: "No answer 9", href: "#none", quiet: true },
+                ]}
+              />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "Withheld",
+      file: "app/(staff)/staff/_components/ui/Withheld.tsx",
+      variants: [
+        {
+          label: "In place of something a permission keeps back",
+          render: () => (
+            <StaffPage as="div">
+              <p>
+                <Withheld>Only staff with a permission can read this.</Withheld>
+              </p>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "PageIntro",
+      file: "app/(staff)/staff/_components/ui/PageIntro.tsx",
+      variants: [
+        {
+          label: "Under a page's title",
+          render: () => (
+            <StaffPage as="div">
+              <h1>A page</h1>
+              <PageIntro>What this page is, in a line or two.</PageIntro>
+              <p>The page itself.</p>
             </StaffPage>
           ),
         },
@@ -452,19 +512,17 @@ export const staffKit: Group = {
           ),
         },
         {
-          label: "Small, in a list's row, the whole box one link; answers in green",
+          label: "Small, in a list's row, each opening its own tab; answers in green",
           render: () => (
             <StaffPage as="div">
               <Counts
                 small
-                href="#mailing"
-                label="How the mailing went"
-                counts={[
+                counts={countsOpening("#mailing", [
                   { key: "sent", n: 129, label: "sent" },
                   { key: "failed", n: 2, label: "failed", tone: "red" },
                   { key: "replied", n: 11, label: "replied" },
                   { key: "answered", n: 14, label: "answers", tone: "green" },
-                ]}
+                ])}
               />
             </StaffPage>
           ),
@@ -577,7 +635,19 @@ export const staffKit: Group = {
           label: "With the supporters permission",
           render: () => (
             <StaffPage as="div">
-              <StaffNav email="jo@pauseai.uk" permissions={["supporters"]} current="letters" />
+              <StaffNav email="jo@pauseai.uk" permissions={["supporters"]} current="campaigns" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "With pages they first saw in the last few days marked new",
+          render: () => (
+            <StaffPage as="div">
+              <StaffNav
+                email="jo@pauseai.uk"
+                permissions={["supporters", "admin"]}
+                fresh={["campaigns", "sentEmails"]}
+              />
             </StaffPage>
           ),
         },

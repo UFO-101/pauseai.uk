@@ -8,7 +8,7 @@ import { mailingWhen } from "@/lib/mailing-groups";
 import type { MailingSummary } from "@/lib/server/mailings";
 import { named } from "@/lib/named-address";
 import { londonWhenShort, staffDate } from "@/lib/staff-time";
-import Counts from "./ui/Counts";
+import Counts, { countsOpening } from "./ui/Counts";
 import Grid, { spanClass } from "./ui/Grid";
 import Progress from "./ui/Progress";
 import styles from "./MailingsOverview.module.css";
@@ -71,7 +71,7 @@ function Standing({ mailing, href }: { mailing: MailingSummary; href: string }) 
       </StaffLink>
     );
   }
-  return <Counts counts={mailingCounts(mailing)} href={href} label={copy.countsLabel(mailing.title)} small />;
+  return <Counts counts={countsOpening(href, mailingCounts(mailing))} small />;
 }
 
 /** One mailing, a row: when; its title, leading to it, over who it's from, name and address, and its ask; how it stands. */
@@ -79,7 +79,7 @@ function Row({ mailing, year }: { mailing: MailingSummary; year: string }) {
   const href = `/staff/mailings/${mailing.id}`;
   // Its name, as a mail app shows it, before its address; with no name of its own, the address alone.
   const from = mailing.imported
-    ? staffCopy.mailings.imported
+    ? (mailing.sentFrom ?? (mailing.oldLetters ? staffCopy.mailings.notRecorded : staffCopy.mailings.imported))
     : named(mailing.fromName === mailing.sentFrom ? null : mailing.fromName, mailing.sentFrom);
   return (
     <li className={styles.row}>
@@ -95,7 +95,8 @@ function Row({ mailing, year }: { mailing: MailingSummary; year: string }) {
           {mailing.ask && (
             <>
               {from ? " · " : ""}
-              {staffCopy.mailings.columns.ask} <StaffLink href={askHref(mailing.ask)}>{mailing.askTitle}</StaffLink>
+              {staffCopy.asks.askTo[mailing.askKind!]}{" "}
+              <StaffLink href={askHref(mailing.ask)}>{mailing.askTitle}</StaffLink>
             </>
           )}
         </Muted>

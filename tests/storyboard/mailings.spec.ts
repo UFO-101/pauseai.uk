@@ -3,7 +3,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { runSql } from "@/scripts/fresh-database.mjs";
 import { addStaffAccount, logInAsStaff, newestEmail, syncPoliticians } from "../steps";
 import { BASE, emailFrame, expect, frame, story, test } from "./fixtures";
-import { stayOnPage } from "./staff-steps";
+import { importEmails, stayOnPage } from "./staff-steps";
 import { scrollSettled } from "./settle";
 
 // Mailings to politicians written on the site: started from New mailing,
@@ -508,4 +508,59 @@ test("Sending from your Gmail", async ({ page, request, flowDatabase }) => {
   // Without the letter she quotes, which is above it already.
   await expect(page.getByText("We'd love to see you", { exact: false })).toHaveCount(0);
   await frame(page, "Morag's reply");
+});
+
+test("Old mailings", async ({ page, request, flowDatabase }) => {
+  story(
+    "The mailings page lists every mailing PauseAI has sent politicians, by month, newest first. These were copied from Airtable.",
+  );
+  await syncPoliticians(request, BASE);
+  await logIn(page, flowDatabase);
+  const mailings = staffCopy.mailings;
+  await importEmails(page);
+  await page.goto(`${BASE}/staff/mailings`);
+  const invitation = "Edinburgh Conference Nov 26 Invitation";
+  await expect(page.getByRole("listitem").filter({ hasText: invitation })).toContainText(mailings.imported);
+  await frame(page, "The mailings");
+
+  story(
+    "The Edinburgh conference invitation has no text, as Airtable kept none. Its page lists who it went to. A politician's history links back to it too.",
+  );
+  // Its title, not its box of counts, whose name says the title too.
+  await page.getByRole("link", { name: invitation, exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(invitation);
+  await expect(page.getByText(mailings.noText)).toBeVisible();
+  await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toContainText(mailings.personalised);
+  await frame(page, "The invitation's page");
+
+  await page.getByRole("link", { name: "Polly Placeholder" }).click();
+  await page
+    .getByRole("list", { name: staffCopy.politician.historyTitle })
+    .getByRole("link", { name: invitation })
+    .click();
+  await expect(page).toHaveURL(/\/staff\/mailings\/\d+$/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(invitation);
+});
+
+test("From a mailing to its ask", async ({ page, request, flowDatabase }) => {
+  story("The invitation names its ask. Following it opens the Edinburgh conference's page.");
+  await syncPoliticians(request, BASE);
+  await logIn(page, flowDatabase);
+  await importEmails(page);
+  await page.goto(`${BASE}/staff/mailings`);
+  await page
+    .getByRole("listitem")
+    .filter({ hasText: "Edinburgh Conference Nov 26 Invitation" })
+    .getByRole("link", { name: "Edinburgh conference", exact: true })
+    .click();
+  await expect(page).toHaveURL(`${BASE}/staff/asks/edinburgh-conference-2026`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Edinburgh conference");
+  await frame(page, "The conference's page");
+  story("On the asks page, each answer's count is a link to the politicians who gave it. One is going.");
+  await page.goto(`${BASE}/staff/asks`);
+  await page.getByRole("link", { name: staffCopy.asks.count(staffCopy.statuses.going, 1) }).click();
+  await expect(page).toHaveURL(/ask=edinburgh-conference-2026&answer=going/);
+  await expect(page.getByRole("row").filter({ hasText: "Morag Example" })).toBeVisible();
+  await expect(page.getByRole("row")).toHaveCount(2);
+  await frame(page, "The politicians going");
 });

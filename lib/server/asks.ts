@@ -19,8 +19,13 @@ export type Ask = {
   askedBy: Asker[];
 };
 
-/** An ask, with how many people have given each answer. */
-export type AskWithCounts = Ask & { counts: Partial<Record<AskStatus, number>> };
+/** An ask, with how many people have given each answer, how many were written to, and how many campaigns and mailings put it. */
+export type AskWithCounts = Ask & {
+  counts: Partial<Record<AskStatus, number>>;
+  writtenTo: number;
+  campaigns: number;
+  mailings: number;
+};
 
 /** A campaign's row: its title, and the ask it makes, if any. */
 export type CampaignRow = { slug: string; title: string; ask: string | null };
@@ -38,9 +43,133 @@ export async function asksWithCounts(): Promise<AskWithCounts[]> {
     `SELECT ${ASK_COLUMNS},
        coalesce((SELECT json_object_agg(c.status, c.count) FROM (
          SELECT s.status, count(*)::int AS count FROM ask_statuses s WHERE s.ask = a.slug GROUP BY s.status
-       ) c), '{}') AS counts
+       ) c), '{}') AS counts, ${HOW_ASKED}
      FROM asks a ORDER BY a.date DESC NULLS LAST, a.title`,
   );
+}
+
+/** One row's written-to count and the campaigns and mailings that put it. */
+const HOW_ASKED = `
+  (SELECT count(DISTINCT l.notable_person_id)::int FROM letters l
+     LEFT JOIN letters_from_supporters s ON s.id = l.id LEFT JOIN campaigns c ON c.slug = s.campaign
+     LEFT JOIN letters_from_pauseai p ON p.id = l.id LEFT JOIN mailings m ON m.id = p.mailing_id
+   WHERE c.ask = a.slug OR m.ask = a.slug) AS "writtenTo",
+  (SELECT count(*)::int FROM campaigns c WHERE c.ask = a.slug) AS campaigns,
+  (SELECT count(*)::int FROM mailings m WHERE m.ask = a.slug AND m.state <> 'draft') AS mailings`;
+
+/** A campaign or mailing that put an ask: its link, name, dates and letters. */
+export type AskWay = {
+  kind: "campaign" | "mailing";
+  href: string;
+  title: string;
+  from: string | null;
+  to: string | null;
+  letters: number;
+};
+
+/** A politician's answer to an ask. */
+export type AskAnswer = {
+  politicianId: number;
+  name: string;
+  constituency: string | null;
+  party: string | null;
+  /** Null for someone written to who hasn't answered. */
+  status: AskStatus | null;
+  /** When a campaign or mailing that put the ask last wrote to them; null if none has. */
+  lastWrittenTo: string | null;
+};
+
+/** Who the campaigns and mailings that put ask $1 wrote to, and when they last did. */
+const WRITTEN_TO = `written AS (
+  SELECT l.notable_person_id AS id, max(coalesce(l.sent_at, l.created_at)) AS at
+  FROM letters l
+    LEFT JOIN letters_from_supporters s ON s.id = l.id LEFT JOIN campaigns c ON c.slug = s.campaign
+    LEFT JOIN letters_from_pauseai p ON p.id = l.id LEFT JOIN mailings m ON m.id = p.mailing_id
+  WHERE c.ask = $1 OR m.ask = $1 GROUP BY 1
+)`;
+
+/** Who an ask's answers are, from `written`: those of the status $2, all with none, or with "none" those written to who haven't answered. */
+const ANSWERS_FROM = `FROM notable_people n
+    LEFT JOIN politicians p ON p.id = n.id
+    LEFT JOIN ask_statuses s ON s.notable_person_id = n.id AND s.ask = $1
+    LEFT JOIN written w ON w.id = n.id
+  WHERE CASE WHEN $2::text = 'none' THEN w.id IS NOT NULL AND s.status IS NULL
+    ELSE s.status IS NOT NULL AND ($2::text IS NULL OR s.status = $2::text) END`;
+
+/** An ask's own page: its counts, how many written to haven't answered, how it was put, by date, and a page of its answers. */
+export type AskPageData = AskWithCounts & {
+  fixed: boolean;
+  noAnswer: number;
+  ways: AskWay[];
+  answers: AskAnswer[];
+  /** How many answers there are across all the pages, and which page these are. */
+  answersTotal: number;
+  page: number;
+  pages: number;
+  pageSize: number;
+};
+
+/** Answers on a page of an ask's page. */
+const ANSWERS_PAGE_SIZE = 100;
+
+/**
+ * The ask with `slug`, for its page, or undefined for none. Its answers are
+ * those of `status`, or with none or blank, all; or with "none", those written
+ * to who haven't answered, whoever was written to longest ago first; a page at a time.
+ */
+export async function askPageData(slug: string, status?: string, page = 1): Promise<AskPageData | undefined> {
+  const [ask] = await query<AskWithCounts>(
+    `SELECT ${ASK_COLUMNS},
+       coalesce((SELECT json_object_agg(c.status, c.count) FROM (
+         SELECT s.status, count(*)::int AS count FROM ask_statuses s WHERE s.ask = a.slug GROUP BY s.status
+       ) c), '{}') AS counts, ${HOW_ASKED}
+     FROM asks a WHERE a.slug = $1`,
+    [slug],
+  );
+  if (!ask) return undefined;
+  const [ways, answers, [{ total }], [{ noAnswer }]] = await Promise.all([
+    query<AskWay>(
+      `SELECT * FROM (
+         SELECT 'campaign' AS kind, '/staff/campaigns/' || c.slug AS href, c.title, min(l.created_at) AS "from", max(l.created_at) AS "to", count(l.id)::int AS letters
+         FROM campaigns c LEFT JOIN letters_from_supporters s ON s.campaign = c.slug LEFT JOIN letters l ON l.id = s.id
+         WHERE c.ask = $1 GROUP BY c.slug
+         UNION ALL
+         SELECT 'mailing', '/staff/mailings/' || m.id, m.title, min(coalesce(l.sent_at, l.created_at)), max(coalesce(l.sent_at, l.created_at)), count(l.id)::int
+         FROM mailings m LEFT JOIN letters_from_pauseai p ON p.mailing_id = m.id LEFT JOIN letters l ON l.id = p.id
+         WHERE m.ask = $1 AND m.state <> 'draft' GROUP BY m.id
+       ) ways ORDER BY "to" DESC NULLS LAST, title`,
+      [slug],
+    ),
+    query<AskAnswer>(
+      `WITH ${WRITTEN_TO}
+       SELECT n.id::int AS "politicianId", n.name, p.constituency, p.party, s.status, w.at AS "lastWrittenTo"
+       ${ANSWERS_FROM}
+       ORDER BY CASE WHEN $2::text = 'none' THEN w.at END, n.name
+       LIMIT ${ANSWERS_PAGE_SIZE} OFFSET ${(page - 1) * ANSWERS_PAGE_SIZE}`,
+      [slug, status || null],
+    ),
+    query<{ total: number }>(`WITH ${WRITTEN_TO} SELECT count(*)::int AS total ${ANSWERS_FROM}`, [
+      slug,
+      status || null,
+    ]),
+    query<{ noAnswer: number }>(
+      `WITH ${WRITTEN_TO}
+       SELECT count(*)::int AS "noAnswer" FROM written w
+       WHERE NOT EXISTS (SELECT 1 FROM ask_statuses s WHERE s.notable_person_id = w.id AND s.ask = $1)`,
+      [slug],
+    ),
+  ]);
+  return {
+    ...ask,
+    fixed: FIXED_ASKS.includes(slug),
+    noAnswer,
+    ways,
+    answers,
+    answersTotal: total,
+    page,
+    pages: Math.max(1, Math.ceil(total / ANSWERS_PAGE_SIZE)),
+    pageSize: ANSWERS_PAGE_SIZE,
+  };
 }
 
 /** Every campaign, by title. */

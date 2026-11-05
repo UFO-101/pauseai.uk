@@ -260,7 +260,7 @@ describe("fetchEmails", () => {
 });
 
 describe("fetchWebFormLetters", () => {
-  it("reads every letter in the old form's table, never the message, and a blank or No consent as no", async () => {
+  it("reads every letter in the old form's table, and a blank or No consent as no", async () => {
     const requests = serve({
       records: [
         record(
@@ -274,7 +274,7 @@ describe("fetchWebFormLetters", () => {
             "Form Submitted Timestamp": "2026-09-25T09:00:00.000Z",
             "Email Sent Time": "2026-09-25T09:01:00.000Z",
             "Contact consent": "Yes",
-            Message: "never this",
+            Message: "Dear Ms Placeholder",
           },
           "recW1",
         ),
@@ -295,6 +295,7 @@ describe("fetchWebFormLetters", () => {
         spam: false,
         invalid: false,
         consent: true,
+        message: "Dear Ms Placeholder",
       },
       {
         airtableId: "recW2",
@@ -309,11 +310,12 @@ describe("fetchWebFormLetters", () => {
         spam: true,
         invalid: true,
         consent: false,
+        message: "",
       },
     ]);
     const url = new URL(requests[0].url);
     expect(url.pathname).toBe("/v0/appBInVvIm6opJ1Ob/tblkzjrRHiZiqMDGR");
-    expect(url.searchParams.getAll("fields[]")).not.toContain("Message");
+    expect(url.searchParams.getAll("fields[]")).toContain("Message");
     expect(url.searchParams.getAll("fields[]")).not.toContain("Attending Parliament 23 June 2026");
   });
 });

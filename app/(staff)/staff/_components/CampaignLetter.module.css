@@ -1,0 +1,13 @@
+/* A campaign's text: which version and how many, then its subject and words. */
+.letter {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* How many letters and the link to those changed, side by side, level at their feet. */
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: flex-end;
+}

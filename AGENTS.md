@@ -48,6 +48,12 @@ A title, then a bullet or two per change: what it does and why, in plain words. 
 
 When you give one in a reply, write it as plain Markdown, not quoted with `>` or put in a code block, so it can be copied and pasted straight into GitHub.
 
+## Migrations are fixed once pushed
+
+Pushing a branch with an open PR makes a deploy preview, and Netlify applies its migrations to that preview's database, as it does to production's on deploy. It refuses a migration changed since it was applied, which fails the deploy. So once a migration has been pushed, it can't be edited, even if the branch hasn't merged, and a person may push at any time.
+
+Before changing a migration, check whether it's on the remote branch or main (`git log origin/<branch> origin/main -- netlify/database/migrations/<file>`, or `git show origin/<branch>:<path>` to see the version pushed), from the local refs, as a person keeps them up to date. If it's there, add a new migration, numbered after the last, and leave the pushed file exactly as it was. If it's only local, edit it. Either way, `npm run db:schema` and commit `schema.sql` with it (`docs/development.md`, "Adding a migration").
+
 ## The storyboard
 
 `tests/storyboard/` is one Playwright suite that drives every flow on fixture data (`docs/testing.md`, "The storyboard"). A spec file is a section, a test a flow, and each `await frame(page, "caption")` a frame: a caption and, in the review, a screenshot (the whole page at the top, the window once scrolled or while a menu or dialog is open). `docs/testing.md`, "What the storyboard covers", lists what each section drives; a new spec file or route handler needs a line there.

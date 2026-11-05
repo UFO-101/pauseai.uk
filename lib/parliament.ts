@@ -11,6 +11,8 @@ export type ParliamentMp = {
   constituency: string;
   /** Every email Parliament lists for them, trimmed: some end in a space. */
   emails: string[];
+  /** Every web address Parliament lists for them. */
+  websites: string[];
 };
 
 type Member = {
@@ -19,7 +21,7 @@ type Member = {
   latestHouseMembership: { membershipFrom: string };
 };
 
-type Contact = { email?: string | null };
+type Contact = { email?: string | null; line1?: string | null; isWebAddress?: boolean };
 
 export type GetJson = (url: string) => Promise<unknown>;
 
@@ -73,6 +75,9 @@ export async function fetchCurrentMps(getJson: GetJson): Promise<ParliamentMp[]>
       name: member.nameDisplayAs,
       constituency: member.latestHouseMembership.membershipFrom,
       emails: [...new Set(emails)],
+      websites: (data.value ?? []).flatMap((contact) =>
+        contact.isWebAddress && contact.line1 ? [contact.line1.trim()] : [],
+      ),
     };
   });
 }

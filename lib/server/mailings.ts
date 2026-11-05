@@ -19,8 +19,15 @@ export type MailingSummary = {
   /** The ask it makes, if any: its slug and title. */
   ask: string | null;
   askTitle: string | null;
+  askKind: string | null;
+  /** Its text from before the site could send, if the import rebuilt one, and whether it's only approximately that. */
+  importedText: unknown;
+  importedSubject: string;
+  importedTextApproximate: boolean;
   /** Copied from Airtable, so with no text, sender or attachments. */
   imported: boolean;
+  /** Whether the import of old letters made or matched it, so Airtable didn't say who it's from. */
+  oldLetters?: boolean;
   state: MailingState;
   /** Who wrote it, and the name it's from, or with none the Gmail it goes from; neither for one imported. */
   createdBy: string | null;
@@ -102,7 +109,8 @@ export type Mailing = MailingSummary & {
 const RECIPIENTS_PAGE_SIZE = 100;
 
 const SELECT_MAILINGS = `
-  SELECT m.id::int AS id, m.title, m.ask, a.title AS "askTitle", (m.airtable_field IS NOT NULL OR m.airtable_sent_between IS NOT NULL) AS imported,
+  SELECT m.id::int AS id, m.title, m.ask, a.title AS "askTitle", a.kind AS "askKind", m.imported_text AS "importedText", m.subject AS "importedSubject",
+    m.imported_text_approximate AS "importedTextApproximate", m.old_letters_key IS NOT NULL AS "oldLetters", (m.airtable_field IS NOT NULL OR m.airtable_sent_between IS NOT NULL) AS imported,
     m.state, m.created_by AS "createdBy", coalesce(nullif(m.from_name, ''), m.sent_from) AS "fromName", m.sent_from AS "sentFrom", m.due_at AS "dueAt",
     m.updated_at AS "updatedAt",
     min(l.sent_at) AS "sentAt",
@@ -118,7 +126,7 @@ const SELECT_MAILINGS = `
 /** Every mailing to politicians but the drafts, newest first, those not yet sent at the top. */
 export async function listMailings(): Promise<MailingSummary[]> {
   return query<MailingSummary>(
-    `${SELECT_MAILINGS} WHERE m.state <> 'draft' AND m.audience = 'politicians' GROUP BY m.id, a.title
+    `${SELECT_MAILINGS} WHERE m.state <> 'draft' AND m.audience = 'politicians' GROUP BY m.id, a.title, a.kind
      ORDER BY min(l.sent_at) DESC NULLS FIRST, m.id DESC`,
   );
 }
@@ -135,7 +143,7 @@ export async function mailingsOverview(): Promise<{
 }> {
   const [drafts, all] = await Promise.all([
     query<MailingSummary & { filter: unknown }>(
-      `SELECT * FROM (${SELECT_MAILINGS} WHERE m.state = 'draft' AND m.audience = 'politicians' GROUP BY m.id, a.title) d
+      `SELECT * FROM (${SELECT_MAILINGS} WHERE m.state = 'draft' AND m.audience = 'politicians' GROUP BY m.id, a.title, a.kind) d
        JOIN (SELECT id::int AS id, filter FROM mailings) f USING (id) ORDER BY "updatedAt" DESC, id DESC`,
     ),
     listMailings(),
@@ -168,7 +176,9 @@ export async function mailingTitle(id: number): Promise<string | undefined> {
 
 /** One mailing, with a page, from 1, of its recipients in `tab`, by name, with their outcomes. */
 export async function getMailing(id: number, page = 1, tab: RecipientTab = "all"): Promise<Mailing | undefined> {
-  const [mailing] = await query<MailingSummary>(`${SELECT_MAILINGS} WHERE m.id = $1 GROUP BY m.id, a.title`, [id]);
+  const [mailing] = await query<MailingSummary>(`${SELECT_MAILINGS} WHERE m.id = $1 GROUP BY m.id, a.title, a.kind`, [
+    id,
+  ]);
   if (!mailing) return undefined;
   const from = `FROM letters_from_pauseai p JOIN letters l USING (id) JOIN notable_people n ON n.id = l.notable_person_id
     LEFT JOIN politicians seat ON seat.id = n.id

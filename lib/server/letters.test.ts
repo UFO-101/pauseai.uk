@@ -216,7 +216,6 @@ describeWithDatabase("politicianLetters", () => {
           id: 1,
           campaign: "regulate-letter-pm",
           campaignTitle: "Regulate AI developers now",
-          campaignUrl: null,
           status: "sent",
           createdAt: expect.any(Date),
           repliedAt: expect.any(Date),
@@ -330,6 +329,37 @@ describeWithDatabase("a letter for its page", () => {
       sentAt: "2026-10-01T12:00:00Z",
     });
     expect(await getSupporterLetter(noAddress)).toMatchObject({ gmail: null });
+    vi.unstubAllEnvs();
+  });
+
+  it("gives a letter whose text the import kept: a form letter by the Message-ID Joseph's mailbox has, a Postmark letter by its copy", async () => {
+    vi.stubEnv("POLICY_INBOX", "policy@pauseai.uk");
+    const politicianId = await addTestPolitician();
+    const doc = JSON.stringify(docFromMarkup("Dear MP"));
+    const form = await addTestLetter({ politicianId, sentAt: "2026-06-01T09:00:00Z" });
+    await query("UPDATE letters_from_supporters SET letter = $2 WHERE id = $1", [form, doc]);
+    await query(
+      `INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id, backend, sender, rfc_message_id, imported)
+       VALUES ('letter', $1, 'mp@parliament.uk', 'sent', 'g1', 'gmail', 'joseph@pauseai.uk', 'r1@mail.gmail.com', true)`,
+      [form],
+    );
+    expect((await getSupporterLetter(form))?.gmail).toEqual({
+      mailbox: "joseph@pauseai.uk",
+      search: "rfc822msgid:r1@mail.gmail.com",
+    });
+    const postmark = await addTestLetter({
+      politicianId,
+      senderEmail: "b@example.com",
+      sentAt: "2026-11-01T09:00:00Z",
+    });
+    await query("UPDATE letters_from_supporters SET letter = $2 WHERE id = $1", [postmark, doc]);
+    await query(
+      `INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id) VALUES ('letter', $1, 'mp@parliament.uk', 'sent', 'pm-1')`,
+      [postmark],
+    );
+    const letter = await getSupporterLetter(postmark);
+    expect(letter?.gmail).toEqual({ mailbox: "policy@pauseai.uk", search: "rfc822msgid:pm-1@mtasv.net" });
+    expect(letter?.sent?.text).toBe("Dear MP");
     vi.unstubAllEnvs();
   });
 

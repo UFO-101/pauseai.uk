@@ -5,6 +5,7 @@ import { gmailAccess } from "./gmail-accounts";
 import { lettersInbox } from "./letters-inbox";
 import { deleteLetterReply } from "./outside-services/blobs";
 import { trashGmailMessage } from "./outside-services/gmail";
+import { deleteOneOffBlobs, eraseOneOffs } from "./one-off-emails";
 import { refreshSupportersList } from "./supporter-facts";
 
 // Erasing a supporter, when they ask to be forgotten: for each source,
@@ -16,8 +17,8 @@ import { refreshSupportersList } from "./supporter-facts";
 // Luma ID is kept in
 // luma_erased so the import never copies them back; a member's record goes
 // the same way, its ID kept in members_erased; a message of a mailing
-// sent to them loses its address and merge values; staff's notes on them
-// go with their row. What stays is what
+// sent to them loses its address and merge values; a one-off email with their
+// address on it goes, with its blob; staff's notes on them go with their row. What stays is what
 // exists to stop us mailing the address: email_problems, email_blocks and
 // opt_outs. The audit log entry carries the supporter's ID and the
 // request's reference, never a name or address. Luma's own copy is left
@@ -32,6 +33,8 @@ export type ErasureResult = {
   /** Their proxies on the letters inbox, and the messages of their letters there, trashed. */
   proxies: number;
   messages: number;
+  /** One-off emails with their address on, deleted. */
+  oneOffs: number;
 };
 
 /** Erases supporter `id`, as `by`, under the request's `reference`. Undefined if there's no such supporter. */
@@ -77,6 +80,14 @@ export async function eraseSupporter(id: number, reference: string, by: string):
       [entries],
       db,
     );
+    // A letter's row stays, as a record it went to that MP, without what could say who wrote it.
+    await query(
+      `UPDATE email_sends SET from_address = NULL, subject = NULL
+       WHERE letter_id IN (SELECT id FROM letters_from_supporters WHERE entry_id = ANY($1::bigint[]))`,
+      [entries],
+      db,
+    );
+    const oneOffs = await eraseOneOffs(id, db);
     await query(
       `DELETE FROM email_sends WHERE purpose IN ('letter-copy', 'relay', 'supporter-notice')
        AND letter_id IN (SELECT id FROM letters_from_supporters WHERE entry_id = ANY($1::bigint[]))`,
@@ -117,12 +128,14 @@ export async function eraseSupporter(id: number, reference: string, by: string):
       members: members.length,
       proxies: proxies.length,
       messages: mail.length,
+      oneOffs: oneOffs.length,
     };
     await logChange(by, "erase supporter", { id, reference, ...result }, db);
-    return { result, mail };
+    return { result, mail, oneOffs };
   }).then(async (erased) => {
     if (!erased) return undefined;
     await clearMail(erased.mail);
+    await clearOneOffs(erased.oneOffs);
     return erased.result;
   });
 }
@@ -141,5 +154,14 @@ async function clearMail(mail: { blobKey: string | null; gmailId: string }[]): P
     for (const { gmailId } of mail) await trashGmailMessage(token, gmailId);
   } catch (error) {
     console.error("Couldn't clear an erased supporter's mail:", error);
+  }
+}
+
+/** Deletes erased one-off emails' blobs. A failure is logged, not thrown: the erasure itself is done. */
+async function clearOneOffs(keys: string[]): Promise<void> {
+  try {
+    await deleteOneOffBlobs(keys);
+  } catch (error) {
+    console.error("Couldn't delete an erased supporter's one-off emails:", error);
   }
 }

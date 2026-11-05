@@ -98,6 +98,12 @@ export default function PrivacyPolicy() {
         copies in our Gmail inbox are deleted within 30 days.
       </p>
 
+      <p>
+        If you copy us into an email to your MP or another politician, or forward us one, we keep it, with your name,
+        email address and what you wrote, so that we can see what has been said to them. The same goes for letters you
+        sent through our earlier form, and replies to them. We delete these when you ask us to erase your data.
+      </p>
+
       <h2>Events and Luma</h2>
       <p>
         Our events run on Luma. When you register for or host one of our events, or follow our calendar, Luma gives us

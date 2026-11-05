@@ -53,7 +53,12 @@ const TABLES = [
   "named_places",
   "notable_people",
   "notes",
+  "old_letters_mail",
+  "one_off_messages",
+  "one_off_thread_people",
+  "one_off_threads",
   "opt_outs",
+  "politician_domains",
   "politicians",
   "postcode_places",
   "staff_login_links",
@@ -62,6 +67,8 @@ const TABLES = [
   "letters_from_supporters",
   "supporter_links",
   "supporters",
+  "staff_nav_seen",
+  "unmatched_mail",
 ];
 
 /**

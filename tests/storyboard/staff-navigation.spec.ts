@@ -1,11 +1,12 @@
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
+import { runSql } from "@/scripts/fresh-database.mjs";
 import { lockTable, syncPoliticians } from "../steps";
 import { BASE, expect, frame, story, test } from "./fixtures";
 import { PM_LETTER, staffEmail, logIn, holdNextPage, loadingLine } from "./staff-steps";
 
 // Finding your way round the staff pages: the dashboard's tiles, the sidebar
-// folded and followed, a list sorted or searched, a politician's page, and
-// setting a status that shows on the public campaigns. Each flow on its own
+// folded and followed, a list sorted or searched, a politician's page,
+// setting a status that shows on the public campaigns, and the new tag. Each flow on its own
 // database.
 
 test("Folding the sidebar", { tag: "@desktop-only" }, async ({ page, flowDatabase }) => {
@@ -160,7 +161,7 @@ test("The MPs signed tile", async ({ page, request, flowDatabase }) => {
   await frame(page, "Everyone who signed");
 });
 
-test("A politician's page", async ({ page, request, flowDatabase }) => {
+test("A test MP's page", async ({ page, request, flowDatabase }) => {
   story("Staff open the test MP's page. It's marked as a test MP, says what they are, and has no history yet.");
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
@@ -189,7 +190,7 @@ test("A politician's page", async ({ page, request, flowDatabase }) => {
   await frame(page, "The politicians, by constituency");
 });
 
-test("An MP signs, and /campaigns shows it", async ({ page, request, flowDatabase }) => {
+test("An MP signs", async ({ page, request, flowDatabase }) => {
   story("An admin logs in, and lands on the dashboard.");
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase, ["admin"]);
@@ -296,4 +297,50 @@ test("An MP signs, and /campaigns shows it", async ({ page, request, flowDatabas
   await frame(page, "The login page");
   await page.goto(`${BASE}/staff`);
   await expect(page).toHaveURL(`${BASE}/staff/login`);
+});
+
+test("The new tag", { tag: "@desktop-only" }, async ({ page, flowDatabase }) => {
+  story("A page someone first saw in the last 3 days is marked new.");
+  await logIn(page, flowDatabase, ["admin", "supporters"]);
+  const email = runSql(flowDatabase, "SELECT email FROM staff_sessions ORDER BY created_at DESC LIMIT 1")[0];
+  runSql(
+    flowDatabase,
+    `UPDATE staff_nav_seen SET first_seen_at = now() WHERE email = '${email}' AND page IN ('campaigns', 'sentEmails')`,
+  );
+  await page.goto(`${BASE}/staff`);
+  const nav = page.getByRole("navigation", { name: staffCopy.nav.title }).first();
+  await expect(
+    nav.getByRole("link", { name: `${staffCopy.nav.campaigns} ${staffCopy.nav.newTag}` }).first(),
+  ).toBeVisible();
+  await frame(page, "New in the menu");
+
+  story("With the menu folded to a rail of icons, a dot says the same.");
+  await nav.getByRole("button", { name: staffCopy.nav.fold }).click();
+  await expect(nav.getByRole("button", { name: staffCopy.nav.unfold })).toBeVisible();
+  await frame(page, "New on the rail");
+  await nav.getByRole("button", { name: staffCopy.nav.unfold }).click();
+
+  story("Three days later, it's gone.");
+  runSql(flowDatabase, `UPDATE staff_nav_seen SET first_seen_at = now() - interval '4 days' WHERE email = '${email}'`);
+  await page.reload();
+  await expect(nav.getByRole("link", { name: staffCopy.nav.campaigns }).first()).not.toContainText(
+    staffCopy.nav.newTag,
+  );
+  await frame(page, "No longer new");
+});
+
+test("The new tag on a phone", { tag: "@phone-only" }, async ({ page, flowDatabase }) => {
+  story("On a phone, the menu that drops down marks the same pages.");
+  await logIn(page, flowDatabase, ["admin", "supporters"]);
+  const email = runSql(flowDatabase, "SELECT email FROM staff_sessions ORDER BY created_at DESC LIMIT 1")[0];
+  runSql(
+    flowDatabase,
+    `UPDATE staff_nav_seen SET first_seen_at = now() WHERE email = '${email}' AND page = 'campaigns'`,
+  );
+  await page.goto(`${BASE}/staff`);
+  await page.getByRole("group").locator("summary").click();
+  await expect(page.getByRole("group").getByRole("link", { name: staffCopy.nav.campaigns })).toContainText(
+    staffCopy.nav.newTag,
+  );
+  await frame(page, "New in the phone's menu", { window: true });
 });

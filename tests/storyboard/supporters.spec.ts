@@ -1,3 +1,4 @@
+import { campaigns } from "@/lib/content/email-your-mp";
 import type { Page } from "@playwright/test";
 import { marchSignupCopy } from "@/lib/content/march-signup";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -120,7 +121,7 @@ test("Filtering supporters", async ({ page, request, flowDatabase }) => {
   await frame(page, "The list, by name, Z to A");
 });
 
-test("Except an event", async ({ page, request, flowDatabase }) => {
+test("Supporters not at an event", async ({ page, request, flowDatabase }) => {
   story(
     "Staff want the supporters who weren't at the London March. Except offers the filters that can leave people out.",
   );
@@ -353,7 +354,7 @@ test("Merged by phone number", async ({ page, request, flowDatabase }) => {
 });
 
 test("A letter writer's page", async ({ page, request, flowDatabase }) => {
-  story("Jane Smith writes to her MP. Staff find her letter in Letters to MPs, and click her name.");
+  story("Jane Smith writes to her MP. Staff find her letter on its campaign's page, and click her name.");
   await syncPoliticians(request, BASE);
   const sender = madeUpAddress("Jane Smith", 41);
   await fakeTurnstile(page);
@@ -362,8 +363,8 @@ test("A letter writer's page", async ({ page, request, flowDatabase }) => {
   await sendLetter(page, TEST_MPS[0]);
 
   await logInWithSupporters(page, flowDatabase);
-  await page.goto(`${BASE}/staff/letters`);
-  await page.getByRole("row").filter({ hasText: sender }).getByRole("link", { name: "Jane Smith" }).click();
+  await page.goto(`${BASE}/staff/campaigns/${campaigns[0].slug}`);
+  await page.getByRole("row").filter({ hasText: "Jane Smith" }).getByRole("link", { name: "Jane Smith" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Jane Smith");
   await expect(page.getByText(`1 ${copy.detail.lettersCounted(1)}`)).toBeVisible();
   await expect(
@@ -373,10 +374,10 @@ test("A letter writer's page", async ({ page, request, flowDatabase }) => {
   await openEverything(page);
   await expect(page.getByText("ZZ9 9ZZ", { exact: false })).toBeVisible();
   await frame(page, "Jane's page");
-  story("The letter's status leads to its page. Copy Gmail search copies a search that finds it in the letters inbox.");
+  story("Letter → opens her letter's page. Copy Gmail search copies a search that finds it in the letters inbox.");
 
   // The letter's status leads to its page, found in the letters inbox, and back to her.
-  await page.getByRole("link", { name: staffCopy.letters.status.sent }).click();
+  await page.getByRole("link", { name: staffCopy.mailingPages.theLetter }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     staffCopy.letters.oneTitle("Jane Smith", "Testy McTestface MP"),
   );

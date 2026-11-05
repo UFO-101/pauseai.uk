@@ -51,13 +51,16 @@ export type LetterSummary = {
   /** The campaign's title, as the campaigns table has it. */
   campaignTitle: string;
   /** Where an old campaign's letter can be read, as the campaigns table has it. */
-  campaignUrl: string | null;
   status: string;
   senderName: string;
   senderEmail: string;
   mpName: string;
   politicianId: number;
   isTest: boolean;
+  /** The politician's seat and party, and their answer to the campaign's ask, if any. */
+  constituency: string | null;
+  party: string | null;
+  answer: string | null;
   /** The share of its words, from 0 to 1, that weren't in the campaign's draft; none for one with no draft, as from Airtable. */
   ownWords: number | null;
   /** What sent it; none for one of this site's never sent. */
@@ -120,6 +123,7 @@ async function letterRows({
   campaign,
   flags,
   backend,
+  tab,
   supporterId,
   letterId,
   politicianId,
@@ -137,8 +141,9 @@ async function letterRows({
     .map((condition) => `AND ${condition}`)
     .join(" ");
   return query<LetterSummary & { total: number }>(
-    `SELECT l.id::int AS id, s.campaign, c.title AS "campaignTitle", c.url AS "campaignUrl", l.status, f.name AS "senderName", f.email AS "senderEmail",
-       n.name AS "mpName", n.id::int AS "politicianId", p.is_test AS "isTest", s.own_words AS "ownWords", ${BACKEND} AS backend, l.created_at AS "createdAt", l.sent_at AS "sentAt", l.replied_at AS "repliedAt",
+    `SELECT l.id::int AS id, s.campaign, c.title AS "campaignTitle", l.status, f.name AS "senderName", f.email AS "senderEmail",
+       n.name AS "mpName", n.id::int AS "politicianId", p.is_test AS "isTest", p.constituency, p.party,
+       (SELECT st.status FROM ask_statuses st WHERE st.notable_person_id = n.id AND st.ask = c.ask) AS answer, s.own_words AS "ownWords", ${BACKEND} AS backend, l.created_at AS "createdAt", l.sent_at AS "sentAt", l.replied_at AS "repliedAt",
        ${AUTO_REPLIED_AT} AS "autoRepliedAt",
        (SELECT k.supporter_id::int FROM supporter_links k WHERE k.form_entry_id = s.entry_id) AS "supporterId",
        coalesce((SELECT json_agg(json_build_object('at', e.at, 'status', e.status, 'details', e.details) ORDER BY e.at DESC, e.id DESC)
@@ -156,7 +161,11 @@ async function letterRows({
        AND ($8::text[] IS NULL OR s.campaign = ANY($8))
        AND ($10::text[] IS NULL OR s.campaign <> ALL($10))
        AND ($11::text[] IS NULL OR ${BACKEND} = ANY($11))
-       AND ($12::text[] IS NULL OR (${BACKEND} = ANY($12)) IS NOT TRUE) ${flagConditions}
+       AND ($12::text[] IS NULL OR (${BACKEND} = ANY($12)) IS NOT TRUE)
+       AND ($13::text IS NULL OR CASE $13 WHEN 'changed' THEN s.own_words > 0 WHEN 'replied' THEN l.replied_at IS NOT NULL
+         WHEN 'sent' THEN l.status IN ('sent', 'spam_complaint')
+         WHEN 'answered' THEN EXISTS (SELECT 1 FROM ask_statuses st WHERE st.notable_person_id = n.id AND st.ask = c.ask)
+         ELSE l.status IN ('not_sent', 'bounced') END) ${flagConditions}
      ORDER BY ${LETTER_COLUMNS[sort.key]} ${sort.dir === "asc" ? "ASC" : "DESC"} NULLS LAST, l.created_at DESC, l.id DESC
      LIMIT $2 OFFSET $9`,
     [
@@ -172,6 +181,7 @@ async function letterRows({
       not?.campaign ?? null,
       backend ?? null,
       not?.backend ?? null,
+      tab ?? null,
     ],
   );
 }
@@ -211,10 +221,10 @@ export type SupporterLetterDetails = LetterSummary & {
   /** Every forward of a reply to it, oldest first. */
   forwards: LetterForward[];
   /**
-   * For one from the letters inbox: its text as sent, and the draft it was
+   * For one with its text kept: its text as sent, and the draft it was
    * written from, if kept; then every
-   * message both ways through the proxies, oldest first. Null for others,
-   * whose text isn't kept.
+   * message of its thread, oldest first. Null for others, whose text isn't
+   * kept.
    */
   sent: { text: string; draft: string | null; messages: ThreadMessage[] } | null;
 };
@@ -301,21 +311,32 @@ export async function getPauseaiLetter(mailingId: number, id: number): Promise<P
 }
 
 /**
- * A supporter's letter `id`, for its page, or undefined if there's none:
- * PauseAI's letters have theirs under their mailing. One from the letters
- * inbox is kept here, and found there by its Message-ID. Another's copy is the one
- * Bcc'd to the policy inbox, found by the Message-ID of the newest send
- * Postmark made of it, or, for one copied from Airtable, by its MP's
- * address and when it went; in its members' mail for one sent while the
+ * Where to find a letter's copy Bcc'd to the policy inbox: by the Message-ID of
+ * the newest send Postmark made of it, or, for one copied from Airtable, by its
+ * MP's address and when it went; in its members' mail for one sent while the
  * policy inbox was a Google Group (POLICY_GMAIL_SINCE).
+ */
+function policyCopy(postmarkId: string | null, mpEmail: string | null, sentAt: string | null): GmailFind | null {
+  const search = postmarkId ? postmarkSearch(postmarkId) : sentAt && mpEmail && sentNearSearch(mpEmail, sentAt);
+  if (!search) return null;
+  const group = sentAt !== null && new Date(sentAt) < POLICY_GMAIL_SINCE;
+  return { mailbox: process.env.POLICY_INBOX || null, search, ...(group ? { inPolicyGroup: true as const } : {}) };
+}
+
+/**
+ * A supporter's letter `id`, for its page, or undefined if there's none:
+ * PauseAI's letters have theirs under their mailing. One with its text kept
+ * shows it, and is found by the Message-ID it went with where it has one, or
+ * else by its copy in the policy inbox (policyCopy).
  */
 export async function getSupporterLetter(id: number): Promise<SupporterLetterDetails | undefined> {
   const [letter] = await recentLetters({ letterId: id });
   if (!letter) return undefined;
-  const [{ subject, postmarkId, rfcId, mpEmail, campaignAsk, forwards, doc, draft }] = await query<{
+  const [{ subject, postmarkId, rfcId, sentBy, mpEmail, campaignAsk, forwards, doc, draft }] = await query<{
     subject: string;
     postmarkId: string | null;
     rfcId: string | null;
+    sentBy: string | null;
     mpEmail: string | null;
     campaignAsk: string | null;
     forwards: LetterForward[];
@@ -326,6 +347,8 @@ export async function getSupporterLetter(id: number): Promise<SupporterLetterDet
        AND e.outcome = 'sent' ORDER BY e.at DESC, e.id DESC LIMIT 1) AS "postmarkId",
        (SELECT e.rfc_message_id FROM email_sends e WHERE e.letter_id = s.id AND e.purpose = 'letter'
         AND e.outcome = 'sent' ORDER BY e.at DESC, e.id DESC LIMIT 1) AS "rfcId",
+       (SELECT e.sender FROM email_sends e WHERE e.letter_id = s.id AND e.purpose = 'letter' AND e.imported
+        ORDER BY e.at DESC, e.id DESC LIMIT 1) AS "sentBy",
        s.letter AS doc, s.draft, n.email AS "mpEmail",
        coalesce((SELECT json_agg(json_build_object('at', e.at, 'address', e.address, 'outcome', e.outcome) ORDER BY e.at, e.id)
                  FROM email_sends e WHERE e.letter_id = s.id AND e.purpose = 'forwarded-reply'), '[]') AS forwards
@@ -336,29 +359,28 @@ export async function getSupporterLetter(id: number): Promise<SupporterLetterDet
   );
   const sentDoc = checkDoc(doc);
   if (sentDoc) {
-    // From the letters inbox: kept here, and found there by the Message-ID it went with.
+    // Kept here, and found in the mailbox it went from by the Message-ID it went with: the letters inbox, or for one the
+    // import read, Joseph's.
     const sent = {
       text: toText(sentDoc),
       draft,
       messages: await threadMessages(id),
     };
-    const gmail = rfcId ? { mailbox: lettersInbox() ?? null, search: messageIdSearch(rfcId) } : null;
+    const gmail = rfcId
+      ? { mailbox: sentBy ?? lettersInbox() ?? null, search: messageIdSearch(rfcId) }
+      : postmarkId
+        ? policyCopy(postmarkId, mpEmail, letter.sentAt)
+        : null;
     return { ...letter, kind: "supporter", subject, mpEmail, campaignAsk, gmail, forwards, sent };
   }
-  const search = postmarkId
-    ? postmarkSearch(postmarkId)
-    : letter.sentAt && mpEmail && sentNearSearch(mpEmail, letter.sentAt);
-  const group = letter.sentAt !== null && new Date(letter.sentAt) < POLICY_GMAIL_SINCE;
-  const gmail = search
-    ? { mailbox: process.env.POLICY_INBOX || null, search, ...(group ? { inPolicyGroup: true as const } : {}) }
-    : null;
+  const gmail = policyCopy(postmarkId, mpEmail, letter.sentAt);
   return { ...letter, kind: "supporter", subject, mpEmail, campaignAsk, gmail, forwards, sent: null };
 }
 
 /** A letter on an MP's page for staff without `supporters`: what happened to it, and nothing of who wrote it. */
 export type UnsignedLetter = Pick<
   LetterSummary,
-  "id" | "campaign" | "campaignTitle" | "campaignUrl" | "status" | "createdAt" | "repliedAt"
+  "id" | "campaign" | "campaignTitle" | "status" | "createdAt" | "repliedAt"
 >;
 
 /** An MP's letters: with their senders, or without. */
@@ -368,7 +390,7 @@ export type PoliticianLetters =
 /** The letters to a politician, newest first, selecting nothing of their senders, so none reach the page. */
 async function unsignedLetters(politicianId: number, limit = 200): Promise<UnsignedLetter[]> {
   return query<UnsignedLetter>(
-    `SELECT l.id::int AS id, s.campaign, c.title AS "campaignTitle", c.url AS "campaignUrl", l.status, l.created_at AS "createdAt", l.replied_at AS "repliedAt"
+    `SELECT l.id::int AS id, s.campaign, c.title AS "campaignTitle", l.status, l.created_at AS "createdAt", l.replied_at AS "repliedAt"
      FROM letters_from_supporters s JOIN letters l ON l.id = s.id JOIN campaigns c ON c.slug = s.campaign
      WHERE l.notable_person_id = $1 ORDER BY l.created_at DESC, l.id DESC LIMIT $2`,
     [politicianId, limit],

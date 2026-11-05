@@ -7,9 +7,9 @@ import { FAILING_DIR } from "../checkout.mjs";
 import { failService } from "../fixtures/failing-services";
 import { logInAsStaff, newestEmail, syncPoliticians } from "../steps";
 import { BASE, emailFrame, expect, frame, story, test } from "./fixtures";
-import { staffEmail, logIn } from "./staff-steps";
+import { importEmails, logIn, staffEmail } from "./staff-steps";
 
-// The imports staff run and watch: Luma's, the members' and Gmail's, each import's
+// The imports staff run and watch: Luma's, the members', Gmail's, PauseAI's emails, pauseai.info's letters and Go to Parliament's meetings, each import's
 // own page of its runs, an import failing, a Gmail Google disconnects, and a
 // politician import held for a person to decide. Each flow on its own database.
 
@@ -304,4 +304,84 @@ test("A held rename", async ({ page, request, flowDatabase }) => {
   await expect(page.getByRole("button", { name: staffCopy.syncs.apply })).toBeVisible();
   await expect(page.getByText("Penny Previous → Polly Placeholder")).toBeVisible();
   await frame(page, "The import, held");
+});
+
+test("PauseAI's emails to politicians", async ({ page, request, flowDatabase }) => {
+  story(
+    "Staff press Import emails now, which copies PauseAI's emails to politicians from Airtable. Its page shows five copied, and one left out, as it belongs to no mailing we know.",
+  );
+  await syncPoliticians(request, BASE);
+  // With no permissions: PauseAI's letters are the politicians section's.
+  await logIn(page, flowDatabase);
+  await importEmails(page);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(jobTitles["sync-emails"]);
+  await expect(page.getByText("recEmailNewBox", { exact: false }).first()).toBeVisible();
+  await frame(page, "The emails import's page");
+  story("Pressing it again finds nothing new.");
+  await page.getByRole("button", { name: staffCopy.pauseaiEmails.importNow }).click();
+  await expect(page.getByText(staffCopy.runs.status.incomplete)).toHaveCount(2);
+  expect(runSql(flowDatabase, "SELECT count(*) FROM letters_from_pauseai")).toEqual(["5"]);
+
+  story("Each email is in its politician's history, and has its own page under its mailing.");
+  // Each is in its MP's history, leading to its own page under its mailing, and from there to a Gmail search for it,
+  // in a mailbox Airtable didn't say.
+  await page.goto(`${BASE}/staff/politicians`);
+  await page.getByRole("link", { name: "Polly Placeholder" }).click();
+  const history = page.getByRole("list", { name: staffCopy.politician.historyTitle });
+  await history.getByRole("link", { name: staffCopy.mailingPages.theLetter }).first().click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    staffCopy.letters.oneTitle(staffCopy.letters.fromPauseai, "Polly Placeholder"),
+  );
+  await expect(page).toHaveURL(/\/staff\/mailings\/\d+\/letters\/\d+$/);
+  await frame(page, "PauseAI's email to Polly");
+  story(
+    "Copy Gmail search copies a search for it by Polly's address and when it went. Airtable didn't say which mailbox sent it, so the page says to look in one that did.",
+  );
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.getByRole("button", { name: staffCopy.findInGmail.copy }).click();
+  await expect(page.getByRole("status")).toContainText(staffCopy.findInGmail.whereUnknown);
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/^to:polly\S+ after:\d+ before:\d+$/);
+  await frame(page, "The search, copied");
+});
+
+test("One-off imports", async ({ page, request, flowDatabase }) => {
+  story(
+    "Staff import the letters supporters sent through pauseai.info's old write to MP form. Three are imported, and the page says why the rest weren't.",
+  );
+  await syncPoliticians(request, BASE);
+  await logIn(page, flowDatabase, ["supporters"]);
+  await page.goto(`${BASE}/staff/import-data/web-form-letters`);
+  await page.getByRole("button", { name: staffCopy.webForm.importNow }).click();
+  await expect(
+    page.getByText(staffCopy.webForm.result({ read: 9, imported: 3, skipped: 3, alreadyHere: 1, noPolitician: 2 }), {
+      exact: false,
+    }),
+  ).toBeVisible();
+  await frame(page, "The old form's letters, imported");
+
+  story("Each old campaign has its letters, on its own page.");
+  await page.goto(`${BASE}/staff/campaigns`);
+  await page.getByRole("link", { name: "Call DeepMind to honour AI Safety Summit pledges" }).first().click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Call DeepMind to honour AI Safety Summit pledges");
+  await frame(page, "An old campaign's page");
+  story("Each sender is now a supporter, from the old form.");
+  await page.getByRole("link", { name: "Dee Deepmind" }).first().click();
+  await expect(page.getByText(staffCopy.supporters.sources["web-form"]).first()).toBeVisible();
+  await frame(page, "Dee Deepmind's page");
+
+  story(
+    "Then they import the MPs' answers about meeting constituents at Go to Parliament. The asks page counts them: one MP is sending staff instead.",
+  );
+  await page.goto(`${BASE}/staff/import-data/go-to-parliament`);
+  await page.getByRole("button", { name: staffCopy.goToParliament.importNow }).click();
+  await expect(
+    page.getByText(staffCopy.goToParliament.result({ guests: 5, mps: 4, added: 3, changed: 0, notFound: 1 }), {
+      exact: false,
+    }),
+  ).toBeVisible();
+  await page.goto(`${BASE}/staff/asks`);
+  await expect(
+    page.getByRole("link", { name: staffCopy.asks.count(staffCopy.statuses.meeting_staff, 1) }),
+  ).toBeVisible();
+  await frame(page, "The asks page");
 });

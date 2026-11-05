@@ -115,9 +115,21 @@ export async function send(
   let rfcId = backend.name === "gmail" ? (messageId ?? newMessageId()) : (messageId ?? null);
   const log = (outcome: "sent" | "refused" | "failed", id: string | null = null, threadId: string | null = null) =>
     query(
-      `INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id, backend, sender, rfc_message_id, gmail_thread_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-      [purpose, letterId, address, outcome, id, backend.name, from, outcome === "sent" ? rfcId : null, threadId],
+      `INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id, backend, sender, rfc_message_id, gmail_thread_id, subject, from_address)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+      [
+        purpose,
+        letterId,
+        address,
+        outcome,
+        id,
+        backend.name,
+        from,
+        outcome === "sent" ? rfcId : null,
+        threadId,
+        email.Subject,
+        bareAddress(email.From),
+      ],
     );
   if (await isBlocked(address)) {
     await log("refused");

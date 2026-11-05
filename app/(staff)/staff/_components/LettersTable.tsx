@@ -1,19 +1,12 @@
 import StaffLink from "./ui/StaffLink";
 import CampaignName from "./CampaignName";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { campaignBySlug } from "@/lib/email-your-mp";
-import type { DownloadColumn } from "@/lib/staff-list";
 import { staffTime } from "@/lib/staff-time";
 import type { LetterSummary } from "@/lib/server/letters";
-import { LETTER_SORTS, type LetterSort } from "@/lib/letter-sort";
-import { filtersPath, pageParam, type LettersSearch } from "@/lib/staff-search";
-import { parseSort, sortHref } from "@/lib/staff-sort";
-import SortHeading from "./SortHeading";
-import ListFrame, { ListTable, type ListColumn } from "./ui/ListFrame";
+import { ListTable, type ListColumn } from "./ui/ListFrame";
 import { Muted } from "@/components/ui/Text";
 import Tag from "@/components/ui/Tag";
 
-const PATH = "/staff/letters";
 const copy = staffCopy.letters;
 
 /** A letter's status, in words. */
@@ -31,18 +24,20 @@ const statusOf = (status: string) => copy.status[status] ?? status;
  * automation emailed it. Each is a sort (lib/letter-sort.ts), newest
  * written first unless another is chosen.
  */
-const columns: (ListColumn<LetterSummary> & { key: LetterSort })[] = [
+const columns: ListColumn<LetterSummary>[] = [
   {
     key: "status",
     label: copy.columns.status,
     short: true,
-    text: (l) => statusOf(l.status),
-    cell: (l) => <StaffLink href={`/staff/letters/${l.id}`}>{statusOf(l.status)}</StaffLink>,
+    cell: (l) => (
+      <>
+        {statusOf(l.status)} · <StaffLink href={`/staff/letters/${l.id}`}>{staffCopy.mailingPages.theLetter}</StaffLink>
+      </>
+    ),
   },
   {
     key: "from",
     label: copy.columns.from,
-    text: (l) => `${l.senderName} <${l.senderEmail}>`,
     cell: (l) => (
       <>
         {l.supporterId === null ? (
@@ -58,7 +53,6 @@ const columns: (ListColumn<LetterSummary> & { key: LetterSort })[] = [
   {
     key: "to",
     label: copy.columns.to,
-    text: (l) => l.mpName,
     cell: (l) => (
       <>
         <StaffLink href={`/staff/politicians/${l.politicianId}`}>{l.mpName}</StaffLink>{" "}
@@ -69,14 +63,12 @@ const columns: (ListColumn<LetterSummary> & { key: LetterSort })[] = [
   {
     key: "campaign",
     label: copy.columns.campaign,
-    text: (l) => campaignBySlug(l.campaign)?.title ?? l.campaignTitle,
-    cell: (l) => <CampaignName slug={l.campaign} title={l.campaignTitle} url={l.campaignUrl} />,
+    cell: (l) => <CampaignName slug={l.campaign} title={l.campaignTitle} />,
   },
   {
     key: "ownWords",
     label: copy.columns.ownWords,
     short: true,
-    text: (l) => (l.ownWords === null ? null : copy.ownWords(l.ownWords)),
     // A letter with no draft, as from Airtable: a dash.
     cell: (l) => (l.ownWords === null ? <Muted>–</Muted> : copy.ownWords(l.ownWords)),
   },
@@ -84,7 +76,6 @@ const columns: (ListColumn<LetterSummary> & { key: LetterSort })[] = [
     key: "backend",
     label: copy.columns.backend,
     short: true,
-    text: (l) => l.backend && copy.backends[l.backend],
     // Nothing yet sent it, as for Sent: a dash.
     cell: (l) => (l.backend ? copy.backends[l.backend] : <Muted>–</Muted>),
   },
@@ -92,21 +83,18 @@ const columns: (ListColumn<LetterSummary> & { key: LetterSort })[] = [
     key: "created",
     label: copy.columns.created,
     short: true,
-    text: (l) => l.createdAt,
     cell: (l) => staffTime(l.createdAt),
   },
   {
     key: "sent",
     label: copy.columns.sent,
     short: true,
-    text: (l) => l.sentAt,
     cell: (l) => (l.sentAt ? staffTime(l.sentAt) : <Muted>–</Muted>),
   },
   {
     key: "replied",
     label: copy.columns.replied,
     short: true,
-    text: (l) => l.repliedAt ?? (l.autoRepliedAt && `${copy.status.auto_reply} ${l.autoRepliedAt}`),
     cell: (l) =>
       l.repliedAt
         ? staffTime(l.repliedAt)
@@ -121,74 +109,8 @@ const columns: (ListColumn<LetterSummary> & { key: LetterSort })[] = [
   },
 ];
 
-/**
- * The list's columns; with the list's filters and sort as typed, each
- * heading sorts the list by its column, keeping the filters.
- */
-export function letterColumns(search?: LettersSearch): ListColumn<LetterSummary>[] {
-  if (!search) return columns;
-  const { sort, dir, page, ...filters } = search;
-  void page;
-  const current = parseSort(LETTER_SORTS, "created", sort, dir);
-  return columns.map((column) => ({
-    ...column,
-    heading: (
-      <SortHeading
-        key={column.key}
-        sortKey={column.key}
-        current={current}
-        href={sortHref(PATH, filters, LETTER_SORTS, current, column.key)}
-      >
-        {column.label}
-      </SortHeading>
-    ),
-  }));
-}
-
-/** The list's columns for a download, with each change of status, which its page shows. */
-export const letterDownloadColumns: DownloadColumn<LetterSummary>[] = [
-  ...columns,
-  {
-    key: "history",
-    label: copy.columns.history,
-    text: (l) => l.events.map((event) => `${event.at} ${statusOf(event.status)}`).join("; "),
-  },
-];
-
 /** Letters, a row each, in the list's columns; or that there are none. */
 export default function LettersTable({ letters }: { letters: LetterSummary[] }) {
   if (letters.length === 0) return <p>{copy.none}</p>;
   return <ListTable columns={columns} rows={letters} rowKey={(l) => l.id} />;
-}
-
-/** The letters page's list, in the list frame: how many, its downloads, the letters and the way through the pages. */
-export function LettersList({
-  letters,
-  total,
-  pages,
-  pageSize,
-  search,
-}: {
-  letters: LetterSummary[];
-  total: number;
-  pages: number;
-  pageSize: number;
-  search: LettersSearch;
-}) {
-  const filters = { ...search, page: "" };
-  return (
-    <ListFrame
-      count={copy.total(total)}
-      total={total}
-      page={Number(search.page) || 1}
-      pages={pages}
-      pageSize={pageSize}
-      href={(n) => filtersPath(PATH, filters, pageParam(n))}
-      download={(format) => filtersPath(`${PATH}/download`, filters, { format })}
-      columns={letterColumns(search)}
-      rows={letters}
-      rowKey={(l) => l.id}
-      empty={copy.none}
-    />
-  );
 }

@@ -23,6 +23,17 @@ export type LoggedChange = AuditEntry & { politician: Named | null; supporter: N
 /** The actions whose details name a politician by `id`; others name one by `politicianId`. */
 const POLITICIAN_ACTIONS = ["add politician", "edit politician", "remove politician", "delete politician"];
 
+/**
+ * The entries staff without `supporters` see: not those about a supporter,
+ * nor downloads, whose filters may name one, nor an address that isn't a politician's.
+ */
+const WITHOUT_SUPPORTERS = `NOT (
+  action = ANY(ARRAY['view supporter', 'erase supporter', 'download supporters', 'download letters', 'download blocked emails'])
+  OR details ? 'supporterId'
+  OR (action = ANY(ARRAY['block address', 'unblock address'])
+    AND NOT EXISTS (SELECT 1 FROM notable_people n WHERE lower(n.email) = lower(details->>'address')))
+)`;
+
 /** Entries on a page of the audit log. */
 export const AUDIT_PAGE_SIZE = 100;
 
@@ -30,19 +41,24 @@ export const AUDIT_PAGE_SIZE = 100;
 export type ChangesPage = { changes: LoggedChange[]; total: number; pages: number; pageSize: number };
 
 /**
- * A page of the audit log, newest first, each entry with whom it's about;
- * with a `limit` of null, every entry, for a download. Whom it's about is
+ * A page of the audit log, newest first, each entry with whom it's about,
+ * as far as `supporters` says they may see; with a `limit` of null, every entry, for a download. Whom it's about is
  * looked up for the page's entries only, not every one before them.
  */
-export async function recentChanges(page = 1, limit: number | null = AUDIT_PAGE_SIZE): Promise<ChangesPage> {
-  const [{ total }] = await query<{ total: number }>("SELECT count(*)::int AS total FROM audit_log");
+export async function recentChanges(
+  supporters: boolean,
+  page = 1,
+  limit: number | null = AUDIT_PAGE_SIZE,
+): Promise<ChangesPage> {
+  const where = supporters ? "true" : WITHOUT_SUPPORTERS;
+  const [{ total }] = await query<{ total: number }>(`SELECT count(*)::int AS total FROM audit_log WHERE ${where}`);
   const changes = await query<LoggedChange>(
     `SELECT a.id::int AS id, a.at, a.actor, a.action, a.details,
        (SELECT json_build_object('id', p.id, 'name', p.name) FROM notable_people p
         WHERE p.id::text = CASE WHEN a.action = ANY($2) THEN a.details->>'id' ELSE a.details->>'politicianId' END) AS politician,
        (SELECT json_build_object('id', s.id, 'name', s.name) FROM supporters_listed s
         WHERE s.id = CASE WHEN a.action = 'view supporter' THEN a.details->>'id' ELSE a.details->>'supporterId' END::bigint) AS supporter
-     FROM (SELECT * FROM audit_log ORDER BY at DESC, id DESC LIMIT $1 OFFSET $3) a ORDER BY a.at DESC, a.id DESC`,
+     FROM (SELECT * FROM audit_log WHERE ${where} ORDER BY at DESC, id DESC LIMIT $1 OFFSET $3) a ORDER BY a.at DESC, a.id DESC`,
     [limit, POLITICIAN_ACTIONS, (page - 1) * (limit ?? 0)],
   );
   return { changes, total, pages: Math.max(1, Math.ceil(total / AUDIT_PAGE_SIZE)), pageSize: AUDIT_PAGE_SIZE };

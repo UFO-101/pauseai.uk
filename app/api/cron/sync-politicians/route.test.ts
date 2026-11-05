@@ -17,7 +17,7 @@ const call = (authorization: string) =>
 describeWithDatabase("POST /api/cron/sync-politicians", () => {
   useTestDatabase();
 
-  it("copies the politicians from Airtable, then PauseAI's emails to them, and says what changed", async () => {
+  it("copies the politicians from Airtable, and says what changed", async () => {
     const res = await call("Bearer s3cret");
     expect(await res.json()).toEqual({
       status: "applied",
@@ -26,13 +26,12 @@ describeWithDatabase("POST /api/cron/sync-politicians", () => {
       changed: 0,
       renamed: 0,
       statuses: { added: 5, changed: 0, removed: 0 },
-      emails: 5,
     });
   });
 
-  it("copies the emails even when the politicians fail, then fails, keeping both runs", async () => {
+  it("fails when the politicians do, keeping the run", async () => {
     server.use(
-      // A Status the sync doesn't know fails it; the Emails sync reads the same table only for Test.
+      // A Status the sync doesn't know fails it.
       http.get("https://*.airtable.com/v0/appBInVvIm6opJ1Ob/tblH3ks9wqQHLpYx3", () =>
         HttpResponse.json({ records: [{ id: "recOdd", fields: { "Full name or Title": "Odd", Status: "Odd" } }] }),
       ),
@@ -40,21 +39,6 @@ describeWithDatabase("POST /api/cron/sync-politicians", () => {
     await expect(call("Bearer s3cret")).rejects.toThrow('Unknown Status "Odd"');
     expect(await query("SELECT job, status FROM import_runs ORDER BY id")).toEqual([
       { job: "sync-politicians", status: "failed" },
-      { job: "sync-emails", status: "unchanged" },
-    ]);
-  });
-
-  it("fails if the emails do, once the politicians are copied", async () => {
-    server.use(
-      http.get(
-        "https://*.airtable.com/v0/appBInVvIm6opJ1Ob/tblp4nH5Jymq48rcm",
-        () => new HttpResponse(null, { status: 500 }),
-      ),
-    );
-    await expect(call("Bearer s3cret")).rejects.toThrow("status 500");
-    expect(await query("SELECT job, status FROM import_runs ORDER BY id")).toEqual([
-      { job: "sync-politicians", status: "applied" },
-      { job: "sync-emails", status: "failed" },
     ]);
   });
 

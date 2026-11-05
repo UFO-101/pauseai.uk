@@ -5,6 +5,7 @@ import type { ChangesPage, LoggedChange } from "@/lib/server/audit";
 import AuditDetail from "./AuditDetail";
 import { LoggedJson } from "./Logged";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
+import Withheld from "./ui/Withheld";
 import styles from "./ChangesTable.module.css";
 
 const copy = staffCopy.changes;
@@ -41,25 +42,35 @@ export function changeColumns(airtableTable: string): ListColumn<LoggedChange>[]
 export default function ChangesTable({
   log,
   page,
+  supporters = true,
   airtableTable,
 }: {
   log: ChangesPage;
   page: number;
+  /** Whether they may see entries about supporters; if not, it says they're left out. */
+  supporters?: boolean;
   airtableTable: string;
 }) {
   return (
-    <ListFrame
-      count={copy.total(log.total)}
-      total={log.total}
-      page={page}
-      pages={log.pages}
-      pageSize={log.pageSize}
-      href={(n) => pagePath(PATH, n)}
-      download={(format) => `${PATH}/download?format=${format}`}
-      columns={changeColumns(airtableTable)}
-      rows={log.changes}
-      rowKey={(c) => c.id}
-      empty={copy.none}
-    />
+    <>
+      {!supporters && (
+        <p>
+          <Withheld>{copy.withheld}</Withheld>
+        </p>
+      )}
+      <ListFrame
+        count={copy.total(log.total)}
+        total={log.total}
+        page={page}
+        pages={log.pages}
+        pageSize={log.pageSize}
+        href={(n) => pagePath(PATH, n)}
+        download={(format) => `${PATH}/download?format=${format}`}
+        columns={changeColumns(airtableTable)}
+        rows={log.changes}
+        rowKey={(c) => c.id}
+        empty={copy.none}
+      />
+    </>
   );
 }

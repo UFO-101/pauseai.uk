@@ -16,6 +16,7 @@ import {
   syncPoliticians,
   WEBHOOK_AUTH,
 } from "../steps";
+import { importEmails } from "./staff-steps";
 import { BASE, expect, flowStorageState, madeUpAddress, frame, story, test } from "./fixtures";
 
 // Who sees what: supporter data only with `supporters`, wherever it would
@@ -81,15 +82,30 @@ test("No permissions", async ({ page, request, flowDatabase }) => {
   expect(secrets).toContain("Jane Fixture");
 
   await logIn(page, flowDatabase);
+  await importEmails(page);
+  await page.goto(`${BASE}/staff`);
   await frame(page, "The dashboard");
   story("No staff page they can open shows any supporter's name or email address.");
   const testyId = politicianId(flowDatabase, testy.name);
   const letterId = runSql(flowDatabase, "SELECT id FROM letters")[0];
   const supporterId = runSql(flowDatabase, "SELECT id FROM supporters ORDER BY id")[0];
-  // One of PauseAI's letters, which the politicians sync copied, at its page under its mailing.
+  // One of PauseAI's letters, which Import emails copied, at its page under its mailing.
   const [pauseaiLetter] = runSql(
     flowDatabase,
     "SELECT '/staff/mailings/' || mailing_id || '/letters/' || id FROM letters_from_pauseai ORDER BY id LIMIT 1",
+  );
+  // A one-off email Jane sent her MP, and mail matching nothing: their names and addresses stay hidden too.
+  const [thread] = runSql(
+    flowDatabase,
+    `INSERT INTO one_off_threads (subject, someone_else, latest_at) VALUES ('${sender}', true, now()) RETURNING id`,
+  );
+  runSql(
+    flowDatabase,
+    `INSERT INTO one_off_thread_people (thread_id, notable_person_id) VALUES (${thread}, ${testyId});
+     INSERT INTO one_off_messages (thread_id, account, gmail_message_id, gmail_thread_id, from_address, from_name, addresses, subject, at, from_us, blob_key, size)
+     VALUES (${thread}, 'policy@pauseai.uk', 'leak-1', 't', '${sender}', 'Jane Smith', ARRAY['${sender}'], '${sender}', now(), false, 'fixture/one-off-volunteer.eml.gz', 1);
+     INSERT INTO import_runs (job, started_by, status, result) VALUES ('import-old-letters', 'x', 'ok',
+       '{"dryRun": false, "finished": true, "read": 1, "left": 0, "replies": 0, "autoReplies": 0, "oneOffs": 0, "formTexts": 0, "postmarkTexts": 0, "joined": {}, "added": {}, "notJoined": {}, "unreadable": [], "unmatched": [{"from": "${sender}", "subject": "x"}]}');`,
   );
   // The route list's examples of letters and asks are the fixture database's.
   const routes = [
@@ -98,9 +114,11 @@ test("No permissions", async ({ page, request, flowDatabase }) => {
         route.startsWith("/staff") &&
         !route.startsWith("/staff/login") &&
         !route.includes("/letters/1") &&
-        !/^\/staff\/(asks\/|mailings\/\d+\/letters)/.test(route),
+        !/^\/staff\/(asks\/|mailings\/\d+\/letters|one-off\/\d)/.test(route),
     ),
     "/staff/asks/frontier-ai-letter",
+    "/staff/asks/frontier-ai-letter/edit",
+    `/staff/one-off/${thread}`,
     pauseaiLetter,
     ...IMPORT_JOBS.map(importPath),
     `/staff/politicians/${testyId}`,
@@ -125,9 +143,37 @@ test("No permissions", async ({ page, request, flowDatabase }) => {
   await frame(page, "The MP's page");
 });
 
+test("An admin without Supporters", async ({ page, request, flowDatabase }) => {
+  story("Jane writes to her MP, and her address bounces. An admin who can't see supporters looks at what went out.");
+  await syncPoliticians(request, BASE);
+  const sender = madeUpAddress("Jane Smith", 32);
+  await writeLetter(page, sender);
+  await postBounce(request, sender);
+  await logIn(page, flowDatabase, ["admin"]);
+  const secrets = runSql(
+    flowDatabase,
+    "SELECT name FROM supporter_identity WHERE name <> '' UNION SELECT email FROM supporter_identity",
+  );
+  expect(secrets).toContain(sender);
+  for (const route of ["/staff/sent-emails", "/staff/audit-log", "/staff/audit-log/download?format=json"]) {
+    const body = await (await page.request.get(`${BASE}${route}`)).text();
+    for (const secret of secrets) expect(body, route).not.toContain(secret);
+  }
+
+  story("Sent emails says those to and from supporters aren't shown.");
+  await page.goto(`${BASE}/staff/sent-emails`);
+  await expect(page.getByText(staffCopy.sentEmails.withheld)).toBeVisible();
+  await frame(page, "The sent emails");
+
+  story("The audit log says the same of its entries about supporters.");
+  await page.goto(`${BASE}/staff/audit-log`);
+  await expect(page.getByText(staffCopy.changes.withheld)).toBeVisible();
+  await frame(page, "The audit log");
+});
+
 test("Blocked emails without Supporters", async ({ page, request, flowDatabase }) => {
   story(
-    "Jane writes to an MP whose address bounces her letter. Staff without the Supporters permission can't open Letters to MPs or Supporters' blocked emails.",
+    "Jane writes to an MP whose address bounces her letter. Staff without the Supporters permission can't open her letter, or Supporters' blocked emails.",
   );
   await syncPoliticians(request, BASE);
   const bouncy = TEST_MPS.find((mp) => mp.postcode === "ZZ99ZH")!;
@@ -154,7 +200,7 @@ test("Blocked emails without Supporters", async ({ page, request, flowDatabase }
   expect(await bounce.json()).toEqual({ recorded: true });
 
   await logIn(page, flowDatabase);
-  for (const closed of ["/staff/letters", "/staff/supporters/blocked-emails"]) {
+  for (const closed of ["/staff/campaigns", "/staff/supporters/blocked-emails"]) {
     await page.goto(`${BASE}${closed}`);
     await expect(page).toHaveURL(`${BASE}/staff`);
   }

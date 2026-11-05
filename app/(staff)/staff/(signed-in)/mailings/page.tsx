@@ -5,6 +5,7 @@ import { mailingsPage } from "@/lib/server/mailings";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { newMailing } from "../../mailing-actions";
 import MailingsOverview from "../../_components/MailingsOverview";
+import PageIntro from "../../_components/ui/PageIntro";
 import PageTitle from "../../_components/ui/PageTitle";
 
 export const metadata: Metadata = { title: staffCopy.mailings.title };
@@ -25,6 +26,7 @@ export default async function MailingsPage() {
       >
         {staffCopy.mailings.title}
       </PageTitle>
+      <PageIntro>{staffCopy.mailings.intro}</PageIntro>
       <MailingsOverview {...await mailingsPage()} />
     </>
   );

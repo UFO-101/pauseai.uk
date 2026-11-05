@@ -73,7 +73,11 @@ export const staffCopy = {
     events: "Events",
     import: "Import data",
     changes: "Audit log",
-    letters: "Letters to MPs",
+    campaigns: "Campaigns",
+    oneOff: "One-off emails",
+    sentEmails: "Sent emails",
+    // Beside a page the staff member first saw in the last 3 days.
+    newTag: "new",
     supporterEmails: "Blocked emails",
     mpEmails: "Blocked emails",
     logout: "Log out",
@@ -98,6 +102,9 @@ export const staffCopy = {
     title: "Letter and replies",
     // An imported letter, whose text Airtable didn't keep.
     noText: "Text not available, as sent from Airtable.",
+    // Over the text of a letter that's rebuilt from replies quoting others like it.
+    approximate:
+      "Approximate: rebuilt from replies quoting other letters in this mailing. This isn't what they received, but it was probably much like this.",
     // A supporter's letter, whose text and replies the site doesn't keep.
     supporterNoText: "Text not available, the site does not keep supporters' letters.",
     noReplies: "No replies yet.",
@@ -801,7 +808,7 @@ export const staffCopy = {
   },
   mailings: {
     title: "Mailings",
-    intro: "Emails PauseAI has sent to many notable people at once.",
+    intro: "Emails PauseAI sends to many notable people at once.",
     none: "No mailings yet.",
     // Over the list: how many there are.
     total: (n: number) => `${n} ${n === 1 ? "mailing" : "mailings"}`,
@@ -816,6 +823,12 @@ export const staffCopy = {
     },
     // A mailing copied from Airtable, which kept only who got it.
     imported: "From Airtable",
+    // The chips in an imported mailing's text.
+    importedFields: {
+      greeting: "Greeting",
+      own: "Their own paragraph",
+      colleagues: "How many colleagues",
+    } as Record<string, string>,
     notRecorded: "Not recorded",
     notSent: "Not sent yet",
     // A mailing's own page.
@@ -1119,8 +1132,6 @@ export const staffCopy = {
     // The list of mailings: when a draft was last saved, and how many a draft or one scheduled goes to.
     savedAt: (when: string) => `Saved ${when}`,
     toCount: (n: number) => `to ${n} ${n === 1 ? "person" : "people"}`,
-    // A mailing's box of counts in the list, which opens the mailing, for screen readers.
-    countsLabel: (title: string) => `How “${title}” went`,
     // The bar of how far a mailing sending has got, and once it's sent, how many have answered its ask.
     sendingBar: (n: number, of: number) => `Sending: ${n} of ${of} sent`,
     answeredBar: (n: number, of: number) => `Sent: ✓ ${n} of ${of} answered the ask`,
@@ -1195,13 +1206,44 @@ export const staffCopy = {
     none: "No asks yet.",
     columns: {
       ask: "Title",
-      kind: "Kind",
+      kind: "We ask them to",
       date: "Date",
       // Who asks it: supporters, in a campaign's letter, or PauseAI, in a mailing; or both.
       askedBy: "Asked by",
       answers: "Answers",
+      writtenTo: "Written to",
+      answered: "Answered",
+      how: "How we asked",
     },
     kinds: { letter: "Sign a letter", event: "Attend an event" } as Record<string, string>,
+    // Over a mailing's or campaign's ask, and before it on their lists.
+    askTo: { letter: "Ask to sign", event: "Ask to attend" } as Record<string, string>,
+    noAsk: "No ask",
+    // An ask's own page.
+    page: {
+      asked: "Asked",
+      started: "Started",
+      on: "On",
+      readIt: { letter: "Read it", event: "Find out more" } as Record<string, string>,
+      theLink: { letter: "The letter", event: "The event" } as Record<string, string>,
+      writtenTo: "written to",
+      answered: "answered",
+      howWeAsked: "How we asked",
+      answersTitle: "Answers",
+      showAll: "Show all the answers",
+      none: "No answers yet.",
+      noWay: "No mailing or campaign has put this.",
+      politician: "Politician",
+      answer: "Answer",
+      lastWrittenTo: "Last written to",
+      everyone: "Every politician with this ask →",
+      bar: (answered: number, of: number, kind: string) =>
+        `${answered} of ${of} politicians answered whether they'd ${kind === "letter" ? "sign" : "attend"}`,
+      campaign: "Campaign",
+      mailing: "Mailing",
+      letters: (n: number) => `${n} ${n === 1 ? "letter" : "letters"}`,
+      way: (n: number, word: "campaign" | "mailing") => `${n} ${word}${n === 1 ? "" : "s"}`,
+    },
     askedBy: { supporters: "Supporters", pauseai: "PauseAI", controlai: "ControlAI" },
     noAnswers: "No answers yet",
     // Each answer's count links to the politicians who gave it.
@@ -1519,11 +1561,12 @@ export const staffCopy = {
   // The read every 5 minutes of the connected Gmail accounts for replies to our
   // letters and bounces (lib/server/gmail-reading.ts), on the import page.
   gmailReading: {
-    title: "Replies and bounces from Gmail",
+    oneOffs: (n: number) => `${n} one-off ${n === 1 ? "email" : "emails"} kept.`,
+    title: "Replies, bounces and one-off emails from Gmail",
     intro: {
       before: "Reads the replies to our letters, and their bounces, in each ",
       link: "connected Gmail account",
-      after: ".",
+      after: ". From policy@ and Joseph's, it also imports any threads with politicians as one-off emails.",
     },
     readNow: "Read Gmail now",
     never: "Not read yet.",
@@ -1571,6 +1614,179 @@ export const staffCopy = {
       `${r.read} letters read: ${r.imported} imported, ${r.skipped} spam, invalid or unsent, ${r.alreadyHere} already here, ${r.noPolitician} to a politician not here.`,
   },
   // The one-off import of the meetings for Go to Parliament.
+  campaigns: {
+    title: "Campaigns",
+    intro: "Letters supporters write to politicians, through a form on the site.",
+    none: "No campaigns yet.",
+    fromSupporters: "From supporters",
+    noLetters: "No letters",
+    started: "Started",
+    last: "Last letter",
+    from: "From",
+    to: "To",
+    supporters: (n: number) => `${n} ${n === 1 ? "supporter" : "supporters"}`,
+    politicians: (n: number) => `${n} ${n === 1 ? "politician" : "politicians"}`,
+    lettersTo: (letters: number, politicians: number) =>
+      `${letters} ${letters === 1 ? "letter" : "letters"} to ${politicians} ${politicians === 1 ? "politician" : "politicians"}`,
+    theLetter: "The letter",
+    publicPage: "Public page",
+    seePublicPage: "See it",
+    version: "Version of the letter",
+    versionLine: (from: string | null, n: number) =>
+      `${from ? `From ${from}: ` : ""}${n} ${n === 1 ? "letter" : "letters"}`,
+    // Over a campaign's letter, as a mailing's says who it's to.
+    fromEach: "Each supporter",
+    lettersTitle: "Letters",
+    // Over the letters one of the counts has chosen, and the way back to them all.
+    tabs: {
+      sent: "Letters that arrived",
+      failed: "Letters that failed",
+      replied: "Letters with a reply",
+      answered: "Letters to those who answered",
+      changed: "Letters with the text changed",
+    },
+    showAll: "Show all the letters",
+    // Under how much of their letters was their own, leading to those letters.
+    changedLink: (n: number) => `${n} changed the wording`,
+    columns: { politician: "Politician", from: "From", ownWords: "Own words", status: "Status" },
+    fields: {
+      salutation: "Salutation",
+      constituency: "Constituency",
+      name: "Name",
+      postcode: "Postcode",
+    } as Record<string, string>,
+    noText: "We've lost the text.",
+  },
+  sentEmails: {
+    // Over the list, for an admin without the supporters permission.
+    withheld: "Emails to and from supporters are not shown, as you don't have the supporters permission.",
+    search: "Address or subject",
+    total: (n: number) => `${n} ${n === 1 ? "email" : "emails"}`,
+    none: "No emails match.",
+    columns: {
+      when: "When",
+      what: "What",
+      to: "To",
+      from: "From",
+      backend: "Backend",
+      subject: "Subject",
+      outcome: "Outcome",
+      links: "Links",
+    },
+    purposes: {
+      letter: "Letter",
+      "letter-copy": "Supporter's copy",
+      relay: "Message relayed",
+      "supporter-notice": "Notice to supporter",
+      "office-notice": "Notice to MP's office",
+      "forwarded-reply": "Forwarded reply",
+      "staff-login": "Staff sign-in",
+      "staff-alert": "Staff alert",
+      "staff-report": "Staff report",
+      mailing: "Mailing",
+      "mailing-test": "Mailing test",
+    } as Record<string, string>,
+    backends: { postmark: "Postmark", gmail: "Gmail" } as Record<string, string>,
+    outcomes: {
+      sent: "Sent",
+      refused: "Refused",
+      failed: "Failed",
+      bounced: "Bounced",
+      complaint: "Spam complaint",
+    } as Record<string, string>,
+    imported: "Imported",
+    letterLink: "Letter →",
+    campaignLink: "Campaign →",
+    mailingLink: "Mailing →",
+    filters: {
+      purpose: "What",
+      outcome: "Outcome",
+      backend: "Backend",
+      links: { letter: "Has a letter", campaign: "Has a campaign", mailing: "Has a mailing" },
+    },
+  },
+  oldLetters: {
+    title: "Old letters and threads with politicians",
+    intro: {
+      before:
+        "Reads old emails to politicians from Joseph's and policy@'s mail. Matches them to campaigns or mailings, or marks them as ",
+      link: "one-off emails",
+      after: ". Each run reads for up to 15 minutes and carries on from where the last stopped.",
+    },
+    importNow: "Import old letters",
+    dryRun: "Dry run: change nothing, and report what happen",
+    never: "Not imported yet.",
+    // Each mailing the import makes or fills, by its key in lib/old-letters.ts.
+    mailingTitles: {
+      "deepmind-30-june": "DeepMind: by 30 June",
+      "deepmind-ten": "DeepMind: ten of your colleagues",
+      "deepmind-25": "DeepMind: join 25 of your colleagues",
+      "deepmind-40": "DeepMind: join 40 of your colleagues",
+      "deepmind-august": "DeepMind: August, from the personal Gmail",
+      "deepmind-others": "DeepMind letter: the others",
+      "documentary-signatories": "Documentary: invitation to signatories",
+      "documentary-reminder": "Documentary: reminder to signatories",
+      "russell-speak": "Stuart Russell panel: invitation to speak",
+      "russell-cohost": "Stuart Russell panel: invitation to co-host",
+      "conference-parliament": "Conference in Parliament",
+      "liability-own": "Liability letter: Joseph's own",
+      "frontier-own": "Frontier AI letter: Joseph's own",
+    } as Record<string, string>,
+    result: (r: {
+      dryRun: boolean;
+      finished: boolean;
+      read: number;
+      left: number;
+      replies: number;
+      autoReplies: number;
+      oneOffs: number;
+      formTexts: number;
+      postmarkTexts: number;
+    }) =>
+      `${r.dryRun ? "Dry run: would have read" : "Read"} ${r.read} messages, ${r.left} left${r.finished ? ", all done" : ""}: ${r.formTexts} form letters' and ${r.postmarkTexts} Postmark letters' text, ${r.replies} replies, ${r.autoReplies} automatic replies and ${r.oneOffs} one-off emails.`,
+    stoppedByGmail: "It stopped early because Gmail refused a request. Press again later.",
+    unreadable: (n: number) => `Gmail wouldn't give ${n} ${n === 1 ? "message" : "messages"}.`,
+    joined: "Joined to their sent emails",
+    added: "Added from sent emails",
+    notJoined: "No sent email found",
+    unmatched: "Mail matching nothing, in policy@ and the group's archive",
+    matchedNothing: (n: number) => `${n} messages matched nothing.`,
+    onlyWithSupporters: "Only staff who see supporters can see which.",
+  },
+  oneOff: {
+    // The page's title, and a thread's way back.
+    title: "One-off emails",
+    intro: (inbox: string) => `Threads copied to ${inbox} that aren't part of a mailing or a campaign.`,
+    threads: (n: number) => `${n} ${n === 1 ? "thread" : "threads"}`,
+    none: "No one-off emails yet.",
+    columns: {
+      when: "Last message",
+      subject: "Subject",
+      messages: "Messages",
+      answered: "Answered",
+      politician: "Politician",
+      participants: "Participants",
+      mailbox: "Mailbox",
+    },
+    answers: { yes: "Yes", no: "No" },
+    hidden: "Only staff who see supporters can read this.",
+    noPolitician: "Parliament address",
+    noSubject: "(no subject)",
+    thread: "The thread",
+    unreadable: "This message couldn't be read.",
+    // On a politician's and a supporter's page.
+    onPageTitle: "One-off emails",
+    // On your own page, under your Gmail.
+    // Around a link to the one-off emails, which says their title.
+    kept: { before: "All threads with politicians in this specific mailbox are kept, and show under", after: "." },
+    // In any other mailbox, around a link to the mailings.
+    notKept: { before: "Replies to threads sent like this will be kept, and show under", after: "." },
+    unmatchedAlert: {
+      subject: (n: number) => `${n} ${n === 1 ? "email" : "emails"} in policy@ matched no politician`,
+      body: (lines: string[], link: string) =>
+        `Some emails arrived in the policy@ inbox and weren't kept, because they didn't match a politician. Work out who they're from, and widen the rule or add exceptions.\n\n${lines.join("\n")}\n\n${link}`,
+    },
+  },
   goToParliament: {
     title: "Go to Parliament event, 20 October 2026",
     intro: {
@@ -1688,6 +1904,8 @@ export const staffCopy = {
     luma: "Luma",
     gmail: "Gmail",
     nightly: "Nightly",
+    // On a job's page, while a press of it is still running.
+    running: (who: string, when: string) => `Running, started by ${who} at ${when}. Can only run one at a time.`,
     frequent: "Every 5 minutes",
     hourly: "Hourly",
     oneOff: "One-off",
@@ -1887,6 +2105,8 @@ export const staffCopy = {
       "Only write notes you'd be happy for them to read (as they can via GDPR). Avoid writing about health, beliefs or private life.",
   },
   changes: {
+    // Over the list, for an admin without the supporters permission.
+    withheld: "Entries about supporters are not shown, as you don't have the supporters permission.",
     title: "Audit log",
     // Over the list: how many entries there are.
     total: (n: number) => `${n} ${n === 1 ? "entry" : "entries"}`,
@@ -1957,4 +2177,5 @@ export const jobTitles: Record<ImportJob, string> = {
   "import-luma": staffCopy.luma.title,
   "import-members": staffCopy.members.title,
   "read-gmail": staffCopy.gmailReading.title,
+  "import-old-letters": staffCopy.oldLetters.title,
 };

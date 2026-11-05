@@ -21,8 +21,8 @@ export default function ThreadEmail({
   children,
 }: {
   from: ReactNode;
-  to: string;
-  cc?: string | null;
+  to: ReactNode;
+  cc?: ReactNode;
   at: string | null;
   subject: string;
   action?: ReactNode;

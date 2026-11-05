@@ -12,6 +12,8 @@ import {
   examplePolitician,
   examplePoliticiansPage,
 } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
+import AskView from "@/app/(staff)/staff/_components/AskView";
+import { exampleAskPage } from "@/app/(staff)/staff/_components/CampaignPages.examples";
 import AsksTable from "@/app/(staff)/staff/_components/AsksTable";
 import { AskLead, AskPreview, AskTitle } from "@/app/(staff)/staff/_components/AskLine";
 import type { Group } from "../_components/types";
@@ -333,17 +335,11 @@ export const staffPoliticians: Group = {
       file: "app/(staff)/staff/_components/AskLine.tsx",
       variants: [
         {
-          label: "Linked to another site, to a page of ours, and not linked",
+          label: "Leading to its page",
           render: () => (
             <StaffPage as="div">
               <p>
                 <AskTitle ask={exampleAsks[0]} />
-              </p>
-              <p>
-                <AskTitle ask={{ ...exampleAsks[2], url: "/campaigns/dear-sir-demis-2025" }} />
-              </p>
-              <p>
-                <AskTitle ask={exampleAsks[1]} />
               </p>
             </StaffPage>
           ),
@@ -383,6 +379,40 @@ export const staffPoliticians: Group = {
           render: () => (
             <StaffPage as="div">
               <AskFormExample ask="fixed" />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "AskView",
+      file: "app/(staff)/staff/_components/AskView.tsx",
+      variants: [
+        {
+          label: "A letter, asked by a campaign and a mailing, answered",
+          render: () => (
+            <StaffPage as="div">
+              <AskView ask={exampleAskPage} answer="" />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "An event the code names, with no answers and nothing that put it",
+          render: () => (
+            <StaffPage as="div">
+              <AskView
+                ask={{
+                  ...exampleAskPage,
+                  kind: "event",
+                  url: "/events",
+                  fixed: true,
+                  counts: {},
+                  writtenTo: 0,
+                  ways: [],
+                  answers: [],
+                }}
+                answer=""
+              />
             </StaffPage>
           ),
         },

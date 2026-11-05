@@ -2,6 +2,7 @@ import { Fragment, type ReactNode } from "react";
 import { site } from "@/lib/content/site";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { CONTROLAI_LETTER_PAGE } from "@/lib/controlai-letter";
+import type { JobPress } from "@/lib/server/import-runs";
 import {
   type AnyImportRun,
   IMPORT_JOBS,
@@ -42,6 +43,7 @@ const SOURCES: Record<ImportJob, ImportSource> = {
   "import-controlai": "web",
   "import-members": "airtable",
   "read-gmail": "gmail",
+  "import-old-letters": "gmail",
 };
 
 /** The check that changes nothing, said so in a lozenge after its name. */
@@ -114,6 +116,12 @@ const ABOUT: Record<
     href: "/staff/me",
     button: staffCopy.gmailReading.readNow,
     none: staffCopy.gmailReading.never,
+  },
+  "import-old-letters": {
+    intro: staffCopy.oldLetters.intro,
+    href: "/staff/one-off",
+    button: staffCopy.oldLetters.importNow,
+    none: staffCopy.oldLetters.never,
   },
 };
 
@@ -198,17 +206,23 @@ export function ImportOverview({
 export function ImportJobPage({
   job,
   runs,
+  press,
   run,
   decide,
   airtableTable,
+  people = false,
 }: {
   job: ImportJob;
   runs: AnyImportRun[];
+  /** A press of it that's still running, which a second press won't add to. */
+  press?: JobPress;
   /** The Server Action that runs the job now. */
-  run: () => void | Promise<void>;
+  run: (form: FormData) => void | Promise<void>;
   /** Applies or discards a held politician sync. */
   decide: Decide;
   airtableTable: string;
+  /** Whether they may see who mail that matched nothing is from. */
+  people?: boolean;
 }): ReactNode {
   return (
     <>
@@ -224,8 +238,13 @@ export function ImportJobPage({
       <p>
         <Intro job={job} airtableTable={airtableTable} />
       </p>
-      <JobActions action={run} label={ABOUT[job].button} />
-      <RunList runs={runs} none={ABOUT[job].none} decide={decide} />
+      {press && <Strip tone="amber">{words.running(press.startedBy, staffTime(press.startedAt))}</Strip>}
+      <JobActions
+        action={run}
+        label={ABOUT[job].button}
+        tick={job === "import-old-letters" ? { name: "dryRun", label: staffCopy.oldLetters.dryRun } : undefined}
+      />
+      <RunList runs={runs} none={ABOUT[job].none} decide={decide} people={people} />
     </>
   );
 }

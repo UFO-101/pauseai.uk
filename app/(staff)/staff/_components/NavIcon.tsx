@@ -18,6 +18,10 @@ const BLOCKED = (
 const PATHS: Record<StaffPageId | "home" | "me" | "logout", ReactNode> = {
   // A house.
   home: <path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-5h-6v5H5a1 1 0 0 1-1-1z" />,
+  // A speech bubble.
+  oneOff: <path d="M4 5h16v11H9l-5 4z" />,
+  // A paper plane.
+  sentEmails: <path d="M21 3 3 10.5l7 2.5 2.5 7zM10 13l5-4" />,
   // Two people.
   supporters: (
     <>
@@ -26,7 +30,7 @@ const PATHS: Record<StaffPageId | "home" | "me" | "logout", ReactNode> = {
     </>
   ),
   // A pen writing on a page.
-  letters: (
+  campaigns: (
     <>
       <path d="M13 4H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6" />
       <path d="M17.5 3.5l3 3L13 14l-3.5.5.5-3.5z" />

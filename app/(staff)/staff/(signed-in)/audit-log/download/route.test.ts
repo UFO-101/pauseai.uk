@@ -15,11 +15,19 @@ describeWithDatabase("GET /staff/audit-log/download", () => {
   });
   afterEach(() => vi.unstubAllEnvs());
 
-  it("gives the whole log, its details as logged, to admins", async () => {
+  it("gives the whole log, its details as logged, to admins who see supporters", async () => {
+    await logChange("jo@pauseai.uk", "erase supporter", { id: 9 });
+    const rows = await (
+      await downloadAs(GET, "https://pauseai.uk/staff/audit-log/download?format=json", ["admin", "supporters"])
+    ).json();
+    expect(rows).toContainEqual(expect.objectContaining({ action: "erase supporter", json: '{"id":9}' }));
+  });
+
+  it("leaves out entries about supporters for an admin who doesn't", async () => {
     await logChange("jo@pauseai.uk", "erase supporter", { id: 9 });
     const rows = await (
       await downloadAs(GET, "https://pauseai.uk/staff/audit-log/download?format=json", ["admin"])
     ).json();
-    expect(rows).toContainEqual(expect.objectContaining({ action: "erase supporter", json: '{"id":9}' }));
+    expect(rows).not.toContainEqual(expect.objectContaining({ action: "erase supporter" }));
   });
 });

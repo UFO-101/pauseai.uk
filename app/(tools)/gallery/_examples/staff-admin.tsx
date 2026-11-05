@@ -1,3 +1,5 @@
+import SentEmails from "@/app/(staff)/staff/_components/SentEmails";
+import { exampleOldLettersResult, exampleSentEmails } from "@/app/(staff)/staff/_components/CampaignPages.examples";
 // The staff interface's dashboard, imports, audit log, accounts, login and
 // Gmail, on fake runs and changes.
 // Their links go to /staff pages, which send anyone without a session to the
@@ -178,6 +180,27 @@ const RUNS: Record<ImportJob, Variant> = {
       </StaffPage>
     ),
   },
+  "import-old-letters": {
+    label:
+      "A press of the import of old letters, with more to read; a dry run that Gmail stopped; hiding who mail is from",
+    render: () => (
+      <StaffPage as="div">
+        <Run
+          run={exampleRun("import-old-letters", exampleOldLettersResult, { startedBy: "jo@pauseai.uk" })}
+          open
+          people
+        />
+        <Run
+          run={exampleRun(
+            "import-old-letters",
+            { ...exampleOldLettersResult, dryRun: true, stoppedBy: "gmail" },
+            { id: 2, startedBy: "jo@pauseai.uk" },
+          )}
+          open
+        />
+      </StaffPage>
+    ),
+  },
   "sync-emails": {
     label: "PauseAI's emails, some held back",
     render: () => (
@@ -192,6 +215,27 @@ export const staffAdmin: Group = {
   id: "staff-admin",
   title: "The staff interface: admin and accounts",
   examples: [
+    {
+      name: "SentEmails",
+      file: "app/(staff)/staff/_components/SentEmails.tsx",
+      variants: [
+        {
+          label: "A letter, one bounced, an imported mailing and a sign-in",
+          render: () => (
+            <StaffPage as="div">
+              <SentEmails
+                emails={exampleSentEmails}
+                total={4}
+                pages={1}
+                page={1}
+                pageSize={100}
+                search={{ q: "", purpose: [], outcome: [], backend: [], link: [], sort: "", dir: "", page: "" }}
+              />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
     {
       name: "PermissionTiles",
       file: "app/(staff)/staff/_components/PermissionTiles.tsx",

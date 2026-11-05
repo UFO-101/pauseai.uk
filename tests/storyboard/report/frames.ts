@@ -32,6 +32,8 @@ export const SECTIONS: { id: string; name: string; part: (typeof PARTS)[number] 
   { id: "politicians", name: "Politicians", part: "Staff pages" },
   { id: "mailings", name: "Mailings", part: "Staff pages" },
   { id: "supporters", name: "Supporters", part: "Staff pages" },
+  { id: "staff-campaigns", name: "Campaigns, asks and sent emails", part: "Staff pages" },
+  { id: "old-letters", name: "Old letters and one-off emails", part: "Staff pages" },
   { id: "letters", name: "Letters and bounces", part: "Staff pages" },
   { id: "replies", name: "Replies to letters", part: "Staff pages" },
   { id: "events", name: "Events and their owners", part: "Staff pages" },

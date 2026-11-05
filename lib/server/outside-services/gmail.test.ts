@@ -11,6 +11,9 @@ import {
   gmailAccessToken,
   gmailConsentUrl,
   GmailError,
+  gmailFullMessage,
+  gmailThreadMessageIds,
+  searchAllGmail,
   gmailHistory,
   gmailMessageHeaders,
   gmailProfile,
@@ -145,6 +148,64 @@ describe("tokens", () => {
 });
 
 describe("the Gmail API", () => {
+  it("gives a message's text parts and its attachments' names, without their content", async () => {
+    const text = (value: string) => ({ data: Buffer.from(value).toString("base64url") });
+    server.use(
+      http.get(`${API}/messages/m1`, () =>
+        HttpResponse.json({
+          id: "m1",
+          threadId: "t1",
+          internalDate: "5",
+          payload: {
+            mimeType: "multipart/mixed",
+            headers: [{ name: "Subject", value: "Hello" }],
+            parts: [
+              { mimeType: "text/plain", body: text("Hi") },
+              { mimeType: "text/html", body: text("<b>Hi</b>") },
+              { mimeType: "application/pdf", filename: "a.pdf", body: {} },
+              { mimeType: "image/png" },
+            ],
+          },
+        }),
+      ),
+      http.get(`${API}/messages/m2`, () => HttpResponse.json({ id: "m2", threadId: "t2", internalDate: "6" })),
+    );
+    const message = await gmailFullMessage("tok", "m1");
+    expect(message).toMatchObject({ id: "m1", plain: "Hi", html: "<b>Hi</b>", files: ["a.pdf"], labelIds: [] });
+    expect(message.headers.get("subject")).toBe("Hello");
+    expect(await gmailFullMessage("tok", "m2")).toMatchObject({ plain: "", html: "", files: [] });
+  });
+
+  it("lists every message a search finds, oldest first, page by page, waiting its turn for each", async () => {
+    server.use(
+      http.get(`${API}/messages`, ({ request }) => {
+        const token = new URL(request.url).searchParams.get("pageToken");
+        return HttpResponse.json(
+          token
+            ? { messages: [{ id: "b", threadId: "t" }] }
+            : { messages: [{ id: "c", threadId: "t" }], nextPageToken: "next" },
+        );
+      }),
+    );
+    let turns = 0;
+    const found = await searchAllGmail("tok", "x", async () => {
+      turns++;
+    });
+    expect(found.map((m) => m.id)).toEqual(["b", "c"]);
+    expect(turns).toBe(2);
+    server.use(http.get(`${API}/messages`, () => HttpResponse.json({})));
+    expect(await searchAllGmail("tok", "x")).toEqual([]);
+  });
+
+  it("lists a thread's messages", async () => {
+    server.use(
+      http.get(`${API}/threads/t1`, () => HttpResponse.json({ messages: [{ id: "a" }, { id: "b" }] })),
+      http.get(`${API}/threads/t2`, () => HttpResponse.json({})),
+    );
+    expect(await gmailThreadMessageIds("tok", "t1")).toEqual(["a", "b"]);
+    expect(await gmailThreadMessageIds("tok", "t2")).toEqual([]);
+  });
+
   it("reads the account's profile with its access token", async () => {
     expect(await gmailProfile("fixture-access:jo@pauseai.uk")).toEqual({
       emailAddress: "jo@pauseai.uk",

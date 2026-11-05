@@ -1,4 +1,5 @@
 import { requireStaff } from "@/lib/server/staff-auth";
+import { newPagesFor } from "@/lib/server/staff-nav-seen";
 import StaffNav from "../_components/StaffNav";
 import StaffPage from "../_components/ui/StaffPage";
 
@@ -11,5 +12,6 @@ import StaffPage from "../_components/ui/StaffPage";
  */
 export default async function SignedInLayout({ children }: { children: React.ReactNode }) {
   const { email, permissions } = await requireStaff();
-  return <StaffPage nav={<StaffNav email={email} permissions={permissions} />}>{children}</StaffPage>;
+  const fresh = await newPagesFor(email, permissions);
+  return <StaffPage nav={<StaffNav email={email} permissions={permissions} fresh={fresh} />}>{children}</StaffPage>;
 }

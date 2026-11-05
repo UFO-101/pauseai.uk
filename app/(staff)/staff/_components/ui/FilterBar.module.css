@@ -1,11 +1,15 @@
 /* A list's filters: the search, then the chips, + Filter and Clear filters,
-   in a row that wraps, lined up along their bottoms. */
+   in a row that wraps, lined up along their bottoms, on a rule. What's over a
+   list draws the rule between them, as Tabs does, and a list draws none of its
+   own, so two can't meet. */
 .bar {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
   align-items: end;
-  margin-block: var(--space-4);
+  margin-block: var(--space-4) var(--space-2);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border);
 }
 
 /* The search box and its button, side by side. */

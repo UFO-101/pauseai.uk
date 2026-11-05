@@ -32,6 +32,8 @@ type Props = {
   permissions?: Permission[];
   /** The page to mark, as the component gallery shows it; otherwise the one the URL is (staffPageAt). */
   current?: StaffPage;
+  /** The pages they first saw in the last few days, which show as new. */
+  fresh?: StaffPageId[];
 };
 
 /**
@@ -44,12 +46,13 @@ type Props = {
  * sidebar to a rail of the icons, the sections a rule apart, each page's
  * name showing beside its icon on hover. Under Log out, with
  * more than one session open, a faint link to them. Each page shows
- * only to those with its permission (lib/staff-sections.ts). The pause symbol and name at the top are the
+ * only to those with its permission (lib/staff-sections.ts); one they first
+ * saw in the last few days has a "new" tag, a dot on the folded rail. The pause symbol and name at the top are the
  * way to the home page. It's drawn once, by the signed-in pages' layout, and
  * stays as they change, marking the page the URL is; the phone's dropdown
  * closes when it does.
  */
-export default function StaffNav({ email, permissions = [], current: shown }: Props) {
+export default function StaffNav({ email, permissions = [], current: shown, fresh = [] }: Props) {
   const path = usePathname();
   const current = shown ?? staffPageAt(path);
   // The pause symbol and the name: the way home, except at home.
@@ -90,7 +93,11 @@ export default function StaffNav({ email, permissions = [], current: shown }: Pr
           <li key={page.id}>
             <StaffLink href={page.href} className={styles.page} aria-current={page.id === current ? "page" : undefined}>
               <NavIcon id={page.id} />
-              <span className={styles.label}>{staffCopy.nav[page.id]}</span>
+              <span className={styles.label}>
+                {staffCopy.nav[page.id]}
+                {fresh.includes(page.id) && <span className={styles.new}>{staffCopy.nav.newTag}</span>}
+              </span>
+              {fresh.includes(page.id) && <span className={styles.newDot} aria-hidden="true" />}
             </StaffLink>
           </li>
         ))}
