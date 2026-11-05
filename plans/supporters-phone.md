@@ -152,18 +152,15 @@ An easy Stop button means people stop rather than block us.
    ([overview](https://developers.facebook.com/documentation/business-messaging/whatsapp/marketing-messages/overview.md)).
    Meta charges for each delivered message, by category
    ([rate card](https://whatsappbusiness.com/products/platform-pricing/)).
-2. Templates. WhatsApp only sends approved templates, so a text's
-   words are either a template Meta has already approved, picked in
-   the writer from those we have, or new words. Scheduling a text on
-   new words sends them for approval and holds the text until Meta
-   decides, usually within a day: its page and the list say it's
-   scheduled and waiting. Approved, it goes at the time chosen, or at
-   the next hourly run if that has passed. Rejected, it's a draft
-   again, and the writer is emailed, as they are if it's still
-   waiting an hour before it's due. Meta's reasons are codes, so the
+2. Templates. WhatsApp only sends approved templates, so a text uses
+   one of the WhatsApp approved templates, picked in the writer, whose
+   words show but can't be edited, or a new one, opened by the New
+   template button. Scheduling a text on a new template sends it for
+   approval and holds the text until Meta decides, usually within a
+   day: its page and the list say it's scheduled and waiting. What
+   happens then is under "Scheduling". Meta's reasons are codes, so the
    page says the code's meaning in plain words, and what to do when
-   Meta recommends something. An approved template's words can't be
-   changed; choosing New words starts again. The site submits new
+   Meta recommends something. The site submits new
    words to Meta as a template: the `marketing`
    category (a utility template must be non-promotional and about the
    person's own booking or account, and Meta approves anything else as
@@ -188,8 +185,10 @@ An easy Stop button means people stop rather than block us.
    A template can be reused: a mailing can pick an approved one and fill
    its parameters, with no new review, which suits a weekly mailing
    whose fixed words rarely change and whose events are a parameter.
-   An approved template's words can be edited once a day and ten times
-   in thirty days, each edit reviewed again
+   A send names the template, not its ID, and an edited template is
+   reviewed again and can't be sent until approved, so the site never
+   edits an approved template: new fixed words make a new template, and
+   the old one stays approved until the new one is
    ([management](https://developers.facebook.com/documentation/business-messaging/whatsapp/templates/template-management)).
    An account can create 100 templates an hour and hold 250, or 6,000
    once verified
@@ -211,6 +210,35 @@ An easy Stop button means people stop rather than block us.
 4. Staff can reply freely within 24 hours of the person's last message,
    at no charge, and after that only with a template
    ([pricing](https://developers.facebook.com/docs/whatsapp/pricing)).
+
+### Scheduling
+
+Scheduling a text mailing submits its template, so staff write, pick a
+time and leave it, rather than coming back once Meta has decided. From
+then on the site sends by itself for as long as the mailing is
+*useful*: until a time the writer sets in When, beside the day and
+hour, which starts as three days after the scheduled time, or for a
+`march-day` text midnight on the day. The writer and the scheduled
+page show it next to the scheduled time, as "Sends Thu 12 Nov at
+09:18, until Sun 15 Nov at 09:18", and say how many days the mailing
+takes at the account's daily limit when it's more than one. While it's
+useful, every copy that can go, goes:
+
+- at the scheduled time, if the template is approved by then;
+- as soon as approval arrives, if it comes later;
+- the next day, for copies past the account's daily limit, and for
+  people at WhatsApp's own limit (131049), which asks for a day's wait.
+
+When the time runs out with copies unsent, the mailing stops, as one
+stopped by hand does: the unsent copies are cancelled and listed under
+Stopped with why, and the person who scheduled it gets an email saying
+how many went and how many didn't. A template rejected, paused or
+disabled before the time runs out stops the mailing the same way, at
+once, with Meta's reason in plain words. Nothing is ever sent after a
+mailing has stopped. A stopped mailing's page offers to schedule it
+again to those it never reached, a new mailing whose filter is "not
+sent this mailing", so fixing the words or giving it more time
+doesn't text again the people it did reach.
 
 ## 3. Optional: an SMS backend
 
