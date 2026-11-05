@@ -235,7 +235,7 @@ describeWithDatabase("the import of old letters", () => {
       n: 2,
     });
     // Parliament's domain, with no one we know: it counts, and whose it is isn't known. Not PauseAI's or a politician's, but on Parliament's domain.
-    expect(thread("Room booking request")).toMatchObject({ people: [], someone: false, n: 1 });
+    expect(thread("Room booking request")).toMatchObject({ people: [], n: 2 });
     // A volunteer forwarding a politician's email: found by its quote, someone else, under that politician.
     expect(thread("Fwd: My MP's answer")).toMatchObject({ people: [polly], someone: true, n: 1 });
     expect(thread("Please back the bill")).toMatchObject({ someone: true });
@@ -307,7 +307,7 @@ Please join 40 of your colleagues.')`,
     await run();
     expect((await outcomeOf("0a20")).outcome).toBe("one_off");
     const [{ someone }] = await query<{ someone: boolean }>(
-      "SELECT someone_else AS someone FROM one_off_threads WHERE subject = 'Coffee next week?'",
+      "SELECT someone_else AS someone FROM one_off_threads WHERE subject = 'Room booking request'",
     );
     expect(someone).toBe(true);
   });

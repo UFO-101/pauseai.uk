@@ -37,7 +37,6 @@ export function isPersonStatus(value: string): value is PersonStatus {
   return (PERSON_STATUSES as readonly string[]).includes(value);
 }
 
-export { COUNTRIES } from "@/lib/politician-filters";
 export type { Country, EmailState, PoliticianFlag } from "@/lib/politician-filters";
 
 export type StatusRecord = {

@@ -41,6 +41,7 @@ describeWithDatabase("asks and campaigns", () => {
     expect(await askPageData("no-such-ask")).toBeUndefined();
     await addAsk({ title: "Ours", kind: "letter", date: null, url: null, askedBy: [] }, "jo@pauseai.uk");
     expect((await askPageData("ours"))!.fixed).toBe(false);
+    await deleteAsk("ours", "jo@pauseai.uk");
   });
 
   it("lists every ask, newest first, those without a date last", async () => {
