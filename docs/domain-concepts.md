@@ -461,7 +461,7 @@ Where they come from:
   into `luma_guests` (phone, a postcode answer, `utm_source`; never Luma's
   invited-only rows), each of our own events' hosts into
   `luma_event_hosts` (from Luma's details of the event, as its list has no
-  hosts: every past event's read once, and each still to come every run until
+  hosts: every past event's read once, and each still to come every hour until
   its day is over) and every Luma user, guest, host or contact, into
   `luma_people`, with when they joined the calendar as a contact and when
   a read of the contacts last listed them. Luma's own IDs are the keys, and

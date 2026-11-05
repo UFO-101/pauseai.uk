@@ -380,7 +380,7 @@ describeWithDatabase("importLuma", () => {
     expect((await query("SELECT user_id FROM luma_people")).map((p) => p.user_id)).toEqual(["usr-2"]);
   });
 
-  it("reads our events' hosts when due: never read, or still to come and not read in the last run; still to come first, then never read, newest first, failed last", async () => {
+  it("reads our events' hosts when due: never read, or still to come and not read in the last hour; still to come first, then never read, newest first, failed last", async () => {
     const luma = fakeLuma({
       events: [
         event("evt-soon", days(1)),
@@ -406,7 +406,7 @@ describeWithDatabase("importLuma", () => {
         [interval, ids],
       );
     await hostsRead("2 hours", ["evt-soon", "evt-later", "evt-past-read", "evt-gone"]);
-    await hostsRead("2 minutes", ["evt-recent"]);
+    await hostsRead("30 minutes", ["evt-recent"]);
     await hostsRead(null, ["evt-past-new", "evt-past-old"]);
     // Taken off the calendar.
     luma.events = luma.events.filter((e) => e.id !== "evt-gone");

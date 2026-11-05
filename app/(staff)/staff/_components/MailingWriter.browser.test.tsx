@@ -565,7 +565,7 @@ describe("MailingWriter", () => {
 
   it("adds an ask on the asks page, saving first, and coming back to the draft", async () => {
     await renderWriter({ draft: exampleWrittenMailing });
-    const link = page.getByRole("link", { name: copy.newAsk.link });
+    const link = page.getByRole("link", { name: copy.newAsk });
     await link.click();
     await expect.poll(() => leavePage.mock.calls.length, WAIT).toBe(1);
     // Marked for the line along the top, till the asks page comes.

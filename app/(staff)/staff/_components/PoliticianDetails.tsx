@@ -1,7 +1,7 @@
 import StaffLink from "./ui/StaffLink";
 import type { ReactNode } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { asksDone } from "@/lib/asks";
+import { asksAgreed } from "@/lib/asks";
 import type { Ask } from "@/lib/server/asks";
 import { AskTitle } from "./AskLine";
 import { PoliticianAsks } from "./AskRow";
@@ -210,7 +210,7 @@ function Detail({ change, asks }: { change: PoliticianChange; asks: Ask[] }) {
  * top right, quietly, where their record came from, an Airtable MP's linked
  * to it there; then their party, whether they're in office, their nation
  * and how to write to them; and how many letters supporters wrote them,
- * leading to the history, and asks they did (asksDone), to the asks.
+ * leading to the history, and asks they agreed to (asksAgreed), to the asks.
  */
 function PoliticianBand({
   politician,
@@ -263,8 +263,8 @@ function PoliticianBand({
             { key: "letters", n: letters, label: copy.band.lettersCounted(letters) },
             {
               key: "asks",
-              n: asksDone(politician.statuses),
-              label: copy.band.asksDone(asksDone(politician.statuses)),
+              n: asksAgreed(politician.statuses),
+              label: copy.band.asksAgreed(asksAgreed(politician.statuses)),
             },
           ]}
         />

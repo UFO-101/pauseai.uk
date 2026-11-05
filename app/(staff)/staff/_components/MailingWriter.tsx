@@ -410,7 +410,6 @@ export default function MailingWriter({
               ))}
             </Select>
             <Hint>
-              {copy.newAsk.before}
               <a
                 href={`/staff/asks/new?${new URLSearchParams({ back: writerPath })}`}
                 data-pending={asking || undefined}
@@ -421,9 +420,8 @@ export default function MailingWriter({
                   leavePage(`/staff/asks/new?${new URLSearchParams({ back: writerPath })}`);
                 }}
               >
-                {copy.newAsk.link}
+                {copy.newAsk}
               </a>
-              {copy.newAsk.after}
             </Hint>
           </div>
           <div className={styles.letter}>

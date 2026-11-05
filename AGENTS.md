@@ -26,6 +26,7 @@ npx stylelint <css files>
 Then everything CI runs (`.github/workflows/ci.yml`), which takes minutes. The branch isn't done until every command exits 0:
 
 ```bash
+npm run typecheck                 # types, on their own, as `next build` checks them too
 npm test                          # both Vitest projects, and the 100% per-file coverage gate
 npm run lint                      # ESLint, failing on warnings too
 npm run lint:css                  # Stylelint

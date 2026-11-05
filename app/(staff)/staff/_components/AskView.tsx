@@ -1,7 +1,7 @@
 import { buttonClass } from "@/components/ui/Button";
 import { Muted } from "@/components/ui/Text";
 import Tag, { type TagTone } from "@/components/ui/Tag";
-import { ASK_STATUSES } from "@/lib/asks";
+import { AGREED_STATUSES, ASK_STATUSES } from "@/lib/asks";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { filtersPath, pageParam } from "@/lib/staff-search";
 import type { AskAnswer, AskPageData, AskWay } from "@/lib/server/asks";
@@ -83,6 +83,9 @@ export default function AskView({ ask, answer }: { ask: AskPageData; answer: str
   const path = `/staff/asks/${ask.slug}`;
   const answers = ASK_STATUSES[ask.kind].filter((status) => ask.counts[status]);
   const answered = answeredOf(ask);
+  // Everyone asked: written to, or with an answer recorded however they were asked.
+  const asked = answered + ask.noAnswer;
+  const agreed = AGREED_STATUSES.reduce((total, status) => total + (ask.counts[status] ?? 0), 0);
   return (
     <div className={styles.page}>
       <Band
@@ -116,11 +119,11 @@ export default function AskView({ ask, answer }: { ask: AskPageData; answer: str
             ))}
         </BandFact>
       </Band>
-      {ask.writtenTo > 0 && (
+      {asked > 0 && (
         <Grid>
           <Card span={6} as="div">
-            <Progress value={ask.writtenTo - ask.noAnswer} max={ask.writtenTo} tone="green" label={page.answered} big>
-              {page.bar(ask.writtenTo - ask.noAnswer, ask.writtenTo, ask.kind)}
+            <Progress value={agreed} max={asked} tone="green" label={page.agreed} big>
+              {page.bar(agreed, asked, ask.kind)}
             </Progress>
           </Card>
         </Grid>

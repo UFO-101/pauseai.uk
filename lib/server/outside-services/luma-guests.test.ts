@@ -38,15 +38,19 @@ describe("getSourceCounts", () => {
     expect(await getSourceCounts("evt-x", TAGS)).toBeNull();
   });
 
-  it("pages through the guest list with the key, accepting both entry shapes", async () => {
+  it("pages through the guest list with the key, latest registration first, each page kept a minute, accepting both entry shapes", async () => {
     vi.stubEnv("LUMA_API_KEY", "k");
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
     const requests: Request[] = [];
     server.use(
       http.get(GUESTS, ({ request }) => {
         requests.push(request);
         return requests.length === 1
           ? HttpResponse.json({
-              entries: [{ api_id: "g1", guest: { utm_source: "brixton" } }, null],
+              entries: [
+                { api_id: "g1", guest: { utm_source: "brixton", registered_at: "2026-10-01T10:00:00.000Z" } },
+                null,
+              ],
               has_more: true,
               next_cursor: "c2",
             })
@@ -63,7 +67,28 @@ describe("getSourceCounts", () => {
     expect(first.get("event_id")).toBe("evt-x");
     expect(first.get("pagination_limit")).toBe("50");
     expect(first.get("pagination_cursor")).toBeNull();
+    expect(first.get("sort_column")).toBe("registered_at");
+    expect(first.get("sort_direction")).toBe("desc nulls last");
     expect(new URL(requests[1].url).searchParams.get("pagination_cursor")).toBe("c2");
+    expect(fetchSpy.mock.calls[0][1]).toMatchObject({ next: { revalidate: 60 } });
+    fetchSpy.mockRestore();
+  });
+
+  it("stops at a page that ends with an invitee, as only invitees follow", async () => {
+    vi.stubEnv("LUMA_API_KEY", "k");
+    const requests: Request[] = [];
+    server.use(
+      http.get(GUESTS, ({ request }) => {
+        requests.push(request);
+        return HttpResponse.json({
+          entries: [{ registered_at: "2026-10-01T10:00:00.000Z" }, { approval_status: "invited", registered_at: null }],
+          has_more: true,
+          next_cursor: "c2",
+        });
+      }),
+    );
+    expect(await getSourceCounts("evt-x", TAGS)).toEqual({ counts: { stratford: 0, brixton: 0 }, other: 2, total: 2 });
+    expect(requests).toHaveLength(1);
   });
 
   it("treats a response with no entries as nobody registered", async () => {
@@ -103,8 +128,11 @@ describe("listEventGuests", () => {
   beforeEach(() => vi.stubEnv("LUMA_API_KEY", "k"));
   afterEach(() => vi.unstubAllEnvs());
 
-  it("reads each guest as the import keeps them, from the fixture", async () => {
+  it("reads each guest as the import keeps them, from the fixture, afresh each time", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
     const page = await listEventGuests("evt-1");
+    expect(fetchSpy.mock.calls[0][1]).toMatchObject({ cache: "no-store" });
+    fetchSpy.mockRestore();
     expect(page.nextCursor).toBe("page-2");
     expect(page.entries[0]).toEqual({
       id: "gst-1-evt-1",

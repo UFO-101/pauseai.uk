@@ -25,19 +25,38 @@ type ApiGuest = {
 };
 type ApiGuestEntry = (ApiGuest & { guest?: ApiGuest }) | null;
 
-/** One page of an event's guests, as Luma lists them. Throws as lumaList does. */
-async function guestsPage(eventId: string, cursor?: string): Promise<LumaPage<ApiGuest>> {
-  const params = new URLSearchParams({ event_id: eventId, pagination_limit: String(LUMA_PAGE_SIZE) });
+/**
+ * One page of an event's guests, as Luma lists them, latest registration
+ * first, cached for `revalidate` seconds if given. Throws as lumaList does.
+ *
+ * Luma lists everyone invited to the event too, with no registration time,
+ * and there can be thousands: every contact on the calendar once an event is
+ * announced to them. Nothing here wants them, so they're asked for last, and
+ * a page that ends with one is the last page read.
+ */
+async function guestsPage(eventId: string, cursor?: string, revalidate?: number): Promise<LumaPage<ApiGuest>> {
+  const params = new URLSearchParams({
+    event_id: eventId,
+    pagination_limit: String(LUMA_PAGE_SIZE),
+    sort_column: "registered_at",
+    sort_direction: "desc nulls last",
+  });
   if (cursor) params.set("pagination_cursor", cursor);
-  const page = await lumaList<ApiGuestEntry>("/v1/events/guests/list", params);
+  const page = await lumaList<ApiGuestEntry>("/v1/events/guests/list", params, revalidate);
   // Entries come as { api_id, guest } or as bare guests, depending on version.
-  return { ...page, entries: page.entries.flatMap((entry) => (entry ? [entry.guest ?? entry] : [])) };
+  const entries = page.entries.flatMap((entry) => (entry ? [entry.guest ?? entry] : []));
+  const last = entries.at(-1);
+  return { ...page, entries, nextCursor: last && !last.registered_at ? undefined : page.nextCursor };
 }
 
+/** How long Next keeps a page of guests for the trackers before asking Luma again, in seconds. */
+const TRACKER_REVALIDATE = 60;
+
 /**
- * Pages through Luma's authenticated guest list for an event. Returns null when
- * LUMA_API_KEY is missing or Luma errors, so the page can say so rather than
- * show a misleading zero.
+ * Pages through Luma's authenticated guest list for an event, each page
+ * cached for a minute, so however many open a tracker, Luma is asked about
+ * once a minute. Returns null when LUMA_API_KEY is missing or Luma errors,
+ * so the page can say so rather than show a misleading zero.
  */
 export async function getSourceCounts(
   eventApiId: string,
@@ -49,7 +68,7 @@ export async function getSourceCounts(
   let cursor: string | undefined;
   try {
     do {
-      const page = await guestsPage(eventApiId, cursor);
+      const page = await guestsPage(eventApiId, cursor, TRACKER_REVALIDATE);
       for (const guest of page.entries) entries.push({ guest });
       cursor = page.nextCursor;
     } while (cursor);

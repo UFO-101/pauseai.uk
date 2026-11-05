@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { askSlug, asksDone } from "./asks";
+import { askSlug, asksAgreed } from "./asks";
 
 describe("askSlug", () => {
   it("makes a slug of the title's letters and digits, then the date's month and year", () => {
@@ -9,10 +9,10 @@ describe("askSlug", () => {
   });
 });
 
-describe("asksDone", () => {
-  it("counts the asks they signed, are going to, or are meeting our staff at, not those they're unsure of or declined", () => {
+describe("asksAgreed", () => {
+  it("counts the asks they signed or are going to, not staff in their place, a tentative yes, or a no", () => {
     const answers = { a: "signed", b: "going", c: "meeting_staff", d: "tentative", e: "declined" } as const;
-    expect(asksDone(Object.fromEntries(Object.entries(answers).map(([ask, status]) => [ask, { status }])))).toBe(3);
-    expect(asksDone({})).toBe(0);
+    expect(asksAgreed(Object.fromEntries(Object.entries(answers).map(([ask, status]) => [ask, { status }])))).toBe(2);
+    expect(asksAgreed({})).toBe(0);
   });
 });

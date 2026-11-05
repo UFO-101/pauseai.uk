@@ -56,6 +56,38 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run format:check
 
+  # The types, on their own, so a type error is one red job saying what's
+  # wrong in seconds. The jobs that build the site wait for this one, as
+  # `next build` checks types too, and show as skipped rather than failing
+  # with the same error at the end of a long log.
+  types:
+    name: Types
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        id: node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          check-latest: true
+
+      - name: Cache dependencies
+        id: node-modules
+        uses: actions/cache@v6
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ steps.node.outputs.node-version }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.node-modules.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Check types
+        run: npm run typecheck
+
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -161,6 +193,7 @@ jobs:
 
   build:
     name: Build
+    needs: types
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -208,6 +241,7 @@ jobs:
   # number of flows, not their length, so the parts aren't the same length.
   storyboard-shard:
     name: Storyboard (${{ matrix.shard }} of 3)
+    needs: types
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -343,11 +377,11 @@ jobs:
 
   # One result for the three parts, under the storyboard check's own name.
   # It runs whatever they did, so a failed part fails it, rather than
-  # leaving it skipped.
+  # leaving it skipped; only a type error, when no part ran, skips it.
   storyboard:
     name: Storyboard
-    needs: storyboard-shard
-    if: ${{ always() }}
+    needs: [types, storyboard-shard]
+    if: ${{ always() && needs.types.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Every part passed

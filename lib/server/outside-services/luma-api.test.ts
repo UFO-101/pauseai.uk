@@ -37,6 +37,17 @@ describe("lumaList", () => {
     expect((await lumaList("/v1/things/list", new URLSearchParams())).nextCursor).toBeUndefined();
   });
 
+  it("asks Luma afresh each time, unless told how long Next may keep the answer", async () => {
+    server.use(http.get(LIST, () => HttpResponse.json({ entries: [] })));
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    await lumaList("/v1/things/list", new URLSearchParams());
+    expect(fetchSpy.mock.calls[0][1]).toMatchObject({ cache: "no-store" });
+    await lumaList("/v1/things/list", new URLSearchParams(), 60);
+    expect(fetchSpy.mock.calls[1][1]).toMatchObject({ next: { revalidate: 60 } });
+    expect(fetchSpy.mock.calls[1][1]).not.toHaveProperty("cache");
+    fetchSpy.mockRestore();
+  });
+
   it("throws LumaRateLimited on a 429, with Luma's retry-after or a minute", async () => {
     server.use(http.get(LIST, () => new HttpResponse(null, { status: 429, headers: { "retry-after": "30" } })));
     await expect(lumaList("/v1/things/list", new URLSearchParams())).rejects.toMatchObject({ retryAfter: 30 });
