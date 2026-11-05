@@ -299,7 +299,7 @@ test("An email sent, and replying", async ({ page, request, flowDatabase }) => {
   const [supporter] = runSql(flowDatabase, `SELECT supporter_id FROM messages_to_supporters WHERE id = ${sent.copy}`);
   await page.goto(`${BASE}/staff/supporters/${supporter}`);
   await expect(page.getByRole("heading", { name: copy.supporterTitle })).toBeVisible();
-  await page.getByRole("heading", { name: copy.supporterTitle }).scrollIntoViewIfNeeded();
+  await page.getByText("Is it OK to bring my dog?").scrollIntoViewIfNeeded();
   await frame(page, "On the supporter's page", { window: true });
 });
 

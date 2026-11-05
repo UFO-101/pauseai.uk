@@ -6,22 +6,25 @@ const copy = staffCopy.messagePages;
 
 /**
  * A bubble in a text conversation: theirs at the left in white, ours at the
- * right in green, each with who and when.
+ * right in green, each with who and when. `fromUs` names it as ours though it's
+ * at the left: the message itself, as it reached them.
  */
 export function ChatBubble({
   who,
   when,
   ours = false,
+  fromUs = ours,
   children,
 }: {
   who: string;
   when: string;
   ours?: boolean;
+  fromUs?: boolean;
   children: ReactNode;
 }) {
   return (
     <div className={ours ? `${styles.bubble} ${styles.ours}` : styles.bubble}>
-      <span className={ours ? `${styles.name} ${styles.ourName}` : styles.name}>{who}</span>
+      <span className={fromUs ? `${styles.name} ${styles.ourName}` : styles.name}>{who}</span>
       {children}
       <span className={styles.time}>{when}</span>
     </div>

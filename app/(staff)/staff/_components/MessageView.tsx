@@ -7,8 +7,16 @@ import { letterFor } from "@/lib/mailing-doc";
 import type { WrittenMessage } from "@/lib/server/message-drafts";
 import type { MessagePageData, MessageRecipient, MessageSummary } from "@/lib/server/message-pages";
 import { filtersPath, pageParam } from "@/lib/staff-search";
-import { londonClock, londonWhen, staffDate } from "@/lib/staff-time";
-import { FIELDS_AS_WORDS, FIELD_WORDS, textStopsAt, type MessageChannel } from "@/lib/supporter-messages";
+import { londonClock, londonWhen, sendsAt, staffDate } from "@/lib/staff-time";
+import {
+  FIELDS_AS_WORDS,
+  FIELD_WORDS,
+  hasField,
+  MEMBER_CONDITION,
+  textStopsAt,
+  VOLUNTEER_CONDITION,
+  type MessageChannel,
+} from "@/lib/supporter-messages";
 import ChannelIcon from "./ChannelIcon";
 import MailingFiles from "./MailingFiles";
 import { MailingLetter } from "./MailingLetter";
@@ -109,17 +117,17 @@ function MessageWords({ written }: { written: WrittenMessage }) {
         <TextBubble
           from={written.fromName!}
           text={toText(letterFor(written.body, FIELDS_AS_WORDS))}
-          time={londonClock(written.dueAt!)}
+          time={londonClock(sendsAt(written.dueAt!))}
         />
       </Card>
     );
   }
-  const conditions = Object.fromEntries(
-    Object.values(copy.conditions).map(({ label }, i) => [
-      ["has:localGroup", "has:mp", "volunteer:yes", "member:yes"][i],
-      label,
-    ]),
-  );
+  const conditions = {
+    [hasField("localGroup")]: copy.conditions.localGroup.label,
+    [hasField("mp")]: copy.conditions.mp.label,
+    [VOLUNTEER_CONDITION]: copy.conditions.volunteer.label,
+    [MEMBER_CONDITION]: copy.conditions.member.label,
+  };
   return (
     <Card span={3} look="aside" title={copy.emailTitle} id="words-title">
       <div className={view.email}>

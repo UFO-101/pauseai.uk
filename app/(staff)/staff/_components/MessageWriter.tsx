@@ -28,7 +28,7 @@ import type { ChannelResult } from "@/lib/server/mailing-channels";
 import type { MessageScheduleResult, MessageTemplate, WrittenMessage } from "@/lib/server/message-drafts";
 import type { MessagePreviewRecipient, MessageWriterData } from "@/lib/server/message-pages";
 import { filtersPath } from "@/lib/staff-search";
-import { earliestHour, fromLondon, londonClock, londonDayHour, londonWhen, staffTime } from "@/lib/staff-time";
+import { earliestHour, fromLondon, londonClock, londonDayHour, londonWhen, sendsAt, staffTime } from "@/lib/staff-time";
 import {
   hasField,
   messageCost,
@@ -215,7 +215,7 @@ function MessagePreview({
             <TextBubble
               from={TEXT_SENDER_NAME}
               text={toText(letterFor(body, recipient))}
-              time={londonClock(dueAt ?? earliestHour())}
+              time={londonClock(sendsAt(dueAt ?? earliestHour()))}
             />
           )}
         </>

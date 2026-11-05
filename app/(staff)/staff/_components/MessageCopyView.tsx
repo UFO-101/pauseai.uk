@@ -31,7 +31,7 @@ function Thread({ one, name }: { one: MessageCopy; name: string }) {
   if (one.channel === "text") {
     return (
       <ChatWall>
-        <ChatBubble who={TEXT_SENDER_NAME} when={staffTime(one.sentAt ?? one.now)}>
+        <ChatBubble who={TEXT_SENDER_NAME} when={staffTime(one.sentAt ?? one.now)} fromUs>
           {toText(letterFor(one.body, merge))}
         </ChatBubble>
         {one.replies.map((reply) => (

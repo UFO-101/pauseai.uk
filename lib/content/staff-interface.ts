@@ -1125,9 +1125,9 @@ export const staffCopy = {
     reply: "⁂ Reply",
     sendReply: { email: "⁂ Send reply by email", text: "⁂ Send reply by text" },
     replyWindow: (until: string) =>
-      `⁂ Free to reply until ${until}, 24 hours after their last message. After that only an approved template can be sent. Goes as PauseAI UK, signed with your name.`,
+      `⁂ Free to reply until ${until}, 24 hours after their last message. After that only an approved template can be sent. Goes as PauseAI UK.`,
     replyClosed: "⁂ It's over 24 hours since their last message, so only an approved template can be sent now.",
-    replyEmail: "⁂ Goes from hello@pauseai.uk as PauseAI UK, signed with your name, in the same thread.",
+    replyEmail: "⁂ Goes from hello@pauseai.uk as PauseAI UK.",
     replyCantSend: "⁂ Replies can't be sent from here yet.",
     standingTitle: "⁂ How it stands",
     standing: {
