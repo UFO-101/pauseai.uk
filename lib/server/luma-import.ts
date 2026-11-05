@@ -40,8 +40,10 @@ const RATE_LIMIT_RESERVE = 50;
 const LIVE_DAYS = 3;
 /** A settled event's guests are read again this often, for late changes. */
 const SETTLED_DAYS = 30;
-/** A live event's guests and hosts are read again when last read this long ago: every run, as one starts every 5 minutes. */
+/** A live event's guests are read again when last read this long ago: every run, as one starts every 5 minutes. */
 const LIVE_REREAD = "4 minutes";
+/** A live event's hosts are read again when last read this long ago: they seldom change, and each read is a request. */
+const HOSTS_REREAD = "1 hour";
 /** The supporter facts and the supporters list are worked out again at least this often, even by runs that changed nothing, for what other sources changed. */
 const REFRESH_AT_LEAST = "1 hour";
 /** A full pass over every event, for edits to old ones and deletions, this often. */
@@ -310,7 +312,7 @@ async function importGuests(eventId: string, budget: Budget, db: Queryable): Pro
  * The events whose hosts are due a read, first first: our own still on the
  * calendar whose hosts have never been read, which reads every past one
  * once, or whose London day hasn't ended and whose hosts weren't read in
- * the last run. Once its day is over and they've been read, they're never
+ * the last hour. Once its day is over and they've been read, they're never
  * read again. Those still to come first, then those never read, newest
  * first; one whose last read failed goes to the back.
  */
@@ -322,7 +324,7 @@ async function eventsDueHosts(db: Queryable): Promise<string[]> {
        FROM luma_events WHERE access = 'manage' AND removed_at IS NULL) e
      WHERE hosts_synced_at IS NULL OR (live AND hosts_synced_at < now() - $1::interval)
      ORDER BY hosts_error IS NOT NULL, CASE WHEN live THEN 0 WHEN hosts_synced_at IS NULL THEN 1 ELSE 2 END, start_at DESC`,
-    [LIVE_REREAD],
+    [HOSTS_REREAD],
     db,
   );
   return rows.map((row) => row.id);
