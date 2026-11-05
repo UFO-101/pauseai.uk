@@ -58,7 +58,9 @@ describeWithDatabase("the message pages' Server Actions", () => {
   });
 
   it("makes a message from a Contact filter answered yes, and opens it", async () => {
-    const to = await expectRedirect(() => newMessage(form({ ...EMAIL, near: "LS1", page: "2" })));
+    const to = await expectRedirect(() =>
+      newMessage(form({ ...EMAIL, near: "LS1", page: "2", file: new File(["x"], "x.txt") })),
+    );
     expect(to).toMatch(/^\/staff\/messages\/\d+$/);
     const id = Number(to.split("/").at(-1));
     expect((await getWrittenMessage(id))!.filter.params).toEqual({ ...EMAIL, near: "LS1" });

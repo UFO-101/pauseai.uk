@@ -5,6 +5,7 @@ import { page } from "vitest/browser";
 import Densities from "../_components/Densities";
 import {
   CheckboxExample,
+  RadioExample,
   LinkBarExample,
   LinkButtonExample,
   SegmentedExample,
@@ -25,6 +26,12 @@ describe("Densities", () => {
 });
 
 describe("the forms group's examples", () => {
+  it("chooses a radio button", async () => {
+    await render(<RadioExample />);
+    await page.getByRole("radio", { name: "Other" }).click();
+    await expect.element(page.getByRole("radio", { name: "Other (chosen)" })).toBeChecked();
+  });
+
   it("ticks and unticks", async () => {
     await render(<CheckboxExample />);
     await page.getByRole("checkbox", { name: "An example option", exact: true }).click();

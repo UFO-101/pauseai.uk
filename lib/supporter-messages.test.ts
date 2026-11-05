@@ -29,6 +29,7 @@ describe("messageTerms", () => {
 
   it("gives none without one topic answered yes, as not sure isn't enough", () => {
     expect(messageTerms(undefined)).toBeUndefined();
+    expect(messageTerms("nonsense")).toBeUndefined();
     expect(messageTerms("email:pauseai-updates:unsure")).toBeUndefined();
     expect(messageTerms("email:pauseai-updates")).toBeUndefined();
     expect(messageTerms("email:blocked")).toBeUndefined();

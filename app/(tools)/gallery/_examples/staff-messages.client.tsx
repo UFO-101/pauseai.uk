@@ -26,27 +26,18 @@ import { supportersSearch } from "@/lib/staff-search";
 import { Logged } from "../_components/wiring";
 
 function messageActions(log: (name: string) => (...args: unknown[]) => void): MessageWriterActions {
+  const logged =
+    <T,>(name: string, answer: T) =>
+    async (...args: unknown[]) => {
+      log(name)(...args);
+      return answer;
+    };
   return {
-    save: async (...args) => {
-      log("saveMessage")(...args);
-      return { saved: true, version: 5 };
-    },
-    attach: async (form) => {
-      log("attachToMessage")(form);
-      return undefined;
-    },
-    detach: async (...args) => {
-      log("detachFromMessage")(...args);
-      return { saved: true, version: 5, attachments: [] };
-    },
-    sendTest: async (id, supporter, to) => {
-      log("sendMessageTestNow")(id, supporter, to);
-      return { sent: true, id: "example", to };
-    },
-    schedule: async (...args) => {
-      log("scheduleMessageNow")(...args);
-      return { scheduled: false, problems: [] };
-    },
+    save: logged("saveMessage", { saved: true as const, version: 5 }),
+    attach: logged("attachToMessage", undefined),
+    detach: logged("detachFromMessage", { saved: true as const, version: 5, attachments: [] }),
+    sendTest: logged("sendMessageTestNow", { sent: true as const, id: "example", to: "me@example.com" }),
+    schedule: logged("scheduleMessageNow", { scheduled: false as const, problems: [] }),
     deleteDraft: log("deleteMessageDraft"),
   };
 }
@@ -195,12 +186,7 @@ export function MessageForExample() {
     <MessageFor
       data={exampleMessageSent}
       actions={{
-        save: async () => undefined,
-        attach: async () => undefined,
-        detach: async () => ({ saved: true, version: 1, attachments: [] }),
-        sendTest: async () => undefined,
-        schedule: async () => ({ scheduled: true }),
-        deleteDraft: nothing,
+        ...messageActions(() => () => {}),
         stop: nothing,
         reschedule: nothing,
       }}

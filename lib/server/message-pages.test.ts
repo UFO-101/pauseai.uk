@@ -1,7 +1,8 @@
 import { beforeEach, afterEach, expect, it, vi } from "vitest";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { query } from "@/lib/server/db";
-import { describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { connectTestGmail, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { LETTERS_INBOX } from "@/tests/fixture-env.mjs";
 import { addFollower, addTemplate, EVENT_WORDS } from "@/tests/message-fixtures";
 import { createMessageDraft, getWrittenMessage, saveMessageDraft, scheduleMessage } from "./message-drafts";
 import {
@@ -108,13 +109,30 @@ describeWithDatabase("the pages of messages to supporters", () => {
     await addFollower("usr-3", "nameless@example.com", "");
     const id = (await createMessageDraft(JO, EMAIL_FILTER))!;
     const data = await messagePageData(id, {}, JO);
-    expect(data).toMatchObject({ kind: "draft", count: 3, me: JO, sends: true, unknown: [], templates: [] });
+    expect(data).toMatchObject({
+      kind: "draft",
+      count: 3,
+      me: JO,
+      sends: true,
+      unknown: [],
+      templates: [],
+      senders: [],
+    });
     expect(data!.kind === "draft" && data!.recipients.length).toBe(2);
     await query(
       `UPDATE mailings SET filter = '{"list": "supporters", "params": {"contact": "email:luma-calendar:yes", "event": "gone"}}' WHERE id = $1`,
       [id],
     );
     expect(await messagePageData(id, {}, JO)).toMatchObject({ unknown: ["event=gone"], count: 0 });
+  });
+
+  it("offers connected Gmails to send from, never the letters inbox", async () => {
+    await connectTestGmail(JO);
+    await connectTestGmail(LETTERS_INBOX);
+    vi.stubEnv("LETTERS_INBOX", LETTERS_INBOX);
+    const id = (await createMessageDraft(JO, EMAIL_FILTER))!;
+    const data = await messagePageData(id, {}, JO);
+    expect(data!.kind === "draft" && data!.senders.map((one) => one.email)).toEqual([JO]);
   });
 
   it("titles a draft, or says it has none; a mailing to politicians is none", async () => {

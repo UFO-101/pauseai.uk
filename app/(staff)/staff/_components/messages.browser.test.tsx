@@ -1,12 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
-import { page } from "vitest/browser";
+import { page, userEvent } from "vitest/browser";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { mailingGroups } from "@/lib/mailing-groups";
 import type { MessageTemplate } from "@/lib/server/message-drafts";
 import { supportersSearch } from "@/lib/staff-search";
 import { londonWhen, staffDate, staffTime } from "@/lib/staff-time";
 import { messageCost, textStopsAt } from "@/lib/supporter-messages";
+import { chooseDay } from "@/tests/browser/date-picker";
 import { navigation } from "@/tests/browser/navigation";
 import MessageCopyView from "./MessageCopyView";
 import MessageFor, { MessageWho } from "./MessageFor";
@@ -200,6 +201,53 @@ describe("MessageWriter, by email", () => {
     await expect.element(button(copy.schedule(412, "email"))).toBeDisabled();
     await page.getByLabelText(copy.subject).fill("Changed");
     await expect.element(page.getByText(staffCopy.mailingPages.saveStates.conflict)).toBeVisible();
+  });
+
+  it("saves what's written and the time chosen", async () => {
+    const actions = await renderWriter();
+    await page.getByRole("textbox", { name: copy.emailLabel }).click();
+    await userEvent.keyboard("More words");
+    await vi.waitFor(() => expect(JSON.stringify(actions.save.mock.calls.at(-1)?.[2])).toContain("More words"), WAIT);
+    await page.getByLabelText(staffCopy.mailingPages.hour, { exact: false }).selectOptions("14");
+    await vi.waitFor(() => expect(actions.save.mock.calls.at(-1)?.[2]).toHaveProperty("dueAt"), WAIT);
+  });
+
+  it("waits for an hour before it has a time", async () => {
+    const actions = await renderWriter({ draft: { ...exampleMessageEmail, dueAt: null } });
+    await expect.element(page.getByText(copy.problems["no-time"])).toBeVisible();
+    const when = page.getByRole("region", { name: copy.sections.when });
+    const soon = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    await chooseDay(when.getByRole("button", { name: staffCopy.mailingPages.day }), soon);
+    await expect.element(page.getByText(copy.problems["no-time"])).toBeVisible();
+    expect(actions.save).not.toHaveBeenCalled();
+  });
+
+  it("says nothing of a field no one lacks, and starts afresh from what isn't a message's words", async () => {
+    await renderWriter({
+      draft: { ...exampleMessageEmail, body: { type: "nonsense" } as unknown as typeof exampleMessageEmail.body },
+    });
+    await expect.element(page.getByText(copy.problems["no-letter"])).toBeVisible();
+  });
+
+  it("names only those lacking a field it uses", async () => {
+    const fields = exampleMessageData.fields.map((field) => ({ ...field, lacking: 0 }));
+    await renderWriter({ data: { ...exampleMessageData, fields } });
+    await expect.element(page.getByText(copy.shownAs("Jane Example"), { exact: true })).toBeVisible();
+  });
+
+  it("goes back to the first if the one shown is no longer among them", async () => {
+    const actions = fakeActions();
+    const writer = (recipients: typeof exampleMessageData.recipients) => (
+      <MessageWriter
+        data={{ ...exampleMessageData, recipients }}
+        draft={exampleMessageEmail}
+        who={null}
+        actions={actions as unknown as MessageWriterActions}
+      />
+    );
+    const view = await render(writer(exampleMessageData.recipients));
+    await view.rerender(writer([exampleMessageData.recipients[1]]));
+    await expect.element(page.getByText(copy.shownAs("Sam"), { exact: false })).toBeVisible();
   });
 
   it("copes with a condition it has no words for, and a part for all but those", async () => {
@@ -485,6 +533,13 @@ describe("a message's page", () => {
     await expect
       .element(page.getByRole("link", { name: new RegExp(copy.counts.failed) }))
       .toHaveAttribute("href", "/staff/messages/5");
+  });
+
+  it("goes through the pages of everyone", async () => {
+    await render(<MessageView data={{ ...exampleMessageSent, pages: 2 }} who={who} {...actions} />);
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.paging.next }))
+      .toHaveAttribute("href", "/staff/messages/5?page=2");
   });
 
   it("shows an email's files and who it's from without a name", async () => {
