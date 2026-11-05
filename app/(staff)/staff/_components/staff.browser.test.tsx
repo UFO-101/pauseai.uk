@@ -1788,7 +1788,7 @@ describe("PoliticianDetails", () => {
     await expect
       .element(list.getByRole("link", { name: "Old campaign, from pauseai.info" }))
       .toHaveAttribute("href", "/staff/campaigns/old-campaign");
-    await expect.element(list.getByRole("link", { name: "gone" })).not.toBeInTheDocument();
+    await expect.element(list.getByRole("link", { name: "gone" })).toHaveAttribute("href", "/staff/campaigns/gone");
   });
 
   it("without senders, lists each letter and reply by campaign and status alone, linking to no letter", async () => {
@@ -1937,7 +1937,7 @@ describe("PoliticianDetails", () => {
     expect(sent[0]).toEqual({ politicianId: "7", ask: "frontier-ai-letter", status: "", note: "Their office wrote" });
   });
 
-  it("shows an answer neither yes nor no plainly, and an ask with no link, asker or date by its title alone", async () => {
+  it("shows an answer neither yes nor no plainly, and an ask with no asker or date by its title alone", async () => {
     const bare = { ...ask("go-to-parliament-oct-2026"), askedBy: [], date: null };
     const tentative = { ...MP.statuses["frontier-ai-letter"], status: "tentative" as const, date: null };
     await render(
@@ -1953,7 +1953,7 @@ describe("PoliticianDetails", () => {
     const answer = row.element().querySelector("[class*=answer]")!;
     expect(answer.textContent).toBe(staffCopy.statuses.tentative);
     expect(answer.className).not.toMatch(/yes/);
-    expect(row.getByRole("link").all()).toHaveLength(0);
+    await expect.element(row.getByRole("link")).toHaveAttribute("href", `/staff/asks/${bare.slug}`);
     await expect.element(row.getByText(staffCopy.politician.askedThem("", "event"), { exact: true })).toBeVisible();
   });
 
@@ -2333,6 +2333,7 @@ describe("JobActions", () => {
 describe("ImportOverview", () => {
   it("is a card per job, each a link to its page, with how its newest run ended, or that it never ran", async () => {
     const newest: (AnyImportRun | undefined)[] = [
+      undefined,
       ran("import-luma", { ...exampleLumaResult, stoppedBy: "time" }, { at: "2026-10-21T11:17:00Z" }),
       ran("import-members", exampleMembersResult, { at: "2026-10-21T11:47:00Z" }),
       ran("read-gmail", { accounts: [] }, { at: "2026-10-21T11:20:00Z", status: "unchanged" }),
@@ -2381,23 +2382,23 @@ describe("ImportOverview", () => {
     const status = (i: number) => cards[i].querySelector("h3")!.parentElement!.nextElementSibling!.firstElementChild!;
     expect(status(0).textContent).toBe(`${staffCopy.runs.status.incomplete}21 Oct 2026, 11:17`);
     // The Emails sync held some back, so it's amber too.
-    expect([0, 1, 2, 3, 4, 5, 6, 7].map((i) => status(i).className.match(/green|amber|red/)?.[0])).toEqual([
+    expect([0, 1, 2, 3, 4, 5, 7, 8].map((i) => status(i).className.match(/green|amber|red/)?.[0])).toEqual([
       "amber",
       "green",
       "green",
-      "amber",
       "amber",
       "green",
       "red",
+      "amber",
       "green",
     ]);
-    expect(status(8).textContent).toBe(staffCopy.goToParliament.never);
-    expect(status(8).className).not.toMatch(/green|amber|red/);
+    expect(status(9).textContent).toBe(staffCopy.goToParliament.never);
+    expect(status(9).className).not.toMatch(/green|amber|red/);
     // The Airtable jobs link the table they read; the politicians' sync also says the test MPs stay.
     const link = (i: number) => cards[i].querySelector(":scope > p a")!.getAttribute("href");
     expect(link(3)).toBe("https://airtable.com/app/tblPoliticians");
     expect(cards[3].querySelector(":scope > p")!.textContent).toContain(staffCopy.syncs.testMps);
-    expect([4, 7, 8].map(link)).toEqual([
+    expect([7, 8, 9].map(link)).toEqual([
       "https://airtable.com/app/tblp4nH5Jymq48rcm",
       "https://airtable.com/app/tblkzjrRHiZiqMDGR",
       "https://airtable.com/app/tblminXS1xSuBbEjz",
@@ -2420,7 +2421,7 @@ describe("ImportOverview", () => {
     const unchanged = ran("import-luma", exampleLumaResult, { status: "unchanged" });
     const { rerender } = await render(
       <ImportOverview
-        newest={[unchanged, undefined, undefined, exampleAppliedSync, undefined, undefined]}
+        newest={[undefined, unchanged, undefined, undefined, exampleAppliedSync, undefined, undefined]}
         airtableTable="x"
       />,
     );
@@ -2430,7 +2431,10 @@ describe("ImportOverview", () => {
     expect(status(0)).toMatch(/green/);
     expect(status(3)).toMatch(/green/);
     await rerender(
-      <ImportOverview newest={[undefined, undefined, undefined, discarded, undefined, undefined]} airtableTable="x" />,
+      <ImportOverview
+        newest={[undefined, undefined, undefined, undefined, discarded, undefined, undefined]}
+        airtableTable="x"
+      />,
     );
     expect(status(3)).not.toMatch(/green|amber|red/);
   });
@@ -3973,13 +3977,13 @@ describe("SupporterDetails", () => {
     expect(old.element().textContent).toContain(
       `${copy.detail.kinds.letter} Gone MP ${copy.detail.about} Old campaign, from pauseai.info · mislaid`,
     );
-    // Only the status links, to the supporter's letters.
+    // Only the campaign's name and the status link, to the supporter's letters.
     expect(
       old
         .getByRole("link")
         .all()
         .map((link) => link.element().getAttribute("href")),
-    ).toEqual([`/staff/letters/supporter/${exampleSupporterDetails.summary.id}`]);
+    ).toEqual(["/staff/campaigns/old-campaign", `/staff/letters/supporter/${exampleSupporterDetails.summary.id}`]);
 
     // The same postcode, typed differently by two sources.
     await first.unmount();

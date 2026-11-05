@@ -35,6 +35,20 @@ test("Campaigns", async ({ page, flowDatabase }) => {
   await frame(page, "No letters failed");
 });
 
+test("Those written to who haven't answered", async ({ page, flowDatabase }) => {
+  story("Jane writes to her MP about the letter to the Prime Minister. They haven't answered yet.");
+  await sentLetterId(page, flowDatabase, madeUpAddress("Jane Smith", 42));
+  await page.goto(`${BASE}/staff/asks/${campaigns[0].ask}`);
+  await expect(page.getByRole("heading", { name: staffCopy.asks.page.howWeAsked })).toBeVisible();
+  await expect(page.getByRole("link", { name: campaigns[0].title })).toBeVisible();
+
+  story("No answer shows those written to who haven't answered, whoever was written to longest ago first.");
+  const unanswered = page.getByRole("link", { name: new RegExp(`^${staffCopy.statuses.noAnswer} \\d`) });
+  await unanswered.click();
+  await expect(unanswered).toHaveAttribute("aria-current", "true");
+  await frame(page, "Those with no answer");
+});
+
 test("Asks", async ({ page, request, flowDatabase }) => {
   story("Asks is a table of questions, with who was written to, who answered and how they were asked.");
   await syncPoliticians(request, BASE);
@@ -54,12 +68,6 @@ test("Asks", async ({ page, request, flowDatabase }) => {
   await going.click();
   await expect(going).toHaveAttribute("aria-current", "true");
   await frame(page, "Those going");
-
-  story("No answer shows those written to who haven't answered, whoever was written to longest ago first.");
-  const unanswered = page.getByRole("link", { name: new RegExp(`^${staffCopy.statuses.noAnswer} \\d`) });
-  await unanswered.click();
-  await expect(unanswered).toHaveAttribute("aria-current", "true");
-  await frame(page, "Those with no answer");
 
   story("One staff made can be edited, on a page of its own.");
   runSql(

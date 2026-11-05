@@ -12,9 +12,9 @@ export function AskTitle({ ask }: { ask: Pick<Ask, "slug" | "title"> }) {
 
 /**
  * An ask as a politician's page leads into it: who asked them to do what,
- * and when, then its title, leading to its page.
+ * and when, then its title, leading to its page but for a preview, whose ask may not exist yet.
  */
-export function AskLead({ ask }: { ask: Ask }) {
+export function AskLead({ ask, linked = true }: { ask: Ask; linked?: boolean }) {
   const who = new Intl.ListFormat("en-GB").format(ask.askedBy.map((asker) => staffCopy.asks.askedBy[asker]));
   const asked = [staffCopy.politician.askedThem(who, ask.kind), ask.date && staffDate(ask.date)]
     .filter(Boolean)
@@ -22,7 +22,7 @@ export function AskLead({ ask }: { ask: Ask }) {
   return (
     <>
       <span className={styles.askMeta}>{asked}</span>
-      <AskTitle ask={ask} />
+      {linked ? <AskTitle ask={ask} /> : <span>{ask.title}</span>}
     </>
   );
 }
@@ -37,7 +37,7 @@ export function AskPreview({ ask }: { ask: Ask }) {
     <div className={styles.asks}>
       <div className={styles.ask} role="group" aria-label={ask.title}>
         <div className={styles.asked}>
-          <AskLead ask={ask} />
+          <AskLead ask={ask} linked={false} />
         </div>
         <div className={`${styles.answer} ${styles.yes}`}>
           <span>{staffCopy.statuses[ask.kind === "letter" ? "signed" : "going"]}</span>

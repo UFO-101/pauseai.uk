@@ -242,7 +242,7 @@ describeWithDatabase("the sent emails", () => {
     expect((await sorted("subject", "desc")).slice(-2)).toEqual(["d@example.com", "c@example.com"]);
     expect((await sorted("outcome", "asc"))[0]).toBe("a@example.com");
     expect((await sorted("what", "asc")).slice(0, 2)).toEqual(["d@example.com", "a@example.com"]);
-    expect((await sorted("backend", "desc"))[0]).toBe("d@example.com");
+    expect((await sorted("backend", "asc"))[0]).toBe("d@example.com");
     expect((await sorted("from", "asc"))[0]).toBe("d@example.com");
   });
 });

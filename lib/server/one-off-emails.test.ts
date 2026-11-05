@@ -321,7 +321,7 @@ describeWithDatabase("one-off emails", () => {
       expect(accounts[0].oneOffs).toBe(1);
       expect(await threads()).toHaveLength(1);
       await query("DELETE FROM one_off_threads");
-      await query("UPDATE staff_accounts SET gmail_token = NULL WHERE email = 'policy@pauseai.uk'");
+      await query("DELETE FROM staff_accounts WHERE email = 'policy@pauseai.uk'");
       await connectTestGmail("jo@pauseai.uk");
       await readGmail("nightly");
       expect(await threads()).toHaveLength(0);

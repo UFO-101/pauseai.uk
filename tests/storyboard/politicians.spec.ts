@@ -33,6 +33,7 @@ test("A politician's page", async ({ page, request, flowDatabase }) => {
   );
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
+  await importEmails(page);
   await openPolitician(page, "Polly Placeholder");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Polly Placeholder");
   await expect(page.getByText(copy.importantTarget, { exact: true })).toBeVisible();
@@ -439,6 +440,7 @@ test("Who has been mailed", async ({ page, request, flowDatabase }) => {
   story("Staff filter the politicians list by who was mailed about the Edinburgh conference.");
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
+  await importEmails(page);
   await page.goto(`${BASE}/staff/politicians?mailed=edinburgh-conference-2026`);
   await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toBeVisible();
   await frame(page, "Mailed about the conference");

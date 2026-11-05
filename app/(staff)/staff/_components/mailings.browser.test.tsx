@@ -531,7 +531,7 @@ describe("MailingView, for a mailing imported from Airtable", () => {
     await imported({ ask: null });
     await expect.element(page.getByRole("heading", { level: 1 })).toMatchTextContent(exampleMailing.title);
     await expect.element(page.getByText(mailings.imported).first()).toBeVisible();
-    await expect.element(page.getByText("1 Oct 2026", { exact: true })).toBeVisible();
+    await expect.element(page.getByText("1 Oct 2026", { exact: true }).first()).toBeVisible();
     await expect.element(page.getByText(staffCopy.campaigns.politicians(4))).toBeVisible();
     await expect.element(page.getByText(mailings.noText)).toBeVisible();
     await expect.element(page.getByRole("row").filter({ hasText: "Polly" })).toMatchTextContent(mailings.personalised);

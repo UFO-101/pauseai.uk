@@ -16,6 +16,7 @@ import {
   syncPoliticians,
   WEBHOOK_AUTH,
 } from "../steps";
+import { importEmails } from "./staff-steps";
 import { BASE, expect, flowStorageState, madeUpAddress, frame, story, test } from "./fixtures";
 
 // Who sees what: supporter data only with `supporters`, wherever it would
@@ -81,12 +82,14 @@ test("No permissions", async ({ page, request, flowDatabase }) => {
   expect(secrets).toContain("Jane Fixture");
 
   await logIn(page, flowDatabase);
+  await importEmails(page);
+  await page.goto(`${BASE}/staff`);
   await frame(page, "The dashboard");
   story("No staff page they can open shows any supporter's name or email address.");
   const testyId = politicianId(flowDatabase, testy.name);
   const letterId = runSql(flowDatabase, "SELECT id FROM letters")[0];
   const supporterId = runSql(flowDatabase, "SELECT id FROM supporters ORDER BY id")[0];
-  // One of PauseAI's letters, which the politicians sync copied, at its page under its mailing.
+  // One of PauseAI's letters, which Import emails copied, at its page under its mailing.
   const [pauseaiLetter] = runSql(
     flowDatabase,
     "SELECT '/staff/mailings/' || mailing_id || '/letters/' || id FROM letters_from_pauseai ORDER BY id LIMIT 1",

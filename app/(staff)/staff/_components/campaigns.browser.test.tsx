@@ -82,7 +82,7 @@ describe("CampaignsOverview", () => {
   it("gives letters' days as a range, a year only once, and one day alone", () => {
     expect(letterRange("2026-11-01T09:00:00Z", "2026-11-05T09:00:00Z", "2026")).toBe("1 Nov – 5 Nov");
     expect(letterRange("2026-11-05T09:00:00Z", "2026-11-05T10:00:00Z", "2026")).toBe("5 Nov");
-    expect(letterRange("2025-07-23T09:00:00Z", "2025-09-30T09:00:00Z", "2026")).toBe("23 Jul – 30 Sep 2025");
+    expect(letterRange("2025-07-23T09:00:00Z", "2025-09-30T09:00:00Z", "2026")).toBe("23 Jul – 30 Sept 2025");
     expect(letterRange("2025-12-01T09:00:00Z", "2026-01-05T09:00:00Z", "2026")).toBe("1 Dec 2025 – 5 Jan");
     expect(letterRange("2025-07-23T09:00:00Z", "2025-07-23T09:00:00Z", "2026")).toBe("23 Jul 2025");
   });
@@ -277,7 +277,15 @@ describe("AskView", () => {
     await expect.element(link(staffCopy.asks.page.theLink.event)).toHaveAttribute("href", "/events");
     await rerender(
       <AskView
-        ask={{ ...exampleAskPage, url: "https://example.org/letter", counts: {}, ways: [], answers: [], writtenTo: 0 }}
+        ask={{
+          ...exampleAskPage,
+          url: "https://example.org/letter",
+          counts: {},
+          noAnswer: 0,
+          ways: [],
+          answers: [],
+          writtenTo: 0,
+        }}
         answer=""
       />,
     );
@@ -313,9 +321,16 @@ describe("the one-off emails", () => {
   it("lists each thread, whose it is and when to the minute, and hides what staff can't read", async () => {
     await render(list());
     await says(staffTime(exampleOneOffs[0].latestAt));
-    for (const column of ["messages", "participants", "answered", "mailbox"] as const) {
-      await expect.element(page.getByRole("columnheader", { name: staffCopy.oneOff.columns[column] })).toBeVisible();
-    }
+    const words = staffCopy.oneOff.columns;
+    expect([...document.querySelectorAll("th")].map((th) => th.textContent)).toEqual([
+      words.subject,
+      words.politician,
+      words.participants,
+      words.answered,
+      words.messages,
+      words.when,
+      words.mailbox,
+    ]);
     await says(exampleOneOffs[0].mailboxes!.join(", "));
     await says(exampleOneOffs[0].participants!.join(", "));
     const cellsOf = (row: number) =>
