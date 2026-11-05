@@ -912,15 +912,9 @@ SELECT id, sent_at + r.after, r.body, r.by FROM messages_to_supporters, (VALUES
   (interval '2 hours', 'Yes, on the 29th.', 'jo@pauseai.uk')) r (after, body, by)
 WHERE status = 'delivered';
 
--- WhatsApp's templates for a text: approved, as made here and in WhatsApp Manager.
-INSERT INTO message_templates (name, body, status, created_by, approved_at)
-SELECT t.name, b.body, 'approved', t.by, now() - t.ago FROM seed_letter b, (VALUES
-  ('March day reminder', 'jo@pauseai.uk', interval '10 days'),
-  ('Local group meetup', NULL, interval '30 days')) t (name, by, ago);
-
 -- A mailing to politicians sending, a third of the way: one of its three
 -- letters sent, two to go. It goes from Jo's Gmail, which isn't connected
--- here, so the hourly job leaves it as it is. Last, so no ID above moves.
+-- here, so the hourly job leaves it as it is. After every mailing a route's example names, so none of those IDs moves.
 INSERT INTO mailings (title, subject, audience, channel, filter, body, created_by, sent_from, from_name, due_at, state, ask, created_at, opened_at)
 SELECT 'Edinburgh: last call', 'Edinburgh: last call', 'politicians', 'email', '{"list": "politicians", "params": {}}'::jsonb, b.body,
   'jo@pauseai.uk', 'jo@pauseai.uk', 'Jo Seed', now() - interval '2 hours', 'sending', 'edinburgh-conference-2026',
@@ -1076,3 +1070,124 @@ INSERT INTO import_runs (at, job, started_by, status, error, result) VALUES
 
 -- A press of a job still running, which its page says.
 INSERT INTO job_presses (job, started_by) VALUES ('import-go-to-parliament', 'jo@pauseai.uk');
+
+-- Messages to supporters, by email and by text, in each state a mailing has:
+-- a draft, one scheduled, one sending, one sent and one stopped. A text's
+-- draft also comes with no template yet, an approved one, new words and
+-- words WhatsApp rejected, and one scheduled waits for approval. Each copy
+-- keeps its supporter's real name, as scheduling does. After the rest, so no
+-- ID above moves.
+CREATE FUNCTION pg_temp.seed_words(words text) RETURNS jsonb LANGUAGE sql AS $$
+  SELECT jsonb_build_object('type', 'doc', 'content', jsonb_build_array(jsonb_build_object('type', 'paragraph', 'content', jsonb_build_array(
+    jsonb_build_object('type', 'text', 'text', 'Hi '), jsonb_build_object('type', 'field', 'attrs', jsonb_build_object('field', 'firstName')),
+    jsonb_build_object('type', 'text', 'text', ', ' || words)))))
+$$;
+CREATE TEMP TABLE seed_people ON COMMIT DROP AS
+SELECT s.id, row_number() OVER (ORDER BY s.id) AS n,
+  coalesce((SELECT nullif(i.name, '') FROM supporter_identity i WHERE i.supporter_id = s.id ORDER BY i.seen_at DESC NULLS LAST LIMIT 1), 'Supporter ' || s.id) AS name,
+  coalesce((SELECT i.email FROM supporter_identity i WHERE i.supporter_id = s.id ORDER BY i.seen_at DESC NULLS LAST LIMIT 1), 'supporter' || s.id || '@example.com') AS email
+FROM supporters s;
+UPDATE messages_to_supporters c SET merge_values = jsonb_build_object('name', p.name, 'place', NULL,
+  'values', jsonb_build_object('firstName', split_part(p.name, ' ', 1)), 'meets', '["has:firstName"]'::jsonb)
+FROM seed_people p WHERE p.id = c.supporter_id;
+
+INSERT INTO message_templates (name, body, status, created_by, approved_at, rejected_at, rejected_reason, created_at)
+SELECT t.name, pg_temp.seed_words(t.words), t.status, t.by,
+  CASE WHEN t.status = 'approved' THEN now() - t.ago END, CASE WHEN t.status = 'rejected' THEN now() - t.ago END,
+  CASE WHEN t.status = 'rejected' THEN 'The message is too short for WhatsApp to tell what it is about.' END, now() - t.ago - interval '1 day'
+FROM (VALUES
+  ('March day reminder', 'the march meets at 11:00 at Parliament Square. Look for the orange flags.', 'approved', 'jo@pauseai.uk', interval '10 days'),
+  ('PauseCon room change', 'PauseCon has moved to the Main Hall. Doors still open at 09:30.', 'approved', 'sam@pauseai.uk', interval '12 days'),
+  ('Event reminder', 'our next event is on Saturday. Hope to see you there.', 'approved', 'jo@pauseai.uk', interval '40 days'),
+  ('Flyering this weekend', 'we are flyering on Saturday. Could you spare an hour?', 'approved', 'jo@pauseai.uk', interval '50 days'),
+  ('Local group meetup', 'your local group meets on Thursday. Everyone is welcome.', 'approved', 'jo@pauseai.uk', interval '60 days'),
+  ('Thank you for coming', 'thank you for coming. Here is what happens next.', 'approved', 'sam@pauseai.uk', interval '70 days'),
+  ('Write to your MP', 'the AI bill has its second reading next week. Could you write to your MP?', 'approved', NULL, interval '80 days'),
+  ('Bring a coat on Saturday', 'bring a coat on Saturday: rain is forecast for the afternoon.', 'pending', 'jo@pauseai.uk', interval '2 hours'),
+  ('Have you written to your MP?', 'have you written to your MP?', 'rejected', 'jo@pauseai.uk', interval '1 day')
+) t (name, words, status, by, ago);
+
+CREATE TEMP TABLE seed_messages ON COMMIT DROP AS
+SELECT nextval(pg_get_serial_sequence('mailings', 'id')) AS id, m.* FROM (VALUES
+  ('Events near you this month', 'email', 'draft', NULL::interval, NULL, 'here is what is on near you this month.'),
+  ('Stall on Saturday', 'email', 'scheduled', interval '3 days', NULL, 'we will be at the stall on Saturday. Come and say hello.'),
+  ('Thank you for marching', 'email', 'sending', interval '-2 hours', NULL, 'thank you for marching with us.'),
+  ('PauseCon: the recordings', 'email', 'cancelled', interval '-5 days', NULL, 'the recordings from PauseCon are up.'),
+  ('', 'text', 'draft', NULL, NULL, NULL),
+  ('Local group meetup', 'text', 'draft', NULL, 'Local group meetup', NULL),
+  ('Hi {first name}, the stall needs a hand on Saturday.', 'text', 'draft', NULL, NULL, 'the stall needs a hand on Saturday.'),
+  ('Have you written to your MP?', 'text', 'draft', NULL, 'Have you written to your MP?', NULL),
+  ('March day reminder', 'text', 'scheduled', interval '2 days', 'March day reminder', NULL),
+  ('Bring a coat on Saturday', 'text', 'scheduled', interval '3 days', 'Bring a coat on Saturday', NULL),
+  ('Event reminder', 'text', 'sending', interval '-1 hour', 'Event reminder', NULL),
+  ('PauseCon room change', 'text', 'sent', interval '-3 days', 'PauseCon room change', NULL),
+  ('Flyering this weekend', 'text', 'cancelled', interval '-6 days', 'Flyering this weekend', NULL)
+) m (title, channel, state, due, template, words);
+INSERT INTO mailings (id, title, subject, audience, channel, topic, filter, body, created_by, sent_from, from_name, due_at, state, template_id, created_at, opened_at)
+  OVERRIDING SYSTEM VALUE
+SELECT m.id, m.title, CASE WHEN m.channel = 'email' THEN m.title ELSE '' END, 'supporters', m.channel, 'luma-calendar',
+  jsonb_build_object('list', 'supporters', 'params', jsonb_build_object('contact', CASE WHEN m.channel = 'email' THEN 'email' ELSE 'phone' END || ':luma-calendar:yes')),
+  CASE WHEN m.words IS NOT NULL THEN pg_temp.seed_words(m.words) ELSE coalesce(t.body, '{"type": "doc", "content": []}'::jsonb) END,
+  'jo@pauseai.uk', CASE WHEN m.channel = 'email' THEN 'hello@pauseai.uk' ELSE '+447700900000' END, 'PauseAI UK',
+  now() + m.due, m.state, t.id, coalesce(now() + m.due, now()) - interval '2 days', now() - interval '1 hour'
+FROM seed_messages m LEFT JOIN message_templates t ON t.name = m.template;
+
+-- Each copy, by who it's to and how it stands: every way one can go, a text
+-- also read, or not on WhatsApp.
+CREATE TEMP TABLE seed_copies ON COMMIT DROP AS
+SELECT nextval(pg_get_serial_sequence('messages_to_supporters', 'id')) AS id, m.id AS mailing_id, m.channel, m.due, c.person, c.status, c.reason, c.was_read
+FROM (VALUES
+  ('Stall on Saturday', 'email', 1, 'scheduled', NULL, false),
+  ('Stall on Saturday', 'email', 2, 'scheduled', NULL, false),
+  ('Thank you for marching', 'email', 1, 'delivered', NULL, false),
+  ('Thank you for marching', 'email', 2, 'sent', NULL, false),
+  ('Thank you for marching', 'email', 3, 'scheduled', NULL, false),
+  ('Thank you for marching', 'email', 4, 'scheduled', NULL, false),
+  ('PauseCon: the recordings', 'email', 1, 'delivered', NULL, false),
+  ('PauseCon: the recordings', 'email', 2, 'failed', NULL, false),
+  ('PauseCon: the recordings', 'email', 3, 'skipped', 'blocked', false),
+  ('PauseCon: the recordings', 'email', 4, 'skipped', 'unsubscribed', false),
+  ('PauseCon: the recordings', 'email', 5, 'skipped', 'no-permission', false),
+  ('PauseCon: the recordings', 'email', 6, 'cancelled', NULL, false),
+  ('March day reminder', 'text', 1, 'scheduled', NULL, false),
+  ('March day reminder', 'text', 2, 'scheduled', NULL, false),
+  ('Bring a coat on Saturday', 'text', 1, 'scheduled', NULL, false),
+  ('Bring a coat on Saturday', 'text', 2, 'scheduled', NULL, false),
+  ('Event reminder', 'text', 1, 'delivered', NULL, true),
+  ('Event reminder', 'text', 2, 'delivered', NULL, false),
+  ('Event reminder', 'text', 3, 'scheduled', NULL, false),
+  ('PauseCon room change', 'text', 1, 'delivered', NULL, true),
+  ('PauseCon room change', 'text', 2, 'delivered', NULL, true),
+  ('PauseCon room change', 'text', 3, 'delivered', NULL, false),
+  ('PauseCon room change', 'text', 4, 'failed', NULL, false),
+  ('PauseCon room change', 'text', 5, 'skipped', 'not-on-whatsapp', false),
+  ('PauseCon room change', 'text', 6, 'skipped', 'unsubscribed', false),
+  ('Flyering this weekend', 'text', 1, 'delivered', NULL, true),
+  ('Flyering this weekend', 'text', 2, 'failed', NULL, false),
+  ('Flyering this weekend', 'text', 3, 'cancelled', NULL, false)
+) c (title, channel, person, status, reason, was_read)
+JOIN seed_messages m ON m.title = c.title AND m.channel = c.channel;
+INSERT INTO messages_to_supporters (id, mailing_id, supporter_id, address, status, merge_values, skip_reason, sent_at) OVERRIDING SYSTEM VALUE
+SELECT c.id, c.mailing_id, p.id,
+  CASE WHEN c.channel = 'email' THEN p.email ELSE '+447700900' || lpad((100 + p.n)::text, 3, '0') END,
+  c.status, jsonb_build_object('name', p.name, 'place', NULL, 'values', jsonb_build_object('firstName', split_part(p.name, ' ', 1)), 'meets', '["has:firstName"]'::jsonb),
+  c.reason, CASE WHEN c.status IN ('sent', 'delivered', 'failed') THEN now() + c.due END
+FROM seed_copies c JOIN seed_people p ON p.n = c.person;
+INSERT INTO message_events (message_id, at, kind)
+SELECT id, now() + due, 'sent' FROM seed_copies WHERE status IN ('sent', 'delivered', 'failed')
+UNION ALL SELECT id, now() + due + interval '1 minute', 'delivered' FROM seed_copies WHERE status = 'delivered'
+UNION ALL SELECT id, now() + due + interval '1 minute', CASE channel WHEN 'email' THEN 'bounced' ELSE 'failed' END FROM seed_copies WHERE status = 'failed'
+UNION ALL SELECT id, now() + due + interval '20 minutes', 'read' FROM seed_copies WHERE was_read
+UNION ALL SELECT id, now() + due, 'opted-out' FROM seed_copies WHERE reason = 'unsubscribed';
+-- A text's replies: one conversation still in its free 24 hours, and one past them.
+INSERT INTO message_replies (message_id, at, body, sent_by)
+SELECT c.id, now() - r.ago, r.body, r.by FROM seed_copies c JOIN seed_messages m ON m.id = c.mailing_id, (VALUES
+  (1, interval '5 hours', 'Which door is the Main Hall?', NULL::text),
+  (1, interval '4 hours', 'The one on the north side, by the café.', 'jo@pauseai.uk'),
+  (1, interval '3 hours', 'Thanks, see you there.', NULL),
+  (2, interval '2 days', 'Can I bring a friend?', NULL)) r (person, ago, body, by)
+WHERE m.title = 'PauseCon room change' AND c.person = r.person;
+-- An email's: someone answering the one that was stopped.
+INSERT INTO message_replies (message_id, at, body, sent_by)
+SELECT c.id, now() - interval '4 days', 'Thanks, is there a transcript?', NULL
+FROM seed_copies c JOIN seed_messages m ON m.id = c.mailing_id WHERE m.title = 'PauseCon: the recordings' AND c.person = 1;

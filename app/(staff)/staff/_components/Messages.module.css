@@ -4,7 +4,7 @@
 /* The channel in a list's row, before who it's from. */
 .channel {
   display: inline-flex;
-  align-items: center;
+  align-items: baseline;
   gap: var(--space-1);
   margin-right: var(--space-2);
 }

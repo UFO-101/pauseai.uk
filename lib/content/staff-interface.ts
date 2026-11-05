@@ -1087,6 +1087,8 @@ export const staffCopy = {
     } as Record<string, string>,
     recipientsTitle: "⁂ Recipients",
     recipientsCount: (n: number) => `⁂ ${n} ${n === 1 ? "recipient" : "recipients"}`,
+    // Under who it's for, in its band, so someone landing on the page can see who they are.
+    supportersCount: (n: number) => `⁂ ${n} ${n === 1 ? "supporter" : "supporters"}`,
     noRecipients: "⁂ No recipients here.",
     columns: { who: "⁂ Supporter", status: "⁂ Status" },
     erased: "⁂ Erased",

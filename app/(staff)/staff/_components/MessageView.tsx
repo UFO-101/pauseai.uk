@@ -200,7 +200,7 @@ export default function MessageView({
         <BandFact label={copy.facts.from} detail={`${written.fromName}, ${copy.byBackend[written.channel]}`}>
           {written.sentFrom}
         </BandFact>
-        <BandFact label={copy.facts.who} detail={copy.recipientsCount(summary.to)}>
+        <BandFact label={copy.facts.who} detail={copy.supportersCount(summary.to)}>
           {who}
         </BandFact>
       </Band>

@@ -513,6 +513,7 @@ describe("a message's page", () => {
       .toHaveAttribute("href", "/staff/messages/5?tab=delivered");
     await expect.element(page.getByRole("link", { name: copy.counts.read })).not.toBeInTheDocument();
     await expect.element(page.getByText(copy.emailTitle)).toBeVisible();
+    await expect.element(page.getByText(copy.supportersCount(290), { exact: true })).toBeVisible();
     await expect
       .element(page.getByRole("link", { name: "Jane Example" }))
       .toHaveAttribute("href", "/staff/supporters/7");
