@@ -67,8 +67,10 @@ skipped after a few tries, as one not on WhatsApp is.
 
 Each stop is a row in `opt_outs` with a new source (`whatsapp-webhook`,
 `sms-provider`, `reply` or `staff`), so `contact_permission()` says no
-for every topic from then on and `contact_unsubscribes` lists it. It's
-kept after erasure. A resume in WhatsApp's settings closes the stop it
+for every topic from then on and `contact_unsubscribes` lists it, and
+every text is checked just before it's sent, so one scheduled before
+the stop is skipped with the reason (`plans/mailings.md`). It's kept
+after erasure. A resume in WhatsApp's settings closes the stop it
 made; a new yes, on a form or to staff, closes any.
 
 These stops don't cover calls, which have their own ("Calls"). Global
@@ -150,12 +152,45 @@ An easy Stop button means people stop rather than block us.
    ([overview](https://developers.facebook.com/documentation/business-messaging/whatsapp/marketing-messages/overview.md)).
    Meta charges for each delivered message, by category
    ([rate card](https://whatsappbusiness.com/products/platform-pricing/)).
-2. Templates. WhatsApp only sends approved templates, so the site
-   submits each text mailing's words to Meta as one: a category,
-   `en_GB`, a body with named parameters for the merge fields, and a
-   Stop button on marketing ones. Review takes up to 24 hours, so a
-   mailing can't be scheduled sooner. The site reads the status back
-   hourly and by webhook, and a template Meta pauses stops its mailing
+2. Templates. WhatsApp only sends approved templates, so a text's
+   words are either a template Meta has already approved, chosen from
+   those we have in the writer, or new words, which go through a
+   review stage before the text can be scheduled. A draft with new
+   words has a button to send them for approval; it then waits, with
+   the strip saying so and Schedule greyed, until Meta approves or
+   rejects them, usually within a day, and the writer is emailed
+   either way. Changing the words withdraws the request. An approved
+   template's words can't be changed; choosing New words starts
+   again. The site submits new words to Meta as a template: the `marketing`
+   category (a utility template must be non-promotional and about the
+   person's own booking or account, and Meta approves anything else as
+   marketing anyway), `en_GB`, a body with named parameters for the
+   merge fields, each with an example value, a footer saying how to
+   stop, and a Stop quick-reply button, which Meta recommends rather
+   than requires. The body can't start or end with a parameter, and
+   one with the same body and footer as an existing template is
+   rejected as a duplicate
+   ([review](https://developers.facebook.com/documentation/business-messaging/whatsapp/templates/template-review)).
+   The mailing then waits:
+   - *Pending*: Meta decides within 24 hours, so a mailing can't be
+     scheduled sooner. The site reads the status back hourly and by the
+     `message_template_status_update` webhook.
+   - *Approved*: the mailing can go. Meta may have changed the category
+     to marketing; the site records what it was approved as.
+   - *Rejected*: the mailing shows Meta's reason, and staff change the
+     words and resubmit, as often as needed, or appeal with a sample,
+     decided within 24 hours.
+   - *Paused* or *disabled*, after approval, on blocks, reports or
+     low read rates: the mailing stops, and the words must change before
+     it goes again.
+   A template can be reused: a mailing can pick an approved one and fill
+   its parameters, with no new review, which suits a weekly mailing
+   whose fixed words rarely change and whose events are a parameter.
+   An approved template's words can be edited once a day and ten times
+   in thirty days, each edit reviewed again
+   ([management](https://developers.facebook.com/documentation/business-messaging/whatsapp/templates/template-management)).
+   An account can create 100 templates an hour and hold 250, or 6,000
+   once verified
    ([templates](https://developers.facebook.com/documentation/business-messaging/whatsapp/templates/overview)).
    Without an SMS backend, a text mailing skips numbers not on
    WhatsApp.
@@ -236,6 +271,9 @@ and a calling tool.
    store that ID against the number when we send, so a later stop can be
    matched?
 6. Which SMS provider, and can it take over the giffgaff number?
-7. Once the join form stops asking intent, where do we learn who wants
+7. Does a text mailing always submit its own template, or can staff
+   keep a few approved ones, such as the weekly events one, and fill
+   their fields? The second means fewer reviews but a template editor.
+8. Once the join form stops asking intent, where do we learn who wants
    to volunteer: Global's `volunteer_updates` list, our own join form,
    or something else?

@@ -176,24 +176,61 @@ question 1).
    result.
 3. Decide whether leaving Luma's emails, or reporting one as spam,
    stops the weekly too.
-4. An email channel on Postmark's broadcast stream
+4. An email channel on Postmark's broadcast stream, from
+   `hello@pauseai.uk`, which needs that address as a sender signature
+   in Postmark (the site's own emails go from `noreply@`, on the
+   transactional stream), so replies land in the hello@ inbox. A
+   staff member's connected Gmail can be chosen instead, as a
+   politicians' mailing is, within its daily limit
    ([streams](https://postmarkapp.com/message-streams)), separate from
    the staff emails on its transactional stream, for about $200–300 a year
    ([pricing](https://postmarkapp.com/pricing)). Postmark reviews new
    broadcast senders, so apply early. A small local mailing could go by
    Gmail instead.
-5. Unsubscribing: a link and a `List-Unsubscribe` header in every email.
-   The link's page offers fewer emails before none (the weekly only,
-   urgent emails only, my local group only, or a three-month pause),
-   shows Global's lists too, and says that stopping all bulk email stops
-   Global's as well. Postmark's unsubscribe and complaint webhooks write
-   to `opt_outs`.
+5. Opt-outs, as below: the link and header in every email, the page
+   they lead to, the webhooks, and staff recording one by hand.
 6. The weekly's sections: the main events with how many have signed up,
    events near the reader, and their MP.
 7. Before the first send, set up Google Postmaster Tools and DMARC
    reports, so we can see our spam rate; pauseai.uk's DMARC is
    `p=none`, with no reports. Google wants complaints below 0.1%
    ([sender guidelines](https://support.google.com/a/answer/81126)).
+
+## Opt-outs
+
+PECR wants a simple way to stop in every email, and Google and Yahoo
+want bulk senders to honour an unsubscribe within two days and keep
+complaints under 0.3%
+([sender guidelines](https://support.google.com/a/answer/81126)). As
+for texts (`plans/supporters-phone.md`, "Opt-outs"), a stop reaches us
+every way a person might make it, and each is honoured at once:
+
+- From the unsubscribe link in every email. Its page offers fewer
+  emails before none (the weekly only, urgent emails only, my local
+  group only, or a three-month pause), shows Global's lists too, and
+  says that stopping all bulk email stops Global's as well.
+- From the `List-Unsubscribe` and `List-Unsubscribe-Post` headers in
+  every email, which mail apps show as their own Unsubscribe button and
+  honour with one POST, no page.
+- From a spam complaint, by Postmark's webhook, which stops all bulk
+  email from us and is sent to Global as `no_bulk_email`.
+- As a reply saying unsubscribe, or anything less clear such as "please
+  stop", which the policy inbox shows staff with a button to record it
+  as a stop, as it folds automatic replies.
+- Any other way, such as a word at an event. Staff record it, with how
+  it was given.
+- From CiviCRM, by the hourly pull: an unsubscribe there, or any of the
+  three flags.
+
+Each stop is a row in `opt_outs` with its source (`link`,
+`list-unsubscribe`, `postmark-complaint`, `reply`, `staff`, `civicrm`),
+and what it stops: one topic, or every email. From then on
+`contact_permission()` says no for it, `contact_unsubscribes` lists it
+on the supporter's page, and every message is checked just before it's
+sent, so one scheduled before the stop is skipped with the reason
+(`plans/mailings.md`). It's kept after erasure. A resubscribe must come
+from the person, with the words of the box they ticked; nothing a staff
+member records can reopen one.
 
 ## Getting more people to say yes
 

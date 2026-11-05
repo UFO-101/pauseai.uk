@@ -110,9 +110,10 @@ function Help({ id, label, children }: { id: string; label: string; children: Re
 
 /**
  * A draft mailing, on one page, in six numbered sections: who it's to, as
- * pills, with Change who, and who's left out; writing it, its subject, ask,
- * letter and files; a preview of each recipient's email, a case at a time;
- * whose Gmail it's from; when it goes, never in the past; and what will go,
+ * pills, with Change who, and who's left out; whose Gmail it's from, before
+ * the writing, as the letters go in that person's voice; writing it, its
+ * subject, ask, letter and files; a preview of each recipient's email, a
+ * case at a time; when it goes, never in the past; and what will go,
  * with the button to schedule it, greyed with the reasons while anything
  * stops it. A draft with nothing written yet starts with a greeting, from
  * the policy team's Gmail, both saved with its first change. A draft saves
@@ -385,7 +386,55 @@ export default function MailingWriter({
           )}
         </Card>
 
-        <Card span={6} title={<Numbered n={2}>{copy.sections.write}</Numbered>} id="write-title">
+        <Card span={6} title={<Numbered n={2}>{copy.sections.from}</Numbered>} id="from-title">
+          {/* The choice of connected Gmails, beside the name the mailing goes in, then what the chosen one has
+              sent today, or that there's none; then, while yours isn't connected, where to connect it. */}
+          <div className={styles.from}>
+            {senderChoices.length > 0 ? (
+              <>
+                <div className={styles.fromFields}>
+                  <Field label={copy.fromLegend} className={styles.sender}>
+                    <Select
+                      value={values.sentFrom ?? ""}
+                      onChange={(event) => change({ sentFrom: event.target.value })}
+                    >
+                      {!values.sentFrom && (
+                        <option value="" disabled>
+                          {copy.choose}
+                        </option>
+                      )}
+                      {senderChoices.map((sender) => (
+                        <option key={sender.email} value={sender.email}>
+                          {sender.connected ? sender.email : copy.senderNotConnected(sender.email)}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  {/* Until it's edited, the Gmail's own name, following the account chosen. Left empty, it's that name too. */}
+                  <Field label={copy.fromNameLabel} className={styles.sender}>
+                    <TextInput
+                      value={values.fromName ?? sender?.name ?? ""}
+                      onChange={(event) => change({ fromName: event.target.value })}
+                      onBlur={() => values.fromName === "" && change({ fromName: null })}
+                    />
+                  </Field>
+                </div>
+                {sender && <SentToday sent={sender.sentToday} />}
+              </>
+            ) : (
+              <p>{copy.noSenders}</p>
+            )}
+            {values.sentFrom && !sender && <Hint>{copy.notConnected}</Hint>}
+            {/* Connecting is done on the account's own page, logged in as it. */}
+            {!data.senders.some((one) => one.email === data.me) && (
+              <p>
+                <StaffLink href="/staff/me#gmail">{copy.connectOne}</StaffLink>
+              </p>
+            )}
+          </div>
+        </Card>
+
+        <Card span={6} title={<Numbered n={3}>{copy.sections.write}</Numbered>} id="write-title">
           <Field label={copy.subject}>
             <TextInput value={values.subject} onChange={(event) => change({ subject: event.target.value })} />
           </Field>
@@ -449,7 +498,7 @@ export default function MailingWriter({
           </div>
         </Card>
 
-        <Card span={6} title={<Numbered n={3}>{copy.sections.preview}</Numbered>} id="preview-title">
+        <Card span={6} title={<Numbered n={4}>{copy.sections.preview}</Numbered>} id="preview-title">
           <Preview
             data={data}
             body={body}
@@ -463,54 +512,6 @@ export default function MailingWriter({
               return actions.sendTest(id, recipient, to);
             }}
           />
-        </Card>
-
-        <Card span={6} title={<Numbered n={4}>{copy.sections.from}</Numbered>} id="from-title">
-          {/* The choice of connected Gmails, beside the name the mailing goes in, then what the chosen one has
-              sent today, or that there's none; then, while yours isn't connected, where to connect it. */}
-          <div className={styles.from}>
-            {senderChoices.length > 0 ? (
-              <>
-                <div className={styles.fromFields}>
-                  <Field label={copy.fromLegend} className={styles.sender}>
-                    <Select
-                      value={values.sentFrom ?? ""}
-                      onChange={(event) => change({ sentFrom: event.target.value })}
-                    >
-                      {!values.sentFrom && (
-                        <option value="" disabled>
-                          {copy.choose}
-                        </option>
-                      )}
-                      {senderChoices.map((sender) => (
-                        <option key={sender.email} value={sender.email}>
-                          {sender.connected ? sender.email : copy.senderNotConnected(sender.email)}
-                        </option>
-                      ))}
-                    </Select>
-                  </Field>
-                  {/* Until it's edited, the Gmail's own name, following the account chosen. Left empty, it's that name too. */}
-                  <Field label={copy.fromNameLabel} className={styles.sender}>
-                    <TextInput
-                      value={values.fromName ?? sender?.name ?? ""}
-                      onChange={(event) => change({ fromName: event.target.value })}
-                      onBlur={() => values.fromName === "" && change({ fromName: null })}
-                    />
-                  </Field>
-                </div>
-                {sender && <SentToday sent={sender.sentToday} />}
-              </>
-            ) : (
-              <p>{copy.noSenders}</p>
-            )}
-            {values.sentFrom && !sender && <Hint>{copy.notConnected}</Hint>}
-            {/* Connecting is done on the account's own page, logged in as it. */}
-            {!data.senders.some((one) => one.email === data.me) && (
-              <p>
-                <StaffLink href="/staff/me#gmail">{copy.connectOne}</StaffLink>
-              </p>
-            )}
-          </div>
         </Card>
 
         <Card span={6} title={<Numbered n={5}>{copy.sections.when}</Numbered>} id="when-title">
