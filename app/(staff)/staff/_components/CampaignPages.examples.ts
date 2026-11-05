@@ -1,3 +1,4 @@
+import { staffCopy } from "@/lib/content/staff-interface";
 import type { AskPageData } from "@/lib/server/asks";
 import type { CampaignSummary, CampaignVersion } from "@/lib/server/campaigns";
 import type { OneOffThread, OneOffThreadRow } from "@/lib/server/one-off-emails";
@@ -251,6 +252,7 @@ export const exampleOldLettersResult: OldLettersImportResult = {
   joined: { "deepmind-30-june": 500, form: 40 },
   added: { "russell-speak": 3 },
   notJoined: { "deepmind-august": 90, "pauseai-info-liability": 2 },
+  titles: staffCopy.oldLetters.mailingTitles,
   replies: 40,
   autoReplies: 200,
   oneOffs: 12,
