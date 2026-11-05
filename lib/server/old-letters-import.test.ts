@@ -97,7 +97,7 @@ describeWithDatabase("the import of old letters", () => {
     expect(result.left).toBe(0);
     expect(result.titles).toMatchObject({
       "deepmind-25": staffCopy.oldLetters.mailingTitles["deepmind-25"],
-      "pauseai-info-frontier-ai": "Frontier AI letter, from pauseai.info",
+      "pauseai-info-frontier-ai": "Regulate AI developers now (Airtable)",
     });
     expect(result.joined).toMatchObject({
       "deepmind-25": 1,

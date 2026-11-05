@@ -546,8 +546,8 @@ test("pauseai.info's letters and Go to Parliament's meetings", async ({ page, re
 
   story("Each old campaign has its letters, on its own page.");
   await page.goto(`${BASE}/staff/campaigns`);
-  await page.getByRole("link", { name: "DeepMind letter, from pauseai.info" }).first().click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("DeepMind letter, from pauseai.info");
+  await page.getByRole("link", { name: "Call DeepMind to honour AI Safety Summit pledges" }).first().click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Call DeepMind to honour AI Safety Summit pledges");
   await frame(page, "An old campaign's page");
   story("Each sender is now a supporter, from the old form.");
   await page.getByRole("link", { name: "Dee Deepmind" }).first().click();

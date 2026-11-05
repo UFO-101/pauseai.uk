@@ -12,7 +12,7 @@ import { exampleAsks } from "./PoliticianTable.examples";
 /** A campaign with an ask, a letter failed, and its letters over several months. */
 export const exampleCampaign: CampaignSummary = {
   slug: "pauseai-info-frontier-ai",
-  title: "Frontier AI letter, from pauseai.info",
+  title: "Regulate AI developers now (Airtable)",
   ask: "frontier-ai-letter",
   askTitle: "Frontier AI letter to the Prime Minister",
   askKind: "letter",
@@ -32,7 +32,7 @@ export const exampleCampaign: CampaignSummary = {
 export const exampleCampaignNoAsk: CampaignSummary = {
   ...exampleCampaign,
   slug: "pauseai-info-liability",
-  title: "Liability letter, from pauseai.info",
+  title: "Legislate for liability for AI model severe harm",
   ask: null,
   askTitle: null,
   askKind: null,
@@ -88,7 +88,7 @@ export const exampleAskPage: AskPageData = {
     {
       kind: "campaign",
       href: "/staff/campaigns/pauseai-info-deepmind",
-      title: "DeepMind letter, from pauseai.info",
+      title: "Call DeepMind to honour AI Safety Summit pledges",
       from: "2025-07-23T09:00:00Z",
       to: "2025-09-30T09:00:00Z",
       letters: 19,
