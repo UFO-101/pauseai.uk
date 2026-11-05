@@ -939,7 +939,7 @@ export const staffCopy = {
     keepContact: "⁂ Keep the Contact filter this message was made from: its channel and topic are fixed.",
     backToDraft: "⁂ Back to the draft",
     // A message's channel, as a pill, a list's row and the band say it.
-    channels: { email: "⁂ Email", text: "⁂ Text" },
+    channels: { email: "Email", text: "Text" },
     newTitle: { email: "⁂ New email to supporters", text: "⁂ New text to supporters" },
     // What's filled in for those without a field, and the fields as the editor and the preview say them.
     fallbacks: { firstName: "⁂ there", localGroup: "⁂ your local group", mp: "⁂ your MP" },
@@ -982,7 +982,7 @@ export const staffCopy = {
       "⁂ Messages can't be sent yet, by email or text. You can write one, and test an email by sending it to yourself.",
     // Write.
     subject: "⁂ Subject",
-    emailLabel: "⁂ Email",
+    emailLabel: "Email",
     files: "⁂ Files",
     templatesLabel: "⁂ WhatsApp approved templates",
     searchTemplates: "⁂ Search the templates",
@@ -1063,7 +1063,7 @@ export const staffCopy = {
       "cannot-send": "⁂ Sending isn't built yet.",
     } as Record<string, string>,
     // Its page.
-    waiting: "⁂ Scheduled, waiting for WhatsApp's approval",
+    waiting: "WhatsApp approving",
     waitingStrip: "⁂ Waiting for WhatsApp to approve the template, usually within a day.",
     sendsOnceApproved: (when: string) => `⁂ Sends ${when}, once approved`,
     scheduledLine: (n: number, channel: "email" | "text", from: string) =>
@@ -1072,11 +1072,11 @@ export const staffCopy = {
     textTitle: "⁂ The text",
     emailTitle: "⁂ The email",
     counts: {
-      delivered: "⁂ delivered",
-      failed: "⁂ failed",
-      stopped: "⁂ stopped",
-      read: "⁂ read",
-      replied: "⁂ replied",
+      delivered: "delivered",
+      failed: "failed",
+      stopped: "stopped",
+      read: "read",
+      replied: "replied",
     },
     tabs: {
       delivered: "⁂ Delivered",

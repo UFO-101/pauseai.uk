@@ -283,6 +283,10 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
           "politicians scheduled",
           "politicians sending",
           "politicians sent",
+          "supporters cancelled",
+          "supporters draft",
+          "supporters scheduled",
+          "supporters sending",
           "supporters sent",
         ]);
         // Opt-outs told by every source, and every answer to whether we'd email someone.

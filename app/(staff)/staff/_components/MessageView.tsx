@@ -99,7 +99,7 @@ function recipientColumns(message: MessageSummary): ListColumn<MessageRecipient>
           <span className={styles.stack}>
             <Tag tone={tone}>{words}</Tag>
             {r.sentAt && <Muted>{staffDate(r.sentAt)}</Muted>}
-            {!r.skipReason && r.status !== "cancelled" && (
+            {!r.skipReason && !["scheduled", "cancelled"].includes(r.status) && (
               <StaffLink href={`/staff/messages/${message.id}/${r.copyId}`}>{copy.messageAndReply}</StaffLink>
             )}
           </span>

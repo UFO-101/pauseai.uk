@@ -536,6 +536,17 @@ describe("a message's page", () => {
       .toHaveAttribute("href", "/staff/messages/5");
   });
 
+  it("leads to a copy only once it has gone", async () => {
+    const [one] = exampleMessageSent.recipients;
+    const recipients = [
+      { ...one, copyId: 31, status: "scheduled", read: false, sentAt: null },
+      { ...one, copyId: 32, status: "cancelled", read: false, sentAt: null },
+    ];
+    await render(<MessageView data={{ ...exampleMessageSent, recipients }} who={who} {...actions} />);
+    await expect.element(page.getByText(copy.statuses.scheduled)).toBeVisible();
+    await expect.element(page.getByRole("link", { name: copy.messageAndReply })).not.toBeInTheDocument();
+  });
+
   it("goes through the pages of everyone", async () => {
     await render(<MessageView data={{ ...exampleMessageSent, pages: 2 }} who={who} {...actions} />);
     await expect
