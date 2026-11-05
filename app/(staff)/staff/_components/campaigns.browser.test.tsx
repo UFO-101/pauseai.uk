@@ -486,6 +486,18 @@ describe("the import of old letters' run", () => {
       />,
     );
     expect(page.getByRole("heading", { name: words.joined }).query()).toBeNull();
+    await rerender(
+      <Run
+        run={exampleRun("import-old-letters", {
+          ...exampleOldLettersResult,
+          joined: { csrb: 2, unnamed: 1 },
+          titles: { csrb: "CSRB Iqbal Amendment" },
+        })}
+        open
+      />,
+    );
+    await says("CSRB Iqbal Amendment: 2");
+    await says("unnamed: 1");
     await rerender(<Run run={exampleFailedRun("import-old-letters", "Gmail said no", {})} open />);
     await says("Gmail said no");
   });

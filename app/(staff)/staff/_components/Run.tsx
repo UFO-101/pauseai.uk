@@ -334,7 +334,15 @@ function GmailRun({ run, open }: { run: GmailReading; open?: boolean }) {
 }
 
 /** Counts by mailing, or a form letter's campaign, as a list under its heading; nothing with none. */
-function CountsByMailing({ heading, counts }: { heading: string; counts: Record<string, number> }) {
+function CountsByMailing({
+  heading,
+  counts,
+  titles,
+}: {
+  heading: string;
+  counts: Record<string, number>;
+  titles?: Record<string, string>;
+}) {
   const rows = Object.entries(counts).filter(([, n]) => n > 0);
   if (rows.length === 0) return null;
   return (
@@ -343,7 +351,7 @@ function CountsByMailing({ heading, counts }: { heading: string; counts: Record<
       <ul>
         {rows.map(([key, n]) => (
           <li key={key}>
-            {staffCopy.oldLetters.mailingTitles[key] ?? key}: {n}
+            {titles?.[key] ?? key}: {n}
           </li>
         ))}
       </ul>
@@ -379,9 +387,9 @@ function OldLettersRun({ run, open, people }: { run: OldLettersImport; open?: bo
         </>
       }
     >
-      <CountsByMailing heading={words.joined} counts={result.joined} />
-      <CountsByMailing heading={words.added} counts={result.added} />
-      <CountsByMailing heading={words.notJoined} counts={result.notJoined} />
+      <CountsByMailing heading={words.joined} counts={result.joined} titles={result.titles} />
+      <CountsByMailing heading={words.added} counts={result.added} titles={result.titles} />
+      <CountsByMailing heading={words.notJoined} counts={result.notJoined} titles={result.titles} />
       {result.unmatched.length > 0 &&
         (people ? (
           <>

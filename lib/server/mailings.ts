@@ -26,6 +26,8 @@ export type MailingSummary = {
   importedTextApproximate: boolean;
   /** Copied from Airtable, so with no text, sender or attachments. */
   imported: boolean;
+  /** Whether the import of old letters made or matched it, so Airtable didn't say who it's from. */
+  oldLetters?: boolean;
   state: MailingState;
   /** Who wrote it, and the name it's from, or with none the Gmail it goes from; neither for one imported. */
   createdBy: string | null;
@@ -108,7 +110,7 @@ const RECIPIENTS_PAGE_SIZE = 100;
 
 const SELECT_MAILINGS = `
   SELECT m.id::int AS id, m.title, m.ask, a.title AS "askTitle", a.kind AS "askKind", m.imported_text AS "importedText", m.subject AS "importedSubject",
-    m.imported_text_approximate AS "importedTextApproximate", (m.airtable_field IS NOT NULL OR m.airtable_sent_between IS NOT NULL) AS imported,
+    m.imported_text_approximate AS "importedTextApproximate", m.old_letters_key IS NOT NULL AS "oldLetters", (m.airtable_field IS NOT NULL OR m.airtable_sent_between IS NOT NULL) AS imported,
     m.state, m.created_by AS "createdBy", coalesce(nullif(m.from_name, ''), m.sent_from) AS "fromName", m.sent_from AS "sentFrom", m.due_at AS "dueAt",
     m.updated_at AS "updatedAt",
     min(l.sent_at) AS "sentAt",

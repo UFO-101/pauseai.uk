@@ -186,6 +186,7 @@
 
 .history li > * {
   padding-block: var(--space-2);
+  overflow-wrap: anywhere;
 }
 
 .history li + li > * {

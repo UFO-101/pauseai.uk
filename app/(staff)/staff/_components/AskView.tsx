@@ -118,8 +118,8 @@ export default function AskView({ ask, answer }: { ask: AskPageData; answer: str
       {ask.writtenTo > 0 && (
         <Grid>
           <Card span={6} as="div">
-            <Progress value={answered} max={ask.writtenTo} tone="green" label={page.answered} big>
-              {page.bar(answered, ask.writtenTo, ask.kind)}
+            <Progress value={ask.writtenTo - ask.noAnswer} max={ask.writtenTo} tone="green" label={page.answered} big>
+              {page.bar(ask.writtenTo - ask.noAnswer, ask.writtenTo, ask.kind)}
             </Progress>
           </Card>
         </Grid>

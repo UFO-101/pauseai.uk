@@ -231,6 +231,17 @@ describe("MailingsOverview", () => {
   );
   const row = (title: string) => page.getByRole("listitem").filter({ hasText: title });
 
+  it("says who it's from isn't recorded for one the import of old letters made", async () => {
+    const mailing = { ...exampleMailings[0], imported: true, sentFrom: null, oldLetters: true };
+    await render(
+      <MailingsOverview
+        groups={mailingGroups({ drafts: [], scheduled: [], sending: [], sent: [mailing] }, now)}
+        now={now}
+      />,
+    );
+    await expect.element(page.getByText(staffCopy.mailings.notRecorded, { exact: false })).toBeVisible();
+  });
+
   it("groups them: coming up, then by month, then by year, each row only what matters at its stage", async () => {
     await render(<MailingsOverview groups={groups} now={now} />);
     expect(
@@ -526,6 +537,11 @@ describe("MailingView, for a mailing imported from Airtable", () => {
   const mailings = staffCopy.mailings;
   const imported = (props: Partial<Mailing> = {}) =>
     render(<MailingView mailing={{ ...exampleMailing, ...props }} asks={[]} stop={noAction} reschedule={noAction} />);
+
+  it("says who it's from isn't recorded for one the import of old letters made", async () => {
+    await imported({ sentFrom: null, oldLetters: true });
+    await expect.element(page.getByText(mailings.notRecorded).first()).toBeVisible();
+  });
 
   it("is when it went, its counts, each recipient's outcome and how it was written, and that it has no text", async () => {
     await imported({ ask: null });

@@ -315,10 +315,11 @@ async function candidatesFor(reader: Reader, people: number[], at: Date) {
     kind: "pauseai" | "supporter";
     senderEmail?: string;
     senderName?: string;
+    campaign: string | null;
     field: string | null;
     person: number;
   }>(
-    `SELECT l.id::int AS id, coalesce(l.sent_at, l.created_at) AS at, l.kind, f.email AS "senderEmail", f.name AS "senderName",
+    `SELECT l.id::int AS id, coalesce(l.sent_at, l.created_at) AS at, l.kind, f.email AS "senderEmail", f.name AS "senderName", s.campaign,
        m.airtable_field AS field, l.notable_person_id::int AS person
      FROM letters l LEFT JOIN letters_from_pauseai p ON p.id = l.id AND l.kind = 'pauseai' LEFT JOIN mailings m ON m.id = p.mailing_id
        LEFT JOIN letters_from_supporters s ON s.id = l.id AND l.kind = 'supporter' LEFT JOIN form_entries f ON f.id = s.entry_id
@@ -408,7 +409,7 @@ async function handleSent(reader: Reader, account: string, id: string): Promise<
   if (letter) {
     const row = candidates.find((c) => c.id === letter.id)!;
     if (row.kind === "supporter") {
-      count(reader.result.joined, "form");
+      count(reader.result.joined, row.campaign!);
       if (!reader.dryRun) await recordSent(letter.id, "letter", account, message, address(), from, rfc);
       return { outcome: "joined", letterId: letter.id, rfc };
     }
@@ -661,7 +662,7 @@ async function placeUnjoined(reader: Reader): Promise<void> {
   reader.result.notJoined["deepmind-august"] = row.august;
   reader.result.notJoined["deepmind-others"] = row.others;
   const notJoined = await query<{ key: string; total: number }>(
-    `SELECT coalesce(m.old_letters_key, s.campaign) AS key, count(*)::int AS total
+    `SELECT coalesce(m.old_letters_key, s.campaign, m.title) AS key, count(*)::int AS total
      FROM letters l LEFT JOIN letters_from_pauseai p ON p.id = l.id LEFT JOIN mailings m ON m.id = p.mailing_id
        LEFT JOIN letters_from_supporters s ON s.id = l.id
      WHERE (p.airtable_id IS NOT NULL OR s.airtable_id IS NOT NULL) AND coalesce(m.old_letters_key, '') <> 'deepmind-others'
@@ -816,6 +817,7 @@ export function importOldLettersChunk({
       else throw error;
     }
     result.searchesDone = searchesDone.n;
+    result.titles = await countedTitles();
     result.left = await leftToRead(dryRun);
     if (runId) {
       await query("UPDATE import_runs SET result = $2 WHERE id = $1", [runId, JSON.stringify(result)]);
@@ -824,6 +826,15 @@ export function importOldLettersChunk({
     const id = await recordRun(JOB, startedBy, "ok", result);
     return { runId: id, more, result };
   });
+}
+
+/** What the result's counts are called: the mailings and campaigns they're under, by key. */
+async function countedTitles(): Promise<Record<string, string>> {
+  const rows = await query<{ key: string; title: string }>(
+    `SELECT old_letters_key AS key, title FROM mailings WHERE old_letters_key IS NOT NULL
+     UNION ALL SELECT slug, title FROM campaigns`,
+  );
+  return { ...Object.fromEntries(rows.map(({ key, title }) => [key, title])), ...staffCopy.oldLetters.mailingTitles };
 }
 
 /** The whole of a press, in one call, as a fixture build does it: no background functions there. */

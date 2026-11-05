@@ -264,6 +264,8 @@ export type OldLettersImportResult = {
   joined: Record<string, number>;
   added: Record<string, number>;
   notJoined: Record<string, number>;
+  /** What those are called, by the key each is counted under. */
+  titles?: Record<string, string>;
   replies: number;
   autoReplies: number;
   oneOffs: number;

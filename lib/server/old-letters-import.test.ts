@@ -1,3 +1,4 @@
+import { staffCopy } from "@/lib/content/staff-interface";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
@@ -94,7 +95,17 @@ describeWithDatabase("the import of old letters", () => {
     const result = await run();
     expect(result.finished).toBe(true);
     expect(result.left).toBe(0);
-    expect(result.joined).toMatchObject({ "deepmind-25": 1, csrb: 1, edinburgh: 1, "ben-lake": 1, form: 1 });
+    expect(result.titles).toMatchObject({
+      "deepmind-25": staffCopy.oldLetters.mailingTitles["deepmind-25"],
+      "pauseai-info-frontier-ai": "Frontier AI letter, from pauseai.info",
+    });
+    expect(result.joined).toMatchObject({
+      "deepmind-25": 1,
+      csrb: 1,
+      edinburgh: 1,
+      "ben-lake": 1,
+      "pauseai-info-frontier-ai": 1,
+    });
     const [send] = await query<Record<string, unknown>>(
       `SELECT purpose, sender, from_address AS "from", rfc_message_id AS rfc, imported, subject, at FROM email_sends WHERE letter_id = $1`,
       [seeded.deepmind],
@@ -428,7 +439,7 @@ Please join 40 of your colleagues.')`,
     const seeded = await seed();
     const result = await run(true);
     expect(result).toMatchObject({ dryRun: true, finished: true });
-    expect(result.joined).toMatchObject({ "deepmind-25": 1, csrb: 1, form: 1 });
+    expect(result.joined).toMatchObject({ "deepmind-25": 1, csrb: 1, "pauseai-info-frontier-ai": 1 });
     expect(result.added["russell-speak"]).toBe(1);
     expect(result.replies).toBeGreaterThan(0);
     expect(result.formTexts).toBe(1);

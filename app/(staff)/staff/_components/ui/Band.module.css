@@ -71,6 +71,7 @@
 
 .facts dd {
   margin: 0;
+  overflow-wrap: anywhere;
   font-weight: 600;
 }
 

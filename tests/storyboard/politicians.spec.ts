@@ -418,6 +418,7 @@ test("From a mailing to its ask", async ({ page, request, flowDatabase }) => {
   story("A mailing names its ask. Following it from the invitation opens the Edinburgh conference's own page.");
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
+  await importEmails(page);
   await page.goto(`${BASE}/staff/mailings`);
   await page
     .getByRole("listitem")

@@ -273,7 +273,9 @@ export default function MailingView({
         aside={state !== "scheduled" && <Counts counts={counts} />}
       >
         <BandFact label={copy.from} detail={written?.fromName}>
-          {written ? written.sentFrom : (mailing.sentFrom ?? staffCopy.mailings.imported)}
+          {written
+            ? written.sentFrom
+            : (mailing.sentFrom ?? (mailing.oldLetters ? staffCopy.mailings.notRecorded : staffCopy.mailings.imported))}
         </BandFact>
         <BandFact label={copy.to} detail={who && staffCopy.campaigns.politicians(mailing.to)}>
           {who ?? staffCopy.campaigns.politicians(mailing.to)}
