@@ -1009,6 +1009,18 @@ INSERT INTO one_off_messages (thread_id, account, gmail_message_id, gmail_thread
   (1, 'joseph@pauseai.uk', 'gmail-one-off-2', 't-coffee', 'fixture-one-off-polly@parliament.uk', '{fixture-one-off-joseph@mail.gmail.com}', 'polly.placeholder.mp@parliament.uk', 'Polly Placeholder', 'Joseph Example <joseph@pauseai.uk>', '', '{joseph@pauseai.uk,polly.placeholder.mp@parliament.uk}', 'Re: Coffee next week?', now() - interval '30 days', false, 'fixture/one-off-polly.eml.gz', 300),
   (2, 'policy@pauseai.uk', 'gmail-one-off-3', 't-forward', 'fixture-one-off-vera@example.com', '{}', 'vera.volunteer@example.com', 'Vera Volunteer', 'PauseAI UK <policy@pauseai.uk>', '', '{vera.volunteer@example.com,policy@pauseai.uk}', 'Fwd: My MP''s answer', now() - interval '20 days', false, 'fixture/one-off-volunteer.eml.gz', 300),
   (3, 'joseph@pauseai.uk', 'gmail-one-off-4', 't-room', 'fixture-one-off-office@parliament.uk', '{}', 'sam.office@parliament.uk', 'Sam Office', 'Joseph Example <joseph@pauseai.uk>', '', '{sam.office@parliament.uk,joseph@pauseai.uk}', 'Room booking request', now() - interval '25 days', false, 'fixture/one-off-office.eml.gz', 300);
+-- The import's place: a message of each outcome, one still to read, and a dry run's.
+INSERT INTO old_letters_mail (dry_run, account, gmail_message_id, source, gmail_thread_id, outcome) VALUES
+  (false, 'joseph@pauseai.uk', 'seed-mail-joined', 'sent', 't1', 'joined'),
+  (false, 'joseph@pauseai.uk', 'seed-mail-added', 'sent', 't2', 'added'),
+  (false, 'joseph@pauseai.uk', 'seed-mail-reply', 'received', 't1', 'reply'),
+  (false, 'joseph@pauseai.uk', 'seed-mail-auto', 'received', 't1', 'auto_reply'),
+  (false, 'joseph@pauseai.uk', 'seed-mail-one-off', 'group', 't3', 'one_off'),
+  (false, 'joseph@pauseai.uk', 'seed-mail-thread', 'thread', 't3', 'one_off'),
+  (false, 'policy@pauseai.uk', 'seed-mail-unmatched', 'policy', 't4', 'unmatched'),
+  (false, 'joseph@pauseai.uk', 'seed-mail-skipped', 'sent', 't5', 'skipped'),
+  (false, 'joseph@pauseai.uk', 'seed-mail-waiting', 'sent', 't6', NULL),
+  (true, 'joseph@pauseai.uk', 'seed-mail-joined', 'sent', 't1', 'joined');
 -- Mail that matched nothing: one reported, one waiting for today's report.
 INSERT INTO unmatched_mail (account, gmail_message_id, found_at, reported_at) VALUES
   ('policy@pauseai.uk', 'seed-unmatched-1', now() - interval '3 days', now() - interval '2 days'),

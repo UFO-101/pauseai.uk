@@ -79,7 +79,7 @@ export type AskAnswer = {
 /** An ask's own page: its counts, how it was put, by date, and a page of its answers. */
 export type AskPageData = AskWithCounts & { fixed: boolean; ways: AskWay[]; answers: AskAnswer[] };
 
-/** The ask with `slug`, for its page, its answers those of `status` or all; or undefined for none. */
+/** The ask with `slug`, for its page, its answers those of `status`, or with none or blank, all; or undefined for none. */
 export async function askPageData(slug: string, status?: string): Promise<AskPageData | undefined> {
   const [ask] = await query<AskWithCounts>(
     `SELECT ${ASK_COLUMNS},
@@ -107,7 +107,7 @@ export async function askPageData(slug: string, status?: string): Promise<AskPag
       `SELECT n.id::int AS "politicianId", n.name, p.constituency, p.party, s.status
        FROM ask_statuses s JOIN notable_people n ON n.id = s.notable_person_id LEFT JOIN politicians p ON p.id = n.id
        WHERE s.ask = $1 AND ($2::text IS NULL OR s.status = $2) ORDER BY n.name LIMIT 200`,
-      [slug, status ?? null],
+      [slug, status || null],
     ),
   ]);
   return { ...ask, fixed: FIXED_ASKS.includes(slug), ways, answers };

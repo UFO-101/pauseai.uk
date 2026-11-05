@@ -199,6 +199,16 @@ describeWithDatabase("the import of old letters", () => {
     expect(new Date(at)).toEqual(new Date("2026-06-10T09:01:00Z"));
   });
 
+  it("joins a reply to an August letter by its subject, though it has no sent email", async () => {
+    const { august } = await seed();
+    await run();
+    expect(await outcomeOf("0a19")).toEqual({ outcome: "reply", letterId: august });
+    const [{ text }] = await query<{ text: { content: unknown[] } | null }>(
+      `SELECT imported_text AS text FROM mailings WHERE old_letters_key = 'deepmind-august'`,
+    );
+    expect(text?.content).toHaveLength(2);
+  });
+
   it("sets replied_at from a person's first reply", async () => {
     const { deepmind, csrb } = await seed();
     await run();

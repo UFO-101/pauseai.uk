@@ -27,7 +27,7 @@ import {
   exampleRepliedLetterDetails,
   exampleSupporterLetterDetails,
 } from "./LettersTable.examples";
-import { emptyLettersSearch, exampleLetter, exampleLetterCampaigns } from "./LettersTable.examples";
+import { exampleLetter, exampleLetterCampaigns } from "./LettersTable.examples";
 import JobActions from "./JobActions";
 import LoginCard from "./LoginCard";
 import LoginForm from "./LoginForm";
@@ -2368,6 +2368,7 @@ describe("ImportOverview", () => {
       "/staff/import-data/controlai",
       "/staff/import-data/web-form-letters",
       "/staff/import-data/go-to-parliament",
+      "/staff/import-data/old-letters",
     ]);
     expect(cards.map((card) => card.querySelector("h3 a")!.textContent)).toEqual([
       jobTitles["import-luma"],
@@ -2536,12 +2537,14 @@ describe("AsksTable", () => {
         copy.count(staffCopy.statuses.declined, 50),
         copy.count(staffCopy.statuses.passed_on, 1),
       ].join(" · "),
+      "186",
+      "54",
+      copy.page.way(1, "mailing"),
       // The code names it, so it has no Edit.
       "",
     ]);
-    // Asked by nobody we record, with no link.
+    // Asked by nobody we record.
     expect(cells(exampleAsks[1].title)[3]).toBe("");
-    expect(row(exampleAsks[1].title).getByRole("link", { name: exampleAsks[1].title }).query()).toBeNull();
     // No date; asked by both.
     expect(cells(exampleAsks[3].title)).toEqual([
       copy.kinds.letter,
@@ -2549,16 +2552,18 @@ describe("AsksTable", () => {
       "",
       `${copy.askedBy.supporters}${copy.askedBy.pauseai}`,
       [copy.count(staffCopy.statuses.signed, 10), copy.count(staffCopy.statuses.declined, 2)].join(" · "),
+      "40",
+      "12",
+      `${copy.page.way(1, "campaign")} · ${copy.page.way(2, "mailing")}`,
       "",
     ]);
-    expect(cells(exampleAsks[2].title).at(-2)).toBe(copy.noAnswers);
-    // Another site's page opens in a new tab; ours in this one.
-    const event = row(exampleAsks[0].title).getByRole("link", { name: exampleAsks[0].title });
-    await expect.element(event).toHaveAttribute("href", "https://luma.com/example");
-    await expect.element(event).toHaveAttribute("target", "_blank");
-    const ours = row(exampleAsks[3].title).getByRole("link", { name: exampleAsks[3].title });
-    await expect.element(ours).toHaveAttribute("href", "/pdfs/Frontier-AI-Open-Letter.pdf");
-    await expect.element(ours).not.toHaveAttribute("target");
+    expect(cells(exampleAsks[2].title)[4]).toBe(copy.noAnswers);
+    // Nobody written to, nor any way of asking.
+    expect(cells(exampleAsks[1].title).slice(5, 8)).toEqual(["–", "5", "–"]);
+    // Each leads to its own page.
+    await expect
+      .element(row(exampleAsks[0].title).getByRole("link", { name: exampleAsks[0].title }))
+      .toHaveAttribute("href", `/staff/asks/${exampleAsks[0].slug}`);
     await expect
       .element(page.getByRole("link", { name: copy.count(staffCopy.statuses.passed_on, 1) }))
       .toHaveAttribute("href", "/staff/politicians?ask=edinburgh-conference-2026&answer=passed_on");
@@ -2571,7 +2576,7 @@ describe("AsksTable", () => {
     const { rerender } = await render(<AsksTable asks={[added]} notice="deleted" />);
     await expect
       .element(page.getByRole("row").filter({ hasText: "Winter reception" }).getByRole("link", { name: copy.edit }))
-      .toHaveAttribute("href", "/staff/asks/winter-reception-dec-2026");
+      .toHaveAttribute("href", "/staff/asks/winter-reception-dec-2026/edit");
     await expect.element(page.getByRole("status")).toHaveTextContent(copy.notices.deleted);
     await rerender(<AsksTable asks={[added]} notice="in-use" />);
     await expect.element(page.getByRole("status")).toHaveTextContent(copy.notices["in-use"]);
@@ -4558,8 +4563,8 @@ describe("PermissionTiles", () => {
 });
 
 describe("the lists' paging", () => {
-  it("leads the audit log and the letters through their pages, from the first when none is given", async () => {
-    const { rerender } = await render(
+  it("leads the audit log through its pages, from the first when none is given", async () => {
+    await render(
       <ChangesTable
         log={{ changes: exampleChanges, total: 250, pages: 3, pageSize: 100 }}
         page={2}

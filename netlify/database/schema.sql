@@ -1661,7 +1661,7 @@ CREATE TABLE public.old_letters_mail (
     outcome text,
     quoted text,
     CONSTRAINT old_letters_mail_account_check CHECK ((account = lower(account))),
-    CONSTRAINT old_letters_mail_outcome_check CHECK ((outcome = ANY (ARRAY['joined'::text, 'added'::text, 'reply'::text, 'auto_reply'::text, 'one_off'::text, 'unmatched'::text, 'skipped'::text, 'not_joined'::text]))),
+    CONSTRAINT old_letters_mail_outcome_check CHECK ((outcome = ANY (ARRAY['joined'::text, 'added'::text, 'reply'::text, 'auto_reply'::text, 'one_off'::text, 'unmatched'::text, 'skipped'::text]))),
     CONSTRAINT old_letters_mail_source_check CHECK ((source = ANY (ARRAY['sent'::text, 'received'::text, 'group'::text, 'policy'::text, 'thread'::text])))
 );
 

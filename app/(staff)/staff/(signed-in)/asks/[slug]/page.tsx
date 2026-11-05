@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Pick<Params, "params">): Prom
 export default async function AskPage({ params, searchParams }: Params) {
   await requireStaff();
   const answer = firstOf((await searchParams).answer);
-  const ask = found(await askPageData((await params).slug, answer || undefined));
+  const ask = found(await askPageData((await params).slug, answer));
   return (
     <>
       <Breadcrumb href="/staff/asks">{staffCopy.asks.title}</Breadcrumb>

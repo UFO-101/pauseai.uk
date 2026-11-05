@@ -134,7 +134,7 @@ CREATE TABLE old_letters_mail (
   rfc_message_id text,
   letter_id bigint REFERENCES letters (id) ON DELETE SET NULL,
   mailing_key text,
-  outcome text CHECK (outcome IN ('joined', 'added', 'reply', 'auto_reply', 'one_off', 'unmatched', 'skipped', 'not_joined')),
+  outcome text CHECK (outcome IN ('joined', 'added', 'reply', 'auto_reply', 'one_off', 'unmatched', 'skipped')),
   quoted text,
   PRIMARY KEY (dry_run, account, gmail_message_id)
 );

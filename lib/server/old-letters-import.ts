@@ -441,18 +441,24 @@ async function handleSent(reader: Reader, account: string, id: string): Promise<
   return { ...(await asOneOff(reader, account, message)), rfc };
 }
 
+/**
+ * What every DeepMind letter was called: those with no sent email, as August's
+ * have none, go by it, as their mailing's subject isn't known until the end.
+ */
+const DEEPMIND_SUBJECT = "Request to co-sign letter on Google's breach of AI safety pledges";
+
 /** A politician's letters, for placing their reply. */
 async function lettersTo(people: number[]): Promise<ReplyCandidate[]> {
   if (!people.length) return [];
   return query<ReplyCandidate>(
     `SELECT l.id::int AS id, coalesce(l.sent_at, l.created_at) AS at,
        coalesce((SELECT e.subject FROM email_sends e WHERE e.letter_id = l.id AND e.imported ORDER BY e.id LIMIT 1), s.subject, nullif(m.subject, ''),
-         (SELECT o.subject FROM mailings o WHERE o.id = m.id), '') AS subject,
+         CASE WHEN m.ask = 'deepmind-letter' THEN $2 END, '') AS subject,
        f.email AS "senderEmail", f.name AS "senderName"
      FROM letters l LEFT JOIN letters_from_pauseai p ON p.id = l.id LEFT JOIN mailings m ON m.id = p.mailing_id
        LEFT JOIN letters_from_supporters s ON s.id = l.id LEFT JOIN form_entries f ON f.id = s.entry_id
      WHERE l.notable_person_id = ANY($1::bigint[])`,
-    [people],
+    [people, DEEPMIND_SUBJECT],
   );
 }
 
