@@ -422,7 +422,8 @@ test("PauseAI's emails to politicians", async ({ page, request, flowDatabase }) 
   await frame(page, "The emails import's page");
   story("Pressing it again finds nothing new.");
   await page.getByRole("button", { name: staffCopy.pauseaiEmails.importNow }).click();
-  await expect(page.getByText(staffCopy.runs.status.incomplete)).toHaveCount(2);
+  // Held back for a mailing nobody has added: a problem of each run, until someone adds it.
+  await expect(page.getByText(staffCopy.runs.status.problems, { exact: true })).toHaveCount(2);
   expect(runSql(flowDatabase, "SELECT count(*) FROM letters_from_pauseai")).toEqual(["5"]);
 
   story("Each email is in its politician's history, and has its own page under its mailing.");

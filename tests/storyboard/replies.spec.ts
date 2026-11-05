@@ -290,7 +290,7 @@ test("Emails that aren't relayed", async ({ page, request, flowDatabase }) => {
   await emailFrame(page, alert, "The email staff get");
   story("On the Gmail import's page, that run failed, and lists the two emails.");
   await page.goto(`${BASE}/staff/import-data/gmail`);
-  await expect(page.getByText(staffCopy.runs.status.failed, { exact: true }).first()).toBeVisible();
+  await expect(page.getByText(staffCopy.runs.status.problems, { exact: true }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: staffCopy.lettersInbox.openInGmail })).toHaveCount(2);
   await frame(page, "The Gmail import's runs");
   story("The dashboard says so too, until a run reads the letters inbox without any.");
