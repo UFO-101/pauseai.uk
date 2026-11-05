@@ -1452,12 +1452,12 @@ export const staffCopy = {
     importNow: "Import Luma now",
     never: "Not imported yet.",
     columns: {
-      events: "⁂ Events",
-      guests: "⁂ Guests changed",
-      hosts: "⁂ Hosts changed",
-      people: "⁂ People",
-      contacts: "⁂ Contacts",
-      supporters: "⁂ Supporters added",
+      events: "Events",
+      guests: "Guests changed",
+      hosts: "Hosts changed",
+      people: "People",
+      contacts: "Contacts",
+      supporters: "Supporters added",
     },
     // The counts of a run, then why it stopped early, if it did.
     result: (r: {
@@ -1584,7 +1584,7 @@ export const staffCopy = {
     account: (a: { account: string; replies: number; autoReplies: number; bounces: number }) =>
       `${a.account}: ${a.replies} replies, ${a.autoReplies} automatic replies, ${a.bounces} bounces.`,
     // In a table of runs: the accounts that had anything.
-    found: "⁂ What it found",
+    found: "What it found",
     // After an account's line: its history had gone, so the last few days were searched instead.
     restarted: "Searched the last three days again, as Gmail had forgotten where we were up to.",
     failed: (error: string) => `Couldn't be read: ${error}`,
@@ -1763,19 +1763,19 @@ export const staffCopy = {
     onlyWithSupporters: "Only staff who see supporters can see which.",
     // How far it has got, over all its runs, above its log.
     progress: {
-      label: "⁂ Messages read so far",
-      counts: (read: string, left: string) => `⁂ ${read} read, ${left} left`,
+      label: "Messages read so far",
+      counts: (read: string, left: string) => `${read} read, ${left} left`,
       totals: (p: { joined: string; replies: string; autoReplies: string; oneOffs: string }) =>
-        `⁂ So far: ${p.joined} joined, ${p.replies} replies, ${p.autoReplies} automatic replies, ${p.oneOffs} one-off emails`,
-      refusals: (n: number) => `⁂ Gmail refused ${n} ${n === 1 ? "run" : "runs"}.`,
+        `So far: ${p.joined} joined, ${p.replies} replies, ${p.autoReplies} automatic replies, ${p.oneOffs} one-off emails`,
+      refusals: (n: number) => `Gmail refused ${n} ${n === 1 ? "run" : "runs"}.`,
     },
     columns: {
-      read: "⁂ Read",
-      left: "⁂ Left",
-      joined: "⁂ Joined",
-      replies: "⁂ Replies",
-      autoReplies: "⁂ Automatic replies",
-      oneOffs: "⁂ One-off emails",
+      read: "Read",
+      left: "Left",
+      joined: "Joined",
+      replies: "Replies",
+      autoReplies: "Automatic replies",
+      oneOffs: "One-off emails",
     },
   },
   oneOff: {
@@ -1890,11 +1890,11 @@ export const staffCopy = {
     error: (error: string) => `Error: "${error}"`,
     decidedBy: (who: string) => `decided by ${who}`,
     // A job's frequent runs, in a table, and the stretches of them that are folded.
-    time: "⁂ Time",
+    time: "Time",
     quiet: (from: string, to: string, n: number) =>
-      `⁂ ${from === to ? from : `${from}–${to}`}: ${n} ${n === 1 ? "run" : "runs"}, nothing new`,
+      `${from === to ? from : `${from}–${to}`}: ${n} ${n === 1 ? "run" : "runs"}, nothing new`,
     stretch: (from: string, to: string, n: number) =>
-      `⁂ ${from === to ? from : `${from}–${to}`}: ${n} ${n === 1 ? "run" : "runs"}, no problems`,
+      `${from === to ? from : `${from}–${to}`}: ${n} ${n === 1 ? "run" : "runs"}, no problems`,
   },
   check: {
     title: "Members of Parliament against Parliament's list",
