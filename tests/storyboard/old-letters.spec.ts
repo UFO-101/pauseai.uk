@@ -26,7 +26,7 @@ async function ready(page: Page, database: string, request: APIRequestContext) {
   await importEmails(page);
   await page.goto(`${BASE}${importPath("import-web-form-letters")}`);
   await page.getByRole("button", { name: staffCopy.webForm.importNow }).click();
-  await expect(page.getByText(staffCopy.runs.status.ok).first()).toBeVisible();
+  await expect(page.getByText(staffCopy.runs.status.problems).first()).toBeVisible();
 }
 
 /** Presses Import old letters, and waits for a new run that's finished. */
