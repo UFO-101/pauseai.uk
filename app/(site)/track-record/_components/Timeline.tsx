@@ -27,6 +27,9 @@ export default function Timeline() {
               </p>
               <EntryList>
                 <li>
+                  <strong>Dame Anneliese Dodds</strong>, MP for Oxford East and former Shadow Chancellor.
+                </li>
+                <li>
                   <strong>Toby Ord</strong>, Senior Researcher at Oxford University&apos;s AI Governance Initiative.
                 </li>
                 <li>
@@ -34,9 +37,6 @@ export default function Timeline() {
                 </li>
                 <li>
                   <strong>Catherine Ge-Wang</strong>, MIRI Technical Governance fellow.
-                </li>
-                <li>
-                  <strong>Anneliese Dodds</strong>, MP for Oxford East.
                 </li>
               </EntryList>
               <p>
