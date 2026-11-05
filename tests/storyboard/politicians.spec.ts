@@ -424,10 +424,9 @@ test("From a mailing to its ask", async ({ page, request, flowDatabase }) => {
     .filter({ hasText: "Edinburgh Conference Nov 26 Invitation" })
     .getByRole("link", { name: "Edinburgh conference", exact: true })
     .click();
-  await expect(page).toHaveURL(`${BASE}/staff/asks?ask=edinburgh-conference-2026#edinburgh-conference-2026`);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.asks.title);
-  await expect(page.locator("tr[aria-current=true]")).toContainText("Edinburgh conference");
-  await frame(page, "The asks, the conference picked out");
+  await expect(page).toHaveURL(`${BASE}/staff/asks/edinburgh-conference-2026`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Edinburgh conference");
+  await frame(page, "The conference's page");
   story("Each answer's count is a link to the politicians who gave it. One is going.");
   await page.getByRole("link", { name: staffCopy.asks.count(staffCopy.statuses.going, 1) }).click();
   await expect(page).toHaveURL(/ask=edinburgh-conference-2026&answer=going/);
@@ -473,7 +472,10 @@ test("A new ask", async ({ page, flowDatabase }) => {
   // Back on the list, saying so: the link alone can be there before the list is what's shown.
   await expect(page.getByText(asks.notices.saved)).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(asks.title);
-  await expect(page.getByRole("link", { name: "Winter reception" })).toHaveAttribute("href", "https://luma.com/winter");
+  await expect(page.getByRole("link", { name: "Winter reception" })).toHaveAttribute(
+    "href",
+    "/staff/asks/winter-reception-dec-2026",
+  );
   await frame(page, "The ask, changed");
   story("Then they delete it. Delete asks to be pressed a second time.");
   await page.getByRole("row").filter({ hasText: "Winter reception" }).getByRole("link", { name: asks.edit }).click();

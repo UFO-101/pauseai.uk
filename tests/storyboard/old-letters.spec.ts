@@ -57,7 +57,7 @@ test("Import old letters", async ({ page, request, flowDatabase }) => {
     "Then they press it for real. It joins each letter to its sent email, reads the replies, and keeps the rest as one-off emails.",
   );
   await press(page, flowDatabase);
-  await expect(page.getByText("Neil Nobody <neil.nobody@example.com>: Volunteering")).toBeVisible();
+  await expect(page.getByText("Neil Nobody <neil.nobody@example.com>: Volunteering").first()).toBeVisible();
   await frame(page, "What it did");
 
   story("Pressing it again skips everything it has kept.");
@@ -81,7 +81,7 @@ test("An old letter's page", async ({ page, request, flowDatabase }) => {
   await expect(page.getByRole("heading", { name: staffCopy.mailingPages.emailTitle })).toBeVisible();
   await frame(page, "A mailing's text, each letter's own part a chip");
   await page
-    .getByRole("link", { name: staffCopy.mailingPages.letterAndReplies(1) })
+    .getByRole("link", { name: staffCopy.mailingPages.letterAndReplies(3) })
     .first()
     .click();
   await expect(page.getByText("You spoke well on the Bill.")).toBeVisible();
