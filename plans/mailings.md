@@ -66,13 +66,20 @@ canvas: https://claude.ai/artifact/1aTdfQjiCGiuN2zesjGBdG
   Gmail; for a text the WhatsApp business account's name, number and
   picture. (A politicians' mailing's Sent from is its second section,
   before the writing, as the letters go in that person's voice.)
-- **A text's template** is one of the WhatsApp approved templates,
-  picked in Write. Its words show but can't be edited. The New template
-  button opens the editor for a new one. Scheduling a text on a new
-  template sends it for approval and holds the text, "Scheduled,
-  waiting for WhatsApp's approval", on its page and in the list;
+- **A text's template** is chosen in Write from the WhatsApp approved
+  templates, none chosen to start with. They're a list of radio rows, as
+  there may come to be dozens: most recently used first, five shown,
+  with a search and Show all. Each says its name, its first words, who
+  made it ("Made in WhatsApp Manager" if not on the site), when it was
+  approved and when it was last used. Until one is chosen there's no
+  preview, and Schedule is greyed. Once chosen the list collapses to it,
+  its words read-only, with Change. The list's last row, New template,
+  opens the editor. Scheduling a text on a new template sends it for
+  approval and holds the text, "Scheduled, waiting for WhatsApp's
+  approval", on its page and in the list;
   approved, it goes at the time chosen, or as soon as approval arrives
-  after it, for as long as it's useful, a time set in When; then it
+  after it, for three days from the time chosen, a fixed limit shown in
+  grey under it ("Will automatically stop sending on …"); then it
   stops, and the writer is emailed with how many went. Rejected, it's a
   draft again with the reason in plain words and what to do, and the
   writer is emailed (`plans/supporters-phone.md`, "Templates" and
@@ -102,21 +109,23 @@ canvas: https://claude.ai/artifact/1aTdfQjiCGiuN2zesjGBdG
   email's as the thread, a text's as the conversation; and a box to
   reply from the site, so nobody needs the phone. A text reply is free
   within 24 hours of the person's last message, and the page says
-  until when; after that only an approved template can go. Replies
-  arrive by Postmark's inbound webhook for email and WhatsApp's
-  webhook for texts (`plans/supporters-phone.md`, "Replies"). A
-  supporter's page lists the messages they were sent, with their
-  replies.
+  until when; after that only an approved template can go. An email's
+  replies come to the inbox it's from, read as replies to politicians
+  are (`plans/supporters-email.md`, open question 3), and a text's by
+  WhatsApp's webhook (`plans/supporters-phone.md`, "1. Groundwork",
+  step 6). A supporter's page lists the messages they were sent, with
+  their replies.
 - **Words.** It's a message and a reply, never a letter: letters are
   supporters' prewritten letters to MPs and the letters we ask MPs to
   sign, the formal ones.
 
 Both previews send a test copy, as a mailing's does: an email to an
-address, by Postmark; a text to a number, by WhatsApp, which needs the
-number to have saved ours or messaged it first. A text is written in
+address, by Postmark; a text to a number, by WhatsApp. WhatsApp sends
+only approved templates, so a new template can't be tested until it's
+approved. A text is written in
 the same writer, with no subject or files, and previewed as a
 messaging app shows it: the words in a bubble from us, with the time,
-and the Stop button under it. A sent text's page shows
-the same bubble where an email's shows the email. The words, and
-Meta's template review before it can be scheduled, are the WhatsApp
-pull request's (`plans/supporters-phone.md`).
+and the Stop button under it. A sent text's page shows the same bubble
+where an email's shows the email. The words, and
+Meta's template review once it's scheduled, are the WhatsApp pull
+request's (`plans/supporters-phone.md`).

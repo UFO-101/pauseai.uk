@@ -176,16 +176,13 @@ question 1).
    result.
 3. Decide whether leaving Luma's emails, or reporting one as spam,
    stops the weekly too.
-4. An email channel on Postmark's broadcast stream, from
-   `hello@pauseai.uk`, which needs that address as a sender signature
-   in Postmark (the site's own emails go from `noreply@`, on the
-   transactional stream), so replies land in the hello@ inbox. A
-   staff member's connected Gmail can be chosen instead, as a
-   politicians' mailing is, within its daily limit
+4. An email channel on Postmark's broadcast stream
    ([streams](https://postmarkapp.com/message-streams)), separate from
    the staff emails on its transactional stream, for about $200–300 a year
-   ([pricing](https://postmarkapp.com/pricing)). Postmark reviews new
-   broadcast senders, so apply early. A small local mailing could go by
+   ([pricing](https://postmarkapp.com/pricing)). It sends from
+   `hello@pauseai.uk`, which needs that address as a sender signature in
+   Postmark; the site's own emails go from `noreply@`. Postmark reviews
+   new broadcast senders, so apply early. A small local message could go by
    Gmail instead.
 5. Opt-outs, as below: the link and header in every email, the page
    they lead to, the webhooks, and staff recording one by hand.
@@ -198,9 +195,9 @@ question 1).
 
 ## Opt-outs
 
-PECR wants a simple way to stop in every email, and Google and Yahoo
-want bulk senders to honour an unsubscribe within two days and keep
-complaints under 0.3%
+PECR wants a simple way to stop in every email. Google wants a visible
+link and one-click headers from anyone sending 5,000 a day, which we do
+from the start, and spam rates below 0.1%, never reaching 0.3%
 ([sender guidelines](https://support.google.com/a/answer/81126)). As
 for texts (`plans/supporters-phone.md`, "Opt-outs"), a stop reaches us
 every way a person might make it, and each is honoured at once:
@@ -215,8 +212,8 @@ every way a person might make it, and each is honoured at once:
 - From a spam complaint, by Postmark's webhook, which stops all bulk
   email from us and is sent to Global as `no_bulk_email`.
 - As a reply saying unsubscribe, or anything less clear such as "please
-  stop", which the policy inbox shows staff with a button to record it
-  as a stop, as it folds automatic replies.
+  stop", shown to staff on the message's page with a button to record
+  it as a stop.
 - Any other way, such as a word at an event. Staff record it, with how
   it was given.
 - From CiviCRM, by the hourly pull: an unsubscribe there, or any of the
@@ -270,3 +267,6 @@ yes, and how to stop.
    show Global's lists too, added to the API, and CiviCRM's page would
    link UK contacts to ours. The alternative, tracking our lists in
    CiviCRM, means creating our people as CRM contacts.
+5. Is `hello@pauseai.uk` a mailbox the site can read, as it reads
+   connected Gmails for replies from politicians (`read-gmail`)? If not,
+   replies need another address or Postmark's inbound webhook.

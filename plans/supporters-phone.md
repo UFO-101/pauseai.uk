@@ -1,7 +1,7 @@
 # Texts to supporters
 
-Mailings to supporters by text, on the staff pages in
-`plans/mailings.md`. A mailing is by email or by text. A text is sent
+Messages to supporters by text, on the staff pages in
+`plans/mailings.md`. A message is by email or by text. A text is sent
 by WhatsApp, and perhaps later by SMS to numbers not on WhatsApp.
 Two pull requests, and an optional third:
 
@@ -98,7 +98,7 @@ and event messages.
 
 ### Steps
 
-1. Each message in a text mailing records which backend sent it.
+1. Each message in a text records which backend sent it.
    `mailings.channel` loses `whatsapp`, leaving `email` and `text`.
 2. Opt-ins: the Luma checkbox, which the import reads as it reads the
    postcode question; and staff recording a yes given elsewhere, with
@@ -108,7 +108,7 @@ and event messages.
 4. Mark a number that isn't a mobile, or isn't on WhatsApp, and skip it
    from then on.
 5. A new source for `volunteering`, as a new member's number is unsure
-   (open question 7).
+   (open question 8).
 6. Replies, in a new `message_replies` table with the message each
    answers, shown on the supporter's page with a reply box. Anyone with
    the `supporters` permission can reply, and each reply records who
@@ -160,40 +160,39 @@ An easy Stop button means people stop rather than block us.
    day: its page and the list say it's scheduled and waiting. What
    happens then is under "Scheduling". Meta's reasons are codes, so the
    page says the code's meaning in plain words, and what to do when
-   Meta recommends something. The site submits new
-   words to Meta as a template: the `marketing`
-   category (a utility template must be non-promotional and about the
+   Meta recommends something. The site submits new words to Meta as a
+   template: the `marketing` category (a utility template must be non-promotional and about the
    person's own booking or account, and Meta approves anything else as
    marketing anyway), `en_GB`, a body with named parameters for the
    merge fields, each with an example value, a footer saying how to
-   stop, and a Stop quick-reply button, which Meta recommends rather
-   than requires. The body can't start or end with a parameter, and
+   stop, and a Stop quick-reply button, a common use Meta's docs give
+   for one. The body can't start or end with a parameter, and
    one with the same body and footer as an existing template is
    rejected as a duplicate
    ([review](https://developers.facebook.com/documentation/business-messaging/whatsapp/templates/template-review)).
-   The mailing then waits:
+   The text then waits:
    - *Pending*: Meta decides within 24 hours. The site reads the status
      back hourly and by the `message_template_status_update` webhook.
-   - *Approved*: the mailing goes at its time. Meta may have changed the
+   - *Approved*: the text goes at its time. Meta may have changed the
      category to marketing; the site records what it was approved as.
-   - *Rejected*: the mailing is a draft again, showing the reason in
+   - *Rejected*: the text is a draft again, showing the reason in
      plain words, and staff change the words and schedule it again, as
      often as needed, or appeal with a sample, decided within 24 hours.
    - *Paused* or *disabled*, after approval, on blocks, reports or
-     low read rates: the mailing stops, and the words must change before
+     low read rates: the text stops, and the words must change before
      it goes again.
-   A template can be reused: a mailing can pick an approved one and fill
-   its parameters, with no new review, which suits a weekly mailing
+   A template can be reused: a text can pick an approved one and fill
+   its parameters, with no new review, which suits a weekly text
    whose fixed words rarely change and whose events are a parameter.
-   A send names the template, not its ID, and an edited template is
-   reviewed again and can't be sent until approved, so the site never
-   edits an approved template: new fixed words make a new template, and
-   the old one stays approved until the new one is
+   A send names the template, not its ID, an edited template is reviewed
+   again, and Meta's docs don't say whether it can be sent meanwhile. So
+   the site never edits an approved template: new fixed words make a new
+   template, and the old one stays approved until the new one is
    ([management](https://developers.facebook.com/documentation/business-messaging/whatsapp/templates/template-management)).
    An account can create 100 templates an hour and hold 250, or 6,000
    once verified
    ([templates](https://developers.facebook.com/documentation/business-messaging/whatsapp/templates/overview)).
-   Without an SMS backend, a text mailing skips numbers not on
+   Without an SMS backend, a text skips numbers not on
    WhatsApp.
 3. A webhook at `/api/whatsapp`, which checks `X-Hub-Signature-256`
    ([webhooks](https://developers.facebook.com/documentation/business-messaging/whatsapp/webhooks/create-webhook-endpoint.md))
@@ -203,7 +202,7 @@ An easy Stop button means people stop rather than block us.
    - marks a number not on WhatsApp (error 131026), and doesn't retry
      WhatsApp's limit per person (131049)
      ([errors](https://developers.facebook.com/documentation/business-messaging/whatsapp/support/error-codes));
-   - stops the mailing and alerts staff on a problem with our account,
+   - stops the text and alerts staff on a problem with our account,
      or a drop in quality (`phone_number_quality_update`,
      `message_template_quality_update`);
    - stores replies.
@@ -213,37 +212,36 @@ An easy Stop button means people stop rather than block us.
 
 ### Scheduling
 
-Scheduling a text mailing submits its template, so staff write, pick a
+Scheduling a text submits its template, so staff write, pick a
 time and leave it, rather than coming back once Meta has decided. From
-then on the site sends by itself for as long as the mailing is
-*useful*: until a time the writer sets in When, beside the day and
-hour, which starts as three days after the scheduled time, or for a
-`march-day` text midnight on the day. The writer and the scheduled
-page show it next to the scheduled time, as "Sends Thu 12 Nov at
-09:18, until Sun 15 Nov at 09:18", and say how many days the mailing
-takes at the account's daily limit when it's more than one. While it's
-useful, every copy that can go, goes:
+then on the site sends by itself for three days from its scheduled
+time, a fixed limit nobody sets. The writer and the scheduled page say
+so quietly, in grey, under the time: "Will automatically stop sending
+on Sun 15 Nov at 09:18". They say how many days the text
+takes at the account's daily limit when it's more than one. Until then,
+every copy that can go, goes:
 
 - at the scheduled time, if the template is approved by then;
 - as soon as approval arrives, if it comes later;
 - the next day, for copies past the account's daily limit, and for
   people at WhatsApp's own limit (131049), which asks for a day's wait.
 
-When the time runs out with copies unsent, the mailing stops, as one
+When the time runs out with copies unsent, the text stops, as one
 stopped by hand does: the unsent copies are cancelled and listed under
 Stopped with why, and the person who scheduled it gets an email saying
-how many went and how many didn't. A template rejected, paused or
-disabled before the time runs out stops the mailing the same way, at
-once, with Meta's reason in plain words. Nothing is ever sent after a
-mailing has stopped. A stopped mailing's page offers to schedule it
-again to those it never reached, a new mailing whose filter is "not
-sent this mailing", so fixing the words or giving it more time
+how many went and how many didn't. A template paused or disabled
+before the time runs out stops the text the same way, at once, with
+Meta's reason in plain words. A template rejected is a draft again
+(step 2), as nothing has gone. Nothing is ever sent after a
+text has stopped. A stopped text's page offers to schedule it
+again to those it never reached, a new text whose filter is "not
+sent this message", so fixing the words or giving it more time
 doesn't text again the people it did reach.
 
 ## 3. Optional: an SMS backend
 
 Only if WhatsApp leaves too many numbers out. An SMS provider would send
-a text mailing's words as they are to numbers not on WhatsApp, from a
+a text's words as they are to numbers not on WhatsApp, from a
 real UK number so people can reply, ending with how to stop, such as
 "Reply STOP to stop". Each 160-character segment is charged, and so is
 each reply staff send.
@@ -301,9 +299,16 @@ and a calling tool.
    store that ID against the number when we send, so a later stop can be
    matched?
 6. Which SMS provider, and can it take over the giffgaff number?
-7. Does a text mailing always submit its own template, or can staff
-   keep a few approved ones, such as the weekly events one, and fill
-   their fields? The second means fewer reviews but a template editor.
+7. Can a text have conditional parts? Meta's docs describe a template
+   body as fixed words with parameters and don't mention parts only some
+   people get, so each combination would need its own template. If so,
+   the writer offers fields with fallbacks for a text, not conditional
+   parts. A fallback can't help a field at the start or end of the body,
+   which Meta rejects
+   ([overview](https://developers.facebook.com/documentation/business-messaging/whatsapp/templates/overview)).
 8. Once the join form stops asking intent, where do we learn who wants
    to volunteer: Global's `volunteer_updates` list, our own join form,
    or something else?
+9. A `march-day` text is sent on the day ("Rules"), but a text keeps
+   sending for three days. Does a topic like that stop sooner, or do
+   staff unschedule it if approval comes too late?
