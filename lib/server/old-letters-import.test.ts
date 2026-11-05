@@ -302,6 +302,112 @@ Please join 40 of your colleagues.')`,
     expect(await query("SELECT 1 FROM old_letters_mail WHERE quoted IS NOT NULL")).toEqual([]);
   });
 
+  it("keeps a thread whole: a message no search found, once its thread is kept", async () => {
+    await seed();
+    await run();
+    expect((await outcomeOf("0a20")).outcome).toBe("one_off");
+    const [{ someone }] = await query<{ someone: boolean }>(
+      "SELECT someone_else AS someone FROM one_off_threads WHERE subject = 'Coffee next week?'",
+    );
+    expect(someone).toBe(true);
+  });
+
+  it("passes over mail that's none of its business, or a copy of what it's read, and lists neither ours nor what it has", async () => {
+    await seed();
+    const { unmatched } = await run();
+    expect((await outcomeOf("0a22")).outcome).toBe("skipped");
+    expect((await outcomeOf("0b05")).outcome).toBe("skipped");
+    expect((await outcomeOf("0b07")).outcome).toBe("unmatched");
+    expect((await outcomeOf("0b06")).outcome).toBe("unmatched");
+    expect(unmatched.map((m) => m.subject)).not.toContain("Rota");
+    expect((await outcomeOf("0a23")).outcome).toBe("one_off");
+    expect((await outcomeOf("0a28")).outcome).toBe("one_off");
+  });
+
+  it("skips an email the site itself sent", async () => {
+    await seed();
+    await query(
+      `INSERT INTO email_sends (purpose, address, outcome, message_id, backend, sender) VALUES ('mailing-test', 'x@example.com', 'sent', '0a13', 'gmail', 'joseph@pauseai.uk')`,
+    );
+    await run();
+    expect((await outcomeOf("0a13")).outcome).toBe("skipped");
+  });
+
+  it("keeps a Postmark letter's text from its copy; for one we've no record of, nothing", async () => {
+    const { dora } = await seed();
+    const letter = await addTestLetter({ politicianId: dora, senderEmail: "pm@example.com" });
+    await query(
+      `INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id) VALUES ('letter', $1, 'x@parliament.uk', 'sent', 'fixture-postmark-1')`,
+      [letter],
+    );
+    const dry = await run(true);
+    expect(dry.postmarkTexts).toBe(1);
+    expect(await query("SELECT 1 FROM letters_from_supporters WHERE id = $1 AND letter IS NOT NULL", [letter])).toEqual(
+      [],
+    );
+    const real = await run();
+    expect(real.postmarkTexts).toBe(1);
+    expect(
+      JSON.stringify(
+        (await query<{ letter: unknown }>("SELECT letter FROM letters_from_supporters WHERE id = $1", [letter]))[0]
+          .letter,
+      ),
+    ).toContain("as sent by Postmark");
+    expect((await outcomeOf("0b04")).outcome).toBe("skipped");
+  });
+
+  it("reads a sent email of only HTML", async () => {
+    const { mo } = await seed();
+    const html = Buffer.from("<p>Dear Mx Example,</p><p>Would you speak, in HTML?</p>").toString("base64url");
+    server.use(
+      http.get(`${GMAIL}/messages/0a12`, () =>
+        HttpResponse.json({
+          id: "0a12",
+          threadId: "t-russell",
+          internalDate: String(Date.parse("2026-07-01T09:00:00Z")),
+          payload: {
+            headers: [
+              { name: "From", value: "joseph@pauseai.info" },
+              { name: "To", value: "mp90003.office@parliament.uk" },
+              { name: "Subject", value: "Invitation to speak on panel with Professor Stuart Russell" },
+            ],
+            mimeType: "text/html",
+            body: { data: html },
+          },
+        }),
+      ),
+    );
+    await run();
+    const [{ own, person }] = await query<{ own: string; person: number }>(
+      `SELECT p.own_text AS own, l.notable_person_id::int AS person FROM old_letters_mail o JOIN letters l ON l.id = o.letter_id
+         JOIN letters_from_pauseai p ON p.id = l.id WHERE o.gmail_message_id = '0a12'`,
+    );
+    expect(own).toContain("Would you speak, in HTML?");
+    expect(person).toBe(mo);
+  });
+
+  it("notes a message Gmail won't give, and goes on", async () => {
+    await seed();
+    server.use(http.get(`${GMAIL}/messages/0a13`, () => new HttpResponse("{}", { status: 400 })));
+    const { unreadable, finished } = await run();
+    expect(unreadable).toEqual(["0a13"]);
+    expect(finished).toBe(true);
+  });
+
+  it("keeps a letter that doesn't fit its mailing's text whole, where most do", async () => {
+    await seed();
+    const { ownText } = await run();
+    expect(ownText).toBeGreaterThan(0);
+    const rows = await query<{ text: string | null; greeting: string | null }>(
+      `SELECT p.own_text AS text, p.merge_values->'values'->>'greeting' AS greeting FROM old_letters_mail o JOIN letters_from_pauseai p ON p.id = o.letter_id
+       WHERE o.gmail_message_id IN ('0a25', '0a27') ORDER BY o.gmail_message_id`,
+    );
+    expect(rows).toEqual([
+      { text: null, greeting: "Dear Polly," },
+      { text: expect.stringContaining("of all people"), greeting: null },
+    ]);
+  });
+
   it("skips what's kept when pressed again", async () => {
     await seed();
     await run();
@@ -350,6 +456,14 @@ Please join 40 of your colleagues.')`,
     expect(again).toMatchObject({ finished: true, left: 0 });
   });
 
+  it("carries on through more calls when a press's time is up", async () => {
+    await seed();
+    await connectTestGmail("joseph@pauseai.uk");
+    await connectTestGmail("policy@pauseai.uk");
+    const result = await importOldLetters("jo@pauseai.uk", true, 0, 40);
+    expect(result).toMatchObject({ finished: true });
+  });
+
   it("works in calls, each keeping its place in one run, when its time is up", async () => {
     await seed();
     await connectTestGmail("joseph@pauseai.uk");
@@ -396,6 +510,7 @@ Please join 40 of your colleagues.')`,
       http.get(`${GMAIL}/messages/0a01`, () => new HttpResponse("{}", { status: 404 }), { once: true }),
       http.get(`${GMAIL}/messages/0a10`, () => new HttpResponse("{}", { status: 404 }), { once: true }),
       http.get(`${GMAIL}/messages/0a14`, () => new HttpResponse("{}", { status: 404 })),
+      http.get(`${GMAIL}/messages/0a20`, () => new HttpResponse("{}", { status: 404 })),
     );
     await importOldLetters("jo@pauseai.uk", false);
     expect((await outcomeOf("0a01")).outcome).toBe("skipped");

@@ -20,8 +20,7 @@ function AskedBy({ ask }: { ask: AskWithCounts }) {
 const answersOf = (ask: AskWithCounts) => ASK_STATUSES[ask.kind].filter((status) => ask.counts[status]);
 
 /** How many politicians gave any answer. */
-export const answeredOf = (ask: AskWithCounts) =>
-  Object.values(ask.counts).reduce((total: number, n) => total + (n ?? 0), 0);
+export const answeredOf = (ask: AskWithCounts) => Object.values(ask.counts).reduce((total: number, n) => total + n!, 0);
 
 /** The campaigns and mailings that put it, in words. */
 const howAsked = (ask: AskWithCounts) =>

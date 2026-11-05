@@ -344,8 +344,15 @@ describeWithDatabase("a letter for its page", () => {
        VALUES ('letter', $1, 'mp@parliament.uk', 'sent', 'g1', 'gmail', 'joseph@pauseai.uk', 'r1@mail.gmail.com', true)`,
       [form],
     );
-    expect((await getSupporterLetter(form))?.gmail).toEqual({ mailbox: "joseph@pauseai.uk", search: "rfc822msgid:r1@mail.gmail.com" });
-    const postmark = await addTestLetter({ politicianId, senderEmail: "b@example.com", sentAt: "2026-11-01T09:00:00Z" });
+    expect((await getSupporterLetter(form))?.gmail).toEqual({
+      mailbox: "joseph@pauseai.uk",
+      search: "rfc822msgid:r1@mail.gmail.com",
+    });
+    const postmark = await addTestLetter({
+      politicianId,
+      senderEmail: "b@example.com",
+      sentAt: "2026-11-01T09:00:00Z",
+    });
     await query("UPDATE letters_from_supporters SET letter = $2 WHERE id = $1", [postmark, doc]);
     await query(
       `INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id) VALUES ('letter', $1, 'mp@parliament.uk', 'sent', 'pm-1')`,

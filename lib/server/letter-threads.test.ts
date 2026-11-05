@@ -2,7 +2,8 @@ import { gzipSync } from "node:zlib";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
-import { letterThread, messageContent, replyFile, repliesAfter } from "./letter-threads";
+import { parseMime } from "./mime";
+import { letterThread, messageContent, replyFile, repliesAfter, wholeTextOf } from "./letter-threads";
 import { saveLetterReply } from "./outside-services/blobs";
 
 const LETTER = {
@@ -108,6 +109,18 @@ describeWithDatabase("letter threads", () => {
       "INSERT INTO staff_accounts (email, added_by, gmail_name) VALUES ('jo@pauseai.uk', 'test', 'Jo Gmail')",
     );
     expect(await letterThread(mailing, id)).toMatchObject({ fromName: "Jo Gmail" });
+  });
+
+  it("gives a letter of its own its whole text, one rebuilt from quotes saying so, and reads a message's whole text", async () => {
+    const { mailing, letter: id } = await letter(true);
+    await query("UPDATE letters_from_pauseai SET own_text = $2 WHERE id = $1", [id, "Dear Polly,\n\nMy own words."]);
+    const thread = await letterThread(mailing, id);
+    expect(JSON.stringify(thread?.letter)).toContain("My own words.");
+    expect(thread?.approximate).toBe(false);
+    const whole = (raw: string) => wholeTextOf(parseMime(raw));
+    expect(whole("Content-Type: text/plain\r\n\r\nHello\r\nthere\r\n")).toBe("Hello\nthere");
+    expect(whole("Content-Type: text/html\r\n\r\n<p>Hello</p>")).toBe("Hello");
+    expect(whole("Content-Type: application/pdf\r\n\r\n%PDF")).toBe("");
   });
 
   it("gives an imported letter no text, and a message with no text, or gone, none either", async () => {

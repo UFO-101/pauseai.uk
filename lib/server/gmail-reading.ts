@@ -317,8 +317,12 @@ async function readMessage(
     if (keepsThreads)
       read.oneOffs =
         (read.oneOffs ?? 0) +
-        ((await keepIfPoliticianThread(account, token, message, account === process.env.POLICY_INBOX?.toLowerCase())) ===
-        "kept"
+        ((await keepIfPoliticianThread(
+          account,
+          token,
+          message,
+          account === process.env.POLICY_INBOX?.toLowerCase(),
+        )) === "kept"
           ? 1
           : 0);
     return;

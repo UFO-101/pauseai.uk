@@ -171,7 +171,8 @@ describe("the August letters", () => {
 
   it("are rebuilt from the paragraphs quotes share, with the number a field", () => {
     const quote = (n: number) => `Dear You,\n\nPlease join ${n} of your colleagues now.\n\nThanks,`;
-    const doc = augustTemplate([quote(40), quote(40), quote(50)])!;
+    const footer = "\n\nUK Parliament Disclaimer: this e-mail is confidential.";
+    const doc = augustTemplate([quote(40) + footer, quote(40) + footer, quote(50)])!;
     expect(doc.content).toHaveLength(3);
     expect(doc.content[1]).toEqual({
       type: "paragraph",
@@ -320,5 +321,17 @@ describe("who a message is from", () => {
     expect(realSender("'Mo' via PauseAI UK <p@x.uk>", undefined, "mo@x.uk")).toBe("mo@x.uk");
     expect(realSender("'Mo' via PauseAI UK <p@x.uk>")).toBe("'Mo' via PauseAI UK <p@x.uk>");
     expect(realSender("Mo <mo@x.uk>", undefined, "other@x.uk")).toBe("Mo <mo@x.uk>");
+  });
+});
+
+describe("where a template's letters have their own", () => {
+  it("is where most do, and a letter with two runs of its own doesn't fit", () => {
+    const shared = "One.\n\nTwo.\n\nThree.";
+    const mine = (own: string) => `One.\n\n${own}\n\nTwo.\n\nThree.`;
+    const late = `One.\n\nTwo.\n\nLate.\n\nThree.`;
+    const twice = `One.\n\nA.\n\nTwo.\n\nB.\n\nThree.`;
+    const template = templateOf([shared, mine("X."), mine("Y."), late, twice])!;
+    expect(template).toEqual({ before: ["One."], after: ["Two.", "Three."] });
+    expect(fitTemplate(twice, template)).toBeUndefined();
   });
 });

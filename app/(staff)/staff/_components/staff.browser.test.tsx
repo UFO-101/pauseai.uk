@@ -2380,6 +2380,7 @@ describe("ImportOverview", () => {
       jobTitles["import-controlai"],
       jobTitles["import-web-form-letters"],
       jobTitles["import-go-to-parliament"],
+      jobTitles["import-old-letters"],
     ]);
     // Under the name, how the newest run ended, tinted to match.
     const status = (i: number) => cards[i].querySelector("h3")!.parentElement!.nextElementSibling!.firstElementChild!;

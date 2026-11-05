@@ -208,6 +208,7 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
           "import-go-to-parliament",
           "import-luma",
           "import-members",
+          "import-old-letters",
           "import-signatories",
           "import-web-form-letters",
           "read-gmail",
@@ -299,7 +300,7 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
         ]);
         expect(
           runSql(name, "SELECT DISTINCT result->>'stoppedBy' FROM import_runs WHERE result ? 'stoppedBy' ORDER BY 1"),
-        ).toEqual(["rate-limit", "running", "time"]);
+        ).toEqual(["gmail", "rate-limit", "running", "time"]);
         // The audit log's entries about politicians name their rows.
         expect(
           runSql(

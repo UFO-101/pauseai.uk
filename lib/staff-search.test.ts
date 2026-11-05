@@ -28,7 +28,13 @@ describe("sentEmailsSearch and oneOffSearch", () => {
       backend: "!gmail",
       page: "2",
     });
-    expect(typed).toEqual({ q: " jane ", purpose: ["letter", "!relay"], outcome: ["sent"], backend: ["!gmail"], page: "2" });
+    expect(typed).toEqual({
+      q: " jane ",
+      purpose: ["letter", "!relay"],
+      outcome: ["sent"],
+      backend: ["!gmail"],
+      page: "2",
+    });
     expect(filter).toEqual({
       search: "jane",
       purpose: ["letter"],

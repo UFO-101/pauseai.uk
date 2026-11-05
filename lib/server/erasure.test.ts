@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { http, HttpResponse } from "msw";
+import { server } from "@/tests/fixtures/msw";
 import { query } from "@/lib/server/db";
 import { docFromMarkup } from "@/lib/letter-format";
 import { addTestLetter, addTestMp, connectTestGmail, describeWithDatabase, useTestDatabase } from "@/tests/database";
@@ -197,6 +199,34 @@ describeWithDatabase("eraseSupporter", () => {
       expect(await eraseSupporter(id, "ICO-125", "jo@pauseai.uk")).toMatchObject({ proxies: 1 });
       expect(console.error).toHaveBeenCalledWith("Couldn't clear an erased supporter's mail:", expect.any(Error));
     });
+  });
+
+  it("is done all the same when a one-off email's blob can't be deleted, saying so", async () => {
+    stubLettersInboxEnv();
+    const mp = await addTestMp();
+    const id = await janeWithEverything(mp);
+    const [{ email }] = await query<{ email: string }>(
+      "SELECT matched_value AS email FROM supporter_links WHERE supporter_id = $1 LIMIT 1",
+      [id],
+    );
+    const [{ thread }] = await query<{ thread: number }>(
+      "INSERT INTO one_off_threads (latest_at) VALUES (now()) RETURNING id::int AS thread",
+    );
+    await query(
+      `INSERT INTO one_off_messages (thread_id, account, gmail_message_id, gmail_thread_id, from_address, addresses, at, from_us, blob_key, size)
+       VALUES ($1, 'policy@pauseai.uk', 'g', 't', $2, ARRAY[$2], now(), false, 'one-off/x', 1)`,
+      [thread, email],
+    );
+    server.use(http.delete("https://blobs.fixture.invalid/*", () => new HttpResponse(null, { status: 500 })));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(await eraseSupporter(id, "ICO-9", "jo@pauseai.uk")).toMatchObject({ oneOffs: 1 });
+    expect(console.error).toHaveBeenCalledWith(
+      "Couldn't delete an erased supporter's one-off emails:",
+      expect.anything(),
+    );
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+    expect(await query("SELECT 1 FROM one_off_threads")).toEqual([]);
   });
 
   it("does nothing for a supporter that doesn't exist", async () => {

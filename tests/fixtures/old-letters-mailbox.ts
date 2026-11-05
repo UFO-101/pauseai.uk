@@ -6,8 +6,8 @@
 /** A message: the mailbox it's in, its Gmail IDs, labels and whole text. */
 export type OldMail = { account: string; id: string; threadId: string; labels: string[]; at: string; raw: string };
 
-export const JOSEPH_MAILBOX = "joseph@pauseai.uk";
-export const POLICY_MAILBOX = "policy@pauseai.uk";
+const JOSEPH_MAILBOX = "joseph@pauseai.uk";
+const POLICY_MAILBOX = "policy@pauseai.uk";
 
 const POLLY = "polly.placeholder.mp@parliament.uk";
 const DORA = "mp90001.office@parliament.uk";
@@ -82,7 +82,7 @@ const deepmindText = (name: string, own: string) =>
   `Dear ${name},\n\nGoogle broke its promise. Please join 25 of your colleagues.\n\n${own}\n\nThank you for your consideration,\n\nJoseph Example`;
 
 /** Everything in the two mailboxes, oldest first in each. */
-export const OLD_MAIL: readonly OldMail[] = [
+const OLD_MAIL: readonly OldMail[] = [
   // A DeepMind letter, with a paragraph of its own, and another of the same send, the same text.
   sent(
     "0a01",
@@ -229,6 +229,77 @@ export const OLD_MAIL: readonly OldMail[] = [
     "Thursday works.",
     { "In-Reply-To": "<0a13@mail.gmail.com>", References: "<0a13@mail.gmail.com>" },
   ),
+  // In the same thread, a message no search finds, from someone else: kept as the thread is.
+  mail(
+    JOSEPH_MAILBOX,
+    "0a20",
+    "t-coffee",
+    ["INBOX", "THREAD"],
+    "2026-08-02T10:00:00.000Z",
+    {
+      From: "Pat Assistant <pat.assistant@example.com>",
+      To: "joseph@pauseai.uk",
+      Subject: "Re: Coffee next week?",
+      "Message-ID": "<0a20@example.com>",
+    },
+    "Polly asked me to confirm.",
+  ),
+  // Mail from no politician that a search found anyway; an automatic reply to no letter.
+  got("0a22", "t-friend", "2026-08-04T09:00:00.000Z", "Fay Friend <fay.friend@example.com>", "Lunch?", "Lunch?"),
+  got(
+    "0a23",
+    "t-away",
+    "2026-08-05T09:00:00.000Z",
+    "Sam Office <sam.office@parliament.uk>",
+    "Automatic reply: Hello",
+    "Away.",
+  ),
+  // A reply quoting an August letter with no greeting left in it.
+  got(
+    "0a24",
+    "t-august-2",
+    "2025-08-10T09:00:00.000Z",
+    `Polly Placeholder <${POLLY}>`,
+    `Re: ${DEEPMIND}`,
+    "Please join 50 of your colleagues.",
+  ),
+  // A send where most letters are one text, and one differs; and mail to no one we know, on Parliament's domain.
+  sent(
+    "0a25",
+    "t-wh-1",
+    "2025-12-05T09:00:00.000Z",
+    "Joseph Example <joseph@pauseai.info>",
+    POLLY,
+    "Westminster Hall Debate on AI Safety [Wednesday 10 Dec]",
+    "Dear Polly,\n\nPlease come to the debate.",
+  ),
+  sent(
+    "0a26",
+    "t-wh-2",
+    "2025-12-05T09:05:00.000Z",
+    "Joseph Example <joseph@pauseai.info>",
+    MO,
+    "Westminster Hall Debate on AI Safety [Wednesday 10 Dec]",
+    "Dear Mo,\n\nPlease come to the debate.",
+  ),
+  sent(
+    "0a27",
+    "t-wh-3",
+    "2025-12-05T09:10:00.000Z",
+    "Joseph Example <joseph@pauseai.info>",
+    DORA,
+    "Westminster Hall Debate on AI Safety [Wednesday 10 Dec]",
+    "Dora, you of all people should come.",
+  ),
+  sent(
+    "0a28",
+    "t-staffer",
+    "2026-08-06T09:00:00.000Z",
+    "Joseph Example <joseph@pauseai.uk>",
+    "sam.office@parliament.uk",
+    "Hello Sam",
+    "Hello.",
+  ),
   // A staff address on Parliament's domain, about no politician we know.
   got(
     "0a15",
@@ -319,19 +390,16 @@ export const OLD_MAIL: readonly OldMail[] = [
   ),
 ];
 
-/** What a search of a mailbox finds, as the import's searches ask. */
+/** What a search of a mailbox finds, as the import's searches ask. Mail labelled THREAD only a thread's listing finds. */
 function search(account: string, q: string): OldMail[] {
-  const mine = OLD_MAIL.filter((m) => m.account === account);
+  const mine = OLD_MAIL.filter((m) => m.account === account && !m.labels.includes("THREAD"));
   if (account === POLICY_MAILBOX) return mine;
   if (q.startsWith("list:")) return mine.filter((m) => /^List-Id:/im.test(m.raw));
   if (q.startsWith("in:sent"))
     return q.includes("to:parliament.uk") ? mine.filter((m) => m.labels.includes("SENT")) : [];
-  if (q.startsWith("-in:sent")) {
-    return q.includes("from:parliament.uk")
-      ? mine.filter((m) => !m.labels.includes("SENT") && !/^List-Id:/im.test(m.raw))
-      : [];
-  }
-  return [];
+  return q.includes("from:parliament.uk")
+    ? mine.filter((m) => !m.labels.includes("SENT") && !/^List-Id:/im.test(m.raw))
+    : [];
 }
 
 function json(body: unknown): Response {
@@ -354,7 +422,7 @@ function headersOf(raw: string): { name: string; value: string }[] {
 export function oldMailResponse(account: string, path: string, params: URLSearchParams): Response | undefined {
   if (account !== JOSEPH_MAILBOX && account !== POLICY_MAILBOX) return undefined;
   if (path === "/messages") {
-    const found = search(account, params.get("q") ?? "");
+    const found = search(account, params.get("q")!);
     return json({ messages: [...found].reverse().map(({ id, threadId }) => ({ id, threadId })) });
   }
   const thread = /^\/threads\/([\w-]+)$/.exec(path)?.[1];

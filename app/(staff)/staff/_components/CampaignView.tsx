@@ -32,7 +32,7 @@ function Outcome({ letter }: { letter: LetterSummary }) {
 }
 
 /** A campaign's letters' columns: the politician, with their seat, party and answer; who wrote it and when; how much was their own; how it went, leading to it. */
-export const campaignLetterColumns: ListColumn<LetterSummary>[] = [
+const campaignLetterColumns: ListColumn<LetterSummary>[] = [
   {
     key: "politician",
     label: copy.columns.politician,

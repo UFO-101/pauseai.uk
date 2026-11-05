@@ -17,7 +17,7 @@ export const PARLIAMENT_DOMAINS = [
  * PauseAI's addresses besides the connected Gmails: kept by hand, as Gmail's
  * API can't tell an alias from another address.
  */
-export const PAUSEAI_ALIASES: readonly string[] = ["joseph@pauseai.info", "info@pauseai.info"];
+const PAUSEAI_ALIASES: readonly string[] = ["joseph@pauseai.info", "info@pauseai.info"];
 
 /** What the site knows of politicians' addresses: each they have or have had, and each domain of one's own, with whose. */
 export type PoliticianBook = { addresses: Map<string, number[]>; domains: Map<string, number> };

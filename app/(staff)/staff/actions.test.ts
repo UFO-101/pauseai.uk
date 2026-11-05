@@ -7,7 +7,7 @@ import { getPolitician } from "@/lib/server/politicians";
 import { createSession } from "@/lib/server/staff-auth";
 import { saveStaffAccount } from "@/lib/server/staff-accounts";
 import { FIXED_ASKS } from "@/lib/asks";
-import { gmailAccounts } from "@/lib/server/gmail-accounts";
+import { gmailAccounts, keepsPoliticianThreads } from "@/lib/server/gmail-accounts";
 import { addTestPolitician, connectTestGmail, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { expectRedirect, requestCookies } from "@/tests/next-headers";
 import {
@@ -23,6 +23,8 @@ import {
   eraseSupporterNow,
   importControlAiNow,
   importGoToParliamentNow,
+  importOldLettersNow,
+  setKeepThreadsNow,
   importWebFormLettersNow,
   syncEmailsNow,
   importLumaNow,
@@ -338,6 +340,28 @@ describeWithDatabase("staff Server Actions", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data/web-form-letters");
     expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data/go-to-parliament");
   });
+
+  it("presses the import of old letters, as a dry run if ticked, and turns keeping threads on and off", async () => {
+    vi.stubEnv("DATA_FIXTURES", "1");
+    const form = (values: Record<string, string>) => {
+      const data = new FormData();
+      for (const [name, value] of Object.entries(values)) data.set(name, value);
+      return data;
+    };
+    await connectTestGmail("joseph@pauseai.uk");
+    await connectTestGmail("policy@pauseai.uk");
+    await importOldLettersNow(form({ dryRun: "on" }));
+    await importOldLettersNow(form({}));
+    const presses = await query<{ dry: string }>(
+      `SELECT result->>'dryRun' AS dry FROM import_runs WHERE job = 'import-old-letters' ORDER BY id`,
+    );
+    expect(presses).toEqual([{ dry: "true" }, { dry: "false" }]);
+    await setKeepThreadsNow(form({ keep: "on" }));
+    expect(await keepsPoliticianThreads("jo@pauseai.uk")).toBe(true);
+    await setKeepThreadsNow(form({}));
+    expect(await keepsPoliticianThreads("jo@pauseai.uk")).toBe(false);
+    vi.stubEnv("DATA_FIXTURES", "");
+  }, 30_000);
 
   it("endStaffSessionsNow ends an account's sessions, as an admin, going back to the page", async () => {
     await createSession("samuel.whitlock@pauseai.uk");

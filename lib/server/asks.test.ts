@@ -9,12 +9,39 @@ import {
   useDatabaseUpTo,
   useTestDatabase,
 } from "@/tests/database";
-import { addAsk, askToEdit, asksWithCounts, deleteAsk, editAsk, listAsks, listCampaigns } from "./asks";
+import { addAsk, askPageData, askToEdit, asksWithCounts, deleteAsk, editAsk, listAsks, listCampaigns } from "./asks";
 import { query } from "./db";
 import { setStatus } from "./politicians";
 
 describeWithDatabase("asks and campaigns", () => {
   useTestDatabase();
+
+  it("gives an ask's page: its counts, its campaigns and mailings by date, and its answers by status", async () => {
+    const polly = await addTestPolitician();
+    const dora = await addTestPolitician({ name: "Dora", email: "dora@parliament.uk", airtableId: "dora" });
+    await setStatus(polly, "deepmind-letter", { status: "signed", date: null, note: "" }, "test");
+    await setStatus(dora, "deepmind-letter", { status: "declined", date: null, note: "" }, "test");
+    const [{ id }] = await query<{ id: number }>(
+      `INSERT INTO letters (kind, notable_person_id, status, sent_at) VALUES ('pauseai', $1, 'sent', '2025-07-01') RETURNING id::int AS id`,
+      [polly],
+    );
+    await query(
+      `INSERT INTO letters_from_pauseai (id, mailing_id) SELECT $1, id FROM mailings WHERE ask = 'deepmind-letter' LIMIT 1`,
+      [id],
+    );
+    const ask = await askPageData("deepmind-letter");
+    expect(ask).toMatchObject({ fixed: true, writtenTo: 1, counts: { signed: 1, declined: 1 } });
+    expect(ask!.mailings).toBeGreaterThan(0);
+    expect(ask!.campaigns).toBeGreaterThan(0);
+    expect(ask!.ways[0]).toMatchObject({ kind: "mailing", letters: 1 });
+    expect(ask!.ways.map((way) => way.kind)).toContain("campaign");
+    expect(ask!.answers.map((a) => a.status).sort()).toEqual(["declined", "signed"]);
+    expect((await askPageData("deepmind-letter", "signed"))!.answers.map((a) => a.politicianId)).toEqual([polly]);
+    expect((await askPageData("deepmind-letter", ""))!.answers).toHaveLength(2);
+    expect(await askPageData("no-such-ask")).toBeUndefined();
+    await addAsk({ title: "Ours", kind: "letter", date: null, url: null, askedBy: [] }, "jo@pauseai.uk");
+    expect((await askPageData("ours"))!.fixed).toBe(false);
+  });
 
   it("lists every ask, newest first, those without a date last", async () => {
     const asks = await listAsks();

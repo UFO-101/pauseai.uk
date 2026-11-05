@@ -171,7 +171,7 @@ export function templateOf(texts: string[]): OldTemplate | undefined {
   const letters = texts.map((text) => paragraphs(text).filter((p, i) => !(i === 0 && isGreeting(p))));
   const counts = new Map<string, number>();
   for (const letter of letters) for (const p of new Set(letter)) counts.set(p, (counts.get(p) ?? 0) + 1);
-  const isShared = (p: string) => (counts.get(p) ?? 0) > letters.length * SHARED;
+  const isShared = (p: string) => counts.get(p)! > letters.length * SHARED;
   const order = letters.find((letter) => letter.filter(isShared).length === [...counts.keys()].filter(isShared).length);
   if (!order) return undefined;
   const shared = order.filter(isShared);
@@ -241,7 +241,9 @@ export function augustColleagues(at: Date): string {
  */
 export function augustTemplate(quotes: string[]): MailingDoc | undefined {
   const asTemplate = (p: string) => p.replace(/join \d+ of your/g, "join {colleagues} of your");
-  const template = templateOf(quotes.map((quote) => paragraphs(quote).map(asTemplate).join("\n\n")));
+  // A reply's mail system adds its own disclaimer under what it quotes.
+  const ours = (p: string) => !/disclaimer|e-?mail is confidential/i.test(p);
+  const template = templateOf(quotes.map((quote) => paragraphs(quote).filter(ours).map(asTemplate).join("\n\n")));
   if (!template) return undefined;
   const words = [...template.before, ...template.after];
   return {

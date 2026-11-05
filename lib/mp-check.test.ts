@@ -107,7 +107,16 @@ describe("a politician's own domains", () => {
 
   it("keeps one held by one politician, leaving out parliaments, parties and social media", () => {
     const domains = ownDomains([
-      { id: 1, addresses: ["a@tulip.example", "https://facebook.com/x", "b@parliament.uk", "https://www.labour.org.uk/a", "nothing"] },
+      {
+        id: 1,
+        addresses: [
+          "a@tulip.example",
+          "https://facebook.com/x",
+          "b@parliament.uk",
+          "https://www.labour.org.uk/a",
+          "nothing",
+        ],
+      },
       { id: 2, addresses: ["https://shared.example"] },
       { id: 3, addresses: ["x@shared.example", "y@gmail.com"] },
     ]);

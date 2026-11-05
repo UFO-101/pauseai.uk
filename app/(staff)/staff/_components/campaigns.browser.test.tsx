@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
 import { staffCopy } from "@/lib/content/staff-interface";
+import type { Mailing } from "@/lib/server/mailings";
 import AskView from "./AskView";
 import CampaignLetter from "./CampaignLetter";
 import CampaignsOverview, { CampaignAsk } from "./CampaignsOverview";
@@ -19,7 +20,14 @@ import {
   exampleSentEmails,
   exampleVersions,
 } from "./CampaignPages.examples";
+import { ImportJobPage } from "./ImportJob";
 import JobActions from "./JobActions";
+import LetterThread from "./LetterThread";
+import { exampleThread } from "./LetterThread.examples";
+import MailingView from "./MailingView";
+import { exampleMailing } from "./MailingsTable.examples";
+import PoliticianDetails from "./PoliticianDetails";
+import { examplePolitician } from "./PoliticianTable.examples";
 import { emptyLettersSearch, exampleLetter } from "./LettersTable.examples";
 import MailingsOverview from "./MailingsOverview";
 import MyGmail from "./MyGmail";
@@ -156,6 +164,11 @@ describe("AskView", () => {
     await expect.element(link(staffCopy.asks.edit)).toHaveAttribute("href", `/staff/asks/${exampleAskPage.slug}/edit`);
     await expect.element(link(answers.all(3))).toBeVisible();
     await expect.element(link("Polly Placeholder")).toHaveAttribute("href", "/staff/politicians/1");
+  });
+
+  it("gives an ask with a date its day", async () => {
+    await render(<AskView ask={{ ...exampleAskPage, date: "2026-11-23" }} answer="" />);
+    await says("23 Nov 2026");
   });
 
   it("an event the code names: no Edit, its answers its own, a link on our site or another's, and when there's nothing", async () => {
@@ -366,7 +379,69 @@ describe("the import of old letters' run", () => {
   });
 });
 
+describe("an imported mailing's text", () => {
+  const doc = {
+    type: "doc",
+    content: [{ type: "paragraph", content: [{ type: "field", attrs: { field: "own" } }] }],
+  };
+  const imported = (props: Partial<Mailing>) => (
+    <MailingView mailing={{ ...exampleMailing, ...props }} asks={[]} stop={() => {}} reschedule={() => {}} />
+  );
+
+  it("shows its template, with its fields as chips, saying so if it's approximate", async () => {
+    const { rerender } = await render(
+      imported({
+        importedText: doc,
+        importedSubject: "The subject",
+        sentFrom: "joseph@pauseai.info",
+        askKind: null,
+        ask: null,
+      }),
+    );
+    await says("The subject");
+    await says(staffCopy.mailings.importedFields.own);
+    expect(document.body.textContent).not.toContain(staffCopy.letterThread.approximate);
+    await rerender(imported({ importedText: doc, sentFrom: null, importedTextApproximate: true, askKind: "letter" }));
+    await says(staffCopy.letterThread.approximate);
+    await says(staffCopy.mailings.notRecorded);
+    await says(staffCopy.asks.askTo.letter);
+  });
+
+  it("says a letter's text is approximate on its page", async () => {
+    await render(<LetterThread thread={{ ...exampleThread, approximate: true }} />);
+    await says(staffCopy.letterThread.approximate);
+  });
+});
+
 describe("the rest", () => {
+  it("gives the import of old letters its box for a dry run, on its page alone", async () => {
+    const page_ = (job: "import-old-letters" | "check-mps") => (
+      <ImportJobPage job={job} runs={[]} run={() => {}} decide={() => {}} airtableTable="x" />
+    );
+    const { rerender } = await render(page_("import-old-letters"));
+    await expect.element(page.getByRole("checkbox", { name: staffCopy.oldLetters.dryRun })).toBeVisible();
+    await rerender(page_("check-mps"));
+    expect(page.getByRole("checkbox").query()).toBeNull();
+  });
+
+  it("lists a politician's one-off emails in their history, one they can't read said so", async () => {
+    await render(
+      <PoliticianDetails
+        politician={examplePolitician}
+        asks={[]}
+        setStatus={() => {}}
+        block={undefined}
+        unblock={() => {}}
+        letters={{ senders: false, letters: [] }}
+        oneOffs={[exampleOneOffs[0], exampleHiddenOneOff]}
+        history={[]}
+        airtableTable="x"
+      />,
+    );
+    await expect.element(link(exampleOneOffs[0].subject!)).toHaveAttribute("href", "/staff/mailings/one-off/1");
+    await expect.element(link(staffCopy.oneOff.hidden)).toBeVisible();
+  });
+
   it("marks new pages in the navigation", async () => {
     await render(<StaffNav email="jo@pauseai.uk" permissions={["supporters"]} fresh={["campaigns"]} />);
     const tagged = [...document.querySelectorAll("nav a")].filter((a) => a.textContent?.endsWith(staffCopy.nav.newTag));

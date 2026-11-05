@@ -45,20 +45,30 @@ export const ONE_OFF_HEADERS = [
   "Precedence",
 ];
 
+/** A header's text, decoded; blank if the message hasn't one. */
+export function headerText(headers: Map<string, string>, name: string): string {
+  return decodeWords(headers.get(name) ?? "");
+}
+
+/** A message's Message-ID, if it has one. */
+export function rfcIdOf(headers: Map<string, string>): string | null {
+  return messageIds(headers.get("message-id"))[0] ?? null;
+}
+
 /** Everyone on a message by its headers, lowercased, its real sender first. */
 export function addressesOn(headers: Map<string, string>): string[] {
-  const sender = realSender(headers.get("from") ?? "", headers.get("x-original-from"), headers.get("reply-to"));
+  const sender = realSender(headerText(headers, "from"), headers.get("x-original-from"), headers.get("reply-to"));
   const lines = [sender, headers.get("from"), headers.get("reply-to"), headers.get("to"), headers.get("cc")];
   return [...new Set(addressesIn(decodeWords(lines.filter(Boolean).join(" "))))];
 }
 
 /** Who a message is from, the real sender where the group rewrote it. */
 export function senderOf(headers: Map<string, string>): { address: string; name: string } {
-  return fromAddress(realSender(headers.get("from") ?? "", headers.get("x-original-from"), headers.get("reply-to")));
+  return fromAddress(realSender(headerText(headers, "from"), headers.get("x-original-from"), headers.get("reply-to")));
 }
 
 /** Whether a message is in the group's mail, which is shared. */
-export function isGroupMail(headers: Map<string, string>): boolean {
+function isGroupMail(headers: Map<string, string>): boolean {
   return /policy(-archive)?\.pauseai\.uk/i.test(headers.get("list-id") ?? "");
 }
 
@@ -75,7 +85,7 @@ export async function keepOneOff(
   connected: readonly string[],
   extraPeople: number[] = [],
 ): Promise<number | undefined> {
-  const rfc = messageIds(message.headers.get("message-id"))[0] ?? null;
+  const rfc = rfcIdOf(message.headers);
   const [kept] = await query(
     "SELECT 1 FROM one_off_messages WHERE (account = $1 AND gmail_message_id = $2) OR rfc_message_id = $3",
     [account, message.id, rfc],
@@ -85,7 +95,7 @@ export async function keepOneOff(
   const addresses = addressesOn(message.headers);
   const from = senderOf(message.headers);
   const at = new Date(Number(message.internalDate));
-  const subject = decodeWords(message.headers.get("subject") ?? "");
+  const subject = headerText(message.headers, "subject");
   const key = `one-off/${account}/${message.id}.eml.gz`;
   await saveLetterReply(key, gzipSync(raw));
   const threads = await query<{ id: number }>(
@@ -110,8 +120,8 @@ export async function keepOneOff(
       refs,
       from.address,
       from.name,
-      decodeWords(message.headers.get("to") ?? ""),
-      decodeWords(message.headers.get("cc") ?? ""),
+      headerText(message.headers, "to"),
+      headerText(message.headers, "cc"),
       addresses,
       subject,
       at,
@@ -215,10 +225,7 @@ export async function reportUnmatchedMail(token: (account: string) => Promise<st
   const lines: string[] = [];
   for (const { account, id } of waiting) {
     const message = await gmailMessageHeaders(await token(account), id, ["From", "Subject"]).catch(unlessGone);
-    if (message)
-      lines.push(
-        `- ${decodeWords(message.headers.get("from") ?? "")}: ${decodeWords(message.headers.get("subject") ?? "")}`,
-      );
+    if (message) lines.push(`- ${headerText(message.headers, "from")}: ${headerText(message.headers, "subject")}`);
   }
   await query("UPDATE unmatched_mail SET reported_at = now() WHERE reported_at IS NULL");
   if (!lines.length) return 0;

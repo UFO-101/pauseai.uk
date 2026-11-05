@@ -298,11 +298,14 @@ describeWithDatabase("one-off emails", () => {
       await connectTestGmail("policy@pauseai.uk");
       vi.stubEnv("POLICY_INBOX", "policy@pauseai.uk");
       await query("UPDATE staff_accounts SET keep_politician_threads = true WHERE email = 'policy@pauseai.uk'");
-      mailbox({ id: "m1", from: POLLY });
+      mailbox({ id: "m1", from: POLLY }, { id: "m2", from: "stranger@example.com" });
       const history = () =>
         server.use(
           http.get(`${GMAIL}/history`, () =>
-            HttpResponse.json({ historyId: "2", history: [{ messagesAdded: [{ message: { id: "m1" } }] }] }),
+            HttpResponse.json({
+              historyId: "2",
+              history: [{ messagesAdded: [{ message: { id: "m1" } }, { message: { id: "m2" } }] }],
+            }),
           ),
           http.get(`${GMAIL}/messages`, () => HttpResponse.json({})),
         );
@@ -319,6 +322,33 @@ describeWithDatabase("one-off emails", () => {
     });
   });
 
+  it("knows a politician by a past address, from the audit log, and their own domain", async () => {
+    const polly = await addTestPolitician();
+    await query(`INSERT INTO audit_log (actor, action, details) VALUES ('sync', 'edit politician', $1)`, [
+      JSON.stringify({ id: polly, changed: { email: ["old.polly@example.com", null] } }),
+    ]);
+    await query("INSERT INTO politician_domains (domain, notable_person_id) VALUES ('polly.example', $1)", [polly]);
+    const book = await politicianBook();
+    expect(book.addresses.get("old.polly@example.com")).toEqual([polly]);
+    expect(book.domains.get("polly.example")).toBe(polly);
+  });
+
+  it("copes with a message missing every header", async () => {
+    const bare = {
+      id: "bare",
+      threadId: "t",
+      labelIds: [],
+      internalDate: "1790000000000",
+      headers: new Map<string, string>(),
+    };
+    const thread = await keepOneOff("policy@pauseai.uk", bare, Buffer.from("x"), await politicianBook(), []);
+    expect(thread).toBeGreaterThan(0);
+    const [row] = await query<Record<string, unknown>>(
+      `SELECT from_address AS "from", subject, to_line AS "to", rfc_message_id AS rfc FROM one_off_messages`,
+    );
+    expect(row).toEqual({ from: "", subject: "", to: "", rfc: null });
+  });
+
   describe("the daily report of what matched nothing", () => {
     const token = async (account: string) => `fixture-access:${account}`;
     const notes: string[] = [];
@@ -332,6 +362,16 @@ describeWithDatabase("one-off emails", () => {
         "INSERT INTO unmatched_mail (account, gmail_message_id, reported_at) VALUES ('policy@pauseai.uk', $1, $2)",
         [id, reported],
       );
+
+    it("copes with a message with no sender or subject", async () => {
+      await add("r2");
+      server.use(
+        http.get(`${GMAIL}/messages/r2`, () =>
+          HttpResponse.json({ id: "r2", threadId: "t", labelIds: [], internalDate: "1", payload: { headers: [] } }),
+        ),
+      );
+      expect(await reportUnmatchedMail(token)).toBe(1);
+    });
 
     it("lists each by sender and subject, once", async () => {
       await add("r1");

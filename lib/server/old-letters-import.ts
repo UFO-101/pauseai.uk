@@ -3,6 +3,7 @@ import { docFromMarkup, toText } from "@/lib/letter-format";
 import type { OldLettersImportResult } from "@/lib/import-runs";
 import { ownWords } from "@/lib/letter-changes";
 import {
+  addressesIn,
   augustColleagues,
   augustTemplate,
   fitTemplate,
@@ -33,8 +34,8 @@ import { gmailAccess } from "./gmail-accounts";
 import { keepReply, noteAutoReply } from "./gmail-reading";
 import { keepingFailure, recordRun } from "./import-runs";
 import { wholeTextOf } from "./letter-threads";
-import { decodeWords, firstOfType, messageIds, parseMime } from "./mime";
-import { addressesOn, keepOneOff, ONE_OFF_HEADERS, senderOf } from "./one-off-emails";
+import { messageIds, parseMime } from "./mime";
+import { addressesOn, headerText, keepOneOff, ONE_OFF_HEADERS, rfcIdOf, senderOf } from "./one-off-emails";
 import { airtableToken, fetchWebFormLetters } from "./outside-services/airtable";
 import {
   gmailFullMessage,
@@ -221,11 +222,11 @@ async function copyFormTexts(reader: Reader): Promise<void> {
         id: number;
         at: Date;
         salutation: string;
-        constituency: string | null;
+        constituency: string;
         name: string;
-        postcode: string | null;
+        postcode: string;
       }>(
-        `SELECT s.airtable_id AS "airtableId", s.id::int AS id, l.created_at AS at, n.salutation, p.constituency, f.name, f.postcode
+        `SELECT s.airtable_id AS "airtableId", s.id::int AS id, l.created_at AS at, n.salutation, coalesce(p.constituency, '') AS constituency, f.name, coalesce(f.postcode, '') AS postcode
          FROM letters_from_supporters s JOIN letters l USING (id) JOIN notable_people n ON n.id = l.notable_person_id
            LEFT JOIN politicians p ON p.id = n.id JOIN form_entries f ON f.id = s.entry_id
          WHERE s.airtable_id IS NOT NULL AND s.letter IS NULL`,
@@ -239,9 +240,9 @@ async function copyFormTexts(reader: Reader): Promise<void> {
     const doc = docFromMarkup(letter.message.replace(/\r/g, ""));
     const draft = formDraft(formVersionAt(new Date(row.at)), {
       salutation: row.salutation,
-      constituency: row.constituency ?? "",
+      constituency: row.constituency,
       name: row.name,
-      postcode: row.postcode ?? "",
+      postcode: row.postcode,
     });
     reader.result.formTexts++;
     if (reader.dryRun) continue;
@@ -299,7 +300,7 @@ async function recordSent(
       account,
       rfc,
       message.threadId,
-      decodeWords(message.headers.get("subject") ?? ""),
+      headerText(message.headers, "subject"),
       from,
     ],
   );
@@ -377,10 +378,10 @@ async function handleSent(reader: Reader, account: string, id: string): Promise<
   await reader.turn();
   const message = await gmailFullMessage(reader.tokens.get(account)!, id).catch(unlessGone);
   if (!message) return { outcome: "skipped" };
-  const rfc = messageIds(message.headers.get("message-id"))[0] ?? null;
-  const subject = decodeWords(message.headers.get("subject") ?? "");
-  const to = addressesOn(new Map([["to", message.headers.get("to") ?? ""]]));
-  const cc = addressesOn(new Map([["to", message.headers.get("cc") ?? ""]]));
+  const rfc = rfcIdOf(message.headers);
+  const subject = headerText(message.headers, "subject");
+  const to = addressesIn(headerText(message.headers, "to"));
+  const cc = addressesIn(headerText(message.headers, "cc"));
   const from = senderOf(message.headers).address;
   const { people } = politiciansIn(reader.book, [...to, ...cc]);
   const at = new Date(Number(message.internalDate));
@@ -402,12 +403,13 @@ async function handleSent(reader: Reader, account: string, id: string): Promise<
   const text = textFrom(message);
   const candidates = people.length ? await candidatesFor(reader, people, at) : [];
   const letter = joinSent(candidates, { at, cc, text });
-  const address = [...to, ...cc].find((a) => politiciansIn(reader.book, [a]).people.length) ?? to[0] ?? "";
+  // Only used once it's a letter, which is to a politician.
+  const address = () => [...to, ...cc].find((a) => politiciansIn(reader.book, [a]).people.length)!;
   if (letter) {
     const row = candidates.find((c) => c.id === letter.id)!;
     if (row.kind === "supporter") {
       count(reader.result.joined, "form");
-      if (!reader.dryRun) await recordSent(letter.id, "letter", account, message, address, from, rfc);
+      if (!reader.dryRun) await recordSent(letter.id, "letter", account, message, address(), from, rfc);
       return { outcome: "joined", letterId: letter.id, rfc };
     }
     const key = mailingOfLetter(row.field, subject, text, at);
@@ -418,7 +420,7 @@ async function handleSent(reader: Reader, account: string, id: string): Promise<
         await mailingIdOf(key),
         text,
       ]);
-      await recordSent(letter.id, "mailing", account, message, address, from, rfc);
+      await recordSent(letter.id, "mailing", account, message, address(), from, rfc);
     }
     return { outcome: "joined", letterId: letter.id, mailingKey: key, rfc };
   }
@@ -435,7 +437,7 @@ async function handleSent(reader: Reader, account: string, id: string): Promise<
       await mailingIdOf(key),
       text,
     ]);
-    await recordSent(letterId, "mailing", account, message, address, from, rfc);
+    await recordSent(letterId, "mailing", account, message, address(), from, rfc);
     return { outcome: "added", letterId, mailingKey: key, rfc };
   }
   return { ...(await asOneOff(reader, account, message)), rfc };
@@ -464,7 +466,7 @@ async function lettersTo(people: number[]): Promise<ReplyCandidate[]> {
 
 /** Whether a message is a machine's: marked so, or its subject says so. */
 function isAutomatic(message: GmailMessageHeaders): boolean {
-  const subject = message.headers.get("subject") ?? "";
+  const subject = headerText(message.headers, "subject");
   return isMachineReply((name) => message.headers.get(name), subject) || isAcknowledgement(subject);
 }
 
@@ -479,10 +481,10 @@ async function handlePoliticianMessage(
   people: number[],
   group: boolean,
 ): Promise<Handled> {
-  const rfc = messageIds(message.headers.get("message-id"))[0] ?? null;
+  const rfc = rfcIdOf(message.headers);
   const token = reader.tokens.get(account)!;
   const automatic = isAutomatic(message);
-  const subject = decodeWords(message.headers.get("subject") ?? "");
+  const subject = headerText(message.headers, "subject");
   const at = new Date(Number(message.internalDate));
   const letters = await lettersTo(people);
   let letter = await letterByThread(reader, account, message);
@@ -545,13 +547,10 @@ async function keepPostmarkCopy(
   if (reader.dryRun) return { outcome: "skipped", letterId: letter.id, rfc };
   await reader.turn();
   const raw = await gmailRawMessage(reader.tokens.get(account)!, message.id);
-  const mime = parseMime(raw.toString("latin1"));
-  if (firstOfType(mime, "text/plain") || firstOfType(mime, "text/html")) {
-    await query("UPDATE letters_from_supporters SET letter = $2 WHERE id = $1 AND letter IS NULL", [
-      letter.id,
-      JSON.stringify(docFromMarkup(wholeTextOf(mime))),
-    ]);
-  }
+  await query("UPDATE letters_from_supporters SET letter = $2 WHERE id = $1 AND letter IS NULL", [
+    letter.id,
+    JSON.stringify(docFromMarkup(wholeTextOf(parseMime(raw.toString("latin1"))))),
+  ]);
   return { outcome: "skipped", letterId: letter.id, rfc };
 }
 
@@ -560,7 +559,7 @@ async function handleReceived(reader: Reader, account: string, id: string, sourc
   await reader.turn();
   const message = await gmailMessageHeaders(reader.tokens.get(account)!, id, ONE_OFF_HEADERS).catch(unlessGone);
   if (!message) return { outcome: "skipped" };
-  const rfc = messageIds(message.headers.get("message-id"))[0] ?? null;
+  const rfc = rfcIdOf(message.headers);
   if (source !== "received") {
     const copy = rfc ? await keepPostmarkCopy(reader, account, message, rfc) : undefined;
     if (copy) return copy;
@@ -581,8 +580,8 @@ async function handleReceived(reader: Reader, account: string, id: string, sourc
   if (quoted.counts) return { ...(await asOneOff(reader, account, message, raw, quoted.people)), rfc };
   if (!isPauseaiAddress(from, reader.connected)) {
     reader.result.unmatched.push({
-      from: decodeWords(message.headers.get("from") ?? ""),
-      subject: decodeWords(message.headers.get("subject") ?? ""),
+      from: headerText(message.headers, "from"),
+      subject: headerText(message.headers, "subject"),
     });
   }
   return { outcome: "unmatched", rfc };
@@ -594,7 +593,7 @@ async function handleThreadMessage(reader: Reader, account: string, id: string):
   const token = reader.tokens.get(account)!;
   const message = await gmailMessageHeaders(token, id, ONE_OFF_HEADERS).catch(unlessGone);
   if (!message) return { outcome: "skipped" };
-  const rfc = messageIds(message.headers.get("message-id"))[0] ?? null;
+  const rfc = rfcIdOf(message.headers);
   await reader.turn();
   await keepOneOff(account, message, await gmailRawMessage(token, id), reader.book, reader.connected);
   return { outcome: "one_off", rfc };
@@ -832,8 +831,9 @@ export async function importOldLetters(
   startedBy: string,
   dryRun: boolean,
   paceMs = 0,
+  chunkMs = CHUNK_MS,
 ): Promise<OldLettersImportResult> {
-  let chunk = await importOldLettersChunk({ startedBy, dryRun, paceMs });
-  while (chunk.more) chunk = await importOldLettersChunk({ startedBy, dryRun, runId: chunk.runId, paceMs });
+  let chunk = await importOldLettersChunk({ startedBy, dryRun, paceMs, chunkMs });
+  while (chunk.more) chunk = await importOldLettersChunk({ startedBy, dryRun, runId: chunk.runId, paceMs, chunkMs });
   return chunk.result;
 }

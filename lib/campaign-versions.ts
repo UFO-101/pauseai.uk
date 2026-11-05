@@ -26,7 +26,7 @@ export function campaignTextDoc(text: string): MailingDoc {
   return {
     type: "doc",
     content: doc.content.map((block) =>
-      block.type === "paragraph" ? { type: "paragraph", content: (block.content ?? []).flatMap(fieldsIn) } : block,
+      block.type === "paragraph" ? { type: "paragraph", content: block.content!.flatMap(fieldsIn) } : block,
     ) as MailingDoc["content"],
   };
 }

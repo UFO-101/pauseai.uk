@@ -13,7 +13,7 @@ const PATH = "/staff/mailings/one-off";
 const copy = staffCopy.oneOff;
 
 /** The list's columns: when, the thread, the politicians in it, who began it, and who's in it. */
-export const oneOffColumns: ListColumn<OneOffThreadRow>[] = [
+const oneOffColumns: ListColumn<OneOffThreadRow>[] = [
   { key: "when", label: copy.columns.when, short: true, cell: (t) => staffDate(t.latestAt) },
   {
     key: "subject",

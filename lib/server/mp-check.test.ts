@@ -24,13 +24,17 @@ describeWithDatabase("checkMps", () => {
     );
     server.use(
       http.get(`${MEMBERS_API}/Members/90002/Contact`, () =>
-        HttpResponse.json({ value: [{ isWebAddress: true, line1: "https://www.polly.example" }, { email: "a@parliament.uk" }] }),
+        HttpResponse.json({
+          value: [{ isWebAddress: true, line1: "https://www.polly.example" }, { email: "a@parliament.uk" }],
+        }),
       ),
       http.get(`${MEMBERS_API}/Members/90001/Contact`, () =>
         HttpResponse.json({ value: [{ email: "someone@notours.example" }] }),
       ),
     );
-    await query("UPDATE politicians SET constituency = 'Elsewhere' WHERE constituency = 'Hackney North and Stoke Newington'");
+    await query(
+      "UPDATE politicians SET constituency = 'Elsewhere' WHERE constituency = 'Hackney North and Stoke Newington'",
+    );
     await checkMps("jo@pauseai.uk");
     const rows = await query<{ domain: string; name: string }>(
       `SELECT d.domain, n.name FROM politician_domains d JOIN notable_people n ON n.id = d.notable_person_id`,
