@@ -568,6 +568,7 @@ import("@/tests/next-headers"))` and put the session cookie in
 ## Commands
 
 ```bash
+npm run typecheck         # types (also runs in npm run build)
 npm test                  # both Vitest projects, with the coverage gate (what CI runs)
 npm run test:node         # Vitest node project (also runs in npm run build)
 npm run lint              # ESLint, failing on warnings too (also runs in npm run build)

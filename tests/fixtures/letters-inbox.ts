@@ -46,9 +46,11 @@ export function lettersMailbox(scope = "default"): Mailbox {
     mailbox = { messages: [], files: new Set() };
     MAILBOXES.set(scope, mailbox);
   }
-  const dir = process.env.LETTERS_INBOX_DIR && join(process.env.LETTERS_INBOX_DIR, scope);
-  if (dir && existsSync(dir)) {
-    for (const file of readdirSync(dir).sort()) {
+  // Each turbopackIgnore here and below: a path known only when it runs, in a folder of fixture builds alone, which
+  // left to itself Turbopack answers by tracing the whole project into every build's server code.
+  const dir = process.env.LETTERS_INBOX_DIR && join(/*turbopackIgnore: true*/ process.env.LETTERS_INBOX_DIR, scope);
+  if (dir && existsSync(/*turbopackIgnore: true*/ dir)) {
+    for (const file of readdirSync(/*turbopackIgnore: true*/ dir).sort()) {
       if (mailbox.files.has(file)) continue;
       mailbox.files.add(file);
       receive(mailbox, readFileSync(join(dir, file), "latin1"), file.endsWith(".spam.eml"));
@@ -108,7 +110,7 @@ export function deliverToLettersInbox(
     receive(lettersMailbox(scope), raw, spam);
     return;
   }
-  mkdirSync(join(dir, scope), { recursive: true });
+  mkdirSync(join(/*turbopackIgnore: true*/ dir, scope), { recursive: true });
   const name = `${Date.now()}-${process.pid}-${String(++written).padStart(4, "0")}${spam ? ".spam" : ""}.eml`;
   writeFileSync(join(dir, scope, name), raw, "latin1");
 }

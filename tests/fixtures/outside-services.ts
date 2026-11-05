@@ -401,7 +401,10 @@ function blobResponse(pathname: string, init?: RequestInit): Response {
 
 function fixtureReply(key: string): Uint8Array | undefined {
   const name = /^fixture\/([\w-]+\.eml)\.gz$/.exec(key)?.[1];
-  // From the checkout's root, where the tests and fixture builds run: a build's own files are elsewhere.
+  // From the checkout's root, where the tests and fixture builds run: a build's own files are elsewhere. The
+  // turbopackIgnores keep Turbopack from tracing the whole project into every build's server code for this path.
   const file = name && join(process.cwd(), "tests/fixtures/letter-replies", name);
-  return file && existsSync(file) ? gzipSync(readFileSync(file)) : undefined;
+  return file && existsSync(/*turbopackIgnore: true*/ file)
+    ? gzipSync(readFileSync(/*turbopackIgnore: true*/ file))
+    : undefined;
 }
