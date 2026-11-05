@@ -188,7 +188,7 @@ test("A letter bounces", async ({ page, request, flowDatabase }) => {
   await frame(page, "What the bounce said", { window: true });
   await page.keyboard.press("Escape");
   story("The way back leads to the letter's campaign.");
-  await page.getByRole("link", { name: campaigns[0].title }).first().click();
+  await page.getByRole("link", { name: campaigns[0].title, exact: true }).first().click();
   await expect(page).toHaveURL(`${BASE}/staff/campaigns/${campaigns[0].slug}`);
 });
 

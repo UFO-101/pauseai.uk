@@ -22,7 +22,7 @@ test("Campaigns", async ({ page, flowDatabase }) => {
   story(
     "A campaign's page shows the letter people were given, how many changed its wording, and the letters they sent.",
   );
-  await page.getByRole("link", { name: campaigns[0].title }).first().click();
+  await page.getByRole("link", { name: campaigns[0].title, exact: true }).first().click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(campaigns[0].title);
   await expect(page.getByRole("region", { name: copy.theLetter })).toContainText(campaigns[0].subject);
   await frame(page, "A campaign's page");
@@ -42,7 +42,7 @@ test("No answer yet", async ({ page, flowDatabase }) => {
   await sentLetterId(page, flowDatabase, madeUpAddress("Jane Smith", 42));
   await page.goto(`${BASE}/staff/asks/${campaigns[0].ask}`);
   await expect(page.getByRole("heading", { name: staffCopy.asks.page.howWeAsked })).toBeVisible();
-  await expect(page.getByRole("link", { name: campaigns[0].title })).toBeVisible();
+  await expect(page.getByRole("link", { name: campaigns[0].title, exact: true })).toBeVisible();
 
   story("No answer lists everyone written to who hasn't answered, longest wait first.");
   const unanswered = page.getByRole("link", { name: new RegExp(`^${staffCopy.statuses.noAnswer} \\d`) });
@@ -88,15 +88,16 @@ test("An ask's pages", async ({ page, flowDatabase }) => {
   story("A hundred and fifty politicians have signed. The answers come a hundred to a page.");
   runSql(
     flowDatabase,
-    `WITH people AS (
+    `INSERT INTO asks (slug, title, kind, asked_by) VALUES ('our-letter', 'Our letter', 'letter', '{pauseai}');
+     WITH people AS (
        INSERT INTO notable_people (kind, airtable_id, name)
        SELECT 'politician', 'recMany' || n, 'Signer ' || lpad(n::text, 3, '0') FROM generate_series(1, 150) n RETURNING id
      )
      INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, updated_by)
-     SELECT id, 'frontier-ai-letter', 'letter', 'signed', 'jo@pauseai.uk' FROM people`,
+     SELECT id, 'our-letter', 'letter', 'signed', 'jo@pauseai.uk' FROM people`,
   );
   await logIn(page, flowDatabase, ["supporters"]);
-  await page.goto(`${BASE}/staff/asks/frontier-ai-letter`);
+  await page.goto(`${BASE}/staff/asks/our-letter`);
   await expect(page.getByText(staffCopy.campaigns.politicians(150))).toBeVisible();
   await frame(page, "The first page");
 
