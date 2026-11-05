@@ -1905,8 +1905,7 @@ export const staffCopy = {
     gmail: "Gmail",
     nightly: "Nightly",
     // On a job's page, while a press of it is still running.
-    running: (who: string, when: string) =>
-      `⁂ Running, started by ${who} at ${when}. Pressing again won't start another.`,
+    running: (who: string, when: string) => `Running, started by ${who} at ${when}. Can only run one at a time.`,
     frequent: "Every 5 minutes",
     hourly: "Hourly",
     oneOff: "One-off",

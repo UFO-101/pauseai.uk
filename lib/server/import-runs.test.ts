@@ -2,7 +2,16 @@ import { afterEach, expect, it, vi } from "vitest";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { notifications } from "@/tests/notifications";
-import { keepingFailure, latestRun, listRuns, recordFailure, recordRun } from "./import-runs";
+import {
+  currentPress,
+  endPress,
+  keepingFailure,
+  latestRun,
+  listRuns,
+  recordFailure,
+  recordRun,
+  takePress,
+} from "./import-runs";
 
 describeWithDatabase("the import log", () => {
   useTestDatabase();
@@ -55,5 +64,18 @@ describeWithDatabase("the import log", () => {
       }),
     ).rejects.toThrow("boom");
     expect(await listRuns("check-mps")).toMatchObject([{ status: "failed", error: "boom" }]);
+  });
+
+  it("lets one press of a job run at a time, until it ends or is older than any can run", async () => {
+    expect(await currentPress("sync-emails")).toBeUndefined();
+    expect(await takePress("sync-emails", "jo@pauseai.uk")).toBe(true);
+    expect(await currentPress("sync-emails")).toMatchObject({ startedBy: "jo@pauseai.uk" });
+    expect(await takePress("sync-emails", "sam@pauseai.uk")).toBe(false);
+    expect(await takePress("check-mps", "sam@pauseai.uk")).toBe(true);
+    await endPress("sync-emails");
+    expect(await takePress("sync-emails", "sam@pauseai.uk")).toBe(true);
+    await query("UPDATE job_presses SET started_at = now() - interval '17 minutes' WHERE job = 'sync-emails'");
+    expect(await currentPress("sync-emails")).toBeUndefined();
+    expect(await takePress("sync-emails", "jo@pauseai.uk")).toBe(true);
   });
 });

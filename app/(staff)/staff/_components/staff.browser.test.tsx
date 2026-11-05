@@ -1778,7 +1778,7 @@ describe("PoliticianDetails", () => {
       .toHaveAttribute("href", "/staff/politicians/blocked-emails?q=polly%40example.org");
     // Each letter's status leads to it alone on the letters page.
     await expect
-      .element(page.getByRole("link", { name: staffCopy.letters.status.bounced }))
+      .element(page.getByRole("link", { name: staffCopy.mailingPages.theLetter }).nth(1))
       .toHaveAttribute("href", `/staff/letters/${exampleLetter.id}`);
     // Each campaign it names leads to its page here.
     const list = page.getByRole("list", { name: staffCopy.politician.historyTitle });
