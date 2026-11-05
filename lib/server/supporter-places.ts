@@ -2,6 +2,8 @@ import "server-only";
 import type { PlacesLookup } from "@/lib/import-runs";
 import { query, type Queryable } from "./db";
 import { placeNamed, placesForPostcodes, POSTCODES_AT_ONCE, type FoundPlace } from "./outside-services/postcodes";
+import { problem } from "./problems";
+import { staffCopy } from "@/lib/content/staff-interface";
 
 // Where supporters are (the supporter_place view): each postcode and town
 // they or their events gave, and each postcode's constituency, looked up at
@@ -86,7 +88,8 @@ export async function lookUpPlaces(db?: Queryable): Promise<PlacesLookup> {
       await storeTown(town, await placeNamed(town), db);
       result.towns++;
     }
-  } catch {
+  } catch (error) {
+    problem(staffCopy.luma.placesFailed, error);
     result.failed = true;
   }
   return result;

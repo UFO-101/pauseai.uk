@@ -131,7 +131,7 @@ describeWithDatabase("connected Gmail accounts", () => {
     server.use(http.post(REVOKE, () => new HttpResponse(null, { status: 500 })));
     expect(await disconnectGmail(JO, JO)).toBe(true);
     await vi.waitFor(() =>
-      expect(error).toHaveBeenCalledWith("Couldn't revoke jo@pauseai.uk's Gmail token:", expect.any(Error)),
+      expect(error).toHaveBeenCalledWith(staffCopy.problems.tokenNotRevoked(JO), expect.any(String)),
     );
     expect(await gmailAccounts()).toEqual([]);
   });

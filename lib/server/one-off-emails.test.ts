@@ -369,6 +369,32 @@ describeWithDatabase("one-off emails", () => {
         [id, reported],
       );
 
+    it("leaves the batch unreported when the email can't go, to report it next time", async () => {
+      await add("r3");
+      server.use(
+        http.get(`${GMAIL}/messages/r3`, () =>
+          HttpResponse.json({
+            id: "r3",
+            threadId: "t",
+            labelIds: [],
+            internalDate: "1",
+            payload: {
+              headers: [
+                { name: "From", value: "a@example.org" },
+                { name: "Subject", value: "Hi" },
+              ],
+            },
+          }),
+        ),
+      );
+      vi.stubEnv("NOTIFICATION_INBOX", "");
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      expect(await reportUnmatchedMail(token)).toBe(0);
+      expect(await query("SELECT gmail_message_id AS id FROM unmatched_mail WHERE reported_at IS NULL")).toEqual([
+        { id: "r3" },
+      ]);
+    });
+
     it("copes with a message with no sender or subject", async () => {
       await add("r2");
       server.use(

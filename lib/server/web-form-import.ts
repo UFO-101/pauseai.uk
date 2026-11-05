@@ -6,6 +6,8 @@ import { keepingFailure, recordRun } from "./import-runs";
 import { airtableToken, fetchWebFormLetters } from "./outside-services/airtable";
 import { refreshSupportersList } from "./supporter-facts";
 import { linkSupporters } from "./supporters";
+import { problem } from "./problems";
+import { staffCopy } from "@/lib/content/staff-interface";
 
 // Copies, once, the letters supporters sent through pauseai.info's old UK
 // form (/uk-email-mp, July 2025 to October 2026), which kept each in
@@ -47,6 +49,7 @@ export function importWebFormLetters(startedBy: string): Promise<WebFormImportRe
         supportersAdded: 0,
         linked: 0,
       };
+      const withoutPolitician: string[] = [];
       for (const letter of letters) {
         if (letter.spam || letter.invalid || !letter.sentAt) {
           result.skipped++;
@@ -59,6 +62,7 @@ export function importWebFormLetters(startedBy: string): Promise<WebFormImportRe
         );
         if (!person) {
           result.noPolitician++;
+          withoutPolitician.push(letter.airtableId);
           continue;
         }
         const campaign = CAMPAIGNS[letter.campaign];
@@ -105,6 +109,9 @@ export function importWebFormLetters(startedBy: string): Promise<WebFormImportRe
       await refreshSupportersList(db);
       const { imported, skipped, alreadyHere, noPolitician } = result;
       await logChange(startedBy, "import web form letters", { imported, skipped, alreadyHere, noPolitician }, db);
+      if (withoutPolitician.length) {
+        problem(staffCopy.problems.noPolitician(withoutPolitician.length), withoutPolitician.join(", "));
+      }
       await recordRun(JOB, startedBy, "ok", result, db);
       return result;
     });

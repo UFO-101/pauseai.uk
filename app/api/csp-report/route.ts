@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseJsonIfAny } from "@/lib/server/json";
 
 // Receives Content-Security-Policy violation reports. Without this the
 // report-only policy in next.config.ts reports to nobody: violations reach the
@@ -83,12 +84,9 @@ export async function POST(request: Request) {
     return new NextResponse(null, { status: 204 });
   }
 
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(body);
-  } catch {
-    return new NextResponse(null, { status: 204 });
-  }
+  // A body that isn't JSON is nothing to report, and nothing to tell the browser either.
+  const parsed = parseJsonIfAny(body);
+  if (parsed === undefined) return new NextResponse(null, { status: 204 });
 
   for (const report of extractReports(parsed)) {
     const entry = normalise(report);

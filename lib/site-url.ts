@@ -12,7 +12,13 @@
  * so there, without a request (a Server Action's), it can't say.
  */
 export function siteUrl(path: string, request: Request | undefined): URL {
+  const url = siteUrlIfKnown(path, request);
+  if (!url) throw new Error("This build doesn't know its own address: SITE_ORIGIN isn't set");
+  return url;
+}
+
+/** The same, or undefined where this build can't say, for a link that can do without. */
+export function siteUrlIfKnown(path: string, request: Request | undefined): URL | undefined {
   const origin = process.env.SITE_ORIGIN || (process.env.DEPLOY_CONTEXT === "local" ? request?.url : "");
-  if (!origin) throw new Error("This build doesn't know its own address: SITE_ORIGIN isn't set");
-  return new URL(path, origin);
+  return origin ? new URL(path, origin) : undefined;
 }

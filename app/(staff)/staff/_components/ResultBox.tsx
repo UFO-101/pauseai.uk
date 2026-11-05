@@ -12,6 +12,8 @@ type Props = {
   lines?: number;
   /** Whether it starts unfolded, whatever the detail's length; left out, it goes by `lines`. */
   open?: boolean;
+  /** What went wrong, shown under the line whether or not the detail is folded. */
+  problems?: ReactNode;
   /** Buttons that stay outside the fold, such as apply and discard. */
   actions?: ReactNode;
   /** The detail: lists or a table. None, and there's nothing to fold. */
@@ -23,7 +25,7 @@ type Props = {
  * The box every import's and check's result is shown in: a summary line,
  * and under it, folded with the browser's arrow, the detail.
  */
-export default function ResultBox({ summary, lines = 0, open, actions, children, ...rest }: Props) {
+export default function ResultBox({ summary, lines = 0, open, problems, actions, children, ...rest }: Props) {
   const line = <span>{summary}</span>;
   return (
     <section className={styles.sync} aria-label={rest["aria-label"]}>
@@ -35,6 +37,7 @@ export default function ResultBox({ summary, lines = 0, open, actions, children,
       ) : (
         <p role="status">{line}</p>
       )}
+      {problems}
       {actions && <Actions>{actions}</Actions>}
     </section>
   );

@@ -566,6 +566,8 @@ export const staffCopy = {
     button: "Erase",
     cancel: "Cancel",
     done: "Erased.",
+    // In amber, over what couldn't be cleared afterwards: the person is erased all the same.
+    partly: "⁂ Erased, but not everything could be cleared afterwards:",
   },
   // The accounts page (/staff/accounts), for admins: who may use the staff
   // pages, and what each may do.
@@ -1536,6 +1538,12 @@ export const staffCopy = {
   // a link to where a person can deal with it.
   notifications: {
     // An import's run failed, after one that didn't: its title, its error, its page.
+    // A run that went wrong along the way, without failing: each problem, a line.
+    importProblems: {
+      subject: (job: string) => `⁂ The import '${job}' had problems`,
+      body: (job: string, problems: string[], link: string) =>
+        `⁂ The import '${job}' ran, but:\n\n${problems.join("\n")}\n\nIt will try again at its next run, and you won't be emailed again until it has worked, or something else goes wrong.\n\nIts runs: ${link}`,
+    },
     importFailed: {
       subject: (job: string) => `The import '${job}' failed`,
       body: (job: string, error: string, link: string) =>
@@ -1593,6 +1601,39 @@ export const staffCopy = {
     // In place of that, when Google refused the account's access, so the site disconnected it.
     disconnected:
       "Google refused our access, so this account has been disconnected. Its owner can connect it again from their account page.",
+  },
+  // The hourly sending (app/api/cron/send-mailings): the letters inbox's queue, then the mailings due.
+  sending: {
+    title: "⁂ Sending letters and mailings",
+    intro: {
+      before: "⁂ Sends what's waiting: the letters inbox's queue, then the letters of ",
+      link: "the mailings",
+      after: " that are due, a few seconds at a time, every hour.",
+    },
+    sendNow: "⁂ Send now",
+    never: "⁂ Nothing sent yet.",
+    result: (r: {
+      started: number[];
+      sent: number;
+      skipped: number;
+      failed: number;
+      left: number;
+      queue: { sent: number; left: number };
+    }) =>
+      `⁂ Started ${r.started.length} ${r.started.length === 1 ? "mailing" : "mailings"}; sent ${r.sent}, skipped ${r.skipped}, failed ${r.failed}, ${r.left} left. The queue: sent ${r.queue.sent}, ${r.queue.left} left.`,
+  },
+  // The nightly tidying (app/api/cron/tidy-logs): this log, the audit log and forgotten drafts.
+  tidying: {
+    title: "⁂ Tidying the logs",
+    intro: {
+      before: "⁂ Deletes the runs this log no longer keeps, old entries of ",
+      link: "the audit log",
+      after: ", and mailing drafts nobody wrote anything in.",
+    },
+    tidyNow: "⁂ Tidy now",
+    never: "⁂ Not tidied yet.",
+    result: (r: { importRuns: number; auditEntries: number; drafts: number }) =>
+      `⁂ Deleted ${r.importRuns} ${r.importRuns === 1 ? "run" : "runs"}, ${r.auditEntries} audit log ${r.auditEntries === 1 ? "entry" : "entries"} and ${r.drafts} ${r.drafts === 1 ? "draft" : "drafts"}.`,
   },
   // The hourly copy of PauseAI's UK members (lib/server/members-import.ts),
   // on the import page.
@@ -1876,11 +1917,54 @@ export const staffCopy = {
   // ended, when, who started it, and for a held MP import, who decided it.
   // A Luma import that left work for later is incomplete in place of done
   // or unchanged.
+  // What a job reports went wrong without stopping it (lib/server/problems.ts): on its run, and in the email.
+  problems: {
+    couldntRead: (account: string) => `⁂ ${account} couldn't be read`,
+    nameUnknown: (account: string) => `⁂ ${account}'s name couldn't be fetched from Gmail`,
+    notUnderstood: (n: number) =>
+      `⁂ ${n} ${n === 1 ? "message" : "messages"} in the letters inbox ${n === 1 ? "needs" : "need"} a person`,
+    eventGuests: (event: string) => `⁂ The guests of an event couldn't be read: ${event}`,
+    eventHosts: (event: string) => `⁂ The hosts of an event couldn't be read: ${event}`,
+    lumaRefused: "⁂ Luma refused a request, as its rate limit was reached",
+    heldBack: (n: number) => `⁂ ${n} ${n === 1 ? "email is" : "emails are"} held back for a mailing nobody has added`,
+    noOnePolitician: (n: number) => `⁂ ${n} ${n === 1 ? "email names" : "emails name"} no single politician`,
+    politicianNotHere: (n: number) =>
+      `⁂ ${n} ${n === 1 ? "email waits" : "emails wait"} for a politician who isn't here yet`,
+    noPolitician: (n: number) => `⁂ ${n} ${n === 1 ? "letter has" : "letters have"} no politician here`,
+    mpNotFound: (n: number) => `⁂ ${n} ${n === 1 ? "MP isn't" : "MPs aren't"} here`,
+    sendFailed: (purpose: string) => `⁂ An email couldn't be sent (${purpose})`,
+    noInbox: "⁂ NOTIFICATION_INBOX isn't set, so nobody was emailed",
+    messageIdUnknown: "⁂ Gmail wouldn't say which Message-ID an email went with",
+    mailNotCleared: "⁂ An erased supporter's mail couldn't be cleared",
+    oneOffsNotCleared: "⁂ An erased supporter's one-off emails couldn't be deleted",
+    postcodesDown: "⁂ postcodes.io couldn't be asked",
+    stripeDown: "⁂ Stripe couldn't be asked, so the wall of thanks is empty",
+    lumaGuestsDown: "⁂ Luma couldn't be asked about an event's guests",
+    badBody: (from: string) => `⁂ ${from} sent a body that isn't JSON`,
+    letterNotSent: (id: number) => `⁂ Letter ${id} couldn't be sent, so it's back in the queue`,
+    mpLookupFailed: "⁂ The MP lookup failed",
+    letterNotKept: "⁂ A letter couldn't be kept",
+    turnstileDown: "⁂ Turnstile couldn't be reached",
+    tokenNotRevoked: (account: string) => `⁂ ${account}'s Gmail token couldn't be revoked at Google`,
+    signUpNotKept: "⁂ A march sign-up couldn't be kept",
+    lumaSkippedGuest: "⁂ Luma skipped a march sign-up: unsubscribed, removed or blocked on the calendar",
+    lumaNotConfigured: "⁂ A march sign-up couldn't go to Luma, as LUMA_API_KEY isn't set",
+    lumaRefusedGuest: "⁂ Luma wouldn't add a march sign-up",
+    signatoriesUnread: "⁂ The signatories couldn't be read",
+    webhookNotRecorded: "⁂ A Luma webhook couldn't be recorded",
+    turnstileUnset: "⁂ TURNSTILE_SECRET_KEY isn't set",
+    turnstileTestKey: "⁂ TURNSTILE_SECRET_KEY is a Cloudflare test key, refused outside development",
+    connectionDropped: "⁂ A database connection was dropped while idle",
+    charsetUnknown: (charset: string) =>
+      `⁂ An email's charset isn't one we know, so its text may be garbled: ${charset}`,
+    lumaEventsDown: "⁂ Luma couldn't be asked for the events, so the page shows none",
+  },
   runs: {
     status: {
       ok: "Done",
       incomplete: "Incomplete",
       running: "Running",
+      problems: "⁂ Problems",
       failed: "Failed",
       unchanged: "Unchanged",
       held: "Held",
@@ -2212,4 +2296,6 @@ export const jobTitles: Record<ImportJob, string> = {
   "import-members": staffCopy.members.title,
   "read-gmail": staffCopy.gmailReading.title,
   "import-old-letters": staffCopy.oldLetters.title,
+  "send-mailings": staffCopy.sending.title,
+  "tidy-logs": staffCopy.tidying.title,
 };

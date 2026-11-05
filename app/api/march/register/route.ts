@@ -8,13 +8,18 @@ import { checkMarchRegistration, type MarchRegisterResult } from "@/lib/march-re
 import { addFormEntry } from "@/lib/server/form-entries";
 import { marchEventId } from "@/lib/server/march-event";
 import { addLumaGuest } from "@/lib/server/outside-services/luma-guests";
+import { problem } from "@/lib/server/problems";
+import { staffCopy } from "@/lib/content/staff-interface";
+import { readJsonIfAny } from "@/lib/server/json";
 
 /** The form's honeypot field: hidden from people, filled in by bots that fill in everything. */
 const HONEYPOT_FIELD = "website";
 
 /** Answers with a MarchRegisterResult, always 200. The logs leave out the email address. */
 export async function POST(request: Request) {
-  return NextResponse.json(await register(await request.json().catch(() => null)));
+  const body = await readJsonIfAny(request);
+  if (body === undefined) problem(staffCopy.problems.badBody("The march form"));
+  return NextResponse.json(await register(body ?? null));
 }
 
 async function register(input: unknown): Promise<MarchRegisterResult> {
@@ -37,19 +42,19 @@ async function register(input: unknown): Promise<MarchRegisterResult> {
   // can't be kept, Luma's answer still stands.
   await addFormEntry("march-2026-11", registration, { eventId: event, status: result.status }).then(
     (id) => console.log(`[march] Kept sign-up ${id}: Luma ${result.status}.`),
-    (error: Error) => console.error(`[march] Couldn't keep the sign-up: ${error.message}`),
+    (error: unknown) => problem(staffCopy.problems.signUpNotKept, error),
   );
   switch (result.status) {
     case "added":
       return { ok: true };
     case "skipped":
-      console.error("[march] Luma skipped the guest (unsubscribed, removed or blocked on the calendar).");
+      problem(staffCopy.problems.lumaSkippedGuest);
       break;
     case "not-configured":
-      console.error("[march] Can't add the guest to Luma: LUMA_API_KEY not set.");
+      problem(staffCopy.problems.lumaNotConfigured);
       break;
     case "failed":
-      console.error(`[march] Couldn't add the guest to Luma: ${result.reason}`);
+      // Reported where it failed (addLumaGuest).
       break;
   }
   return { ok: false, reason: "luma-failed" };

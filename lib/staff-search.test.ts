@@ -16,6 +16,7 @@ import {
   politicianId,
   supporterId,
   supportersSearch,
+  erasedPath,
 } from "./staff-search";
 
 describe("sentEmailsSearch", () => {
@@ -254,6 +255,7 @@ describe("supportersSearch", () => {
     dir: "",
     page: "",
     erased: "",
+    why: "",
   };
 
   it("reads each filter as typed and as applied, a repeated one as a list, its values marked ! left out", () => {
@@ -402,4 +404,11 @@ describe("askFormSearch and staffBack", () => {
     expect(staffBack("/staffing", "/x")).toBe("/x");
     expect(staffBack(undefined, "/x")).toBe("/x");
   });
+});
+
+it("sends an erasure to the list saying so, with what couldn't be cleared, if anything", () => {
+  expect(erasedPath([])).toBe("/staff/supporters?erased=1");
+  expect(erasedPath(["Mail wasn't cleared", "Nor one-offs"])).toBe(
+    "/staff/supporters?erased=partly&why=Mail%20wasn't%20cleared%0ANor%20one-offs",
+  );
 });

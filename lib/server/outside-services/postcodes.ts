@@ -2,6 +2,8 @@ import "server-only";
 import { constituencyName } from "@/lib/constituencies";
 import type { Place } from "@/lib/events";
 import { outsideFetch } from "./outside-fetch";
+import { problem } from "../problems";
+import { staffCopy } from "@/lib/content/staff-interface";
 
 // postcodes.io: the UK's open postcode API, no key needed. It gives the
 // constituency's name and its official code; we take the official name for
@@ -34,7 +36,8 @@ export async function constituencyForPostcode(postcode: string): Promise<Constit
       constituency,
       ...(place && { place }),
     };
-  } catch {
+  } catch (error) {
+    problem(staffCopy.problems.postcodesDown, error);
     return { ok: false, reason: "failed" };
   }
 }
@@ -54,7 +57,8 @@ export async function placeForPostcode(postcode: string): Promise<PostcodePlaceR
     const full = await placeAt(`postcodes/${encodeURIComponent(code)}`, code);
     if (full.ok || full.reason === "failed") return full;
     return await placeAt(`outcodes/${encodeURIComponent(code)}`, code);
-  } catch {
+  } catch (error) {
+    problem(staffCopy.problems.postcodesDown, error);
     return { ok: false, reason: "failed" };
   }
 }
@@ -158,7 +162,8 @@ export async function placeFor(text: string): Promise<FoundPlace | null | "faile
   if (postcode.reason === "failed") return "failed";
   try {
     return await placeNamed(text.trim());
-  } catch {
+  } catch (error) {
+    problem(staffCopy.problems.postcodesDown, error);
     return "failed";
   }
 }

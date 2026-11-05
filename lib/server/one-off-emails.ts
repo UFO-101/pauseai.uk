@@ -234,15 +234,20 @@ export async function reportUnmatchedMail(token: (account: string) => Promise<st
     const message = await gmailMessageHeaders(await token(account), id, ["From", "Subject"]).catch(unlessGone);
     if (message) lines.push(`- ${headerText(message.headers, "from")}: ${headerText(message.headers, "subject")}`);
   }
-  await query("UPDATE unmatched_mail SET reported_at = now() WHERE reported_at IS NULL");
-  if (!lines.length) return 0;
   const words = staffCopy.oneOff.unmatchedAlert;
-  await notifyStaff(
-    words.subject(lines.length),
-    words.body(lines, staffLink("/staff/one-off", undefined)),
-    null,
-    "staff-report",
-  );
+  // Marked reported only once the email has gone, so a batch the email failed for is reported next time.
+  if (
+    lines.length &&
+    !(await notifyStaff(
+      words.subject(lines.length),
+      words.body(lines, staffLink("/staff/one-off", undefined)),
+      null,
+      "staff-report",
+    ))
+  ) {
+    return 0;
+  }
+  await query("UPDATE unmatched_mail SET reported_at = now() WHERE reported_at IS NULL");
   return lines.length;
 }
 

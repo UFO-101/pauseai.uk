@@ -46,6 +46,8 @@ const SOURCES: Record<ImportJob, ImportSource> = {
   "import-members": "airtable",
   "read-gmail": "gmail",
   "import-old-letters": "gmail",
+  "send-mailings": "gmail",
+  "tidy-logs": "web",
 };
 
 /** The check that changes nothing, said so in a lozenge after its name. */
@@ -124,6 +126,18 @@ const ABOUT: Record<
     href: "/staff/one-off",
     button: staffCopy.oldLetters.importNow,
     none: staffCopy.oldLetters.never,
+  },
+  "send-mailings": {
+    intro: staffCopy.sending.intro,
+    href: "/staff/mailings",
+    button: staffCopy.sending.sendNow,
+    none: staffCopy.sending.never,
+  },
+  "tidy-logs": {
+    intro: staffCopy.tidying.intro,
+    href: "/staff/audit-log",
+    button: staffCopy.tidying.tidyNow,
+    none: staffCopy.tidying.never,
   },
 };
 

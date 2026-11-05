@@ -255,6 +255,14 @@ export const staffSupporters: Group = {
             </StaffPage>
           ),
         },
+        {
+          label: "Erased, but something couldn't be cleared",
+          render: () => (
+            <StaffPage as="div">
+              <ErasedNotice erased="partly" why={"An example line about mail that couldn't be cleared\nAnother"} />
+            </StaffPage>
+          ),
+        },
       ],
     },
     {

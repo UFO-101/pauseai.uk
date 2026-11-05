@@ -176,6 +176,40 @@ it("says one and many of each of the new pages' counts", () => {
     formTexts: 0,
     postmarkTexts: 0,
   };
+  const { problems, sending, tidying } = staffCopy;
+  for (const words of [
+    problems.heldBack,
+    problems.noOnePolitician,
+    problems.politicianNotHere,
+    problems.noPolitician,
+    problems.mpNotFound,
+    problems.notUnderstood,
+  ]) {
+    expect(words(1)).not.toContain("1 emails");
+    expect(words(1)).not.toMatch(/\b1 (emails|letters|MPs|messages)\b/);
+    expect(words(2)).toMatch(/\b2 (emails|letters|MPs|messages)\b/);
+  }
+  for (const words of [problems.couldntRead, problems.nameUnknown, problems.tokenNotRevoked]) {
+    expect(words("jo@pauseai.uk")).toContain("jo@pauseai.uk");
+  }
+  expect(problems.eventGuests("evt-1")).toContain("evt-1");
+  expect(problems.eventHosts("evt-1")).toContain("evt-1");
+  expect(problems.sendFailed("mailing")).toContain("mailing");
+  expect(problems.badBody("Postmark")).toContain("Postmark");
+  expect(problems.letterNotSent(7)).toContain("7");
+  expect(problems.charsetUnknown("x-mac")).toContain("x-mac");
+  expect(
+    sending.result({ started: [1], sent: 1, skipped: 0, failed: 0, left: 0, queue: { sent: 0, left: 0 } }),
+  ).toContain("1 mailing;");
+  expect(
+    sending.result({ started: [1, 2], sent: 1, skipped: 0, failed: 0, left: 0, queue: { sent: 0, left: 0 } }),
+  ).toContain("2 mailings;");
+  expect(tidying.result({ importRuns: 1, auditEntries: 1, drafts: 1 })).toContain(
+    "1 run, 1 audit log entry and 1 draft.",
+  );
+  expect(tidying.result({ importRuns: 2, auditEntries: 2, drafts: 2 })).toContain(
+    "2 runs, 2 audit log entries and 2 drafts.",
+  );
   expect(oldLetters.result(run)).toContain("all done");
   expect(oldLetters.result({ ...run, finished: false })).not.toContain("all done");
 });

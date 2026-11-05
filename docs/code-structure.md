@@ -95,6 +95,24 @@ the code should go instead. The rules below say which ones are enforced.
   (`lib/supporters.ts`) for a merged supporter's old ID. Links within the
   site never lead to these, so no one clicking around sees the empty
   layout.
+- **A caught error is rethrown or reported.** Code that catches an error
+  and carries on reports it with `problem()` (`lib/server/problems.ts`): in
+  our words, with the error. During a run of a job (`keepingFailure()` in
+  `lib/server/import-runs.ts`) the problem is kept on the run, so the job's
+  page shows it under the run's line, and staff are emailed once, until a
+  run goes right or something else goes wrong. Outside a run, as in a form
+  or a webhook, it's logged. Nothing in `lib/server`, `app/api` or
+  `netlify/functions` writes an error to the log by hand: `console.error`
+  reaches only Netlify's logs, and `String(error)` drops the error's cause,
+  so a network failure reads "fetch failed" and nothing more
+  (`describeError()` keeps it). Every route under `app/api/cron` runs as a
+  run of the import log. Three checks enforce it:
+  `tests/checks/caught-errors.test.ts`, `problem-reporting.test.ts` and
+  `cron-runs.test.ts`; the first names its few exceptions, each a catch
+  that answers a question rather than carrying on past a failure. A
+  promise nobody waits for says so with `void`
+  (`@typescript-eslint/no-floating-promises`), as its rejection would
+  otherwise reach only the console.
 - **Pages are thin.** A `page.tsx` holds its metadata, its data loading
   (calling `lib/`) and the order of its sections. Content and markup belong
   in components, and helper functions in `lib/`, where they can be tested.

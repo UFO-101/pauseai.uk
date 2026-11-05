@@ -2,6 +2,8 @@ import "server-only";
 import { tallySources, type GuestEntry, type SourceCounts } from "@/lib/trackers";
 import { LUMA_PAGE_SIZE, lumaList, type LumaPage } from "./luma-api";
 import { outsideFetch } from "./outside-fetch";
+import { problem } from "../problems";
+import { staffCopy } from "@/lib/content/staff-interface";
 
 // An event's guests, through Luma's official API: the list, for the flyering
 // trackers' tallies and for the import, which keeps each guest; how many are
@@ -72,7 +74,8 @@ export async function getSourceCounts(
       for (const guest of page.entries) entries.push({ guest });
       cursor = page.nextCursor;
     } while (cursor);
-  } catch {
+  } catch (error) {
+    problem(staffCopy.problems.lumaGuestsDown, error);
     return null;
   }
   return tallySources(entries, tags, since, until);
@@ -118,7 +121,8 @@ export async function getEventGuestCount(eventId: string): Promise<number | null
     const data = (await res.json()) as { guest_counts?: { approved?: { guests?: unknown } } };
     const going = data.guest_counts?.approved?.guests;
     return typeof going === "number" ? going : null;
-  } catch {
+  } catch (error) {
+    problem(staffCopy.problems.lumaGuestsDown, error);
     return null;
   }
 }
@@ -212,13 +216,16 @@ export async function addLumaGuest(
     if (!res.ok) {
       // The start of the body says why: a bad key, an unknown event, a rate limit.
       const body = (await res.text()).slice(0, 300);
-      return { status: "failed", reason: `Luma responded ${res.status}${body ? `: ${body}` : ""}` };
+      const reason = `Luma responded ${res.status}${body ? `: ${body}` : ""}`;
+      problem(staffCopy.problems.lumaRefusedGuest, reason);
+      return { status: "failed", reason };
     }
     const data = (await res.json()) as { skipped?: { email?: unknown }[] };
     const email = guest.email.toLowerCase();
     const skipped = (data.skipped ?? []).some((s) => typeof s.email === "string" && s.email.toLowerCase() === email);
     return skipped ? { status: "skipped" } : { status: "added" };
   } catch (error) {
+    problem(staffCopy.problems.lumaRefusedGuest, error);
     const err = error as Error;
     if (err.name === "TimeoutError") return { status: "failed", reason: `Luma did not respond within ${timeoutMs}ms` };
     return { status: "failed", reason: `Request to Luma failed: ${err.message}` };

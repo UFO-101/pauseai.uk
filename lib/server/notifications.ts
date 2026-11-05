@@ -1,7 +1,9 @@
 import "server-only";
-import { siteUrl } from "@/lib/site-url";
+import { siteUrlIfKnown } from "@/lib/site-url";
 import { send, type Purpose } from "./email";
 import { notifyDomain } from "./outside-services/postmark";
+import { problem } from "./problems";
+import { staffCopy } from "@/lib/content/staff-interface";
 
 // Emails to the notification inbox (NOTIFICATION_INBOX): something on the
 // site needs a person. An MP's address bouncing, mail in the letters inbox
@@ -16,11 +18,7 @@ import { notifyDomain } from "./outside-services/postmark";
  * build can't, the path alone.
  */
 export function staffLink(path: string, request: Request | undefined): string {
-  try {
-    return siteUrl(path, request).href;
-  } catch {
-    return path;
-  }
+  return siteUrlIfKnown(path, request)?.href ?? path;
 }
 
 /**
@@ -35,7 +33,10 @@ export async function notifyStaff(
   purpose: Extract<Purpose, "staff-alert" | "staff-report"> = "staff-alert",
 ): Promise<boolean> {
   const inbox = process.env.NOTIFICATION_INBOX;
-  if (!inbox) return false;
+  if (!inbox) {
+    problem(staffCopy.problems.noInbox);
+    return false;
+  }
   const result = await send(
     {
       From: `PauseAI UK <noreply@${notifyDomain()}>`,

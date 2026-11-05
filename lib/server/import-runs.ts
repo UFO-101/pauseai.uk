@@ -3,19 +3,22 @@ import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { importPath, type AnyImportRun, type ImportJob, type ImportRunStatus } from "@/lib/import-runs";
 import { query, type Queryable } from "./db";
 import { notifyStaff, staffLink } from "./notifications";
+import { describeError } from "./problems";
+import { currentRun, inRun } from "./run-store";
 
 // One log of every run of every import and check: the MPs and the
 // signatories from Airtable, the check against Parliament, and ControlAI's
 // letter. Each run is a row: when, who started it, how it ended, why it
-// failed, and the job's own account of what it found. Failures are kept
+// failed, what went wrong along the way (problems.ts), and the job's own
+// account of what it found. Failures are kept
 // too, so each job's page under /staff/import-data can say what went
 // wrong, and so are runs that changed nothing, so it can say when the job
 // last ran. Each job's page lists all of its runs. The types are in lib/import-runs.ts,
 // for the components.
 
-const COLUMNS = `id::int AS id, at, job, started_by AS "startedBy", status, error, result, decided_by AS "decidedBy"`;
+const COLUMNS = `id::int AS id, at, job, started_by AS "startedBy", status, error, result, problems, decided_by AS "decidedBy"`;
 
-/** Keeps a run that ended, and returns its ID. */
+/** Keeps a run that ended, with the problems reported so far, and returns its ID. */
 export async function recordRun(
   job: ImportJob,
   startedBy: string,
@@ -23,48 +26,92 @@ export async function recordRun(
   result: object,
   db?: Queryable,
 ): Promise<number> {
+  const run = currentRun();
   const [{ id }] = await query<{ id: number }>(
-    "INSERT INTO import_runs (job, started_by, status, result) VALUES ($1, $2, $3, $4) RETURNING id::int AS id",
-    [job, startedBy, status, JSON.stringify(result)],
+    "INSERT INTO import_runs (job, started_by, status, result, problems) VALUES ($1, $2, $3, $4, $5) RETURNING id::int AS id",
+    [job, startedBy, status, JSON.stringify(result), JSON.stringify(run?.problems ?? [])],
     db,
   );
+  if (run) run.recorded = id;
+  return id;
+}
+
+/** Keeps a run that failed, with why, and the problems reported before it did. */
+export async function recordFailure(job: ImportJob, startedBy: string, error: unknown): Promise<number> {
+  const run = currentRun();
+  const [{ id }] = await query<{ id: number }>(
+    "INSERT INTO import_runs (job, started_by, status, error, problems) VALUES ($1, $2, 'failed', $3, $4) RETURNING id::int AS id",
+    [job, startedBy, describeError(error), JSON.stringify(run?.problems ?? [])],
+  );
+  if (run) run.recorded = id;
   return id;
 }
 
 /**
- * Keeps a run that failed, with why; and, unless its run before failed too,
- * emails the notification inbox, so a job failing every hour says so once.
+ * Runs a job's work as a run: what it reports with problem() is kept on the
+ * run it records, and once it's done, staff are emailed if it failed or had
+ * problems that the run before didn't (below). A failure is kept as a failed
+ * run and thrown on, for the caller to log, and ends any press of the job.
  */
-export async function recordFailure(job: ImportJob, startedBy: string, error: unknown): Promise<void> {
-  const why = String(error).replace(/^Error: /, "");
-  const [before] = await query<{ status: string }>(
-    "SELECT status FROM import_runs WHERE job = $1 ORDER BY at DESC, id DESC LIMIT 1",
-    [job],
-  );
-  await query("INSERT INTO import_runs (job, started_by, status, error) VALUES ($1, $2, 'failed', $3)", [
-    job,
-    startedBy,
-    why,
-  ]);
-  if (before?.status === "failed") return;
-  const words = staffCopy.notifications.importFailed;
-  await notifyStaff(
-    words.subject(jobTitles[job]),
-    words.body(jobTitles[job], why, staffLink(importPath(job), undefined)),
-  );
+export async function keepingFailure<T>(job: ImportJob, startedBy: string, work: () => Promise<T>): Promise<T> {
+  let recorded: number | undefined;
+  try {
+    return await inRun(async (run) => {
+      try {
+        const result = await work();
+        recorded = run.recorded;
+        // Problems reported after the run was recorded, as a job's last steps may.
+        if (recorded) {
+          await query("UPDATE import_runs SET problems = $2 WHERE id = $1", [recorded, JSON.stringify(run.problems)]);
+        }
+        return result;
+      } catch (error) {
+        recorded = await recordFailure(job, startedBy, error);
+        throw error;
+      }
+    });
+  } finally {
+    if (recorded) await alertIfNew(job, recorded);
+  }
+}
+
+/** What a run went wrong with, as the alert tells it apart from the run before: its problems by name, those with an alert of their own aside, or that it failed. */
+function wentWrong(run: AnyImportRun | undefined): string[] {
+  if (!run) return [];
+  if (run.status === "failed") return ["failed"];
+  return run.problems.filter((p) => !p.told).map((p) => p.what);
 }
 
 /**
- * Runs a job's work, keeping the failure if it throws, then throwing it on for
- * the caller to log. The work records its own success, with what it found.
+ * Emails the notification inbox about run `id` if it went wrong in a way the
+ * run before didn't: a failure, or a problem by its name. A job failing every
+ * hour, or stuck on the same problem, says so once; it says so again once a
+ * run has gone right, or when something new goes wrong.
  */
-export async function keepingFailure<T>(job: ImportJob, startedBy: string, work: () => Promise<T>): Promise<T> {
-  try {
-    return await work();
-  } catch (error) {
-    await recordFailure(job, startedBy, error);
-    throw error;
+async function alertIfNew(job: ImportJob, id: number): Promise<void> {
+  const [run, before] = await query<AnyImportRun>(
+    `SELECT ${COLUMNS} FROM import_runs WHERE job = $1 AND id <= $2 ORDER BY at DESC, id DESC LIMIT 2`,
+    [job, id],
+  );
+  const wrong = wentWrong(run);
+  const already = new Set(wentWrong(before));
+  if (!wrong.length || wrong.every((what) => already.has(what))) return;
+  const title = jobTitles[job];
+  const link = staffLink(importPath(job), undefined);
+  if (run.status === "failed") {
+    const words = staffCopy.notifications.importFailed;
+    await notifyStaff(words.subject(title), words.body(title, run.error, link));
+    return;
   }
+  const words = staffCopy.notifications.importProblems;
+  await notifyStaff(
+    words.subject(title),
+    words.body(
+      title,
+      run.problems.map((p) => (p.error ? `- ${p.what}: ${p.error}` : `- ${p.what}`)),
+      link,
+    ),
+  );
 }
 
 /** Longer than any press can run, so one that died is ignored. */

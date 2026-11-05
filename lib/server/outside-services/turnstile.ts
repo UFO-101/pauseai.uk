@@ -1,6 +1,8 @@
 import "server-only";
 import { copy } from "@/lib/content/email-your-mp";
 import { outsideFetch } from "./outside-fetch";
+import { problem } from "../problems";
+import { staffCopy } from "@/lib/content/staff-interface";
 
 // Cloudflare Turnstile, checked on the server. Ported from pauseai-website's
 // src/lib/server/turnstile-verify.ts. With neither key set, it's skipped,
@@ -26,11 +28,11 @@ async function verifyTurnstile(token: string | undefined): Promise<string | unde
   }
   if (!secret) {
     if (isDev()) return undefined;
-    console.error("TURNSTILE_SECRET_KEY is not configured");
+    problem(staffCopy.problems.turnstileUnset);
     return copy.errors.spamUnavailable;
   }
   if (!isDev() && TEST_SECRET.test(secret)) {
-    console.error("TURNSTILE_SECRET_KEY is a Cloudflare test key, refused outside development");
+    problem(staffCopy.problems.turnstileTestKey);
     return copy.errors.spamMisconfigured;
   }
   if (!token) return copy.errors.spamWait;
@@ -51,7 +53,7 @@ async function verifyTurnstile(token: string | undefined): Promise<string | unde
     // allowed hostnames, set in Cloudflare, say where tokens can be made.
     return undefined;
   } catch (error) {
-    console.error("Turnstile verification error:", error);
+    problem(staffCopy.problems.turnstileDown, error);
     return copy.errors.spamUnreachable;
   }
 }

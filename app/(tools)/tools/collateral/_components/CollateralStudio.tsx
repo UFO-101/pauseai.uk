@@ -137,7 +137,7 @@ export default function CollateralStudio({ events }: { events: CalendarEvent[] }
   // Restore the last session once on the client.
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    void (async () => {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         const result = raw ? parseProject(raw) : null;

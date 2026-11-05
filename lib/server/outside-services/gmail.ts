@@ -2,6 +2,9 @@ import "server-only";
 import { saveRawToOutbox, saveToOutbox } from "@/tests/fixtures/outbox";
 import { messageIds, toMime, type MimeEmail } from "../mime";
 import { outsideFetch } from "./outside-fetch";
+import { problem } from "../problems";
+import { staffCopy } from "@/lib/content/staff-interface";
+import { readJsonIfAny } from "../json";
 
 // The only file that talks to Google: the OAuth consent that connects a
 // staff member's Gmail, and the Gmail API, over HTTP through outsideFetch,
@@ -86,7 +89,7 @@ async function tokenRequest(params: Record<string, string>): Promise<Record<stri
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ ...params, client_id: id, client_secret: secret }).toString(),
   });
-  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  const data = ((await readJsonIfAny(res)) ?? {}) as Record<string, unknown>;
   if (!res.ok) {
     throw new GmailError(
       `Google refused the token request: ${res.status} ${data.error ?? ""}`.trim(),
@@ -125,7 +128,7 @@ async function api<T>(accessToken: string, path: string, init: RequestInit = {})
   });
   if (!res.ok) {
     // Google's own words say which limit it was, and often when to retry.
-    const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
+    const body = (await readJsonIfAny(res)) as { error?: { message?: string } } | undefined;
     const reason = body?.error?.message ? `: ${body.error.message}` : "";
     throw new GmailError(`Gmail answered ${res.status} for ${path.split("?")[0]}${reason}`, res.status);
   }
@@ -315,7 +318,8 @@ export async function gmailMessageId(accessToken: string, id: string): Promise<s
   try {
     const message = await gmailMessageHeaders(accessToken, id, ["Message-ID"]);
     return messageIds(message.headers.get("message-id"))[0];
-  } catch {
+  } catch (error) {
+    problem(staffCopy.problems.messageIdUnknown, error);
     return undefined;
   }
 }

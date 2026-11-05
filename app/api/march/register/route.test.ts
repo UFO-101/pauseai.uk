@@ -4,6 +4,7 @@ import { query } from "@/lib/server/db";
 import { describeWithDatabase, useTestDatabase, withDatabaseDown } from "@/tests/database";
 import { server } from "@/tests/fixtures/msw";
 import { POST } from "./route";
+import { staffCopy } from "@/lib/content/staff-interface";
 
 /** Posts a body, JSON unless it's a string already, and reads the answer. */
 async function registerForMarch(body: unknown) {
@@ -97,7 +98,7 @@ describeWithDatabase("POST /api/march/register", () => {
 
   it("still says it worked when the sign-up can't be kept, as Luma has them", async () => {
     expect(await withDatabaseDown(() => registerForMarch(person))).toEqual({ ok: true });
-    expect(console.error).toHaveBeenCalledWith(expect.stringMatching(/^\[march\] Couldn't keep the sign-up: /));
+    expect(console.error).toHaveBeenCalledWith(staffCopy.problems.signUpNotKept, expect.any(String));
   });
 
   it("says why it won't take a name or email", async () => {
@@ -135,9 +136,7 @@ describeWithDatabase("POST /api/march/register", () => {
       reason: "luma-failed",
     });
     expect(await entries()).toEqual([expect.objectContaining({ email: "luma-skips@example.org", status: "skipped" })]);
-    expect(console.error).toHaveBeenCalledWith(
-      "[march] Luma skipped the guest (unsubscribed, removed or blocked on the calendar).",
-    );
+    expect(console.error).toHaveBeenCalledWith(staffCopy.problems.lumaSkippedGuest);
   });
 
   it("fails when Luma does", async () => {
@@ -146,14 +145,15 @@ describeWithDatabase("POST /api/march/register", () => {
       reason: "luma-failed",
     });
     expect(console.error).toHaveBeenCalledWith(
-      '[march] Couldn\'t add the guest to Luma: Luma responded 500: {"message":"Fixture failure"}',
+      staffCopy.problems.lumaRefusedGuest,
+      'Luma responded 500: {"message":"Fixture failure"}',
     );
   });
 
   it("fails, rather than pretending, when there's no Luma key", async () => {
     vi.stubEnv("LUMA_API_KEY", undefined);
     expect(await registerForMarch(person)).toEqual({ ok: false, reason: "luma-failed" });
-    expect(console.error).toHaveBeenCalledWith("[march] Can't add the guest to Luma: LUMA_API_KEY not set.");
+    expect(console.error).toHaveBeenCalledWith(staffCopy.problems.lumaNotConfigured);
     expect(await entries()).toEqual([expect.objectContaining({ status: "not-configured" })]);
   });
 });

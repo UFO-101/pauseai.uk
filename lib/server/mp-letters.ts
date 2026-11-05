@@ -11,6 +11,8 @@ import { checkNotSpam } from "./outside-services/turnstile";
 import { statusesOf } from "./politicians";
 import { politicianProxy, supporterProxy } from "./proxies";
 import { linkSupporters } from "./supporters";
+import { problem } from "./problems";
+import { staffCopy } from "@/lib/content/staff-interface";
 
 // A letter from the form: checked, kept, then sent from the letters inbox
 // at once if it can be (lib/server/letter-sending.ts), else queued.
@@ -171,7 +173,7 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
       return id;
     });
   } catch (error) {
-    console.error("Couldn't keep a letter:", error);
+    problem(staffCopy.problems.letterNotKept, error);
     return fail(500, copy.errors.failed);
   }
   if (id === undefined) return fail(409, copy.errors.alreadySent);

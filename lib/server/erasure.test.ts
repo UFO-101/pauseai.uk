@@ -1,3 +1,4 @@
+import { staffCopy } from "@/lib/content/staff-interface";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
@@ -90,6 +91,7 @@ describeWithDatabase("eraseSupporter", () => {
       proxies: 0,
       messages: 0,
       oneOffs: 0,
+      problems: [],
     });
     expect(await query("SELECT 1 FROM supporters WHERE id = $1", [id])).toEqual([]);
     expect(await query("SELECT 1 FROM luma_people WHERE user_id = 'usr-fixture-1'")).toEqual([]);
@@ -196,8 +198,11 @@ describeWithDatabase("eraseSupporter", () => {
     it("is done all the same when the letters inbox can't be reached, saying so", async () => {
       const id = await janesLetter();
       await query("UPDATE staff_accounts SET gmail_token = NULL, gmail_connected_at = NULL, gmail_history_id = NULL");
-      expect(await eraseSupporter(id, "ICO-125", "jo@pauseai.uk")).toMatchObject({ proxies: 1 });
-      expect(console.error).toHaveBeenCalledWith("Couldn't clear an erased supporter's mail:", expect.any(Error));
+      expect(await eraseSupporter(id, "ICO-125", "jo@pauseai.uk")).toMatchObject({
+        proxies: 1,
+        problems: [staffCopy.problems.mailNotCleared],
+      });
+      expect(console.error).toHaveBeenCalledWith(staffCopy.problems.mailNotCleared, expect.any(String));
     });
   });
 
@@ -219,11 +224,11 @@ describeWithDatabase("eraseSupporter", () => {
     );
     server.use(http.delete("https://blobs.fixture.invalid/*", () => new HttpResponse(null, { status: 500 })));
     vi.spyOn(console, "error").mockImplementation(() => {});
-    expect(await eraseSupporter(id, "ICO-9", "jo@pauseai.uk")).toMatchObject({ oneOffs: 1 });
-    expect(console.error).toHaveBeenCalledWith(
-      "Couldn't delete an erased supporter's one-off emails:",
-      expect.anything(),
-    );
+    expect(await eraseSupporter(id, "ICO-9", "jo@pauseai.uk")).toMatchObject({
+      oneOffs: 1,
+      problems: [staffCopy.problems.oneOffsNotCleared],
+    });
+    expect(console.error).toHaveBeenCalledWith(staffCopy.problems.oneOffsNotCleared, expect.any(String));
     vi.restoreAllMocks();
     vi.unstubAllEnvs();
     expect(await query("SELECT 1 FROM one_off_threads")).toEqual([]);

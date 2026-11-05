@@ -314,8 +314,12 @@ describeWithDatabase("reading the letters inbox", () => {
     expect(sent).toEqual([]);
     // Left in the inbox, unread, for a person.
     expect(labelsOfNewest()).toEqual(["INBOX", labels.notUnderstood, "UNREAD"].sort());
-    const [run] = await query<GmailReading>("SELECT job, status, result FROM import_runs ORDER BY id DESC LIMIT 1");
-    expect(runStatus(run)).toBe("failed");
+    const [run] = await query<GmailReading>(
+      "SELECT job, status, result, problems FROM import_runs ORDER BY id DESC LIMIT 1",
+    );
+    // Mail a person has to look at is a problem of the run, told by the alert above.
+    expect(runStatus(run)).toBe("problems");
+    expect(run.problems).toEqual([{ what: staffCopy.problems.notUnderstood(3), told: true }]);
   });
 
   it("doesn't understand a stranger answering one of our emails at the plain address, or writing to the MP's proxy", async () => {

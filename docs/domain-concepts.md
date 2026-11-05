@@ -728,13 +728,19 @@ opt-outs ("Opt-outs", above) as well as the blocks here.
 A job that copies data in from outside: the politician sync, the Emails
 sync, the check against Parliament, the ControlAI letter, the Luma import,
 the members import, and the one-off imports of pauseai.info's web form
-letters, Go to Parliament's meetings and old letters (`IMPORT_JOBS` in
-`lib/import-runs.ts`). Each runs on a schedule or when
-staff press its button, and
-every run is recorded (`import_runs`): when, who started it (`nightly` or a
-staff email), how it ended, why it failed, and the job's own account of
-what it found. A run can be held for staff to decide on, as a large politician sync
-is. `/staff/import-data` shows each job's newest run on a card, and each
+letters, Go to Parliament's meetings and old letters; and the two jobs that
+don't import but run on a schedule all the same, the hourly sending and the
+nightly tidying (`IMPORT_JOBS` in `lib/import-runs.ts`). Each runs on a
+schedule or when staff press its button, and every run is recorded
+(`import_runs`): when, who started it (`nightly` or a staff email), how it
+ended, why it failed, what went wrong along the way without stopping it
+(its problems, `lib/server/problems.ts`), and the job's own account of what
+it found. A run with problems is amber, "Problems", and lists them under its
+line; staff are emailed about a failure, or a problem the run before didn't
+have, once, until a run goes right (`lib/server/import-runs.ts`). A problem
+with an alert of its own, such as a Gmail account Google disconnected, is
+marked told, so the run's email leaves it out. A run can be held for staff
+to decide on, as a large politician sync is. `/staff/import-data` shows each job's newest run on a card, and each
 job's own page (`/staff/import-data/<slug>`, `importPath()` in
 `lib/import-runs.ts`) its button and every run it keeps: a week of a
 5-minute job's, a month of a nightly one's, a one-off job's last 50, and
@@ -754,9 +760,10 @@ and on a 5-minute job a problem stays tinted further down. Nightly and one-off
 jobs show each run whole. The import of old letters also says how far it has got.
 
 A new job is a name in `IMPORT_JOBS` and the `import_runs` CHECK, a result
-type, a function that records its run, a slug in `IMPORT_SLUGS`, its
-icons (`ImportIcon.tsx`, where it reads from) and description in `ImportJob.tsx`, its button's Server Action in
-the job page, and a scheduled function if it runs on a schedule. A job that has more to do
+type, a function that runs it inside `keepingFailure()` and records its run,
+a slug in `IMPORT_SLUGS`, its icons (`ImportIcon.tsx`, where it reads from)
+and description in `ImportJob.tsx`, its button's Server Action in the job
+page, and a scheduled function if it runs on a schedule. A job that has more to do
 than a run allows, as the Luma import has, keeps its place and says in
 its result what's left.
 

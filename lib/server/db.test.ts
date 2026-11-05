@@ -6,6 +6,7 @@ import { describeWithDatabase, MAKES_DATABASES, useTestDatabase, withDatabaseDow
 import { requestCookies } from "@/tests/next-headers";
 import { FLOW_DATABASE_COOKIE } from "@/tests/fixture-env.mjs";
 import { dropDatabase, freshDatabase, runSql } from "@/scripts/fresh-database.mjs";
+import { staffCopy } from "@/lib/content/staff-interface";
 
 // A copy of the stand-in, so one test can make cookies() throw as it does
 // outside a request.
@@ -42,7 +43,7 @@ describeWithDatabase("the database", () => {
   });
 
   it("warns the dev server, once, when the database is behind on migrations", async () => {
-    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const error = vi.spyOn(console, "warn").mockImplementation(() => {});
     try {
       vi.stubEnv("NODE_ENV", "development");
       // The test database has no ledger, so it's behind.
@@ -92,7 +93,7 @@ describeWithDatabase("the database", () => {
       await closeDb();
       terminate(await pid());
       await vi.waitFor(() =>
-        expect(error).toHaveBeenCalledWith(expect.stringContaining("Database connection dropped")),
+        expect(error).toHaveBeenCalledWith(staffCopy.problems.connectionDropped, expect.any(String)),
       );
       expect(await query("SELECT 1 AS one")).toEqual([{ one: 1 }]);
     } finally {

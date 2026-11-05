@@ -1,3 +1,4 @@
+import { staffCopy } from "@/lib/content/staff-interface";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
@@ -29,6 +30,8 @@ import {
   importLumaNow,
   importMembersNow,
   readGmailNow,
+  sendNow,
+  tidyNow,
   endStaffSessionsNow,
   setAskStatus,
   saveEventNow,
@@ -211,7 +214,9 @@ describeWithDatabase("staff Server Actions", () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     server.use(http.get("https://controlai.org/uk-pm-letter", () => new HttpResponse(null, { status: 500 })));
     await importControlAiNow();
-    expect(error).toHaveBeenCalledOnce();
+    // The failure, and that nobody could be emailed about it, as NOTIFICATION_INBOX isn't set here.
+    expect(error).toHaveBeenCalledTimes(2);
+    expect(error).toHaveBeenCalledWith(staffCopy.problems.noInbox);
     expect(await runs()).toEqual([
       { job: "import-controlai", status: "ok", startedBy: "jo@pauseai.uk" },
       { job: "import-controlai", status: "failed", startedBy: "jo@pauseai.uk" },
@@ -289,6 +294,18 @@ describeWithDatabase("staff Server Actions", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data/gmail");
   });
 
+  it("sendNow sends what's waiting, and tidyNow tidies the logs, each as the staff member", async () => {
+    await sendNow();
+    expect(await runs()).toEqual([{ job: "send-mailings", status: "unchanged", startedBy: "jo@pauseai.uk" }]);
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data/sending");
+    await tidyNow();
+    expect(await runs()).toEqual([
+      { job: "send-mailings", status: "unchanged", startedBy: "jo@pauseai.uk" },
+      { job: "tidy-logs", status: "unchanged", startedBy: "jo@pauseai.uk" },
+    ]);
+    expect(revalidatePath).toHaveBeenCalledWith("/staff/import-data/tidying");
+  });
+
   it("checkNow checks the MPs against Parliament's", async () => {
     await checkNow();
     expect(await runs()).toEqual([{ job: "check-mps", status: "ok", startedBy: "jo@pauseai.uk" }]);
@@ -305,7 +322,9 @@ describeWithDatabase("staff Server Actions", () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     server.use(http.get("https://*.airtable.com/v0/*", () => new HttpResponse(null, { status: 500 })));
     await syncNow();
-    expect(error).toHaveBeenCalledOnce();
+    // The failure, and that nobody could be emailed about it, as NOTIFICATION_INBOX isn't set here.
+    expect(error).toHaveBeenCalledTimes(2);
+    expect(error).toHaveBeenCalledWith(staffCopy.problems.noInbox);
     expect(await runs()).toEqual([
       { job: "sync-politicians", status: "applied", startedBy: "jo@pauseai.uk" },
       { job: "sync-politicians", status: "failed", startedBy: "jo@pauseai.uk" },

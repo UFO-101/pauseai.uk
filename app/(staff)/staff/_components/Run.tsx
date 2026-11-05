@@ -12,6 +12,8 @@ import {
   type MpCheck,
   type OldLettersImport,
   type PoliticianSync,
+  type Sending,
+  type Tidying,
   type WebFormImport,
 } from "@/lib/import-runs";
 import type { MpProblem } from "@/lib/mp-check";
@@ -273,7 +275,6 @@ function LumaRun({ run, open }: { run: LumaImport; open?: boolean }) {
           {hostsChanged !== undefined && <> {staffCopy.luma.hostsChanged(hostsChanged)}</>}
           {contactPages !== undefined && <> {staffCopy.luma.contactPages(contactPages)}</>}
           {places && <> {staffCopy.luma.places(places)}</>}
-          {places?.failed && <> {staffCopy.luma.placesFailed}</>}
           {stoppedBy && <> {staffCopy.luma.stoppedBy[stoppedBy]}</>}
         </>
       }
@@ -350,23 +351,7 @@ function OldLettersRun({ run, open, people }: { run: OldLettersImport; open?: bo
     Object.keys(result.notJoined).length +
     result.unmatched.length;
   return (
-    <RunBox
-      run={run}
-      open={open}
-      lines={lines}
-      summary={
-        <>
-          {words.result(result)}
-          {result.stoppedBy === "gmail" && (
-            <>
-              {" "}
-              {words.stoppedByGmail} <Muted>{result.stoppedWhy}</Muted>
-            </>
-          )}
-          {result.unreadable.length > 0 && <> {words.unreadable(result.unreadable.length)}</>}
-        </>
-      }
-    >
+    <RunBox run={run} open={open} lines={lines} summary={<>{words.result(result)}</>}>
       <CountsByMailing heading={words.joined} counts={result.joined} titles={result.titles} />
       <CountsByMailing heading={words.added} counts={result.added} titles={result.titles} />
       <CountsByMailing heading={words.notJoined} counts={result.notJoined} titles={result.titles} />
@@ -388,6 +373,20 @@ function OldLettersRun({ run, open, people }: { run: OldLettersImport; open?: bo
           </p>
         ))}
     </RunBox>
+  );
+}
+
+/** An hour's sending: the counts. */
+function SendingRun({ run, open }: { run: Sending; open?: boolean }) {
+  return (
+    <RunBox run={run} summary={run.status === "failed" ? null : staffCopy.sending.result(run.result)} open={open} />
+  );
+}
+
+/** A night's tidying: the counts. */
+function TidyingRun({ run, open }: { run: Tidying; open?: boolean }) {
+  return (
+    <RunBox run={run} summary={run.status === "failed" ? null : staffCopy.tidying.result(run.result)} open={open} />
   );
 }
 
@@ -424,5 +423,9 @@ export default function Run({
       return <GmailRun run={run} open={open} />;
     case "import-old-letters":
       return <OldLettersRun run={run} open={open} people={people} />;
+    case "send-mailings":
+      return <SendingRun run={run} open={open} />;
+    case "tidy-logs":
+      return <TidyingRun run={run} open={open} />;
   }
 }

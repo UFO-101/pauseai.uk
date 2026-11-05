@@ -241,7 +241,7 @@ export default function GalleryStudio() {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    void (async () => {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         const result = raw ? parseGalleryProject(raw) : null;
@@ -272,7 +272,7 @@ export default function GalleryStudio() {
 
   useEffect(() => {
     let cancelled = false;
-    loadFonts()
+    void loadFonts()
       .catch(() => undefined)
       .then(() => {
         if (!cancelled) setFontsReady(true);

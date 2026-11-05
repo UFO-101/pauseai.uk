@@ -32,7 +32,9 @@ import {
   exampleLettersInboxRead,
   exampleMembersResult,
   exampleRun,
+  exampleSendingResult,
   exampleSyncedMp,
+  exampleTidyingResult,
   exampleWebFormResult,
 } from "@/app/(staff)/staff/_components/RunList.examples";
 import AccountsNotice from "@/app/(staff)/staff/_components/AccountsNotice";
@@ -180,6 +182,22 @@ const RUNS: Record<ImportJob, Variant> = {
     render: () => (
       <StaffPage as="div">
         <Run run={exampleRun("import-go-to-parliament", exampleGoToParliamentResult, { startedBy: "jo@pauseai.uk" })} />
+      </StaffPage>
+    ),
+  },
+  "send-mailings": {
+    label: "An hour's sending",
+    render: () => (
+      <StaffPage as="div">
+        <Run run={exampleRun("send-mailings", exampleSendingResult)} open />
+      </StaffPage>
+    ),
+  },
+  "tidy-logs": {
+    label: "A night's tidying",
+    render: () => (
+      <StaffPage as="div">
+        <Run run={exampleRun("tidy-logs", exampleTidyingResult)} open />
       </StaffPage>
     ),
   },

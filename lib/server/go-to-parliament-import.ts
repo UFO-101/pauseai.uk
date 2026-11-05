@@ -6,6 +6,8 @@ import { query, transaction } from "./db";
 import { keepingFailure, recordRun } from "./import-runs";
 import { airtableToken, fetchGoToParliamentMeetings } from "./outside-services/airtable";
 import { AIRTABLE } from "./politician-sync";
+import { problem } from "./problems";
+import { staffCopy } from "@/lib/content/staff-interface";
 
 // Copies, once, the meetings arranged for Go to Parliament (20 October
 // 2026) from Airtable: each MP a constituent was booked to meet gets a
@@ -50,6 +52,7 @@ export function importGoToParliament(startedBy: string): Promise<GoToParliamentI
         changed: 0,
         notFound: 0,
       };
+      const notFound: string[] = [];
       for (const [airtableId, i] of best) {
         const status = MEETING_STATUSES[i][1];
         const [person] = await query<{ id: number }>(
@@ -59,6 +62,7 @@ export function importGoToParliament(startedBy: string): Promise<GoToParliamentI
         );
         if (!person) {
           result.notFound++;
+          notFound.push(airtableId);
           continue;
         }
         // Dated the event's day, which Airtable's sheet was made for, or today if that's still to come.
@@ -83,6 +87,7 @@ export function importGoToParliament(startedBy: string): Promise<GoToParliamentI
         );
       }
       await logChange(startedBy, "import Go to Parliament", { added: result.added, changed: result.changed }, db);
+      if (notFound.length) problem(staffCopy.problems.mpNotFound(notFound.length), notFound.join(", "));
       await recordRun(JOB, startedBy, "ok", result, db);
       return result;
     });

@@ -295,6 +295,29 @@ test("An import fails", async ({ page, request, flowDatabase }) => {
   await frame(page, "The Luma import's runs");
 });
 
+test("An import has problems", async ({ page, request, flowDatabase }) => {
+  story(
+    "postcodes.io is down. The Luma import still runs, but can't place the new supporters, so it says so under its line, and the notification inbox gets an email saying what went wrong.",
+  );
+  failService(flowDatabase, "api.postcodes.io", FAILING_DIR);
+  const luma = () =>
+    request.post(`${BASE}/api/cron/import-luma`, { headers: { Authorization: "Bearer fixture-cron-secret" } });
+  expect((await luma()).ok()).toBe(true);
+  const words = staffCopy.notifications.importProblems;
+  const email = notified(words.subject(jobTitles["import-luma"]))!;
+  expect(email.TextBody).toContain(staffCopy.luma.placesFailed);
+  await emailFrame(page, email, "The email to the notification inbox");
+
+  story("The next run has the same problem. No second email: there's one until the problem has gone.");
+  expect((await luma()).ok()).toBe(true);
+  expect(notified(words.subject(jobTitles["import-luma"]))!.MessageId).toBe(email.MessageId);
+  await logIn(page, flowDatabase);
+  await page.goto(`${BASE}/staff/import-data/luma`);
+  await expect(page.getByText(staffCopy.runs.status.problems, { exact: true })).toHaveCount(2);
+  await expect(page.getByText(staffCopy.luma.placesFailed, { exact: false }).first()).toBeVisible();
+  await frame(page, "The Luma import's runs, with the problem under each");
+});
+
 test("A held politician import", async ({ page, request, flowDatabase }) => {
   story(
     "21 MPs are no longer in Airtable. An import that would mark that many gone changes too much to go ahead alone, so it's held for a person to check.",

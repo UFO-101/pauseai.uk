@@ -486,21 +486,20 @@ describe("the import of old letters' run", () => {
     await says(`${words.mailingTitles["deepmind-30-june"]}: 500`);
     await says("form: 40");
     await says("Jane Smith <jane@example.com>: A question");
-    expect(document.body.textContent).toContain(words.unreadable(1));
+    // What went wrong is under the line, as the run's problems, not in the summary.
+    expect(document.body.textContent).not.toContain(words.unreadable(1));
     expect(document.body.textContent).not.toContain(words.stoppedByGmail);
     await rerender(
       <Run
-        run={exampleRun("import-old-letters", {
-          ...exampleOldLettersResult,
-          stoppedBy: "gmail",
-          stoppedWhy: "Gmail answered 403: too many",
-          unreadable: [],
-        })}
+        run={exampleRun(
+          "import-old-letters",
+          { ...exampleOldLettersResult, stoppedBy: "gmail", unreadable: [] },
+          { problems: [{ what: words.stoppedByGmail, error: "Gmail answered 429 for /messages/0a02" }] },
+        )}
         open
       />,
     );
-    expect(document.body.textContent).toContain(words.stoppedByGmail);
-    expect(document.body.textContent).toContain("Gmail answered 403: too many");
+    expect(document.body.textContent).toContain(`${words.stoppedByGmail} Gmail answered 429 for /messages/0a02`);
     expect(document.body.textContent).not.toContain("Jane Smith");
     await says(`${words.matchedNothing(1)} ${words.onlyWithSupporters}`);
     await rerender(

@@ -546,6 +546,28 @@ Please join 40 of your colleagues.')`,
     await expect(importOldLetters("jo@pauseai.uk", 0)).rejects.toThrow("Gmail answered 500");
   });
 
+  it("skips a message gone between reading its headers and the whole of it, wherever that happens", async () => {
+    const { dora } = await seed();
+    // A letter Postmark sent, so its Bcc'd copy is read whole for its text.
+    const letter = await addTestLetter({ politicianId: dora, senderEmail: "pm@example.com" });
+    await query(
+      `INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id) VALUES ('letter', $1, 'x@parliament.uk', 'sent', 'fixture-postmark-1')`,
+      [letter],
+    );
+    // One of each kind read whole after its headers: a one-off sent, a person's reply, a Postmark copy, shared mail
+    // checked for who it quotes, and a message of a kept thread.
+    const gone = new Set(["0a13", "0a03", "0b03", "0a17", "0a20"]);
+    server.use(
+      http.get(`${GMAIL}/messages/:id`, ({ request, params }) => {
+        const raw = new URL(request.url).searchParams.get("format") === "raw";
+        return raw && gone.has(String(params.id)) ? new HttpResponse(null, { status: 404 }) : undefined;
+      }),
+    );
+    const result = await run();
+    expect(result.finished).toBe(true);
+    for (const id of gone) expect((await outcomeOf(id)).outcome).toBe("skipped");
+  });
+
   it("skips mail gone since it was listed", async () => {
     await seed();
     await connectTestGmail("joseph@pauseai.uk");

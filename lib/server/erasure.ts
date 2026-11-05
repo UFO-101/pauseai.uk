@@ -7,6 +7,8 @@ import { deleteLetterReply } from "./outside-services/blobs";
 import { trashGmailMessage } from "./outside-services/gmail";
 import { deleteOneOffBlobs, eraseOneOffs } from "./one-off-emails";
 import { refreshSupportersList } from "./supporter-facts";
+import { problem } from "./problems";
+import { staffCopy } from "@/lib/content/staff-interface";
 
 // Erasing a supporter, when they ask to be forgotten: for each source,
 // what that source holds about them goes. A form entry goes with its letter,
@@ -35,6 +37,8 @@ export type ErasureResult = {
   messages: number;
   /** One-off emails with their address on, deleted. */
   oneOffs: number;
+  /** What couldn't be cleared afterwards, in our words: the erasure itself is done. */
+  problems: string[];
 };
 
 /** Erases supporter `id`, as `by`, under the request's `reference`. Undefined if there's no such supporter. */
@@ -121,7 +125,7 @@ export async function eraseSupporter(id: number, reference: string, by: string):
     await query("DELETE FROM supporters WHERE id = $1", [id], db);
     // Off the list now, not at the next import.
     await refreshSupportersList(db);
-    const result: ErasureResult = {
+    const result: Omit<ErasureResult, "problems"> = {
       lumaUsers: lumaUsers.length,
       formEntries: entries.length,
       letters: letters.length,
@@ -134,34 +138,38 @@ export async function eraseSupporter(id: number, reference: string, by: string):
     return { result, mail, oneOffs };
   }).then(async (erased) => {
     if (!erased) return undefined;
-    await clearMail(erased.mail);
-    await clearOneOffs(erased.oneOffs);
-    return erased.result;
+    const problems = [await clearMail(erased.mail), await clearOneOffs(erased.oneOffs)];
+    return { ...erased.result, problems: problems.filter((p) => p !== undefined) };
   });
 }
 
 /**
  * Deletes the kept messages of erased letters from Netlify Blobs, and
  * moves them and what we sent in the letters inbox to Trash, which Gmail
- * empties after 30 days. A failure is logged, not thrown: the erasure
- * itself is done, and Trash empties itself.
+ * empties after 30 days. A failure is reported, not thrown, and said in
+ * words for whoever erased: the erasure itself is done, and Trash empties
+ * itself.
  */
-async function clearMail(mail: { blobKey: string | null; gmailId: string }[]): Promise<void> {
-  if (!mail.length) return;
+async function clearMail(mail: { blobKey: string | null; gmailId: string }[]): Promise<string | undefined> {
+  if (!mail.length) return undefined;
   try {
     for (const { blobKey } of mail) if (blobKey) await deleteLetterReply(blobKey);
     const token = await gmailAccess(lettersInbox()!);
     for (const { gmailId } of mail) await trashGmailMessage(token, gmailId);
+    return undefined;
   } catch (error) {
-    console.error("Couldn't clear an erased supporter's mail:", error);
+    problem(staffCopy.problems.mailNotCleared, error);
+    return staffCopy.problems.mailNotCleared;
   }
 }
 
-/** Deletes erased one-off emails' blobs. A failure is logged, not thrown: the erasure itself is done. */
-async function clearOneOffs(keys: string[]): Promise<void> {
+/** Deletes erased one-off emails' blobs. A failure is reported, not thrown, and said in words for whoever erased: the erasure itself is done. */
+async function clearOneOffs(keys: string[]): Promise<string | undefined> {
   try {
     await deleteOneOffBlobs(keys);
+    return undefined;
   } catch (error) {
-    console.error("Couldn't delete an erased supporter's one-off emails:", error);
+    problem(staffCopy.problems.oneOffsNotCleared, error);
+    return staffCopy.problems.oneOffsNotCleared;
   }
 }

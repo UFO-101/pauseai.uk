@@ -50,6 +50,7 @@ import {
 import { connectedAccounts, politicianBook } from "./politician-book";
 import { isMachineReply } from "./postmark-webhooks";
 import { htmlAsText } from "./old-letters-text";
+import { problem } from "./problems";
 
 // The import of the letters written before the site could send them
 // (import-old-letters): a run every 5 minutes, and one for each press of its
@@ -341,7 +342,8 @@ async function asOneOff(
 ): Promise<Handled> {
   const token = reader.tokens.get(account)!;
   await reader.turn();
-  const whole = raw ?? (await gmailRawMessage(token, message.id));
+  const whole = raw ?? (await gmailRawMessage(token, message.id).catch(unlessGone));
+  if (!whole) return { outcome: "skipped" };
   await keepOneOff(account, message, whole, reader.book, reader.connected, people);
   await reader.turn();
   const siblings = await gmailThreadMessageIds(token, message.threadId);
@@ -473,7 +475,8 @@ async function handlePoliticianMessage(
     return { outcome: "auto_reply", letterId: letter, rfc };
   }
   await reader.turn();
-  const raw = await gmailRawMessage(token, message.id);
+  const raw = await gmailRawMessage(token, message.id).catch(unlessGone);
+  if (!raw) return { outcome: "skipped", rfc };
   const text = wholeTextOf(parseMime(raw.toString("latin1")));
   letter ??= placeReply(letters, { at, subject, automatic, text, group })?.id;
   if (!letter) return { ...(await asOneOff(reader, account, message, raw, people)), rfc };
@@ -520,7 +523,8 @@ async function keepPostmarkCopy(
   );
   if (!letter) return { outcome: "skipped", rfc };
   await reader.turn();
-  const raw = await gmailRawMessage(reader.tokens.get(account)!, message.id);
+  const raw = await gmailRawMessage(reader.tokens.get(account)!, message.id).catch(unlessGone);
+  if (!raw) return { outcome: "skipped", rfc };
   await query("UPDATE letters_from_supporters SET letter = $2 WHERE id = $1 AND letter IS NULL", [
     letter.id,
     JSON.stringify(docFromMarkup(wholeTextOf(parseMime(raw.toString("latin1"))))),
@@ -550,7 +554,8 @@ async function handleReceived(reader: Reader, account: string, id: string, sourc
   if (source === "received") return { outcome: "skipped", rfc };
   // Shared mail: a politician named in what it quotes or forwards.
   await reader.turn();
-  const raw = await gmailRawMessage(reader.tokens.get(account)!, id);
+  const raw = await gmailRawMessage(reader.tokens.get(account)!, id).catch(unlessGone);
+  if (!raw) return { outcome: "skipped", rfc };
   const quoted = politiciansIn(reader.book, quotedAddresses(wholeTextOf(parseMime(raw.toString("latin1")))));
   if (quoted.counts) return { ...(await asOneOff(reader, account, message, raw, quoted.people)), rfc };
   if (!isPauseaiAddress(from, reader.connected)) {
@@ -570,7 +575,9 @@ async function handleThreadMessage(reader: Reader, account: string, id: string):
   if (!message) return { outcome: "skipped" };
   const rfc = rfcIdOf(message.headers);
   await reader.turn();
-  await keepOneOff(account, message, await gmailRawMessage(token, id), reader.book, reader.connected);
+  const raw = await gmailRawMessage(token, id).catch(unlessGone);
+  if (!raw) return { outcome: "skipped", rfc };
+  await keepOneOff(account, message, raw, reader.book, reader.connected);
   return { outcome: "one_off", rfc };
 }
 
@@ -587,7 +594,7 @@ async function handleOne(reader: Reader, account: string, id: string, source: st
   } catch (error) {
     if (!(error instanceof GmailError && error.status === 400)) throw error;
     reader.result.unreadable.push(id);
-    return { outcome: "skipped" };
+    return { outcome: "unreadable" };
   }
 }
 
@@ -769,11 +776,13 @@ async function readSome(startedBy: string, paceMs: number, readMs: number): Prom
     result.finished = true;
   } catch (error) {
     if (error instanceof GmailError && (error.status === 403 || error.status === 429)) {
-      console.error(error);
+      problem(staffCopy.oldLetters.stoppedByGmail, error);
       result.stoppedBy = "gmail";
       result.stoppedWhy = error.message;
     } else if (!(error instanceof TimeUp)) throw error;
   }
+  if (result.unreadable.length) problem(staffCopy.oldLetters.unreadable(result.unreadable.length));
+  if (result.unmatched.length) problem(staffCopy.oldLetters.matchedNothing(result.unmatched.length));
   result.searchesDone = searchesDone.n;
   result.titles = await countedTitles();
   result.left = await leftToRead();
