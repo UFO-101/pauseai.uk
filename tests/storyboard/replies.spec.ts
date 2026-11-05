@@ -18,6 +18,8 @@ type EditorHandle = {
   };
   chain: () => { focus: () => { deleteRange: (range: { from: number; to: number }) => { run: () => boolean } } };
 };
+import { FAILING_DIR } from "../checkout.mjs";
+import { failService } from "../fixtures/failing-services";
 import { BASE, emailFrame, expect, frame, madeUpAddress, story, test } from "./fixtures";
 import {
   bounceOf,
@@ -557,4 +559,31 @@ test("A reply to an older letter", async ({ page, request, flowDatabase }) => {
   await expect(entries.first().getByText(staffCopy.letters.backends.postmark, { exact: true })).toBeVisible();
   await expect(entries.last().getByText(staffCopy.letters.backends.postmark, { exact: true })).toBeVisible();
   await frame(page, "The letter's history");
+});
+
+test("Erasing Jane when her mail can't be cleared", async ({ page, request, flowDatabase }) => {
+  story(
+    "Jane wrote to her MP and got a reply, which the site keeps. She asks to be erased, but the kept mail can't be cleared: the erasure is done all the same, and the list says what couldn't be.",
+  );
+  const sender = madeUpAddress("Jane Smith", 38);
+  await writeLetter(page, flowDatabase, sender);
+  deliver(flowDatabase, { from: OFFICE, to: JANES_PROXY, text: MP_REPLY });
+  expect(await readInbox(request)).toMatchObject({ replies: 1 });
+  failService(flowDatabase, "blobs.fixture.invalid", FAILING_DIR);
+  await logIn(page, flowDatabase, ["supporters"]);
+  await page.goto(`${BASE}/staff/supporters`);
+  await page.getByRole("link", { name: "Jane Smith" }).click();
+  await page
+    .locator("summary", { has: page.getByRole("heading", { name: staffCopy.supporters.detail.everythingTitle }) })
+    .click();
+  await page.getByRole("link", { name: staffCopy.erase.title }).click();
+  await page.getByRole("textbox", { name: staffCopy.erase.referenceLabel }).fill("Request of 16 Oct 2026");
+  await page.getByRole("checkbox", { name: staffCopy.erase.confirm }).check();
+  await page.getByRole("button", { name: staffCopy.erase.button }).click();
+  // The blobs client tries a failing request again, a few seconds apart, before giving up.
+  await expect(page).toHaveURL(/\/staff\/supporters\?erased=partly&why=/, { timeout: 60_000 });
+  await expect(page.getByRole("status")).toContainText(staffCopy.erase.partly);
+  await expect(page.getByRole("status")).toContainText(staffCopy.problems.mailNotCleared);
+  await expect(page.getByRole("link", { name: "Jane Smith" })).toHaveCount(0);
+  await frame(page, "Erased, but her mail couldn't be cleared");
 });

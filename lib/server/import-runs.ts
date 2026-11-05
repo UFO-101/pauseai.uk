@@ -108,7 +108,7 @@ async function alertIfNew(job: ImportJob, id: number): Promise<void> {
     words.subject(title),
     words.body(
       title,
-      run.problems.map((p) => (p.error ? `- ${p.what}: ${p.error}` : `- ${p.what}`)),
+      run.problems.map((p) => (p.error ? `- ${p.what} ${p.error}` : `- ${p.what}`)),
       link,
     ),
   );

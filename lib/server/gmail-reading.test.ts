@@ -441,7 +441,7 @@ describeWithDatabase("reading Gmail", () => {
     const title = jobTitles["read-gmail"];
     const told = words.body(
       title,
-      [`- ${staffCopy.problems.couldntRead("al@pauseai.uk")}: Gmail answered 500 for /history`],
+      [`- ${staffCopy.problems.couldntRead("al@pauseai.uk")} Gmail answered 500 for /history`],
       "https://pauseai.uk/staff/import-data/gmail",
     );
     // Its first run, failing: told. Failing again: not.

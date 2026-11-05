@@ -74,9 +74,9 @@ describeWithDatabase("the import log", () => {
     const luma = jobTitles["import-luma"];
     const link = "https://pauseai.uk/staff/import-data/luma";
     expect(sent.map((email) => [email.Subject, email.TextBody])).toEqual([
-      [words.subject(luma), words.body(luma, ["- An event wouldn't load: 503", "- Postcodes.io failed"], link)],
-      [words.subject(luma), words.body(luma, ["- An event wouldn't load: 503", "- A host wouldn't load: 503"], link)],
-      [words.subject(luma), words.body(luma, ["- An event wouldn't load: 503"], link)],
+      [words.subject(luma), words.body(luma, ["- An event wouldn't load 503", "- Postcodes.io failed"], link)],
+      [words.subject(luma), words.body(luma, ["- An event wouldn't load 503", "- A host wouldn't load 503"], link)],
+      [words.subject(luma), words.body(luma, ["- An event wouldn't load 503"], link)],
     ]);
   });
 
