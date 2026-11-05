@@ -123,7 +123,12 @@ export async function eraseSupporter(id: number, reference: string, by: string):
     await query("DELETE FROM luma_people WHERE user_id = ANY($1::text[])", [lumaUsers], db);
     await query("INSERT INTO members_erased (id) SELECT unnest($1::text[]) ON CONFLICT DO NOTHING", [members], db);
     await query("DELETE FROM members WHERE id = ANY($1::text[])", [members], db);
-    // A message they were sent keeps only that it was.
+    // A message they were sent keeps only that it was, not what was said after it.
+    await query(
+      "DELETE FROM message_replies WHERE message_id IN (SELECT id FROM messages_to_supporters WHERE supporter_id = $1)",
+      [id],
+      db,
+    );
     await query(
       "UPDATE messages_to_supporters SET supporter_id = NULL, address = NULL, merge_values = NULL WHERE supporter_id = $1",
       [id],

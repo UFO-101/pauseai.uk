@@ -186,6 +186,11 @@
   --brand-airtable-blue: #18bfff;
   --brand-airtable-red: #f82b60;
   --brand-gmail-blue: #4285f4;
+  /* A text as a messaging app shows it: the wall behind it, our bubble, and the names on the bubbles. */
+  --chat-wall: #e4ddd3;
+  --chat-ours: #d9fdd3;
+  --chat-our-name: #1f7a5a;
+  --chat-their-name: #b4532a;
   --brand-gmail-green: #34a853;
   --brand-gmail-yellow: #fbbc04;
   --brand-gmail-red: #ea4335;

@@ -26,11 +26,12 @@ import styles from "./SupportersTable.module.css";
 const PATH = "/staff/supporters";
 const copy = staffCopy.supporters;
 
-/** The list's filters as typed, the URL's, without the page or the notice. */
+/** The list's filters as typed, the URL's, without the page or the notices. */
 export function supporterFiltersOf(search: SupportersSearch): Params {
-  const { page, erased, filter, ...rest } = search as SupportersSearch & { filter?: unknown };
+  const { page, erased, why, filter, ...rest } = search as SupportersSearch & { filter?: unknown };
   void page;
   void erased;
+  void why;
   void filter;
   return rest;
 }

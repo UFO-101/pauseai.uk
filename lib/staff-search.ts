@@ -316,6 +316,9 @@ export type SupportersSearch = {
   page: string;
   /** After an erasure: "1", or "partly" with what couldn't be cleared in `why`, as codes. */
   erased: string;
+  /** The draft message the list is choosing who for, by ID. */
+  message: string;
+  /** With `erased`, the codes above; or "contact" after Message was pressed with no Contact filter, to say which to add. */
   why: string;
   /** The saved filter loaded, by ID. */
   saved: string;
@@ -341,8 +344,8 @@ export function eraseLeftovers(why: string): EraseLeftover[] {
 export function supportersSearch(
   params: Partial<Record<keyof SupportersSearch, ParamValue>>,
 ): SupportersSearch & { filter: SupporterFilter } {
-  const [q, campaign, wrote, near, within, sort, dir, page, erased, why, saved] = (
-    ["q", "campaign", "wrote", "near", "within", "sort", "dir", "page", "erased", "why", "saved"] as const
+  const [q, campaign, wrote, near, within, sort, dir, page, erased, message, why, saved] = (
+    ["q", "campaign", "wrote", "near", "within", "sort", "dir", "page", "erased", "message", "why", "saved"] as const
   ).map((name) => firstOf(params[name]));
   const [activity, contact, event, nation, mp] = (["activity", "contact", "event", "nation", "mp"] as const).map(
     (name) => valuesOf(params[name]),
@@ -386,6 +389,7 @@ export function supportersSearch(
     dir,
     page,
     erased,
+    message,
     why,
     saved,
     filter,

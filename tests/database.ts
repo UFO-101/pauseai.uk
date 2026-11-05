@@ -48,6 +48,7 @@ const TABLES = [
   "mailing_attachments",
   "members",
   "message_events",
+  "message_replies",
   "messages_to_supporters",
   "members_erased",
   "named_places",
@@ -90,6 +91,8 @@ export function useTestDatabase(extraTables: string[] = []) {
     await query(`TRUNCATE ${[...TABLES, ...extraTables].join(", ")} RESTART IDENTITY CASCADE`);
     // The mailings written here; the imported ones come with the migrations.
     await query("DELETE FROM mailings WHERE body IS NOT NULL");
+    // Apart from the tables above: truncating it would take the imported mailings too, as they can refer to it.
+    await query("DELETE FROM message_templates");
     // The kept supporters list, emptied with the tables it's made from.
     await query("REFRESH MATERIALIZED VIEW supporters_list");
   });

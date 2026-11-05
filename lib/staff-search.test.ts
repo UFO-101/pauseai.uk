@@ -257,6 +257,7 @@ describe("supportersSearch", () => {
     dir: "",
     page: "",
     erased: "",
+    message: "",
     why: "",
     saved: "",
   };

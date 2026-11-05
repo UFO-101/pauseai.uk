@@ -130,16 +130,24 @@ function ChangeTime({ mailing, action }: { mailing: WrittenMailing; action: Form
  * sending; once sent, how many of everyone it went to have answered its ask.
  * Nothing for one with no ask.
  */
-function Standing({
+export function MailingStanding({
   mailing,
   written,
   stop,
   reschedule,
+  sends,
+  line,
+  note,
 }: {
-  mailing: Mailing;
+  mailing: Pick<Mailing, "ask" | "to" | "sent" | "failed" | "answered">;
   written?: WrittenMailing;
   stop: FormAction;
   reschedule: FormAction;
+  /** When one scheduled sends, and how many from whom, when a message says them its own way. */
+  sends?: string;
+  line?: string;
+  /** Quietly under those, such as when a text stops sending. */
+  note?: ReactNode;
 }) {
   if (written?.state === "scheduled") {
     return (
@@ -147,8 +155,9 @@ function Standing({
         <Card span={6} as="div">
           <div className={styles.standing}>
             <div className={styles.due}>
-              <strong>{copy.sends(londonWhen(written.dueAt!, "short"))}</strong>
-              <span>{copy.scheduledLine(mailing.to, written.fromName || written.sentFrom!)}</span>
+              <strong>{sends ?? copy.sends(londonWhen(written.dueAt!, "short"))}</strong>
+              <span>{line ?? copy.scheduledLine(mailing.to, written.fromName || written.sentFrom!)}</span>
+              {note}
             </div>
             <div className={styles.actions}>
               <ChangeTime mailing={written} action={reschedule} />
@@ -191,7 +200,13 @@ function Standing({
 }
 
 /** When it went, or goes, and who sent it, as the band's first fact says it. */
-function When({ mailing, written }: { mailing: Mailing; written?: WrittenMailing }) {
+export function MailingWhen({
+  mailing,
+  written,
+}: {
+  mailing: Pick<Mailing, "sentAt">;
+  written?: Pick<WrittenMailing, "createdBy" | "state" | "dueAt">;
+}) {
   const by = written?.createdBy && copy.by(written.createdBy);
   if (written?.state === "scheduled") {
     return (
@@ -236,7 +251,7 @@ function ImportedText({ mailing }: { mailing: Mailing }) {
 /**
  * A mailing's page, once scheduled: a band of its title, who from, who it was
  * for, its ask, and when it went and who sent it, with its counts, each
- * leading to those recipients; where it stands (Standing); then the email,
+ * leading to those recipients; where it stands (MailingStanding); then the email,
  * white on an aside, as a mail app shows it, beside its recipients, of all of them or those a count chose. One
  * imported from Airtable, with no `written`, has only what Airtable kept:
  * who got it and how it was written, but no text or filter.
@@ -297,9 +312,9 @@ export default function MailingView({
         <BandFact label={mailing.askKind ? staffCopy.asks.askTo[mailing.askKind] : staffCopy.mailings.fields.ask}>
           {mailing.ask && <StaffLink href={askHref(mailing.ask)}>{mailing.askTitle}</StaffLink>}
         </BandFact>
-        <When mailing={mailing} written={written} />
+        <MailingWhen mailing={mailing} written={written} />
       </Band>
-      <Standing mailing={mailing} written={written} stop={stop} reschedule={reschedule} />
+      <MailingStanding mailing={mailing} written={written} stop={stop} reschedule={reschedule} />
       <Grid>
         {written ? (
           <Card span={3} look="aside" title={copy.emailTitle} id="email-title">

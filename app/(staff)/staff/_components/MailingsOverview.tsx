@@ -3,12 +3,13 @@ import Tag from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
 import { askHref } from "@/lib/asks";
 import { staffCopy } from "@/lib/content/staff-interface";
+import type { ReactNode } from "react";
 import type { MailingGroup } from "@/lib/mailing-groups";
 import { mailingWhen } from "@/lib/mailing-groups";
 import type { MailingSummary } from "@/lib/server/mailings";
 import { named } from "@/lib/named-address";
 import { londonWhenShort, staffDate } from "@/lib/staff-time";
-import Counts, { countsOpening } from "./ui/Counts";
+import Counts, { countsOpening, type Count } from "./ui/Counts";
 import Grid, { spanClass } from "./ui/Grid";
 import Progress from "./ui/Progress";
 import styles from "./MailingsOverview.module.css";
@@ -35,6 +36,27 @@ export function mailingCounts(mailing: MailingSummary) {
 }
 
 /**
+ * How a list's rows differ for what it lists: where a row leads, how one
+ * sent went, what comes before who it's from, and what one scheduled says.
+ */
+export type OverviewLook<T extends MailingSummary> = {
+  base: string;
+  counts: (mailing: T) => Count[];
+  untitled: string;
+  none: string;
+  lead?: (mailing: T) => ReactNode;
+  scheduledWords?: (mailing: T) => string | undefined;
+};
+
+/** How a list of mailings to politicians looks. */
+const MAILINGS_LOOK: OverviewLook<MailingSummary> = {
+  base: "/staff/mailings",
+  counts: mailingCounts,
+  untitled: copy.untitled,
+  none: staffCopy.mailings.none,
+};
+
+/**
  * When, at a row's left: when a draft was last saved; when one scheduled
  * goes, or one sending started, in blue, as it's going out; the day one
  * went, with its year when that's not `year`.
@@ -53,11 +75,21 @@ function When({ mailing, year }: { mailing: MailingSummary; year: string }) {
  * Draft and how many it's to; one scheduled the same; one sending, its
  * bar; one sent, its counts, the box leading to it as its title does.
  */
-function Standing({ mailing, href }: { mailing: MailingSummary; href: string }) {
+function Standing<T extends MailingSummary>({
+  mailing,
+  href,
+  look,
+}: {
+  mailing: T;
+  href: string;
+  look: OverviewLook<T>;
+}) {
   if (mailing.state === "draft" || mailing.state === "scheduled") {
     return (
       <span className={styles.state}>
-        <Tag tone={mailing.state === "scheduled" ? "blue" : undefined}>{copy.states[mailing.state]}</Tag>
+        <Tag tone={mailing.state === "scheduled" ? "blue" : undefined}>
+          {look.scheduledWords?.(mailing) ?? copy.states[mailing.state]}
+        </Tag>
         {copy.toCount(mailing.to)}
       </span>
     );
@@ -71,12 +103,12 @@ function Standing({ mailing, href }: { mailing: MailingSummary; href: string }) 
       </StaffLink>
     );
   }
-  return <Counts counts={countsOpening(href, mailingCounts(mailing))} small />;
+  return <Counts counts={countsOpening(href, look.counts(mailing))} small />;
 }
 
 /** One mailing, a row: when; its title, leading to it, over who it's from, name and address, and its ask; how it stands. */
-function Row({ mailing, year }: { mailing: MailingSummary; year: string }) {
-  const href = `/staff/mailings/${mailing.id}`;
+function Row<T extends MailingSummary>({ mailing, year, look }: { mailing: T; year: string; look: OverviewLook<T> }) {
+  const href = `${look.base}/${mailing.id}`;
   // Its name, as a mail app shows it, before its address; with no name of its own, the address alone.
   const from = mailing.imported
     ? (mailing.sentFrom ??
@@ -90,9 +122,10 @@ function Row({ mailing, year }: { mailing: MailingSummary; year: string }) {
       </span>
       <span className={styles.what}>
         <StaffLink href={href} className={styles.title}>
-          {mailing.title || copy.untitled}
+          {mailing.title || look.untitled}
         </StaffLink>
         <Muted>
+          {look.lead?.(mailing)}
           {from}
           {mailing.ask && (
             <>
@@ -104,7 +137,7 @@ function Row({ mailing, year }: { mailing: MailingSummary; year: string }) {
         </Muted>
       </span>
       <span className={styles.standing}>
-        <Standing mailing={mailing} href={href} />
+        <Standing mailing={mailing} href={href} look={look} />
       </span>
     </li>
   );
@@ -117,11 +150,19 @@ function Row({ mailing, year }: { mailing: MailingSummary; year: string }) {
  * done on the mailing's own page, on purpose. It's as wide as the grid,
  * not the window.
  */
-export default function MailingsOverview({ groups, now }: { groups: MailingGroup[]; now: string }) {
+export default function MailingsOverview<T extends MailingSummary = MailingSummary>({
+  groups,
+  now,
+  look = MAILINGS_LOOK as unknown as OverviewLook<T>,
+}: {
+  groups: MailingGroup<T>[];
+  now: string;
+  look?: OverviewLook<T>;
+}) {
   if (groups.length === 0) {
     return (
       <p>
-        <Muted>{staffCopy.mailings.none}</Muted>
+        <Muted>{look.none}</Muted>
       </p>
     );
   }
@@ -135,7 +176,7 @@ export default function MailingsOverview({ groups, now }: { groups: MailingGroup
             <h2 id={`mailings-${group.key}`}>{group.heading}</h2>
             <ul className={styles.rows}>
               {group.mailings.map((mailing) => (
-                <Row key={mailing.id} mailing={mailing} year={year} />
+                <Row key={mailing.id} mailing={mailing} year={year} look={look} />
               ))}
             </ul>
           </section>

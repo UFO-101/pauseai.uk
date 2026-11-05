@@ -12,6 +12,8 @@ type Look = {
   size?: ButtonSize;
   /** Fit its text on a phone too, rather than fill the width. */
   fit?: boolean;
+  /** A dashed edge, for one that can't do its work yet and pressing it says why. */
+  dashed?: boolean;
 };
 
 /**
@@ -19,8 +21,10 @@ type Look = {
  * that aren't one of the three below (CopyLinkButton). A `className` is for
  * the button's place in the layout, never its look (Button.module.css).
  */
-export function buttonClass({ variant, size, fit, className }: Look & { className?: string }) {
-  return [styles.btn, styles[variant], size && styles[size], fit && styles.fit, className].filter(Boolean).join(" ");
+export function buttonClass({ variant, size, fit, dashed, className }: Look & { className?: string }) {
+  return [styles.btn, styles[variant], size && styles[size], fit && styles.fit, dashed && styles.dashed, className]
+    .filter(Boolean)
+    .join(" ");
 }
 
 /**

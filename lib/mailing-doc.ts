@@ -117,7 +117,7 @@ export function checkMailingDoc(value: unknown): MailingDoc | undefined {
   return blocks.every(Boolean) ? { type: "doc", content: blocks as MailingDoc["content"] } : undefined;
 }
 
-function inlinesOf(block: MailingBlock | OnlyForNode): MailingInline[] {
+export function inlinesOf(block: MailingBlock | OnlyForNode): MailingInline[] {
   if (block.type === "paragraph") return block.content ?? [];
   if (block.type === "onlyFor" || block.type === "blockquote") return block.content.flatMap(inlinesOf);
   return block.content.flatMap((item) => item.content.flatMap(inlinesOf));

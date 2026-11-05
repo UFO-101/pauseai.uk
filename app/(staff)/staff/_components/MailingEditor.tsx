@@ -20,14 +20,16 @@ type Props = {
   fields: MailingChoice[];
   /** Who a part can be only for, such as those who signed an ask, each with how many it covers. */
   conditions: MailingChoice[];
+  /** No parts only some recipients get, as in a WhatsApp template, whose words are the same for everyone. */
+  noParts?: boolean;
   /** How many recipients there are, to say how many all but some is. */
   recipients?: number;
   /** The ID of the label naming it. */
   labelledBy: string;
 };
 
-/** Whether every recipient has a value for a field, so it can be used. */
-const usable = (field: MailingChoice) => !field.lacking;
+/** Whether a field can be used: every recipient has a value for it, or those without get its fallback. */
+const usable = (field: MailingChoice) => !field.lacking || Boolean(field.fallback);
 
 /** A choice's label, or its ID when it has none, as for a field no longer offered. */
 function labelOf(choices: Record<string, string>, id: string): string {
@@ -298,11 +300,13 @@ function Sidebar({
   editor,
   fields,
   conditions,
+  noParts,
   recipients,
 }: {
   editor: Editor;
   fields: MailingChoice[];
   conditions: MailingChoice[];
+  noParts?: boolean;
   recipients?: number;
 }) {
   const inBox = useEditorState({ editor, selector: ({ editor }) => editor.isActive("onlyFor") });
@@ -325,7 +329,7 @@ function Sidebar({
               tabIndex={0}
               className={styles.fieldLozenge}
               aria-disabled={!usable(field) || undefined}
-              title={usable(field) ? copy.dragHint : copy.lacking(field.lacking!)}
+              title={field.lacking ? copy.lacking(field.lacking) : copy.dragHint}
               draggable={usable(field)}
               onDragStart={(event) => {
                 event.dataTransfer.effectAllowed = "copy";
@@ -344,8 +348,8 @@ function Sidebar({
           </li>
         ))}
       </ul>
-      <p className={styles.sideHeading}>{copy.partsHeading}</p>
-      {conditions.length === 0 ? (
+      {!noParts && <p className={styles.sideHeading}>{copy.partsHeading}</p>}
+      {noParts ? null : conditions.length === 0 ? (
         <p className={styles.sideNote}>{copy.noConditions}</p>
       ) : (
         <div className={styles.partMenus}>
@@ -374,7 +378,15 @@ function Sidebar({
  * with the fields and who a part can be for beside it. Typing { offers the
  * fields every recipient has at the cursor.
  */
-export default function MailingEditor({ initial, onChange, fields, conditions, recipients, labelledBy }: Props) {
+export default function MailingEditor({
+  initial,
+  onChange,
+  fields,
+  conditions,
+  noParts,
+  recipients,
+  labelledBy,
+}: Props) {
   const frame = useRef<HTMLDivElement>(null);
   // Where the { was typed, and where to show the menu of fields.
   const [picker, setPicker] = useState<{ from: number; to: number; top: number; left: number }>();
@@ -471,7 +483,9 @@ export default function MailingEditor({ initial, onChange, fields, conditions, r
           </div>
         )}
       </div>
-      {editor && <Sidebar editor={editor} fields={fields} conditions={conditions} recipients={recipients} />}
+      {editor && (
+        <Sidebar editor={editor} fields={fields} conditions={conditions} noParts={noParts} recipients={recipients} />
+      )}
     </div>
   );
 }

@@ -192,3 +192,8 @@
     width: 100%;
   }
 }
+
+/* A dashed edge: the button can't do its work yet, and pressing it says why. */
+.btn.dashed {
+  border-style: dashed;
+}

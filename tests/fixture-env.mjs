@@ -52,6 +52,8 @@ export function fixtureEnv({ outboxDir, origin = "" }) {
     // storyboard turns it on to drive the cookie consent flow, and blocks
     // every request to Google (tests/storyboard/fixtures.ts).
     ANALYTICS: "1",
+    // Made up: a number Ofcom keeps for drama (https://www.ofcom.org.uk/phones-and-broadband/phone-numbers/numbers-for-drama).
+    WHATSAPP_NUMBER: "+447700900000",
     LUMA_API_KEY: "fixture",
     // tests/luma-webhooks.ts signs the storyboard's webhooks with it.
     LUMA_WEBHOOK_SECRET: "fixture-luma-webhook-secret",

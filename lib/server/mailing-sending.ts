@@ -15,7 +15,9 @@ import type { SkipReason } from "./mailings";
 // time, at Gmail's pace, marking each as it goes, so a run that stops
 // partway is taken up by the next. Each letter is checked again just
 // before it goes: a politician who has left office, or whose address has
-// been blocked since, is skipped, and the letter says why.
+// been blocked since, is skipped, and the letter says why. Only mailings to
+// politicians: a message to supporters goes by its own channel, and this
+// job would otherwise find it has no letters and call it sent.
 
 /** Who the audit log says started a mailing. */
 const JOB = "send-mailings";
@@ -32,7 +34,7 @@ export async function startDueMailings(): Promise<number[]> {
   if (now().getUTCHours() < SENDING.firstHour) return [];
   const started = await query<{ id: number }>(
     `UPDATE mailings SET state = 'sending', updated_at = now()
-     WHERE state = 'scheduled' AND due_at <= $1 RETURNING id::int AS id`,
+     WHERE state = 'scheduled' AND audience = 'politicians' AND due_at <= $1 RETURNING id::int AS id`,
     [now()],
   );
   for (const { id } of started) await logChange(JOB, "start mailing", { id });
@@ -77,7 +79,7 @@ async function skip(letterId: number, reason: SkipReason): Promise<void> {
 /** Marks every mailing sending with no letter left to send as sent. */
 async function finishMailings(): Promise<void> {
   const finished = await query<{ id: number }>(
-    `UPDATE mailings m SET state = 'sent', updated_at = now() WHERE m.state = 'sending' AND NOT EXISTS (
+    `UPDATE mailings m SET state = 'sent', updated_at = now() WHERE m.state = 'sending' AND m.audience = 'politicians' AND NOT EXISTS (
        SELECT 1 FROM letters_from_pauseai p JOIN letters l USING (id)
        WHERE p.mailing_id = m.id AND l.status IN ('scheduled', 'sending'))
      RETURNING m.id::int AS id`,
@@ -118,7 +120,7 @@ export async function sendDueLetters({
     `SELECT m.id::int AS id, m.subject, m.body, m.sent_from AS "sentFrom",
        coalesce(nullif(m.from_name, ''), a.gmail_name, '') AS "fromName"
      FROM mailings m LEFT JOIN staff_accounts a ON a.email = m.sent_from
-     WHERE m.state = 'sending' ORDER BY m.due_at, m.id`,
+     WHERE m.state = 'sending' AND m.audience = 'politicians' ORDER BY m.due_at, m.id`,
   );
   let last = 0;
   for (const mailing of mailings) {
