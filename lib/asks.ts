@@ -18,12 +18,16 @@ export type Asker = "supporters" | "pauseai" | "controlai";
 /** Each ask's status for one person, keyed by the ask's slug. */
 export type AskStatuses = Partial<Record<string, AskStatus>>;
 
-/** The answers that mean they did what was asked: signed the letter, or are going to the event, or meeting our staff there. */
-const DONE_STATUSES: readonly AskStatus[] = ["signed", "going", "meeting_staff"];
+/**
+ * The answers that mean they agreed to what was asked: signed the letter, or
+ * are going to the event. Nothing less counts, not a tentative yes nor staff
+ * going in their place, wherever the site counts asks agreed.
+ */
+export const AGREED_STATUSES: readonly AskStatus[] = ["signed", "going"];
 
-/** How many asks someone did, by their answers (DONE_STATUSES). */
-export function asksDone(statuses: Record<string, { status: AskStatus }>): number {
-  return Object.values(statuses).filter((answer) => DONE_STATUSES.includes(answer.status)).length;
+/** How many asks someone agreed to, by their answers (AGREED_STATUSES). */
+export function asksAgreed(statuses: Record<string, { status: AskStatus }>): number {
+  return Object.values(statuses).filter((answer) => AGREED_STATUSES.includes(answer.status)).length;
 }
 
 /** Where an ask's name leads: its own page. */

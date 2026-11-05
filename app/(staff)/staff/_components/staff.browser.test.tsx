@@ -1473,12 +1473,12 @@ describe("PoliticianDetails", () => {
       .element(page.getByText(`${staffCopy.politician.source} ${staffCopy.politician.sources.staff}`))
       .toBeVisible();
     expect(document.querySelectorAll("dd svg[aria-hidden]")).toHaveLength(2);
-    // The letters supporters wrote them, then the asks done: MP signed one.
+    // The letters supporters wrote them, then the asks agreed: MP signed one.
     const counts = document.querySelector("[class*=counts]")!;
     expect(counts.querySelector("a")).toBeNull();
     expect([...counts.children].map((count) => count.textContent)).toEqual([
       `0 ${staffCopy.politician.band.lettersCounted(0)}`,
-      `1 ${staffCopy.politician.band.asksDone(1)}`,
+      `1 ${staffCopy.politician.band.asksAgreed(1)}`,
     ]);
     // Not PauseAI's emails: they're in the history.
     expect(page.getByRole("link", { name: /from PauseAI/ }).query()).toBeNull();

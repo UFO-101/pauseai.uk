@@ -97,7 +97,7 @@ export default function LetterThread({ thread, link }: { thread: Thread; link?: 
  * shows its text against the draft it was written from (LetterChanges),
  * with `link`, the way to it there, at the right of the heading, then each
  * message both ways, oldest first, an automatic reply folded
- * (FoldedAutoReply). For another, whose text the site doesn't keep, a
+ * (FoldedAutoReply). For another, whose text the site doesn't have, a
  * note saying so, with `link` in its place.
  */
 export function SupporterLetterThread({ letter, link }: { letter: SupporterLetterDetails; link?: ReactNode }) {

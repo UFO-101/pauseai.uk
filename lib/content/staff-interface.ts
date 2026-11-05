@@ -105,8 +105,8 @@ export const staffCopy = {
     // Over the text of a letter that's rebuilt from replies quoting others like it.
     approximate:
       "Approximate: rebuilt from replies quoting other letters in this mailing. This isn't what they received, but it was probably much like this.",
-    // A supporter's letter, whose text and replies the site doesn't keep.
-    supporterNoText: "Text not available, the site does not keep supporters' letters.",
+    // A supporter's letter whose text the site doesn't have.
+    supporterNoText: "Text not available.",
     noReplies: "No replies yet.",
     unreadable: "This message couldn't be read.",
     // Over each message, as an email shows them.
@@ -972,8 +972,8 @@ export const staffCopy = {
       `The saved filter has values that are no longer supported (${values}), you need to change it before carrying on.`,
     subject: "Subject",
     ask: "Ask",
-    // Under the ask: where to add a new one, around a link to the asks page's form, which comes back here.
-    newAsk: { before: "You can add a new ask on the ", link: "Asks page", after: "." },
+    // Under the ask: a link to the asks page's form, which comes back here.
+    newAsk: "Add a new ask",
     // Behind the ? beside Ask.
     askHelpLabel: "Help about what an ask is",
     askHelp:
@@ -1228,6 +1228,7 @@ export const staffCopy = {
       theLink: { letter: "The letter", event: "The event" } as Record<string, string>,
       writtenTo: "written to",
       answered: "answered",
+      agreed: "agreed",
       howWeAsked: "How we asked",
       answersTitle: "Answers",
       showAll: "Show all the answers",
@@ -1237,8 +1238,9 @@ export const staffCopy = {
       answer: "Answer",
       lastWrittenTo: "Last written to",
       everyone: "Every politician with this ask →",
-      bar: (answered: number, of: number, kind: string) =>
-        `${answered} of ${of} politicians answered whether they'd ${kind === "letter" ? "sign" : "attend"}`,
+      // Of everyone asked: written to by a campaign or mailing, or with an answer recorded.
+      bar: (agreed: number, of: number, kind: string) =>
+        `${agreed} of ${of} asked have ${kind === "letter" ? "signed" : "agreed to attend"}`,
       campaign: "Campaign",
       mailing: "Mailing",
       letters: (n: number) => `${n} ${n === 1 ? "letter" : "letters"}`,
@@ -1289,8 +1291,8 @@ export const staffCopy = {
     airtableRemoved: (when: string) => `No longer in Airtable since ${when}`,
     // The band at the top of their page: where their record came from, and the counts at its right.
     band: {
-      // The asks they signed, are going to, or are meeting our staff at.
-      asksDone: (n: number) => (n === 1 ? "ask done" : "asks done"),
+      // The asks they signed or are going to.
+      asksAgreed: (n: number) => (n === 1 ? "ask agreed" : "asks agreed"),
       lettersCounted: (n: number) => (n === 1 ? "letter from a supporter" : "letters from supporters"),
     },
     historyTitle: "History",

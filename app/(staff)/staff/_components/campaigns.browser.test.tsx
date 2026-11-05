@@ -206,7 +206,7 @@ describe("AskView", () => {
     expect(document.body.textContent).toContain(staffCopy.politician.askedThem("PauseAI", "letter").slice(0, 8));
     await expect.element(link(exampleAskPage.ways[0].title)).toHaveAttribute("href", exampleAskPage.ways[0].href);
     await says(answers.letters(19));
-    await says(answers.bar(3, 40, "letter"));
+    await says(answers.bar(2, 40, "letter"));
     await expect.element(link(staffCopy.asks.edit)).toHaveAttribute("href", `/staff/asks/${exampleAskPage.slug}/edit`);
     expect(page.getByRole("link", { name: new RegExp(answers.answered) }).query()).toBeNull();
     await expect.element(link("Polly Placeholder")).toHaveAttribute("href", "/staff/politicians/1");

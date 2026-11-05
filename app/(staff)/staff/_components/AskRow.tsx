@@ -5,7 +5,7 @@ import { buttonClass } from "@/components/ui/Button";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Segmented, TextInput } from "@/components/ui/Controls";
 import { FilterForm } from "@/components/ui/Form";
-import { ASK_STATUSES } from "@/lib/asks";
+import { AGREED_STATUSES, ASK_STATUSES } from "@/lib/asks";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { answeredByHand } from "@/lib/email-your-mp";
 import type { Ask } from "@/lib/server/asks";
@@ -61,8 +61,7 @@ export function AskRows({ children }: { children: ReactNode }) {
   return <div className={styles.asks}>{children}</div>;
 }
 
-/** Answers that are a yes, ticked in green, and a no, crossed. */
-const YES = ["signed", "going"];
+/** Answers that are a no, crossed; a yes (AGREED_STATUSES) is ticked in green. */
 const NO = ["declined", "declined_surgery"];
 
 /**
@@ -90,7 +89,8 @@ export default function AskRow({
   const status = politician.statuses[ask.slug];
   const byHand = answeredByHand(ask.slug);
   const editId = `edit-${ask.slug}`;
-  const tone = status && (YES.includes(status.status) ? styles.yes : NO.includes(status.status) ? styles.no : "");
+  const tone =
+    status && (AGREED_STATUSES.includes(status.status) ? styles.yes : NO.includes(status.status) ? styles.no : "");
   const popover = useRef<HTMLDivElement>(null);
   const row = useRef<HTMLDivElement>(null);
   useEffect(() => {
