@@ -1743,14 +1743,14 @@ describe("PoliticianDetails", () => {
     expect(history.map((item) => item.element().textContent)).toEqual([
       `15 Oct 2026, 09:00${copy["letter-replied"]} Anon Writer · ${pm.title}`,
       `14 Oct 2026, 09:30${copy["unblock address"]} polly.placeholder.mp@parliament.uk · Fixed in Airtable · jo@pauseai.uk`,
-      `13 Oct 2026, 08:00${copy.letter} Anon Writer · ${pm.title} · ${staffCopy.letters.status.sent}`,
+      `13 Oct 2026, 08:00${copy.letter} Anon Writer · ${pm.title} · ${staffCopy.letters.status.sent} · ${staffCopy.mailingPages.theLetter}`,
       `12 Oct 2026, 09:10${copy["block address"]} polly.placeholder.mp@parliament.uk · ${staffCopy.emails.kinds.hard} · postmark`,
-      `12 Oct 2026, 09:00${copy.letter} ${exampleLetter.senderName} · ${pm.title} · ${staffCopy.letters.status.bounced}`,
-      `3 Oct 2026, 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.politician.personalised} · ${staffCopy.letters.status.sent}`,
+      `12 Oct 2026, 09:00${copy.letter} ${exampleLetter.senderName} · ${pm.title} · ${staffCopy.letters.status.bounced} · ${staffCopy.mailingPages.theLetter}`,
+      `3 Oct 2026, 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.politician.personalised} · ${staffCopy.letters.status.sent} · ${staffCopy.mailingPages.theLetter}`,
       // Dated the day before it was recorded, so on that day.
       `1 Oct 2026${statusLine(staffCopy.politician.statusSet(staffCopy.statuses.signed), ask("frontier-ai-letter").title)} · Told us at the march · jo@pauseai.uk`,
       `30 Sept 2026, 10:00${copy["edit politician"]} Polly Placeholder · polly.placeholder.mp@parliament.uk · samuel.whitlock@pauseai.uk`,
-      `2 Sept 2026, 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.letters.status.sent}`,
+      `2 Sept 2026, 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.letters.status.sent} · ${staffCopy.mailingPages.theLetter}`,
       `1 Sept 2026, 10:00${statusLine(staffCopy.politician.statusCleared, "gone")} · jo@pauseai.uk`,
       `15 Aug 2026, 10:00${statusLine(staffCopy.politician.statusSet("odd"), pm.title)} · jo@pauseai.uk`,
       `12 Aug 2026, 10:00${statusLine(staffCopy.politician.statusSet(staffCopy.statuses.signed), "an-old-ask")} · airtable`,
@@ -1758,8 +1758,8 @@ describe("PoliticianDetails", () => {
       "1 Aug 2026, 10:00strange  · x",
       `20 Jul 2026, 10:00${copy["edit politician"]} Polly Placeholder · ${staffCopy.fields.party} Labour → Labour (Co-op) · sync`,
       `15 Jul 2026, 10:00${copy["add politician"]} Polly Placeholder · import`,
-      `1 Jul 2026, 08:00${copy.letter} Old Writer · Old campaign, from pauseai.info · mislaid`,
-      `1 Jun 2026, 08:00${copy["pauseai-letter"]} Example Mailing · made-up`,
+      `1 Jul 2026, 08:00${copy.letter} Old Writer · Old campaign, from pauseai.info · mislaid · ${staffCopy.mailingPages.theLetter}`,
+      `1 Jun 2026, 08:00${copy["pauseai-letter"]} Example Mailing · made-up · ${staffCopy.mailingPages.theLetter}`,
     ]);
     // An answer leads to everyone who gave it, the ask to the letter as in the asks card, PauseAI's email to its
     // mailing, an address to its block.
@@ -1849,15 +1849,15 @@ describe("PoliticianDetails", () => {
       `15 Oct 2026, 09:00${copy["unsigned-letter-replied"]} · ${pm.title}`,
       `13 Oct 2026, 08:00${copy.unsignedLetter} · ${pm.title} · ${staffCopy.letters.status.sent}`,
       `1 Jul 2026, 08:00${copy.unsignedLetter} · Old campaign, from pauseai.info · mislaid`,
-      `1 Jun 2026, 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.letters.status.sent}`,
-      `1 May 2026, 08:00${copy["pauseai-letter"]} Example Mailing · made-up`,
+      `1 Jun 2026, 08:00${copy["pauseai-letter"]} Example Mailing · ${staffCopy.letters.status.sent} · ${staffCopy.mailingPages.theLetter}`,
+      `1 May 2026, 08:00${copy["pauseai-letter"]} Example Mailing · made-up · ${staffCopy.mailingPages.theLetter}`,
     ]);
     expect(list.element().querySelector('a[href^="/staff/letters"]')).toBeNull();
     // Without `supporters`, whose campaign pages these are, a campaign's name is plain.
     expect(list.getByRole("link", { name: "Old campaign, from pauseai.info" }).query()).toBeNull();
     // PauseAI's letters lead to their pages under their mailing, for anyone.
     await expect
-      .element(list.getByRole("link", { name: "made-up" }))
+      .element(list.getByRole("link", { name: staffCopy.mailingPages.theLetter }).last())
       .toHaveAttribute("href", "/staff/mailings/3/letters/12");
   });
 
@@ -3279,11 +3279,14 @@ describe("LettersTable", () => {
     // How much of each is the sender's own words.
     await expect.element(page.getByRole("cell", { name: "18%", exact: true })).toBeInTheDocument();
     await expect.element(page.getByRole("cell", { name: "62%", exact: true })).toBeInTheDocument();
-    await expect.element(page.getByRole("link", { name: "odd" })).toHaveAttribute("href", "/staff/letters/2");
-    // Its history is on its page, which its status leads to; when it was sent, or a dash.
+    expect(document.body.textContent).toContain("odd");
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.mailingPages.theLetter }).nth(1))
+      .toHaveAttribute("href", "/staff/letters/2");
+    // Its history is on its page; when it was sent, or a dash.
     expect(document.body.textContent).not.toContain("strange");
     await expect
-      .element(page.getByRole("link", { name: staffCopy.letters.status[letter.status] }))
+      .element(page.getByRole("link", { name: staffCopy.mailingPages.theLetter }).first())
       .toHaveAttribute("href", "/staff/letters/1");
     await expect.element(page.getByRole("cell", { name: staffTime(letter.sentAt!), exact: true })).toBeInTheDocument();
     await expect.element(page.getByRole("cell", { name: "–", exact: true })).toBeInTheDocument();
@@ -3928,8 +3931,10 @@ describe("SupporterDetails", () => {
       .element(letters.getByRole("link", { name: "Polly Placeholder" }))
       .toHaveAttribute("href", "/staff/politicians/1");
     await expect
-      .element(letters.getByRole("link", { name: staffCopy.letters.status.sent }))
+      .element(letters.getByRole("link", { name: staffCopy.mailingPages.theLetter }))
       .toHaveAttribute("href", "/staff/letters/12");
+    // So does the same letter in the history.
+    expect(document.querySelector('a[href="/staff/letters/99"]')).not.toBeNull();
     // Beside the facts, whether we'd contact her about each topic: by email, and by the phone she gave Luma.
     const subscriptions = page.getByRole("region", { name: copy.detail.listsTitle });
     await expect
@@ -3986,13 +3991,13 @@ describe("SupporterDetails", () => {
     expect(old.element().textContent).toContain(
       `${copy.detail.kinds.letter} Gone MP ${copy.detail.about} Old campaign, from pauseai.info · mislaid`,
     );
-    // Only the campaign's name and the status link, to the supporter's letters.
+    // Only the campaign's name links, as this one's letter can't be found; its status stays plain.
     expect(
       old
         .getByRole("link")
         .all()
         .map((link) => link.element().getAttribute("href")),
-    ).toEqual(["/staff/campaigns/old-campaign", `/staff/letters/supporter/${exampleSupporterDetails.summary.id}`]);
+    ).toEqual(["/staff/campaigns/old-campaign"]);
 
     // The same postcode, typed differently by two sources.
     await first.unmount();
@@ -4165,8 +4170,11 @@ describe("SupporterDetails", () => {
     await expect.element(page.getByText(copy.detail.statuses.waitlist, { exact: false }).first()).toBeVisible();
     await expect.element(page.getByText("other-list", { exact: false })).toBeVisible();
     await expect.element(page.getByText("Gone campaign", { exact: false }).first()).toBeVisible();
-    // A letter's status, as stored when it's no status we know, leads to its page.
-    await expect.element(page.getByRole("link", { name: "odd" })).toHaveAttribute("href", "/staff/letters/5");
+    // A letter's status, as stored when it's no status we know, beside the link to its page.
+    await expect.element(page.getByText("odd", { exact: false }).first()).toBeVisible();
+    await expect
+      .element(page.getByRole("link", { name: staffCopy.mailingPages.theLetter }).last())
+      .toHaveAttribute("href", "/staff/letters/5");
   });
 
   it("says where they are and what it's from, and nothing when we don't know", async () => {

@@ -3,9 +3,9 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { runSql } from "@/scripts/fresh-database.mjs";
 import { addFilter, syncPoliticians } from "../steps";
 import { BASE, expect, frame, madeUpAddress, story, test } from "./fixtures";
-import { importEmails, logIn, sentLetterId } from "./staff-steps";
+import { chooseDay, importEmails, logIn, sentLetterId } from "./staff-steps";
 
-// Campaigns, each ask's page, the sent emails and the new tag. Each flow on its
+// Campaigns, each ask's page and form, and the sent emails. Each flow on its
 // own database.
 
 const copy = staffCopy.campaigns;
@@ -35,7 +35,7 @@ test("Campaigns", async ({ page, flowDatabase }) => {
   await frame(page, "No letters failed");
 });
 
-test("Those written to who haven't answered", async ({ page, flowDatabase }) => {
+test("No answer yet", async ({ page, flowDatabase }) => {
   story("Jane writes to her MP about the letter to the Prime Minister. They haven't answered yet.");
   await sentLetterId(page, flowDatabase, madeUpAddress("Jane Smith", 42));
   await page.goto(`${BASE}/staff/asks/${campaigns[0].ask}`);
@@ -50,7 +50,7 @@ test("Those written to who haven't answered", async ({ page, flowDatabase }) => 
 });
 
 test("Asks", async ({ page, request, flowDatabase }) => {
-  story("Asks is a table of questions, with who was written to, who answered and how they were asked.");
+  story("The asks page lists each ask, how we asked and its answers.");
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase, ["supporters"]);
   await importEmails(page);
@@ -103,48 +103,42 @@ test("Sent emails", async ({ page, flowDatabase }) => {
   await expect(page).toHaveURL(`${BASE}/staff`);
 });
 
-test("The new tag", { tag: "@desktop-only" }, async ({ page, flowDatabase }) => {
-  story("A page someone first saw in the last 3 days is marked new; everything they'd seen before isn't.");
-  await logIn(page, flowDatabase, ["admin", "supporters"]);
-  const email = runSql(flowDatabase, "SELECT email FROM staff_sessions ORDER BY created_at DESC LIMIT 1")[0];
-  runSql(
-    flowDatabase,
-    `UPDATE staff_nav_seen SET first_seen_at = now() WHERE email = '${email}' AND page IN ('campaigns', 'sentEmails')`,
-  );
-  await page.goto(`${BASE}/staff`);
-  const nav = page.getByRole("navigation", { name: staffCopy.nav.title }).first();
-  await expect(
-    nav.getByRole("link", { name: `${staffCopy.nav.campaigns} ${staffCopy.nav.newTag}` }).first(),
-  ).toBeVisible();
-  await frame(page, "New in the menu");
+test("A new ask", async ({ page, flowDatabase }) => {
+  story("Staff add an ask from the asks page: an event, a winter reception.");
+  await logIn(page, flowDatabase);
+  const asks = staffCopy.asks;
+  await page.goto(`${BASE}/staff/asks`);
+  await frame(page, "The asks");
+  await page.getByRole("link", { name: asks.newTitle }).click();
+  await page.getByRole("radio", { name: asks.kinds.event }).click();
+  await page.getByLabel(asks.byKind.event.title).fill("Winter reception");
+  await chooseDay(page, asks.byKind.event.date, "2026-12-09");
+  await frame(page, "The new ask, filled in");
+  await page.getByRole("button", { name: asks.save }).click();
+  await expect(page.getByText(asks.notices.added)).toBeVisible();
+  await expect(page.getByRole("row").filter({ hasText: "Winter reception" })).toBeVisible();
+  await frame(page, "The ask, added");
 
-  story("With the menu folded to a rail of icons, a dot says the same.");
-  await nav.getByRole("button", { name: staffCopy.nav.fold }).click();
-  await expect(nav.getByRole("button", { name: staffCopy.nav.unfold })).toBeVisible();
-  await frame(page, "New on the rail");
-  await nav.getByRole("button", { name: staffCopy.nav.unfold }).click();
-
-  story("Three days later, it's gone.");
-  runSql(flowDatabase, `UPDATE staff_nav_seen SET first_seen_at = now() - interval '4 days' WHERE email = '${email}'`);
-  await page.reload();
-  await expect(nav.getByRole("link", { name: staffCopy.nav.campaigns }).first()).not.toContainText(
-    staffCopy.nav.newTag,
+  story("They edit it to add the event's web address. Its title links there.");
+  await page.getByRole("row").filter({ hasText: "Winter reception" }).getByRole("link", { name: asks.edit }).click();
+  await expect(page.getByText("winter-reception-dec-2026", { exact: true })).toBeVisible();
+  await page.getByLabel(asks.byKind.event.url).fill("https://luma.com/winter");
+  await page.getByRole("button", { name: asks.save }).click();
+  // Back on the list, saying so: the link alone can be there before the list is what's shown.
+  await expect(page.getByText(asks.notices.saved)).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(asks.title);
+  await expect(page.getByRole("link", { name: "Winter reception" })).toHaveAttribute(
+    "href",
+    "/staff/asks/winter-reception-dec-2026",
   );
-  await frame(page, "No longer new");
-});
-
-test("The new tag on a phone", { tag: "@phone-only" }, async ({ page, flowDatabase }) => {
-  story("On a phone, the menu that drops down marks the same pages.");
-  await logIn(page, flowDatabase, ["admin", "supporters"]);
-  const email = runSql(flowDatabase, "SELECT email FROM staff_sessions ORDER BY created_at DESC LIMIT 1")[0];
-  runSql(
-    flowDatabase,
-    `UPDATE staff_nav_seen SET first_seen_at = now() WHERE email = '${email}' AND page = 'campaigns'`,
-  );
-  await page.goto(`${BASE}/staff`);
-  await page.getByRole("group").locator("summary").click();
-  await expect(page.getByRole("group").getByRole("link", { name: staffCopy.nav.campaigns })).toContainText(
-    staffCopy.nav.newTag,
-  );
-  await frame(page, "New in the phone's menu", { window: true });
+  await frame(page, "The ask, changed");
+  story("Then they delete it. Delete asks to be pressed a second time.");
+  await page.getByRole("row").filter({ hasText: "Winter reception" }).getByRole("link", { name: asks.edit }).click();
+  await page.getByRole("button", { name: asks.delete }).click();
+  await expect(page.getByRole("button", { name: staffCopy.deleteIt })).toBeFocused();
+  await frame(page, "Delete, pressed once", { window: true });
+  await page.getByRole("button", { name: staffCopy.deleteIt }).click();
+  await expect(page.getByText(asks.notices.deleted)).toBeVisible();
+  await expect(page.getByRole("row").filter({ hasText: "Winter reception" })).toHaveCount(0);
+  await frame(page, "The ask, deleted");
 });

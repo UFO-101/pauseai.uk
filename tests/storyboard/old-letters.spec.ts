@@ -68,7 +68,7 @@ test("Import old letters", async ({ page, request, flowDatabase }) => {
   await frame(page, "Pressed again");
 });
 
-test("The old letters import fails", async ({ page, flowDatabase }) => {
+test("The import fails", async ({ page, flowDatabase }) => {
   story("Joseph's Gmail isn't connected, so the import can't read it. The press shows as a failed run, saying why.");
   await logIn(page, flowDatabase, ["supporters", "admin"]);
   await page.goto(`${BASE}${importPath("import-old-letters")}`);
@@ -77,7 +77,7 @@ test("The old letters import fails", async ({ page, flowDatabase }) => {
   await frame(page, "A failed run");
 });
 
-test("Pressing while it's running", async ({ page, flowDatabase }) => {
+test("A second press", async ({ page, flowDatabase }) => {
   story("Someone's press is still running. The job's page says so, and pressing again starts nothing.");
   await logIn(page, flowDatabase, ["supporters", "admin"]);
   runSql(flowDatabase, "INSERT INTO job_presses (job, started_by) VALUES ('import-old-letters', 'jo@pauseai.uk')");
@@ -110,7 +110,7 @@ test("An old letter's page", async ({ page, request, flowDatabase }) => {
   await expect(page.getByText("Thank you, I'll think about it.")).toBeVisible();
   await frame(page, "A letter and the politician's reply");
 
-  story("A letter that was each its own keeps its whole text.");
+  story("A letter written individually keeps its whole text.");
   await page.goto(`${BASE}/staff/mailings`);
   await page.getByRole("link", { name: words.mailingTitles["russell-speak"] }).first().click();
   await page.getByRole("link", { name: staffCopy.mailingPages.theLetter }).first().click();

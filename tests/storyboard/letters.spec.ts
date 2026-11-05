@@ -20,7 +20,7 @@ import {
 // emailing staff and blocking the address until staff unblock it. Each flow
 // on its own database.
 
-test("Filtering letters", async ({ page, request, flowDatabase }) => {
+test("Letters by count", async ({ page, request, flowDatabase }) => {
   story("Jane and Sam write to their MPs. Sam's MP's address bounces his letter.");
   const jane = madeUpAddress("Jane Smith", 11);
   const sam = madeUpAddress("Sam Smith", 12);

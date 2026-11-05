@@ -430,8 +430,8 @@ that changes it: those, or an account's permissions.
 
 Where a row has a page of its own, the first column leads to it, so
 there's one place to click to open it: a supporter's or politician's
-name. A row with no name, such as a letter, starts with what leads to it
-instead, its status, before who it's from and to. A list read by time
+name. A row with no name, such as a letter, starts with its status, then a
+link to it ("Letter →"), before who it's from and to. A list read by time
 starts with when instead. In a log, newest first, when is all there is
 to it: the audit log, an import's runs, a history. Something that
 happens on a day, such as an event, is named by its date as much as its
@@ -547,7 +547,10 @@ hover or focus; the browser remembers it (`lib/staff-nav.ts`).
 its own is shown, such as a campaign, an ask or a politician, it links to that
 page, so a thing that looks the same goes to the same place. A number can go
 elsewhere, to a filter or a list of what it counts. A link to somewhere else
-has words of its own ("See it", not the name). Two exceptions: a name in a
+has words of its own ("See it", not the name). A letter or email with no name of its own is
+opened by "Letter →", everywhere, and its status stays plain words beside it, so
+a status never looks like a link. A one-off thread has its subject as its name,
+so that's what opens it. Two exceptions: a name in a
 choice, such as a menu's option, picks it instead; and for staff who can't open
 the page, the name is plain.
 

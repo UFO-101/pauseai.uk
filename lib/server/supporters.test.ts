@@ -796,6 +796,7 @@ describeWithDatabase("members as supporters", () => {
       href: "https://airtable.com/appWPTGqZmUcs3NWu/tblL1icZBhTV1gQ9o/recJane",
       status: null,
       eventAt: null,
+      letterId: null,
     });
 
     // A member no longer read is no longer one, though what they gave stays.

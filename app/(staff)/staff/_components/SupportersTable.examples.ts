@@ -100,6 +100,7 @@ export const exampleSupporterDetails: SupporterDetails = {
       detail: "Polly Placeholder",
       href: "/staff/politicians/1",
       status: "sent",
+      letterId: 99,
     },
     {
       source: "luma",

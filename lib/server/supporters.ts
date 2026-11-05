@@ -367,7 +367,14 @@ export async function getSupporter(given: number): Promise<SupporterDetails | un
     ),
     query<SupporterActivity>(
       `SELECT a.source, a.at, a.kind, a.title, c.title AS "campaignTitle", a.detail, a.href, a.status,
-         e.start_at AS "eventAt"
+         e.start_at AS "eventAt",
+         -- The letter it's about: this campaign's to this MP, nearest in time, as a person may write twice.
+         CASE WHEN a.kind IN ('letter', 'letter-replied') THEN (
+           SELECT l.id::int FROM letters_from_supporters s JOIN letters l USING (id)
+             JOIN supporter_links k ON k.form_entry_id = s.entry_id
+           WHERE k.supporter_id = a.supporter_id AND s.campaign = a.title AND '/staff/politicians/' || l.notable_person_id = a.href
+           ORDER BY abs(extract(epoch FROM l.created_at - a.at)) LIMIT 1
+         ) END AS "letterId"
        FROM supporter_activity a LEFT JOIN campaigns c ON a.kind IN ('letter', 'letter-replied') AND c.slug = a.title
          LEFT JOIN luma_events e ON a.kind IN ('luma-registered', 'luma-hosted') AND a.href = 'https://luma.com/' || e.url
        WHERE a.supporter_id = $1 ORDER BY a.at DESC, a.kind`,

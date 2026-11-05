@@ -86,8 +86,8 @@ const heldColumns: ListColumn<Held>[] = [
   { key: "from", label: copy.detail.held.columns.from, cell: (h) => h.from },
 ];
 
-/** What an activity was about: the event, the MP and campaign, the form, or the list. `letters` lists the supporter's letters. */
-function Subject({ item, letters }: { item: SupporterActivity; letters: string }) {
+/** What an activity was about: the event, the MP and campaign, the form, or the list. */
+function Subject({ item }: { item: SupporterActivity }) {
   if (item.kind === "luma-registered" || item.kind === "luma-hosted") {
     const status = copy.detail.statuses[item.detail ?? ""];
     return (
@@ -99,7 +99,6 @@ function Subject({ item, letters }: { item: SupporterActivity; letters: string }
   }
   if (item.kind === "letter" || item.kind === "letter-replied") {
     // The MP, linked to their page; the campaign, linked to its public page while it's still one; then a letter's
-    // status, linked to the page of the supporter's letters.
     return (
       <>
         {item.href ? <StaffLink href={item.href}>{item.detail}</StaffLink> : item.detail}
@@ -113,7 +112,13 @@ function Subject({ item, letters }: { item: SupporterActivity; letters: string }
           {item.status && (
             <>
               {" · "}
-              <StaffLink href={letters}>{staffCopy.letters.status[item.status] ?? item.status}</StaffLink>
+              {staffCopy.letters.status[item.status] ?? item.status}
+              {item.letterId && (
+                <>
+                  {" · "}
+                  <StaffLink href={`/staff/letters/${item.letterId}`}>{staffCopy.mailingPages.theLetter}</StaffLink>
+                </>
+              )}
             </>
           )}
         </Muted>
@@ -248,14 +253,17 @@ function eventsByDate(activity: SupporterActivity[]): SupporterActivity[] {
   return eventsOf(activity).toSorted((a, b) => start(b) - start(a));
 }
 
-/** Their letters, newest first: how each stands, leading to the letter's page, when it was sent, to whom, and in which campaign. */
+/** Their letters, newest first: how each stands, a link to its page, when it was sent, to whom, and in which campaign. */
 const letterColumns: ListColumn<SupporterLetter>[] = [
   {
     key: "letter",
     label: copy.detail.columns.letter,
     short: true,
     cell: (l) => (
-      <StaffLink href={`/staff/letters/${l.id}`}>{staffCopy.letters.status[l.status] ?? l.status}</StaffLink>
+      <>
+        {staffCopy.letters.status[l.status] ?? l.status} ·{" "}
+        <StaffLink href={`/staff/letters/${l.id}`}>{staffCopy.mailingPages.theLetter}</StaffLink>
+      </>
     ),
   },
   {
@@ -297,11 +305,10 @@ export default function SupporterDetails({
   /** Their one-off emails (OneOffTable). */
   oneOffs?: ReactNode;
 }) {
-  const { summary, activity, permissions, letters } = supporter;
+  const { activity, permissions, letters } = supporter;
   const usable = new Set(permissions.filter((p) => p.channel === "phone" && p.send !== "no").map((p) => p.address));
   const holding = held(supporter, usable);
   const events = eventsByDate(activity);
-  const lettersPage = `/staff/letters/supporter/${summary.id}`;
   return (
     <>
       <SupporterBand supporter={supporter} events={eventsCounted(activity)} letters={letters.length} />
@@ -347,7 +354,7 @@ export default function SupporterDetails({
                 <li key={i}>
                   <span className={styles.when}>{staffTime(item.at)}</span>
                   <span>
-                    {copy.detail.kinds[item.kind]} <Subject item={item} letters={lettersPage} />
+                    {copy.detail.kinds[item.kind]} <Subject item={item} />
                   </span>
                 </li>
               ))}

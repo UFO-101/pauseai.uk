@@ -73,7 +73,7 @@ function Unsigned({ letter, status }: { letter: UnsignedLetter; status: boolean 
 
 /**
  * The letters as history: each written, and each answered, as its own
- * line. With their senders, each names who wrote it, its status linked to
+ * line. With their senders, each names who wrote it, its status, and a link to
  * the letter's page; without, only the campaign and the status.
  */
 function letterEntries({ senders, letters }: PoliticianLetters): Entry[] {
@@ -103,9 +103,9 @@ function letterEntries({ senders, letters }: PoliticianLetters): Entry[] {
         {copy.history.letter} <Sender letter={letter} />
         <Muted>
           {" · "}
-          <StaffLink href={`/staff/letters/${letter.id}`}>
-            {staffCopy.letters.status[letter.status] ?? letter.status}
-          </StaffLink>
+          {staffCopy.letters.status[letter.status] ?? letter.status}
+          {" · "}
+          <StaffLink href={`/staff/letters/${letter.id}`}>{staffCopy.mailingPages.theLetter}</StaffLink>
         </Muted>
       </>,
       <>
@@ -117,7 +117,7 @@ function letterEntries({ senders, letters }: PoliticianLetters): Entry[] {
 
 /**
  * PauseAI's letters, each a line: the mailing, whether it was personalised,
- * and how it stands, leading to the letter's page under its mailing.
+ * how it stands, and a link to the letter's page under its mailing.
  */
 function pauseaiEntries(letters: PauseaiLetter[]): Entry[] {
   return letters.map((letter) => ({
@@ -130,8 +130,10 @@ function pauseaiEntries(letters: PauseaiLetter[]): Entry[] {
         <Muted>
           {letter.personalised && ` · ${copy.personalised}`}
           {" · "}
+          {staffCopy.letters.status[letter.status] ?? letter.status}
+          {" · "}
           <StaffLink href={`/staff/mailings/${letter.mailingId}/letters/${letter.id}`}>
-            {staffCopy.letters.status[letter.status] ?? letter.status}
+            {staffCopy.mailingPages.theLetter}
           </StaffLink>
         </Muted>
       </>

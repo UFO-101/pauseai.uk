@@ -87,6 +87,8 @@ export type SupporterActivity = {
   href: string | null;
   /** A letter's status; null for every other kind. */
   status: string | null;
+  /** A letter's ID, for a link to it; null for every other kind. */
+  letterId?: number | null;
   /** When the event starts, for a registration or hosting, where the supporter's page reads it; null for an event no longer copied. */
   eventAt?: string | null;
 };

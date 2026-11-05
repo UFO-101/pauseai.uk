@@ -173,7 +173,7 @@ test("An admin without Supporters", async ({ page, request, flowDatabase }) => {
 
 test("Blocked emails without Supporters", async ({ page, request, flowDatabase }) => {
   story(
-    "Jane writes to an MP whose address bounces her letter. Staff without the Supporters permission can't open Letters to MPs or Supporters' blocked emails.",
+    "Jane writes to an MP whose address bounces her letter. Staff without the Supporters permission can't open her letter, or Supporters' blocked emails.",
   );
   await syncPoliticians(request, BASE);
   const bouncy = TEST_MPS.find((mp) => mp.postcode === "ZZ99ZH")!;

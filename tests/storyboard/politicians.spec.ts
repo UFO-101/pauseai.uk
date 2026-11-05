@@ -1,14 +1,13 @@
 import type { Page } from "@playwright/test";
-import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
+import { staffCopy } from "@/lib/content/staff-interface";
 import { runSql } from "@/scripts/fresh-database.mjs";
 import { addFilter, addStaffAccount, changeFilter, logInAsStaff, syncPoliticians } from "../steps";
 import { BASE, expect, frame, story, test } from "./fixtures";
-import { chooseDay, importEmails, PM_LETTER } from "./staff-steps";
+import { importEmails, PM_LETTER } from "./staff-steps";
 
-// The politicians from Airtable: every body, their answers to the asks, and
-// PauseAI's emails to them, as the nightly sync copies them from the fixture
-// Airtable (tests/fixtures/airtable-*.json); the asks page; and the one-off
-// imports of pauseai.info's letters and Go to Parliament's meetings.
+// The politicians from Airtable: every body and their answers to the asks, as
+// the nightly sync copies them from the fixture Airtable
+// (tests/fixtures/airtable-*.json), with PauseAI's emails to them.
 
 const copy = staffCopy.politician;
 
@@ -72,7 +71,7 @@ test("A note on a politician", async ({ page, request, flowDatabase }) => {
   await frame(page, "The note in Polly's history");
 });
 
-test("An answer to a new ask", async ({ page, request, flowDatabase }) => {
+test("Answering a new ask", async ({ page, request, flowDatabase }) => {
   story(
     "Staff have added an ask of their own, a letter about a giant pause button. Polly has no answer to it yet, so it isn't among her asks.",
   );
@@ -106,7 +105,7 @@ test("An answer to a new ask", async ({ page, request, flowDatabase }) => {
   await frame(page, "The answer, saved");
 });
 
-test("A declined letter, then cleared", async ({ page, request, flowDatabase }) => {
+test("Clearing an answer", async ({ page, request, flowDatabase }) => {
   story("Polly hasn't answered the letter to the Prime Minister, so it has no row among her asks.");
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
@@ -385,58 +384,6 @@ test("Deleting a politician", async ({ page, request, flowDatabase }) => {
   await frame(page, "The politicians list, without Rita");
 });
 
-test("Mailings", async ({ page, request, flowDatabase }) => {
-  story(
-    "The mailings page lists every mailing PauseAI has sent politicians, by month, newest first. These were copied from Airtable.",
-  );
-  await syncPoliticians(request, BASE);
-  await logIn(page, flowDatabase);
-  const mailings = staffCopy.mailings;
-  await importEmails(page);
-  await page.goto(`${BASE}/staff/mailings`);
-  const invitation = "Edinburgh Conference Nov 26 Invitation";
-  await expect(page.getByRole("listitem").filter({ hasText: invitation })).toContainText(mailings.imported);
-  await frame(page, "The mailings");
-
-  story(
-    "The Edinburgh conference invitation has no text, as Airtable kept none. Its page lists who it went to. A politician's history links back to it too.",
-  );
-  // Its title, not its box of counts, whose name says the title too.
-  await page.getByRole("link", { name: invitation, exact: true }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(invitation);
-  await expect(page.getByText(mailings.noText)).toBeVisible();
-  await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toContainText(mailings.personalised);
-  await frame(page, "The invitation's page");
-
-  await page.getByRole("link", { name: "Polly Placeholder" }).click();
-  await page.getByRole("list", { name: copy.historyTitle }).getByRole("link", { name: invitation }).click();
-  await expect(page).toHaveURL(/\/staff\/mailings\/\d+$/);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(invitation);
-});
-
-test("From a mailing to its ask", async ({ page, request, flowDatabase }) => {
-  story("A mailing names its ask. Following it from the invitation opens the Edinburgh conference's own page.");
-  await syncPoliticians(request, BASE);
-  await logIn(page, flowDatabase);
-  await importEmails(page);
-  await page.goto(`${BASE}/staff/mailings`);
-  await page
-    .getByRole("listitem")
-    .filter({ hasText: "Edinburgh Conference Nov 26 Invitation" })
-    .getByRole("link", { name: "Edinburgh conference", exact: true })
-    .click();
-  await expect(page).toHaveURL(`${BASE}/staff/asks/edinburgh-conference-2026`);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Edinburgh conference");
-  await frame(page, "The conference's page");
-  story("On the asks page, each answer's count is a link to the politicians who gave it. One is going.");
-  await page.goto(`${BASE}/staff/asks`);
-  await page.getByRole("link", { name: staffCopy.asks.count(staffCopy.statuses.going, 1) }).click();
-  await expect(page).toHaveURL(/ask=edinburgh-conference-2026&answer=going/);
-  await expect(page.getByRole("row").filter({ hasText: "Morag Example" })).toBeVisible();
-  await expect(page.getByRole("row")).toHaveCount(2);
-  await frame(page, "The politicians going");
-});
-
 test("Who has been mailed", async ({ page, request, flowDatabase }) => {
   story("Staff filter the politicians list by who was mailed about the Edinburgh conference.");
   await syncPoliticians(request, BASE);
@@ -449,124 +396,4 @@ test("Who has been mailed", async ({ page, request, flowDatabase }) => {
   await page.goto(`${BASE}/staff/politicians?mailed=!edinburgh-conference-2026`);
   await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toHaveCount(0);
   await frame(page, "Not mailed about the conference");
-});
-
-test("A new ask", async ({ page, flowDatabase }) => {
-  story("Staff add an ask from the asks page: an event, a winter reception.");
-  await logIn(page, flowDatabase);
-  const asks = staffCopy.asks;
-  await page.goto(`${BASE}/staff/asks`);
-  await frame(page, "The asks");
-  await page.getByRole("link", { name: asks.newTitle }).click();
-  await page.getByRole("radio", { name: asks.kinds.event }).click();
-  await page.getByLabel(asks.byKind.event.title).fill("Winter reception");
-  await chooseDay(page, asks.byKind.event.date, "2026-12-09");
-  await frame(page, "The new ask, filled in");
-  await page.getByRole("button", { name: asks.save }).click();
-  await expect(page.getByText(asks.notices.added)).toBeVisible();
-  await expect(page.getByRole("row").filter({ hasText: "Winter reception" })).toBeVisible();
-  await frame(page, "The ask, added");
-
-  story("They edit it to add the event's web address. Its title links there.");
-  await page.getByRole("row").filter({ hasText: "Winter reception" }).getByRole("link", { name: asks.edit }).click();
-  await expect(page.getByText("winter-reception-dec-2026", { exact: true })).toBeVisible();
-  await page.getByLabel(asks.byKind.event.url).fill("https://luma.com/winter");
-  await page.getByRole("button", { name: asks.save }).click();
-  // Back on the list, saying so: the link alone can be there before the list is what's shown.
-  await expect(page.getByText(asks.notices.saved)).toBeVisible();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(asks.title);
-  await expect(page.getByRole("link", { name: "Winter reception" })).toHaveAttribute(
-    "href",
-    "/staff/asks/winter-reception-dec-2026",
-  );
-  await frame(page, "The ask, changed");
-  story("Then they delete it. Delete asks to be pressed a second time.");
-  await page.getByRole("row").filter({ hasText: "Winter reception" }).getByRole("link", { name: asks.edit }).click();
-  await page.getByRole("button", { name: asks.delete }).click();
-  await expect(page.getByRole("button", { name: staffCopy.deleteIt })).toBeFocused();
-  await frame(page, "Delete, pressed once", { window: true });
-  await page.getByRole("button", { name: staffCopy.deleteIt }).click();
-  await expect(page.getByText(asks.notices.deleted)).toBeVisible();
-  await expect(page.getByRole("row").filter({ hasText: "Winter reception" })).toHaveCount(0);
-  await frame(page, "The ask, deleted");
-});
-
-test("PauseAI's emails to politicians", async ({ page, request, flowDatabase }) => {
-  story(
-    "Staff press Import emails now, which copies PauseAI's emails to politicians from Airtable. Its page shows five copied, and one left out, as it belongs to no mailing we know.",
-  );
-  await syncPoliticians(request, BASE);
-  // With no permissions: PauseAI's letters are the politicians section's.
-  await logIn(page, flowDatabase);
-  await importEmails(page);
-  await expect(page.getByRole("heading", { level: 1 })).toContainText(jobTitles["sync-emails"]);
-  await expect(page.getByText("recEmailNewBox", { exact: false }).first()).toBeVisible();
-  await frame(page, "The emails import's page");
-  story("Pressing it again finds nothing new.");
-  await page.getByRole("button", { name: staffCopy.pauseaiEmails.importNow }).click();
-  await expect(page.getByText(staffCopy.runs.status.incomplete)).toHaveCount(2);
-  expect(runSql(flowDatabase, "SELECT count(*) FROM letters_from_pauseai")).toEqual(["5"]);
-
-  story("Each email is in its politician's history, and has its own page under its mailing.");
-  // Each is in its MP's history, leading to its own page under its mailing, and from there to a Gmail search for it,
-  // in a mailbox Airtable didn't say.
-  await page.goto(`${BASE}/staff/politicians`);
-  await page.getByRole("link", { name: "Polly Placeholder" }).click();
-  const history = page.getByRole("list", { name: staffCopy.politician.historyTitle });
-  await history.getByRole("link", { name: staffCopy.letters.status.sent }).first().click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    staffCopy.letters.oneTitle(staffCopy.letters.fromPauseai, "Polly Placeholder"),
-  );
-  await expect(page).toHaveURL(/\/staff\/mailings\/\d+\/letters\/\d+$/);
-  await frame(page, "PauseAI's email to Polly");
-  story(
-    "Copy Gmail search copies a search for it by Polly's address and when it went. Airtable didn't say which mailbox sent it, so the page says to look in one that did.",
-  );
-  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
-  await page.getByRole("button", { name: staffCopy.findInGmail.copy }).click();
-  await expect(page.getByRole("status")).toContainText(staffCopy.findInGmail.whereUnknown);
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/^to:polly\S+ after:\d+ before:\d+$/);
-  await frame(page, "The search, copied");
-});
-
-test("pauseai.info's letters and Go to Parliament's meetings", async ({ page, request, flowDatabase }) => {
-  story(
-    "Staff import the letters supporters sent through pauseai.info's old write to MP form. Three are imported, and the page says why the rest weren't.",
-  );
-  await syncPoliticians(request, BASE);
-  await logIn(page, flowDatabase, ["supporters"]);
-  await page.goto(`${BASE}/staff/import-data/web-form-letters`);
-  await page.getByRole("button", { name: staffCopy.webForm.importNow }).click();
-  await expect(
-    page.getByText(staffCopy.webForm.result({ read: 9, imported: 3, skipped: 3, alreadyHere: 1, noPolitician: 2 }), {
-      exact: false,
-    }),
-  ).toBeVisible();
-  await frame(page, "The old form's letters, imported");
-
-  story("Each old campaign has its letters, on its own page.");
-  await page.goto(`${BASE}/staff/campaigns`);
-  await page.getByRole("link", { name: "Call DeepMind to honour AI Safety Summit pledges" }).first().click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Call DeepMind to honour AI Safety Summit pledges");
-  await frame(page, "An old campaign's page");
-  story("Each sender is now a supporter, from the old form.");
-  await page.getByRole("link", { name: "Dee Deepmind" }).first().click();
-  await expect(page.getByText(staffCopy.supporters.sources["web-form"]).first()).toBeVisible();
-  await frame(page, "Dee Deepmind's page");
-
-  story(
-    "Then they import the MPs' answers about meeting constituents at Go to Parliament. The asks page counts them: one MP is sending staff instead.",
-  );
-  await page.goto(`${BASE}/staff/import-data/go-to-parliament`);
-  await page.getByRole("button", { name: staffCopy.goToParliament.importNow }).click();
-  await expect(
-    page.getByText(staffCopy.goToParliament.result({ guests: 5, mps: 4, added: 3, changed: 0, notFound: 1 }), {
-      exact: false,
-    }),
-  ).toBeVisible();
-  await page.goto(`${BASE}/staff/asks`);
-  await expect(
-    page.getByRole("link", { name: staffCopy.asks.count(staffCopy.statuses.meeting_staff, 1) }),
-  ).toBeVisible();
-  await frame(page, "The asks page");
 });

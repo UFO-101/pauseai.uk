@@ -29,7 +29,11 @@ const columns: ListColumn<LetterSummary>[] = [
     key: "status",
     label: copy.columns.status,
     short: true,
-    cell: (l) => <StaffLink href={`/staff/letters/${l.id}`}>{statusOf(l.status)}</StaffLink>,
+    cell: (l) => (
+      <>
+        {statusOf(l.status)} · <StaffLink href={`/staff/letters/${l.id}`}>{staffCopy.mailingPages.theLetter}</StaffLink>
+      </>
+    ),
   },
   {
     key: "from",
