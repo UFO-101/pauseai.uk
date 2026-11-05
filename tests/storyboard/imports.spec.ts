@@ -1,5 +1,6 @@
+import { exampleLumaResult, exampleMembersResult } from "@/app/(staff)/staff/_components/RunList.examples";
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
-import type { ImportJob } from "@/lib/import-runs";
+import { type ImportJob, importPath } from "@/lib/import-runs";
 import { staffDate } from "@/lib/staff-time";
 import { runSql } from "@/scripts/fresh-database.mjs";
 import { FIXTURE_NOW, LETTERS_INBOX, NOTIFICATION_INBOX } from "../fixture-env.mjs";
@@ -112,6 +113,85 @@ test("Reading Gmail", async ({ page, flowDatabase }) => {
   await expect(page.getByText(staffCopy.runs.status.unchanged)).toBeVisible();
   await page.getByRole("heading", { name: staffCopy.gmailReading.title }).scrollIntoViewIfNeeded();
   await frame(page, "Gmail, read");
+});
+
+/** `count` of the job's runs on its schedule, `minutes` apart, the newest `from` before now. */
+const scheduled = (
+  database: string,
+  job: ImportJob,
+  count: number,
+  from: string,
+  result: object,
+  status = "ok",
+  minutes = 5,
+) =>
+  runSql(
+    database,
+    `INSERT INTO import_runs (job, started_by, status, result, at)
+     SELECT '${job}', 'nightly', '${status}', '${JSON.stringify(result).replaceAll("'", "''")}', now() - interval '${from}' - n * interval '${minutes} minutes'
+     FROM generate_series(0, ${count - 1}) n`,
+  );
+
+test("The Luma import's log", async ({ page, flowDatabase }) => {
+  story(
+    "Luma is copied every 5 minutes. Runs that found nothing gather into a line, those that did are a row each, and one that stopped short shows whole.",
+  );
+  await logIn(page, flowDatabase);
+  scheduled(flowDatabase, "import-luma", 1, "0 minutes", exampleLumaResult);
+  scheduled(flowDatabase, "import-luma", 9, "5 minutes", exampleLumaResult, "unchanged");
+  scheduled(flowDatabase, "import-luma", 2, "50 minutes", exampleLumaResult);
+  scheduled(flowDatabase, "import-luma", 1, "60 minutes", { ...exampleLumaResult, stoppedBy: "rate-limit" });
+  scheduled(flowDatabase, "import-luma", 30, "65 minutes", exampleLumaResult, "unchanged");
+  scheduled(flowDatabase, "import-luma", 16, "215 minutes", exampleLumaResult);
+  await page.goto(`${BASE}${importPath("import-luma")}`);
+  await expect(page.getByText(/nothing new/).first()).toBeVisible();
+  await frame(page, "Its log");
+  await page
+    .locator("summary", { hasText: /no problems/ })
+    .first()
+    .click();
+  await frame(page, "An older stretch, opened");
+});
+
+test("The Gmail reading's log", async ({ page, flowDatabase }) => {
+  story(
+    "Gmail is read every 5 minutes too. A read that found something says which account and what. A mailbox that couldn't be read shows whole, in red.",
+  );
+  await logIn(page, flowDatabase);
+  const account = (email: string, extra = {}) => ({ account: email, replies: 0, autoReplies: 0, bounces: 0, ...extra });
+  const quiet = { accounts: [account("joseph@pauseai.uk"), account("policy@pauseai.uk")] };
+  const replied = {
+    accounts: [account("joseph@pauseai.uk", { replies: 1 }), account("policy@pauseai.uk", { oneOffs: 1 })],
+  };
+  const refused = {
+    accounts: [
+      account("joseph@pauseai.uk", {
+        error: "Error: Gmail answered 403 for /settings/sendAs: User-rate limit exceeded",
+      }),
+      account("policy@pauseai.uk"),
+    ],
+  };
+  scheduled(flowDatabase, "read-gmail", 1, "0 minutes", replied);
+  scheduled(flowDatabase, "read-gmail", 6, "5 minutes", quiet, "unchanged");
+  scheduled(flowDatabase, "read-gmail", 1, "35 minutes", refused);
+  scheduled(flowDatabase, "read-gmail", 8, "40 minutes", quiet, "unchanged");
+  scheduled(flowDatabase, "read-gmail", 3, "80 minutes", replied);
+  scheduled(flowDatabase, "read-gmail", 40, "95 minutes", quiet, "unchanged");
+  await page.goto(`${BASE}${importPath("read-gmail")}`);
+  await expect(page.getByText(/nothing new/).first()).toBeVisible();
+  await frame(page, "Its log");
+});
+
+test("The members import's log", async ({ page, flowDatabase }) => {
+  story("Members are copied hourly. Hours with nothing new gather into a line; one with new members shows whole.");
+  await logIn(page, flowDatabase);
+  scheduled(flowDatabase, "import-members", 1, "0 minutes", exampleMembersResult);
+  scheduled(flowDatabase, "import-members", 3, "1 hour", exampleMembersResult, "unchanged", 60);
+  scheduled(flowDatabase, "import-members", 1, "4 hours", exampleMembersResult);
+  scheduled(flowDatabase, "import-members", 5, "5 hours", exampleMembersResult, "unchanged", 60);
+  await page.goto(`${BASE}${importPath("import-members")}`);
+  await expect(page.getByText(/nothing new/).first()).toBeVisible();
+  await frame(page, "Its log");
 });
 
 test("Google disconnects a Gmail", async ({ page, request, flowDatabase }) => {

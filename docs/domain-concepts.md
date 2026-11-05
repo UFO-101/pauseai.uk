@@ -332,12 +332,13 @@ token is kept encrypted (`GMAIL_TOKEN_KEY`), and deleted on disconnecting.
 A one-off job (`import-old-letters`, `lib/server/old-letters-import.ts`, its
 rules in `lib/old-letters.ts`) reads the letters written before the site could
 send them from Joseph's and policy@'s mail, so each one's text, diff and replies
-show on its page. Each press of its button starts a background function, which
-calls the site again and again for up to 15 minutes, as the site's own calls
-last seconds. Its place is `old_letters_mail`: the Gmail ID of each message it
-has listed, and what became of it, so pressing it again carries on and skips
-what's kept. It reads at most two a second, as
-Gmail's limit is shared with the site, and stops the moment Gmail refuses.
+show on its page. It runs every 5 minutes, and when its button is pressed, reading
+for 20 seconds each time. Its place is `old_letters_mail`, the Gmail ID of each
+message it has listed and what became of it, and the last run's `searchesDone`,
+so each run carries on from the last and skips what's kept. Once a run finishes
+the schedule does nothing more, and a press goes through it all again. It reads at
+most two a second, as Gmail's limit is shared with the site, and stops the moment
+Gmail refuses; a mailbox's limit applies to all its reading, the regular read's too.
 
 - **Mailings.** A send is a mailing, so the list shows it and its counts
   (`OLD_MAILINGS`): DeepMind's told apart by the phrases in their text, the
@@ -742,8 +743,15 @@ nightly).
 
 Pressing a job's button marks it running (`job_presses`) until it finishes, or
 for 16 minutes if it dies, and its page says so: a second press of that job meanwhile
-starts nothing. The import of old letters holds its press across its background
-function's calls. Scheduled runs don't take a press.
+starts nothing. Scheduled runs don't take a press; the Luma import and the import
+of old letters each take a lock, so a press can't overlap a scheduled run.
+
+A job's page shows its runs under a heading for each day (`lib/run-log.ts`). A job
+that runs every 5 minutes or hourly gathers runs that found nothing into a line.
+The import of old letters, Luma's and the Gmail reading show routine runs as rows
+of a table, the older ones folded. Anything else, a failure above all, shows whole,
+and on a 5-minute job a problem stays tinted further down. Nightly and one-off
+jobs show each run whole. The import of old letters also says how far it has got.
 
 A new job is a name in `IMPORT_JOBS` and the `import_runs` CHECK, a result
 type, a function that records its run, a slug in `IMPORT_SLUGS`, its

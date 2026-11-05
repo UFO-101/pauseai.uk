@@ -582,7 +582,7 @@ images in cards none (full bleed).
 
 Cards use a `1px solid var(--border)` border. On hover, borders shift to `var(--border-strong)`. No heavy/coloured borders except for active/focus states.
 
-A box that shows a state says so with its tint: the background is the status colour's `-bg` token (`--status-red-bg`, `--status-amber-bg`, `--status-green-bg`), and the words can take the status colour. On staff pages that's a strip, with no border (above, "Staff pages"); a past run in a job's history keeps the ordinary border. Never a thick edge on one side: on a rounded corner it bends into a wedge. Only the current state is coloured. A history of past runs or events is plain, so the one thing in colour is the thing that's true now.
+A box that shows a state says so with its tint: the background is the status colour's `-bg` token (`--status-red-bg`, `--status-amber-bg`, `--status-green-bg`), and the words can take the status colour. On staff pages that's a strip, with no border (above, "Staff pages"); a past run in a job's history keeps the ordinary border. Never a thick edge on one side: on a rounded corner it bends into a wedge. Only the current state is coloured. A history of past runs or events is plain, so the one thing in colour is the thing that's true now. The exception is a job that runs every 5 minutes: among hundreds of runs a failure or refusal would be lost, so it stays tinted (`lib/run-log.ts`).
 
 ---
 

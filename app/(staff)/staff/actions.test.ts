@@ -352,29 +352,6 @@ describeWithDatabase("staff Server Actions", () => {
     expect(await query("SELECT 1 FROM job_presses")).toEqual([]);
   });
 
-  it("holds a press in the background until the import of old letters ends it", async () => {
-    vi.stubEnv("DATA_FIXTURES", "");
-    vi.stubEnv("SITE_ORIGIN", "https://pauseai.uk");
-    vi.stubEnv("CRON_SECRET", "s3cret");
-    server.use(
-      http.post(
-        "https://pauseai.uk/.netlify/functions/import-old-letters-background",
-        () => new HttpResponse(null, { status: 202 }),
-      ),
-    );
-    await importOldLettersNow();
-    expect(await query("SELECT started_by AS by FROM job_presses")).toEqual([{ by: "jo@pauseai.uk" }]);
-    server.use(
-      http.post(
-        "https://pauseai.uk/.netlify/functions/import-old-letters-background",
-        () => new HttpResponse(null, { status: 500 }),
-      ),
-    );
-    await query("DELETE FROM job_presses");
-    await importOldLettersNow();
-    expect(await query("SELECT 1 FROM job_presses")).toEqual([]);
-  });
-
   it("keeps a failed press of the import of old letters as a failed run, rather than crashing", async () => {
     vi.stubEnv("DATA_FIXTURES", "1");
     await expect(importOldLettersNow()).resolves.toBeUndefined();

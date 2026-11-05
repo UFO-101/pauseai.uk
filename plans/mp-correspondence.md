@@ -237,15 +237,15 @@ of them if it can't be told which. Replies join by rules 2 and 3 above.
 
 ### The import job
 
-One one-off job on `/staff/import-data`, "Import old letters". It's safe
-to press as often as needed, as it skips what's kept.
+One job on `/staff/import-data`, "Import old letters", run every 5 minutes
+as Luma's is, and when pressed. It's safe to run as often as needed, as it
+skips what's kept.
 
-- **Each press** starts a background function with up to 15 minutes,
-  following `import-luma-background`, and shows on the job's page what it
-  did and how much is left. It stops early the moment Gmail refuses.
-- **Its pace** is at most 2 requests a second, which allows about 1,700
-  in a run. It uses the site's stored tokens for joseph@ and policy@.
-- **In all:** about 10,000 messages, so about 6 presses.
+- **Each run** reads for 20 seconds and shows on the job's page what it did
+  and how much is left. It stops early the moment Gmail refuses.
+- **Its pace** is at most 2 requests a second, so 40 in a run. It uses the
+  site's stored tokens for joseph@ and policy@.
+- **In all:** about 10,000 messages, so one or two days.
 - **What it reads:** Joseph's Sent mail to politicians; what he received
   from their addresses and domains; the group's mail, by
   `list:policy@pauseai.uk OR list:policy-archive@pauseai.uk`; and policy@'s

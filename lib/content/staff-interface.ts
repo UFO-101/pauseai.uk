@@ -1451,6 +1451,14 @@ export const staffCopy = {
     },
     importNow: "Import Luma now",
     never: "Not imported yet.",
+    columns: {
+      events: "⁂ Events",
+      guests: "⁂ Guests changed",
+      hosts: "⁂ Hosts changed",
+      people: "⁂ People",
+      contacts: "⁂ Contacts",
+      supporters: "⁂ Supporters added",
+    },
     // The counts of a run, then why it stopped early, if it did.
     result: (r: {
       events: number;
@@ -1575,6 +1583,8 @@ export const staffCopy = {
       `${accounts.length} ${accounts.length === 1 ? "account" : "accounts"} read: ${accounts.reduce((n, a) => n + a.replies, 0)} replies, ${accounts.reduce((n, a) => n + a.autoReplies, 0)} automatic replies, ${accounts.reduce((n, a) => n + a.bounces, 0)} bounces.`,
     account: (a: { account: string; replies: number; autoReplies: number; bounces: number }) =>
       `${a.account}: ${a.replies} replies, ${a.autoReplies} automatic replies, ${a.bounces} bounces.`,
+    // In a table of runs: the accounts that had anything.
+    found: "⁂ What it found",
     // After an account's line: its history had gone, so the last few days were searched instead.
     restarted: "Searched the last three days again, as Gmail had forgotten where we were up to.",
     failed: (error: string) => `Couldn't be read: ${error}`,
@@ -1711,7 +1721,8 @@ export const staffCopy = {
       before:
         "Reads old emails to politicians from Joseph's and policy@'s mail. Matches them to campaigns or mailings, or marks them as ",
       link: "one-off emails",
-      after: ". Each run reads for up to 15 minutes and carries on from where the last stopped.",
+      after:
+        ". It runs every 5 minutes until it has read everything, each run carrying on from where the last stopped. Pressing the button runs it now.",
     },
     importNow: "Import old letters",
     never: "Not imported yet.",
@@ -1742,7 +1753,7 @@ export const staffCopy = {
       postmarkTexts: number;
     }) =>
       `Read ${r.read} messages, ${r.left} left${r.finished ? ", all done" : ""}: ${r.formTexts} form letters' and ${r.postmarkTexts} Postmark letters' text, ${r.replies} replies, ${r.autoReplies} automatic replies and ${r.oneOffs} one-off emails.`,
-    stoppedByGmail: "It stopped early because Gmail refused a request. Press again later.",
+    stoppedByGmail: "It stopped early because Gmail refused a request. The next run carries on.",
     unreadable: (n: number) => `Gmail wouldn't give ${n} ${n === 1 ? "message" : "messages"}.`,
     joined: "Joined to their sent emails",
     added: "Added from sent emails",
@@ -1750,6 +1761,22 @@ export const staffCopy = {
     unmatched: "Mail matching nothing, in policy@ and the group's archive",
     matchedNothing: (n: number) => `${n} messages matched nothing.`,
     onlyWithSupporters: "Only staff who see supporters can see which.",
+    // How far it has got, over all its runs, above its log.
+    progress: {
+      label: "⁂ Messages read so far",
+      counts: (read: string, left: string) => `⁂ ${read} read, ${left} left`,
+      totals: (p: { joined: string; replies: string; autoReplies: string; oneOffs: string }) =>
+        `⁂ So far: ${p.joined} joined, ${p.replies} replies, ${p.autoReplies} automatic replies, ${p.oneOffs} one-off emails`,
+      refusals: (n: number) => `⁂ Gmail refused ${n} ${n === 1 ? "run" : "runs"}.`,
+    },
+    columns: {
+      read: "⁂ Read",
+      left: "⁂ Left",
+      joined: "⁂ Joined",
+      replies: "⁂ Replies",
+      autoReplies: "⁂ Automatic replies",
+      oneOffs: "⁂ One-off emails",
+    },
   },
   oneOff: {
     // The page's title, and a thread's way back.
@@ -1862,6 +1889,12 @@ export const staffCopy = {
     // A failed run's error, as it came.
     error: (error: string) => `Error: "${error}"`,
     decidedBy: (who: string) => `decided by ${who}`,
+    // A job's frequent runs, in a table, and the stretches of them that are folded.
+    time: "⁂ Time",
+    quiet: (from: string, to: string, n: number) =>
+      `⁂ ${from === to ? from : `${from}–${to}`}: ${n} ${n === 1 ? "run" : "runs"}, nothing new`,
+    stretch: (from: string, to: string, n: number) =>
+      `⁂ ${from === to ? from : `${from}–${to}`}: ${n} ${n === 1 ? "run" : "runs"}, no problems`,
   },
   check: {
     title: "Members of Parliament against Parliament's list",

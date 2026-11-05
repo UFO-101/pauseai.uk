@@ -6,6 +6,7 @@ import type { JobPress } from "@/lib/server/import-runs";
 import {
   type AnyImportRun,
   IMPORT_JOBS,
+  type OldLettersProgress,
   JOB_SCHEDULES,
   type ImportJob,
   importPath,
@@ -19,6 +20,7 @@ import styles from "./ImportJob.module.css";
 import ImportCard, { ImportCards } from "./ImportCard";
 import ImportIcon, { type ImportSource } from "./ImportIcon";
 import JobActions from "./JobActions";
+import OldLettersProgressBar from "./OldLettersProgressBar";
 import type { Decide } from "./Run";
 import RunList from "./RunList";
 import Tag from "@/components/ui/Tag";
@@ -223,6 +225,7 @@ export function ImportJobPage({
   decide,
   airtableTable,
   people = false,
+  progress,
 }: {
   job: ImportJob;
   runs: AnyImportRun[];
@@ -235,6 +238,8 @@ export function ImportJobPage({
   airtableTable: string;
   /** Whether they may see who mail that matched nothing is from. */
   people?: boolean;
+  /** How far the import of old letters has got, on its page. */
+  progress?: OldLettersProgress;
 }): ReactNode {
   return (
     <>
@@ -258,6 +263,7 @@ export function ImportJobPage({
         </div>
       )}
       <JobActions action={run} label={ABOUT[job].button} />
+      {progress && <OldLettersProgressBar progress={progress} />}
       <RunList runs={runs} none={ABOUT[job].none} decide={decide} people={people} press={press} />
     </>
   );

@@ -16,7 +16,10 @@ import ResultBox, { OPEN_UP_TO } from "@/app/(staff)/staff/_components/ResultBox
 import Run from "@/app/(staff)/staff/_components/Run";
 import RunBox from "@/app/(staff)/staff/_components/RunBox";
 import { ImportOverview } from "@/app/(staff)/staff/_components/ImportJob";
+import CountsByMailing from "@/app/(staff)/staff/_components/CountsByMailing";
+import OldLettersProgressBar from "@/app/(staff)/staff/_components/OldLettersProgressBar";
 import RunList from "@/app/(staff)/staff/_components/RunList";
+import RunRows from "@/app/(staff)/staff/_components/RunRows";
 import {
   exampleAppliedSync,
   exampleControlAiResult,
@@ -947,9 +950,100 @@ export const staffAdmin: Group = {
       ],
     },
     {
+      name: "CountsByMailing",
+      file: "app/(staff)/staff/_components/CountsByMailing.tsx",
+      variants: [
+        {
+          label: "What the import of old letters joined",
+          render: () => (
+            <StaffPage as="div">
+              <CountsByMailing
+                heading="An example heading"
+                counts={exampleOldLettersResult.joined}
+                titles={exampleOldLettersResult.titles}
+              />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "OldLettersProgressBar",
+      file: "app/(staff)/staff/_components/OldLettersProgressBar.tsx",
+      variants: [
+        {
+          label: "Partway",
+          render: () => (
+            <StaffPage as="div">
+              <OldLettersProgressBar
+                progress={{
+                  read: 2842,
+                  left: 6120,
+                  joined: 2510,
+                  replies: 212,
+                  autoReplies: 24,
+                  oneOffs: 96,
+                  refusals: 1,
+                  byMailing: { "deepmind-30-june": 2100, "deepmind-25": 410 },
+                  titles: exampleOldLettersResult.titles!,
+                }}
+              />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "RunRows",
+      file: "app/(staff)/staff/_components/RunRows.tsx",
+      variants: [
+        {
+          label: "The import of old letters",
+          render: () => (
+            <StaffPage as="div">
+              <RunRows runs={[exampleRun("import-old-letters", exampleOldLettersResult, { id: 21 })]} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Luma",
+          render: () => (
+            <StaffPage as="div">
+              <RunRows runs={[exampleRun("import-luma", exampleLumaResult, { id: 22 })]} />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "Gmail",
+          render: () => (
+            <StaffPage as="div">
+              <RunRows runs={[exampleRun("read-gmail", exampleGmailResult, { id: 23 })]} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
       name: "RunList",
       file: "app/(staff)/staff/_components/RunList.tsx",
       variants: [
+        {
+          label: "A job that runs often: the newest whole, then rows and a line for runs that found nothing",
+          render: () => (
+            <StaffPage as="div">
+              <RunList
+                none="None"
+                runs={[
+                  exampleRun("import-luma", exampleLumaResult, { id: 31 }),
+                  exampleRun("import-luma", exampleLumaResult, { id: 32 }),
+                  exampleRun("import-luma", exampleLumaResult, { id: 33, status: "unchanged" }),
+                  exampleRun("import-luma", exampleLumaResult, { id: 34, status: "unchanged" }),
+                  exampleRun("import-luma", { ...exampleLumaResult, stoppedBy: "time" }, { id: 35 }),
+                ]}
+              />
+            </StaffPage>
+          ),
+        },
         {
           label: "A job's page: each day headed",
           render: () => (

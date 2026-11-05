@@ -1,6 +1,6 @@
 import "server-only";
 import { docFromMarkup, toText } from "@/lib/letter-format";
-import type { OldLettersImportResult } from "@/lib/import-runs";
+import { type ImportJob, NIGHTLY, type OldLettersImportResult, type OldLettersProgress } from "@/lib/import-runs";
 import { ownWords } from "@/lib/letter-changes";
 import {
   addressesIn,
@@ -29,10 +29,10 @@ import {
   type PoliticianBook,
 } from "@/lib/one-off";
 import { staffCopy } from "@/lib/content/staff-interface";
-import { query } from "./db";
+import { query, transaction } from "./db";
 import { gmailAccess } from "./gmail-accounts";
 import { keepReply, noteAutoReply } from "./gmail-reading";
-import { endPress, keepingFailure, recordRun } from "./import-runs";
+import { keepingFailure, recordRun } from "./import-runs";
 import { wholeTextOf } from "./letter-threads";
 import { messageIds, parseMime } from "./mime";
 import { addressesOn, headerText, keepOneOff, ONE_OFF_HEADERS, rfcIdOf, senderOf } from "./one-off-emails";
@@ -51,15 +51,15 @@ import { connectedAccounts, politicianBook } from "./politician-book";
 import { isMachineReply } from "./postmark-webhooks";
 import { htmlAsText } from "./old-letters-text";
 
-// The one-off import of the letters written before the site could send them
-// (import-old-letters): each press starts a background function, which calls
-// importOldLettersChunk again and again, as the site's own functions last only
-// seconds, for up to 15 minutes. Its place is kept in old_letters_mail, so
-// pressing it again takes up what's left and skips what's kept. Its order:
-// make the mailings, copy the form letters' text, read each sent email and
-// join it, read the replies, keep the one-off emails, then the templates and
-// replied_at. Gmail's limit is shared with the site, so it reads at most two
-// a second, and stops the moment Gmail refuses.
+// The import of the letters written before the site could send them
+// (import-old-letters): a run every 5 minutes, and one for each press of its
+// button. Each reads for seconds, as Gmail's limit is shared with the site, and
+// carries on from where the last stopped: old_letters_mail has what's read, and
+// the last run how far listing got. Once one finishes, the schedule does nothing
+// more; a press goes through it all again, skipping what's kept. Its order: make
+// the mailings, copy the form letters' text, read each sent email and join it,
+// read the replies, keep the one-off emails, then the templates and replied_at.
+// It reads at most two a second, and stops the moment Gmail refuses.
 
 const JOB = "import-old-letters";
 
@@ -70,8 +70,8 @@ const POLICY = "policy@pauseai.uk";
 /** The gap between Gmail requests: at most 2 a second. */
 const PACE_MS = 500;
 
-/** How long one call of the site works, well inside what a function is given. */
-const CHUNK_MS = 20_000;
+/** How long a run reads, well inside what a function is given. */
+const READ_MS = 20_000;
 
 /** The group's mail, as Gmail lists it. */
 const GROUP_SEARCH = "list:policy@pauseai.uk OR list:policy-archive@pauseai.uk";
@@ -79,21 +79,8 @@ const GROUP_SEARCH = "list:policy@pauseai.uk OR list:policy-archive@pauseai.uk";
 /** How many addresses a Gmail search names at once. */
 const ADDRESSES_A_SEARCH = 30;
 
-/** The whole of a run's reading: its place within listing, and what it found. */
-export type ChunkOptions = {
-  startedBy: string;
-  /** The run it continues, once its first call has made it. */
-  runId?: number;
-  /** For tests, how long to wait between Gmail requests, and to work for. */
-  paceMs?: number;
-  chunkMs?: number;
-};
-
-/** What one call did: its run, and whether there's more to do. */
-export type ChunkResult = { runId: number; more: boolean; result: OldLettersImportResult };
-
 /** Why reading stopped short. */
-class ChunkOver extends Error {}
+class TimeUp extends Error {}
 
 /** A fresh run's account of itself. */
 function emptyResult(): OldLettersImportResult {
@@ -120,7 +107,7 @@ function emptyResult(): OldLettersImportResult {
 }
 
 type Reader = {
-  /** Waits its turn, and stops the chunk once its time is up. */
+  /** Waits its turn, and stops the run once its time is up. */
   turn(): Promise<void>;
   book: PoliticianBook;
   connected: string[];
@@ -128,12 +115,12 @@ type Reader = {
   result: OldLettersImportResult;
 };
 
-/** Waits for each Gmail request's turn, and stops the call when its time is up. */
+/** Waits for each Gmail request's turn, and stops the run when its time is up. */
 function pacer(paceMs: number, until: number, result: OldLettersImportResult) {
   let next = 0;
   return async () => {
     const at = Date.now();
-    if (at >= until) throw new ChunkOver();
+    if (at >= until) throw new TimeUp();
     if (next > at) await new Promise((resolve) => setTimeout(resolve, next - at));
     next = Math.max(at, next) + paceMs;
     result.requests++;
@@ -352,7 +339,6 @@ async function asOneOff(
   raw?: Buffer,
   people: number[] = [],
 ): Promise<Handled> {
-  reader.result.oneOffs++;
   const token = reader.tokens.get(account)!;
   await reader.turn();
   const whole = raw ?? (await gmailRawMessage(token, message.id));
@@ -364,6 +350,7 @@ async function asOneOff(
      SELECT $1, id, $2, 'thread' FROM unnest($3::text[]) AS id ON CONFLICT DO NOTHING`,
     [account, message.threadId, siblings],
   );
+  reader.result.oneOffs++;
   return { outcome: "one_off" };
 }
 
@@ -383,12 +370,12 @@ async function handleSent(reader: Reader, account: string, id: string): Promise<
   if (isReplySubject(subject, message.headers.get("in-reply-to"))) {
     const letter = await letterByThread(reader, account, message);
     if (letter) {
-      reader.result.replies++;
       await reader.turn();
       await keepReply(account, reader.tokens.get(account)!, letter, message, {
         from: senderOf(message.headers),
         fromUs: true,
       });
+      reader.result.replies++;
       return { outcome: "reply", letterId: letter, rfc };
     }
     return { ...(await asOneOff(reader, account, message)), rfc };
@@ -490,8 +477,8 @@ async function handlePoliticianMessage(
   const text = wholeTextOf(parseMime(raw.toString("latin1")));
   letter ??= placeReply(letters, { at, subject, automatic, text, group })?.id;
   if (!letter) return { ...(await asOneOff(reader, account, message, raw, people)), rfc };
-  reader.result.replies++;
   await keepReply(account, token, letter, message, { raw, from: senderOf(message.headers), fromUs: false });
+  reader.result.replies++;
   const quoted =
     AUGUST_SUBJECT.test(subject) && /join \d+ of your/.test(text.replace(/\s+/g, " ")) ? quotedLetter(text) : undefined;
   return { outcome: "reply", letterId: letter, rfc, quoted };
@@ -532,13 +519,13 @@ async function keepPostmarkCopy(
     [postmarkId],
   );
   if (!letter) return { outcome: "skipped", rfc };
-  reader.result.postmarkTexts++;
   await reader.turn();
   const raw = await gmailRawMessage(reader.tokens.get(account)!, message.id);
   await query("UPDATE letters_from_supporters SET letter = $2 WHERE id = $1 AND letter IS NULL", [
     letter.id,
     JSON.stringify(docFromMarkup(wholeTextOf(parseMime(raw.toString("latin1"))))),
   ]);
+  reader.result.postmarkTexts++;
   return { outcome: "skipped", letterId: letter.id, rfc };
 }
 
@@ -604,7 +591,7 @@ async function handleOne(reader: Reader, account: string, id: string, source: st
   }
 }
 
-/** Works through what's listed, oldest first in each mailbox, sent mail before replies, until the call's time is up. */
+/** Works through what's listed, oldest first in each mailbox, sent mail before replies, until the run's time is up. */
 async function readQueue(reader: Reader): Promise<void> {
   for (;;) {
     const batch = await query<{ account: string; id: string; source: string }>(
@@ -690,7 +677,9 @@ async function buildTemplates(reader: Reader): Promise<void> {
     }
     if (!mailing.template) continue;
     const letters = await query<{ id: number; text: string }>(
-      "SELECT id::int AS id, own_text AS text FROM letters_from_pauseai WHERE mailing_id = $1 AND own_text IS NOT NULL",
+      // Only a mailing with no template yet: after that, only the letters that didn't fit have their text.
+      `SELECT id::int AS id, own_text AS text FROM letters_from_pauseai
+       WHERE mailing_id = $1 AND own_text IS NOT NULL AND (SELECT imported_text IS NULL FROM mailings WHERE id = $1)`,
       [id],
     );
     const template = letters.length ? templateOf(letters.map((letter) => letter.text)) : undefined;
@@ -741,66 +730,108 @@ async function leftToRead(): Promise<number> {
   return left;
 }
 
+/** The newest run that didn't fail, which says where the next carries on. */
+async function lastRun(): Promise<OldLettersImportResult | undefined> {
+  const [last] = await query<{ result: OldLettersImportResult }>(
+    `SELECT result FROM import_runs WHERE job = $1 AND status <> 'failed' ORDER BY at DESC, id DESC LIMIT 1`,
+    [JOB],
+  );
+  return last?.result;
+}
+
+/** As far as a run gets in its time, keeping its place and its run. Gmail refusing stops it there, with the reason in its result. */
+async function readSome(startedBy: string, paceMs: number, readMs: number): Promise<OldLettersImportResult> {
+  const last = await lastRun();
+  if (startedBy === NIGHTLY && last?.finished) return last;
+  const carrying = last?.finished === false ? last : undefined;
+  const result = emptyResult();
+  const searchesDone = { n: carrying?.searchesDone ?? 0 };
+  const reader: Reader = {
+    turn: pacer(paceMs, Date.now() + readMs, result),
+    book: await politicianBook(),
+    connected: await connectedAccounts(),
+    tokens: new Map([
+      [JOSEPH, await gmailAccess(JOSEPH)],
+      [POLICY, await gmailAccess(POLICY)],
+    ]),
+    result,
+  };
+  try {
+    if (!carrying) {
+      await makeMailings();
+      await copyFormTexts(reader);
+    }
+    await list(reader, searchesDone);
+    await readQueue(reader);
+    await placeUnjoined(reader);
+    await buildTemplates(reader);
+    await setRepliedAt(reader);
+    result.finished = true;
+  } catch (error) {
+    if (error instanceof GmailError && (error.status === 403 || error.status === 429)) {
+      console.error(error);
+      result.stoppedBy = "gmail";
+      result.stoppedWhy = error.message;
+    } else if (!(error instanceof TimeUp)) throw error;
+  }
+  result.searchesDone = searchesDone.n;
+  result.titles = await countedTitles();
+  result.left = await leftToRead();
+  await recordRun(JOB, startedBy, "ok", result);
+  return result;
+}
+
 /**
- * One call's work on a press of the import: as far as it gets in its time,
- * keeping its place, and saying whether there's more. It says so in its run,
- * which each call of a press adds to. Gmail refusing stops the press there
- * with the reason in its result, as its limit is the site's too.
+ * A run of the import, keeping it in the log. Only one runs at a time: a second
+ * started meanwhile, a press during a scheduled run, stops at once, leaving no
+ * record. The transaction only holds that lock, so what's read stays kept
+ * whatever becomes of the run.
  */
-export function importOldLettersChunk({
-  startedBy,
-  runId,
-  paceMs = PACE_MS,
-  chunkMs = CHUNK_MS,
-}: ChunkOptions): Promise<ChunkResult> {
-  return keepingFailure(JOB, startedBy, async () => {
-    const [earlier] = runId
-      ? await query<{ result: OldLettersImportResult }>("SELECT result FROM import_runs WHERE id = $1", [runId])
-      : [];
-    const result: OldLettersImportResult = earlier?.result ?? emptyResult();
-    const until = Date.now() + chunkMs;
-    const searchesDone = { n: result.searchesDone ?? 0 };
-    const reader: Reader = {
-      turn: pacer(paceMs, until, result),
-      book: await politicianBook(),
-      connected: await connectedAccounts(),
-      tokens: new Map([
-        [JOSEPH, await gmailAccess(JOSEPH)],
-        [POLICY, await gmailAccess(POLICY)],
-      ]),
-      result,
-    };
-    let more = false;
-    try {
-      if (!runId) {
-        await makeMailings();
-        await copyFormTexts(reader);
-      }
-      await list(reader, searchesDone);
-      await readQueue(reader);
-      await placeUnjoined(reader);
-      await buildTemplates(reader);
-      await setRepliedAt(reader);
-      result.finished = true;
-    } catch (error) {
-      if (error instanceof ChunkOver) more = true;
-      else if (error instanceof GmailError && (error.status === 403 || error.status === 429)) {
-        console.error(error);
-        result.stoppedBy = "gmail";
-        result.stoppedWhy = error.message;
-      } else throw error;
-    }
-    result.searchesDone = searchesDone.n;
-    result.titles = await countedTitles();
-    result.left = await leftToRead();
-    if (!more) await endPress(JOB);
-    if (runId) {
-      await query("UPDATE import_runs SET result = $2 WHERE id = $1", [runId, JSON.stringify(result)]);
-      return { runId, more, result };
-    }
-    const id = await recordRun(JOB, startedBy, "ok", result);
-    return { runId: id, more, result };
-  });
+export function importOldLetters(
+  startedBy: string,
+  paceMs = process.env.DATA_FIXTURES === "1" ? 0 : PACE_MS,
+  readMs = READ_MS,
+): Promise<OldLettersImportResult> {
+  return keepingFailure(JOB, startedBy, () =>
+    transaction(async (db) => {
+      const [{ locked }] = await query<{ locked: boolean }>(
+        "SELECT pg_try_advisory_xact_lock(hashtext($1)) AS locked",
+        [JOB],
+        db,
+      );
+      return locked ? readSome(startedBy, paceMs, readMs) : emptyResult();
+    }),
+  );
+}
+
+/** How far a job has got, for its page: only the import of old letters says. */
+export async function jobProgress(job: ImportJob): Promise<OldLettersProgress | undefined> {
+  return job === JOB ? oldLettersProgress() : undefined;
+}
+
+/** How far the import has got, over all its runs, from what it has kept of each message. */
+async function oldLettersProgress(): Promise<OldLettersProgress> {
+  const [counts] = await query<Omit<OldLettersProgress, "refusals" | "byMailing" | "titles">>(
+    `SELECT count(*) FILTER (WHERE outcome IS NOT NULL)::int AS read, count(*) FILTER (WHERE outcome IS NULL)::int AS left,
+       count(*) FILTER (WHERE outcome IN ('joined', 'added'))::int AS joined, count(*) FILTER (WHERE outcome = 'reply')::int AS replies,
+       count(*) FILTER (WHERE outcome = 'auto_reply')::int AS "autoReplies", count(*) FILTER (WHERE outcome = 'one_off')::int AS "oneOffs"
+     FROM old_letters_mail`,
+  );
+  const [{ refusals }] = await query<{ refusals: number }>(
+    `SELECT count(*)::int AS refusals FROM import_runs WHERE job = $1 AND result->>'stoppedBy' = 'gmail'`,
+    [JOB],
+  );
+  const mailings = await query<{ key: string; total: number }>(
+    `SELECT coalesce(o.mailing_key, s.campaign) AS key, count(*)::int AS total
+     FROM old_letters_mail o LEFT JOIN letters_from_supporters s ON s.id = o.letter_id
+     WHERE o.outcome IN ('joined', 'added') GROUP BY 1 ORDER BY 2 DESC, 1`,
+  );
+  return {
+    ...counts,
+    refusals,
+    byMailing: Object.fromEntries(mailings.map(({ key, total }) => [key, total])),
+    titles: await countedTitles(),
+  };
 }
 
 /** What the result's counts are called: the mailings and campaigns they're under, by key. */
@@ -810,15 +841,4 @@ async function countedTitles(): Promise<Record<string, string>> {
      UNION ALL SELECT slug, title FROM campaigns`,
   );
   return { ...Object.fromEntries(rows.map(({ key, title }) => [key, title])), ...staffCopy.oldLetters.mailingTitles };
-}
-
-/** The whole of a press, in one call, as a fixture build does it: no background functions there. */
-export async function importOldLetters(
-  startedBy: string,
-  paceMs = 0,
-  chunkMs = CHUNK_MS,
-): Promise<OldLettersImportResult> {
-  let chunk = await importOldLettersChunk({ startedBy, paceMs, chunkMs });
-  while (chunk.more) chunk = await importOldLettersChunk({ startedBy, runId: chunk.runId, paceMs, chunkMs });
-  return chunk.result;
 }
