@@ -53,8 +53,8 @@ backup/                   the nightly database backup: a Cloudflare Worker and
 proxy.ts                  turns away /staff requests without a session cookie
 tests/                    Playwright suites, the route list, fixtures,
                           Vitest setup
-  checks/                 tests that scan the whole repo (placeholders,
-                          coverage ignores, assets, staff auth)
+  checks/                 tests that scan the whole repo (placeholder copy,
+                          thin pages, staff auth and the rest)
 scripts/                  database, storyboard and data scripts
                           (scripts/README.md)
 docs/
@@ -143,12 +143,13 @@ the code should go instead. The rules below say which ones are enforced.
 - **Browsers.** The site is built for browsers up to about a year old. In
   older ones it may look a bit off (the mobile menu's scroll lock needs
   `:has()`, Firefox 121+), but it must still work: every page readable,
-  every link and form usable. Use a feature that new without asking; flag
-  one that would break an older browser.
+  every link and form usable. Use a feature that's new without asking;
+  flag one that would break an older browser.
 - **Layouts own the chrome.** Pages don't render `<Nav>`; their route
   group's layout does.
-- **Outside services** (Airtable, Luma, Postmark, postcodes.io, Stripe,
-  Turnstile, Parliament, ControlAI's letter) are each called from one binding in
+- **Outside services** (Airtable, Luma, Postmark, Gmail, Netlify Blobs,
+  postcodes.io, Stripe, Turnstile, Parliament, ControlAI's letter) are each
+  called from one binding in
   `lib/server/outside-services/`, through `outsideFetch`
   (`outside-fetch.ts` there), so tests and fixture builds can answer
   instead. The rest of the code calls the binding's functions. A new
@@ -177,11 +178,10 @@ the code should go instead. The rules below say which ones are enforced.
   Netlify applies before each production publish and to each preview's copy
   of the database. They must be backward compatible (expand, then contract)
   and work with or without a transaction around the file. Once pushed, a
-  migration is never edited: a preview's database may have applied it, and
-  Netlify refuses a migration changed since, so a change is a new file. With each one,
-  run `npm run db:schema` and commit `netlify/database/schema.sql`, the
-  whole schema as the migrations leave it, so the PR shows what changed. A
-  test fails while it's out of date. Tables follow the SQL rules below.
+  migration is never edited, as Netlify refuses one changed since it was
+  applied: a change is a new file. Each one is committed with
+  `netlify/database/schema.sql` (`docs/development.md`, "Adding a
+  migration"). Tables follow the SQL rules below.
 - **Links to the site** in emails and redirects are built with
   `siteUrl(path, request)` (`lib/site-url.ts`), on the deploy's own address
   (`SITE_ORIGIN`, set in `next.config.ts` from Netlify's settings):
@@ -198,8 +198,11 @@ the code should go instead. The rules below say which ones are enforced.
   `CRON_SECRET`. The work itself stays in the Next app. Every one is a job
   on `/staff/import-data`, whether or not it imports anything, despite the
   page's name, so that staff can see its runs and press its button
-  (`docs/domain-concepts.md`, "Imports"). The backup Worker in `backup/` runs
-  on Cloudflare, outside the site, so it isn't one of them.
+  (`docs/domain-concepts.md`, "Imports"). A scheduled function gets 30
+  seconds; a job that needs longer has a background function beside it
+  (`<job>-background`), which the scheduled one starts and which calls the
+  route for up to 15 minutes. The backup Worker in `backup/` runs on
+  Cloudflare, outside the site, so it isn't one of them.
 - **Write it once.** Pages that share a shape share a component: each local
   group page is `LocalGroupPage` plus its content in
   `lib/content/local-group-pages.tsx`, and each flyering tracker is
@@ -333,10 +336,9 @@ ROLE dev SET session_preload_libraries = 'auto_explain'`, with
 on`, run the tests, read the plans in Postgres's log, and reset the three.
 
 The symptom is a test that times out in CI and passes here in milliseconds.
-The fix is a query the planner prices lower, not JIT turned off (it was
-once, and then the query was fixed instead): Postgres prices views of
-views of unions in the millions however few rows they hold. What has
-brought them under:
+The fix is a query the planner prices lower, not JIT turned off: Postgres
+prices views of views of unions in the millions however few rows they
+hold. What brings them under:
 
 - Grouping each source once and joining, not a subquery per row:
   `supporters_summary`, and the newest email in `supporters_list`.
@@ -346,11 +348,10 @@ brought them under:
   each up by ID in a loop, declared with a small `ROWS`, so the outer query
   is planned as if there are few (`supporters_added()`).
 
-A migration can't be changed once it's in, so the one fix left for a costly
-one is the statistics: `migrate()` analyses every table Postgres hasn't yet
-before each migration, as autovacuum has a live database's. Without that,
-creating `supporters_list` in 0045 and 0047 cost over 100,000, and a
-migration's test that runs every later migration timed out in CI.
+`migrate()` analyses every table Postgres hasn't yet before each migration,
+as autovacuum has a live database's, so a migration that builds a view over
+the tables is planned as production plans it, and not priced in the
+hundreds of thousands on a fresh test database.
 
 Beyond that, no speculative indexes: one costs every write to its table and
 is easy to add later, when a query that's actually used turns out slow.
@@ -408,13 +409,11 @@ only a variant. The look itself (colours, type, buttons, cards) is in
   read is an attribute (`data-active`, `aria-pressed`, `aria-expanded`), not
   a class.
 - **Shared pieces are components.** Used by two or more routes, in
-  `components/`: `components/ui/` has the site's kit (`Button`,
-  `IconButton`, `LinkButton`, `PageHero`, `Section`, `Foreword`, `Closing`,
-  `Callout`, `ButtonRow`, `Actions`, `PhotoCard`, `FeatureCard`, `Lightbox`,
-  `ProsePage`, `SmallPrint`; the forms' `Field`, `Controls` and `Form`;
-  `Tag`, `Table`, `Text` and `StatusMessage`); `components/layout/` the header, footer and banners;
-  `components/events/`, `components/people/` and `components/tools/` the
-  pieces of those areas. Used by one route, in its `_components/`, with a
+  `components/`: `components/ui/` has the site's kit (buttons, the page
+  hero and sections, cards, the forms' pieces, tags, tables and text; the
+  gallery's UI group shows them all); `components/layout/` the header,
+  footer and banners; the other folders the pieces of one area each.
+  Used by one route, in its `_components/`, with a
   small kit there where several of its components share a shape (the
   staff interface's page frame in `app/(staff)/staff/_components/ui/`). A
   piece a second route needs moves to `components/`: the collateral
@@ -429,11 +428,8 @@ only a variant. The look itself (colours, type, buttons, cards) is in
 ### The weekly briefings
 
 `/campaigns/briefings` follows its designer's A4 layout, made as an HTML
-page each week: a white sheet on the page, a masthead (logo, byline,
-the week's calendar, title, an orange rule), then boxes ruled in a topic's
-colour with the heading on a tab, and its own charts. Its sizes are the
-design's, scaled so the text is 16px. It follows the rules above, with these
-particulars:
+page each week (`docs/style-guide.md`, "The briefings and the march"). It
+follows the rules above, with these particulars:
 
 - **A briefing is data and its kit.** `lib/content/briefings.tsx` gives each
   briefing's week and key stories as data (its summary is the key stories'
@@ -453,10 +449,9 @@ particulars:
 ### The march sign-up
 
 `/protests/march-against-ai-extinction-nov-26` (`app/(march)/protests/march-against-ai-extinction-nov-26/`)
-is a sub-site in its
-own poster style, deliberately unlike the rest of the site: ink and paper,
-a hotter orange, Anton for headings, square corners and hard shadows. It
-follows the rules above, with these exceptions:
+is a sub-site in its own poster style (`docs/style-guide.md`, "The
+briefings and the march"). It follows the rules above, with these
+exceptions:
 
 - **One stylesheet for the sub-site.** Its components share
   `_components/march.module.css`, in the order its rules cascade, and take

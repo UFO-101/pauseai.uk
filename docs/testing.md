@@ -115,10 +115,10 @@ caption)` (`tests/storyboard/frame.ts`) shows an email from the outbox in
   the `Date` header is the fixed clock's, and a login link's token and a
   letter's reply address come from a seed (`randomId` in
   `lib/server/random-id.ts`). A fixture build knows the address it's served at
-  (`FIXTURE_ORIGIN`, set by `scripts/serve-fixture.mjs` and
-  `scripts/serve-main.mjs`), as the live site knows its own, so every
-  link in an email is whole, whether or not the code that sent it had a
-  request; the picture shows it at `pauseai.example.org`.
+  (`FIXTURE_ORIGIN`, from `tests/fixture-env.mjs`, which both fixture
+  builds use), as the live site knows its own, so every link in an email
+  is whole, whether or not the code that sent it had a request; the
+  picture shows it at `pauseai.example.org`.
 - **Gmail and Outlook are checked from the HTML.** `lib/letter-format.test.ts`
   runs the letter's HTML through doiuse-email
   (`@jsx-email/doiuse-email`, the Can I email tables,
@@ -204,33 +204,37 @@ how a page looks. CI runs it in three parts at once, each a job of its own
 all three have; `.github/workflows/ci.yml` says why.
 
 **The review** (`scripts/storyboard.mjs`) runs the suite against this
-branch with screenshots, meanwhile building and serving main if it looks to be needed
-(`scripts/serve-main.mjs`: a git worktree of where this branch left origin/main, the merge base a pull request compares with, kept in your temp folder, with Next's cache; nothing is fetched,
-with its own `npm ci` when its lockfile changes; its output is
-`main-server.log` in the run's folder), then runs against it the
-flows that took pictures on this branch (its failures are just missing
-frames; a flow without frames has nothing to compare). Then
-`tests/storyboard/report/board.ts` pairs the frames by section, flow and
-caption, diffs them pixel by pixel, a few at a time and without decoding a
-pair whose files are the same, and the review opens
-`test-results/storyboard/index.html`, which goes to the
-newest run's page: the flows in
-sections, each frame captioned and pictured on desktop and phone, with this
-branch's picture, main's and the diff, a lightbox, a phone/desktop toggle
-that stays on the flow being looked at, a control to show all the flows, only those with changed frames (just those frames), only those that failed, or only those that failed on main (Main failed: a flow there has nothing fair to compare with, so isn't in Changed), with the count of each, a box
-that filters flows by their section, title, captions or story (`/` to start,
-Escape to clear), and a failed flow's message under its last frame. The
-sections come under three headings, the public site, the staff pages, and
-the tools and checks, in the order of `SECTIONS`
-(`tests/storyboard/report/frames.ts`), which names each; the component
-gallery is last. The flows in each keep their spec file's order. The
-sidebar follows the page: the section in view is open and the flow in
-view marked, the rest folded, but a section opened or shut by hand stays
-so. Which of All, Changed, Failed and Main failed is chosen is kept for the tab, and the filter's words on a
-reload. The same data is in
-`test-results/storyboard/latest/storyboard.json`, for an agent.
-Both are local only and gitignored. A difference never fails; only this
-branch's checks do, and the exit code is theirs.
+branch with screenshots, and against main for the flows that took pictures
+(a flow without frames has nothing to compare), then pairs the frames by
+section, flow and caption, diffs them pixel by pixel, and opens
+`test-results/storyboard/index.html`, the newest run's page. Main is built
+and served by `scripts/serve-main.mjs`: a git worktree of where this branch
+left origin/main, the merge base a pull request compares with, kept in
+your temp folder with Next's cache and its own `npm ci` when its lockfile
+changes; nothing is fetched, and its output is `main-server.log` in the
+run's folder. The page shows:
+
+- the flows in sections, each frame captioned and pictured on desktop and
+  phone, with this branch's picture, main's and the diff, in a lightbox,
+  and a phone/desktop toggle that stays on the flow being looked at;
+- a control to show all the flows, only those with changed frames (just
+  those frames), only those that failed, or only those that failed on main
+  (a flow there has nothing fair to compare with, so isn't in Changed),
+  with the count of each; a box that filters flows by their section,
+  title, captions or story (`/` to start, Escape to clear); and a failed
+  flow's message under its last frame. The choice and the filter's words
+  are kept on a reload;
+- the sections under three headings, the public site, the staff pages, and
+  the tools and checks, in the order of `SECTIONS`
+  (`tests/storyboard/report/frames.ts`), which names each; the component
+  gallery last; and the flows in each in their spec file's order. The
+  sidebar follows the page: the section in view is open and the flow in
+  view marked, the rest folded, but a section opened or shut by hand stays
+  so.
+
+The same data is in `test-results/storyboard/latest/storyboard.json`, for
+an agent. Both are local only and gitignored. A difference never fails;
+only this branch's checks do, and the exit code is theirs.
 
 **Runs.** Each run has its own folder,
 `test-results/storyboard/runs/<when>/`, with every picture its page shows,
@@ -433,14 +437,13 @@ Netlify, aren't caught here; check previews by hand.
 ## The component gallery
 
 Every component, and each of its major variants, rendered on fixture data,
-a page per group: `/gallery` lists the groups (the design tokens, the UI kit
-and its forms at both densities, the header and footer, each area of the
-site, the tools, and the staff interface in a group for each of its kit,
-supporters, letters, politicians and asks, mailings and events, and admin),
-and `/gallery/<group>` (`/gallery/ui`, `/gallery/staff-letters`) shows
-that group's components, with a link to each at the top. It exists only in fixture
-builds (`DATA_FIXTURES=1`); production answers 404, and the pages are
-noindex.
+a page per group: `/gallery` lists the groups (the design tokens, the UI
+kit and its forms at both densities, the header and footer, each area of
+the site, the tools, and the staff interface in several), and
+`/gallery/<group>` (`/gallery/ui`, `/gallery/staff-letters`) shows that
+group's components, with a link to each at the top. It exists only in
+fixture builds (`DATA_FIXTURES=1`); production answers 404, and the pages
+are noindex.
 
 - **Look there first.** Before making a component, find out whether one
   already does the job, and how the site's pieces look side by side. With
@@ -579,6 +582,7 @@ npm run test:node         # Vitest node project (also runs in npm run build)
 npm run lint              # ESLint, failing on warnings too (also runs in npm run build)
 npm run lint:css          # Stylelint (also runs in npm run build)
 npm run lint:unused       # Knip: unused files, exports and dependencies
+npm run format:check      # Prettier, on everything but plans/ (npm run format fixes it)
 npm run test:browser      # Vitest browser project
 npm run test:watch        # Vitest in watch mode
 npm run test:storyboard   # Playwright: the storyboard's gate, on a fixture build
@@ -586,8 +590,10 @@ npm run storyboard        # Playwright: the storyboard with screenshots, against
 npm run test:report       # open the last Playwright report
 ```
 
-- `npm run build` runs only the Node project, because Netlify's build has no
-  browser.
+- `npm run build` runs the types, the Node project and the linters first,
+  then `next build`. Only the Node project, because Netlify's build has no
+  browser. While any copy is a placeholder, `tests/checks/placeholder-copy.test.ts`
+  fails, and so does the build: placeholders can't be deployed (AGENTS.md).
 - The storyboard builds and starts the site itself, or reuses a server
   already on port 3100 (except in CI). That's not the dev server's port, so
   a running `npm run dev` doesn't get in the way.

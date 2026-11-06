@@ -1,4 +1,4 @@
-# PauseAI UK — Design Style Guide
+# Style guide
 
 How the site looks, and where that lives in the code.
 
@@ -21,23 +21,26 @@ writing styles are in `docs/code-structure.md` ("Styling"). Where this
 guide and the code differ, the code is what visitors see; fix whichever is
 wrong.
 
-## Design Philosophy: "Warm Authority"
+## The look: warm authority
 
-The old site used a dark, techy look (black backgrounds, orange accents) that read more like a startup than a citizens' movement. This design is **warm, light and human-centred**, and communicates both **gravitas** (we are serious, credible, and organised) and **friendliness** (we are open, hopeful, and welcoming).
+The site is warm, light and human-centred. It has to carry both gravitas
+(we are serious, credible and organised) and friendliness (we are open,
+hopeful and welcoming). It takes its cue from the brand image, a white
+dove against a warm terracotta sky with bold black type: hope, peace and
+determined action.
 
-Inspired by the brand image — a white dove against a warm terracotta sky with bold black typography — the design evokes **hope, peace, and determined action**.
+1. **Warmth over darkness.** Light backgrounds with warm undertones, not
+   an all-black palette, so it feels inviting.
+2. **Bold clarity.** A strong typographic hierarchy: headlines hit hard,
+   body text breathes.
+3. **Generous space.** Ample whitespace signals competence and calm. No
+   visual clutter.
+4. **Subtle depth.** Soft shadows and gentle layering give dimension
+   without flashiness.
+5. **People first.** Photography, rounded shapes and warm colours keep the
+   focus on people, not technology.
 
-### Core Principles
-
-1. **Warmth over darkness** — Light backgrounds with warm undertones replace the all-black palette. This feels inviting, not exclusionary.
-2. **Bold clarity** — Strong typographic hierarchy creates authority. Headlines hit hard; body text breathes.
-3. **Generous space** — Ample whitespace signals competence and calm confidence. No visual clutter.
-4. **Subtle depth** — Soft shadows, warm gradients, and gentle layering create dimension without flashiness.
-5. **Human first** — Photography, rounded shapes, and warm colours keep the focus on people, not technology.
-
----
-
-## Colour Palette
+## Colours
 
 Every colour is a variable in `styles/tokens.css`, drawn on the
 gallery's tokens page (`/gallery/tokens`). Stylelint refuses a hex,
@@ -45,27 +48,27 @@ gallery's tokens page (`/gallery/tokens`). Stylelint refuses a hex,
 new token there. An alpha uses a token's `-rgb` channels:
 `rgb(var(--white-rgb) / 0.1)`.
 
-### Main Colours
+### Main colours
 
-| Token              | Hex       | Usage                                  |
-| ------------------ | --------- | -------------------------------------- |
-| `--bg`             | `#FDF8F3` | Page background — warm cream/parchment |
-| `--surface`        | `#FFFFFF` | Cards, elevated surfaces               |
-| `--surface-2`      | `#F5EDE4` | Muted sections, alternate backgrounds  |
-| `--text`           | `#1A1612` | Primary text — warm near-black         |
-| `--text-secondary` | `#5C544A` | Secondary/body text — warm dark grey   |
-| `--muted`          | `#8A7F73` | Captions, meta text — warm medium grey |
+| Token              | Hex       | Usage                                 |
+| ------------------ | --------- | ------------------------------------- |
+| `--bg`             | `#FDF8F3` | Page background: warm cream           |
+| `--surface`        | `#FFFFFF` | Cards, raised surfaces                |
+| `--surface-2`      | `#F5EDE4` | Muted sections, alternate backgrounds |
+| `--text`           | `#1A1612` | Text: warm near-black                 |
+| `--text-secondary` | `#5C544A` | Secondary text: warm dark grey        |
+| `--muted`          | `#8A7F73` | Captions and meta text: warm mid grey |
 
-### Accent Colours
+### Accent colours
 
 | Token                        | Hex       | Usage                               |
 | ---------------------------- | --------- | ----------------------------------- |
 | `--accent`, `--pause-orange` | `#E57226` | The PauseAI orange: links, buttons  |
-| `--accent-strong`            | `#E57226` | Hover states (the same orange now)  |
+| `--accent-strong`            | `#E57226` | Hover states (the same orange)      |
 | `--accent-light`             | `#F0D4BC` | Light accent fills, tag backgrounds |
 | `--accent-bg`                | `#FFFFFF` | Accent sections                     |
 
-### Utility Colours
+### Border and shadow colours
 
 | Token             | Hex                      | Usage                  |
 | ----------------- | ------------------------ | ---------------------- |
@@ -79,11 +82,9 @@ new token there. An alpha uses a token's `-rgb` channels:
 (`--danger`, `--status-green` and the rest). Use one of those before
 adding another.
 
-### Rationale
-
-The palette draws directly from the brand image: the terracotta sky becomes our accent, the dove's white becomes our surfaces, and the bold black typography becomes our text colour. Everything is warm-toned — no blue-greys or cool neutrals.
-
----
+The palette is the brand image's: the terracotta sky is the accent, the
+dove's white the surfaces, and the bold black type the text colour.
+Everything is warm-toned, with no blue-greys or cool neutrals.
 
 ## Typography
 
@@ -95,10 +96,10 @@ Body and the rest: Inter, weight 400/500, self-hosted (public/fonts)
 Accent labels:     Inter, weight 600, uppercase, tracked
 ```
 
-- **Lato** — bold and plain, with a commanding presence at heavy weights.
-- **Inter** — clean and highly legible, excellent at small sizes for body text, strong enough for subheadings.
+Lato is bold and plain, commanding at heavy weights. Inter is clean and
+legible at small sizes, and strong enough for subheadings.
 
-### Type Scale
+### Type scale
 
 Set in the components that use them; these are the main ones.
 
@@ -109,12 +110,10 @@ Set in the components that use them; these are the main ones.
 | Body            | `styles/base.css` | `16px` (`17px` in prose)   | 400    |
 | Small / caption | each component    | `14px`                     | 500    |
 
-### Line Heights
+### Line heights
 
 - Headings: tight, around `1.1`
 - Body text: `1.65` (`styles/base.css`)
-
----
 
 ## Spacing, type sizes and corners
 
@@ -200,8 +199,6 @@ Widths are tokens too: `.container` is 1140px, a page's reading column
 component narrows the containers inside it by setting `--container-width`
 on its own root.
 
----
-
 ## Forms
 
 Every field is the kit's, in `components/ui/`.
@@ -225,8 +222,6 @@ with why.
 - **Errors**: a field that's wrong has `aria-invalid`, which gives it a
   danger-coloured border, and a `FieldError` under it.
 
----
-
 ## Density
 
 The same components come at two densities. **Comfortable** is the
@@ -244,8 +239,6 @@ the page when it's focused. The tokens it sets are the `--control-*`,
 `--label-font-size`, `--note-font-size`, `--field-gap`, `--form-gap`,
 `--table-*` and `--tag-*` ones in `styles/tokens.css`. The gallery's forms
 page (`/gallery/forms`) shows every field, table and tag at both.
-
----
 
 ## Staff pages
 
@@ -538,6 +531,28 @@ logged is hidden. Beside it, a {} button (`LoggedJson`) opens the JSON
 exactly as stored, in a bubble by the button. That's the fallback, for
 checking exactly what was recorded or a field the words don't cover yet.
 
+**A history** (`LetterHistory`). A letter's events, newest first, each
+with its fields in words and a {} for what it recorded. Every email in it
+says who it went to, and its tag says what sent or brought it, Postmark or
+Gmail (as its event recorded, or, for one recorded before events did,
+what the letter went by). A Sent with no event of its own comes from the
+letter's dates. What belongs to another entry goes under it, a size
+smaller:
+
+- under a reply, its relay: every entry naming the reply's message in
+  Gmail (relayed, waiting, held, bounced, uncertain, not relayed, and the
+  MP's office told it can't be passed on);
+- under Sent, the supporter's copy (sent, held, bounced, delayed): under
+  the last Sent before it, or the first if it was recorded a moment
+  earlier;
+- under what it tells of, a notice to the supporter: one that the letter
+  bounced under the last bounce before it, and one that it went again
+  under the last Sent; a relay's bounce or sending again is under its
+  reply, so the notice goes there, beside it.
+
+Anything else, and a notice with nothing before it to go under, stays in
+the list, in its place.
+
 **The sidebar** (`StaffNav`). Each page has its icon (`NavIcon`) beside
 its name. Fold, at its foot, folds it to a rail of the icons on wider
 screens, the sections a rule apart, each name showing beside its icon on
@@ -570,35 +585,27 @@ nothing.
 
 The gallery's staff group shows each piece and each page built from them.
 
----
-
-## Borders
+## Borders and shadows
 
 Corners are the `--radius-*` tokens (above): buttons and fields
 `--radius-md`, cards `--radius-lg`, tags `--radius-pill`, avatars `50%`,
 images in cards none (full bleed).
 
-### Border Style
-
-Cards use a `1px solid var(--border)` border. On hover, borders shift to `var(--border-strong)`. No heavy/coloured borders except for active/focus states.
+Cards have a `1px solid var(--border)` border, `var(--border-strong)` on
+hover. No heavy or coloured borders except for active and focus states.
 
 A box that shows a state says so with its tint: the background is the status colour's `-bg` token (`--status-red-bg`, `--status-amber-bg`, `--status-green-bg`), and the words can take the status colour. On staff pages that's a strip, with no border (above, "Staff pages"); a past run in a job's history keeps the ordinary border. Never a thick edge on one side: on a rounded corner it bends into a wedge. Only the current state is coloured. A history of past runs or events is plain, so the one thing in colour is the thing that's true now. The exception is a job that runs every 5 minutes: among hundreds of runs a failure or refusal would be lost, so it stays tinted (below, "A job's log").
 
 **A job's log** (`RunList.tsx`). A job's runs go under a heading for each day, newest first. A nightly or one-off job shows each run whole, in its box (`RunBox`), the newest tinted by how it ended. A job that runs every 5 minutes or hourly has one table a day instead (`RunTable.tsx`, `lib/run-log.ts`), so the same number sits in the same place: the time first, then the job's counts (a Gmail read's over every account it read), or what each run found. A routine run is a row of counts; a stretch that found nothing is one muted row, its time range in the time column; anything shown whole is a row of its own words, with no box and without the time or the schedule, which the row and the page say, its detail folded. A run with counts and words has its counts in their columns and its words in a row under them, with no rule between. The newest run's rows are tinted by how it ended, and a problem's stay tinted further down. Rows too far down fold into a line between the day's tables, which opens into more of the table, headerless; the day's first table shown has the header. The table keeps a width for its counts and scrolls sideways on a phone (`ui/Table`, fixed layout).
 
----
-
-## Shadows
+Shadows are warm-toned (brown-black, not blue-black), from the two shadow
+tokens:
 
 | Level    | Value                             | Usage              |
 | -------- | --------------------------------- | ------------------ |
 | Subtle   | `0 1px 3px var(--shadow)`         | Default cards      |
 | Medium   | `0 4px 16px var(--shadow)`        | Hovered cards      |
 | Elevated | `0 8px 32px var(--shadow-strong)` | Hero image, modals |
-
-Shadows are warm-toned (brown-black, not blue-black) to maintain palette consistency.
-
----
 
 ## Buttons
 
@@ -689,32 +696,19 @@ Delete is offered only when the thing can be deleted. While something
 refers to it (an ask politicians have answered, a mailing that's been
 sent), there's no button, and a `Hint` says why in its place.
 
-### Primary Button
+### How they look
 
-- Background: `var(--accent)` (solid, no gradient)
-- Text: `#FFFFFF` (white)
-- Border-radius: `8px`
-- Padding: `14px 24px`
-- Font: Inter, weight 600, `15px`
-- Shadow: `0 2px 8px rgba(200, 101, 42, 0.25)`
-- Hover: background darkens to `var(--accent-strong)`, slight lift `translateY(-1px)`
+Every button is `14px 24px` of padding (`--button-padding`), `8px`
+corners, and Inter at `15px` (`--button-font-size`), weight 600.
 
-### Ghost/Secondary Button
-
-- Background: `transparent`
-- Border: `1px solid var(--border-strong)`
-- Text: `var(--text)`
-- Hover: border becomes `var(--accent)`, text becomes `var(--accent)`
-
-### Light Button (on a photo)
-
-- Background: `var(--white)`, text `var(--ink)`
-- Border: `1px solid var(--pause-orange)`
-- Hover: an orange ring
+- **Primary**: `var(--accent)`, solid, white text, a soft orange shadow;
+  on hover a stronger shadow and a lift of a pixel.
+- **Ghost**: transparent, a `1px` `var(--border-strong)` border and
+  `var(--text)`; on hover the border and text turn `var(--accent)`.
+- **Light** (on a photo): `var(--white)` with `var(--ink)` text and an
+  orange border; on hover an orange ring.
 
 Sizes: `small` and `large` besides the default.
-
----
 
 ## Cards
 
@@ -722,63 +716,51 @@ The site's cards are `PhotoCard` (an image above a body) and `FeatureCard`
 in `components/ui/`; areas have their own built on the same look
 (`PersonCard`, the local groups' cards).
 
-### Photo Card (activity, local group)
+- **Photo card** (an activity, a local group): white, the card border,
+  `12px` corners and the subtle shadow; the image full width at `3:2`,
+  clipped to the corners; `20px` of padding round the text; on hover the
+  medium shadow and a lift of two pixels.
+- **Feature card** (the mission's pillars): the same box with a `3px`
+  `var(--accent)` left edge, and `--space-5` of padding.
+- **Person card**: a round photo beside the text, with no heavy border.
 
-- Background: `var(--surface)` (white)
-- Border: `1px solid var(--border)`
-- Border-radius: `12px`
-- Shadow: subtle level
-- Overflow: hidden (for full-bleed images)
-- Hover: shadow increases to medium, slight `translateY(-2px)`
-- Image: full-width, `aspect-ratio: 3/2`
-- Padding (content area): `20px`
+## Header and navigation
 
-### Feature Card (mission pillars)
+`Nav` (`components/layout/Nav.tsx`) is sticky and black, with light text
+(`--on-dark`), and no heavy chrome. At 1024px and below a burger opens the
+menu over the page.
 
-- Background: `var(--surface)`
-- Border: `1px solid var(--border)`
-- Left border accent: `3px solid var(--accent)` on the left edge (replaces the dot)
-- Padding: `24px`
-
-### Person Card
-
-- Horizontal layout (avatar + text)
-- Avatar: `80px` circle with `2px solid var(--accent-light)` border
-- Clean, no heavy borders on the card itself
-
----
-
-## Header & Navigation
-
-- `Nav` (`components/layout/Nav.tsx`): sticky, black, light text (`--on-dark`)
-- At 1024px and below, a burger opens the menu over the page
-- Clean and minimal — no heavy chrome
-
----
-
-## Section Styling
+## Sections
 
 A page is a run of `Section` bands (`components/ui/Section.tsx`); its
 `tone` prop picks the background. A page's top is `PageHero`, and an
 introduction under it `Foreword`.
 
-### Default Section
-
-- Background: `var(--bg)` (warm cream)
-- Padding: `80px 0`
-
-### Muted Section (`tone="muted"`)
-
-- Background: `var(--surface-2)` (slightly darker warm cream)
-- No gradient — solid colour for clean separation
-
-### White Section (`tone="white"`)
-
-- Background: `var(--accent-bg)` (white)
+- **Default**: `var(--bg)`, warm cream, with `80px` above and below, less
+  on a phone.
+- **Muted** (`tone="muted"`): `var(--surface-2)`, a slightly darker cream,
+  solid, for a clean break between sections.
+- **White** (`tone="white"`): `var(--accent-bg)`.
 
 A boxed message inside a section is `Callout`.
 
----
+## The briefings and the march
+
+Two parts of the site have a look of their own. How their styles are
+organised is in `docs/code-structure.md` ("The weekly briefings", "The
+march sign-up").
+
+- **The weekly briefings** (`/campaigns/briefings`) follow their
+  designer's A4 layout: a white sheet on the page, a masthead (logo,
+  byline, the week's calendar, title, an orange rule), then boxes ruled in
+  a topic's colour with the heading on a tab, and charts of their own. The
+  sizes are the design's, scaled so the text is 16px, and the topic
+  colours are the `--briefing-*` tokens.
+- **The march sign-up** (`/protests/march-against-ai-extinction-nov-26`)
+  is a poster, deliberately unlike the rest of the site: ink and paper, a
+  hotter orange (the `--march-*` tokens), Anton for headings, square
+  corners and hard shadows, with a header of its own and the site's
+  footer.
 
 ## Links
 
@@ -789,32 +771,26 @@ A boxed message inside a section is `Callout`.
   `target="_blank" rel="noreferrer"`, with no icon or other mark. Links
   within the site, `mailto:` and `#anchor` links open in place.
 
----
-
-## Interface Text
+## Interface text
 
 - **Sentence case** for labels, buttons and headings: "Your name", "Find my MP", "Send email". Not "Your Name" or "Find My MP". Proper nouns keep their capitals: "MP", "PauseAI", "Airtable".
 - **Full stops** on messages that are sentences: errors, notices, hints and confirmations. "Please enter your name.", "Postcode not found."
 - **No full stops** on labels, buttons, headings, or a word or two of status: "Your email", "Preview", "Sending".
 - **Dates as people say them**: "23 Oct 2026", and with a time, "23 Oct 2026, 10:34", never "2026-10-23". The staff pages' are in UTC (`staffDate` and `staffTime` in `lib/staff-time.ts`). A download keeps the ISO form, for a spreadsheet to read.
 
----
+## Imagery
 
-## Imagery Guidelines
+- Photography is documentary, not stock: real people at real events.
+- Warm colour grading, slightly desaturated and amber-shifted.
+- Hopeful and energetic, not grim.
+- Hero images carry a subtle warm gradient overlay.
 
-- Photography should feel **documentary, not stock** — real people at real events
-- Warm colour grading preferred (slightly desaturated, amber-shifted)
-- Images should feel hopeful and energetic, not grim
-- Brand overlay: subtle warm gradient overlay on hero images
+## Phones and wide screens
 
----
-
-## Responsive Behaviour
-
-- Container: `max-width: 1140px`, 24px side padding
-- Breakpoints: most components change at `720px` or `860px` (and `520px`
-  for the smallest phones); the nav switches to its burger at `1024px`
-- Typography: fluid via `clamp()` — no hard breakpoint font changes
-- Spacing reduces proportionally on mobile
+- The container is `1140px` at most, with `24px` of side padding.
+- Most components change at `720px` or `860px` (and `520px` for the
+  smallest phones); the nav switches to its burger at `1024px`.
+- Headings scale with `clamp()`, not by breakpoint; spacing drops by whole
+  steps on a phone ("Using the spacing", above).
 - Check both: the storyboard pictures every page, and the gallery every
-  component, on desktop and a phone
+  component, on desktop and a phone.

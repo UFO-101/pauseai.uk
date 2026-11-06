@@ -117,20 +117,16 @@ This:
   `lib/test-mps.json`.
 - with `DATA_FIXTURES=1`, adds fake data (`tests/fixtures/staff-data.sql`)
   to every table, so every staff page has something on it and the home
-  page's dashboard has a number in each tile for the last week and the week
-  before: the Luma fixtures' people and events and Airtable's two MPs under
-  their own IDs (so an import writes the same rows rather than doubling
-  them) plus made-up people, events, registrations of every status and an
-  erased person; twenty letters to the test MPs in every state, with
-  replies, an out-of-office, bounces that blocked Bouncy's address, a soft
-  bounce and a spam complaint; unsubscribes, one undone; a peer added by
-  staff and an MP who has left; statuses set this week and last; every
-  job's runs in every state, including a sync held for a decision; staff
-  accounts for jo@pauseai.uk (supporters, with a kept session) and
-  samuel.whitlock@pauseai.uk (none) beside the migration's admin; and an audit log of
-  all that. Dates are relative to when it runs. Without `TEST_MP_EMAIL`,
-  the test MPs still go in, with `test-mp@parliament.example`, since the letters go
-  to the fixture outbox anyway. The storyboard's flows start from an empty
+  page's dashboard a number in each tile: the fixture services' people,
+  events and politicians under their own IDs, so an import writes the same
+  rows rather than doubling them, plus made-up supporters, letters in every
+  state with their replies and bounces, statuses, every job's runs, and
+  staff accounts beside the migration's admin: jo@pauseai.uk (supporters,
+  with a kept session), samuel.whitlock@pauseai.uk and policy@pauseai.uk
+  (none). The file's own comments say what each part is for. Dates are
+  relative to when it runs. Without `TEST_MP_EMAIL`, the test MPs still go
+  in, with `test-mp@parliament.example`, since the letters go to the
+  fixture outbox anyway. The storyboard's flows start from an empty
   database, without this.
 
 Run it again whenever you want a clean database. It wipes everything. It
@@ -276,9 +272,10 @@ Then postcode `SW1A 1AA` finds Polly Placeholder.
 Open http://localhost:3000/staff/login. In a fixture build the login card
 has a hatched purple box under it, the dev login: a button per account
 (admin@pauseai.uk, which every database starts with, and which
-`db:reset` gives the supporters permission as well as admin; and the
-seed's jo@pauseai.uk and samuel.whitlock@pauseai.uk) and one for nobody@pauseai.uk, which has
-no account, each signing you in at once, with no email.
+`db:reset` gives the supporters permission as well as admin; and the fake
+data's jo@pauseai.uk, samuel.whitlock@pauseai.uk and policy@pauseai.uk)
+and one for nobody@pauseai.uk, which has no account, each signing you in
+at once, with no email.
 It exists only with `DATA_FIXTURES=1`; its route is a 404 anywhere else.
 
 To go through the real login instead:
@@ -328,9 +325,9 @@ Delete `DATA_FIXTURES` from `.env.local`, and fill in the keys you need. Each is
   your own pauseai.uk address.
 - **Airtable.** `AIRTABLE_TOKEN` needs read access to the UK
   Parliamentarians base's "UK Parliamentarians", "Emails", "Web form
-  emails" and "Go to Parliament Oct 2026" tables, and to the members' base.
-  They're for the politician and Emails syncs and the two one-off imports at
-  `/staff/import-data`.
+  emails" and Go to Parliament tables, and to the members' base.
+  They're for the politician and Emails syncs, the members import and the
+  two one-off imports at `/staff/import-data`.
 
 ### The march sign-up and Luma
 
@@ -360,14 +357,18 @@ None of these run under `npm run dev` by themselves. Call them by hand.
 call these routes. Locally, with `CRON_SECRET=dev` in `.env.local`:
 
 ```bash
-curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-politicians
-curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/check-mps
-curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/import-luma   # the Luma import, every 5 minutes; with fixtures, the fixture calendar
-curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/import-members   # the hourly members import; with fixtures, the fixture members
-curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/tidy-logs   # deletes what the import and audit logs no longer keep, and empty drafts
-curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/send-mailings   # sends what the letters inbox has queued, then starts the mailings due and sends for a few seconds
-curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/read-gmail   # reads the connected Gmail accounts for replies and bounces, and relays the letters inbox's
+curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/sync-politicians   # the politician sync, then the Emails sync
+curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/check-mps           # the MPs against Parliament
+curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/import-controlai    # ControlAI's letter's signatories
+curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/import-luma         # the Luma import; with fixtures, the fixture calendar
+curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/import-members      # the members import; with fixtures, the fixture members
+curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/import-old-letters  # one run of the import of old letters
+curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/tidy-logs           # deletes what the import and audit logs no longer keep, and empty drafts
+curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/send-mailings       # sends what the letters inbox has queued, then starts the mailings due and sends for a few seconds
+curl -X POST -H "Authorization: Bearer dev" localhost:3000/api/cron/read-gmail          # reads the connected Gmail accounts for replies and bounces, and relays the letters inbox's
 ```
+
+What each does, and when it runs on Netlify, is in "Deploying" below.
 
 **Postmark's webhooks.** Set `POSTMARK_WEBHOOK_USER=postmark` and
 `POSTMARK_WEBHOOK_PASSWORD=secret`, then post payloads in Postmark's
@@ -430,24 +431,13 @@ BlazeFace model with TensorFlow.js, which are dev dependencies only.
 
 ## 6. Tests
 
-```bash
-npm test                 # both, held at 100% per file, as CI runs it
-npm run test:node        # Vitest, Node: logic, routes, database code
-npm run test:browser     # Vitest, real Chromium: components
-npm run test:storyboard  # Playwright: every page and every flow, on a fixture build (the gate)
-npm run storyboard       # Playwright: the same with screenshots, against main, then the page (testing.md)
-npm run lint                    # ESLint, failing on warnings too
-npm run lint:css                # Stylelint
-npm run lint:unused             # Knip: unused files, exports and dependencies
-npm run format                  # Prettier, on everything but plans/ (format:check only checks)
-```
+The commands, and the rules for new code, are in [testing.md](testing.md).
+What they need from your machine:
 
-- **Database tests** need Postgres reachable with your `PG*` variables.
-  Each test file copies its own database from a migrated template, made
-  once for the run, and drops it afterwards.
-- **While any copy is a placeholder**, `tests/checks/placeholder-copy.test.ts` fails, and
-  so does `npm run build`, which runs the unit tests first. That's on
-  purpose: placeholders can't be deployed (AGENTS.md).
+- **Database tests** need Postgres reachable: `TEST_DATABASE_URL`, or your
+  `PG*` variables, or the local socket (section 3). Each test file copies
+  its own database from a migrated template, made once for the run, and
+  drops it afterwards.
 - **The storyboard** builds and starts the site itself on port 3100, unless
   a server is already running there. Your dev server, on 3000, is left
   alone. To skip rebuilding each run, start one yourself, as
@@ -463,8 +453,6 @@ npm run format                  # Prettier, on everything but plans/ (format:che
   template on the test server (`TEST_DATABASE_URL`, or your local Postgres),
   so the build's own database is only for requests that carry no flow's
   cookie.
-
-See [testing.md](testing.md) for the rules.
 
 ## 7. When something goes wrong
 
@@ -496,11 +484,26 @@ Set up outside the code:
 - **Settings:** every environment variable is in [.env.example](../.env.example), with what it's for. Netlify needs the same ones.
 - **Postmark:** a server, and two sending domains, each with DKIM, Return-Path and DMARC. `letters.pauseai.uk` sends letters to representatives and is the inbound domain, with its MX pointing at `inbound.postmarkapp.com`. `notify.pauseai.uk` sends everything else, such as forwarded replies and staff emails. Its webhooks carry basic auth in the URL, e.g. `https://postmark:<password>@pauseai.uk/api/postmark/bounce`: Bounce and Spam complaint go to `/api/postmark/bounce`, Inbound to `/api/postmark/inbound`.
 - **Luma's webhook:** in Luma, the PauseAI UK calendar, Settings → Developer → Webhooks: a webhook for `https://pauseai.uk/api/luma/webhook` with the event types Calendar Person Unsubscribed and Calendar Person Subscribed. Its secret (`whsec_…`) goes into Netlify as `LUMA_WEBHOOK_SECRET`. Luma retries a delivery that isn't answered 2xx three more times, after 1, 2 and 4 minutes, and only sends unsubscribes that happen after the webhook exists. To check it works: unsubscribe a staff address from the calendar's emails and look for its row in `opt_outs`; follow the calendar again, and the next full pass over the contacts sets the row's `resubscribed_at`, as Luma's webhook doesn't say when someone comes back ([domain concepts](domain-concepts.md#opt-outs)).
-- **Daily jobs:** the politician sync, then the Emails sync, runs at 06:21 UTC, the check against Parliament at 06:23, the ControlAI import at 06:25 and the tidying of the logs at 06:27, and none runs from midnight to six UTC. The database sleeps after five minutes without a query and is billed while it's awake, about 10 credits an hour at its smallest; the Luma import and the Gmail reading, every 5 minutes, keep it awake all day. The check makes about 650 requests to Parliament, which took 12–18 seconds from a laptop on 14 Oct 2026. A Netlify scheduled function gets 30 seconds, so a daily check that starts timing out has outgrown it.
-- **The Luma import** runs every 5 minutes, from 2 minutes past the hour, with `LUMA_API_KEY`. Each run fetches for about 20 seconds, then stops and records how many events are still waiting, so the first copy of the calendar (about 430 requests on 21 Oct 2026) takes a few runs; after that a run reads the guests of the events still to come (registered first, stopping before Luma's invitees, who can be every contact on the calendar), their hosts once an hour, and a few pages of contacts. A run that changed nothing doesn't work out every supporter's facts and the supporters list again unless no run has in the last hour, as at 100,000 supporters they take a few seconds. It leaves 50 of Luma's 200 requests a minute for the site's own fetches, and stops early if Luma answers 429. Run it by hand from `/staff/import-data` to see where it's got to.
-- **The members import** runs at 19 minutes past every hour, with `AIRTABLE_TOKEN`, which needs read access to Stichting PauseAI's "Members & Actions" base (`appWPTGqZmUcs3NWu`) as well as the MPs' base; the global team grant it. A run reads every UK member we may hold, about 15 requests, which counts against the global team's Airtable plan's monthly API calls. Run it by hand from `/staff/import-data`.
-- **Gmail:** the PauseAI UK Google Cloud project, under the organisation of PauseAI's Google Workspace. That Workspace's primary domain is pauseai.info and pauseai.uk is in it too, and a Workspace has only one organisation (https://cloud.google.com/resource-manager/docs/creating-managing-organization). The project has the Gmail API turned on; the Internal user type, under Google Auth Platform → Audience, so any account in the Workspace can grant access and Google doesn't review the app (https://support.google.com/cloud/answer/15549945); the app asks for the `gmail.send`, `gmail.readonly` and `userinfo.profile` scopes when an account connects (the last for the account's name, when its address sends as none of its own); and a web application OAuth client whose redirect URI is `https://pauseai.uk/staff/api/gmail/callback`; its ID and secret go into Netlify as `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, and `GMAIL_TOKEN_KEY` is 32 random bytes in base64. Previews have other addresses, so Gmail can be connected only on the live site. `send-mailings` runs at 18 minutes past every hour and `read-gmail` every 5 minutes, night and day; a mailing due overnight goes at 06:18. `send-mailings-background` is a background function, which credit-based plans have (https://docs.netlify.com/build/functions/background-functions/). The replies are kept in Netlify Blobs, in the `letter-replies` store, which needs no setting; the backup Worker copies them with `BACKUP_SECRET`, which goes into Netlify and, as `SITE_BACKUP_SECRET`, the Worker (`backup/README.md`).
-- **The letters inbox:** a Gmail account of PauseAI UK's Workspace at pauseai.uk, used for nothing else, which supporters' letters to MPs go from, each side seeing the other only as a proxy, a plus address on it (`docs/domain-concepts.md`, "Letters"). Its address goes into Netlify as `LETTERS_INBOX`, and nowhere in the repo, which is public. It needs a staff account (`/staff/accounts`); someone logged in as it connects its Gmail on `/staff/me`, where it also asks for `gmail.modify`, to label and trash its mail. Until it's connected, letters are kept and wait in the queue. It sends at most 1,950 a day (`LETTERS_DAILY_LIMIT`), and is never offered as a mailing's Sent from. Mail to it that the site can't account for is labelled "Not understood" and left in its inbox, and each run that finds any emails `NOTIFICATION_INBOX`.
-- **A new database:** run the politician sync from `/staff/import-data`, and apply it, then the Emails sync and the two one-off imports (the web form letters and Go to Parliament). Until the sync has run, Email your MP finds no MPs.
+- **Gmail:** the PauseAI UK Google Cloud project, under the organisation of PauseAI's Google Workspace. That Workspace's primary domain is pauseai.info and pauseai.uk is in it too, and a Workspace has only one organisation (https://cloud.google.com/resource-manager/docs/creating-managing-organization). The project has the Gmail API turned on; the Internal user type, under Google Auth Platform → Audience, so any account in the Workspace can grant access and Google doesn't review the app (https://support.google.com/cloud/answer/15549945); the app asks for the `gmail.send`, `gmail.readonly` and `userinfo.profile` scopes when an account connects (the last for the account's name, when its address sends as none of its own); and a web application OAuth client whose redirect URI is `https://pauseai.uk/staff/api/gmail/callback`. Its ID and secret go into Netlify as `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, and `GMAIL_TOKEN_KEY` is 32 random bytes in base64. Previews have other addresses, so Gmail can be connected only on the live site. The replies read from Gmail are kept in Netlify Blobs, in the `letter-replies` store, which needs no setting; the backup Worker copies them with `BACKUP_SECRET`, which goes into Netlify and, as `SITE_BACKUP_SECRET`, the Worker (`backup/README.md`).
+- **The letters inbox:** a Gmail account of PauseAI UK's Workspace at pauseai.uk, used for nothing else, which supporters' letters to MPs go from (`docs/domain-concepts.md`, "Letters through the letters inbox"). Its address goes into Netlify as `LETTERS_INBOX`, and nowhere in the repo, which is public. It needs a staff account (`/staff/accounts`); someone logged in as it connects its Gmail on `/staff/me`, where it also asks for `gmail.modify`, to label and trash its mail. Until it's connected, letters are kept and wait in the queue.
 - **The notification inbox:** `NOTIFICATION_INBOX`, `notification@pauseai.uk` on the live site, where the site emails when something needs a person (`docs/domain-concepts.md`, "Email"). Unset, nothing is sent.
-- **Staff accounts:** every database starts with one account, `admin@pauseai.uk`, with the admin permission. Log in as it and add everyone else on `/staff/accounts`: an account alone opens the ordinary pages; the supporters permission opens the supporter pages, admin the accounts page and the audit log. Give admin to at least one other person; the last admin can't be removed. The Luma import fills the supporter pages over its first few runs, and links every letter already written; run it from `/staff/import-data` to watch it. An erasure request is handled as `docs/data-protection.md` says.
+- **Staff accounts:** every database starts with one account, `admin@pauseai.uk`, with the admin permission. Log in as it and add everyone else on `/staff/accounts`: an account alone opens the ordinary pages; the supporters permission opens the supporter pages, admin the accounts page and the audit log. Give admin to at least one other person; the last admin can't be removed. An erasure request is handled as `docs/data-protection.md` says.
+- **A new database:** run the politician sync from `/staff/import-data`, and apply it, then the Emails sync and the two one-off imports (the web form letters and Go to Parliament). Until the sync has run, Email your MP finds no MPs. The Luma import fills the supporter pages over its first few runs, and links every letter already written; run it from `/staff/import-data` to watch it.
+
+### The scheduled jobs
+
+Each is a Netlify scheduled function in `netlify/functions/` that calls its route under `/api/cron/` (`docs/code-structure.md`, "Scheduled jobs"), and each has a page under `/staff/import-data` with its runs and a button (`docs/domain-concepts.md`, "Imports"). Times are UTC.
+
+| Job                                          | When                                  | Needs                                                                                                                                                                                                                                                                                              |
+| -------------------------------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sync-politicians`, then the Emails sync     | 06:21 daily                           | `AIRTABLE_TOKEN`                                                                                                                                                                                                                                                                                   |
+| `check-mps`, the MPs against Parliament      | 06:23 daily                           | Nothing. About 650 requests to Parliament's Members API, which take some seconds; a scheduled function gets 30, so a check that starts timing out has outgrown it.                                                                                                                                 |
+| `import-controlai`, the letter's signatories | 06:25 daily                           | Nothing                                                                                                                                                                                                                                                                                            |
+| `tidy-logs`                                  | 06:27 daily                           | Nothing                                                                                                                                                                                                                                                                                            |
+| `import-luma`                                | every 5 minutes, from 2 past the hour | `LUMA_API_KEY`. Its background function does the work. The first copy of the calendar takes a few runs; after that each run reads what's changed ("Supporters" in `docs/domain-concepts.md`).                                                                                                      |
+| `import-old-letters`                         | every 5 minutes, from 3 past the hour | The policy team's Gmail connected. Its background function does the work, and once a pass has finished the schedule does nothing more.                                                                                                                                                             |
+| `read-gmail`                                 | every 5 minutes                       | The connected Gmail accounts                                                                                                                                                                                                                                                                       |
+| `send-mailings`                              | 18 past every hour                    | The connected Gmail accounts. Its background function sends what one call can't (`send-mailings-background`), which credit-based plans have (https://docs.netlify.com/build/functions/background-functions/). It starts no mailing between midnight and 06:18, so one due overnight goes at 06:18. |
+| `import-members`                             | 19 past every hour                    | `AIRTABLE_TOKEN`, with read access to Stichting PauseAI's "Members & Actions" base (`appWPTGqZmUcs3NWu`), which the global team grant. A run reads every UK member we may hold, which counts against the global team's Airtable plan's monthly API calls.                                          |
+
+The database sleeps after five minutes without a query and is billed while it's awake, about 10 credits an hour at its smallest; the 5-minute jobs keep it awake all day.

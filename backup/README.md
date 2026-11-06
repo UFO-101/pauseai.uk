@@ -2,10 +2,9 @@
 
 Every night at 03:00 UTC, a Cloudflare Worker backs up the live database to
 an R2 bucket on Cloudflare, and checks that the backup is good. It's a copy
-outside Netlify, which keeps its own backups too (Data & Storage > Database
-
-> Backups, for 3 to 30 days depending on the plan:
-> https://docs.netlify.com/build/data-and-storage/netlify-database/backup-and-recovery/).
+outside Netlify, which keeps its own backups too, under the project's Data &
+Storage, Database, Backups, for 3 to 30 days depending on the plan
+(https://docs.netlify.com/build/data-and-storage/netlify-database/backup-and-recovery/).
 
 It's a package of its own, apart from the site: it runs on Cloudflare, not
 Netlify, and has its own dependencies and tests.
