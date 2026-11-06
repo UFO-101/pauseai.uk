@@ -398,10 +398,9 @@ describe("StaffDashboard", () => {
     // A sparkline on registrations, with the week's count on each point.
     const sparkline = (label: string) => page.getByRole("img", { name: copy.series(label, 7, 8) });
     await expect.element(sparkline(copy.metrics.eventRegistrations(277))).toBeVisible();
-    // New supporters in bars by source, saying how they're counted, with the week's count of each source in the legend, and half the grid to fit them.
+    // New supporters in bars by source, with the week's count of each source in the legend, and half the grid to fit them.
     const sourceBars = page.getByRole("img", { name: copy.bySourceName(copy.metrics.supportersAdded(176), 7, 8) });
     await expect.element(sourceBars).toBeVisible();
-    expect(supporters[0].element().textContent).toContain(copy.bySourceNote);
     expect(supporters[0].element().textContent).toContain(`${staffCopy.supporters.sources.luma} · 115`);
     expect(supporters[0].element().textContent).toContain(`${staffCopy.supporters.sources.member} · 44`);
     expect(supporters[0].element().textContent).not.toContain(staffCopy.supporters.sources["web-form"]);
@@ -503,7 +502,6 @@ describe("StaffDashboard", () => {
     await expect
       .element(page.getByRole("img", { name: copy.bySourceName(copy.metrics.supportersAdded(0), 30, 8) }))
       .not.toBeInTheDocument();
-    await expect.element(page.getByText(copy.bySourceNote)).not.toBeInTheDocument();
     await expect
       .element(page.getByRole("img", { name: copy.series(copy.metrics.eventRegistrations(4), 30, 8) }))
       .toBeVisible();

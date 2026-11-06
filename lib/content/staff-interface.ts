@@ -233,12 +233,11 @@ export const staffCopy = {
         days === 7
           ? `Sparkline of ${what}, week by week over the last ${points} weeks`
           : `Sparkline of ${what}, ${days} days at a time over the last ${days * points} days`,
-      // The chart of new supporters: its name, which only screen readers read, and the note under it.
+      // The chart of new supporters' name, which only screen readers read.
       bySourceName: (what: string, days: number, points: number) =>
         days === 7
           ? `Bars of ${what} by source, week by week over the last ${points} weeks`
           : `Bars of ${what} by source, ${days} days at a time over the last ${days * points} days`,
-      bySourceNote: "Supporters shown under earliest source.",
       // A point's label: the window it counts, by the day it begins.
       seriesPoint: (days: number, from: string, n: number) =>
         days === 7 ? `Week beginning ${from}: ${n}` : `${days} days beginning ${from}: ${n}`,

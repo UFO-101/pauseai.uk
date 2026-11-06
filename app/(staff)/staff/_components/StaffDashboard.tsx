@@ -123,29 +123,26 @@ function CampaignBar({ counts }: { counts: Record<string, number> }) {
   );
 }
 
-/** New supporters in bars by the window, each split by their earliest source, and saying so. */
+/** New supporters in bars by the window, each counted once and split by their earliest source. */
 function SourceBars({ dashboard, label }: { dashboard: Dashboard; label: string }) {
   const sources = staffCopy.supporters.sources;
   const points = dashboard.supportersBySource;
   return (
-    <>
-      <StackedBars
-        name={copy.bySourceName(label, dashboard.days, SERIES_POINTS)}
-        parts={SUPPORTER_SOURCES.map((key) => ({ key, label: sources[key] }))}
-        bars={points.map((point) => ({
-          counts: point.sources,
-          label: [
-            copy.seriesPoint(dashboard.days, staffDate(point.from), point.count),
-            ...SUPPORTER_SOURCES.filter((key) => point.sources[key]).map(
-              (key) => `${sources[key]} ${point.sources[key]}`,
-            ),
-          ].join(" · "),
-        }))}
-        from={staffDate(points[0].from)}
-        to={staffDate(dashboard.asOf)}
-      />
-      <Muted>{copy.bySourceNote}</Muted>
-    </>
+    <StackedBars
+      name={copy.bySourceName(label, dashboard.days, SERIES_POINTS)}
+      parts={SUPPORTER_SOURCES.map((key) => ({ key, label: sources[key] }))}
+      bars={points.map((point) => ({
+        counts: point.sources,
+        label: [
+          copy.seriesPoint(dashboard.days, staffDate(point.from), point.count),
+          ...SUPPORTER_SOURCES.filter((key) => point.sources[key]).map(
+            (key) => `${sources[key]} ${point.sources[key]}`,
+          ),
+        ].join(" · "),
+      }))}
+      from={staffDate(points[0].from)}
+      to={staffDate(dashboard.asOf)}
+    />
   );
 }
 
