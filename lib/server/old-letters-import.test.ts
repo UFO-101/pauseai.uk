@@ -4,6 +4,7 @@ import { latestRun } from "./import-runs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
+import webForm from "@/tests/fixtures/airtable-web-form.json";
 import {
   addTestLetter,
   addTestPolitician,
@@ -611,13 +612,28 @@ Please join 40 of your colleagues.')`,
     expect(await ownTextOf("0a27")).toContain("of all people");
   });
 
-  it("puts a supporter's repeat of their form letter on that letter, with one address", async () => {
-    const { form } = await seed();
+  /** A repeat of Wendy's frontier AI form letter, at the moment Airtable has a record of one, to Polly. */
+  const wendysRepeat = (id = "0a28", at = "2026-10-01T09:00:30Z") =>
     mailIs(
-      "0a28",
+      id,
       "t-staffer",
-      "2026-10-01T09:00:00Z",
+      at,
       fromTheForm("Wendy Webform", "wendy.webform@example.com", "polly.placeholder.mp@parliament.uk"),
+      Buffer.from("Dear Ms Placeholder,"),
+    );
+  const pollyInAirtable = (polly: number) =>
+    query("UPDATE notable_people SET airtable_id = 'recPlaceholder' WHERE id = $1", [polly]);
+
+  it("puts a supporter's repeat of their form letter on that letter, with one address, reading Airtable once", async () => {
+    const { form, polly } = await seed();
+    await pollyInAirtable(polly);
+    wendysRepeat();
+    // Someone Airtable has no record of, read in the same run.
+    mailIs(
+      "0a27",
+      "t-wh-3",
+      "2026-10-01T09:00:40Z",
+      fromTheForm("Nell Nobody", "nell.nobody@example.com", "polly.placeholder.mp@parliament.uk"),
       Buffer.from("Dear Ms Placeholder,"),
     );
     const result = await run();
@@ -628,6 +644,70 @@ Please join 40 of your colleagues.')`,
       [form],
     );
     expect(sends).toEqual([{ from: "wendy.webform@example.com", purpose: "letter" }]);
+    expect(await outcomeOf("0a27")).toEqual({ outcome: "one_off", letterId: null });
+  });
+
+  it("puts a repeat on the letter of the campaign Airtable says, of a supporter's letters in two", async () => {
+    const { form, polly } = await seed();
+    await pollyInAirtable(polly);
+    await query("UPDATE letters_from_supporters SET campaign = 'pauseai-info-liability' WHERE id = $1", [form]);
+    const frontier = await addTestLetter({
+      politicianId: polly,
+      campaign: "pauseai-info-frontier-ai",
+      senderName: "Wendy Webform",
+      senderEmail: "wendy.webform@example.com",
+    });
+    await query("UPDATE letters_from_supporters SET airtable_id = 'recOther', postmark_mailbox = NULL WHERE id = $1", [
+      frontier,
+    ]);
+    wendysRepeat();
+    await run();
+    expect(await outcomeOf("0a28")).toEqual({ outcome: "joined", letterId: frontier });
+  });
+
+  it("keeps as a one-off a supporter's email Airtable has no record of at that time", async () => {
+    const { polly } = await seed();
+    await pollyInAirtable(polly);
+    wendysRepeat("0a28", "2026-10-09T09:00:00Z");
+    await run();
+    expect(await outcomeOf("0a28")).toEqual({ outcome: "one_off", letterId: null });
+  });
+
+  it("keeps as a one-off a repeat Airtable marks as spam, though the supporter has a letter", async () => {
+    const { polly } = await seed();
+    await pollyInAirtable(polly);
+    server.use(
+      http.get("https://api.airtable.com/v0/:base/tblkzjrRHiZiqMDGR", () =>
+        HttpResponse.json({
+          records: webForm.records.map((record) =>
+            record.id === "recWebWendyAgain" ? { ...record, fields: { ...record.fields, Spam: true } } : record,
+          ),
+        }),
+      ),
+    );
+    wendysRepeat();
+    await run();
+    expect(await outcomeOf("0a28")).toEqual({ outcome: "one_off", letterId: null });
+  });
+
+  it("keeps as a one-off a repeat to a politician Airtable's record isn't to", async () => {
+    const { polly, dora } = await seed();
+    await pollyInAirtable(polly);
+    await addTestLetter({
+      politicianId: dora,
+      campaign: "pauseai-info-frontier-ai",
+      senderName: "Wendy Webform",
+      senderEmail: "wendy.webform@example.com",
+    });
+    mailIs(
+      "0a28",
+      "t-staffer",
+      "2026-10-01T09:00:30Z",
+      fromTheForm("Wendy Webform", "wendy.webform@example.com", "mp90001.office@parliament.uk"),
+      Buffer.from("Dear Ms Dummy,"),
+    );
+    await run();
+    expect(await outcomeOf("0a28")).toEqual({ outcome: "one_off", letterId: null });
   });
 
   it("keeps a stranger's email to a politician as a one-off, though its subject is a mailing's", async () => {
@@ -645,6 +725,52 @@ Please join 40 of your colleagues.')`,
       "SELECT from_address AS from FROM one_off_messages WHERE gmail_message_id = '0a28'",
     );
     expect(from).toBe("nell.nobody@example.com");
+  });
+
+  it("puts a reply of ours on the letter its subject and politician say, though it's in no thread of the letter", async () => {
+    const { deepmind } = await seed();
+    mailIs(
+      "0a28",
+      "t-staffer",
+      "2025-07-20T09:00:00Z",
+      {
+        From: "Joseph Example <joseph@pauseai.info>",
+        To: "polly.placeholder.mp@parliament.uk",
+        Subject: "Re: Request to co-sign letter on Google's breach of AI safety pledges",
+        "Message-ID": "<0a28@mail.gmail.com>",
+        "Content-Type": "text/plain; charset=utf-8",
+      },
+      Buffer.from("Thank you for your answer."),
+    );
+    await run();
+    expect(await outcomeOf("0a28")).toEqual({ outcome: "reply", letterId: deepmind });
+  });
+
+  it("moves a reply of ours kept as a one-off to its letter, its stored mail with it, and its thread if that's all there was", async () => {
+    const { deepmind } = await seed();
+    await run();
+    const subject = "Re: Request to co-sign letter on Google's breach of AI safety pledges";
+    await query(
+      `UPDATE one_off_messages SET subject = $1, from_us = true, addresses = ARRAY['polly.placeholder.mp@parliament.uk'], at = '2025-07-20T09:00:00Z' WHERE gmail_message_id = '0a28'`,
+      [subject],
+    );
+    const [{ threadId, blob }] = await query<{ threadId: number; blob: string }>(
+      `SELECT thread_id::int AS "threadId", blob_key AS blob FROM one_off_messages WHERE gmail_message_id = '0a28'`,
+    );
+    await query("DELETE FROM one_off_messages WHERE thread_id = $1 AND gmail_message_id <> '0a28'", [threadId]);
+    // A reply nothing answers stays where it is.
+    await query("UPDATE one_off_messages SET subject = 'Re: Coffee next week?' WHERE gmail_message_id = '0a13'");
+    const again = await run();
+    expect(again.read).toBe(0);
+    expect(await outcomeOf("0a28")).toEqual({ outcome: "reply", letterId: deepmind });
+    expect(await query("SELECT 1 FROM one_off_messages WHERE gmail_message_id = '0a28'")).toEqual([]);
+    expect(await query("SELECT 1 FROM one_off_threads WHERE id = $1", [threadId])).toEqual([]);
+    const replies = await query<{ blob: string; fromUs: boolean }>(
+      `SELECT blob_key AS blob, from_us AS "fromUs" FROM letter_replies WHERE gmail_message_id = '0a28' AND letter_id = $1`,
+      [deepmind],
+    );
+    expect(replies).toEqual([{ blob, fromUs: true }]);
+    expect((await outcomeOf("0a13")).outcome).toBe("one_off");
   });
 
   it("reads again, as what it is, an email kept as PauseAI's letter though a supporter sent it, with what joined that letter", async () => {
@@ -791,19 +917,15 @@ Please join 40 of your colleagues.')`,
     expect(again).toMatchObject({ finished: true, left: 0, listed: 0 });
   });
 
-  it("carries on from where the last run stopped when its time is up, without listing again", async () => {
+  it("carries on from where the last run stopped when its time is up", async () => {
     await seed();
     await connectTestGmail("joseph@pauseai.uk");
     await connectTestGmail("policy@pauseai.uk");
-    let last = await importOldLetters("jo@pauseai.uk", 0, 40);
-    let runs = 1;
-    while (!last.finished) {
-      last = await importOldLetters("jo@pauseai.uk", 0, 40);
-      runs++;
-    }
-    expect(runs).toBeGreaterThan(1);
-    expect(await query("SELECT 1 FROM import_runs WHERE job = 'import-old-letters'")).toHaveLength(runs);
-    expect(last.left).toBe(0);
+    const stopped = await importOldLetters("jo@pauseai.uk", 0, 1);
+    expect(stopped.finished).toBe(false);
+    const last = await importOldLetters("jo@pauseai.uk", 0, 60_000);
+    expect(last).toMatchObject({ finished: true, left: 0 });
+    expect(await query("SELECT 1 FROM import_runs WHERE job = 'import-old-letters'")).toHaveLength(2);
   });
 
   it("does nothing on its schedule once finished, while a press goes through it all again", async () => {

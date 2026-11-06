@@ -9,7 +9,7 @@ import { deliverToLettersInbox, lettersMailbox, resetLettersInbox } from "@/test
 import { LETTERS_INBOX, stubLettersInboxEnv, testMail, testProxy } from "@/tests/gmail-sends";
 import { readGmail } from "./gmail-reading";
 import { submitLetter } from "./mp-letters";
-import { letterReply } from "./outside-services/blobs";
+import { letterReply, saveLetterReply } from "./outside-services/blobs";
 import { eraseSupporter } from "./erasure";
 import { importLuma } from "./luma-import";
 import { importMembers } from "./members-import";
@@ -207,6 +207,28 @@ describeWithDatabase("eraseSupporter", () => {
         expect.any(String),
       );
     });
+  });
+
+  it("deletes the stored mail of a reply on a form letter, leaving the mailbox's alone, and doesn't keep it again", async () => {
+    stubLettersInboxEnv();
+    const mp = await addTestMp();
+    const id = await janeWithEverything(mp);
+    const [{ letter }] = await query<{ letter: number }>(
+      `SELECT s.id::int AS letter FROM letters_from_supporters s JOIN supporter_links k ON k.form_entry_id = s.entry_id WHERE k.supporter_id = $1 LIMIT 1`,
+      [id],
+    );
+    await saveLetterReply("joseph@pauseai.uk/on-form.eml.gz", Buffer.from("x"));
+    await query(
+      `INSERT INTO letter_replies (letter_id, account, gmail_message_id, gmail_thread_id, rfc_message_id, from_address, at, from_us, blob_key, size)
+       VALUES ($1, 'joseph@pauseai.uk', 'on-form', 't', 'on-form@mail.gmail.com', 'joseph@pauseai.info', now(), true, 'joseph@pauseai.uk/on-form.eml.gz', 1)`,
+      [letter],
+    );
+    await eraseSupporter(id, "ICO-10", "jo@pauseai.uk");
+    expect(await letterReply("joseph@pauseai.uk/on-form.eml.gz")).toBeUndefined();
+    vi.unstubAllEnvs();
+    expect(await query("SELECT account FROM one_off_erased WHERE gmail_message_id = 'on-form'")).toEqual([
+      { account: "joseph@pauseai.uk" },
+    ]);
   });
 
   it("is done all the same when a one-off email's blob can't be deleted, saying so", async () => {

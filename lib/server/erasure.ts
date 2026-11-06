@@ -5,7 +5,7 @@ import { gmailAccess } from "./gmail-accounts";
 import { lettersInbox } from "./letters-inbox";
 import { deleteLetterReply } from "./outside-services/blobs";
 import { trashGmailMessage } from "./outside-services/gmail";
-import { deleteOneOffBlobs, eraseOneOffs } from "./one-off-emails";
+import { deleteOneOffBlobs, eraseOneOffs, eraseRepliesToFormLetters } from "./one-off-emails";
 import { refreshSupportersList } from "./supporter-facts";
 import { problem } from "./problems";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -22,7 +22,8 @@ import type { EraseLeftover } from "@/lib/staff-search";
 // the same way, its ID kept in members_erased; a message of a mailing
 // sent to them loses its address and merge values; a one-off email with their
 // address on it goes, with its blob, its IDs kept in one_off_erased so that
-// reading its thread again doesn't keep it again; staff's notes on them go with their row. What stays is what
+// reading its thread again doesn't keep it again, as does a reply on a form letter
+// read from a staff mailbox; staff's notes on them go with their row. What stays is what
 // exists to stop us mailing the address: email_problems, email_blocks and
 // opt_outs. The audit log entry carries the supporter's ID and the
 // request's reference, never a name or address. Luma's own copy is left
@@ -94,6 +95,7 @@ export async function eraseSupporter(id: number, reference: string, by: string):
       db,
     );
     const oneOffs = await eraseOneOffs(id, db);
+    const formLetterReplies = await eraseRepliesToFormLetters(entries, db);
     await query(
       `DELETE FROM email_sends WHERE purpose IN ('letter-copy', 'relay', 'supporter-notice')
        AND letter_id IN (SELECT id FROM letters_from_supporters WHERE entry_id = ANY($1::bigint[]))`,
@@ -137,12 +139,12 @@ export async function eraseSupporter(id: number, reference: string, by: string):
       oneOffs: oneOffs.length,
     };
     await logChange(by, "erase supporter", { id, reference, ...result }, db);
-    return { result, mail, oneOffs };
+    return { result, mail, blobs: [...oneOffs, ...formLetterReplies] };
   }).then(async (erased) => {
     if (!erased) return undefined;
     const notCleared = [
       ...(await leftOver("mail", () => clearMail(erased.mail))),
-      ...(await leftOver("oneOffs", () => deleteOneOffBlobs(erased.oneOffs))),
+      ...(await leftOver("oneOffs", () => deleteOneOffBlobs(erased.blobs))),
     ];
     return { ...erased.result, notCleared };
   });

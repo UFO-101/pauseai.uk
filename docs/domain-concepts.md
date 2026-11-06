@@ -349,8 +349,9 @@ Gmail refuses; a mailbox's limit applies to all its reading, the regular read's 
   25 minutes before its time in production to 5 seconds after it (`joinSent`). A
   sent email from PauseAI with no letter is one if its subject says so
   (`mailingOfNewLetter`). One from a supporter, who may send a form letter twice
-  though production keeps one, goes on their letter to that politician, or else
-  is a one-off.
+  though production keeps one for each ask, goes on their letter in the campaign
+  Airtable's record of that send says (`formLetterRepeated`). With no such record,
+  or one marked spam or invalid, it's a one-off.
 - **Text.** Many of Joseph's sends kept only each character's low byte, whatever
   charset they name. Bytes not valid in that charset are read one to a character
   (`decodedText`), and the control characters that curly quotes and dashes became

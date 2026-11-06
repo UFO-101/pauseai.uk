@@ -442,6 +442,21 @@ export function placeReply(
   return reply.group && before.length === 1 && before[0].senderEmail ? { id: before[0].id, rule: "quote" } : undefined;
 }
 
+/**
+ * Which letter a reply of ours answers, past a Gmail thread and Message-ID, by
+ * placeReply's rules: among the letters of a supporter it copies, or else only
+ * PauseAI's own, as it can't be told which of the politician's constituents a
+ * reply copying none is about.
+ */
+export function placeOurReply(
+  letters: ReplyCandidate[],
+  reply: { at: Date; subject: string; addresses: string[]; text?: string },
+): number | undefined {
+  const theirs = letters.filter((l) => l.senderEmail && reply.addresses.includes(l.senderEmail.trim().toLowerCase()));
+  const candidates = theirs.length ? theirs : letters.filter((l) => !l.senderEmail);
+  return placeReply(candidates, { at: reply.at, subject: reply.subject, text: reply.text, automatic: false })?.id;
+}
+
 /** Who a message is really from: the group rewrote many Froms as "'Some MP' via PauseAI UK", with the real one elsewhere. */
 export function realSender(from: string, originalFrom?: string, replyTo?: string): string {
   if (originalFrom) return originalFrom;
