@@ -288,9 +288,10 @@ describe("StaffSessions", () => {
 });
 
 describe("StaffHome", () => {
-  it("shows the dashboard under its title, with its groups in the sidebar's order and under its names", async () => {
+  it("shows the dashboard under its title and the day, with its groups in the sidebar's order and under its names", async () => {
     await render(<StaffHome permissions={["admin", "supporters"]} dashboard={exampleDashboard} />);
     await expect.element(page.getByRole("heading", { level: 1, name: staffCopy.home.title })).toBeVisible();
+    await expect.element(page.getByText("Wednesday 21 October")).toBeVisible();
     const sections = staffCopy.nav.sections;
     expect(
       page
@@ -346,9 +347,8 @@ describe("StaffDashboard", () => {
     expect(page.getByRole("list", { name: copy.actionsTitle }).all()).toHaveLength(0);
   });
 
-  it("heads the numbers with the day, and the windows as tabs", async () => {
+  it("heads the numbers with the windows as tabs", async () => {
     const { rerender } = await render(<StaffDashboard dashboard={exampleDashboard} permissions={[]} />);
-    await expect.element(page.getByText("Wednesday 21 October")).toBeVisible();
     const tabs = page.getByRole("navigation", { name: copy.windows });
     await expect.element(tabs.getByRole("link", { name: copy.window(7) })).toHaveAttribute("aria-current", "page");
     await expect.element(tabs.getByRole("link", { name: copy.window(7) })).toHaveAttribute("href", "/staff");

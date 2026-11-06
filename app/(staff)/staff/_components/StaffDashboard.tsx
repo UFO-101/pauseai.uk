@@ -19,7 +19,7 @@ import {
 } from "@/lib/staff-dashboard";
 import { SUPPORTER_SOURCES } from "@/lib/supporters";
 import type { Permission } from "@/lib/staff-permissions";
-import { staffDate, staffDay, staffTime } from "@/lib/staff-time";
+import { staffDate, staffTime } from "@/lib/staff-time";
 import Grid, { spanClass } from "./ui/Grid";
 import Strip from "./ui/Strip";
 import Tabs from "./ui/Tabs";
@@ -230,8 +230,8 @@ function Tiles({
 
 /**
  * The home page's dashboard: what needs a person, a strip each, only
- * when something does; the day, and the windows as tabs; the window's numbers
- * in three groups, each against the window before.
+ * when something does; the windows as tabs; the window's numbers in three
+ * groups, each against the window before.
  */
 export default function StaffDashboard({
   dashboard,
@@ -249,9 +249,6 @@ export default function StaffDashboard({
           ))}
         </ul>
       )}
-      <p className={styles.window}>
-        <strong>{staffDay(dashboard.asOf)}</strong>
-      </p>
       <Tabs
         label={copy.windows}
         current={String(dashboard.days)}

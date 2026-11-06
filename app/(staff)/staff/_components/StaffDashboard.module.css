@@ -1,4 +1,4 @@
-/* The home page's dashboard: what needs a person, the day and the windows' tabs,
+/* The home page's dashboard: what needs a person, the windows' tabs,
    then three groups of tiles, each a grid (ui/Grid). */
 
 .heading {
@@ -6,18 +6,13 @@
   font-size: var(--text-lg);
 }
 
-/* What needs a person, at the top: a strip each, a little apart; then room before the day. */
+/* What needs a person, at the top: a strip each, a little apart; then room before the tabs. */
 .actions {
   display: grid;
   gap: var(--space-2);
   margin: 0 0 var(--space-5);
   padding: 0;
   list-style: none;
-}
-
-/* The day, over the windows' tabs. */
-.window {
-  margin: 0 0 var(--space-3);
 }
 
 /* A tile: the window's number large, what it counts under it, a bar or a
