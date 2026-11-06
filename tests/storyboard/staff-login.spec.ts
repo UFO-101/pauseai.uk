@@ -117,9 +117,8 @@ test("Staff accounts", async ({ page, flowDatabase }, testInfo) => {
   const colleague = `colleague-${testInfo.testId.replace(/\W/g, "").slice(-8)}@pauseai.uk`;
   // Logged in for the first time, with no account: one is made, with no permissions, so the dashboard and the pages any account opens.
   await logInWithLink(page, BASE, staffEmail());
-  await expect(
-    page.getByRole("main").getByRole("heading", { level: 2, name: staffCopy.nav.sections.politicians }),
-  ).toBeVisible();
+  // The sidebar has a heading of the same name, before the dashboard's.
+  await expect(page.getByRole("heading", { level: 2, name: staffCopy.nav.sections.politicians }).last()).toBeVisible();
   // The sidebar (hidden behind the bar's menu on a phone, so read from the DOM) offers the ordinary pages and not the admin's.
   await expect(page.locator('nav a[href="/staff/politicians"]').first()).toBeAttached();
   await expect(page.locator('nav a[href="/staff/accounts"]')).toHaveCount(0);
