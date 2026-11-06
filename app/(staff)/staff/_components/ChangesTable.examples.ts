@@ -116,4 +116,8 @@ export const exampleChanges: LoggedChange[] = [
     { supporter: { id: 3, name: "Jane Example" } },
   ),
   change(26, "jo@pauseai.uk", "edit note", { noteId: 5, supporterId: 6 }),
+  change(27, "jo@pauseai.uk", "save filter", { id: 3, list: "events" }),
+  change(28, "jo@pauseai.uk", "update filter", { id: 3, list: "events" }),
+  change(29, "jo@pauseai.uk", "rename filter", { id: 3, list: "events" }),
+  change(30, "jo@pauseai.uk", "delete filter", { id: 3, list: "events" }),
 ];

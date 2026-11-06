@@ -191,6 +191,26 @@ describeWithDatabase("filterProblems", () => {
   });
 });
 
+describeWithDatabase("filterProblems on the events list", () => {
+  useTestDatabase();
+
+  it("knows its owners, tags and places, whichever way they're chosen, and names the rest", async () => {
+    await query("INSERT INTO staff_accounts (email, added_by) VALUES ('jo@pauseai.uk', 'admin@pauseai.uk')");
+    await expect(
+      filterProblems({
+        list: "events",
+        params: {
+          q: "anything",
+          owner: ["jo@pauseai.uk", "!none", "gone@pauseai.uk"],
+          place: ["online", "Atlantis"],
+          tag: "!Gone",
+          removed: "yes",
+        },
+      }),
+    ).resolves.toEqual(["owner=gone@pauseai.uk", "place=Atlantis", "tag=!Gone"]);
+  });
+});
+
 describeWithDatabase("migration 0059_filters_by_nation", MAKES_DATABASES, () => {
   const db = useDatabaseUpTo("0058");
 

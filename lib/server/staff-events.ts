@@ -105,16 +105,28 @@ export async function eventsPage(
   const iso = now().toISOString();
   const events = await listEvents(undefined, hosts);
   const found = findEvents(events, filter, iso);
-  const staff = await query<{ email: string }>("SELECT email FROM staff_accounts ORDER BY email");
-  const sorted = (values: string[]) => [...new Set(values)].sort((a, b) => a.localeCompare(b));
   return {
     ...found,
     events: found.events.map(withoutEmails),
+    ...(await choicesOf(events)),
+    now: iso,
+  };
+}
+
+/** What the events list's filters offer, among `events`. */
+async function choicesOf(events: SearchedEvent[]): Promise<{ staff: string[]; tags: string[]; cities: string[] }> {
+  const staff = await query<{ email: string }>("SELECT email FROM staff_accounts ORDER BY email");
+  const sorted = (values: string[]) => [...new Set(values)].sort((a, b) => a.localeCompare(b));
+  return {
     staff: staff.map((account) => account.email),
     tags: sorted(events.flatMap((event) => event.tags)),
     cities: sorted(events.flatMap((event) => event.city ?? [])),
-    now: iso,
   };
+}
+
+/** What the events list's filters offer: every staff account, and every tag and city our events have. */
+export async function eventChoices(): Promise<{ staff: string[]; tags: string[]; cities: string[] }> {
+  return choicesOf(await listEvents());
 }
 
 /**

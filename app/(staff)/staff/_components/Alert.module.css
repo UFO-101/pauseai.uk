@@ -1,0 +1,4 @@
+/* A message on the page: its own room above and below, whatever is beside it, so it never crowds them. */
+.alert {
+  margin-block: var(--space-4);
+}

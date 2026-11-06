@@ -132,6 +132,7 @@ export const emptyPoliticiansSearch: PoliticiansSearch = {
   mailing: "",
   tab: "",
   pasted: [],
+  saved: "",
 };
 
 /** The draft "Edinburgh thank-you", choosing who it's for, with Polly ticked. */

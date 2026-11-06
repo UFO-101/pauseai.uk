@@ -81,6 +81,7 @@ describe("politiciansSearch", () => {
       ...typed,
       tab: "",
       pasted: [],
+      saved: "",
       filter: {
         search: "Jo",
         house: "lords",
@@ -142,6 +143,7 @@ describe("politiciansSearch", () => {
       mailing: "",
       tab: "",
       pasted: [],
+      saved: "",
     };
     expect(politiciansSearch({})).toEqual({ ...blank, filter: none });
     // A draft's ID is a number; the ticked tab is "1"; the lines pasted are a list.

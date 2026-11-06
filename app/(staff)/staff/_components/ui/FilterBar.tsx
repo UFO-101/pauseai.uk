@@ -5,10 +5,12 @@ import { Select, TextInput } from "@/components/ui/Controls";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { filtersPath, firstOf, NOT, notValue, valuesOf, type Params } from "@/lib/staff-search";
 import ChoiceSearch from "./ChoiceSearch";
+import FilterBarLines from "./FilterBarLines";
 import FormPending from "./FormPending";
 import StaffLink from "./StaffLink";
 import Menu from "./Menu";
 import NotIcon from "./NotIcon";
+import SavedFilters, { SavedFilterGone, type SavedFiltersProps } from "./SavedFilters";
 import styles from "./FilterBar.module.css";
 
 /**
@@ -90,6 +92,20 @@ export function filteredTitle(title: string, words: string[]): string {
   if (!filters) return title;
   const short = filters.length > TITLE_FILTERS ? `${filters.slice(0, TITLE_FILTERS - 1).trimEnd()}…` : filters;
   return copy.pageTitle(title, short);
+}
+
+/** A list's title with all the search and filters that are on, `words` (filterWords()): a saved filter's first name. */
+export function filteredName(title: string, words: string[]): string {
+  return copy.pageTitle(title, words.filter(Boolean).join(", "));
+}
+
+/** The values a saved filter can no longer find, each "<parameter>=<value>", in words, as chips say them. */
+function goneWords(filters: Filter[], gone: string[]): string[] {
+  return gone.map((one) => {
+    const [name, ...value] = one.split("=");
+    const filter = filters.find((f) => f.name === name);
+    return filter ? valueWords(filter, value.join("="), ": ") : value.join("=");
+  });
 }
 
 /** A list of choices, each a link; the one chosen marked; with `search`, a box over it that narrows it. */
@@ -190,7 +206,10 @@ function PlaceForm({
  * to left out, and back. Every choice is a link, so the URL holds
  * the filters. `values` are the URL's parameters as typed: a change keeps
  * the rest, but for the page, and Clear filters clears the sort too,
- * keeping only those named in `keep`, such as a tab.
+ * keeping only those named in `keep`, such as a tab. With `saved`, that
+ * list's saved filters are a chip (ui/SavedFilters) at the right of the first
+ * row, with a way to save what's on while anything is; Clear filters shows
+ * with one loaded, and unloads it.
  */
 export default function FilterBar({
   path,
@@ -198,12 +217,14 @@ export default function FilterBar({
   search,
   filters,
   keep = [],
+  saved,
 }: {
   path: string;
   values: Params;
   search: { name: string; label: string };
   filters: Filter[];
   keep?: string[];
+  saved?: SavedFiltersProps;
 }) {
   const href = (changes: Params) => filtersPath(path, values, { ...changes, page: "" });
   const chosen = (name: string) => valuesOf(values[name]);
@@ -326,113 +347,121 @@ export default function FilterBar({
     </div>
   );
   return (
-    // Keyed on the filters, so the menu chosen from closes when they change.
-    <div key={filtersPath(path, values)} className={styles.bar}>
-      <Form action={path} className={styles.search} role="search">
-        <span className={styles.box}>
-          <TextInput
-            type="search"
-            name={search.name}
-            defaultValue={firstOf(values[search.name])}
-            aria-label={search.label}
-            placeholder={search.label}
-          />
-          {values[search.name] && (
-            <StaffLink href={href({ [search.name]: "" })} className={styles.clear} aria-label={copy.clearSearch}>
-              ×
+    <>
+      {/* Keyed on the filters, so the menu chosen from closes when they change. */}
+      <FilterBarLines key={filtersPath(path, values)} className={styles.bar}>
+        <Form action={path} className={styles.search} role="search">
+          <span className={styles.box}>
+            <TextInput
+              type="search"
+              name={search.name}
+              defaultValue={firstOf(values[search.name])}
+              aria-label={search.label}
+              placeholder={search.label}
+            />
+            {values[search.name] && (
+              <StaffLink href={href({ [search.name]: "" })} className={styles.clear} aria-label={copy.clearSearch}>
+                ×
+              </StaffLink>
+            )}
+          </span>
+          {hidden.map(([name, value]) => (
+            <input key={`${name}-${value}`} type="hidden" name={name} value={value} />
+          ))}
+          <Button variant="primary" size="small" fit type="submit">
+            {staffCopy.search}
+          </Button>
+          <FormPending />
+        </Form>
+        {saved && (
+          <SavedFilters key={saved.version} {...saved} canSave={on.length > 0 || Boolean(values[search.name])} />
+        )}
+        <div className={styles.chips}>
+          {on
+            .filter((filter) => !(filter.after && chosen(filter.after).length > 0))
+            .flatMap((filter) => {
+              const next = filters.find((f) => f.after === filter.name);
+              const value = firstOf(values[filter.name]);
+              if (next) {
+                // A filter and the one that comes after it: one lozenge in two halves, each its own menu.
+                const nextValue = firstOf(values[next.name]);
+                return (
+                  <span key={filter.name} className={styles.pair} role="group" aria-label={filter.label}>
+                    {chip(filter, value, label(filter, value))}
+                    {chip(next, nextValue, label(next, nextValue), true)}
+                  </span>
+                );
+              }
+              if (filter.place) return chip(filter, value, placeLabel(filter, value));
+              return chosen(filter.name).map((one) => {
+                const { value: plain, not } = notValue(one);
+                const { first, second } = parts(filter, plain);
+                if (!first?.seconds) return chip(filter, one, valueWords(filter, one, ": "));
+                // A choice in two parts: one lozenge in two halves, the second narrowing the first.
+                // Its group's icon before its words, so "PauseAI UK" says which.
+                const named = first.group ? (
+                  <>
+                    <span className={styles.chipIcon}>{first.group.icon}</span>
+                    {first.label}
+                  </>
+                ) : (
+                  first.label
+                );
+                const words = not ? (
+                  <>
+                    {copy.notChip(filter.label, "")}
+                    {named}
+                  </>
+                ) : (
+                  <>
+                    {filter.label}: {named}
+                  </>
+                );
+                return (
+                  <span key={`${filter.name}-${one}`} className={styles.pair} role="group" aria-label={filter.label}>
+                    {chip(filter, one, words)}
+                    {chip(filter, one, (second ?? first.seconds[0]).label, true, {
+                      options: first.seconds,
+                      current: plain,
+                    })}
+                  </span>
+                );
+              });
+            })}
+          {offered.length > 0 &&
+            (negatable.length > 0 ? (
+              // "+ Filter" and Except: one lozenge, cut down the middle, a menu each.
+              <span className={styles.pair} role="group" aria-label={copy.add}>
+                <Menu id="filter-add" trigger={styles.add} label={copy.add}>
+                  {groups(offered, false)}
+                </Menu>
+                <Menu
+                  id="filter-except"
+                  trigger={styles.add}
+                  label={
+                    <>
+                      <NotIcon />
+                      {copy.except}
+                    </>
+                  }
+                >
+                  <p className={styles.groupsHeading}>{copy.exceptHeading}</p>
+                  {groups(negatable, true)}
+                </Menu>
+              </span>
+            ) : (
+              <Menu id="filter-add" trigger={styles.add} label={copy.add}>
+                {groups(offered, false)}
+              </Menu>
+            ))}
+          {(on.length > 0 || values[search.name] || saved?.loaded) && (
+            <StaffLink href={filtersPath(path, kept)} className={styles.clearAll}>
+              {staffCopy.resetFilters}
             </StaffLink>
           )}
-        </span>
-        {hidden.map(([name, value]) => (
-          <input key={`${name}-${value}`} type="hidden" name={name} value={value} />
-        ))}
-        <Button variant="primary" size="small" fit type="submit">
-          {staffCopy.search}
-        </Button>
-        <FormPending />
-      </Form>
-      {on
-        .filter((filter) => !(filter.after && chosen(filter.after).length > 0))
-        .flatMap((filter) => {
-          const next = filters.find((f) => f.after === filter.name);
-          const value = firstOf(values[filter.name]);
-          if (next) {
-            // A filter and the one that comes after it: one lozenge in two halves, each its own menu.
-            const nextValue = firstOf(values[next.name]);
-            return (
-              <span key={filter.name} className={styles.pair} role="group" aria-label={filter.label}>
-                {chip(filter, value, label(filter, value))}
-                {chip(next, nextValue, label(next, nextValue), true)}
-              </span>
-            );
-          }
-          if (filter.place) return chip(filter, value, placeLabel(filter, value));
-          return chosen(filter.name).map((one) => {
-            const { value: plain, not } = notValue(one);
-            const { first, second } = parts(filter, plain);
-            if (!first?.seconds) return chip(filter, one, valueWords(filter, one, ": "));
-            // A choice in two parts: one lozenge in two halves, the second narrowing the first.
-            // Its group's icon before its words, so "PauseAI UK" says which.
-            const named = first.group ? (
-              <>
-                <span className={styles.chipIcon}>{first.group.icon}</span>
-                {first.label}
-              </>
-            ) : (
-              first.label
-            );
-            const words = not ? (
-              <>
-                {copy.notChip(filter.label, "")}
-                {named}
-              </>
-            ) : (
-              <>
-                {filter.label}: {named}
-              </>
-            );
-            return (
-              <span key={`${filter.name}-${one}`} className={styles.pair} role="group" aria-label={filter.label}>
-                {chip(filter, one, words)}
-                {chip(filter, one, (second ?? first.seconds[0]).label, true, {
-                  options: first.seconds,
-                  current: plain,
-                })}
-              </span>
-            );
-          });
-        })}
-      {offered.length > 0 &&
-        (negatable.length > 0 ? (
-          // "+ Filter" and Except: one lozenge, cut down the middle, a menu each.
-          <span className={styles.pair} role="group" aria-label={copy.add}>
-            <Menu id="filter-add" trigger={styles.add} label={copy.add}>
-              {groups(offered, false)}
-            </Menu>
-            <Menu
-              id="filter-except"
-              trigger={styles.add}
-              label={
-                <>
-                  <NotIcon />
-                  {copy.except}
-                </>
-              }
-            >
-              <p className={styles.groupsHeading}>{copy.exceptHeading}</p>
-              {groups(negatable, true)}
-            </Menu>
-          </span>
-        ) : (
-          <Menu id="filter-add" trigger={styles.add} label={copy.add}>
-            {groups(offered, false)}
-          </Menu>
-        ))}
-      {(on.length > 0 || values[search.name]) && (
-        <StaffLink href={filtersPath(path, kept)} className={styles.clearAll}>
-          {staffCopy.resetFilters}
-        </StaffLink>
-      )}
-    </div>
+        </div>
+      </FilterBarLines>
+      {saved && <SavedFilterGone words={goneWords(filters, saved.gone)} />}
+    </>
   );
 }

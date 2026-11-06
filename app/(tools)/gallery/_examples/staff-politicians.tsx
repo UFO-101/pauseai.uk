@@ -52,6 +52,7 @@ const EMPTY_POLITICIAN_FILTERS = {
   mailing: "",
   tab: "",
   pasted: [] as string[],
+  saved: "",
 };
 
 export const staffPoliticians: Group = {

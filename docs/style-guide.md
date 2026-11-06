@@ -463,6 +463,21 @@ are:
   menu, beside Remove, turns its choice the other way: "Except this
   instead", or "Only this instead". In the URL a choice left out is the
   same parameter, its value marked `!`: `event=!evt-2`.
+- Politicians, Supporters and Events have saved filters (`ui/SavedFilters`,
+  FilterBar's `saved`, and "Saved filters" in `docs/domain-concepts.md`): a
+  white lozenge at the right of the bar's first row; on a phone it shares a
+  row with the search, which takes what it leaves, or on the narrowest has
+  its own row under it. If the search, the chips and this don't all
+  fit on one line, the chips start a line of their own (`ui/FilterBarLines`). Its bookmark is outlined, or filled in the accent with one
+  loaded, and it's named for that one, cut at about 17rem, the full name on
+  hover, "edited" after it never cut. Its second half is there only with
+  something to save: Save, with a filter or search on and none loaded,
+  opens a small form with the name filled in; Save ▾, once one's edited,
+  holds Update for everyone, Save as new and Undo my changes. The list is a
+  box that narrows by name, and rows of name, summary, creator and date,
+  each a link that loads it, with a menu to rename or delete
+  it without loading it. Clear filters unloads one too. A loaded one that
+  names something gone says so under the bar.
 - A filter with too many choices to read (`searchable`: the events) has a
   box over them, and shows none until something's typed.
 - A place filter (`place`: Near) is a small form, words and how far, and

@@ -785,6 +785,32 @@ page, and a scheduled function if it runs on a schedule. A job that has more to 
 than a run allows, as the Luma import has, keeps its place and says in
 its result what's left.
 
+## Saved filters
+
+A saved filter is a staff list's filters under a name, for everyone who can
+open that list (`saved_filters`, `lib/server/saved-filters.ts`, and
+`ui/SavedFilters` for how it looks). Politicians, Supporters and Events have
+them. Anyone who can open the list can update, rename or delete any of them,
+and the audit log records each change by its ID and list, never its name or
+parameters, which can name a supporter.
+
+It holds the list's URL parameters (`savedParams()`, `lib/saved-filters.ts`):
+the search and every filter, the tab and the sort, never the page or who a
+mailing is being chosen for. This isn't `FILTER_LISTS`, which is the lists a
+mailing can be to.
+
+Filters live in the URL, so loading one is a link to its parameters and
+`saved=<id>`, which every link in the bar keeps. Nothing is held in the
+browser: each page compares its URL with the filter it names, ignoring
+order and blanks, to know whether it's been edited. An ID that's unknown,
+deleted or another list's loads nothing. A value that no longer exists
+(`filterProblems()`) is left out of the list, says so over it and doesn't
+count as an edit; saving an edit to the filter takes it out for good.
+
+Erasing a supporter takes their exact names, emails, phone numbers and
+postcode, ignoring case, out of every saved filter's name and typed
+parameters (`docs/data-protection.md`).
+
 ## The audit log
 
 Every change made by staff, or by something acting on its own, records who,

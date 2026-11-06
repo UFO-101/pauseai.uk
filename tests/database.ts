@@ -58,6 +58,7 @@ const TABLES = [
   "one_off_messages",
   "one_off_thread_people",
   "one_off_threads",
+  "saved_filters",
   "opt_outs",
   "politician_domains",
   "politicians",

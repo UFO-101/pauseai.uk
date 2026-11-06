@@ -1831,6 +1831,39 @@ ALTER TABLE public.proxies ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 );
 
 --
+-- Name: saved_filters; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.saved_filters (
+    id bigint NOT NULL,
+    list text NOT NULL,
+    name text NOT NULL,
+    params jsonb NOT NULL,
+    created_by text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_by text,
+    updated_at timestamp with time zone,
+    CONSTRAINT saved_filters_list_check CHECK ((list = ANY (ARRAY['politicians'::text, 'supporters'::text, 'events'::text])))
+);
+
+--
+-- Name: saved_filters_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.saved_filters_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+--
+-- Name: saved_filters_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.saved_filters_id_seq OWNED BY public.saved_filters.id;
+
+--
 -- Name: staff_accounts; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1997,6 +2030,12 @@ CREATE TABLE public.unmatched_mail (
     tried_at timestamp with time zone,
     CONSTRAINT unmatched_mail_account_check CHECK ((account = lower(account)))
 );
+
+--
+-- Name: saved_filters id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.saved_filters ALTER COLUMN id SET DEFAULT nextval('public.saved_filters_id_seq'::regclass);
 
 --
 -- Name: ask_kind_statuses ask_kind_statuses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -2480,6 +2519,13 @@ ALTER TABLE ONLY public.proxies
 
 ALTER TABLE ONLY public.proxies
     ADD CONSTRAINT proxies_tag_key UNIQUE (tag);
+
+--
+-- Name: saved_filters saved_filters_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.saved_filters
+    ADD CONSTRAINT saved_filters_pkey PRIMARY KEY (id);
 
 --
 -- Name: staff_accounts staff_accounts_pkey; Type: CONSTRAINT; Schema: public; Owner: -

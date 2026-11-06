@@ -81,6 +81,14 @@
   border-bottom: 1px solid var(--border);
 }
 
+/* On a phone, the navigation over the page: its row only as tall as it is, as a
+   short page would otherwise share its spare height with it. */
+@media (max-width: 720px) {
+  .withNav {
+    grid-template-rows: auto 1fr;
+  }
+}
+
 /* The sidebar's column, on screens wide enough; the breakpoint matches StaffNav's. */
 @media (min-width: 721px) {
   .withNav {

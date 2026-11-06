@@ -7,6 +7,9 @@ import {
   noteEditFrom,
   noteFrom,
   permissionsFrom,
+  savedFilterNeeds,
+  savedListFrom,
+  savedNameFrom,
   statusFrom,
   unblockFrom,
 } from "./staff-forms";
@@ -177,5 +180,24 @@ describe("eventFrom", () => {
     expect(eventFrom(form({ owner: "jo@pauseai.uk" }))).toBeUndefined();
     expect(eventFrom(form({ eventId: "evt-1", doc: "https://example.com/docs.google.com/" }))).toBeUndefined();
     expect(eventFrom(form({ eventId: "evt-1", doc: "http://docs.google.com/document/d/abc" }))).toBeUndefined();
+  });
+});
+
+describe("a saved filter's form", () => {
+  it("is for a list that has them", () => {
+    expect(savedListFrom(form({ list: "events" }))).toBe("events");
+    expect(savedListFrom(form({ list: "mailings" }))).toBeUndefined();
+    expect(savedListFrom(form({}))).toBeUndefined();
+  });
+
+  it("needs the supporters permission only for that list", () => {
+    expect(savedFilterNeeds(form({ list: "supporters" }))).toBe("supporters");
+    expect(savedFilterNeeds(form({ list: "politicians" }))).toBe("account");
+    expect(savedFilterNeeds(form({ list: "nonsense" }))).toBe("account");
+  });
+
+  it("gives a name on one line", () => {
+    expect(savedNameFrom(form({ name: "  Labour\n  or   Green " }))).toBe("Labour or Green");
+    expect(savedNameFrom(form({}))).toBe("");
   });
 });

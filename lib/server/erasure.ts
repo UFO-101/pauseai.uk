@@ -6,6 +6,7 @@ import { lettersInbox } from "./letters-inbox";
 import { deleteLetterReply } from "./outside-services/blobs";
 import { trashGmailMessage } from "./outside-services/gmail";
 import { deleteOneOffBlobs, eraseOneOffs, eraseRepliesToFormLetters } from "./one-off-emails";
+import { eraseFromSavedFilters } from "./saved-filters";
 import { refreshSupportersList } from "./supporter-facts";
 import { problem } from "./problems";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -23,7 +24,8 @@ import type { EraseLeftover } from "@/lib/staff-search";
 // sent to them loses its address and merge values; a one-off email with their
 // address on it goes, with its blob, its IDs kept in one_off_erased so that
 // reading its thread again doesn't keep it again, as does a reply on a form letter
-// read from a staff mailbox; staff's notes on them go with their row. What stays is what
+// read from a staff mailbox; staff's notes on them go with their row; their
+// details come out of saved filters. What stays is what
 // exists to stop us mailing the address: email_problems, email_blocks and
 // opt_outs. The audit log entry carries the supporter's ID and the
 // request's reference, never a name or address. Luma's own copy is left
@@ -49,6 +51,7 @@ export async function eraseSupporter(id: number, reference: string, by: string):
   return transaction(async (db) => {
     const [supporter] = await query("SELECT 1 FROM supporters WHERE id = $1 FOR UPDATE", [id], db);
     if (!supporter) return undefined;
+    await eraseFromSavedFilters(id, by, db);
     const lumaUsers = (
       await query<{ userId: string }>(
         `SELECT luma_user_id AS "userId" FROM supporter_links WHERE supporter_id = $1 AND luma_user_id IS NOT NULL`,

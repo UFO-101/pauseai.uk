@@ -1,5 +1,6 @@
 import { staffCopy } from "@/lib/content/staff-interface";
-import type { SupportersSearch } from "@/lib/staff-search";
+import { supportersSearch, type SupportersSearch } from "@/lib/staff-search";
+import type { SavedFiltersState } from "@/lib/server/saved-filters";
 import { CHANNELS, SENDS, stateValue, waysKey, type Channel, type Topic } from "@/lib/contact-permissions";
 import { campaigns } from "@/lib/content/email-your-mp";
 import type { SupporterChoices, SupportersPage } from "@/lib/server/supporters";
@@ -7,7 +8,8 @@ import { staffDate } from "@/lib/staff-time";
 import { NEAR_MILES, SUPPORTER_BADGES } from "@/lib/supporters";
 import ChannelIcon from "./ChannelIcon";
 import { supporterFiltersOf } from "./SupportersTable";
-import FilterBar, { filterWords, type Filter } from "./ui/FilterBar";
+import FilterBar, { filteredName, filterWords, type Filter } from "./ui/FilterBar";
+import { savedFiltersProps, type SavedFilterActions } from "./ui/SavedFilters";
 
 /**
  * The Subscriptions filter's topics, in its order: email's, then phone's,
@@ -143,15 +145,17 @@ export function supporterWords(
   return filterWords(supporterFilters(search, choices, near), supporterFiltersOf(search), "q");
 }
 
-/** Search and filter the supporters list. The erased notice goes with any change. */
+/** Search and filter the supporters list, with its `saved` filters. The erased notice goes with any change. */
 export default function SupporterFilters({
   search,
   choices,
   near,
+  saved,
 }: {
   search: SupportersSearch;
   choices: SupporterChoices;
   near?: SupportersPage["near"];
+  saved?: { state: SavedFiltersState; actions: SavedFilterActions };
 }) {
   return (
     <FilterBar
@@ -159,6 +163,17 @@ export default function SupporterFilters({
       values={{ ...search, erased: "" }}
       search={{ name: "q", label: staffCopy.supporters.filters.search }}
       filters={supporterFilters(search, choices, near)}
+      saved={
+        saved &&
+        savedFiltersProps({
+          ...saved,
+          list: "supporters",
+          values: { ...search, erased: "" },
+          path: "/staff/supporters",
+          name: filteredName(staffCopy.supporters.title, supporterWords(search, choices, near)),
+          summary: (params) => supporterWords(supportersSearch(params), choices),
+        })
+      }
     />
   );
 }

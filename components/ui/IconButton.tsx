@@ -3,6 +3,11 @@ import styles from "./IconButton.module.css";
 
 export type IconButtonLook = "outline" | "raised" | "dark";
 
+/** A round button's class, for a button that something else draws, such as a menu's (ui/Menu). */
+export function iconButtonClass(look: IconButtonLook, className?: string): string {
+  return [styles.button, styles[look], className].filter(Boolean).join(" ");
+}
+
 /**
  * A round button with an icon (or a single glyph) in it, and an accessible
  * name in `aria-label`. `outline` is a thin ring that fills orange on
@@ -23,7 +28,7 @@ export default function IconButton({
     <button
       {...rest}
       type={type}
-      className={[styles.button, styles[look], className].filter(Boolean).join(" ")}
+      className={iconButtonClass(look, className)}
       style={size ? { ...style, ["--icon-button-size" as string]: `${size}px` } : style}
     />
   );

@@ -126,6 +126,13 @@ export default function AuditDetail({ change, airtableTable }: { change: LoggedC
         ),
       );
       break;
+    case "save filter":
+    case "update filter":
+    case "rename filter":
+    case "delete filter":
+      take("id", "list");
+      lead.push(copy.savedFilter(text("list"), String(details.id)));
+      break;
     case "erase supporter":
       take("id");
       lead.push(copy.gone(String(details.id)));
