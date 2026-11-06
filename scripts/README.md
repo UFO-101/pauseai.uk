@@ -16,10 +16,12 @@ where there's an npm script. Each file's opening comment has the details.
 
 ## Storyboard
 
-| Script           | Run with                    | What it does                                                                                                                                        |
-| ---------------- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `storyboard.mjs` | `npm run storyboard`        | The storyboard review: runs the Playwright suite with screenshots on both viewports, for this branch and for main, and opens the page pairing them. |
-| `serve-main.mjs` | started by `storyboard.mjs` | Builds and serves where this branch left origin/main (or `--ref`) on fixture data, from a git worktree in your temp folder, for the comparison.     |
+| Script                | Run with                             | What it does                                                                                                                                                                               |
+| --------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `storyboard.mjs`      | `npm run storyboard`                 | The storyboard review: runs the Playwright suite with screenshots on both viewports, for this branch and for main, and opens the page pairing them.                                        |
+| `storyboard-main.mjs` | imported by `storyboard.mjs`         | Keeps main's frames between runs, under main's commit and a hash of the suite's shared files, so a run builds and runs main only for the flows it hasn't got.                              |
+| `serve-fixture.mjs`   | Playwright's `webServer`, or by hand | Builds this checkout on fixture data, with a fresh database of its own, and serves it on port 3100. Start it yourself to keep one server up between runs (`docs/development.md`, "Tests"). |
+| `serve-main.mjs`      | started by `storyboard.mjs`          | Builds and serves where this branch left origin/main (or `--ref`) on fixture data, from a git worktree in your temp folder, on port 3001, for the comparison.                              |
 
 `docs/testing.md`, "The storyboard", covers them.
 
@@ -35,6 +37,6 @@ where there's an npm script. Each file's opening comment has the details.
 
 ## Tests and types
 
-`db-migrate.test.ts` and `fresh-database.test.ts` test the scripts beside
-them, in the Vitest node project. The `.d.mts` files give the scripts'
+`db-migrate.test.ts`, `fresh-database.test.ts` and `storyboard-main.test.ts`
+test the scripts beside them, in the Vitest node project. The `.d.mts` files give the scripts'
 functions types, for the TypeScript that imports them.

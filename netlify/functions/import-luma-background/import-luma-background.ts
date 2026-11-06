@@ -1,5 +1,5 @@
 // Netlify background function (its name ends -background): started by the
-// hourly import-luma function, it asks the site to copy the Luma calendar's
+// import-luma function every 5 minutes, it asks the site to copy the Luma calendar's
 // events, guests and contacts (app/api/cron/import-luma). It answers 202 at
 // once, whoever calls it, so it does nothing for a call without CRON_SECRET.
 // Netlify tries it twice more, a minute and then two minutes apart, if it

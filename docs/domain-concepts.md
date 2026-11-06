@@ -135,8 +135,9 @@ pauseai.info's old ones each commit of its form live when a letter was written
 
 Every letter to a notable person (`letters`): its kind, the person, when it
 was made and sent, and its status (`sending`, `sent`, `not_sent`,
-`bounced`, `spam_complaint`, and for PauseAI's only, `scheduled` and
-`cancelled`), with a log of everything that happened to it
+`bounced` or `spam_complaint`; a supporter's can also be `queued`, and
+PauseAI's `scheduled`, `cancelled` or `skipped`), with a log of everything
+that happened to it
 (`letter_events`), including replies and automatic replies. A child row
 adds what its kind has, joined as notable people are:
 
@@ -246,13 +247,14 @@ written to and kept.
   uncertain match. Every message is kept whole (`letter_replies`, Netlify
   Blobs), and each relay is a row (`letter_relays`) recorded before it's
   sent, so a run that stops between is shown as uncertain rather than sent
-  twice. A letter's relays are capped, 5 an hour and 20 a day, so a loop
-  of automatic replies stops. Each message is labelled in Gmail, and all
-  but those not understood are archived. Mail it can't account for (an
+  twice. A letter's relays are capped, 5 an hour and 20 a day
+  (`RELAY_CAP`), so a loop of automatic replies stops. Each message is
+  labelled in Gmail and archived, but for mail it can't account for (an
   unknown proxy, a stranger, a forgery, one over the cap, a bounce of
-  nothing we sent) fails the run, which lists each with a link to it in
-  Gmail, and emails the notification inbox once ("Email", below); spam to no letter is only
-  counted.
+  nothing we sent), which is labelled "Not understood" and left in the
+  inbox, and fails the run, which lists each with a link to it in Gmail
+  and emails the notification inbox once ("Email", below); spam to no
+  letter is only counted.
 - **Bounces**: the letter, or a relay to the MP, bouncing hard blocks the
   MP's address, emails the notification inbox, and tells the supporter, in our own words,
   in their copy's thread; once staff unblock the address, or the MP's
@@ -473,7 +475,7 @@ their blocked addresses) is an audit log entry.
 
 Where they come from:
 
-- **Luma.** The import, every 5 minutes, (`lib/server/luma-import.ts`) copies every
+- **Luma.** The import, every 5 minutes (`lib/server/luma-import.ts`), copies every
   public event on our calendar into `luma_events`, each registered guest
   into `luma_guests` (phone, a postcode answer, `utm_source`; never Luma's
   invited-only rows), each of our own events' hosts into
@@ -483,7 +485,14 @@ Where they come from:
   `luma_people`, with when they joined the calendar as a contact and when
   a read of the contacts last listed them. Luma's own IDs are the keys, and
   only the import writes these tables. The site's events pages still read
-  Luma live.
+  Luma live. A run fetches for about 20 seconds, reading what's changed
+  first and backfilling the rest over later runs, and records how many
+  events are still waiting, so the first copy of the calendar takes a few
+  runs. It leaves 50 of Luma's 200 requests a minute for the site's own
+  fetches, and stops early if Luma answers 429. A run that changed nothing
+  doesn't work out every supporter's facts and the supporters list again
+  unless no run has in the last hour, as with many supporters they take a
+  few seconds.
 - **Our forms.** Each form entry ("Form entries", above). Its source in
   `supporter_identity`, `supporter_activity` and `supporter_contact` is its
   form, so staff see which; a letter is activity of the entry that sent it.
@@ -500,12 +509,17 @@ Where they come from:
   erased; the summary's `member` is false for them, so they lose the
   Member badge.
 
-**Where they are.** `supporterPlace()` (`lib/supporter-place.ts`) gives a
-supporter's best-known place from their contact details: the newest a
-source says they gave themselves (a member's city), or failing that the
-newest event they registered for, since Luma's places are its events'.
-The supporter's page shows the cities they gave, or else that one; finding
-supporters near somewhere would use it too.
+**Where they are.** The `supporter_place` view gives each supporter's
+best-known place, with its coordinates, country and the postcode's
+constituency: their newest postcode, else the newest city they gave
+themselves (never Luma's, whose cities are its events'), else the newest
+event they registered for that isn't a big day or online. Each postcode
+and town is looked up at postcodes.io once, at the end of each Luma
+import, and kept in `postcode_places` and `named_places`
+(`lib/server/supporter-places.ts`); a big import catches up over a few
+runs. The list's Near filter and a supporter's MP read it, and the
+supporter's page shows the cities they gave (`givenPlaces()` in
+`lib/supporter-place.ts`).
 
 **Erasure.** When someone asks to be forgotten, staff erase the supporter
 from their page (`lib/server/erasure.ts`), under the request's reference.
@@ -807,26 +821,32 @@ changed. Reading is logged only where the data is personal and leaves the
 site: each download of a list of supporters, their letters or their
 blocked addresses. Nothing else about reading is logged.
 
-| Action                                                                                                        | Actor                          | When                                                                        | Details name                                                 |
-| ------------------------------------------------------------------------------------------------------------- | ------------------------------ | --------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| `add politician`                                                                                              | `sync`                         | The politician sync adds a politician                                       | `id`, and their details                                      |
-| `edit politician`                                                                                             | `sync`                         | The politician sync changes a politician's details, or their record is back | `id`, `name`, and each field `changed`, before and after     |
-| `remove politician`                                                                                           | `sync`                         | The politician sync finds a record no longer in Airtable                    | `id`, `name`                                                 |
-| `set status`                                                                                                  | staff, `controlai`, `airtable` | A status set or cleared, by hand or by an import                            | `politicianId`, `ask`, `status`, `date`, `note`              |
-| `apply politician sync`, `hold politician sync`, `apply held politician sync`, `discard held politician sync` | `sync`, staff                  | Each sync's outcome, and each decision on a held one                        | counts, or the run's `id`                                    |
-| `copy PauseAI emails`                                                                                         | `sync`                         | The Emails sync adds any                                                    | `added`                                                      |
-| `import web form letters`                                                                                     | staff                          | The one-off import of pauseai.info's letters                                | counts                                                       |
-| `import Go to Parliament`                                                                                     | staff                          | The one-off import of its meetings                                          | counts                                                       |
-| `import ControlAI letter`                                                                                     | `controlai`                    | A read of the letter that set or cleared any status                         | counts                                                       |
-| `block address`, `unblock address`                                                                            | `postmark`, staff              | A bounce or complaint blocks an address; staff unblock it                   | `address`, and the `kind` or the `note`                      |
-| `add staff account`, `set staff permissions`, `remove staff account`                                          | staff                          | The accounts page                                                           | `email`, and the permissions `from` and `to`                 |
-| `download supporters`, `download letters`, `download blocked emails`                                          | staff                          | A list of them is downloaded, as CSV or JSON                                | the list's `filters` in words, the `format`, how many `rows` |
-| `erase supporter`                                                                                             | staff                          | A supporter is erased                                                       | `id`, the request's `reference`, and what went               |
+| Action                                                                                                        | Actor                                | When                                                                                            | Details name                                                 |
+| ------------------------------------------------------------------------------------------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `add politician`                                                                                              | `sync`                               | The politician sync adds a politician                                                           | `id`, and their details                                      |
+| `edit politician`                                                                                             | `sync`                               | The politician sync changes a politician's details, or their record is back                     | `id`, `name`, and each field `changed`, before and after     |
+| `remove politician`, `delete politician`                                                                      | `sync`, staff                        | The politician sync finds a record no longer in Airtable; staff delete one gone                 | `id`, `name`                                                 |
+| `set status`                                                                                                  | staff, `controlai`, `airtable`       | A status set or cleared, by hand or by an import                                                | `politicianId`, `ask`, `status`, `date`, `note`              |
+| `apply politician sync`, `hold politician sync`, `apply held politician sync`, `discard held politician sync` | `sync`, staff                        | Each sync's outcome, and each decision on a held one                                            | counts, or the run's `id`                                    |
+| `copy PauseAI emails`                                                                                         | `sync`                               | The Emails sync adds any                                                                        | `added`                                                      |
+| `import web form letters`, `import Go to Parliament`                                                          | staff                                | The one-off imports of pauseai.info's letters and of the meetings                               | counts                                                       |
+| `import ControlAI letter`                                                                                     | `controlai`                          | A read of the letter that set or cleared any status                                             | counts                                                       |
+| `add ask`, `edit ask`, `delete ask`                                                                           | staff                                | The asks pages                                                                                  | `slug`, and the ask's fields                                 |
+| `add note`, `edit note`, `delete note`                                                                        | staff                                | A note on a politician or a supporter                                                           | `noteId`, and whose it is                                    |
+| `create mailing`, `schedule mailing`, `reschedule mailing`, `stop mailing`, `delete mailing`                  | staff                                | A mailing written on the site                                                                   | `id`, and `recipients`, `dueAt` or what it `was`             |
+| `start mailing`, `finish mailing`                                                                             | `send-mailings`                      | The hourly job starts a scheduled mailing, and sends its last letter                            | `id`                                                         |
+| `set event owner`, `set event doc`                                                                            | staff, `sync`                        | An event's owner or Google Doc set on the events page, or an owner given by the rules           | `eventId`, `owner` or `url`, `previous`                      |
+| `block address`, `unblock address`                                                                            | `postmark`, staff                    | A bounce or complaint blocks an address; staff unblock it                                       | `address`, and the `kind` or the `note`                      |
+| `add staff account`, `set staff permissions`, `remove staff account`, `end staff sessions`                    | staff, or the address on first login | The accounts page, a first login, and sessions ended from the accounts page or `/staff/me`      | `email`, the permissions `from` and `to`, or `sessions`      |
+| `connect gmail`, `disconnect gmail`                                                                           | staff                                | A Gmail connected or disconnected on `/staff/me`, or by Google                                  | `email`, and `why`                                           |
+| `download supporters`, `download blocked emails`                                                              | staff                                | A list of supporters, or of blocked addresses with theirs, is downloaded, as CSV, JSON or vCard | the list's `filters` in words, the `format`, how many `rows` |
+| `erase supporter`                                                                                             | staff                                | A supporter is erased                                                                           | `id`, the request's `reference`, and what went               |
 
 Entries from before asks and the politician sync keep their own names: a
 status set by `campaign`, `apply MP sync` and the rest, and `import
 signatories from Airtable`. So do `view supporter` entries, from when each
-opening of a supporter's page was logged (`id`).
+opening of a supporter's page was logged (`id`), and `download letters`,
+from when letters had a download of their own.
 
 Details don't name a supporter: one is given by `id`, and an erasure by its
 reference, so the log stays after the person is gone. A blocked address may be
