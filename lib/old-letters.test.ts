@@ -16,6 +16,7 @@ import {
   mailingOfLetter,
   mailingOfNewLetter,
   paragraphs,
+  placeOurReply,
   placeReply,
   plainSubject,
   quotedHeaders,
@@ -335,6 +336,27 @@ describe("who a message is from", () => {
     const from = "'Mo' via PauseAI UK <p@x.uk>";
     expect(realSender(from, undefined, "mo@x.uk, info@x.uk")).toBe("mo@x.uk");
     expect(realSender(from, undefined, '"Mo, MP" <mo@x.uk>, info@x.uk')).toBe('"Mo, MP" <mo@x.uk>');
+  });
+});
+
+describe("which letter a reply of ours answers", () => {
+  const at = new Date("2026-02-01T00:00:00Z");
+  const letter = (id: number, senderEmail?: string) => ({
+    id,
+    at: new Date(`2026-01-0${id}T00:00:00Z`),
+    subject: "The letter",
+    senderEmail,
+  });
+  const reply = (addresses: string[]) => ({ at, subject: "Re: The letter", addresses });
+
+  it("is the letter of the supporter it copies, not a later one of another's", () => {
+    const letters = [letter(1, "Ann@example.com "), letter(2, "bob@example.com")];
+    expect(placeOurReply(letters, reply(["ann@example.com", "mp@parliament.uk"]))).toBe(1);
+  });
+
+  it("is only PauseAI's own if it copies none, as it can't say which constituent's", () => {
+    expect(placeOurReply([letter(1), letter(2, "bob@example.com")], reply(["mp@parliament.uk"]))).toBe(1);
+    expect(placeOurReply([letter(2, "bob@example.com")], reply(["mp@parliament.uk"]))).toBeUndefined();
   });
 });
 

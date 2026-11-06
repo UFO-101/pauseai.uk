@@ -1,5 +1,6 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import { NIGHTLY } from "@/lib/import-runs";
+import { docFromMarkup } from "@/lib/letter-format";
 import { latestRun } from "./import-runs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
@@ -628,6 +629,90 @@ Please join 40 of your colleagues.')`,
       [form],
     );
     expect(sends).toEqual([{ from: "wendy.webform@example.com", purpose: "letter" }]);
+  });
+
+  it("puts a repeat on the letter it reads like, of a supporter's letters in two campaigns", async () => {
+    const { form, polly } = await seed();
+    const other = await addTestLetter({
+      politicianId: polly,
+      campaign: "pauseai-info-liability",
+      senderName: "Wendy Webform",
+      senderEmail: "wendy.webform@example.com",
+    });
+    const text = (words: string) => JSON.stringify(docFromMarkup(words));
+    await query(
+      "UPDATE letters_from_supporters SET airtable_id = 'recLiability', postmark_mailbox = NULL, letter = $2 WHERE id = $1",
+      [other, text("Companies must be liable for the harm their systems cause to people.")],
+    );
+    mailIs(
+      "0a28",
+      "t-staffer",
+      "2026-10-01T09:00:00Z",
+      fromTheForm("Wendy Webform", "wendy.webform@example.com", "polly.placeholder.mp@parliament.uk"),
+      Buffer.from("Companies must be liable for the harm their systems cause to people."),
+    );
+    await run();
+    expect((await outcomeOf("0a28")).letterId).toBe(other);
+    expect((await outcomeOf("0a07")).letterId).toBe(form);
+  });
+
+  it("keeps a supporter's email like none of their letters as a one-off, as a form letter marked spam is", async () => {
+    await seed();
+    mailIs(
+      "0a28",
+      "t-staffer",
+      "2026-10-01T09:00:00Z",
+      fromTheForm("Wendy Webform", "wendy.webform@example.com", "polly.placeholder.mp@parliament.uk"),
+      Buffer.from("Something else altogether, on another subject, and in many other words than theirs."),
+    );
+    await run();
+    expect(await outcomeOf("0a28")).toEqual({ outcome: "one_off", letterId: null });
+  });
+
+  it("puts a reply of ours on the letter its subject and politician say, though it's in no thread of the letter", async () => {
+    const { deepmind } = await seed();
+    mailIs(
+      "0a28",
+      "t-staffer",
+      "2025-07-20T09:00:00Z",
+      {
+        From: "Joseph Example <joseph@pauseai.info>",
+        To: "polly.placeholder.mp@parliament.uk",
+        Subject: "Re: Request to co-sign letter on Google's breach of AI safety pledges",
+        "Message-ID": "<0a28@mail.gmail.com>",
+        "Content-Type": "text/plain; charset=utf-8",
+      },
+      Buffer.from("Thank you for your answer."),
+    );
+    await run();
+    expect(await outcomeOf("0a28")).toEqual({ outcome: "reply", letterId: deepmind });
+  });
+
+  it("moves a reply of ours kept as a one-off to its letter, its stored mail with it, and its thread if that's all there was", async () => {
+    const { deepmind } = await seed();
+    await run();
+    const subject = "Re: Request to co-sign letter on Google's breach of AI safety pledges";
+    await query(
+      `UPDATE one_off_messages SET subject = $1, from_us = true, addresses = ARRAY['polly.placeholder.mp@parliament.uk'], at = '2025-07-20T09:00:00Z' WHERE gmail_message_id = '0a28'`,
+      [subject],
+    );
+    const [{ threadId, blob }] = await query<{ threadId: number; blob: string }>(
+      `SELECT thread_id::int AS "threadId", blob_key AS blob FROM one_off_messages WHERE gmail_message_id = '0a28'`,
+    );
+    await query("DELETE FROM one_off_messages WHERE thread_id = $1 AND gmail_message_id <> '0a28'", [threadId]);
+    // A reply nothing answers stays where it is.
+    await query("UPDATE one_off_messages SET subject = 'Re: Coffee next week?' WHERE gmail_message_id = '0a13'");
+    const again = await run();
+    expect(again.read).toBe(0);
+    expect(await outcomeOf("0a28")).toEqual({ outcome: "reply", letterId: deepmind });
+    expect(await query("SELECT 1 FROM one_off_messages WHERE gmail_message_id = '0a28'")).toEqual([]);
+    expect(await query("SELECT 1 FROM one_off_threads WHERE id = $1", [threadId])).toEqual([]);
+    const replies = await query<{ blob: string; fromUs: boolean }>(
+      `SELECT blob_key AS blob, from_us AS "fromUs" FROM letter_replies WHERE gmail_message_id = '0a28' AND letter_id = $1`,
+      [deepmind],
+    );
+    expect(replies).toEqual([{ blob, fromUs: true }]);
+    expect((await outcomeOf("0a13")).outcome).toBe("one_off");
   });
 
   it("keeps a stranger's email to a politician as a one-off, though its subject is a mailing's", async () => {

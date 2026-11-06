@@ -17,6 +17,7 @@ import {
   mailingOfLetter,
   mailingOfNewLetter,
   OLD_MAILINGS,
+  placeOurReply,
   placeReply,
   restoreCutDown,
   templateDoc,
@@ -363,14 +364,25 @@ async function asOneOff(
   return { outcome: "one_off" };
 }
 
-/** The form letter a supporter wrote to one of these politicians: a repeat of it has no letter of its own. */
-async function formLetterFrom(address: string, people: number[]) {
-  const [letter] = await query<{ id: number; campaign: string }>(
-    `SELECT s.id::int AS id, s.campaign FROM letters_from_supporters s JOIN letters l USING (id) JOIN form_entries f ON f.id = s.entry_id
-     WHERE s.airtable_id IS NOT NULL AND lower(f.email) = $1 AND l.notable_person_id = ANY($2::bigint[]) ORDER BY l.id LIMIT 1`,
+/** How much of a repeat of a form letter can be words the letter hasn't: more is a letter of another campaign. */
+const REPEAT_OWN_WORDS = 0.5;
+
+/**
+ * The form letter a supporter's email to one of these politicians repeats, as
+ * production keeps one for each ask: of their letters, the one it reads most
+ * like, as one person can write to a politician in two campaigns, and a subject
+ * is theirs to change. None if none is like it.
+ */
+async function formLetterRepeated(address: string, people: number[], text: string) {
+  const letters = await query<{ id: number; campaign: string; letter: Parameters<typeof toText>[0] }>(
+    `SELECT s.id::int AS id, s.campaign, s.letter FROM letters_from_supporters s JOIN letters l USING (id) JOIN form_entries f ON f.id = s.entry_id
+     WHERE s.airtable_id IS NOT NULL AND s.letter IS NOT NULL AND lower(f.email) = $1 AND l.notable_person_id = ANY($2::bigint[])`,
     [address, people],
   );
-  return letter;
+  const closest = letters
+    .map(({ id, campaign, letter }) => ({ id, campaign, own: ownWords(toText(letter), text) }))
+    .sort((a, b) => a.own - b.own)[0];
+  return closest && closest.own <= REPEAT_OWN_WORDS ? closest : undefined;
 }
 
 /** Handles one message of Joseph's Sent mail. */
@@ -386,8 +398,11 @@ async function handleSent(reader: Reader, account: string, id: string): Promise<
   const from = senderOf(message.headers).address;
   const { people } = politiciansIn(reader.book, [...to, ...cc]);
   const at = new Date(Number(message.internalDate));
+  const text = textFrom(message);
   if (isReplySubject(subject, message.headers.get("in-reply-to"))) {
-    const letter = await letterByThread(reader, account, message);
+    const letter =
+      (await letterByThread(reader, account, message)) ??
+      placeOurReply(await lettersTo(people), { at, subject, addresses: [...to, ...cc], text });
     if (letter) {
       await reader.turn();
       await keepReply(account, reader.tokens.get(account)!, letter, message, {
@@ -399,7 +414,6 @@ async function handleSent(reader: Reader, account: string, id: string): Promise<
     }
     return { ...(await asOneOff(reader, account, message)), rfc };
   }
-  const text = textFrom(message);
   const candidates = people.length ? await candidatesFor(reader, people, at) : [];
   const letter = joinSent(candidates, { at, cc, text });
   // Only used once it's a letter, which is to a politician.
@@ -423,7 +437,7 @@ async function handleSent(reader: Reader, account: string, id: string): Promise<
   }
   // Only PauseAI's own mail is a letter of PauseAI's. A supporter's is their form letter sent again, or a one-off.
   const ours = isPauseaiAddress(from, reader.connected);
-  const repeat = people.length && !ours ? await formLetterFrom(from, people) : undefined;
+  const repeat = people.length && !ours ? await formLetterRepeated(from, people, text) : undefined;
   if (repeat) {
     count(reader.result.joined, repeat.campaign);
     await recordSent(repeat.id, "letter", account, message, address(), from, rfc);
@@ -624,10 +638,57 @@ async function handleOne(reader: Reader, account: string, id: string, source: st
 }
 
 /**
+ * A reply of ours kept as a one-off that a letter answers becomes that letter's,
+ * with its stored mail, leaving its thread if that was all there was of it.
+ */
+async function moveOurRepliesToLetters(reader: Reader): Promise<void> {
+  const kept = await query<{
+    id: number;
+    threadId: number;
+    account: string;
+    gmailId: string;
+    inReplyTo: string[];
+    addresses: string[];
+    subject: string;
+    at: Date;
+  }>(
+    `SELECT m.id::int AS id, m.thread_id::int AS "threadId", m.account, m.gmail_message_id AS "gmailId", m.in_reply_to AS "inReplyTo", m.addresses, m.subject, m.at
+     FROM one_off_messages m JOIN old_letters_mail o ON o.account = m.account AND o.gmail_message_id = m.gmail_message_id
+     WHERE o.source = 'sent' AND o.outcome = 'one_off' AND m.from_us`,
+  );
+  for (const { id, threadId, account, gmailId, inReplyTo, addresses, subject, at } of kept) {
+    if (!isReplySubject(subject, inReplyTo[0])) continue;
+    const { people } = politiciansIn(reader.book, addresses);
+    const letter = placeOurReply(await lettersTo(people), { at: new Date(at), subject, addresses });
+    if (!letter) continue;
+    await transaction(async (db) => {
+      await query(
+        `INSERT INTO letter_replies (letter_id, account, gmail_message_id, gmail_thread_id, rfc_message_id, from_address, from_name, subject, at, from_us, blob_key, size)
+         SELECT $2, account, gmail_message_id, gmail_thread_id, rfc_message_id, from_address, from_name, subject, at, true, blob_key, size
+         FROM one_off_messages WHERE id = $1 ON CONFLICT (account, gmail_message_id) DO NOTHING`,
+        [id, letter],
+        db,
+      );
+      await query("DELETE FROM one_off_messages WHERE id = $1", [id], db);
+      await query(
+        "DELETE FROM one_off_threads t WHERE t.id = $1 AND NOT EXISTS (SELECT 1 FROM one_off_messages m WHERE m.thread_id = t.id)",
+        [threadId],
+        db,
+      );
+      await query(
+        "UPDATE old_letters_mail SET outcome = 'reply', letter_id = $3 WHERE account = $1 AND gmail_message_id = $2",
+        [account, gmailId, letter],
+        db,
+      );
+    });
+  }
+}
+
+/**
  * Puts right what's kept, needing no mail read. An email added as PauseAI's own
  * letter though a supporter sent it goes back on the list, with what joined that
- * letter, to be read again as what it is. A send keeps its first address alone,
- * and a letter's text its whole characters.
+ * letter, to be read again as what it is. A reply of ours goes on its letter. A
+ * send keeps its first address alone, and a letter's text its whole characters.
  */
 async function putRightWhatsKept(reader: Reader): Promise<void> {
   const added = await query<{ id: number; from: string }>(
@@ -647,6 +708,7 @@ async function putRightWhatsKept(reader: Reader): Promise<void> {
       await query("DELETE FROM letters WHERE id = $1", [id], db);
     });
   }
+  await moveOurRepliesToLetters(reader);
   await query(
     `UPDATE email_sends SET from_address = split_part(from_address, ',', 1) WHERE imported AND from_address LIKE '%,%'`,
   );
