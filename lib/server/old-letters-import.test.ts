@@ -266,10 +266,6 @@ describeWithDatabase("the import of old letters", () => {
     const { august } = await seed();
     await run();
     expect(await outcomeOf("0a19")).toEqual({ outcome: "reply", letterId: august });
-    const [{ text }] = await query<{ text: { content: unknown[] } | null }>(
-      `SELECT imported_text AS text FROM mailings WHERE old_letters_key = 'deepmind-august'`,
-    );
-    expect(text?.content).toHaveLength(2);
   });
 
   it("sets replied_at from a person's first reply", async () => {
@@ -345,24 +341,52 @@ describeWithDatabase("the import of old letters", () => {
     expect((await place(june)).key).toBe("deepmind-others");
   });
 
-  it("rebuilds August's text from a reply quoting it, marked approximate", async () => {
-    await seed();
-    await connectTestGmail("joseph@pauseai.uk");
-    await connectTestGmail("policy@pauseai.uk");
-    await query(
-      `INSERT INTO old_letters_mail (account, gmail_message_id, source, outcome, quoted) VALUES
-       ('joseph@pauseai.uk', 'quoted1', 'received', 'reply', 'Dear You,
+  it("builds August's letters from the send before and the person's latest paragraph, approximate, from Joseph with no address", async () => {
+    const { august } = await seed();
+    const join40 = (id: string, thread: string, to: string, own: string) =>
+      mailIs(
+        id,
+        thread,
+        "2025-08-01T09:00:00Z",
+        {
+          From: "Joseph Example <joseph@pauseai.info>",
+          To: to,
+          Subject: "Request to co-sign letter on Google's breach of AI safety pledges",
+          "Message-ID": `<${id}@mail.gmail.com>`,
+          "Content-Type": "text/plain; charset=utf-8",
+        },
+        Buffer.from(`Dear You,\n\nWould you join 40 of your colleagues?\n\n${own}\n\nThanks,`),
+      );
+    join40("0a26", "t-wh-2", "polly.placeholder.mp@parliament.uk", "As you said so well.");
+    join40("0a27", "t-wh-3", "mp90003.office@parliament.uk", "Another paragraph altogether.");
+    const result = await run();
+    const [mailing] = await query<{ approx: boolean; text: { content: unknown[] }; name: string; from: string | null }>(
+      `SELECT imported_text_approximate AS approx, imported_text AS text, from_name AS name, sent_from AS from FROM mailings WHERE old_letters_key = 'deepmind-august'`,
+    );
+    expect(mailing).toMatchObject({ approx: true, name: "Joseph", from: null });
+    expect(JSON.stringify(mailing.text)).toContain('"field":"colleagues"');
+    const [{ values }] = await query<{ values: { values: Record<string, string> } }>(
+      "SELECT merge_values AS values FROM letters_from_pauseai WHERE id = $1",
+      [august],
+    );
+    expect(values.values).toEqual({ greeting: "Dear Ms Placeholder,", colleagues: "50", own: "As you said so well." });
+    expect(result.templates).toBeGreaterThan(0);
+    // Pressed again, it keeps what it made.
+    const again = await run();
+    expect(again.finished).toBe(true);
+    const [{ text }] = await query<{ text: unknown }>(
+      "SELECT imported_text AS text FROM mailings WHERE old_letters_key = 'deepmind-august'",
+    );
+    expect(text).toEqual(mailing.text);
+  });
 
-Please join 40 of your colleagues.')`,
+  it("leaves August's letters without text while the send before has no template", async () => {
+    await seed();
+    await run();
+    const [{ text }] = await query<{ text: unknown }>(
+      "SELECT imported_text AS text FROM mailings WHERE old_letters_key = 'deepmind-august'",
     );
-    await importOldLetters("jo@pauseai.uk", 0);
-    // The press deletes nothing of a real run, so the quote is read, and cleared once used.
-    const [mailing] = await query<{ approx: boolean; text: { content: unknown[] } }>(
-      `SELECT imported_text_approximate AS approx, imported_text AS text FROM mailings WHERE old_letters_key = 'deepmind-august'`,
-    );
-    expect(mailing.approx).toBe(true);
-    expect(mailing.text.content).toHaveLength(2);
-    expect(await query("SELECT 1 FROM old_letters_mail WHERE quoted IS NOT NULL")).toEqual([]);
+    expect(text).toBeNull();
   });
 
   it("keeps a thread whole: a message no search found, once its thread is kept", async () => {

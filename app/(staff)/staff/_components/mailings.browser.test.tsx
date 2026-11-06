@@ -232,7 +232,7 @@ describe("MailingsOverview", () => {
   const row = (title: string) => page.getByRole("listitem").filter({ hasText: title });
 
   it("says who it's from isn't recorded for one the import of old letters made", async () => {
-    const mailing = { ...exampleMailings[0], imported: true, sentFrom: null, oldLetters: true };
+    const mailing = { ...exampleMailings[0], imported: true, sentFrom: null, fromName: null, oldLetters: true };
     await render(
       <MailingsOverview
         groups={mailingGroups({ drafts: [], comingUp: [], sent: [mailing] }, new Date(now))}
@@ -240,6 +240,18 @@ describe("MailingsOverview", () => {
       />,
     );
     await expect.element(page.getByText(staffCopy.mailings.notRecorded, { exact: false })).toBeVisible();
+  });
+
+  it("says who it's from by name alone for one with a name and no address", async () => {
+    const mailing = { ...exampleMailings[0], imported: true, sentFrom: null, fromName: "Joseph", oldLetters: true };
+    await render(
+      <MailingsOverview
+        groups={mailingGroups({ drafts: [], comingUp: [], sent: [mailing] }, new Date(now))}
+        now={now}
+      />,
+    );
+    await expect.element(page.getByText("Joseph", { exact: false })).toBeVisible();
+    expect(document.body.textContent).not.toContain(staffCopy.mailings.notRecorded);
   });
 
   it("groups them: coming up, then by month, then by year, each row only what matters at its stage", async () => {
@@ -539,8 +551,14 @@ describe("MailingView, for a mailing imported from Airtable", () => {
     render(<MailingView mailing={{ ...exampleMailing, ...props }} asks={[]} stop={noAction} reschedule={noAction} />);
 
   it("says who it's from isn't recorded for one the import of old letters made", async () => {
-    await imported({ sentFrom: null, oldLetters: true });
+    await imported({ sentFrom: null, fromName: null, oldLetters: true });
     await expect.element(page.getByText(mailings.notRecorded).first()).toBeVisible();
+  });
+
+  it("says who it's from by name alone for one with a name and no address", async () => {
+    await imported({ sentFrom: null, fromName: "Joseph", oldLetters: true });
+    await expect.element(page.getByText("Joseph").first()).toBeVisible();
+    expect(document.body.textContent).not.toContain(mailings.notRecorded);
   });
 
   it("is when it went, its counts, each recipient's outcome and how it was written, and that it has no text", async () => {

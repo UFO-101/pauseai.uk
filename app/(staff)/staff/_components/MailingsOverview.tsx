@@ -79,7 +79,9 @@ function Row({ mailing, year }: { mailing: MailingSummary; year: string }) {
   const href = `/staff/mailings/${mailing.id}`;
   // Its name, as a mail app shows it, before its address; with no name of its own, the address alone.
   const from = mailing.imported
-    ? (mailing.sentFrom ?? (mailing.oldLetters ? staffCopy.mailings.notRecorded : staffCopy.mailings.imported))
+    ? (mailing.sentFrom ??
+      mailing.fromName ??
+      (mailing.oldLetters ? staffCopy.mailings.notRecorded : staffCopy.mailings.imported))
     : named(mailing.fromName === mailing.sentFrom ? null : mailing.fromName, mailing.sentFrom);
   return (
     <li className={styles.row}>

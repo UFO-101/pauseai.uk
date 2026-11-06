@@ -235,36 +235,30 @@ export function augustColleagues(at: Date): string {
 }
 
 /**
- * The August letters' text, from replies quoting one: its paragraphs most
- * quotes share, each number of colleagues a field, as they went out in turn.
- * The greeting, and what each letter had of its own, can't be told.
+ * The template of the letters that went from Joseph's personal Gmail, whose own
+ * text we can't read: that of the send before them, with its number a field.
  */
-export function augustTemplate(quotes: string[]): MailingDoc | undefined {
-  const asTemplate = (p: string) => p.replace(/join \d+ of your/g, "join {colleagues} of your");
-  // A reply's mail system adds its own disclaimer under what it quotes.
-  const ours = (p: string) => !/disclaimer|e-?mail is confidential/i.test(p);
-  const template = templateOf(quotes.map((quote) => paragraphs(quote).filter(ours).map(asTemplate).join("\n\n")));
-  if (!template) return undefined;
-  const words = [...template.before, ...template.after];
+export function augustTemplate(doc: MailingDoc): MailingDoc {
   return {
-    type: "doc",
-    content: [
-      fieldParagraph("greeting"),
-      ...words.map((p): MailingDoc["content"][number] => {
-        const [start, end] = p.split("{colleagues}");
-        return end === undefined
-          ? textParagraph(p)
-          : {
-              type: "paragraph",
-              content: [
-                { type: "text", text: start },
-                { type: "field", attrs: { field: "colleagues" } },
-                { type: "text", text: end },
-              ],
-            };
-      }),
-    ],
+    ...doc,
+    content: doc.content.map((block) =>
+      block.type === "paragraph" ? { ...block, content: (block.content ?? []).flatMap(withColleaguesField) } : block,
+    ),
   };
+}
+
+/** A paragraph's piece with "join 40 of your" in it, as three with the number a field. */
+function withColleaguesField<Node extends { type: string }>(node: Node) {
+  const found =
+    node.type === "text"
+      ? /^([\s\S]*join\s)\d+(\sof\syour[\s\S]*)$/.exec((node as Node & { text: string }).text)
+      : null;
+  if (!found) return [node];
+  return [
+    { type: "text" as const, text: found[1] },
+    { type: "field" as const, attrs: { field: "colleagues" } },
+    { type: "text" as const, text: found[2] },
+  ];
 }
 
 /** How long after a commit its version was live: Netlify's deploy of pauseai.info. */

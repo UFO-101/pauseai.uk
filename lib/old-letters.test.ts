@@ -171,21 +171,31 @@ describe("the August letters", () => {
     expect(augustColleagues(at("2025-08-08T00:00:00Z"))).toBe("50");
   });
 
-  it("are rebuilt from the paragraphs quotes share, with the number a field", () => {
-    const quote = (n: number) => `Dear You,\n\nPlease join ${n} of your colleagues now.\n\nThanks,`;
-    const footer = "\n\nUK Parliament Disclaimer: this e-mail is confidential.";
-    const doc = augustTemplate([quote(40) + footer, quote(40) + footer, quote(50)])!;
-    expect(doc.content).toHaveLength(3);
-    expect(doc.content[1]).toEqual({
+  it("take the send before's template, with the number a field, whatever space it has", () => {
+    const words = (text: string) => ({ type: "paragraph" as const, content: [{ type: "text" as const, text }] });
+    const doc = {
+      type: "doc" as const,
+      content: [
+        { type: "paragraph" as const, content: [{ type: "field" as const, attrs: { field: "greeting" } }] },
+        words("Would you join 40 of your colleagues\u00a0now?"),
+        { type: "paragraph" as const },
+        { type: "bulletList" as const, content: [] },
+        words("Thanks,"),
+      ],
+    };
+    const august = augustTemplate(doc);
+    expect(august.content[0]).toEqual(doc.content[0]);
+    expect(august.content[1]).toEqual({
       type: "paragraph",
       content: [
-        { type: "text", text: "Please join " },
+        { type: "text", text: "Would you join " },
         { type: "field", attrs: { field: "colleagues" } },
-        { type: "text", text: " of your colleagues now." },
+        { type: "text", text: " of your colleagues\u00a0now?" },
       ],
     });
-    expect(doc.content[2]).toEqual({ type: "paragraph", content: [{ type: "text", text: "Thanks," }] });
-    expect(augustTemplate([])).toBeUndefined();
+    expect(august.content[2]).toEqual({ type: "paragraph", content: [] });
+    expect(august.content[3]).toEqual(doc.content[3]);
+    expect(august.content[4]).toEqual(doc.content[4]);
   });
 });
 

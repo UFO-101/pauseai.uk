@@ -175,6 +175,11 @@ describe("LetterThread", () => {
     expect(headers()[0][0]).toEqual([copy.headers.from, "jo@pauseai.uk"]);
   });
 
+  it("names who a letter's from alone when it has a name and no address", async () => {
+    await render(<LetterThread thread={{ ...exampleImportedThread, fromName: "Joseph" }} />);
+    expect(headers()[0][0]).toEqual([copy.headers.from, "Joseph"]);
+  });
+
   it("says an imported letter's text isn't here, and that nothing's come back", async () => {
     await render(
       <LetterThread

@@ -102,9 +102,9 @@ export const staffCopy = {
     title: "Letter and replies",
     // An imported letter, whose text Airtable didn't keep.
     noText: "Text not available, as sent from Airtable.",
-    // Over the text of a letter that's rebuilt from replies quoting others like it.
+    // Over the text of a letter that's built from the send before it and the person's earlier letter.
     approximate:
-      "Approximate: rebuilt from replies quoting other letters in this mailing. This isn't what they received, but it was probably much like this.",
+      "Approximate: rebuilt from an earlier letter found in Joseph's personal email. This isn't what they received, but it was probably much like this.",
     // A supporter's letter whose text the site doesn't have.
     supporterNoText: "Text not available.",
     noReplies: "No replies yet.",
