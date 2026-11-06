@@ -163,7 +163,7 @@ function Tile({
   const href = metric === "mpsSigned" ? signedHref(dashboard) : METRIC_LINKS[metric].href;
   const count = dashboard.counts[metric];
   const label = copy.metrics[metric](count.current);
-  // A bar only when some campaign counted, a line or bars by source only when some window counted; the tile is a third, not a sixth, only to fit one.
+  // A bar only when some campaign counted, a line or bars by source only when some window counted; the tile is a third, not a sixth, only to fit one, and half for the bars by source.
   const bar = isCampaignMetric(metric) && Object.values(dashboard.byCampaign[metric]).some((n) => n > 0);
   const series = isSeriesMetric(metric) ? dashboard.series[metric] : [];
   const line = series.some((point) => point.count > 0);
@@ -193,7 +193,7 @@ function Tile({
   );
   const linked = needed.every((permission) => permissions.includes(permission));
   return (
-    <li className={spanClass(bar || line || bySource ? 2 : 1)}>
+    <li className={spanClass(bySource ? 3 : bar || line ? 2 : 1)}>
       {linked ? (
         <StaffLink href={href} className={styles.tile}>
           {inside}

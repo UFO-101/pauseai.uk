@@ -25,8 +25,8 @@
    the text's colour; hovering one brings its border and number up to the
    accent. */
 .tile {
-  /* A sparkline or bars are as tall as they would be in a tile one column wide,
-     though their tile is two (Sparkline): that tile's inner width, from this one's,
+  /* A sparkline is as tall as it would be in a tile one column wide, though its
+     tile is two (Sparkline), and bars by source, in a tile three wide, a little taller: that tile's inner width, from this one's,
      the grid's gap and the padding at the sides. */
   --tile-side: var(--space-5);
   --sparkline-width: calc((100cqi + 2 * var(--tile-side) - var(--grid-gap)) / 2 - 2 * var(--tile-side));
