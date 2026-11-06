@@ -47,13 +47,13 @@ Running one Vitest project (`npm run test:node`, `npm run test:browser`) or one 
 
 A title, then a bullet or two per change: what it does and why, in plain words. Leave out what the diff or the commits already say (file lists, how it was tested beyond "the CI gate passes") and anything left for later but a line saying so.
 
-When you give one in a reply, write it as plain Markdown, not quoted with `>` or put in a code block, so it can be copied and pasted straight into GitHub.
-
 ## Migrations are fixed once pushed
 
-Pushing a branch with an open PR makes a deploy preview, and Netlify applies its migrations to that preview's database, as it does to production's on deploy. It refuses a migration changed since it was applied, which fails the deploy. So once a migration has been pushed, it can't be edited, even if the branch hasn't merged, and a person may push at any time.
+Pushing a branch with an open PR makes a deploy preview, and Netlify applies its migrations to that preview's database, as it does to production's on deploy. It refuses a migration changed since it was applied, which fails the deploy. So once a migration has been pushed, it can't be edited, even if the branch hasn't merged.
 
-Before changing a migration, check whether it's on the remote branch or main (`git log origin/<branch> origin/main -- netlify/database/migrations/<file>`, or `git show origin/<branch>:<path>` to see the version pushed), from the local refs, as a person keeps them up to date. If it's there, add a new migration, numbered after the last, and leave the pushed file exactly as it was. If it's only local, edit it. Either way, `npm run db:schema` and commit `schema.sql` with it (`docs/development.md`, "Adding a migration").
+So don't push a migration early. If the branch has a migration that may still change, or you think it may need another, settle the schema first and push once it's settled: the first push of the branch waits for that, however far along the rest of the work is. Every migration on a pushed branch is final.
+
+Before changing a migration, `git fetch`, then check whether it's on the remote branch or main (`git log origin/<branch> origin/main -- netlify/database/migrations/<file>`, or `git show origin/<branch>:<path>` to see the version pushed). If it's there, add a new migration, numbered after the last, and leave the pushed file exactly as it was. If it's only local, edit it. Either way, `npm run db:schema` and commit `schema.sql` with it (`docs/development.md`, "Adding a migration").
 
 ## The storyboard
 
