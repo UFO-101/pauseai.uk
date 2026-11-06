@@ -21,7 +21,8 @@ import type { EraseLeftover } from "@/lib/staff-search";
 // luma_erased so the import never copies them back; a member's record goes
 // the same way, its ID kept in members_erased; a message of a mailing
 // sent to them loses its address and merge values; a one-off email with their
-// address on it goes, with its blob; staff's notes on them go with their row. What stays is what
+// address on it goes, with its blob, its IDs kept in one_off_erased so that
+// reading its thread again doesn't keep it again; staff's notes on them go with their row. What stays is what
 // exists to stop us mailing the address: email_problems, email_blocks and
 // opt_outs. The audit log entry carries the supporter's ID and the
 // request's reference, never a name or address. Luma's own copy is left

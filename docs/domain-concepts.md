@@ -388,18 +388,25 @@ navigation under Politicians, and on the politician's and supporter's pages.
   if only one politician has it and it isn't a party's or social media's. One
   message is kept once by its Message-ID, and threaded across mailboxes by
   In-Reply-To and References, as each has its own Gmail thread IDs. A thread that
-  counts is kept whole.
+  counts is kept whole, within the mailbox it was found in: what came before the
+  message that counts and what comes after, whoever wrote it.
 - **Quotes.** The forwarded or quoted From, Sent, To and Cc also say a thread is
   with a politician. As volunteers forward their emails to us, policy@ and the
   group's archive, which are shared mail, are searched this way. Joseph's other
-  mail isn't: it's found by its headers alone, to keep the rest of it private.
+  mail isn't: it's found by its headers alone, to keep the rest of it private,
+  apart from the threads found.
+- **Catching up.** The import, last of all, asks Gmail for every thread kept in
+  its two mailboxes, whichever read kept it, and keeps what's missing, a press
+  going through them all again.
 - **New threads.** The regular read keeps policy@'s and joseph@'s threads by the
-  same rule (`keepsPoliticianThreads`), and `/staff/me` says so once they're
-  connected. Everyone else copies policy@ into theirs.
-- **Mail that matches nothing,** in policy@ and the group's archive, isn't kept,
-  only its Gmail ID (`unmatched_mail`), to list its sender and subject, read again
-  from Gmail, in an email to the notification inbox: at most once a day, whether
-  or not the last try's email went (`tried_at`), and the oldest 100 at a time, saying how many more wait. The import
+  same rule (`keepsPoliticianThreads`), fetching the rest of the Gmail thread with
+  each message it keeps, and `/staff/me` says so once they're connected. Everyone
+  else copies policy@ into theirs.
+- **Mail that matches nothing,** in policy@ and the group's archive, isn't kept
+  unless its thread comes to be, only its Gmail ID (`unmatched_mail`), to list its
+  sender and subject, read again from Gmail, in an email to the notification inbox:
+  at most once a day, whether or not the last try's email went (`tried_at`), and
+  the oldest 100 at a time, saying how many more wait. The import
   lists what it finds on its results instead, for staff with `supporters`.
 - **Who sees what.** Staff without `supporters` see the name and text of a thread
   only if every sender in it is a politician, on a parliament's domain, or one of
@@ -511,7 +518,8 @@ the address: `email_problems`,
 `email_blocks` and `opt_outs`. The Luma user's ID goes in `luma_erased`,
 which the import skips, so they never come back; a new Luma account later
 is a new supporter. A member's record ID goes in `members_erased` in the
-same way. The audit log entry carries the supporter's ID and the
+same way, and a one-off email's Gmail ID and hashed Message-ID in `one_off_erased`,
+so that reading its thread again doesn't keep it again. The audit log entry carries the supporter's ID and the
 reference, never a name or address. Luma's own records, the copies of
 letters and replies in the policy team's Gmail inbox, and letters sent
 through the earlier form in Airtable ("Web form emails") and Stichting

@@ -54,6 +54,7 @@ const TABLES = [
   "notable_people",
   "notes",
   "old_letters_mail",
+  "one_off_erased",
   "one_off_messages",
   "one_off_thread_people",
   "one_off_threads",

@@ -1676,6 +1676,17 @@ CREATE TABLE public.old_letters_mail (
 );
 
 --
+-- Name: one_off_erased; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.one_off_erased (
+    account text NOT NULL,
+    gmail_message_id text NOT NULL,
+    rfc_sha256 text,
+    erased_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
 -- Name: one_off_messages; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2359,6 +2370,13 @@ ALTER TABLE ONLY public.old_letters_mail
     ADD CONSTRAINT old_letters_mail_pkey PRIMARY KEY (account, gmail_message_id);
 
 --
+-- Name: one_off_erased one_off_erased_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.one_off_erased
+    ADD CONSTRAINT one_off_erased_pkey PRIMARY KEY (account, gmail_message_id);
+
+--
 -- Name: one_off_messages one_off_messages_account_gmail_message_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2803,6 +2821,12 @@ CREATE INDEX old_letters_mail_thread ON public.old_letters_mail USING btree (acc
 --
 
 CREATE INDEX old_letters_mail_waiting ON public.old_letters_mail USING btree (source) WHERE (outcome IS NULL);
+
+--
+-- Name: one_off_erased_rfc; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX one_off_erased_rfc ON public.one_off_erased USING btree (rfc_sha256);
 
 --
 -- Name: one_off_messages_addresses; Type: INDEX; Schema: public; Owner: -
