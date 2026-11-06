@@ -47,7 +47,7 @@ const SOURCES: Record<ImportJob, ImportSource> = {
   "read-gmail": "gmail",
   "import-old-letters": "gmail",
   "send-mailings": "gmail",
-  "tidy-logs": "web",
+  "tidy-logs": "database",
 };
 
 /** The check that changes nothing, said so in a lozenge after its name. */
@@ -62,6 +62,8 @@ const ABOUT: Record<
     intro: { before: string; link: string; after: string };
     /** Where it reads from: a page, or another table of the same Airtable base, by its ID; the politicians' table when left out. */
     href?: string;
+    /** More of the intro, with a link of its own, for a job that works from two places. */
+    then?: { link: string; after: string; href: string };
     also?: string;
     button: string;
     none: string;
@@ -129,13 +131,15 @@ const ABOUT: Record<
   },
   "send-mailings": {
     intro: staffCopy.sending.intro,
-    href: "/staff/mailings",
+    href: "/staff/campaigns",
+    then: { ...staffCopy.sending.introThen, href: "/staff/mailings" },
     button: staffCopy.sending.sendNow,
     none: staffCopy.sending.never,
   },
   "tidy-logs": {
     intro: staffCopy.tidying.intro,
     href: "/staff/audit-log",
+    then: { ...staffCopy.tidying.introThen, href: "/staff/mailings" },
     button: staffCopy.tidying.tidyNow,
     none: staffCopy.tidying.never,
   },
@@ -143,7 +147,7 @@ const ABOUT: Record<
 
 /** What the job does, with its source linked. Airtable's table link is the server's, so it comes in as a prop. */
 function Intro({ job, airtableTable }: { job: ImportJob; airtableTable: string }) {
-  const { intro, href, also } = ABOUT[job];
+  const { intro, href, then, also } = ABOUT[job];
   return (
     <>
       {intro.before}
@@ -155,6 +159,14 @@ function Intro({ job, airtableTable }: { job: ImportJob; airtableTable: string }
         {intro.link}
       </a>
       {intro.after}
+      {then && (
+        <>
+          <a href={then.href} target="_blank" rel="noreferrer">
+            {then.link}
+          </a>
+          {then.after}
+        </>
+      )}
       {also && ` ${also}`}
     </>
   );

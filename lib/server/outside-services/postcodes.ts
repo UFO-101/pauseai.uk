@@ -37,7 +37,7 @@ export async function constituencyForPostcode(postcode: string): Promise<Constit
       ...(place && { place }),
     };
   } catch (error) {
-    problem(staffCopy.problems.postcodesDown, error);
+    problem(staffCopy.problems.logs.postcodesDown, error);
     return { ok: false, reason: "failed" };
   }
 }
@@ -58,7 +58,7 @@ export async function placeForPostcode(postcode: string): Promise<PostcodePlaceR
     if (full.ok || full.reason === "failed") return full;
     return await placeAt(`outcodes/${encodeURIComponent(code)}`, code);
   } catch (error) {
-    problem(staffCopy.problems.postcodesDown, error);
+    problem(staffCopy.problems.logs.postcodesDown, error);
     return { ok: false, reason: "failed" };
   }
 }
@@ -163,7 +163,7 @@ export async function placeFor(text: string): Promise<FoundPlace | null | "faile
   try {
     return await placeNamed(text.trim());
   } catch (error) {
-    problem(staffCopy.problems.postcodesDown, error);
+    problem(staffCopy.problems.logs.postcodesDown, error);
     return "failed";
   }
 }

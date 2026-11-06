@@ -319,7 +319,7 @@ describeWithDatabase("reading the letters inbox", () => {
     );
     // Mail a person has to look at is a problem of the run, told by the alert above.
     expect(runStatus(run)).toBe("problems");
-    expect(run.problems).toEqual([{ what: staffCopy.problems.notUnderstood(3), told: true }]);
+    expect(run.problems).toEqual([{ what: staffCopy.problems.job.notUnderstood(3), told: true }]);
   });
 
   it("doesn't understand a stranger answering one of our emails at the plain address, or writing to the MP's proxy", async () => {

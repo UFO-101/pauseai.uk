@@ -34,7 +34,7 @@ export async function notifyStaff(
 ): Promise<boolean> {
   const inbox = process.env.NOTIFICATION_INBOX;
   if (!inbox) {
-    problem(staffCopy.problems.noInbox);
+    problem(staffCopy.problems.anywhere.noInbox);
     return false;
   }
   const result = await send(

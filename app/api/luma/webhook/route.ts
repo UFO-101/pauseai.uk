@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     console.info(`Luma webhook ${webhookId}, ${payload.type}: ${recorded ? "recorded" : "nothing to record"}`);
     return NextResponse.json({ recorded });
   } catch (error) {
-    problem(staffCopy.problems.webhookNotRecorded, error);
+    problem(staffCopy.problems.logs.webhookNotRecorded, error);
     return NextResponse.json({ error: "Not recorded" }, { status: 500 });
   }
 }

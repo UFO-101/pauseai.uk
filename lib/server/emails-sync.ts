@@ -96,7 +96,7 @@ export function syncEmails(startedBy: string): Promise<EmailSyncResult> {
       }
       if (result.added > 0) await logChange("sync", "copy PauseAI emails", { added: result.added }, db);
       // Each thing it couldn't do, by the records, so a person can find them in Airtable.
-      const words = staffCopy.problems;
+      const words = staffCopy.problems.job;
       if (noOnePolitician.length) problem(words.noOnePolitician(noOnePolitician.length), noOnePolitician.join(", "));
       if (notHere.length) problem(words.politicianNotHere(notHere.length), notHere.join(", "));
       if (result.unplaced.length) {

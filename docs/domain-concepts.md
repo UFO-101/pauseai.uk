@@ -730,7 +730,8 @@ sync, the check against Parliament, the ControlAI letter, the Luma import,
 the members import, and the one-off imports of pauseai.info's web form
 letters, Go to Parliament's meetings and old letters; and the two jobs that
 don't import but run on a schedule all the same, the hourly sending and the
-nightly tidying (`IMPORT_JOBS` in `lib/import-runs.ts`). Each runs on a
+nightly tidying (`IMPORT_JOBS` in `lib/import-runs.ts`). Whatever a scheduled
+job does, it goes here, despite the name (`docs/code-structure.md`). Each runs on a
 schedule or when staff press its button, and every run is recorded
 (`import_runs`): when, who started it (`nightly` or a staff email), how it
 ended, why it failed, what went wrong along the way without stopping it

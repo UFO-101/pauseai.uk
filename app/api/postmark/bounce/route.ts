@@ -13,7 +13,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 export async function POST(request: Request) {
   if (!isPostmark(request)) return NextResponse.json({ error: "Not allowed" }, { status: 401 });
   const payload = await readJsonIfAny(request);
-  if (payload === undefined) problem(staffCopy.problems.badBody("Postmark"));
+  if (payload === undefined) problem(staffCopy.problems.logs.badBody("Postmark"));
   if (await recordAutoResponder(payload ?? {})) return NextResponse.json({ recorded: true });
   const found = deliveryProblem(payload ?? {});
   if (found) await handleDeliveryProblem(found, request);

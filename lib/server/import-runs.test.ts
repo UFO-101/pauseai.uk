@@ -80,6 +80,28 @@ describeWithDatabase("the import log", () => {
     ]);
   });
 
+  it("leaves a problem with an alert of its own out of the email about another", async () => {
+    const sent = notifications();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    await keepingFailure("check-mps", "nightly", async () => {
+      problem("Google disconnected an account", undefined, { told: true });
+      problem("Parliament was slow");
+      await recordRun("check-mps", "nightly", "ok", { problems: [] });
+    });
+    const title = jobTitles["check-mps"];
+    expect(sent.map((email) => email.TextBody)).toEqual([
+      staffCopy.notifications.importProblems.body(
+        title,
+        ["- Parliament was slow"],
+        "https://pauseai.uk/staff/import-data/mp-check",
+      ),
+    ]);
+    // Still on the run, for its page.
+    expect(await latestRun("check-mps")).toMatchObject({
+      problems: [{ what: "Google disconnected an account", told: true }, { what: "Parliament was slow" }],
+    });
+  });
+
   it("emails about a failure after a run with problems, and about problems after a failure, as each is new", async () => {
     const sent = notifications();
     vi.spyOn(console, "error").mockImplementation(() => {});

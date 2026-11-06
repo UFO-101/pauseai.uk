@@ -28,11 +28,11 @@ async function verifyTurnstile(token: string | undefined): Promise<string | unde
   }
   if (!secret) {
     if (isDev()) return undefined;
-    problem(staffCopy.problems.turnstileUnset);
+    problem(staffCopy.problems.logs.turnstileUnset);
     return copy.errors.spamUnavailable;
   }
   if (!isDev() && TEST_SECRET.test(secret)) {
-    problem(staffCopy.problems.turnstileTestKey);
+    problem(staffCopy.problems.logs.turnstileTestKey);
     return copy.errors.spamMisconfigured;
   }
   if (!token) return copy.errors.spamWait;
@@ -53,7 +53,7 @@ async function verifyTurnstile(token: string | undefined): Promise<string | unde
     // allowed hostnames, set in Cloudflare, say where tokens can be made.
     return undefined;
   } catch (error) {
-    problem(staffCopy.problems.turnstileDown, error);
+    problem(staffCopy.problems.logs.turnstileDown, error);
     return copy.errors.spamUnreachable;
   }
 }

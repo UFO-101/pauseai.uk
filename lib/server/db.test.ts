@@ -87,17 +87,17 @@ describeWithDatabase("the database", () => {
     expect(await query("SELECT 1 AS one")).toEqual([{ one: 1 }]);
   });
 
-  it("reports a connection dropped while idle, rather than crashing", async () => {
-    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+  it("warns of a connection dropped while idle, rather than crashing", async () => {
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
     try {
       await closeDb();
       terminate(await pid());
       await vi.waitFor(() =>
-        expect(error).toHaveBeenCalledWith(staffCopy.problems.connectionDropped, expect.any(String)),
+        expect(warning).toHaveBeenCalledWith(staffCopy.problems.logs.connectionDropped, expect.any(String)),
       );
       expect(await query("SELECT 1 AS one")).toEqual([{ one: 1 }]);
     } finally {
-      error.mockRestore();
+      warning.mockRestore();
     }
   });
 

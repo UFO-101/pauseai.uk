@@ -313,15 +313,25 @@ export type SupportersSearch = {
   sort: string;
   dir: string;
   page: string;
-  /** After an erasure: "1", or "partly" with what couldn't be cleared in `why`, a line each. */
+  /** After an erasure: "1", or "partly" with what couldn't be cleared in `why`, as codes. */
   erased: string;
   why: string;
 };
 
+/** What an erasure can leave behind when its clean-up fails. */
+export const ERASE_LEFTOVERS = ["mail", "oneOffs"] as const;
+export type EraseLeftover = (typeof ERASE_LEFTOVERS)[number];
+
 /** Where an erasure goes afterwards: the list, saying so, and what couldn't be cleared, if anything. */
-export function erasedPath(problems: string[]): string {
-  if (!problems.length) return "/staff/supporters?erased=1";
-  return `/staff/supporters?erased=partly&why=${encodeURIComponent(problems.join("\n"))}`;
+export function erasedPath(notCleared: EraseLeftover[]): string {
+  if (!notCleared.length) return "/staff/supporters?erased=1";
+  return `/staff/supporters?erased=partly&why=${notCleared.join(",")}`;
+}
+
+/** The codes in an erasure's `why`; anything else in the address is left out. */
+export function eraseLeftovers(why: string): EraseLeftover[] {
+  const codes = why.split(",");
+  return ERASE_LEFTOVERS.filter((leftover) => codes.includes(leftover));
 }
 
 /** The supporters list's filters and sort, each as typed and as applied. */

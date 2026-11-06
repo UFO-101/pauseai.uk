@@ -1323,7 +1323,7 @@ describe("SortHeading", () => {
 
 describe("ImportIcon", () => {
   it("shows each source's mark, named for screen readers and on hover", async () => {
-    const sources = ["airtable", "luma", "gmail", "web"] as const;
+    const sources = ["airtable", "luma", "gmail", "web", "database"] as const;
     await render(
       <>
         {sources.map((source) => (
@@ -2417,12 +2417,27 @@ describe("ImportOverview", () => {
       "https://airtable.com/app/tblminXS1xSuBbEjz",
     ]);
     expect(cards[6].querySelector(":scope > p")!.textContent).not.toContain(staffCopy.syncs.testMps);
-    // The members come from the join form; Gmail's card leads to where it's connected; the sending's to the mailings,
-    // the tidying's to the audit log.
+    // The members come from the join form; Gmail's card leads to where it's connected; the sending's to the campaigns'
+    // letters and the mailings, the tidying's to the audit log and the mailings.
     expect(link(3)).toBe("https://pauseai.info/join");
     expect(link(2)).toBe("/staff/me");
-    expect(link(4)).toBe("/staff/mailings");
-    expect(link(8)).toBe("/staff/audit-log");
+    expect([...cards[4].querySelectorAll(":scope > p a")].map((a) => a.getAttribute("href"))).toEqual([
+      "/staff/campaigns",
+      "/staff/mailings",
+    ]);
+    expect(cards[4].querySelector(":scope > p")!.textContent).toBe(
+      [
+        staffCopy.sending.intro.before,
+        staffCopy.sending.intro.link,
+        staffCopy.sending.intro.after,
+        staffCopy.sending.introThen.link,
+        staffCopy.sending.introThen.after,
+      ].join(""),
+    );
+    expect([...cards[8].querySelectorAll(":scope > p a")].map((a) => a.getAttribute("href"))).toEqual([
+      "/staff/audit-log",
+      "/staff/mailings",
+    ]);
     // The MP check says it changes nothing, after its name.
     expect(cards[6].querySelector("h3")!.textContent).toBe(`${jobTitles["check-mps"]}${staffCopy.import.checkOnly}`);
     expect(cards[9].querySelector("h3")!.textContent).toBe(jobTitles["sync-emails"]);
@@ -3120,7 +3135,7 @@ describe("RunList", () => {
   });
 
   it("lists the emails an Emails sync held back, with the boxes ticked, or says why it failed", async () => {
-    const heldBack = { what: staffCopy.problems.heldBack(2), error: "recEmail1, recEmail2" };
+    const heldBack = { what: staffCopy.problems.job.heldBack(2), error: "recEmail1, recEmail2" };
     const { rerender } = await render(
       <RunList
         runs={[
@@ -3171,7 +3186,7 @@ describe("RunList", () => {
 
   it("shows a Gmail read's totals, then each account, with one searched afresh and one that couldn't be read", async () => {
     const accounts = [{ ...exampleGmailResult.accounts[0], restarted: true }, exampleGmailResult.accounts[1]];
-    const couldntRead = { what: staffCopy.problems.couldntRead(accounts[1].account), error: accounts[1].error! };
+    const couldntRead = { what: staffCopy.problems.job.couldntRead(accounts[1].account), error: accounts[1].error! };
     await render(
       <RunList
         runs={[
@@ -3196,7 +3211,7 @@ describe("RunList", () => {
 
   it("says a Gmail read that disconnected an account had problems, and why, in place of its error", async () => {
     const accounts = [exampleGmailResult.accounts[0], exampleDisconnectedGmail];
-    const told = { what: staffCopy.problems.couldntRead(exampleDisconnectedGmail.account), told: true as const };
+    const told = { what: staffCopy.problems.job.couldntRead(exampleDisconnectedGmail.account), told: true as const };
     await render(<RunList runs={[ran("read-gmail", { accounts }, { id: 1, problems: [told] })]} none="None" />);
     await expect.element(page.getByText(staffCopy.runs.status.problems, { exact: true })).toBeVisible();
     await expect.element(page.getByText(staffCopy.gmailReading.result(accounts), { exact: false })).toBeVisible();
@@ -3205,7 +3220,7 @@ describe("RunList", () => {
   });
 
   it("says a Gmail read had problems that found mail in the letters inbox it couldn't account for, listing each with a link", async () => {
-    const told = { what: staffCopy.problems.notUnderstood(2), told: true as const };
+    const told = { what: staffCopy.problems.job.notUnderstood(2), told: true as const };
     await render(
       <RunList
         runs={[ran("read-gmail", { accounts: [exampleLettersInboxRead] }, { id: 1, problems: [told] })]}
@@ -4953,7 +4968,7 @@ describe("ErasedNotice", () => {
   it("says done, or done but what couldn't be cleared, or nothing", async () => {
     const { rerender } = await render(<ErasedNotice erased="1" />);
     await expect.element(page.getByRole("status")).toHaveTextContent(staffCopy.erase.done);
-    await rerender(<ErasedNotice erased="partly" why={"Mail wasn't cleared\nNor one-offs\n"} />);
+    await rerender(<ErasedNotice erased="partly" why="mail,someone's words,oneOffs" />);
     await expect.element(page.getByRole("status")).toBeVisible();
     expect(page.getByRole("status").element().textContent).toContain(staffCopy.erase.partly);
     expect(
@@ -4961,7 +4976,7 @@ describe("ErasedNotice", () => {
         .getByRole("listitem")
         .all()
         .map((li) => li.element().textContent),
-    ).toEqual(["Mail wasn't cleared", "Nor one-offs"]);
+    ).toEqual([staffCopy.erase.notCleared.mail, staffCopy.erase.notCleared.oneOffs]);
     await rerender(<ErasedNotice erased="" />);
     expect(page.getByRole("status").all()).toHaveLength(0);
   });

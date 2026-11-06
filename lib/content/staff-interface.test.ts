@@ -176,28 +176,29 @@ it("says one and many of each of the new pages' counts", () => {
     formTexts: 0,
     postmarkTexts: 0,
   };
-  const { problems, sending, tidying } = staffCopy;
+  const { sending, tidying } = staffCopy;
+  const { job, anywhere, logs } = staffCopy.problems;
   for (const words of [
-    problems.heldBack,
-    problems.noOnePolitician,
-    problems.politicianNotHere,
-    problems.noPolitician,
-    problems.mpNotFound,
-    problems.notUnderstood,
+    job.heldBack,
+    job.noOnePolitician,
+    job.politicianNotHere,
+    job.noPolitician,
+    job.mpNotFound,
+    job.notUnderstood,
   ]) {
     expect(words(1)).not.toContain("1 emails");
     expect(words(1)).not.toMatch(/\b1 (emails|letters|MPs|messages)\b/);
     expect(words(2)).toMatch(/\b2 (emails|letters|MPs|messages)\b/);
   }
-  for (const words of [problems.couldntRead, problems.nameUnknown, problems.tokenNotRevoked]) {
+  for (const words of [job.couldntRead, job.nameUnknown, logs.tokenNotRevoked]) {
     expect(words("jo@pauseai.uk")).toContain("jo@pauseai.uk");
   }
-  expect(problems.eventGuests("evt-1")).toContain("evt-1");
-  expect(problems.eventHosts("evt-1")).toContain("evt-1");
-  expect(problems.sendFailed("mailing")).toContain("mailing");
-  expect(problems.badBody("Postmark")).toContain("Postmark");
-  expect(problems.letterNotSent(7)).toContain("7");
-  expect(problems.charsetUnknown("x-mac")).toContain("x-mac");
+  expect(job.eventGuests("evt-1")).toContain("evt-1");
+  expect(job.eventHosts("evt-1")).toContain("evt-1");
+  expect(anywhere.sendFailed("mailing")).toContain("mailing");
+  expect(logs.badBody("Postmark")).toContain("Postmark");
+  expect(anywhere.letterNotSent(7)).toContain("7");
+  expect(anywhere.charsetUnknown("x-mac")).toContain("x-mac");
   expect(
     sending.result({ started: [1], sent: 1, skipped: 0, failed: 0, left: 0, queue: { sent: 0, left: 0 } }),
   ).toContain("1 mailing;");

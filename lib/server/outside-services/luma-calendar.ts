@@ -78,7 +78,7 @@ export async function getEvents(period: EventPeriod = "future"): Promise<LumaEve
       return [toLumaEvent(event, event.url, event.start_at)];
     });
   } catch (error) {
-    problem(staffCopy.problems.lumaEventsDown, error);
+    problem(staffCopy.problems.logs.lumaEventsDown, error);
     return [];
   }
 }

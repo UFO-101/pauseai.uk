@@ -29,7 +29,7 @@ export async function findMp(postcode: string): Promise<FindMpResult> {
     const mp = await findMpInOffice(found.constituency);
     return mp ? { ok: true, mp, ...(found.place && { place: found.place }) } : { ok: false, reason: "no_mp" };
   } catch (error) {
-    problem(staffCopy.problems.mpLookupFailed, error);
+    problem(staffCopy.problems.logs.mpLookupFailed, error);
     return { ok: false, reason: "failed" };
   }
 }

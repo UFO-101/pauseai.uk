@@ -11,7 +11,7 @@ export async function GET() {
       headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" },
     });
   } catch (error) {
-    problem(staffCopy.problems.signatoriesUnread, error);
+    problem(staffCopy.problems.logs.signatoriesUnread, error);
     return NextResponse.json({ error: "Couldn't read the signatories" }, { status: 500 });
   }
 }

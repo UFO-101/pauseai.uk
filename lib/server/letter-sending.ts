@@ -136,7 +136,7 @@ export async function sendLetter(id: number): Promise<{ sent: true } | { sent: f
     return await sendTaken(id);
   } catch (error) {
     // Kept, and back in the queue, so the next run tries again; whoever wrote it is told it's on its way.
-    problem(staffCopy.problems.letterNotSent(id), error);
+    problem(staffCopy.problems.anywhere.letterNotSent(id), error);
     return requeue(id, "failed");
   }
 }

@@ -91,7 +91,7 @@ describeWithDatabase("eraseSupporter", () => {
       proxies: 0,
       messages: 0,
       oneOffs: 0,
-      problems: [],
+      notCleared: [],
     });
     expect(await query("SELECT 1 FROM supporters WHERE id = $1", [id])).toEqual([]);
     expect(await query("SELECT 1 FROM luma_people WHERE user_id = 'usr-fixture-1'")).toEqual([]);
@@ -200,9 +200,12 @@ describeWithDatabase("eraseSupporter", () => {
       await query("UPDATE staff_accounts SET gmail_token = NULL, gmail_connected_at = NULL, gmail_history_id = NULL");
       expect(await eraseSupporter(id, "ICO-125", "jo@pauseai.uk")).toMatchObject({
         proxies: 1,
-        problems: [staffCopy.problems.mailNotCleared],
+        notCleared: ["mail"],
       });
-      expect(console.error).toHaveBeenCalledWith(staffCopy.problems.mailNotCleared, expect.any(String));
+      expect(console.error).toHaveBeenCalledWith(
+        `${staffCopy.erase.partly} ${staffCopy.erase.notCleared.mail}`,
+        expect.any(String),
+      );
     });
   });
 
@@ -226,9 +229,12 @@ describeWithDatabase("eraseSupporter", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     expect(await eraseSupporter(id, "ICO-9", "jo@pauseai.uk")).toMatchObject({
       oneOffs: 1,
-      problems: [staffCopy.problems.oneOffsNotCleared],
+      notCleared: ["oneOffs"],
     });
-    expect(console.error).toHaveBeenCalledWith(staffCopy.problems.oneOffsNotCleared, expect.any(String));
+    expect(console.error).toHaveBeenCalledWith(
+      `${staffCopy.erase.partly} ${staffCopy.erase.notCleared.oneOffs}`,
+      expect.any(String),
+    );
     vi.restoreAllMocks();
     vi.unstubAllEnvs();
     expect(await query("SELECT 1 FROM one_off_threads")).toEqual([]);

@@ -18,7 +18,7 @@ const HONEYPOT_FIELD = "website";
 /** Answers with a MarchRegisterResult, always 200. The logs leave out the email address. */
 export async function POST(request: Request) {
   const body = await readJsonIfAny(request);
-  if (body === undefined) problem(staffCopy.problems.badBody("The march form"));
+  if (body === undefined) problem(staffCopy.problems.logs.badBody("The march form"));
   return NextResponse.json(await register(body ?? null));
 }
 
@@ -42,16 +42,16 @@ async function register(input: unknown): Promise<MarchRegisterResult> {
   // can't be kept, Luma's answer still stands.
   await addFormEntry("march-2026-11", registration, { eventId: event, status: result.status }).then(
     (id) => console.log(`[march] Kept sign-up ${id}: Luma ${result.status}.`),
-    (error: unknown) => problem(staffCopy.problems.signUpNotKept, error),
+    (error: unknown) => problem(staffCopy.problems.logs.signUpNotKept, error),
   );
   switch (result.status) {
     case "added":
       return { ok: true };
     case "skipped":
-      problem(staffCopy.problems.lumaSkippedGuest);
+      problem(staffCopy.problems.logs.lumaSkippedGuest);
       break;
     case "not-configured":
-      problem(staffCopy.problems.lumaNotConfigured);
+      problem(staffCopy.problems.logs.lumaNotConfigured);
       break;
     case "failed":
       // Reported where it failed (addLumaGuest).

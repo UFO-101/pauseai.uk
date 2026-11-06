@@ -222,7 +222,7 @@ export function partText(part: MimePart): string {
   try {
     return new TextDecoder(charset).decode(part.body);
   } catch (error) {
-    problem(staffCopy.problems.charsetUnknown(charset), error);
+    problem(staffCopy.problems.anywhere.charsetUnknown(charset), error);
     return part.body.toString("utf8");
   }
 }

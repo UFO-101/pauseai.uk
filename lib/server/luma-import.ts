@@ -95,7 +95,7 @@ class Budget {
       return page;
     } catch (error) {
       if (!(error instanceof LumaRateLimited)) throw error;
-      problem(staffCopy.problems.lumaRefused, error);
+      problem(staffCopy.problems.job.lumaRefused, error);
       this.requests++;
       this.stoppedBy = "rate-limit";
       return undefined;
@@ -297,7 +297,7 @@ async function importGuests(eventId: string, budget: Budget, db: Queryable): Pro
       cursor = page.nextCursor;
     } while (cursor);
   } catch (error) {
-    problem(staffCopy.problems.eventGuests(eventId), error);
+    problem(staffCopy.problems.job.eventGuests(eventId), error);
     await query("UPDATE luma_events SET guests_error = $2 WHERE id = $1", [eventId, describeError(error)], db);
     return counts;
   }
@@ -349,7 +349,7 @@ async function importHosts(eventId: string, budget: Budget, db: Queryable): Prom
     if (!page) return undefined;
     hosts = [...new Map(page.entries.map((host) => [host.userId, host])).values()];
   } catch (error) {
-    problem(staffCopy.problems.eventHosts(eventId), error);
+    problem(staffCopy.problems.job.eventHosts(eventId), error);
     await query("UPDATE luma_events SET hosts_error = $2 WHERE id = $1", [eventId, describeError(error)], db);
     return { hosts: 0, people: 0 };
   }

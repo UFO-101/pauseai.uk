@@ -173,7 +173,7 @@ export async function submitLetter(form: LetterForm): Promise<SubmitResult> {
       return id;
     });
   } catch (error) {
-    problem(staffCopy.problems.letterNotKept, error);
+    problem(staffCopy.problems.logs.letterNotKept, error);
     return fail(500, copy.errors.failed);
   }
   if (id === undefined) return fail(409, copy.errors.alreadySent);

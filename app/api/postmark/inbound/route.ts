@@ -11,6 +11,6 @@ import { readJsonIfAny } from "@/lib/server/json";
 export async function POST(request: Request) {
   if (!isPostmark(request)) return NextResponse.json({ error: "Not allowed" }, { status: 401 });
   const payload = await readJsonIfAny(request);
-  if (payload === undefined) problem(staffCopy.problems.badBody("Postmark"));
+  if (payload === undefined) problem(staffCopy.problems.logs.badBody("Postmark"));
   return NextResponse.json({ forwarded: (await forwardReply(payload ?? {})).length });
 }

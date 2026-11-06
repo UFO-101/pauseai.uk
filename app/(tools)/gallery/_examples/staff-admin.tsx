@@ -590,7 +590,7 @@ export const staffAdmin: Group = {
           render: () => (
             <StaffPage as="div">
               <div style={{ display: "flex", gap: "var(--space-3)" }}>
-                {(["airtable", "luma", "gmail", "web"] as const).map((source) => (
+                {(["airtable", "luma", "gmail", "web", "database"] as const).map((source) => (
                   <ImportIcon key={source} source={source} />
                 ))}
               </div>

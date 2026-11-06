@@ -216,7 +216,7 @@ describeWithDatabase("staff Server Actions", () => {
     await importControlAiNow();
     // The failure, and that nobody could be emailed about it, as NOTIFICATION_INBOX isn't set here.
     expect(error).toHaveBeenCalledTimes(2);
-    expect(error).toHaveBeenCalledWith(staffCopy.problems.noInbox);
+    expect(error).toHaveBeenCalledWith(staffCopy.problems.anywhere.noInbox);
     expect(await runs()).toEqual([
       { job: "import-controlai", status: "ok", startedBy: "jo@pauseai.uk" },
       { job: "import-controlai", status: "failed", startedBy: "jo@pauseai.uk" },
@@ -324,7 +324,7 @@ describeWithDatabase("staff Server Actions", () => {
     await syncNow();
     // The failure, and that nobody could be emailed about it, as NOTIFICATION_INBOX isn't set here.
     expect(error).toHaveBeenCalledTimes(2);
-    expect(error).toHaveBeenCalledWith(staffCopy.problems.noInbox);
+    expect(error).toHaveBeenCalledWith(staffCopy.problems.anywhere.noInbox);
     expect(await runs()).toEqual([
       { job: "sync-politicians", status: "applied", startedBy: "jo@pauseai.uk" },
       { job: "sync-politicians", status: "failed", startedBy: "jo@pauseai.uk" },

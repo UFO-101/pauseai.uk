@@ -284,7 +284,7 @@ export async function eraseSupporterNow(form: FormData): Promise<void> {
   const result = await eraseSupporter(parsed.id, parsed.reference, email);
   if (!result) return;
   revalidatePath("/staff", "layout");
-  redirect(erasedPath(result.problems));
+  redirect(erasedPath(result.notCleared));
 }
 
 /** Disconnects your own Gmail, from your page, going back to it saying so, in place of how connecting went. */

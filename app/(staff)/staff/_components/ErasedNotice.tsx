@@ -1,10 +1,11 @@
 import { staffCopy } from "@/lib/content/staff-interface";
+import { eraseLeftovers } from "@/lib/staff-search";
 import Strip from "./ui/Strip";
 
 /**
  * After an erasure, at the top of the list, read out: done, in green; or
  * done but something couldn't be cleared afterwards, in amber, with what
- * (`why`, a line each). Nothing otherwise.
+ * (`why`, as codes, a line each). Nothing otherwise.
  */
 export default function ErasedNotice({ erased, why = "" }: { erased: string; why?: string }) {
   if (erased === "1")
@@ -18,12 +19,9 @@ export default function ErasedNotice({ erased, why = "" }: { erased: string; why
       <Strip tone="amber" announce>
         {staffCopy.erase.partly}
         <ul>
-          {why
-            .split("\n")
-            .filter(Boolean)
-            .map((line) => (
-              <li key={line}>{line}</li>
-            ))}
+          {eraseLeftovers(why).map((leftover) => (
+            <li key={leftover}>{staffCopy.erase.notCleared[leftover]}</li>
+          ))}
         </ul>
       </Strip>
     );

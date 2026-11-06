@@ -17,6 +17,7 @@ import {
   supporterId,
   supportersSearch,
   erasedPath,
+  eraseLeftovers,
 } from "./staff-search";
 
 describe("sentEmailsSearch", () => {
@@ -408,7 +409,10 @@ describe("askFormSearch and staffBack", () => {
 
 it("sends an erasure to the list saying so, with what couldn't be cleared, if anything", () => {
   expect(erasedPath([])).toBe("/staff/supporters?erased=1");
-  expect(erasedPath(["Mail wasn't cleared", "Nor one-offs"])).toBe(
-    "/staff/supporters?erased=partly&why=Mail%20wasn't%20cleared%0ANor%20one-offs",
-  );
+  expect(erasedPath(["mail", "oneOffs"])).toBe("/staff/supporters?erased=partly&why=mail,oneOffs");
+});
+
+it("reads only the codes it knows from an erasure's address", () => {
+  expect(eraseLeftovers("oneOffs,someone's words")).toEqual(["oneOffs"]);
+  expect(eraseLeftovers("")).toEqual([]);
 });

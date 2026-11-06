@@ -47,7 +47,7 @@ export async function getThankedDonors(): Promise<ThankedDonor[]> {
     const payments = (await list<PaymentIntent>(key, "payment_intents", {})) ?? [];
     return thanked(sessions, monthlyPayments(payments));
   } catch (error) {
-    problem(staffCopy.problems.stripeDown, error);
+    problem(staffCopy.problems.logs.stripeDown, error);
     return [];
   }
 }

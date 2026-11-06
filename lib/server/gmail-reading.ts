@@ -360,7 +360,7 @@ async function readAccount(account: string, historyId: string, request: Request 
   try {
     await saveGmailName(account, await gmailSendName(token));
   } catch (error) {
-    problem(staffCopy.problems.nameUnknown(account), error);
+    problem(staffCopy.problems.job.nameUnknown(account), error);
   }
   return read;
 }
@@ -402,7 +402,7 @@ export function readGmail(startedBy: string, request?: Request): Promise<GmailRe
       } catch (error) {
         const disconnected = error instanceof GmailError && error.revoked;
         // One Google disconnected has an email of its own (gmail-accounts.ts).
-        problem(staffCopy.problems.couldntRead(email), error, { told: disconnected });
+        problem(staffCopy.problems.job.couldntRead(email), error, { told: disconnected });
         accounts.push({
           account: email,
           replies: 0,
@@ -425,7 +425,7 @@ export function readGmail(startedBy: string, request?: Request): Promise<GmailRe
     );
     const notUnderstood = accounts.reduce((n, a) => n + (a.notUnderstood?.length ?? 0), 0);
     if (notUnderstood) {
-      problem(staffCopy.problems.notUnderstood(notUnderstood), undefined, {
+      problem(staffCopy.problems.job.notUnderstood(notUnderstood), undefined, {
         told: await alertNotUnderstood(accounts, request),
       });
     }

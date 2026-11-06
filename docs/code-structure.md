@@ -195,7 +195,11 @@ the code should go instead. The rules below say which ones are enforced.
   (`tests/checks/staff-auth.test.ts`). `proxy.ts` only checks the cookie exists.
 - **Scheduled jobs** are Netlify scheduled functions, each in its own folder
   in `netlify/functions/`, that POST to a route under `app/api/cron/` with
-  `CRON_SECRET`. The work itself stays in the Next app.
+  `CRON_SECRET`. The work itself stays in the Next app. Every one is a job
+  on `/staff/import-data`, whether or not it imports anything, despite the
+  page's name, so that staff can see its runs and press its button
+  (`docs/domain-concepts.md`, "Imports"). The backup Worker in `backup/` runs
+  on Cloudflare, outside the site, so it isn't one of them.
 - **Write it once.** Pages that share a shape share a component: each local
   group page is `LocalGroupPage` plus its content in
   `lib/content/local-group-pages.tsx`, and each flyering tracker is

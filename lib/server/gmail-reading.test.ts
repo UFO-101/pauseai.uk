@@ -390,7 +390,7 @@ describeWithDatabase("reading Gmail", () => {
     expect(await read()).toEqual([{ account: JO, replies: 0, autoReplies: 0, bounces: 0 }]);
     expect(await latestRun("read-gmail")).toMatchObject({
       status: "unchanged",
-      problems: [{ what: staffCopy.problems.nameUnknown(JO), error: "Gmail answered 403 for /settings/sendAs" }],
+      problems: [{ what: staffCopy.problems.job.nameUnknown(JO), error: "Gmail answered 403 for /settings/sendAs" }],
     });
   });
 
@@ -417,7 +417,7 @@ describeWithDatabase("reading Gmail", () => {
       { account: JO, replies: 0, autoReplies: 0, bounces: 0 },
     ]);
     expect(error).toHaveBeenCalledWith(
-      staffCopy.problems.couldntRead("al@pauseai.uk"),
+      staffCopy.problems.job.couldntRead("al@pauseai.uk"),
       "Gmail answered 500 for /history",
     );
     expect(await query("SELECT email, gmail_history_id AS h FROM staff_accounts ORDER BY email")).toEqual([
@@ -441,7 +441,7 @@ describeWithDatabase("reading Gmail", () => {
     const title = jobTitles["read-gmail"];
     const told = words.body(
       title,
-      [`- ${staffCopy.problems.couldntRead("al@pauseai.uk")} Gmail answered 500 for /history`],
+      [`- ${staffCopy.problems.job.couldntRead("al@pauseai.uk")} Gmail answered 500 for /history`],
       "https://pauseai.uk/staff/import-data/gmail",
     );
     // Its first run, failing: told. Failing again: not.
@@ -450,7 +450,9 @@ describeWithDatabase("reading Gmail", () => {
     expect(sent.map((s) => [s.Subject, s.TextBody])).toEqual([[words.subject(title), told]]);
     expect(await latestRun("read-gmail")).toMatchObject({
       status: "ok",
-      problems: [{ what: staffCopy.problems.couldntRead("al@pauseai.uk"), error: "Gmail answered 500 for /history" }],
+      problems: [
+        { what: staffCopy.problems.job.couldntRead("al@pauseai.uk"), error: "Gmail answered 500 for /history" },
+      ],
     });
     // Read, then failing: told again.
     failing = false;

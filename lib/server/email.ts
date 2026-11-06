@@ -169,7 +169,7 @@ export async function send(
       return { sent: false, reason: "failed" };
     }
     problem(
-      staffCopy.problems.sendFailed(error instanceof GmailError ? `${purpose}, by Gmail as ${from}` : purpose),
+      staffCopy.problems.anywhere.sendFailed(error instanceof GmailError ? `${purpose}, by Gmail as ${from}` : purpose),
       error,
     );
     await log("failed");
