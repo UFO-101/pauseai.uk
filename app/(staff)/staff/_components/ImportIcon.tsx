@@ -4,12 +4,12 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import styles from "./ImportIcon.module.css";
 
 /** Where an import reads from. */
-export type ImportSource = "airtable" | "luma" | "gmail" | "web";
+export type ImportSource = "airtable" | "luma" | "gmail" | "web" | "database";
 
 // Each service's own mark, in its own colours: Airtable's three boxes (its
 // shape Simple Icons', https://simpleicons.org, CC0), Gmail's M, and Luma's
 // star, its own picture from luma.com, as it's shaded rather than flat.
-// The web, no one's, is a globe.
+// The web, no one's, is a globe, and our own database a stack of discs.
 const MARKS: Record<ImportSource, ReactNode> = {
   airtable: (
     <svg viewBox="0 0 24 24">
@@ -42,6 +42,13 @@ const MARKS: Record<ImportSource, ReactNode> = {
       <path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z" />
       <path d="M3 12h18" />
       <path d="M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z" />
+    </svg>
+  ),
+  database: (
+    <svg viewBox="0 0 24 24" className={styles.line}>
+      <path d="M4 5.5c0-1.66 3.58-3 8-3s8 1.34 8 3-3.58 3-8 3-8-1.34-8-3z" />
+      <path d="M4 5.5v13c0 1.66 3.58 3 8 3s8-1.34 8-3v-13" />
+      <path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3" />
     </svg>
   ),
 };

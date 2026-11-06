@@ -186,5 +186,5 @@ export async function chooseDay(page: Page, label: string, day: string) {
 export async function importEmails(page: Page) {
   await page.goto(`${BASE}/staff/import-data/emails`);
   await page.getByRole("button", { name: staffCopy.pauseaiEmails.importNow }).click();
-  await expect(page.getByText(staffCopy.runs.status.incomplete).first()).toBeVisible();
+  await expect(page.getByText(staffCopy.runs.status.problems).first()).toBeVisible();
 }

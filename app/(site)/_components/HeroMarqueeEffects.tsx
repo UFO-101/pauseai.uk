@@ -31,7 +31,7 @@ export default function HeroMarqueeEffects() {
       }
 
       if (document.fonts?.ready) {
-        document.fonts.ready.then(update);
+        void document.fonts.ready.then(update);
       }
 
       copy.querySelectorAll("img").forEach((img) => {

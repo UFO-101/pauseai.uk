@@ -59,11 +59,15 @@ describe("how a run shows", () => {
     expect(runShape(exampleRun("import-luma", { ...exampleLumaResult, stoppedBy: "time" as const }, {}))).toBe("run");
   });
 
-  it("is a row for an ordinary read of Gmail, and whole for one that failed or searched again", () => {
+  it("is a row for an ordinary read of Gmail, and whole for one with problems or that searched again", () => {
     const read = (a: object) =>
       exampleRun("read-gmail", { accounts: [{ ...exampleGmailResult.accounts[0], ...a }] }, {});
     expect(runShape(read({ error: undefined, notUnderstood: undefined }))).toBe("rows");
-    expect(runShape(read({ error: "403" }))).toBe("run");
+    // An account it couldn't read is a problem of the run, which shows whole.
+    expect(runShape(read({ error: "403" }))).toBe("rows");
+    expect(
+      runShape(exampleRun("read-gmail", { accounts: [] }, { problems: [{ what: "al@pauseai.uk couldn't be read" }] })),
+    ).toBe("run");
     expect(runShape(read({ error: undefined, restarted: true }))).toBe("run");
   });
 });

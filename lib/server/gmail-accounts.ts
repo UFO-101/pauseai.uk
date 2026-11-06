@@ -6,6 +6,7 @@ import { query } from "./db";
 import { lettersInbox } from "./letters-inbox";
 import { notifyStaff, staffLink } from "./notifications";
 import { decryptToken, encryptToken } from "./gmail-tokens";
+import { problem } from "./problems";
 import {
   exchangeGmailCode,
   gmailAccessToken,
@@ -106,7 +107,7 @@ async function forget(account: string, by: string, why: string): Promise<string 
 export async function disconnectGmail(account: string, by: string): Promise<boolean> {
   const token = await forget(account, by, "disconnected");
   if (token === undefined) return false;
-  await revokeGmail(token).catch((error) => console.error(`Couldn't revoke ${account}'s Gmail token:`, error));
+  await revokeGmail(token).catch((error: unknown) => problem(staffCopy.problems.logs.tokenNotRevoked(account), error));
   return true;
 }
 

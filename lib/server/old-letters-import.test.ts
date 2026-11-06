@@ -1,5 +1,6 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import { NIGHTLY } from "@/lib/import-runs";
+import { latestRun } from "./import-runs";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
@@ -400,6 +401,11 @@ Please join 40 of your colleagues.')`,
     const { unreadable, finished } = await run();
     expect(unreadable).toEqual(["0a13"]);
     expect(finished).toBe(true);
+    // Under a fixed sentence, so a run with a different number is no new problem.
+    expect((await latestRun("import-old-letters"))?.problems).toContainEqual({
+      what: staffCopy.problems.job.unreadable,
+      error: "0a13",
+    });
   });
 
   it("keeps a letter that doesn't fit its mailing's text whole, where most do", async () => {
@@ -544,6 +550,28 @@ Please join 40 of your colleagues.')`,
     await connectTestGmail("policy@pauseai.uk");
     server.use(http.get(`${GMAIL}/messages/0a01`, () => new HttpResponse("{}", { status: 500 }), { once: true }));
     await expect(importOldLetters("jo@pauseai.uk", 0)).rejects.toThrow("Gmail answered 500");
+  });
+
+  it("skips a message gone between reading its headers and the whole of it, wherever that happens", async () => {
+    const { dora } = await seed();
+    // A letter Postmark sent, so its Bcc'd copy is read whole for its text.
+    const letter = await addTestLetter({ politicianId: dora, senderEmail: "pm@example.com" });
+    await query(
+      `INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id) VALUES ('letter', $1, 'x@parliament.uk', 'sent', 'fixture-postmark-1')`,
+      [letter],
+    );
+    // One of each kind read whole after its headers: a one-off sent, a person's reply, a Postmark copy, shared mail
+    // checked for who it quotes, and a message of a kept thread.
+    const gone = new Set(["0a13", "0a03", "0b03", "0a17", "0a20"]);
+    server.use(
+      http.get(`${GMAIL}/messages/:id`, ({ request, params }) => {
+        const raw = new URL(request.url).searchParams.get("format") === "raw";
+        return raw && gone.has(String(params.id)) ? new HttpResponse(null, { status: 404 }) : undefined;
+      }),
+    );
+    const result = await run();
+    expect(result.finished).toBe(true);
+    for (const id of gone) expect((await outcomeOf(id)).outcome).toBe("skipped");
   });
 
   it("skips mail gone since it was listed", async () => {

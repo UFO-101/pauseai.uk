@@ -313,16 +313,33 @@ export type SupportersSearch = {
   sort: string;
   dir: string;
   page: string;
-  /** After an erasure: "1". */
+  /** After an erasure: "1", or "partly" with what couldn't be cleared in `why`, as codes. */
   erased: string;
+  why: string;
 };
+
+/** What an erasure can leave behind when its clean-up fails. */
+export const ERASE_LEFTOVERS = ["mail", "oneOffs"] as const;
+export type EraseLeftover = (typeof ERASE_LEFTOVERS)[number];
+
+/** Where an erasure goes afterwards: the list, saying so, and what couldn't be cleared, if anything. */
+export function erasedPath(notCleared: EraseLeftover[]): string {
+  if (!notCleared.length) return "/staff/supporters?erased=1";
+  return `/staff/supporters?erased=partly&why=${notCleared.join(",")}`;
+}
+
+/** The codes in an erasure's `why`; anything else in the address is left out. */
+export function eraseLeftovers(why: string): EraseLeftover[] {
+  const codes = why.split(",");
+  return ERASE_LEFTOVERS.filter((leftover) => codes.includes(leftover));
+}
 
 /** The supporters list's filters and sort, each as typed and as applied. */
 export function supportersSearch(
   params: Partial<Record<keyof SupportersSearch, ParamValue>>,
 ): SupportersSearch & { filter: SupporterFilter } {
-  const [q, campaign, wrote, near, within, sort, dir, page, erased] = (
-    ["q", "campaign", "wrote", "near", "within", "sort", "dir", "page", "erased"] as const
+  const [q, campaign, wrote, near, within, sort, dir, page, erased, why] = (
+    ["q", "campaign", "wrote", "near", "within", "sort", "dir", "page", "erased", "why"] as const
   ).map((name) => firstOf(params[name]));
   const [activity, contact, event, nation, mp] = (["activity", "contact", "event", "nation", "mp"] as const).map(
     (name) => valuesOf(params[name]),
@@ -366,6 +383,7 @@ export function supportersSearch(
     dir,
     page,
     erased,
+    why,
     filter,
   };
 }

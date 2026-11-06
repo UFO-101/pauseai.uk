@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { signatories } from "@/lib/server/politicians";
 import { FRONTIER_AI_LETTER_ASK } from "@/lib/asks";
+import { problem } from "@/lib/server/problems";
+import { staffCopy } from "@/lib/content/staff-interface";
 
 /** Everyone who signed the letter to the Prime Minister, for the list on /campaigns. */
 export async function GET() {
@@ -9,7 +11,7 @@ export async function GET() {
       headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" },
     });
   } catch (error) {
-    console.error("Couldn't read the signatories:", error);
+    problem(staffCopy.problems.logs.signatoriesUnread, error);
     return NextResponse.json({ error: "Couldn't read the signatories" }, { status: 500 });
   }
 }

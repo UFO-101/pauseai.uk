@@ -1,5 +1,7 @@
 import "server-only";
-import { IMPORT_JOBS, JOB_SCHEDULES, type ImportJob } from "@/lib/import-runs";
+import { IMPORT_JOBS, JOB_SCHEDULES, type ImportJob, type TidyingResult } from "@/lib/import-runs";
+import { keepingFailure, recordRun } from "./import-runs";
+import { deleteForgottenDrafts } from "./mailing-drafts";
 import { query } from "./db";
 
 // How long the import log and the audit log keep what they hold, so neither
@@ -19,6 +21,8 @@ import { query } from "./db";
 /** How many runs a one-off job keeps. */
 export const ONE_OFF_RUNS = 50;
 
+const JOB = "tidy-logs";
+
 const jobsThat = (schedule: (typeof JOB_SCHEDULES)[ImportJob]) =>
   IMPORT_JOBS.filter((job) => JOB_SCHEDULES[job] === schedule);
 
@@ -31,13 +35,24 @@ const POLITICIAN_HISTORY = `(
   OR (a.action IN ('block address', 'unblock address')
     AND EXISTS (SELECT 1 FROM notable_people n WHERE lower(n.email) = a.details->>'address')))`;
 
+/** One run of the tidying, kept in the import log: the logs (below), and the mailing drafts nobody wrote anything in. */
+export function runTidying(startedBy: string): Promise<TidyingResult> {
+  return keepingFailure(JOB, startedBy, async () => {
+    const result: TidyingResult = { ...(await tidyLogs()), drafts: await deleteForgottenDrafts() };
+    const anything = result.importRuns + result.auditEntries + result.drafts > 0;
+    await recordRun(JOB, startedBy, anything ? "ok" : "unchanged", result);
+    return result;
+  });
+}
+
 /** Deletes what the logs no longer keep. Returns how many import runs and audit log entries went. */
 export async function tidyLogs(): Promise<{ importRuns: number; auditEntries: number }> {
   const runs = await query(
     `DELETE FROM import_runs r
      WHERE r.status <> 'held'
        AND r.id <> (SELECT n.id FROM import_runs n WHERE n.job = r.job ORDER BY n.at DESC, n.id DESC LIMIT 1)
-       AND ((r.job = ANY($1) AND r.at < now() - interval '7 days')
+       AND ((r.job = ANY($1) AND r.status <> 'failed' AND r.problems = '[]'::jsonb AND r.at < now() - interval '7 days')
+         OR (r.job = ANY($1) AND r.at < now() - interval '1 month')
          OR (r.job = ANY($2) AND r.at < now() - interval '1 month')
          OR (r.job = ANY($3) AND r.id NOT IN (
                SELECT k.id FROM import_runs k WHERE k.job = r.job ORDER BY k.at DESC, k.id DESC LIMIT $4)))

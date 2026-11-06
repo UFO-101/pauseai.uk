@@ -566,6 +566,13 @@ export const staffCopy = {
     button: "Erase",
     cancel: "Cancel",
     done: "Erased.",
+    // In amber, over what couldn't be cleared afterwards: the person is erased all the same.
+    partly: "Erased everything except:",
+    // What couldn't be cleared, a line each under `partly`; the log has `partly` and the line together.
+    notCleared: {
+      mail: "their mail",
+      oneOffs: "their one-off emails",
+    },
   },
   // The accounts page (/staff/accounts), for admins: who may use the staff
   // pages, and what each may do.
@@ -1449,7 +1456,7 @@ export const staffCopy = {
     intro: {
       before: "The public events on ",
       link: "our Luma calendar",
-      after: ", who registered for each, who the hosts are. Also who is subscribed to the calendar (the contacts).",
+      after: ", who registered for each, who the hosts are and who is subscribed to the calendar (the contacts).",
     },
     importNow: "Import Luma now",
     never: "Not imported yet.",
@@ -1536,6 +1543,12 @@ export const staffCopy = {
   // a link to where a person can deal with it.
   notifications: {
     // An import's run failed, after one that didn't: its title, its error, its page.
+    // A run that went wrong along the way, without failing: each problem, a line.
+    importProblems: {
+      subject: (job: string) => `The import '${job}' had problems`,
+      body: (job: string, problems: string[], link: string) =>
+        `The import '${job}' ran, but:\n\n${problems.join("\n")}\n\nIt will try again at its next run, and you won't be emailed again until it has worked, or something else goes wrong.\n\nIts runs: ${link}`,
+    },
     importFailed: {
       subject: (job: string) => `The import '${job}' failed`,
       body: (job: string, error: string, link: string) =>
@@ -1593,6 +1606,49 @@ export const staffCopy = {
     // In place of that, when Google refused the account's access, so the site disconnected it.
     disconnected:
       "Google refused our access, so this account has been disconnected. Its owner can connect it again from their account page.",
+  },
+  // The hourly sending (app/api/cron/send-mailings): the letters inbox's queue, then the mailings due.
+  sending: {
+    title: "Sending letters and mailings",
+    intro: {
+      before: "Sends ",
+      link: "campaign",
+      after: " and ",
+    },
+    // The intro goes on, with a second link.
+    introThen: {
+      link: "mailing",
+      after: " messages that are ready to send.",
+    },
+    sendNow: "Send emails now",
+    never: "Nothing sent yet.",
+    result: (r: {
+      started: number[];
+      sent: number;
+      skipped: number;
+      failed: number;
+      left: number;
+      queue: { sent: number; left: number };
+    }) =>
+      `Started ${r.started.length} ${r.started.length === 1 ? "mailing" : "mailings"}; sent ${r.sent}, skipped ${r.skipped}, failed ${r.failed}, ${r.left} left. The queue: sent ${r.queue.sent}, ${r.queue.left} left.`,
+  },
+  // The nightly tidying (app/api/cron/tidy-logs): this log, the audit log and forgotten drafts.
+  tidying: {
+    title: "Tidying the logs",
+    intro: {
+      before: "Deletes entries of the ",
+      link: "audit log",
+      after: " over a month old (except politicians' history) and empty ",
+    },
+    // The intro goes on, with a second link.
+    introThen: {
+      link: "mailing drafts",
+      after: " unopened for a day.",
+    },
+    tidyNow: "Tidy logs now",
+    never: "Not tidied yet.",
+    result: (r: { importRuns: number; auditEntries: number; drafts: number }) =>
+      `Deleted ${r.importRuns} ${r.importRuns === 1 ? "run" : "runs"}, ${r.auditEntries} audit log ${r.auditEntries === 1 ? "entry" : "entries"} and ${r.drafts} ${r.drafts === 1 ? "draft" : "drafts"}.`,
   },
   // The hourly copy of PauseAI's UK members (lib/server/members-import.ts),
   // on the import page.
@@ -1723,8 +1779,7 @@ export const staffCopy = {
       before:
         "Reads old emails to politicians from Joseph's and policy@'s mail. Matches them to campaigns or mailings, or marks them as ",
       link: "one-off emails",
-      after:
-        ". It runs every 5 minutes until it has read everything, each run carrying on from where the last stopped. Pressing the button runs it now.",
+      after: ".",
     },
     importNow: "Import old letters",
     never: "Not imported yet.",
@@ -1756,7 +1811,6 @@ export const staffCopy = {
     }) =>
       `Read ${r.read} messages, ${r.left} left${r.finished ? ", all done" : ""}: ${r.formTexts} form letters' and ${r.postmarkTexts} Postmark letters' text, ${r.replies} replies, ${r.autoReplies} automatic replies and ${r.oneOffs} one-off emails.`,
     stoppedByGmail: "It stopped early because Gmail refused a request. The next run carries on.",
-    unreadable: (n: number) => `Gmail wouldn't give ${n} ${n === 1 ? "message" : "messages"}.`,
     joined: "Joined to their sent emails",
     added: "Added from sent emails",
     notJoined: "No sent email found",
@@ -1812,6 +1866,8 @@ export const staffCopy = {
       subject: (n: number) => `${n} ${n === 1 ? "email" : "emails"} in policy@ matched no politician`,
       body: (lines: string[], link: string) =>
         `Some emails arrived in the policy@ inbox and weren't kept, because they didn't match a politician. Work out who they're from, and widen the rule or add exceptions.\n\n${lines.join("\n")}\n\n${link}`,
+      // After the list, when a report is full: how many wait for the next one.
+      more: (n: number) => `And ${n} more, in the next report.`,
     },
   },
   goToParliament: {
@@ -1853,10 +1909,10 @@ export const staffCopy = {
       before: "Every politician in every body is copied from the ",
       link: "UK Parliamentarians table in Airtable",
       after:
-        ", except the Airtable test MPs. Stores their answers to “Frontier AI letter to the Prime Minister”, “DeepMind letter to Sir Demis Hassabis”, “ControlAI's campaign statement” and “Edinburgh conference”. Runs that change lots of data are held for checking.",
+        ", except the Airtable test MPs. Stores their answers in appropriate asks. Runs that change lots of data are held for checking.",
     },
     /** The test MPs (lib/test-mps.json) aren't in Airtable; every import adds any that are missing. */
-    testMps: "Each import also adds our own test MPs, who aren’t in Airtable, if any are missing.",
+    testMps: "Adds our own test MPs if any are missing.",
     syncNow: "Import politicians now",
     none: "Not yet imported.",
     added: "Added",
@@ -1872,6 +1928,93 @@ export const staffCopy = {
     discard: "Discard",
   },
 
+  // What went wrong without stopping the work (lib/server/problems.ts), by how far each can reach.
+  problems: {
+    // On a job's run, so on its page and in the email: something the job carried on past.
+    job: {
+      // The Gmail read: Gmail errored or refused for a connected account, so its new mail wasn't read this time.
+      couldntRead: (account: string) =>
+        `Gmail gave errors or refused connection, or our internal error, for ${account}`,
+      // The Gmail read: the mailbox was read, but Gmail wouldn't give the account's name.
+      nameUnknown: (account: string) => `Couldn't fetch name of ${account} from Gmail`,
+      // The Gmail read: mail in the letters inbox that couldn't be matched to anything, so a person must look. How many follows.
+      notUnderstood: "Messages in the letters inbox that couldn't be matched, so need a person to look at:",
+      // The old letters import: messages Gmail wouldn't give, by ID, which follow. They aren't tried again.
+      unreadable: "Messages that Gmail has but refused to give us:",
+      // The old letters import: messages that matched no campaign, mailing or politician. How many follows.
+      matchedNothing: "Messages that didn't match to a campaign, mailing or politician:",
+      // The Luma import: Luma errored on one event's guests. Its other events carry on.
+      eventGuests: (event: string) => `Couldn't read the guests of an event: ${event}`,
+      // The Luma import: Luma errored on one event's hosts. Its other events carry on.
+      eventHosts: (event: string) => `Couldn't read the hosts of an event: ${event}`,
+      // The Luma import: Luma's rate limit stopped the run early. The next run carries on.
+      lumaRefused: "Luma rate limit reached",
+      // The Emails sync: emails in Airtable that belong to no mailing here, or to several, so they weren't copied. Their records follow.
+      heldBack: "Emails we couldn't match to a mailing here, so weren't imported:",
+      // The Emails sync: emails in Airtable that don't name exactly one politician, so they weren't copied. Their records follow.
+      noOnePolitician: "Emails with no or more than one politician, so weren't imported:",
+      // The Emails sync: emails to a politician not imported yet, so they wait. Their records follow.
+      politicianNotHere: "Emails to a politician we don't have yet, so weren't imported:",
+      // The web form letters import: letters to a politician who isn't here. Their records follow.
+      noPolitician: "Letters with no politician here, so weren't imported:",
+      // The Go to Parliament import: MPs in that table who aren't here, so their answers weren't stored. Their records follow.
+      mpNotFound: "MPs who aren't here, so their answers weren't stored:",
+    },
+    // Can happen in a job or not. In a job, staff see it on the job's page and in the email. Not in a job, such
+    // as a visitor sending a letter, it only goes to Netlify's logs.
+    anywhere: {
+      // An email didn't go, as Gmail or Postmark errored.
+      sendFailed: (purpose: string) => `An email of type '${purpose}' couldn't be sent`,
+      // Something should have emailed staff, but NOTIFICATION_INBOX isn't set, so nobody heard.
+      noInbox: "NOTIFICATION_INBOX isn't set, so nobody was emailed",
+      // An email went by Gmail, but Gmail wouldn't say its Message-ID. Replies to it may not find their letter.
+      messageIdUnknown: "Gmail wouldn't say which Message-ID an email went with",
+      // Something went wrong sending a queued letter. It's back in the queue, and the writer is told it's on its way.
+      letterNotSent: (id: number) => `Letter ${id} couldn't be sent, so it's gone back in the queue`,
+      // Reading an email in a charset we don't know: a job reading mail, or staff opening a letter. It's read as UTF-8.
+      charsetUnknown: (charset: string) =>
+        `An email's charset isn't one we know, so its text may be garbled: ${charset}`,
+    },
+    // Only ever in Netlify's logs: no job reaches these. Each says what the person saw, if anything.
+    logs: {
+      // Staff disconnecting their Gmail: it disconnects as normal, but Google still holds the permission.
+      tokenNotRevoked: (account: string) => `${account}'s Gmail token couldn't be revoked at Google`,
+      // A visitor looking up their MP is told it failed.
+      mpLookupFailed: "The MP lookup failed",
+      // A visitor sending a letter gets an error, and the letter is lost unless they try again.
+      letterNotKept: "A letter couldn't be kept",
+      // A visitor is told the spam check can't be reached.
+      turnstileDown: "Turnstile couldn't be reached",
+      // A visitor is told the spam check isn't available.
+      turnstileUnset: "TURNSTILE_SECRET_KEY isn't set",
+      // A visitor is told the spam check is set up wrongly.
+      turnstileTestKey: "TURNSTILE_SECRET_KEY is a Cloudflare test key, refused outside development",
+      // A march sign-up that couldn't be saved here. The visitor gets Luma's answer, worked or failed.
+      signUpNotKept: "A march sign-up couldn't be kept",
+      // A march sign-up Luma wouldn't take. The visitor is told it failed, and their details are kept.
+      lumaSkippedGuest: "Luma skipped a march sign-up: unsubscribed, removed or blocked on the calendar",
+      // A march sign-up with no Luma key set. The visitor is told it failed, and their details are kept.
+      lumaNotConfigured: "A march sign-up couldn't go to Luma, as LUMA_API_KEY isn't set",
+      // A march sign-up Luma errored on. The visitor is told it failed, and their details are kept.
+      lumaRefusedGuest: "Luma wouldn't add a march sign-up",
+      // The signatories list's API answers with an error.
+      signatoriesUnread: "The signatories couldn't be read",
+      // Luma gets an error, so it sends the webhook again.
+      webhookNotRecorded: "A Luma webhook couldn't be recorded",
+      // A visitor looking up a postcode, or staff searching near a place, gets a failed answer.
+      postcodesDown: "postcodes.io couldn't be asked",
+      // The donate page shows an empty wall of thanks.
+      stripeDown: "Stripe couldn't be queried, so the wall of thanks is empty",
+      // A flyering tracker or the march's sign-up count shows no number.
+      lumaGuestsDown: "Luma couldn't be asked about an event's guests",
+      // A page that lists events shows none.
+      lumaEventsDown: "Luma couldn't be asked for the events, so the page shows none",
+      // A request from Postmark or the march form that isn't JSON, treated as empty.
+      badBody: (from: string) => `${from} sent a body that isn't JSON`,
+      // Nobody sees anything: a warning, as the next query carries on.
+      connectionDropped: "A database connection was dropped while idle",
+    },
+  },
   // The line every run in the import log starts with (RunBox): how it
   // ended, when, who started it, and for a held MP import, who decided it.
   // A Luma import that left work for later is incomplete in place of done
@@ -1881,6 +2024,7 @@ export const staffCopy = {
       ok: "Done",
       incomplete: "Incomplete",
       running: "Running",
+      problems: "Problems",
       failed: "Failed",
       unchanged: "Unchanged",
       held: "Held",
@@ -1935,6 +2079,7 @@ export const staffCopy = {
     // headings and a lozenge on the job's page.
     airtable: "Airtable",
     web: "Web",
+    database: "Database",
     luma: "Luma",
     gmail: "Gmail",
     nightly: "Nightly",
@@ -2212,4 +2357,6 @@ export const jobTitles: Record<ImportJob, string> = {
   "import-members": staffCopy.members.title,
   "read-gmail": staffCopy.gmailReading.title,
   "import-old-letters": staffCopy.oldLetters.title,
+  "send-mailings": staffCopy.sending.title,
+  "tidy-logs": staffCopy.tidying.title,
 };

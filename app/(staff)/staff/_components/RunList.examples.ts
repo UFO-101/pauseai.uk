@@ -14,6 +14,9 @@ import {
   type PoliticianSync,
   type PoliticianSyncResult,
   type WebFormImportResult,
+  type Problem,
+  type SendingResult,
+  type TidyingResult,
 } from "@/lib/import-runs";
 import type { SyncedPolitician } from "@/lib/politician-sync";
 
@@ -28,6 +31,8 @@ type Results = {
   "import-web-form-letters": WebFormImportResult;
   "import-go-to-parliament": GoToParliamentImportResult;
   "import-old-letters": OldLettersImportResult;
+  "send-mailings": SendingResult;
+  "tidy-logs": TidyingResult;
 };
 type RunOf<Job extends ImportJob> = Extract<AnyImportRun, { job: Job }>;
 
@@ -45,6 +50,7 @@ export function exampleRun<Job extends ImportJob>(
     decidedBy: null,
     status: "ok",
     error: null,
+    problems: [] as Problem[],
     result,
     ...run,
   } as RunOf<Job>;
@@ -216,3 +222,17 @@ export const exampleControlAiResult: ControlAiImportResult = {
   removed: 1,
   problems: [],
 };
+
+/** What an hour's sending did: a mailing started and most of it sent. */
+export const exampleSendingResult: SendingResult = {
+  started: [12],
+  sent: 40,
+  skipped: 1,
+  failed: 0,
+  left: 110,
+  waiting: [],
+  queue: { sent: 2, left: 0 },
+};
+
+/** What a night's tidying deleted. */
+export const exampleTidyingResult: TidyingResult = { importRuns: 288, auditEntries: 12, drafts: 1 };

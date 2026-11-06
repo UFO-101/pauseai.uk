@@ -9,12 +9,14 @@ export const IMPORT_JOBS = [
   "import-luma",
   "import-members",
   "read-gmail",
+  "send-mailings",
   "sync-politicians",
   "sync-emails",
   "check-mps",
   "import-controlai",
   "import-web-form-letters",
   "import-go-to-parliament",
+  "tidy-logs",
 ] as const;
 export type ImportJob = (typeof IMPORT_JOBS)[number];
 
@@ -34,6 +36,8 @@ const IMPORT_SLUGS: Record<ImportJob, string> = {
   "import-controlai": "controlai",
   "import-members": "members",
   "read-gmail": "gmail",
+  "send-mailings": "sending",
+  "tidy-logs": "tidying",
 };
 
 /** How often each job runs on its own, matching its schedule in netlify/functions/; a one-off is only run by staff. */
@@ -41,6 +45,8 @@ export const JOB_SCHEDULES: Record<ImportJob, "frequent" | "hourly" | "nightly" 
   "import-luma": "frequent",
   "import-members": "hourly",
   "read-gmail": "frequent",
+  "send-mailings": "hourly",
+  "tidy-logs": "nightly",
   "sync-politicians": "nightly",
   "sync-emails": "oneOff",
   "import-web-form-letters": "oneOff",
@@ -71,11 +77,15 @@ export const NIGHTLY = "nightly";
 /** ok or failed; a sync-politicians run is instead unchanged, held, applied or discarded. */
 export type ImportRunStatus = "ok" | "failed" | "unchanged" | "held" | "applied" | "discarded";
 
-/** One run of a job: how it ended, and the job's own account of what it found, unless it failed. */
+/** One thing that went wrong during a run without stopping it: what, in our words, and the error's own, if it came from one; `told` once an alert of its own has gone. */
+export type Problem = { what: string; error?: string; told?: true };
+
+/** One run of a job: how it ended, what went wrong along the way, and the job's own account of what it found, unless it failed. */
 export type ImportRun<Job extends ImportJob, Result> = {
   id: number;
   at: string;
   job: Job;
+  problems: Problem[];
   /** NIGHTLY, a staff member's email, or null for a run kept before 16 Oct 2026, when this wasn't recorded. */
   startedBy: string | null;
   /** Who applied or discarded a held sync. */
@@ -297,6 +307,25 @@ export type OldLettersImportResult = {
 };
 export type OldLettersImport = ImportRun<"import-old-letters", OldLettersImportResult>;
 
+/** What an hour's sending did: the mailings it started, their letters, and the letters inbox's queue. */
+export type SendingResult = {
+  /** The IDs of the mailings started this run. */
+  started: number[];
+  sent: number;
+  skipped: number;
+  failed: number;
+  /** Letters of started mailings still to send. */
+  left: number;
+  /** The mailings waiting for their send time or a person. */
+  waiting: string[];
+  queue: { sent: number; left: number };
+};
+export type Sending = ImportRun<"send-mailings", SendingResult>;
+
+/** What a night's tidying deleted: runs from this log, audit log entries, and forgotten mailing drafts. */
+export type TidyingResult = { importRuns: number; auditEntries: number; drafts: number };
+export type Tidying = ImportRun<"tidy-logs", TidyingResult>;
+
 export type AnyImportRun =
   | PoliticianSync
   | EmailSync
@@ -307,39 +336,33 @@ export type AnyImportRun =
   | GmailReading
   | WebFormImport
   | GoToParliamentImport
-  | OldLettersImport;
+  | OldLettersImport
+  | Sending
+  | Tidying;
 
-/** Whether a Luma run left work for later: it was cut short, or postcodes.io failed. */
-function lumaRunIncomplete(result: LumaImportResult): boolean {
-  return result.stoppedBy !== undefined || result.places?.failed === true;
+/** Whether a run left work for later: a Luma import cut short, by its time, its rate limit or another run; the old letters import until it has read everything. */
+function moreToDo(run: Exclude<AnyImportRun, { status: "failed" }>): boolean {
+  if (run.job === "import-luma") return run.result.stoppedBy !== undefined;
+  return run.job === "import-old-letters" && !run.result.finished;
 }
 
 /**
- * How a run ended, as its line in the import log says it: its status, or
- * for a Luma import that left work for later or an Emails sync that held
- * some back, "incomplete", in place of "ok" or "unchanged". A Gmail read
- * that couldn't read an account, or had to disconnect one, or found mail
- * in the letters inbox a person has to look at, failed: someone has to.
+ * How a run ended, as its line in the import log says it: failed; else with
+ * problems, if anything went wrong along the way; else incomplete, if it
+ * left work for a later run; else its status.
  */
 export function runStatus(run: AnyImportRun): string {
-  if (run.job === "import-luma" && run.status !== "failed" && lumaRunIncomplete(run.result)) return "incomplete";
-  // Emails held back for a mailing nobody has added yet.
-  if (run.job === "sync-emails" && run.status !== "failed" && run.result.unplaced.length > 0) return "incomplete";
-  // Left to read: a later run carries on.
-  if (run.job === "import-old-letters" && run.status !== "failed" && !run.result.finished) return "incomplete";
-  if (run.job === "read-gmail" && run.status !== "failed") {
-    // An account that couldn't be read, a disconnected one among them, or mail in the letters inbox a person
-    // has to look at.
-    if (run.result.accounts.some((a) => a.error || a.notUnderstood?.length)) return "failed";
-  }
+  if (run.status === "failed") return "failed";
+  if (run.problems.length > 0) return "problems";
+  if (moreToDo(run)) return "incomplete";
   return run.status;
 }
 
-/** How a run ended, as a colour: green when it went well, changing something or nothing, amber held or stopped short, red failed; none when it was discarded, or never ran. */
+/** How a run ended, as a colour: green when it went well, changing something or nothing; amber held, with problems or with more to do; red failed; none when it was discarded, or never ran. */
 export function runTone(run: AnyImportRun | undefined): "green" | "amber" | "red" | undefined {
   if (!run) return undefined;
   const status = runStatus(run);
   if (status === "failed") return "red";
-  if (status === "held" || status === "incomplete") return "amber";
+  if (status === "held" || status === "incomplete" || status === "problems") return "amber";
   return run.status === "discarded" ? undefined : "green";
 }

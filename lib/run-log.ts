@@ -20,7 +20,7 @@ export function runShape(run: AnyImportRun): Shape {
   if (schedule !== "frequent" && schedule !== "hourly") return "run";
   const status = runStatus(run);
   if (status === "unchanged") return "quiet";
-  if (run.status === "failed") return "run";
+  if (run.status === "failed" || run.problems.length > 0) return "run";
   switch (run.job) {
     case "import-old-letters": {
       const { finished, stoppedBy, unmatched, unreadable, formTexts } = run.result;
@@ -30,7 +30,7 @@ export function runShape(run: AnyImportRun): Shape {
     case "import-luma":
       return status === "incomplete" ? "run" : "rows";
     case "read-gmail":
-      return status === "failed" || run.result.accounts.some((a) => a.restarted) ? "run" : "rows";
+      return run.result.accounts.some((a) => a.restarted) ? "run" : "rows";
     default:
       return "run";
   }

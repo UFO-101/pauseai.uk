@@ -1,5 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
+import { problem } from "./problems";
+import { staffCopy } from "@/lib/content/staff-interface";
 
 // Email as MIME, both ways: a message to send by Gmail, which takes the
 // whole message rather than its fields, and the messages read back from a
@@ -219,7 +221,8 @@ export function partText(part: MimePart): string {
   const charset = headerParameter(part.headers.get("content-type"), "charset") ?? "utf-8";
   try {
     return new TextDecoder(charset).decode(part.body);
-  } catch {
+  } catch (error) {
+    problem(staffCopy.problems.anywhere.charsetUnknown(charset), error);
     return part.body.toString("utf8");
   }
 }

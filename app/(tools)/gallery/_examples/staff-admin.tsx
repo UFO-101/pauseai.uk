@@ -32,7 +32,9 @@ import {
   exampleLettersInboxRead,
   exampleMembersResult,
   exampleRun,
+  exampleSendingResult,
   exampleSyncedMp,
+  exampleTidyingResult,
   exampleWebFormResult,
 } from "@/app/(staff)/staff/_components/RunList.examples";
 import AccountsNotice from "@/app/(staff)/staff/_components/AccountsNotice";
@@ -147,13 +149,39 @@ const RUNS: Record<ImportJob, Variant> = {
       "A read of Gmail, one account unread; one that disconnected an account; one with mail in the letters inbox not understood",
     render: () => (
       <StaffPage as="div">
-        <Run run={exampleRun("read-gmail", exampleGmailResult)} open />
-        <Run run={exampleRun("read-gmail", { accounts: [exampleLettersInboxRead] }, { id: 4 })} open />
+        <Run
+          run={exampleRun("read-gmail", exampleGmailResult, {
+            problems: [
+              {
+                what: staffCopy.problems.job.couldntRead("jo@pauseai.uk"),
+                error: "Gmail answered 500 for /history",
+              },
+            ],
+          })}
+          open
+        />
+        <Run
+          run={exampleRun(
+            "read-gmail",
+            { accounts: [exampleLettersInboxRead] },
+            { id: 4, problems: [{ what: staffCopy.problems.job.notUnderstood, error: "2", told: true }] },
+          )}
+          open
+        />
         <Run
           run={exampleRun(
             "read-gmail",
             { accounts: [exampleGmailResult.accounts[0], exampleDisconnectedGmail] },
-            { id: 3 },
+            {
+              id: 3,
+              problems: [
+                {
+                  what: staffCopy.problems.job.couldntRead("al@pauseai.uk"),
+                  error: "Google refused the token request: 400 invalid_grant",
+                  told: true,
+                },
+              ],
+            },
           )}
           open
         />
@@ -183,12 +211,34 @@ const RUNS: Record<ImportJob, Variant> = {
       </StaffPage>
     ),
   },
+  "send-mailings": {
+    label: "An hour's sending",
+    render: () => (
+      <StaffPage as="div">
+        <Run run={exampleRun("send-mailings", exampleSendingResult)} open />
+      </StaffPage>
+    ),
+  },
+  "tidy-logs": {
+    label: "A night's tidying",
+    render: () => (
+      <StaffPage as="div">
+        <Run run={exampleRun("tidy-logs", exampleTidyingResult)} open />
+      </StaffPage>
+    ),
+  },
   "import-old-letters": {
     label: "A press of the import of old letters, with more to read; one that Gmail stopped; hiding who mail is from",
     render: () => (
       <StaffPage as="div">
         <Run
-          run={exampleRun("import-old-letters", exampleOldLettersResult, { startedBy: "jo@pauseai.uk" })}
+          run={exampleRun("import-old-letters", exampleOldLettersResult, {
+            startedBy: "jo@pauseai.uk",
+            problems: [
+              { what: staffCopy.problems.job.unreadable, error: "18f0a" },
+              { what: staffCopy.problems.job.matchedNothing, error: "1" },
+            ],
+          })}
           open
           people
         />
@@ -200,7 +250,15 @@ const RUNS: Record<ImportJob, Variant> = {
               stoppedBy: "gmail",
               stoppedWhy: "Gmail answered 403 for /messages/1a2b: Too many",
             },
-            { id: 2, startedBy: "jo@pauseai.uk" },
+            {
+              id: 2,
+              startedBy: "jo@pauseai.uk",
+              problems: [
+                { what: staffCopy.oldLetters.stoppedByGmail, error: "Gmail answered 403 for /messages/1a2b: Too many" },
+                { what: staffCopy.problems.job.unreadable, error: "18f0a" },
+                { what: staffCopy.problems.job.matchedNothing, error: "1" },
+              ],
+            },
           )}
           open
         />
@@ -211,7 +269,15 @@ const RUNS: Record<ImportJob, Variant> = {
     label: "PauseAI's emails, some held back",
     render: () => (
       <StaffPage as="div">
-        <Run run={exampleRun("sync-emails", exampleEmailsResult)} />
+        <Run
+          run={exampleRun("sync-emails", exampleEmailsResult, {
+            problems: [
+              { what: staffCopy.problems.job.noOnePolitician, error: "recEmail3" },
+              { what: staffCopy.problems.job.politicianNotHere, error: "recEmail4" },
+              { what: staffCopy.problems.job.heldBack, error: "recEmail1, recEmail2" },
+            ],
+          })}
+        />
       </StaffPage>
     ),
   },
@@ -572,7 +638,7 @@ export const staffAdmin: Group = {
           render: () => (
             <StaffPage as="div">
               <div style={{ display: "flex", gap: "var(--space-3)" }}>
-                {(["airtable", "luma", "gmail", "web"] as const).map((source) => (
+                {(["airtable", "luma", "gmail", "web", "database"] as const).map((source) => (
                   <ImportIcon key={source} source={source} />
                 ))}
               </div>

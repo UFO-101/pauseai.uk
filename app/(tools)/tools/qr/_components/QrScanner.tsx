@@ -220,7 +220,7 @@ export default function QrScanner({ onResult }: Props) {
       }
     }
 
-    start();
+    void start();
     return () => {
       stopped = true;
       cancelAnimationFrame(frame);

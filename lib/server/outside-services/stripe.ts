@@ -1,5 +1,7 @@
 import "server-only";
 import { outsideFetch } from "./outside-fetch";
+import { problem } from "../problems";
+import { staffCopy } from "@/lib/content/staff-interface";
 
 /** The key of the question every donate link's checkout asks, "Are you happy to be named on our wall of thanks?". */
 export const WALL_OF_THANKS_FIELD = "areyouhappytobenamedonourwallofthanks";
@@ -44,7 +46,8 @@ export async function getThankedDonors(): Promise<ThankedDonor[]> {
     if (!sessions) return [];
     const payments = (await list<PaymentIntent>(key, "payment_intents", {})) ?? [];
     return thanked(sessions, monthlyPayments(payments));
-  } catch {
+  } catch (error) {
+    problem(staffCopy.problems.logs.stripeDown, error);
     return [];
   }
 }

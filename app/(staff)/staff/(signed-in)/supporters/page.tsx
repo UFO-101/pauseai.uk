@@ -25,7 +25,7 @@ export default async function SupportersPage({ searchParams }: Props) {
   return (
     <>
       <h1>{staffCopy.supporters.title}</h1>
-      <ErasedNotice erased={search.erased} />
+      <ErasedNotice erased={search.erased} why={search.why} />
       <SupporterFilters search={search} choices={choices} near={page.near} />
       <SupportersTable page={page} search={search} />
     </>

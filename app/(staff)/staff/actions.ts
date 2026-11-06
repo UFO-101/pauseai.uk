@@ -8,7 +8,7 @@ import { redirect } from "next/navigation";
 import { type ImportJob, importPath } from "@/lib/import-runs";
 import { endPress, takePress } from "@/lib/server/import-runs";
 import { now } from "@/lib/now";
-import { staffBack } from "@/lib/staff-search";
+import { erasedPath, staffBack } from "@/lib/staff-search";
 import {
   askFrom,
   eraseFrom,
@@ -37,6 +37,8 @@ import { addNote, deleteNote, editNote, type NoteTarget } from "@/lib/server/not
 import { deletePolitician, setStatus } from "@/lib/server/politicians";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { type EventSaved, setEventDoc, setEventOwner } from "@/lib/server/staff-events";
+import { runSending } from "@/lib/server/sending-job";
+import { runTidying } from "@/lib/server/log-retention";
 import {
   type AccountChange,
   endStaffSessions,
@@ -190,6 +192,16 @@ export async function importMembersNow(): Promise<void> {
   await run("import-members", email, () => importMembers(email));
 }
 
+export async function sendNow(): Promise<void> {
+  const { email } = await requireStaff();
+  await run("send-mailings", email, () => runSending(email));
+}
+
+export async function tidyNow(): Promise<void> {
+  const { email } = await requireStaff();
+  await run("tidy-logs", email, () => runTidying(email));
+}
+
 export async function readGmailNow(): Promise<void> {
   const { email } = await requireStaff();
   await run("read-gmail", email, () => readGmail(email));
@@ -262,7 +274,8 @@ export async function endStaffSessionsNow(form: FormData): Promise<void> {
 
 /**
  * Erases a supporter, from their page, then goes to the list, which says
- * so. A supporter that's already gone is nothing to do.
+ * so, and what couldn't be cleared afterwards, if anything. A supporter
+ * that's already gone is nothing to do.
  */
 export async function eraseSupporterNow(form: FormData): Promise<void> {
   const { email } = await requireStaff("supporters");
@@ -271,7 +284,7 @@ export async function eraseSupporterNow(form: FormData): Promise<void> {
   const result = await eraseSupporter(parsed.id, parsed.reference, email);
   if (!result) return;
   revalidatePath("/staff", "layout");
-  redirect("/staff/supporters?erased=1");
+  redirect(erasedPath(result.notCleared));
 }
 
 /** Disconnects your own Gmail, from your page, going back to it saying so, in place of how connecting went. */

@@ -4,6 +4,8 @@ import type { Place } from "@/lib/events";
 import { TEST_MPS } from "@/lib/test-mps";
 import { findMpInOffice, findTestMp, type FoundMp } from "./politicians";
 import { constituencyForPostcode } from "./outside-services/postcodes";
+import { problem } from "./problems";
+import { staffCopy } from "@/lib/content/staff-interface";
 
 export type FindMpResult =
   | { ok: true; mp: FoundMp; place?: Place }
@@ -27,7 +29,7 @@ export async function findMp(postcode: string): Promise<FindMpResult> {
     const mp = await findMpInOffice(found.constituency);
     return mp ? { ok: true, mp, ...(found.place && { place: found.place }) } : { ok: false, reason: "no_mp" };
   } catch (error) {
-    console.error("Couldn't look up the MP:", error);
+    problem(staffCopy.problems.logs.mpLookupFailed, error);
     return { ok: false, reason: "failed" };
   }
 }

@@ -16,6 +16,8 @@ import {
 } from "./outside-services/luma-calendar";
 import { getEventHosts, type EventHost } from "./outside-services/luma-event";
 import { type EventGuest, listEventGuests } from "./outside-services/luma-guests";
+import { describeError, problem } from "./problems";
+import { staffCopy } from "@/lib/content/staff-interface";
 
 // Copies our Luma calendar into luma_events, luma_people, luma_guests and
 // luma_event_hosts: every public event, the guests who registered for each,
@@ -67,7 +69,7 @@ async function refreshDue(db: Queryable): Promise<boolean> {
 /** A full pass over the contacts failed partway: its cursor is dropped, outside the run's transaction. */
 class ContactsPassFailed extends Error {
   constructor(public readonly cause: unknown) {
-    super(String(cause));
+    super(describeError(cause));
   }
 }
 
@@ -93,6 +95,7 @@ class Budget {
       return page;
     } catch (error) {
       if (!(error instanceof LumaRateLimited)) throw error;
+      problem(staffCopy.problems.job.lumaRefused, error);
       this.requests++;
       this.stoppedBy = "rate-limit";
       return undefined;
@@ -294,7 +297,8 @@ async function importGuests(eventId: string, budget: Budget, db: Queryable): Pro
       cursor = page.nextCursor;
     } while (cursor);
   } catch (error) {
-    await query("UPDATE luma_events SET guests_error = $2 WHERE id = $1", [eventId, String(error)], db);
+    problem(staffCopy.problems.job.eventGuests(eventId), error);
+    await query("UPDATE luma_events SET guests_error = $2 WHERE id = $1", [eventId, describeError(error)], db);
     return counts;
   }
   const removed = await query(
@@ -345,7 +349,8 @@ async function importHosts(eventId: string, budget: Budget, db: Queryable): Prom
     if (!page) return undefined;
     hosts = [...new Map(page.entries.map((host) => [host.userId, host])).values()];
   } catch (error) {
-    await query("UPDATE luma_events SET hosts_error = $2 WHERE id = $1", [eventId, String(error)], db);
+    problem(staffCopy.problems.job.eventHosts(eventId), error);
+    await query("UPDATE luma_events SET hosts_error = $2 WHERE id = $1", [eventId, describeError(error)], db);
     return { hosts: 0, people: 0 };
   }
   const people = await upsertPeople(hosts, db);

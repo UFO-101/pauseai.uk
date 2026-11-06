@@ -13,7 +13,7 @@ export function useStudioAssets() {
 
   useEffect(() => {
     let cancelled = false;
-    loadFonts()
+    void loadFonts()
       .catch(() => undefined)
       .then(() => {
         if (!cancelled) setFontsReady(true);

@@ -2,7 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import { addTestPolitician, connectTestGmail, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import { staffCopy } from "@/lib/content/staff-interface";
 import { stubLettersInboxEnv } from "@/tests/gmail-sends";
+import { notifications } from "@/tests/notifications";
 import { query } from "./db";
 import { eraseSupporter } from "./erasure";
 import { addFormEntry } from "./form-entries";
@@ -368,6 +370,65 @@ describeWithDatabase("one-off emails", () => {
         "INSERT INTO unmatched_mail (account, gmail_message_id, reported_at) VALUES ('policy@pauseai.uk', $1, $2)",
         [id, reported],
       );
+
+    it("leaves the batch unreported when the email can't go, to report it next time", async () => {
+      await add("r3");
+      server.use(
+        http.get(`${GMAIL}/messages/r3`, () =>
+          HttpResponse.json({
+            id: "r3",
+            threadId: "t",
+            labelIds: [],
+            internalDate: "1",
+            payload: {
+              headers: [
+                { name: "From", value: "a@example.org" },
+                { name: "Subject", value: "Hi" },
+              ],
+            },
+          }),
+        ),
+      );
+      vi.stubEnv("NOTIFICATION_INBOX", "");
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      expect(await reportUnmatchedMail(token)).toBe(0);
+      expect(await query("SELECT gmail_message_id AS id FROM unmatched_mail WHERE reported_at IS NULL")).toEqual([
+        { id: "r3" },
+      ]);
+      // Not tried again for a day, however often Gmail is read.
+      const asked = vi.fn();
+      server.events.on("request:start", asked);
+      expect(await reportUnmatchedMail(token)).toBe(0);
+      expect(asked).not.toHaveBeenCalled();
+      server.events.removeListener("request:start", asked);
+      vi.stubEnv("NOTIFICATION_INBOX", "notify@pauseai.uk");
+      await query("UPDATE unmatched_mail SET tried_at = now() - interval '2 days'");
+      expect(await reportUnmatchedMail(token)).toBe(1);
+    });
+
+    it("lists the oldest in a report, says how many more wait, and leaves those for the next", async () => {
+      await query(
+        `INSERT INTO unmatched_mail (account, gmail_message_id, found_at)
+         SELECT 'policy@pauseai.uk', 'm' || n, now() - n * interval '1 minute' FROM generate_series(1, 102) n`,
+      );
+      server.use(
+        http.get(`${GMAIL}/messages/:id`, ({ params }) =>
+          HttpResponse.json({
+            id: params.id,
+            threadId: "t",
+            labelIds: [],
+            internalDate: "1",
+            payload: { headers: [] },
+          }),
+        ),
+      );
+      const sent = notifications();
+      expect(await reportUnmatchedMail(token)).toBe(100);
+      expect(sent.map((email) => email.TextBody).join()).toContain(staffCopy.oneOff.unmatchedAlert.more(2));
+      expect(
+        await query("SELECT gmail_message_id AS id FROM unmatched_mail WHERE reported_at IS NULL ORDER BY id"),
+      ).toEqual([{ id: "m1" }, { id: "m2" }]);
+    });
 
     it("copes with a message with no sender or subject", async () => {
       await add("r2");

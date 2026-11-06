@@ -4,6 +4,8 @@ import { logChange } from "./audit";
 import { query, transaction } from "./db";
 import { keepingFailure, recordRun } from "./import-runs";
 import { airtableToken, fetchEmails, fetchTestPoliticianIds } from "./outside-services/airtable";
+import { problem } from "./problems";
+import { staffCopy } from "@/lib/content/staff-interface";
 
 // Copies PauseAI's emails to politicians from Airtable's Emails table
 // into letters_from_pauseai when staff ask, each run in the import log as
@@ -54,10 +56,13 @@ export function syncEmails(startedBy: string): Promise<EmailSyncResult> {
           )
         ).map((row) => row.airtableId),
       );
+      const noOnePolitician: string[] = [];
+      const notHere: string[] = [];
       for (const email of emails) {
         if (known.has(email.airtableId)) continue;
         if (email.politicians.length !== 1) {
           result.noPolitician++;
+          noOnePolitician.push(email.airtableId);
           continue;
         }
         if (tests.has(email.politicians[0])) continue;
@@ -73,6 +78,7 @@ export function syncEmails(startedBy: string): Promise<EmailSyncResult> {
         );
         if (!person) {
           result.waiting++;
+          notHere.push(email.airtableId);
           continue;
         }
         const [{ id }] = await query<{ id: number }>(
@@ -89,6 +95,13 @@ export function syncEmails(startedBy: string): Promise<EmailSyncResult> {
         result.added++;
       }
       if (result.added > 0) await logChange("sync", "copy PauseAI emails", { added: result.added }, db);
+      // Each thing it couldn't do, by the records, so a person can find them in Airtable.
+      const words = staffCopy.problems.job;
+      if (noOnePolitician.length) problem(words.noOnePolitician, noOnePolitician.join(", "));
+      if (notHere.length) problem(words.politicianNotHere, notHere.join(", "));
+      if (result.unplaced.length) {
+        problem(words.heldBack, result.unplaced.map((u) => u.airtableId).join(", "));
+      }
       await recordRun(JOB, startedBy, result.added > 0 ? "ok" : "unchanged", result, db);
       return result;
     });

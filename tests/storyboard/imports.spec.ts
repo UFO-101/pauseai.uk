@@ -124,11 +124,12 @@ const scheduled = (
   result: object,
   status = "ok",
   minutes = 5,
+  problems: object[] = [],
 ) =>
   runSql(
     database,
-    `INSERT INTO import_runs (job, started_by, status, result, at)
-     SELECT '${job}', 'nightly', '${status}', '${JSON.stringify(result).replaceAll("'", "''")}', now() - interval '${from}' - n * interval '${minutes} minutes'
+    `INSERT INTO import_runs (job, started_by, status, result, problems, at)
+     SELECT '${job}', 'nightly', '${status}', '${JSON.stringify(result).replaceAll("'", "''")}', '${JSON.stringify(problems).replaceAll("'", "''")}', now() - interval '${from}' - n * interval '${minutes} minutes'
      FROM generate_series(0, ${count - 1}) n`,
   );
 
@@ -155,7 +156,7 @@ test("The Luma import's log", async ({ page, flowDatabase }) => {
 
 test("The Gmail reading's log", async ({ page, flowDatabase }) => {
   story(
-    "Gmail is read every 5 minutes too. A read that found something says which account and what. A mailbox that couldn't be read shows whole, in red.",
+    "Gmail is read every 5 minutes too. A read that found something says which account and what. A mailbox that couldn't be read shows whole, in amber, saying so under its line.",
   );
   await logIn(page, flowDatabase);
   const account = (email: string, extra = {}) => ({ account: email, replies: 0, autoReplies: 0, bounces: 0, ...extra });
@@ -163,17 +164,15 @@ test("The Gmail reading's log", async ({ page, flowDatabase }) => {
   const replied = {
     accounts: [account("joseph@pauseai.uk", { replies: 1 }), account("policy@pauseai.uk", { oneOffs: 1 })],
   };
+  const refusal = "Gmail answered 403 for /settings/sendAs: User-rate limit exceeded";
   const refused = {
-    accounts: [
-      account("joseph@pauseai.uk", {
-        error: "Error: Gmail answered 403 for /settings/sendAs: User-rate limit exceeded",
-      }),
-      account("policy@pauseai.uk"),
-    ],
+    accounts: [account("joseph@pauseai.uk", { error: refusal }), account("policy@pauseai.uk")],
   };
   scheduled(flowDatabase, "read-gmail", 1, "0 minutes", replied);
   scheduled(flowDatabase, "read-gmail", 6, "5 minutes", quiet, "unchanged");
-  scheduled(flowDatabase, "read-gmail", 1, "35 minutes", refused);
+  scheduled(flowDatabase, "read-gmail", 1, "35 minutes", refused, "ok", 5, [
+    { what: staffCopy.problems.job.couldntRead("joseph@pauseai.uk"), error: refusal },
+  ]);
   scheduled(flowDatabase, "read-gmail", 8, "40 minutes", quiet, "unchanged");
   scheduled(flowDatabase, "read-gmail", 3, "80 minutes", replied);
   scheduled(flowDatabase, "read-gmail", 40, "95 minutes", quiet, "unchanged");
@@ -295,6 +294,29 @@ test("An import fails", async ({ page, request, flowDatabase }) => {
   await frame(page, "The Luma import's runs");
 });
 
+test("An import has problems", async ({ page, request, flowDatabase }) => {
+  story(
+    "postcodes.io is down. The Luma import still runs, but can't place the new supporters, so it says so under its line, and the notification inbox gets an email saying what went wrong.",
+  );
+  failService(flowDatabase, "api.postcodes.io", FAILING_DIR);
+  const luma = () =>
+    request.post(`${BASE}/api/cron/import-luma`, { headers: { Authorization: "Bearer fixture-cron-secret" } });
+  expect((await luma()).ok()).toBe(true);
+  const words = staffCopy.notifications.importProblems;
+  const email = notified(words.subject(jobTitles["import-luma"]))!;
+  expect(email.TextBody).toContain(staffCopy.luma.placesFailed);
+  await emailFrame(page, email, "The email to the notification inbox");
+
+  story("The next run has the same problem. No second email: there's one until the problem has gone.");
+  expect((await luma()).ok()).toBe(true);
+  expect(notified(words.subject(jobTitles["import-luma"]))!.MessageId).toBe(email.MessageId);
+  await logIn(page, flowDatabase);
+  await page.goto(`${BASE}/staff/import-data/luma`);
+  await expect(page.getByText(staffCopy.runs.status.problems, { exact: true })).toHaveCount(2);
+  await expect(page.getByText(staffCopy.luma.placesFailed, { exact: false }).first()).toBeVisible();
+  await frame(page, "The Luma import's runs, with the problem under each");
+});
+
 test("A held politician import", async ({ page, request, flowDatabase }) => {
   story(
     "21 MPs are no longer in Airtable. An import that would mark that many gone changes too much to go ahead alone, so it's held for a person to check.",
@@ -399,7 +421,8 @@ test("PauseAI's emails to politicians", async ({ page, request, flowDatabase }) 
   await frame(page, "The emails import's page");
   story("Pressing it again finds nothing new.");
   await page.getByRole("button", { name: staffCopy.pauseaiEmails.importNow }).click();
-  await expect(page.getByText(staffCopy.runs.status.incomplete)).toHaveCount(2);
+  // Held back for a mailing nobody has added: a problem of each run, until someone adds it.
+  await expect(page.getByText(staffCopy.runs.status.problems, { exact: true })).toHaveCount(2);
   expect(runSql(flowDatabase, "SELECT count(*) FROM letters_from_pauseai")).toEqual(["5"]);
 
   story("Each email is in its politician's history, and has its own page under its mailing.");

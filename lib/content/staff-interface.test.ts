@@ -158,7 +158,6 @@ it("says one and many of each of the new pages' counts", () => {
     [campaigns.versionLine(null, 1), campaigns.versionLine("1 Jan", 2)],
     [oneOff.threads(1), oneOff.threads(2)],
     [oneOff.unmatchedAlert.subject(1), oneOff.unmatchedAlert.subject(2)],
-    [oldLetters.unreadable(1), oldLetters.unreadable(2)],
     [gmailReading.oneOffs(1), gmailReading.oneOffs(2)],
     [asks.page.letters(1), asks.page.letters(2)],
     [asks.page.way(1, "mailing"), asks.page.way(2, "campaign")],
@@ -176,6 +175,29 @@ it("says one and many of each of the new pages' counts", () => {
     formTexts: 0,
     postmarkTexts: 0,
   };
+  const { sending, tidying } = staffCopy;
+  const { job, anywhere, logs } = staffCopy.problems;
+  for (const words of [job.couldntRead, job.nameUnknown, logs.tokenNotRevoked]) {
+    expect(words("jo@pauseai.uk")).toContain("jo@pauseai.uk");
+  }
+  expect(job.eventGuests("evt-1")).toContain("evt-1");
+  expect(job.eventHosts("evt-1")).toContain("evt-1");
+  expect(anywhere.sendFailed("mailing")).toContain("mailing");
+  expect(logs.badBody("Postmark")).toContain("Postmark");
+  expect(anywhere.letterNotSent(7)).toContain("7");
+  expect(anywhere.charsetUnknown("x-mac")).toContain("x-mac");
+  expect(
+    sending.result({ started: [1], sent: 1, skipped: 0, failed: 0, left: 0, queue: { sent: 0, left: 0 } }),
+  ).toContain("1 mailing;");
+  expect(
+    sending.result({ started: [1, 2], sent: 1, skipped: 0, failed: 0, left: 0, queue: { sent: 0, left: 0 } }),
+  ).toContain("2 mailings;");
+  expect(tidying.result({ importRuns: 1, auditEntries: 1, drafts: 1 })).toContain(
+    "1 run, 1 audit log entry and 1 draft.",
+  );
+  expect(tidying.result({ importRuns: 2, auditEntries: 2, drafts: 2 })).toContain(
+    "2 runs, 2 audit log entries and 2 drafts.",
+  );
   expect(oldLetters.result(run)).toContain("all done");
   expect(oldLetters.result({ ...run, finished: false })).not.toContain("all done");
 });

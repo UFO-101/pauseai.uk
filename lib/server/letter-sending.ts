@@ -13,6 +13,7 @@ import { reportSupporterBounces, tellOfficesOfHeldReplies } from "./held-replies
 import { notifyStaff, staffLink } from "./notifications";
 import { mpName, nameLine, proxyLine } from "./proxies";
 import { resendAfterFix, sendRelay, uncertainRelays } from "./relays";
+import { problem } from "./problems";
 
 // Supporters' letters to MPs, sent from the letters inbox
 // (lib/server/letters-inbox.ts): the letter, from the supporter's proxy to
@@ -135,7 +136,7 @@ export async function sendLetter(id: number): Promise<{ sent: true } | { sent: f
     return await sendTaken(id);
   } catch (error) {
     // Kept, and back in the queue, so the next run tries again; whoever wrote it is told it's on its way.
-    console.error(`Couldn't send letter ${id}:`, error);
+    problem(staffCopy.problems.anywhere.letterNotSent(id), error);
     return requeue(id, "failed");
   }
 }

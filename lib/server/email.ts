@@ -7,6 +7,8 @@ import { GmailError, gmailMessageId, sendGmail, sendRawGmail } from "./outside-s
 import { PostmarkError, sendEmail, unsuppress, type Email } from "./outside-services/postmark";
 import { resendAfterFix } from "./relays";
 import { now } from "@/lib/now";
+import { problem } from "./problems";
+import { staffCopy } from "@/lib/content/staff-interface";
 
 // Every email the site sends goes through send(), whatever it's for. A bounce
 // or complaint is about an address, not about the email that found it out:
@@ -166,8 +168,8 @@ export async function send(
       await log("failed");
       return { sent: false, reason: "failed" };
     }
-    console.error(
-      `Couldn't send an email (${purpose}${error instanceof GmailError ? `, by Gmail as ${from}` : ""}):`,
+    problem(
+      staffCopy.problems.anywhere.sendFailed(error instanceof GmailError ? `${purpose}, by Gmail as ${from}` : purpose),
       error,
     );
     await log("failed");

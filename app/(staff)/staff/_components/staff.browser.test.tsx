@@ -63,7 +63,9 @@ import {
   exampleLettersInboxRead,
   exampleMembersResult,
   exampleRun,
+  exampleSendingResult,
   exampleSyncedMp,
+  exampleTidyingResult,
   exampleWebFormResult,
 } from "./RunList.examples";
 import StaffNav, { staffPageAt } from "./StaffNav";
@@ -1321,7 +1323,7 @@ describe("SortHeading", () => {
 
 describe("ImportIcon", () => {
   it("shows each source's mark, named for screen readers and on hover", async () => {
-    const sources = ["airtable", "luma", "gmail", "web"] as const;
+    const sources = ["airtable", "luma", "gmail", "web", "database"] as const;
     await render(
       <>
         {sources.map((source) => (
@@ -2339,11 +2341,13 @@ describe("ImportOverview", () => {
       ran("import-luma", { ...exampleLumaResult, stoppedBy: "time" }, { at: "2026-10-21T11:17:00Z" }),
       ran("import-members", exampleMembersResult, { at: "2026-10-21T11:47:00Z" }),
       ran("read-gmail", { accounts: [] }, { at: "2026-10-21T11:20:00Z", status: "unchanged" }),
+      undefined,
       exampleHeldSync,
       ran("sync-emails", exampleEmailsResult, { at: "2026-10-21T06:22:00Z" }),
       ran("check-mps", { problems: [] }, { at: "2026-10-21T01:00:00Z", status: "ok" }),
       failed("import-controlai", "No PDF linked", { at: "2026-10-21T02:00:00Z" }),
       ran("import-web-form-letters", exampleWebFormResult, { at: "2026-10-20T09:00:00Z" }),
+      undefined,
       undefined,
     ];
     await render(
@@ -2363,9 +2367,11 @@ describe("ImportOverview", () => {
       "/staff/import-data/luma",
       "/staff/import-data/gmail",
       "/staff/import-data/members",
+      "/staff/import-data/sending",
       "/staff/import-data/politicians",
       "/staff/import-data/mp-check",
       "/staff/import-data/controlai",
+      "/staff/import-data/tidying",
       "/staff/import-data/emails",
       "/staff/import-data/web-form-letters",
       "/staff/import-data/go-to-parliament",
@@ -2375,9 +2381,11 @@ describe("ImportOverview", () => {
       jobTitles["import-luma"],
       jobTitles["read-gmail"],
       jobTitles["import-members"],
+      jobTitles["send-mailings"],
       jobTitles["sync-politicians"],
       jobTitles["check-mps"],
       jobTitles["import-controlai"],
+      jobTitles["tidy-logs"],
       jobTitles["sync-emails"],
       jobTitles["import-web-form-letters"],
       jobTitles["import-go-to-parliament"],
@@ -2385,35 +2393,54 @@ describe("ImportOverview", () => {
     // Under the name, how the newest run ended, tinted to match.
     const status = (i: number) => cards[i].querySelector("h3")!.parentElement!.nextElementSibling!.firstElementChild!;
     expect(status(1).textContent).toBe(`${staffCopy.runs.status.incomplete}21 Oct 2026, 11:17`);
-    // The Emails sync held some back, so it's amber too.
-    expect([1, 2, 3, 4, 5, 6, 7, 8].map((i) => status(i).className.match(/green|amber|red/)?.[0])).toEqual([
+    expect([1, 2, 3, 5, 6, 7, 9, 10].map((i) => status(i).className.match(/green|amber|red/)?.[0])).toEqual([
       "amber",
       "green",
       "green",
       "amber",
       "green",
       "red",
-      "amber",
+      "green",
       "green",
     ]);
-    expect(status(9).textContent).toBe(staffCopy.goToParliament.never);
-    expect(status(9).className).not.toMatch(/green|amber|red/);
+    expect(status(11).textContent).toBe(staffCopy.goToParliament.never);
+    expect(status(11).className).not.toMatch(/green|amber|red/);
+    expect(status(4).textContent).toBe(staffCopy.sending.never);
+    expect(status(8).textContent).toBe(staffCopy.tidying.never);
     // The Airtable jobs link the table they read; the politicians' sync also says the test MPs stay.
     const link = (i: number) => cards[i].querySelector(":scope > p a")!.getAttribute("href");
-    expect(link(4)).toBe("https://airtable.com/app/tblPoliticians");
-    expect(cards[4].querySelector(":scope > p")!.textContent).toContain(staffCopy.syncs.testMps);
-    expect([7, 8, 9].map(link)).toEqual([
+    expect(link(5)).toBe("https://airtable.com/app/tblPoliticians");
+    expect(cards[5].querySelector(":scope > p")!.textContent).toContain(staffCopy.syncs.testMps);
+    expect([9, 10, 11].map(link)).toEqual([
       "https://airtable.com/app/tblp4nH5Jymq48rcm",
       "https://airtable.com/app/tblkzjrRHiZiqMDGR",
       "https://airtable.com/app/tblminXS1xSuBbEjz",
     ]);
-    expect(cards[5].querySelector(":scope > p")!.textContent).not.toContain(staffCopy.syncs.testMps);
-    // The members come from the join form; Gmail's card leads to where it's connected.
+    expect(cards[6].querySelector(":scope > p")!.textContent).not.toContain(staffCopy.syncs.testMps);
+    // The members come from the join form; Gmail's card leads to where it's connected; the sending's to the campaigns'
+    // letters and the mailings, the tidying's to the audit log and the mailings.
     expect(link(3)).toBe("https://pauseai.info/join");
     expect(link(2)).toBe("/staff/me");
+    expect([...cards[4].querySelectorAll(":scope > p a")].map((a) => a.getAttribute("href"))).toEqual([
+      "/staff/campaigns",
+      "/staff/mailings",
+    ]);
+    expect(cards[4].querySelector(":scope > p")!.textContent).toBe(
+      [
+        staffCopy.sending.intro.before,
+        staffCopy.sending.intro.link,
+        staffCopy.sending.intro.after,
+        staffCopy.sending.introThen.link,
+        staffCopy.sending.introThen.after,
+      ].join(""),
+    );
+    expect([...cards[8].querySelectorAll(":scope > p a")].map((a) => a.getAttribute("href"))).toEqual([
+      "/staff/audit-log",
+      "/staff/mailings",
+    ]);
     // The MP check says it changes nothing, after its name.
-    expect(cards[5].querySelector("h3")!.textContent).toBe(`${jobTitles["check-mps"]}${staffCopy.import.checkOnly}`);
-    expect(cards[7].querySelector("h3")!.textContent).toBe(jobTitles["sync-emails"]);
+    expect(cards[6].querySelector("h3")!.textContent).toBe(`${jobTitles["check-mps"]}${staffCopy.import.checkOnly}`);
+    expect(cards[9].querySelector("h3")!.textContent).toBe(jobTitles["sync-emails"]);
   });
 
   it("shows an applied run, and one that changed nothing, in green, and one discarded plainly", async () => {
@@ -2426,7 +2453,7 @@ describe("ImportOverview", () => {
     const { rerender } = await render(
       <ImportOverview
         presses={[]}
-        newest={[undefined, unchanged, undefined, undefined, exampleAppliedSync, undefined, undefined]}
+        newest={[undefined, unchanged, undefined, undefined, undefined, exampleAppliedSync, undefined, undefined]}
         airtableTable="x"
       />,
     );
@@ -2434,23 +2461,23 @@ describe("ImportOverview", () => {
       document.querySelectorAll("section")[i].querySelector("h3")!.parentElement!.nextElementSibling!.firstElementChild!
         .className;
     expect(status(1)).toMatch(/green/);
-    expect(status(4)).toMatch(/green/);
+    expect(status(5)).toMatch(/green/);
     await rerender(
       <ImportOverview
         presses={[]}
-        newest={[undefined, undefined, undefined, undefined, discarded, undefined, undefined]}
+        newest={[undefined, undefined, undefined, undefined, undefined, discarded, undefined, undefined]}
         airtableTable="x"
       />,
     );
-    expect(status(4)).not.toMatch(/green|amber|red/);
+    expect(status(5)).not.toMatch(/green|amber|red/);
     await rerender(
       <ImportOverview
-        newest={[undefined, undefined, undefined, undefined, exampleAppliedSync, undefined, undefined]}
-        presses={[undefined, undefined, undefined, undefined, press]}
+        newest={[undefined, undefined, undefined, undefined, undefined, exampleAppliedSync, undefined, undefined]}
+        presses={[undefined, undefined, undefined, undefined, undefined, press]}
         airtableTable="x"
       />,
     );
-    expect(status(4)).toMatch(/blue/);
+    expect(status(5)).toMatch(/blue/);
     expect(document.body.textContent).toContain(staffCopy.runs.status.running);
     expect(document.body.textContent).toContain(staffTime(press.startedAt));
   });
@@ -3085,17 +3112,41 @@ describe("RunList", () => {
     expect(page.getByText(staffCopy.runs.by("jo@pauseai.uk"), { exact: false }).all()).toHaveLength(2);
   });
 
+  it("shows an hour's sending and a night's tidying as their counts, or why they failed", async () => {
+    await render(
+      <RunList
+        runs={[
+          ran("send-mailings", exampleSendingResult, { id: 4 }),
+          ran("tidy-logs", exampleTidyingResult, { id: 3 }),
+          failed("send-mailings", "Postmark answered 500", { id: 2 }),
+          failed("tidy-logs", "Database down", { id: 1 }),
+        ]}
+        none="None"
+      />,
+    );
+    await expect
+      .element(page.getByText(staffCopy.sending.result(exampleSendingResult), { exact: false }))
+      .toBeVisible();
+    await expect
+      .element(page.getByText(staffCopy.tidying.result(exampleTidyingResult), { exact: false }))
+      .toBeVisible();
+    await expect.element(page.getByText(staffCopy.runs.error("Postmark answered 500"), { exact: false })).toBeVisible();
+    await expect.element(page.getByText(staffCopy.runs.error("Database down"), { exact: false })).toBeVisible();
+  });
+
   it("lists the emails an Emails sync held back, with the boxes ticked, or says why it failed", async () => {
+    const heldBack = { what: staffCopy.problems.job.heldBack, error: "recEmail1, recEmail2" };
     const { rerender } = await render(
       <RunList
         runs={[
-          ran("sync-emails", exampleEmailsResult, { id: 2 }),
+          ran("sync-emails", exampleEmailsResult, { id: 2, problems: [heldBack] }),
           failed("sync-emails", "Airtable answered 503", { id: 1 }),
         ]}
         none="None"
       />,
     );
-    await expect.element(page.getByText(staffCopy.runs.status.incomplete)).toBeVisible();
+    await expect.element(page.getByText(staffCopy.runs.status.problems)).toBeVisible();
+    await expect.element(page.getByText(heldBack.what, { exact: false })).toBeVisible();
     await expect
       .element(page.getByText(staffCopy.pauseaiEmails.result(exampleEmailsResult), { exact: false }))
       .toBeVisible();
@@ -3135,15 +3186,20 @@ describe("RunList", () => {
 
   it("shows a Gmail read's totals, then each account, with one searched afresh and one that couldn't be read", async () => {
     const accounts = [{ ...exampleGmailResult.accounts[0], restarted: true }, exampleGmailResult.accounts[1]];
+    const couldntRead = { what: staffCopy.problems.job.couldntRead(accounts[1].account), error: accounts[1].error! };
     await render(
       <RunList
-        runs={[ran("read-gmail", { accounts }, { id: 2 }), failed("read-gmail", "Database down", { id: 1 })]}
+        runs={[
+          ran("read-gmail", { accounts }, { id: 2, problems: [couldntRead] }),
+          failed("read-gmail", "Database down", { id: 1 }),
+        ]}
         none="None"
       />,
     );
     await expect.element(page.getByText(staffCopy.gmailReading.result(accounts), { exact: false })).toBeVisible();
-    // Failed, both: the one that couldn't read an account, and the one that failed outright.
-    expect(page.getByText(staffCopy.runs.status.failed, { exact: true }).all()).toHaveLength(2);
+    // The one that couldn't read an account had problems; the other failed outright.
+    expect(page.getByText(staffCopy.runs.status.problems, { exact: true }).all()).toHaveLength(1);
+    expect(page.getByText(staffCopy.runs.status.failed, { exact: true }).all()).toHaveLength(1);
     await expect.element(page.getByText(staffCopy.runs.error("Database down"), { exact: false })).toBeVisible();
     await expect
       .element(page.getByText(`${staffCopy.gmailReading.account(accounts[0])} ${staffCopy.gmailReading.restarted}`))
@@ -3153,20 +3209,25 @@ describe("RunList", () => {
       .toBeVisible();
   });
 
-  it("says a Gmail read that disconnected an account failed, and why, in place of its error", async () => {
+  it("says a Gmail read that disconnected an account had problems, and why, in place of its error", async () => {
     const accounts = [exampleGmailResult.accounts[0], exampleDisconnectedGmail];
-    await render(<RunList runs={[ran("read-gmail", { accounts }, { id: 1 })]} none="None" />);
-    await expect.element(page.getByText(staffCopy.runs.status.failed, { exact: true })).toBeVisible();
+    const told = { what: staffCopy.problems.job.couldntRead(exampleDisconnectedGmail.account), told: true as const };
+    await render(<RunList runs={[ran("read-gmail", { accounts }, { id: 1, problems: [told] })]} none="None" />);
+    await expect.element(page.getByText(staffCopy.runs.status.problems, { exact: true })).toBeVisible();
     await expect.element(page.getByText(staffCopy.gmailReading.result(accounts), { exact: false })).toBeVisible();
     await expect.element(page.getByText(staffCopy.gmailReading.disconnected, { exact: false })).toBeVisible();
     await expect.element(page.getByText(exampleDisconnectedGmail.error!, { exact: false })).not.toBeInTheDocument();
   });
 
-  it("says a Gmail read failed that found mail in the letters inbox it couldn't account for, listing each with a link", async () => {
+  it("says a Gmail read had problems that found mail in the letters inbox it couldn't account for, listing each with a link", async () => {
+    const told = { what: staffCopy.problems.job.notUnderstood, error: "2", told: true as const };
     await render(
-      <RunList runs={[ran("read-gmail", { accounts: [exampleLettersInboxRead] }, { id: 1 })]} none="None" />,
+      <RunList
+        runs={[ran("read-gmail", { accounts: [exampleLettersInboxRead] }, { id: 1, problems: [told] })]}
+        none="None"
+      />,
     );
-    await expect.element(page.getByText(staffCopy.runs.status.failed, { exact: true })).toBeVisible();
+    await expect.element(page.getByText(staffCopy.runs.status.problems, { exact: true })).toBeVisible();
     await expect
       .element(page.getByText(staffCopy.lettersInbox.result({ relayed: 4, spam: 2, uncertain: 1 }), { exact: false }))
       .toBeVisible();
@@ -3201,11 +3262,16 @@ describe("RunList", () => {
 
   it("says how many postcodes and towns a Luma run looked up, and when postcodes.io failed", async () => {
     const places = { postcodes: 3, towns: 2, failed: false };
+    const postcodesDown = { what: staffCopy.luma.placesFailed, error: "fetch failed (connect ECONNREFUSED)" };
     await render(
       <RunList
         runs={[
           ran("import-luma", { ...exampleLumaResult, places }, { id: 1 }),
-          ran("import-luma", { ...exampleLumaResult, places: { ...places, failed: true } }, { id: 2 }),
+          ran(
+            "import-luma",
+            { ...exampleLumaResult, places: { ...places, failed: true } },
+            { id: 2, problems: [postcodesDown] },
+          ),
         ]}
         none="None"
       />,
@@ -3215,8 +3281,9 @@ describe("RunList", () => {
       `${staffCopy.luma.result(exampleLumaResult)} ${staffCopy.luma.places(places)}`,
     );
     expect(found.element().textContent).not.toContain(staffCopy.luma.placesFailed);
-    expect(failed.element().textContent).toContain(`${staffCopy.luma.places(places)} ${staffCopy.luma.placesFailed}`);
-    expect(failed.element().textContent).toMatch(new RegExp(`^${staffCopy.runs.status.incomplete} `));
+    // What went wrong is under the line, with the error's own words muted after it.
+    expect(failed.element().textContent).toMatch(new RegExp(`^${staffCopy.runs.status.problems} `));
+    await expect.element(page.getByText(`${postcodesDown.what} ${postcodesDown.error}`)).toBeVisible();
   });
 
   it("shows a Luma import's counts, or its error", async () => {
@@ -4898,9 +4965,18 @@ describe("EraseForm", () => {
 });
 
 describe("ErasedNotice", () => {
-  it("says done, or nothing", async () => {
+  it("says done, or done but what couldn't be cleared, or nothing", async () => {
     const { rerender } = await render(<ErasedNotice erased="1" />);
     await expect.element(page.getByRole("status")).toHaveTextContent(staffCopy.erase.done);
+    await rerender(<ErasedNotice erased="partly" why="mail,someone's words,oneOffs" />);
+    await expect.element(page.getByRole("status")).toBeVisible();
+    expect(page.getByRole("status").element().textContent).toContain(staffCopy.erase.partly);
+    expect(
+      page
+        .getByRole("listitem")
+        .all()
+        .map((li) => li.element().textContent),
+    ).toEqual([staffCopy.erase.notCleared.mail, staffCopy.erase.notCleared.oneOffs]);
     await rerender(<ErasedNotice erased="" />);
     expect(page.getByRole("status").all()).toHaveLength(0);
   });

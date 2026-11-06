@@ -50,7 +50,7 @@ describe("pairRuns", () => {
       expect.objectContaining({ flow: "login", frames: 4, changed: 3, status: "passed", mainStatus: "passed" }),
       expect.objectContaining({ flow: "letters", viewport: "phone", frames: 1, changed: 0 }),
     ]);
-    expect(board.summary).toEqual({ flows: 2, failed: 0, frames: 5, changed: 3 });
+    expect(board.summary).toEqual({ flows: 2, failed: 0, frames: 5, changed: 3, mainFailed: 0 });
   });
 
   it("keeps the story told before each frame, and after the last", async () => {
@@ -83,6 +83,8 @@ describe("pairRuns", () => {
     // Main got no frame, so this branch's is new to it.
     expect(board.frames[0]).toMatchObject({ changed: true, main: undefined, status: "failed" });
     expect(board.summary.failed).toBe(1);
+    expect(board.summary).toMatchObject({ changed: 0, mainFailed: 1 });
+    expect(board.flows[0].changed).toBe(0);
   });
 
   it("keeps a flow only main has, as gone", async () => {

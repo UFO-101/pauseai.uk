@@ -333,7 +333,7 @@ describeWithDatabase("importLuma", () => {
     await importLuma("jo@pauseai.uk");
     expect((await eventRows()).find((e) => e.id === "evt-failed")).toMatchObject({
       guests_synced_at: null,
-      guests_error: "Error: Luma answered 500 for /v1/events/guests/list",
+      guests_error: "Luma answered 500 for /v1/events/guests/list",
     });
     await setSynced("evt-live", "2 hours");
     await setSynced("evt-new", null);
@@ -397,7 +397,7 @@ describeWithDatabase("importLuma", () => {
     });
     await importLuma("jo@pauseai.uk");
     expect(await query("SELECT hosts_error FROM luma_events WHERE id = 'evt-failed'")).toEqual([
-      { hosts_error: "Error: Luma answered 500 for /v1/events/get" },
+      { hosts_error: "Luma answered 500 for /v1/events/get" },
     ]);
     const hostsRead = (interval: string | null, ids: string[]) =>
       query(

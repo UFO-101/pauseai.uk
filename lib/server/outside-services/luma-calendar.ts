@@ -3,6 +3,8 @@ import type { LumaEvent } from "@/lib/events";
 import { now } from "@/lib/now";
 import { LUMA_PAGE_SIZE, lumaList, type LumaPage } from "./luma-api";
 import { outsideFetch } from "./outside-fetch";
+import { problem } from "../problems";
+import { staffCopy } from "@/lib/content/staff-interface";
 
 /** The two halves of the calendar: from today on, and before today. */
 export type EventPeriod = "future" | "past";
@@ -75,7 +77,8 @@ export async function getEvents(period: EventPeriod = "future"): Promise<LumaEve
       if (event?.visibility !== "public" || !event.url || !event.start_at) return [];
       return [toLumaEvent(event, event.url, event.start_at)];
     });
-  } catch {
+  } catch (error) {
+    problem(staffCopy.problems.logs.lumaEventsDown, error);
     return [];
   }
 }

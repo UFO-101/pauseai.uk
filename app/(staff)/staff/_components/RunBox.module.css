@@ -1,0 +1,10 @@
+/* What went wrong during a run, under its line: each problem, with the error's own words muted after it. */
+.problems {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+  color: var(--status-amber);
+}
+
+.problems li + li {
+  margin-top: var(--space-1);
+}

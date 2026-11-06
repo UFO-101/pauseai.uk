@@ -2,6 +2,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { saveToOutbox } from "@/tests/fixtures/outbox";
 import { outsideFetch } from "./outside-fetch";
+import { readJsonIfAny } from "../json";
 
 // The only file that talks to Postmark, over its HTTP API through
 // outsideFetch. Not the postmark npm package: it makes its own requests,
@@ -97,11 +98,11 @@ export async function sendEmail(email: Email): Promise<string> {
     },
     body: JSON.stringify(body),
   });
-  const result = await res.json().catch(() => ({}));
+  const result = ((await readJsonIfAny(res)) ?? {}) as Record<string, unknown>;
   if (!res.ok || result.ErrorCode !== 0 || typeof result.MessageID !== "string") {
     throw new PostmarkError(
       `Postmark refused the email: ${res.status} ${result.ErrorCode ?? ""} ${result.Message ?? ""}`.trim(),
-      result.ErrorCode,
+      result.ErrorCode as number | undefined,
     );
   }
   log(

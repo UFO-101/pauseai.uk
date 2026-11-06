@@ -5,9 +5,7 @@ import {
   exampleAppliedSync,
   exampleEmailsResult,
   exampleFailedRun,
-  exampleDisconnectedGmail,
   exampleGmailResult,
-  exampleLettersInboxRead,
   exampleHeldSync,
   exampleLumaResult,
   exampleRun,
@@ -31,52 +29,40 @@ it("gives each job a page of its own, and finds the job from its page's slug", (
   expect(jobBySlug("history")).toBeUndefined();
 });
 
-it("says a Luma import that left work for later is incomplete, in place of done or unchanged, but not failed", () => {
+it("says a run that left work for a later one is incomplete, in place of done or unchanged, but not failed", () => {
   expect(runStatus(exampleRun("import-old-letters", exampleOldLettersResult))).toBe("incomplete");
   expect(runStatus(exampleRun("import-old-letters", { ...exampleOldLettersResult, finished: true }))).toBe("ok");
   expect(runStatus(exampleRun("import-luma", { ...exampleLumaResult, stoppedBy: "time" }))).toBe("incomplete");
-  const placesFailed = { postcodes: 0, towns: 0, failed: true };
-  expect(runStatus(exampleRun("import-luma", { ...exampleLumaResult, places: placesFailed }))).toBe("incomplete");
-  expect(
-    runStatus(exampleRun("import-luma", { ...exampleLumaResult, places: { ...placesFailed, failed: false } })),
-  ).toBe("ok");
+  expect(runStatus(exampleRun("import-luma", { ...exampleLumaResult, stoppedBy: "running" }))).toBe("incomplete");
+  expect(runStatus(exampleRun("import-luma", { ...exampleLumaResult, stoppedBy: "rate-limit" }))).toBe("incomplete");
   expect(runStatus(exampleRun("import-luma", exampleLumaResult))).toBe("ok");
   expect(runStatus(exampleFailedRun("import-luma", "boom", {}))).toBe("failed");
+  expect(runStatus(exampleFailedRun("import-old-letters", "boom", {}))).toBe("failed");
   expect(runStatus(exampleHeldSync)).toBe("held");
 });
 
-it("says an Emails sync that held emails back is incomplete, but not one that held none, or failed", () => {
-  expect(runStatus(exampleRun("sync-emails", exampleEmailsResult))).toBe("incomplete");
-  expect(runStatus(exampleRun("sync-emails", { ...exampleEmailsResult, unplaced: [] }))).toBe("ok");
-  expect(runStatus(exampleFailedRun("sync-emails", "boom", {}))).toBe("failed");
-});
-
-it("says a Gmail read that couldn't read an account failed, but not one that read them all", () => {
-  expect(runStatus(exampleRun("read-gmail", exampleGmailResult))).toBe("failed");
-  // One it had to disconnect isn't read again, so the read failed, whatever else it read.
-  const disconnected = { accounts: [...exampleGmailResult.accounts, exampleDisconnectedGmail] };
-  expect(runStatus(exampleRun("read-gmail", disconnected))).toBe("failed");
-  expect(runTone(exampleRun("read-gmail", disconnected))).toBe("red");
-  expect(runTone(exampleRun("read-gmail", exampleGmailResult))).toBe("red");
-  expect(runStatus(exampleRun("read-gmail", { accounts: exampleGmailResult.accounts.slice(0, 1) }))).toBe("ok");
-  expect(runStatus(exampleFailedRun("read-gmail", "boom", {}))).toBe("failed");
-  // Mail in the letters inbox a person has to look at fails it; with none, it went well.
-  expect(runStatus(exampleRun("read-gmail", { accounts: [exampleLettersInboxRead] }))).toBe("failed");
-  expect(runStatus(exampleRun("read-gmail", { accounts: [{ ...exampleLettersInboxRead, notUnderstood: [] }] }))).toBe(
-    "ok",
+it("says a run that went wrong along the way had problems, whatever else it did, unless it failed outright", () => {
+  const problems = [{ what: "Luma wouldn't give an event", error: "Luma answered 503" }];
+  expect(runStatus(exampleRun("import-luma", exampleLumaResult, { problems }))).toBe("problems");
+  expect(runStatus(exampleRun("import-luma", { ...exampleLumaResult, stoppedBy: "time" }, { problems }))).toBe(
+    "problems",
   );
+  expect(runStatus(exampleRun("import-luma", exampleLumaResult, { status: "unchanged", problems }))).toBe("problems");
+  expect(runStatus(exampleRun("sync-emails", exampleEmailsResult, { problems }))).toBe("problems");
+  expect(runStatus(exampleRun("read-gmail", exampleGmailResult, { problems }))).toBe("problems");
+  expect(runStatus(exampleFailedRun("read-gmail", "boom", { problems }))).toBe("failed");
 });
 
-it("colours a run by how it ended: green done, applied or unchanged, amber held or stopped short, red failed, none otherwise", () => {
+it("colours a run by how it ended: green done, applied or unchanged, amber held, stopped short or with problems, red failed, none otherwise", () => {
+  expect(runTone(exampleRun("check-mps", { problems: [] }, { problems: [{ what: "Parliament was slow" }] }))).toBe(
+    "amber",
+  );
   expect(runTone(exampleRun("check-mps", { problems: [] }))).toBe("green");
   expect(runTone(exampleAppliedSync)).toBe("green");
   expect(runTone(exampleHeldSync)).toBe("amber");
   expect(runTone(exampleRun("import-luma", { ...exampleLumaResult, stoppedBy: "time" }))).toBe("amber");
   expect(runTone(exampleRun("import-luma", exampleLumaResult))).toBe("green");
   // postcodes.io failing leaves work for later too.
-  expect(
-    runTone(exampleRun("import-luma", { ...exampleLumaResult, places: { postcodes: 0, towns: 0, failed: true } })),
-  ).toBe("amber");
   expect(runTone(exampleFailedRun("check-mps", "boom", {}))).toBe("red");
   expect(runTone(exampleRun("import-luma", exampleLumaResult, { status: "unchanged" }))).toBe("green");
   expect(runTone(exampleRun("check-mps", { problems: [] }, { status: "discarded" }))).toBeUndefined();

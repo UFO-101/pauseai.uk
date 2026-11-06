@@ -16,6 +16,8 @@ import {
   importMembersNow,
   importWebFormLettersNow,
   readGmailNow,
+  sendNow,
+  tidyNow,
   syncEmailsNow,
   syncNow,
 } from "../../../actions";
@@ -35,6 +37,8 @@ const RUN_NOW: Record<ImportJob, (form: FormData) => Promise<void>> = {
   "import-members": importMembersNow,
   "read-gmail": readGmailNow,
   "import-old-letters": importOldLettersNow,
+  "send-mailings": sendNow,
+  "tidy-logs": tidyNow,
 };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {

@@ -26,7 +26,7 @@ async function ready(page: Page, database: string, request: APIRequestContext) {
   await importEmails(page);
   await page.goto(`${BASE}${importPath("import-web-form-letters")}`);
   await page.getByRole("button", { name: staffCopy.webForm.importNow }).click();
-  await expect(page.getByText(staffCopy.runs.status.ok).first()).toBeVisible();
+  await expect(page.getByText(staffCopy.runs.status.problems).first()).toBeVisible();
 }
 
 /** Presses Import old letters, and waits for a new run that's finished. */
@@ -75,11 +75,15 @@ test("The import fails", async ({ page, flowDatabase }) => {
 test("A second press", async ({ page, flowDatabase }) => {
   story("The import is already running. Its page says so, and pressing again starts nothing.");
   await logIn(page, flowDatabase, ["supporters", "admin"]);
-  // The run before it stopped short.
+  // The run before it stopped short, with what it reported.
   const stopped = JSON.stringify(exampleOldLettersResult).replaceAll("'", "''");
+  const problems = JSON.stringify([
+    { what: staffCopy.problems.job.unreadable, error: "18f0a" },
+    { what: staffCopy.problems.job.matchedNothing, error: "1" },
+  ]).replaceAll("'", "''");
   runSql(
     flowDatabase,
-    `INSERT INTO import_runs (job, started_by, status, result, at) VALUES ('import-old-letters', 'jo@pauseai.uk', 'ok', '${stopped}', '2026-11-01T10:00:00Z')`,
+    `INSERT INTO import_runs (job, started_by, status, result, problems, at) VALUES ('import-old-letters', 'jo@pauseai.uk', 'ok', '${stopped}', '${problems}', '2026-11-01T10:00:00Z')`,
   );
   runSql(flowDatabase, "INSERT INTO job_presses (job, started_by) VALUES ('import-old-letters', 'jo@pauseai.uk')");
   await page.goto(`${BASE}${importPath("import-old-letters")}`);
@@ -113,12 +117,22 @@ const lettersResult = (extra: object) =>
   }).replaceAll("'", "''");
 
 /** `count` runs of the job on its schedule, five minutes apart, the newest `from` before now. */
-const runsOf = (database: string, job: string, count: number, from: string, result: string, status = "ok") =>
+const runsOf = (
+  database: string,
+  job: string,
+  count: number,
+  from: string,
+  result: string,
+  status = "ok",
+  problems: object[] = [],
+) =>
   runSql(
     database,
-    `INSERT INTO import_runs (job, started_by, status, result, at)
-     SELECT '${job}', 'nightly', '${status}', '${result}', now() - interval '${from}' - n * interval '5 minutes' FROM generate_series(0, ${count - 1}) n`,
+    `INSERT INTO import_runs (job, started_by, status, result, problems, at)
+     SELECT '${job}', 'nightly', '${status}', '${result}', '${JSON.stringify(problems).replaceAll("'", "''")}', now() - interval '${from}' - n * interval '5 minutes' FROM generate_series(0, ${count - 1}) n`,
   );
+
+const GMAIL_REFUSAL = "Gmail answered 403 for /messages/0a02: User-rate limit exceeded";
 
 test("The import running by itself", async ({ page, flowDatabase }) => {
   story(
@@ -141,11 +155,15 @@ test("The import running by itself", async ({ page, flowDatabase }) => {
     lettersResult({
       read: 12,
       stoppedBy: "gmail",
-      stoppedWhy: "Gmail answered 403 for /messages/0a02: User-rate limit exceeded",
+      stoppedWhy: GMAIL_REFUSAL,
     }),
+    "ok",
+    [{ what: words.stoppedByGmail, error: GMAIL_REFUSAL }],
   );
   runsOf(flowDatabase, "import-old-letters", 3, "50 minutes", lettersResult({}));
-  runsOf(flowDatabase, "import-old-letters", 1, "65 minutes", lettersResult({ unreadable: ["18f0a"] }));
+  runsOf(flowDatabase, "import-old-letters", 1, "65 minutes", lettersResult({ unreadable: ["18f0a"] }), "ok", [
+    { what: staffCopy.problems.job.unreadable, error: "18f0a" },
+  ]);
   runsOf(flowDatabase, "import-old-letters", 30, "70 minutes", lettersResult({}));
   await page.goto(`${BASE}${importPath("import-old-letters")}`);
   await expect(page.getByRole("progressbar")).toBeVisible();

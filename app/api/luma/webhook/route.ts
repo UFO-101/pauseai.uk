@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { type LumaWebhook, recordLumaWebhook, signedByLuma } from "@/lib/server/luma-webhooks";
+import { problem } from "@/lib/server/problems";
+import { staffCopy } from "@/lib/content/staff-interface";
+import { parseJsonIfAny } from "@/lib/server/json";
 
 /**
  * Luma's webhook: someone unsubscribed from the calendar's emails, or
@@ -12,18 +15,14 @@ export async function POST(request: Request) {
   if (!at) return NextResponse.json({ error: "Not allowed" }, { status: 401 });
   const webhookId = request.headers.get("webhook-id");
   if (!webhookId) return NextResponse.json({ error: "No Webhook-Id" }, { status: 400 });
-  let payload: LumaWebhook;
-  try {
-    payload = JSON.parse(body);
-  } catch {
-    return NextResponse.json({ error: "Not JSON" }, { status: 400 });
-  }
+  const payload = parseJsonIfAny(body) as LumaWebhook | undefined;
+  if (payload === undefined) return NextResponse.json({ error: "Not JSON" }, { status: 400 });
   try {
     const recorded = await recordLumaWebhook(payload, webhookId, at);
     console.info(`Luma webhook ${webhookId}, ${payload.type}: ${recorded ? "recorded" : "nothing to record"}`);
     return NextResponse.json({ recorded });
   } catch (error) {
-    console.error(error);
+    problem(staffCopy.problems.logs.webhookNotRecorded, error);
     return NextResponse.json({ error: "Not recorded" }, { status: 500 });
   }
 }

@@ -1289,8 +1289,9 @@ CREATE TABLE public.import_runs (
     result jsonb DEFAULT '{}'::jsonb NOT NULL,
     decided_by text,
     decided_at timestamp with time zone,
+    problems jsonb DEFAULT '[]'::jsonb NOT NULL,
     CONSTRAINT import_runs_check CHECK (((status = 'failed'::text) = (error IS NOT NULL))),
-    CONSTRAINT import_runs_job_check CHECK ((job = ANY (ARRAY['sync-politicians'::text, 'check-mps'::text, 'import-controlai'::text, 'import-signatories'::text, 'import-luma'::text, 'import-members'::text, 'sync-emails'::text, 'import-web-form-letters'::text, 'import-go-to-parliament'::text, 'read-gmail'::text, 'import-old-letters'::text]))),
+    CONSTRAINT import_runs_job_check CHECK ((job = ANY (ARRAY['sync-politicians'::text, 'check-mps'::text, 'import-controlai'::text, 'import-signatories'::text, 'import-luma'::text, 'import-members'::text, 'sync-emails'::text, 'import-web-form-letters'::text, 'import-go-to-parliament'::text, 'read-gmail'::text, 'import-old-letters'::text, 'send-mailings'::text, 'tidy-logs'::text]))),
     CONSTRAINT import_runs_status_check CHECK ((status = ANY (ARRAY['ok'::text, 'failed'::text, 'unchanged'::text, 'held'::text, 'applied'::text, 'discarded'::text])))
 );
 
@@ -1670,7 +1671,7 @@ CREATE TABLE public.old_letters_mail (
     outcome text,
     quoted text,
     CONSTRAINT old_letters_mail_account_check CHECK ((account = lower(account))),
-    CONSTRAINT old_letters_mail_outcome_check CHECK ((outcome = ANY (ARRAY['joined'::text, 'added'::text, 'reply'::text, 'auto_reply'::text, 'one_off'::text, 'unmatched'::text, 'skipped'::text]))),
+    CONSTRAINT old_letters_mail_outcome_check CHECK ((outcome = ANY (ARRAY['joined'::text, 'added'::text, 'reply'::text, 'auto_reply'::text, 'one_off'::text, 'unmatched'::text, 'skipped'::text, 'unreadable'::text]))),
     CONSTRAINT old_letters_mail_source_check CHECK ((source = ANY (ARRAY['sent'::text, 'received'::text, 'group'::text, 'policy'::text, 'thread'::text])))
 );
 
@@ -1982,6 +1983,7 @@ CREATE TABLE public.unmatched_mail (
     gmail_message_id text NOT NULL,
     found_at timestamp with time zone DEFAULT now() NOT NULL,
     reported_at timestamp with time zone,
+    tried_at timestamp with time zone,
     CONSTRAINT unmatched_mail_account_check CHECK ((account = lower(account)))
 );
 

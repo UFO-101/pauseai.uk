@@ -1,6 +1,6 @@
 import "server-only";
 import { gzipSync } from "node:zlib";
-import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
+import { staffCopy } from "@/lib/content/staff-interface";
 import { importPath, type GmailRead, type GmailReadResult } from "@/lib/import-runs";
 import { gmailMessageLink } from "@/lib/letter-links";
 import { query } from "./db";
@@ -37,6 +37,7 @@ import {
 } from "./outside-services/gmail";
 import type { ReplyHandling } from "./letters";
 import { isMachineReply } from "./postmark-webhooks";
+import { describeError, problem } from "./problems";
 
 // Reading the connected Gmail accounts, every 5 minutes: the replies to PauseAI's
 // letters and the bounces of them. For each message that arrived since the
@@ -354,59 +355,40 @@ async function readAccount(account: string, historyId: string, request: Request 
     for (const id of ids) await readMessage(account, token, id, read, request);
   }
   await saveHistoryId(account, history.historyId);
-  // Its name, as Gmail has it now: renamed since it was connected, or connected before the site kept it.
-  await saveGmailName(account, await gmailSendName(token));
-  return read;
-}
-
-/**
- * Emails the notification inbox, as for an import that failed, for each
- * account this run couldn't read that the run before could: once, until
- * it's read again. Not one Google disconnected, which has an email of its
- * own (gmail-accounts.ts).
- */
-async function alertUnreadable(accounts: GmailRead[], request: Request | undefined): Promise<void> {
-  const failing = accounts.filter((a) => a.error && !a.disconnected);
-  if (!failing.length) return;
-  // This run, and the one before it, if any; a run that failed outright has no accounts.
-  const [, before] = await query<{ result: { accounts?: GmailRead[] } }>(
-    "SELECT result FROM import_runs WHERE job = $1 ORDER BY at DESC, id DESC LIMIT 2",
-    [JOB],
-  );
-  const failedBefore = new Set((before?.result.accounts ?? []).filter((a) => a.error).map((a) => a.account));
-  const words = staffCopy.notifications.importFailed;
-  const title = jobTitles[JOB];
-  for (const { account, error } of failing.filter((a) => !failedBefore.has(a.account))) {
-    await notifyStaff(
-      words.subject(title),
-      words.body(title, `${account}: ${error}`, staffLink(importPath(JOB), request)),
-    );
+  // Its name, as Gmail has it now: renamed since it was connected, or connected before the site kept it. The
+  // mailbox has been read by now, so a name Gmail won't give is a problem, not a read that failed.
+  try {
+    await saveGmailName(account, await gmailSendName(token));
+  } catch (error) {
+    problem(staffCopy.problems.job.nameUnknown(account), error);
   }
+  return read;
 }
 
 /**
  * Emails the notification inbox once, after a run that found mail in the letters
  * inbox it couldn't account for: each message, with a link to it in Gmail,
- * and a link to the runs.
+ * and a link to the runs. Says whether it went.
  */
-async function alertNotUnderstood(accounts: GmailRead[], request: Request | undefined): Promise<void> {
+async function alertNotUnderstood(accounts: GmailRead[], request: Request | undefined): Promise<boolean> {
   const words = staffCopy.lettersInbox;
-  const lines = accounts.flatMap((a) =>
-    (a.notUnderstood ?? []).map(
-      (m) =>
-        `- ${m.from}, "${m.subject}": ${words.reasons[m.reason]}. ${gmailMessageLink(a.account, m.gmailMessageId)}`,
-    ),
-  );
-  if (!lines.length) return;
-  await notifyStaff(
+  const lines = accounts
+    .filter((a) => a.notUnderstood)
+    .flatMap((a) =>
+      a.notUnderstood!.map(
+        (m) =>
+          `- ${m.from}, "${m.subject}": ${words.reasons[m.reason]}. ${gmailMessageLink(a.account, m.gmailMessageId)}`,
+      ),
+    );
+  return notifyStaff(
     words.alert.subject(lines.length, lettersInbox()!),
     words.alert.body(lettersInbox()!, lines, staffLink(importPath(JOB), request)),
   );
 }
 
 /**
- * Reads every connected account, keeping the run. One that fails is logged
- * and said so, and the next is read all the same; it's read again from
+ * Reads every connected account, keeping the run. One that fails is a
+ * problem of the run, and the next is read all the same; it's read again from
  * where it got to next time, unless Google refused its access, which
  * disconnects it (gmailAccess). `request` is the job's call, for links in
  * alerts; a staff member's run has none.
@@ -418,14 +400,15 @@ export function readGmail(startedBy: string, request?: Request): Promise<GmailRe
       try {
         accounts.push(await readAccount(email, historyId, request));
       } catch (error) {
-        console.error(`Couldn't read ${email}'s Gmail:`, error);
         const disconnected = error instanceof GmailError && error.revoked;
+        // One Google disconnected has an email of its own (gmail-accounts.ts).
+        problem(staffCopy.problems.job.couldntRead(email), error, { told: disconnected });
         accounts.push({
           account: email,
           replies: 0,
           autoReplies: 0,
           bounces: 0,
-          error: String(error),
+          error: describeError(error),
           ...(disconnected && { disconnected }),
         });
       }
@@ -440,9 +423,13 @@ export function readGmail(startedBy: string, request?: Request): Promise<GmailRe
         a.restarted ||
         a.error,
     );
+    const notUnderstood = accounts.reduce((n, a) => n + (a.notUnderstood?.length ?? 0), 0);
+    if (notUnderstood) {
+      problem(staffCopy.problems.job.notUnderstood, notUnderstood, {
+        told: await alertNotUnderstood(accounts, request),
+      });
+    }
     await recordRun(JOB, startedBy, found ? "ok" : "unchanged", { accounts });
-    await alertNotUnderstood(accounts, request);
-    await alertUnreadable(accounts, request);
     await reportUnmatchedMail(gmailAccess);
     return { accounts };
   });

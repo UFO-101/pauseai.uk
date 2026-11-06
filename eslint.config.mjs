@@ -342,6 +342,14 @@ const eslintConfig = defineConfig([
     rules: { "no-restricted-properties": ["error", ...DIRECT_DOM_EDITS] },
   },
   ...LAYERS,
+  // A promise nobody waits for fails silently: its rejection reaches only the
+  // console, where nobody looks. One that's meant to run on its own says so
+  // with `void`. Needs the types, which typed linting gives from tsconfig.
+  {
+    files: ["**/*.{ts,tsx}"],
+    languageOptions: { parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname } },
+    rules: { "@typescript-eslint/no-floating-promises": "error" },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

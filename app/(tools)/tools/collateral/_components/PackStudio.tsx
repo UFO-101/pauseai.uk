@@ -171,7 +171,7 @@ export default function PackStudio({ events }: { events: CalendarEvent[] }) {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    void (async () => {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         const result = raw ? parsePackProject(raw) : null;

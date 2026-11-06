@@ -96,6 +96,12 @@ describeWithDatabase("importWebFormLetters", () => {
     expect(await importWebFormLetters(JO)).toMatchObject({ imported: 2, alreadyHere: 2 });
   });
 
+  it("imports nothing, and has nothing to report, when the form has no letters", async () => {
+    server.use(http.get("https://api.airtable.com/v0/*/tblkzjrRHiZiqMDGR", () => HttpResponse.json({ records: [] })));
+    expect(await importWebFormLetters(NIGHTLY)).toMatchObject({ read: 0, noPolitician: 0 });
+    expect(await listRuns("import-web-form-letters")).toMatchObject([{ status: "ok", problems: [] }]);
+  });
+
   it("refuses a sent letter whose Campaign it doesn't know, importing nothing", async () => {
     server.use(
       http.get("https://*.airtable.com/v0/appBInVvIm6opJ1Ob/tblkzjrRHiZiqMDGR", () =>
