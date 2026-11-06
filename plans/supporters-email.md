@@ -23,36 +23,140 @@ PauseAI email, or by being marked do-not-email after a complaint or
 bounce. We can't move the list until we can see those.
 
 Global refused a read key on 19 October. Since then Maxime has approved
-API access, and Global has proposed a chapter contacts API
-([PauseAI/pauseai-civicrm#1175](https://github.com/PauseAI/pauseai-civicrm/issues/1175)).
-It waits on other work of Global's, and on the joint controller
-agreement (legal-pack PR #7). If it never comes, the fallback is a
-button in the CiviCRM weekly to keep getting it from pauseai.uk.
+API access, and Global has specified a chapter contacts API
+([PauseAI/pauseai-civicrm#1175](https://github.com/PauseAI/pauseai-civicrm/issues/1175)),
+which Francis has agreed fits. It's marked blocked in Global's infra
+project: it waits on other work of Global's, and on the joint
+controller agreement (legal-pack PR #7). Who updates the legitimate
+interests assessment is also open. If the API never comes, the fallback
+is a button in the CiviCRM weekly to keep getting it from pauseai.uk.
 
-As proposed, a UK key has two actions:
+A UK key, on a dedicated API account (a service contact owned by a
+named developer who has signed the AUA), reaches two actions and
+nothing else. Every call is logged on Global's side: account, action
+and outcome, never the addresses.
 
-- `PauseaiChapterContact.get` lists every UK chapter contact (1,536 on
-  28 October): the address, `no_bulk_email`, `do_not_email` and
-  `on_hold`, and whether they're on `newsletter` (our `pauseai-updates`)
-  and `volunteer_updates` (unused so far). We pull it all hourly, paged
-  by contact ID, and look up a new address between pulls. Only a
-  complete pull removes anyone.
-- `PauseaiChapterContact.updateSubscriptions` takes our stops back: an
-  unsubscribe, `no_bulk_email` (for a spam complaint too, which stops
-  Global's mail as well) or `do_not_email`. Each has our own ID and is
-  retried until accepted. A resubscribe must come from the person, with
-  the words of the box they ticked.
+### Who it returns
 
-We may send the newsletter to an address only if a pull at most 24
-hours old shows it subscribed with none of the three flags, and our own
-stops allow it. With no complete pull in 24 hours, nothing sends. Our
-own lists, such as `site-forms`, need their own yes, and still honour
-the flags.
+The contacts CiviCRM assigns to the UK chapter: 1,536 on 28 October,
+growing 20 to 30 a day. Each row is an address, `on_hold`,
+`no_bulk_email`, `do_not_email`, the contact's `airtable_id` (the
+Members record ID our `members` and `members_erased` tables are keyed
+by, or null; after a merge, the surviving record's) and each UK list
+as `subscribed`, `unsubscribed` or `not_on_list`. No name, phone or
+address in v1.
 
-We'd send by Postmark, not through CiviCRM: we already email people who
+Anyone whose UK relationship has ended, such as by saying no to
+sharing with the chapter, or who was deleted, is simply not returned.
+Absence is the signal: Global won't say "left UK", as that would tell
+us about someone who said no. So being in `members` isn't enough to
+mail someone, and once someone stops being returned we remove them
+from `members` and have the Airtable import skip them, after a delay
+long enough to catch a bug on Global's side that returns too few. That
+covers only the people we get from Global; people from Luma or an MP
+letter are our own records.
+
+An address shared by several contacts (41 on 28 October, unmerged
+duplicates) gets a row for each UK contact, with the same values: the
+flags and removals are combined across every contact with the address,
+in the UK chapter or not, so a stop on any one blocks the address, and
+only a current UK contact can make it subscribed. Addresses are
+compared trimmed and lowercased; plus-addressing and provider aliases
+are different addresses.
+
+The lists, as people see them:
+
+- `newsletter`, "PauseAI UK Newsletter": our `pauseai-updates`, from the
+  "Keep me informed" tick. The one to replace.
+- `volunteer_updates`, "PauseAI UK Volunteer Updates": people who said
+  at signup they want to volunteer or lead. Nothing has been sent to
+  it. The new join form won't ask about intent, so it may be filled
+  another way or removed (open question 3).
+
+Global's own lists stay sent from CiviCRM: "PauseAI Newsletter" (no
+fixed schedule, lately a weekly follow-up to new signups), "Critical
+Alerts" (urgent calls to action such as the Warning Shot emails, which
+members join by default even without "Keep me informed") and "Local
+Invitations" (from Global to people in an area, mostly to start or join
+a group). They can be added to the API if we build a preferences page
+that shows them. The set of lists may change.
+
+### Reading: `PauseaiChapterContact.get`
+
+A full pull is paged by contact ID, 500 rows at a time, passing the
+last `contact_id` as `after_contact_id`; it's complete when a page is
+short. We pull hourly, and only a complete pull removes anyone. Between
+pulls, an address not in the last pull (someone who just joined) is
+looked up by POST, so it stays out of URL logs.
+
+We match by email first, falling back to `contact_id` when the address
+isn't found: an email change keeps the contact ID, and a merge of
+duplicates ends one contact ID and keeps the address. So we store the
+contact ID alongside the Airtable ID, and use `airtable_id` for the
+first match and for checking against `members_erased`. We send only to
+the returned address, never an older one we hold.
+
+### Writing: `PauseaiChapterContact.updateSubscriptions`
+
+Up to 100 events a call, applied in order. Each carries our own unique
+`event_id` (the `opt_outs` row ID, not a Postmark message ID, which an
+unsubscribe and a complaint can share), the address, when it happened
+and its source. Resending an ID changes nothing and returns the first
+result, so we retry every event until it has a result, and suppress
+locally the moment we get a stop. Changes apply by address, to every
+contact with it, in the UK chapter or not:
+
+- `unsubscribe` from a list, `no_bulk_email` (our spam complaints too,
+  which stops Global's mail as well) and `do_not_email` ("never email
+  me") are never refused. An opt-out may name the `contact_id` from the
+  last pull, so it still applies if the address changed in CiviCRM
+  since.
+- `resubscribe` to a list and `allow_bulk_email` must come from the
+  person, ticking a box on a preferences page, never staff or a bulk
+  job, and carry the box's wording, which must name who will contact
+  them (JCA 2.6(e)); Global logs it for audit. They're refused when a
+  later or equal stop exists on either side (`newer_unsubscribe`),
+  "Do not email" is set (`opted_out_everywhere`), the person doesn't fit
+  the list (`not_on_list`) or no current UK contact has the address
+  (`not_in_uk`). `allow_bulk_email` re-enables Global's mail too, which
+  our page must say. The API never clears "Do not email".
+
+Each event comes back `accepted` (applied, already so, or nothing to
+do; it doesn't say whether the address matched anyone), `refused` with
+a reason, or `invalid` with an error.
+
+Known limits Global accepts for v1: once an address stops being
+returned the API says nothing more about it, so we keep the blocks
+we've seen for our own lists; a stop for an address with no contact
+changes nothing in CiviCRM and isn't applied if they join later; and
+an opt-in delayed past a repeated stop could clear it.
+
+Not in v1: bounces back to CiviCRM (Postmark suppresses its own),
+creating contacts, or replacing our Airtable import.
+
+### Sending rule
+
+We may send a list's mail to an address only if our latest data for it
+(a complete pull, or a later lookup, at most 24 hours old) returns the
+address, shows that list subscribed with all three flags false, and our
+own stops allow it. A change in CiviCRM reaches us with the next pull,
+normally within the hour. With no complete pull in 24 hours, nothing
+sends. Each mailing goes once per address, however many rows or members
+share it. Our own lists, such as `site-forms`, need their own yes on
+pauseai.uk, and still honour the flags for any address the API returns;
+an address it doesn't return follows our own records.
+
+We send by Postmark, not through CiviCRM: we already email people who
 aren't CRM contacts, and sharing its SES account would let our
-complaints pause Global's sending. What we read from CiviCRM is used
-only to stop emails.
+complaints pause Global's sending. Anthony suggested sending through
+the CRM instead, which would enforce stops at send time with no sync
+lag; that's a separate discussion, along with what role each system
+plays longer term. What we read from CiviCRM is used only to stop
+emails.
+
+Global's CRM has "Do not phone" and "Do not SMS" flags, but Global
+doesn't call or text; phone stops could extend this API later
+(`plans/supporters-phone.md`).
 
 We import 1,621 members (29 October) against the API's 1,536 (open
 question 1).
@@ -60,12 +164,16 @@ question 1).
 ## Steps
 
 1. Import the API: the hourly pull and the lookup, into a table keyed by
-   CiviCRM's contact ID and matched to members by address. The flags
-   and list statuses are kept after erasure. `contact_permission()`
-   answers `pauseai-updates` from them, yes or no rather than unsure,
-   and any of the three flags is a no for every email topic.
+   CiviCRM's contact ID, holding the Airtable ID too, and matched to
+   members by address with the contact ID as fallback. The flags and
+   list statuses are kept after erasure. `contact_permission()` answers
+   `pauseai-updates` from them, yes or no rather than unsure, and any
+   of the three flags is a no for every email topic. A member no longer
+   returned is removed from `members` after a delay, and the import
+   skips them.
 2. Send our stops back: each new `opt_outs` row for the newsletter, and
-   each spam complaint.
+   each spam complaint as `no_bulk_email`, retried until each has a
+   result.
 3. Decide whether leaving Luma's emails, or reporting one as spam,
    stops the weekly too.
 4. An email channel on Postmark's broadcast stream
@@ -112,7 +220,16 @@ yes, and how to stop.
 
 ## Open questions
 
-1. Which of the members we import aren't chapter contacts, and why? Do
-   we need the API to give each contact's Airtable record ID, or is
-   matching by address enough?
-2. Will UK staff still send anything through CiviCRM?
+1. Which of the members we import aren't chapter contacts, and why?
+   Some said no to chapter sharing or were deleted; is that all of the
+   gap?
+2. Will UK staff still send anything through CiviCRM? Global asks the
+   same.
+3. Do we plan volunteer-only mailings? If not, Global can drop
+   `volunteer_updates`. If so, how do people join it once the join form
+   stops asking intent (`plans/supporters-phone.md`, open question 7)?
+4. Will we send lists of our own beyond the shared ones? If so, people
+   should manage everything in one place: our preferences page would
+   show Global's lists too, added to the API, and CiviCRM's page would
+   link UK contacts to ours. The alternative, tracking our lists in
+   CiviCRM, means creating our people as CRM contacts.
