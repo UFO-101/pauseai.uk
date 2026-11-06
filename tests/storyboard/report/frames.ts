@@ -110,7 +110,7 @@ export type Storyboard = {
   generatedAt: string;
   /** Whether there was a run of main to compare with. */
   withMain: boolean;
-  summary: { flows: number; failed: number; frames: number; changed: number };
+  summary: { flows: number; failed: number; frames: number; changed: number; mainFailed: number };
   flows: Flow[];
   frames: Frame[];
 };
@@ -256,7 +256,10 @@ export async function pairRuns(
   }
 
   await Promise.all(comparisons);
-  for (const { flow, frames } of flows) flow.changed = frames.filter((f) => f.changed).length;
+  // A flow that failed on main has nothing fair to compare with, so none of its frames count as changed. It's
+  // told apart by its mainStatus, in Main failed on the page.
+  const failedOnMain = (flow: Flow) => flow.mainStatus !== undefined && flow.mainStatus !== "passed";
+  for (const { flow, frames } of flows) flow.changed = failedOnMain(flow) ? 0 : frames.filter((f) => f.changed).length;
   const frames = flows.flatMap((f) => f.frames);
   return {
     generatedAt: new Date().toISOString(),
@@ -265,7 +268,8 @@ export async function pairRuns(
       flows: flows.length,
       failed: flows.filter((f) => f.flow.status !== "passed").length,
       frames: frames.length,
-      changed: frames.filter((f) => f.changed).length,
+      changed: flows.reduce((n, f) => n + f.flow.changed, 0),
+      mainFailed: flows.filter((f) => failedOnMain(f.flow)).length,
     },
     flows: flows.map((f) => f.flow),
     frames,

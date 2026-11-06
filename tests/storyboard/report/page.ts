@@ -45,7 +45,7 @@ export function renderStoryboardPage(storyboard: Storyboard): string {
         <button type="button" id="filter-clear" aria-label="Clear the filter" hidden>×</button>
       </span>
       <span class="segmented" id="show" role="radiogroup" aria-label="Show">
-        <button type="button" data-show="all" aria-pressed="true">All</button><button type="button" data-show="changed" aria-pressed="false">Changed <span class="count" id="changed-count"></span></button><button type="button" data-show="failed" aria-pressed="false">Failed <span class="count" id="failed-count"></span></button>
+        <button type="button" data-show="all" aria-pressed="true">All</button><button type="button" data-show="changed" aria-pressed="false">Changed <span class="count" id="changed-count"></span></button><button type="button" data-show="failed" aria-pressed="false">Failed <span class="count" id="failed-count"></span></button><button type="button" data-show="main-failed" aria-pressed="false">Main failed <span class="count" id="main-failed-count"></span></button>
       </span>
     </div>
     <nav id="section-list" aria-label="Sections and flows"></nav>
@@ -95,8 +95,7 @@ h1, h2, h3, h4, p { margin: 0; }
 #sidebar { position: sticky; top: var(--bar); display: flex; flex-direction: column; height: calc(100vh - var(--bar)); border-right: 1px solid var(--line); background: var(--bg); }
 #sidebar .tools { display: grid; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 #sidebar .tools label { display: flex; gap: 6px; align-items: center; color: #333; cursor: pointer; }
-/* Changed only and Failed only, side by side. */
-/* All, Changed or Failed: the buttons share the width, each count beside its name, on one line. */
+/* All, Changed, Failed or Main failed: the buttons share the width, each count beside its name, on one line. */
 #show { display: flex; }
 #show button { flex: auto; white-space: nowrap; padding: 4px 8px; }
 #sidebar #show button[aria-pressed="true"] .count { color: #ddd; }
@@ -170,13 +169,13 @@ const JS = `
 const data = JSON.parse(document.getElementById("data").textContent);
 const sectionInfo = new Map(JSON.parse(document.getElementById("sections").textContent).map((s) => [s.id, s]));
 // The browser restores the filter's words on a reload, and the tab keeps
-// which of All, Changed and Failed was chosen (\`show\`), so the page starts
+// which of All, Changed, Failed and Main failed was chosen (\`show\`), so the page starts
 // from them. \`opened\` and \`closed\` hold the sections folded open or shut
 // by hand; any other opens while it's in view.
 const SHOWN = "storyboard-show";
 const state = {
   viewport: "desktop",
-  show: ["changed", "failed"].includes(sessionStorage.getItem(SHOWN)) ? sessionStorage.getItem(SHOWN) : "all",
+  show: ["changed", "failed", "main-failed"].includes(sessionStorage.getItem(SHOWN)) ? sessionStorage.getItem(SHOWN) : "all",
   query: document.getElementById("filter").value,
   opened: new Set(),
   closed: new Set(),
@@ -201,6 +200,7 @@ const shotTime = (iso) => new Date(iso).toLocaleString([], { weekday: "short", h
 const plural = (n, word) => n + " " + word + (n === 1 ? "" : "s");
 const pct = (n) => (n * 100 < 0.01 && n > 0 ? "<0.01" : (n * 100).toFixed(2)) + "%";
 const slug = (...parts) => parts.join("-").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+const mainFailed = (flow) => Boolean(flow.mainStatus) && flow.mainStatus !== "passed";
 const framesOf = (flow) => data.frames.filter((f) => f.section === flow.section && f.flow === flow.flow && f.viewport === flow.viewport);
 
 /** The filter's words, each of which must be somewhere in what's searched. */
@@ -230,7 +230,7 @@ function render() {
   for (const section of sections) {
     const shown = flows
       .filter((f) => f.section === section)
-      .filter((f) => (state.show === "changed" ? f.changed > 0 : state.show === "failed" ? f.status !== "passed" : true))
+      .filter((f) => (state.show === "changed" ? f.changed > 0 : state.show === "failed" ? f.status !== "passed" : state.show === "main-failed" ? mainFailed(f) : true))
       .map((flow) => {
         // A flow matches by its section or title, and then shows every frame;
         // or by some captions, and then shows those.
@@ -295,21 +295,24 @@ function render() {
     partBlock.append(sec);
   }
   if (!shownFlows)
-    board.append(el("p", { class: "empty-note" }, [terms.length ? "No flow or frame matches “" + state.query.trim() + "”." : state.show === "failed" ? "Nothing failed on this viewport." : state.show === "changed" ? "Nothing changed on this viewport." : "No flows ran on this viewport."]));
+    board.append(el("p", { class: "empty-note" }, [terms.length ? "No flow or frame matches “" + state.query.trim() + "”." : state.show === "failed" ? "Nothing failed on this viewport." : state.show === "changed" ? "Nothing changed on this viewport." : state.show === "main-failed" ? "Nothing failed on main on this viewport." : "No flows ran on this viewport."]));
   here = { section: null, flow: null };
   trackPlace();
   const frames = data.frames.filter((f) => f.viewport === state.viewport);
-  const changed = frames.filter((f) => f.changed).length;
+  const changed = flows.reduce((n, f) => n + f.changed, 0);
   const failed = flows.filter((f) => f.status !== "passed").length;
-  // Beside Changed and Failed, what each shows on this viewport: the frames changed, the flows failed.
+  const failedOnMain = flows.filter(mainFailed).length;
+  // Beside each, what it shows on this viewport: the frames changed, the flows failed, the flows that failed on main.
   document.getElementById("changed-count").textContent = "(" + changed + ")";
   document.getElementById("failed-count").textContent = "(" + failed + ")";
+  document.getElementById("main-failed-count").textContent = "(" + failedOnMain + ")";
   const carried = flows.filter((f) => f.shotAt && f.shotAt !== newestShot).length;
   document.getElementById("summary").textContent =
     (terms.length ? shownFlows + " of " + plural(flows.length, "flow") + " match. " : "") +
     frames.length + " frames in " + flows.length + " flows" +
     (data.withMain ? ", " + changed + " changed against main" : ", no run of main to compare with") +
-    (failed ? ", " + failed + " failed" : "") + "." +
+    (failed ? ", " + failed + " failed" : "") +
+    (failedOnMain ? ", " + failedOnMain + " failed on main" : "") + "." +
     (carried ? " " + plural(flows.length - carried, "flow") + " shot now, " + carried + " carried from earlier runs." : "");
 }
 

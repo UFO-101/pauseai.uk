@@ -217,7 +217,7 @@ pair whose files are the same, and the review opens
 newest run's page: the flows in
 sections, each frame captioned and pictured on desktop and phone, with this
 branch's picture, main's and the diff, a lightbox, a phone/desktop toggle
-that stays on the flow being looked at, a control to show all the flows, only those with changed frames (just those frames), or only those that failed, with the count of each, a box
+that stays on the flow being looked at, a control to show all the flows, only those with changed frames (just those frames), only those that failed, or only those that failed on main (Main failed: a flow there has nothing fair to compare with, so isn't in Changed), with the count of each, a box
 that filters flows by their section, title, captions or story (`/` to start,
 Escape to clear), and a failed flow's message under its last frame. The
 sections come under three headings, the public site, the staff pages, and
@@ -226,7 +226,7 @@ the tools and checks, in the order of `SECTIONS`
 gallery is last. The flows in each keep their spec file's order. The
 sidebar follows the page: the section in view is open and the flow in
 view marked, the rest folded, but a section opened or shut by hand stays
-so. Which of All, Changed and Failed is chosen is kept for the tab, and the filter's words on a
+so. Which of All, Changed, Failed and Main failed is chosen is kept for the tab, and the filter's words on a
 reload. The same data is in
 `test-results/storyboard/latest/storyboard.json`, for an agent.
 Both are local only and gitignored. A difference never fails; only this

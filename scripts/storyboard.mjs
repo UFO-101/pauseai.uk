@@ -408,7 +408,9 @@ if (existsSync(branchFrames)) {
   console.log(
     `\nStoryboard: ${summary.frames} frames in ${summary.flows} flows, ${
       withMain ? `${summary.changed} changed against main` : "no run of main to compare with"
-    }${summary.failed ? `, ${summary.failed} failed` : ""}. ${join(runDir, "index.html")}\n`,
+    }${summary.failed ? `, ${summary.failed} failed` : ""}${
+      summary.mainFailed ? `, ${summary.mainFailed} failed on main` : ""
+    }. ${join(runDir, "index.html")}\n`,
   );
 }
 

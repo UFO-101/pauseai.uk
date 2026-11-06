@@ -43,7 +43,7 @@ describe("writeStoryboard", () => {
     const board = await writeStoryboard(dir);
 
     expect(board.withMain).toBe(true);
-    expect(board.summary).toEqual({ flows: 2, failed: 0, frames: 7, changed: 6 });
+    expect(board.summary).toEqual({ flows: 2, failed: 0, frames: 7, changed: 6, mainFailed: 0 });
     expect(board.frames[0]).toMatchObject({ mismatch: 1, diff: "diff/staff-desktop-login-1.png" });
     expect(existsSync(join(dir, "diff", "staff-desktop-login-6.png"))).toBe(true);
     expect(JSON.parse(readFileSync(join(dir, "storyboard.json"), "utf8"))).toEqual(board);
@@ -54,10 +54,10 @@ describe("writeStoryboard", () => {
     manifest("branch", [flow("login", [await picture("branch/a.png", 0)])]);
     const board = await writeStoryboard(dir);
     expect(board.withMain).toBe(false);
-    expect(board.summary).toEqual({ flows: 1, failed: 0, frames: 1, changed: 0 });
+    expect(board.summary).toEqual({ flows: 1, failed: 0, frames: 1, changed: 0, mainFailed: 0 });
   });
 
   it("with no frames written at all, is an empty board", async () => {
-    expect((await writeStoryboard(dir)).summary).toEqual({ flows: 0, failed: 0, frames: 0, changed: 0 });
+    expect((await writeStoryboard(dir)).summary).toEqual({ flows: 0, failed: 0, frames: 0, changed: 0, mainFailed: 0 });
   });
 });
