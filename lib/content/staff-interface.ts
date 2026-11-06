@@ -1933,31 +1933,32 @@ export const staffCopy = {
     // On a job's run, so on its page and in the email: something the job carried on past.
     job: {
       // The Gmail read: Gmail errored or refused for a connected account, so its new mail wasn't read this time.
-      couldntRead: (account: string) => `${account} couldn't be read`,
+      couldntRead: (account: string) =>
+        `Gmail gave errors or refused connection, or our internal error, for ${account}`,
       // The Gmail read: the mailbox was read, but Gmail wouldn't give the account's name.
-      nameUnknown: (account: string) => `${account}'s name couldn't be fetched from Gmail`,
+      nameUnknown: (account: string) => `Couldn't fetch name of ${account} from Gmail`,
       // The Gmail read: mail in the letters inbox that couldn't be matched to anything, so a person must look. How many follows.
-      notUnderstood: "Messages in the letters inbox that need a person:",
+      notUnderstood: "Messages in the letters inbox that couldn't be matched, so need a person to look at:",
       // The old letters import: messages Gmail wouldn't give, by ID, which follow. They aren't tried again.
-      unreadable: "Messages Gmail wouldn't give:",
+      unreadable: "Messages that Gmail has but refused to give us:",
       // The old letters import: messages that matched no campaign, mailing or politician. How many follows.
-      matchedNothing: "Messages that matched nothing:",
+      matchedNothing: "Messages that didn't match to a campaign, mailing or politician:",
       // The Luma import: Luma errored on one event's guests. Its other events carry on.
-      eventGuests: (event: string) => `The guests of an event couldn't be read: ${event}`,
+      eventGuests: (event: string) => `Couldn't read the guests of an event: ${event}`,
       // The Luma import: Luma errored on one event's hosts. Its other events carry on.
-      eventHosts: (event: string) => `The hosts of an event couldn't be read: ${event}`,
+      eventHosts: (event: string) => `Couldn't read the hosts of an event: ${event}`,
       // The Luma import: Luma's rate limit stopped the run early. The next run carries on.
-      lumaRefused: "Luma refused a request, as its rate limit was reached",
+      lumaRefused: "Luma rate limit reached",
       // The Emails sync: emails in Airtable that belong to no mailing here, or to several, so they weren't copied. Their records follow.
-      heldBack: "Emails held back for a mailing nobody has added:",
+      heldBack: "Emails we couldn't match to a mailing here, so weren't imported:",
       // The Emails sync: emails in Airtable that don't name exactly one politician, so they weren't copied. Their records follow.
-      noOnePolitician: "Emails that name no single politician:",
+      noOnePolitician: "Emails with no or more than one politician, so weren't imported:",
       // The Emails sync: emails to a politician not imported yet, so they wait. Their records follow.
-      politicianNotHere: "Emails waiting for a politician who isn't here yet:",
+      politicianNotHere: "Emails to a politician we don't have yet, so weren't imported:",
       // The web form letters import: letters to a politician who isn't here. Their records follow.
-      noPolitician: "Letters with no politician here:",
+      noPolitician: "Letters with no politician here, so weren't imported:",
       // The Go to Parliament import: MPs in that table who aren't here, so their answers weren't stored. Their records follow.
-      mpNotFound: "MPs who aren't here:",
+      mpNotFound: "MPs who aren't here, so their answers weren't stored:",
     },
     // Can happen in a job or not. In a job, staff see it on the job's page and in the email. Not in a job, such
     // as a visitor sending a letter, it only goes to Netlify's logs.
@@ -1969,7 +1970,7 @@ export const staffCopy = {
       // An email went by Gmail, but Gmail wouldn't say its Message-ID. Replies to it may not find their letter.
       messageIdUnknown: "Gmail wouldn't say which Message-ID an email went with",
       // Something went wrong sending a queued letter. It's back in the queue, and the writer is told it's on its way.
-      letterNotSent: (id: number) => `Letter ${id} couldn't be sent, so it's back in the queue`,
+      letterNotSent: (id: number) => `Letter ${id} couldn't be sent, so it's gone back in the queue`,
       // Reading an email in a charset we don't know: a job reading mail, or staff opening a letter. It's read as UTF-8.
       charsetUnknown: (charset: string) =>
         `An email's charset isn't one we know, so its text may be garbled: ${charset}`,
