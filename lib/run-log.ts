@@ -2,9 +2,9 @@ import { type AnyImportRun, type ImportJob, JOB_SCHEDULES, runStatus, runTone } 
 import { staffDate } from "./staff-time";
 
 // How a job's page lays out its runs. A job that runs every few minutes makes
-// hundreds a day, nearly all alike, so the newest shows whole, as the job's
-// state, and the rest of each day is one table: the routine runs a row each,
-// those that found nothing gathered into a row, and a problem a tinted row.
+// hundreds a day, nearly all alike, so each day is one table: the newest run
+// a tinted row, the routine ones a row each, those that found nothing
+// gathered into a row, and a problem a tinted row.
 
 /** How many runs, newest first, may start unfolded. Those further down start folded, however short. */
 const UNFOLDED_RUNS = 5;

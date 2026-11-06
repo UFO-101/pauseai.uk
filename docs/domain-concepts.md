@@ -771,15 +771,13 @@ for 16 minutes if it dies, and its page says so: a second press of that job mean
 starts nothing. Scheduled runs don't take a press; the Luma import and the import
 of old letters each take a lock, so a press can't overlap a scheduled run.
 
-A job's page shows its runs under a heading for each day (`lib/run-log.ts`). On a
-job that runs every 5 minutes or hourly, the newest run is the job's state, whole
-in its box, and the rest of each day is one table (`RunTable.tsx`): the import of
-old letters, Luma's and the Gmail reading have a row of counts per routine run,
-runs that found nothing gather into one row, and anything else, a failure above
-all, is a row of its own words, its detail folded, which on a 5-minute job stays
-tinted. Rows too far down are folded into a line, and the table carries on under
-it. Nightly and one-off jobs show each run whole. The import of old letters also
-says how far it has got.
+A job's page shows its runs under a heading for each day (`lib/run-log.ts`).
+A job that runs every 5 minutes or hourly makes hundreds a day, nearly all
+alike, so its runs that found nothing are gathered together, its routine runs
+(the import of old letters, Luma's and the Gmail reading) are counts, and
+anything else, a failure above all, shows whole. How a page lays that out is in
+the style guide ("A job's log"). The import of old letters also says how far it
+has got.
 
 A new job is a name in `IMPORT_JOBS` and the `import_runs` CHECK, a result
 type, a function that runs it inside `keepingFailure()` and records its run,

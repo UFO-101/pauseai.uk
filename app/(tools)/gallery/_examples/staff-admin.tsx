@@ -1138,7 +1138,7 @@ export const staffAdmin: Group = {
       variants: [
         {
           label:
-            "A job that runs often: the newest whole, then the day's table, with a row for runs that found nothing and a tinted one for a problem",
+            "A job that runs often: the day's table, the newest run green, a row for runs that found nothing and an amber one for a problem",
           render: () => (
             <StaffPage as="div">
               <RunList

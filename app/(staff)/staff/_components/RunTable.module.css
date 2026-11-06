@@ -25,7 +25,11 @@
   border-bottom: 0;
 }
 
-/* A problem's rows, tinted as its box would be. */
+/* The newest run's rows, by how it ended, and a problem's further down. */
+.green {
+  --row-bg: var(--status-green-bg);
+}
+
 .amber {
   --row-bg: var(--status-amber-bg);
 }

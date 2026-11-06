@@ -31,14 +31,13 @@ function Whole({ entry, decide, people }: { entry: LogEntry } & Pick<Props, "dec
 }
 
 /**
- * A day of a job that runs often: the job's state now, whole, if the day
- * has it, then the rest as one table. Rows too far down to show are folded,
- * a line each, and the table carries on under it, headed only the first time.
+ * A day of a job that runs often: one table, the newest run a tinted row of
+ * it. Rows too far down to show are folded, a line each, and the table
+ * carries on under it, headed only the first time.
  */
 function DayTable({ entries, decide, people }: { entries: LogEntry[] } & Pick<Props, "decide" | "people">) {
-  const current = entries[0].current ? entries[0] : undefined;
   const segments: LogEntry[][] = [];
-  for (const entry of current ? entries.slice(1) : entries) {
+  for (const entry of entries) {
     const last = segments.at(-1);
     if (last && !entry.folded && !last[0].folded) last.push(entry);
     else segments.push([entry]);
@@ -46,7 +45,6 @@ function DayTable({ entries, decide, people }: { entries: LogEntry[] } & Pick<Pr
   const firstShown = segments.find((segment) => !segment[0].folded);
   return (
     <>
-      {current && <Whole entry={current} decide={decide} people={people} />}
       {segments.map((segment) =>
         segment[0].folded ? (
           <details key={segment[0].runs[0].id} className={styles.stretch}>
@@ -74,9 +72,9 @@ function DayTable({ entries, decide, people }: { entries: LogEntry[] } & Pick<Pr
  * Runs from the import log, under a heading for each day, or a line saying there
  * are none. The newest is the job's state now: tinted by how it ended, and
  * unfolded however long its detail. Further down, each is laid out by
- * lib/run-log.ts: whole, plain and folded when long, or for a job that runs
- * often, a row of the day's table. While a press runs, that's the state instead, so the
- * newest is treated as an older one.
+ * lib/run-log.ts: whole, plain and folded when long. A job that runs often
+ * has one table a day instead, the newest a tinted row of it. While a press
+ * runs, that's the state instead, so the newest is treated as an older one.
  */
 export default function RunList({ runs, none, decide, people, press }: Props) {
   if (runs.length === 0) return <p>{none}</p>;

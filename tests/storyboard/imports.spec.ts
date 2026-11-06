@@ -135,7 +135,7 @@ const scheduled = (
 
 test("The Luma import's log", async ({ page, flowDatabase }) => {
   story(
-    "Luma is copied every 5 minutes. The newest run is whole; the rest of the day is one table. Runs that found nothing gather into a row, those that did are a row each, and one that stopped short is tinted, its words under its counts.",
+    "Luma is copied every 5 minutes, and each day is one table. The newest run is a green row. Runs that found nothing gather into a row, those that did are a row each, and one that stopped short is amber, its words under its counts.",
   );
   await logIn(page, flowDatabase);
   scheduled(flowDatabase, "import-luma", 1, "0 minutes", exampleLumaResult);

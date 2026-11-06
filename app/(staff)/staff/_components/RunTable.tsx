@@ -106,7 +106,8 @@ function Rows({
     ));
   // A run shown whole: its counts in their columns where it has them, and its
   // words under them, spanning the table; or just its words, for a failure or
-  // a job whose one column is words. A problem keeps its tint (lib/run-log.ts).
+  // a job whose one column is words. Tinted as the newest, or as a problem
+  // further down (lib/run-log.ts).
   const run = runs[0];
   const tinted = tone ? styles[tone] : "";
   const words = <Run run={run} decide={decide} open={open} people={people} bare />;
@@ -132,10 +133,9 @@ function Rows({
 }
 
 /**
- * A day's history on the page of a job that runs often: one table, a row or
- * several for each entry of the log (lib/run-log.ts), so the same number
- * sits in the same place. The time first, then the job's counts, or what
- * each run found.
+ * A day on the page of a job that runs often: one table, a row or several
+ * for each entry of the log (lib/run-log.ts), so the same number sits in the
+ * same place. The time first, then the job's counts, or what each run found.
  */
 export default function RunTable({ entries, header, decide, people }: Props) {
   const columns = columnsOf(entries[0].runs[0].job) as Column<AnyImportRun>[];
