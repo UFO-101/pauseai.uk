@@ -3135,7 +3135,7 @@ describe("RunList", () => {
   });
 
   it("lists the emails an Emails sync held back, with the boxes ticked, or says why it failed", async () => {
-    const heldBack = { what: staffCopy.problems.job.heldBack(2), error: "recEmail1, recEmail2" };
+    const heldBack = { what: staffCopy.problems.job.heldBack, error: "recEmail1, recEmail2" };
     const { rerender } = await render(
       <RunList
         runs={[
@@ -3220,7 +3220,7 @@ describe("RunList", () => {
   });
 
   it("says a Gmail read had problems that found mail in the letters inbox it couldn't account for, listing each with a link", async () => {
-    const told = { what: staffCopy.problems.job.notUnderstood(2), told: true as const };
+    const told = { what: staffCopy.problems.job.notUnderstood, error: "2", told: true as const };
     await render(
       <RunList
         runs={[ran("read-gmail", { accounts: [exampleLettersInboxRead] }, { id: 1, problems: [told] })]}

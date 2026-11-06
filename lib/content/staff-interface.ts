@@ -1811,7 +1811,6 @@ export const staffCopy = {
     }) =>
       `Read ${r.read} messages, ${r.left} left${r.finished ? ", all done" : ""}: ${r.formTexts} form letters' and ${r.postmarkTexts} Postmark letters' text, ${r.replies} replies, ${r.autoReplies} automatic replies and ${r.oneOffs} one-off emails.`,
     stoppedByGmail: "It stopped early because Gmail refused a request. The next run carries on.",
-    unreadable: (n: number) => `Gmail wouldn't give ${n} ${n === 1 ? "message" : "messages"}.`,
     joined: "Joined to their sent emails",
     added: "Added from sent emails",
     notJoined: "No sent email found",
@@ -1867,6 +1866,8 @@ export const staffCopy = {
       subject: (n: number) => `${n} ${n === 1 ? "email" : "emails"} in policy@ matched no politician`,
       body: (lines: string[], link: string) =>
         `Some emails arrived in the policy@ inbox and weren't kept, because they didn't match a politician. Work out who they're from, and widen the rule or add exceptions.\n\n${lines.join("\n")}\n\n${link}`,
+      // After the list, when a report is full: how many wait for the next one.
+      more: (n: number) => `⁂ And ${n} more, in the next report.`,
     },
   },
   goToParliament: {
@@ -1935,26 +1936,28 @@ export const staffCopy = {
       couldntRead: (account: string) => `${account} couldn't be read`,
       // The Gmail read: the mailbox was read, but Gmail wouldn't give the account's name.
       nameUnknown: (account: string) => `${account}'s name couldn't be fetched from Gmail`,
-      // The Gmail read: mail in the letters inbox that couldn't be matched to anything, so a person must look.
-      notUnderstood: (n: number) =>
-        `${n} ${n === 1 ? "message" : "messages"} in the letters inbox ${n === 1 ? "needs" : "need"} a person`,
+      // The Gmail read: mail in the letters inbox that couldn't be matched to anything, so a person must look. How many follows.
+      notUnderstood: "⁂ Messages in the letters inbox that need a person:",
+      // The old letters import: messages Gmail wouldn't give, by ID, which follow. They aren't tried again.
+      unreadable: "⁂ Messages Gmail wouldn't give:",
+      // The old letters import: messages that matched no campaign, mailing or politician. How many follows.
+      matchedNothing: "⁂ Messages that matched nothing:",
       // The Luma import: Luma errored on one event's guests. Its other events carry on.
       eventGuests: (event: string) => `The guests of an event couldn't be read: ${event}`,
       // The Luma import: Luma errored on one event's hosts. Its other events carry on.
       eventHosts: (event: string) => `The hosts of an event couldn't be read: ${event}`,
       // The Luma import: Luma's rate limit stopped the run early. The next run carries on.
       lumaRefused: "Luma refused a request, as its rate limit was reached",
-      // The Emails sync: emails in Airtable that belong to no mailing here, or to several, so they weren't copied.
-      heldBack: (n: number) => `${n} ${n === 1 ? "email is" : "emails are"} held back for a mailing nobody has added`,
-      // The Emails sync: emails in Airtable that don't name exactly one politician, so they weren't copied.
-      noOnePolitician: (n: number) => `${n} ${n === 1 ? "email names" : "emails name"} no single politician`,
-      // The Emails sync: emails to a politician not imported yet, so they wait.
-      politicianNotHere: (n: number) =>
-        `${n} ${n === 1 ? "email waits" : "emails wait"} for a politician who isn't here yet`,
-      // The web form letters import: letters to a politician who isn't here.
-      noPolitician: (n: number) => `${n} ${n === 1 ? "letter has" : "letters have"} no politician here`,
-      // The Go to Parliament import: MPs in that table who aren't here, so their answers weren't stored.
-      mpNotFound: (n: number) => `${n} ${n === 1 ? "MP isn't" : "MPs aren't"} here`,
+      // The Emails sync: emails in Airtable that belong to no mailing here, or to several, so they weren't copied. Their records follow.
+      heldBack: "⁂ Emails held back for a mailing nobody has added:",
+      // The Emails sync: emails in Airtable that don't name exactly one politician, so they weren't copied. Their records follow.
+      noOnePolitician: "⁂ Emails that name no single politician:",
+      // The Emails sync: emails to a politician not imported yet, so they wait. Their records follow.
+      politicianNotHere: "⁂ Emails waiting for a politician who isn't here yet:",
+      // The web form letters import: letters to a politician who isn't here. Their records follow.
+      noPolitician: "⁂ Letters with no politician here:",
+      // The Go to Parliament import: MPs in that table who aren't here, so their answers weren't stored. Their records follow.
+      mpNotFound: "⁂ MPs who aren't here:",
     },
     // Can happen in a job or not. In a job, staff see it on the job's page and in the email. Not in a job, such
     // as a visitor sending a letter, it only goes to Netlify's logs.

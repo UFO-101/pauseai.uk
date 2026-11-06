@@ -425,7 +425,7 @@ export function readGmail(startedBy: string, request?: Request): Promise<GmailRe
     );
     const notUnderstood = accounts.reduce((n, a) => n + (a.notUnderstood?.length ?? 0), 0);
     if (notUnderstood) {
-      problem(staffCopy.problems.job.notUnderstood(notUnderstood), undefined, {
+      problem(staffCopy.problems.job.notUnderstood, notUnderstood, {
         told: await alertNotUnderstood(accounts, request),
       });
     }

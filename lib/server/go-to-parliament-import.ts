@@ -87,7 +87,7 @@ export function importGoToParliament(startedBy: string): Promise<GoToParliamentI
         );
       }
       await logChange(startedBy, "import Go to Parliament", { added: result.added, changed: result.changed }, db);
-      if (notFound.length) problem(staffCopy.problems.job.mpNotFound(notFound.length), notFound.join(", "));
+      if (notFound.length) problem(staffCopy.problems.job.mpNotFound, notFound.join(", "));
       await recordRun(JOB, startedBy, "ok", result, db);
       return result;
     });

@@ -110,7 +110,7 @@ export function importWebFormLetters(startedBy: string): Promise<WebFormImportRe
       const { imported, skipped, alreadyHere, noPolitician } = result;
       await logChange(startedBy, "import web form letters", { imported, skipped, alreadyHere, noPolitician }, db);
       if (withoutPolitician.length) {
-        problem(staffCopy.problems.job.noPolitician(withoutPolitician.length), withoutPolitician.join(", "));
+        problem(staffCopy.problems.job.noPolitician, withoutPolitician.join(", "));
       }
       await recordRun(JOB, startedBy, "ok", result, db);
       return result;

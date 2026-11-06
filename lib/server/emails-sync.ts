@@ -97,10 +97,10 @@ export function syncEmails(startedBy: string): Promise<EmailSyncResult> {
       if (result.added > 0) await logChange("sync", "copy PauseAI emails", { added: result.added }, db);
       // Each thing it couldn't do, by the records, so a person can find them in Airtable.
       const words = staffCopy.problems.job;
-      if (noOnePolitician.length) problem(words.noOnePolitician(noOnePolitician.length), noOnePolitician.join(", "));
-      if (notHere.length) problem(words.politicianNotHere(notHere.length), notHere.join(", "));
+      if (noOnePolitician.length) problem(words.noOnePolitician, noOnePolitician.join(", "));
+      if (notHere.length) problem(words.politicianNotHere, notHere.join(", "));
       if (result.unplaced.length) {
-        problem(words.heldBack(result.unplaced.length), result.unplaced.map((u) => u.airtableId).join(", "));
+        problem(words.heldBack, result.unplaced.map((u) => u.airtableId).join(", "));
       }
       await recordRun(JOB, startedBy, result.added > 0 ? "ok" : "unchanged", result, db);
       return result;

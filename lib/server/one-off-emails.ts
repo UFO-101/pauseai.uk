@@ -217,37 +217,52 @@ export async function keepIfPoliticianThread(
 /** A day between reports. */
 const REPORT_EVERY_MS = 24 * 60 * 60_000;
 
+/** The most one report lists, as each is read again from Gmail. The rest wait for the next. */
+const REPORT_AT_MOST = 100;
+
 /**
- * Emails the notification inbox the new mail that matched nothing, by sender
- * and subject, read again from Gmail as only its ID is kept: at most once a
- * day. `token` gives the access token of an account. Says how many it listed.
+ * Emails the notification inbox the new mail that matched nothing, oldest
+ * first, by sender and subject, read again from Gmail as only its ID is kept:
+ * at most once a day, whether the last try's email went or not, and saying how
+ * many more wait. `token` gives the access token of an account. Says how many
+ * it listed.
  */
 export async function reportUnmatchedMail(token: (account: string) => Promise<string>): Promise<number> {
-  const [last] = await query<{ at: Date | null }>("SELECT max(reported_at) AS at FROM unmatched_mail");
-  if (last.at && now().getTime() - new Date(last.at).getTime() < REPORT_EVERY_MS) return 0;
-  const waiting = await query<{ account: string; id: string }>(
-    `SELECT account, gmail_message_id AS id FROM unmatched_mail WHERE reported_at IS NULL ORDER BY found_at`,
+  const [last] = await query<{ at: Date | null }>(
+    "SELECT greatest(max(reported_at), max(tried_at)) AS at FROM unmatched_mail",
   );
-  if (!waiting.length) return 0;
+  if (last.at && now().getTime() - new Date(last.at).getTime() < REPORT_EVERY_MS) return 0;
+  await query("UPDATE unmatched_mail SET tried_at = now() WHERE reported_at IS NULL");
+  const batch = await query<{ account: string; id: string; waiting: number }>(
+    `SELECT account, gmail_message_id AS id, count(*) OVER ()::int AS waiting FROM unmatched_mail
+     WHERE reported_at IS NULL ORDER BY found_at, gmail_message_id LIMIT $1`,
+    [REPORT_AT_MOST],
+  );
+  if (!batch.length) return 0;
   const lines: string[] = [];
-  for (const { account, id } of waiting) {
+  for (const { account, id } of batch) {
     const message = await gmailMessageHeaders(await token(account), id, ["From", "Subject"]).catch(unlessGone);
     if (message) lines.push(`- ${headerText(message.headers, "from")}: ${headerText(message.headers, "subject")}`);
   }
   const words = staffCopy.oneOff.unmatchedAlert;
+  const more = batch[0].waiting - batch.length;
   // Marked reported only once the email has gone, so a batch the email failed for is reported next time.
   if (
     lines.length &&
     !(await notifyStaff(
       words.subject(lines.length),
-      words.body(lines, staffLink("/staff/one-off", undefined)),
+      words.body(more ? [...lines, words.more(more)] : lines, staffLink("/staff/one-off", undefined)),
       null,
       "staff-report",
     ))
   ) {
     return 0;
   }
-  await query("UPDATE unmatched_mail SET reported_at = now() WHERE reported_at IS NULL");
+  await query(
+    `UPDATE unmatched_mail SET reported_at = now()
+     WHERE (account, gmail_message_id) IN (SELECT * FROM unnest($1::text[], $2::text[]))`,
+    [batch.map((row) => row.account), batch.map((row) => row.id)],
+  );
   return lines.length;
 }
 

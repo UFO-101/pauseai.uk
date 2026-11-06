@@ -80,6 +80,18 @@ describeWithDatabase("the import log", () => {
     ]);
   });
 
+  it("doesn't email again about a problem whose error alone has changed", async () => {
+    const sent = notifications();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    for (const count of [2, 3]) {
+      await keepingFailure("check-mps", "nightly", async () => {
+        problem("Messages that matched nothing:", count);
+        await recordRun("check-mps", "nightly", "ok", { problems: [] });
+      });
+    }
+    expect(sent).toHaveLength(1);
+  });
+
   it("leaves a problem with an alert of its own out of the email about another", async () => {
     const sent = notifications();
     vi.spyOn(console, "error").mockImplementation(() => {});

@@ -164,7 +164,7 @@ const RUNS: Record<ImportJob, Variant> = {
           run={exampleRun(
             "read-gmail",
             { accounts: [exampleLettersInboxRead] },
-            { id: 4, problems: [{ what: staffCopy.problems.job.notUnderstood(2), told: true }] },
+            { id: 4, problems: [{ what: staffCopy.problems.job.notUnderstood, error: "2", told: true }] },
           )}
           open
         />
@@ -234,7 +234,10 @@ const RUNS: Record<ImportJob, Variant> = {
         <Run
           run={exampleRun("import-old-letters", exampleOldLettersResult, {
             startedBy: "jo@pauseai.uk",
-            problems: [{ what: staffCopy.oldLetters.unreadable(1) }, { what: staffCopy.oldLetters.matchedNothing(1) }],
+            problems: [
+              { what: staffCopy.problems.job.unreadable, error: "18f0a" },
+              { what: staffCopy.problems.job.matchedNothing, error: "1" },
+            ],
           })}
           open
           people
@@ -252,8 +255,8 @@ const RUNS: Record<ImportJob, Variant> = {
               startedBy: "jo@pauseai.uk",
               problems: [
                 { what: staffCopy.oldLetters.stoppedByGmail, error: "Gmail answered 403 for /messages/1a2b: Too many" },
-                { what: staffCopy.oldLetters.unreadable(1) },
-                { what: staffCopy.oldLetters.matchedNothing(1) },
+                { what: staffCopy.problems.job.unreadable, error: "18f0a" },
+                { what: staffCopy.problems.job.matchedNothing, error: "1" },
               ],
             },
           )}
@@ -269,9 +272,9 @@ const RUNS: Record<ImportJob, Variant> = {
         <Run
           run={exampleRun("sync-emails", exampleEmailsResult, {
             problems: [
-              { what: staffCopy.problems.job.noOnePolitician(1), error: "recEmail3" },
-              { what: staffCopy.problems.job.politicianNotHere(1), error: "recEmail4" },
-              { what: staffCopy.problems.job.heldBack(2), error: "recEmail1, recEmail2" },
+              { what: staffCopy.problems.job.noOnePolitician, error: "recEmail3" },
+              { what: staffCopy.problems.job.politicianNotHere, error: "recEmail4" },
+              { what: staffCopy.problems.job.heldBack, error: "recEmail1, recEmail2" },
             ],
           })}
         />

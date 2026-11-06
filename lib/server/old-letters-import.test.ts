@@ -1,5 +1,6 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import { NIGHTLY } from "@/lib/import-runs";
+import { latestRun } from "./import-runs";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
@@ -400,6 +401,11 @@ Please join 40 of your colleagues.')`,
     const { unreadable, finished } = await run();
     expect(unreadable).toEqual(["0a13"]);
     expect(finished).toBe(true);
+    // Under a fixed sentence, so a run with a different number is no new problem.
+    expect((await latestRun("import-old-letters"))?.problems).toContainEqual({
+      what: staffCopy.problems.job.unreadable,
+      error: "0a13",
+    });
   });
 
   it("keeps a letter that doesn't fit its mailing's text whole, where most do", async () => {

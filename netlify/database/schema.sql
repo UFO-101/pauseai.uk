@@ -1983,6 +1983,7 @@ CREATE TABLE public.unmatched_mail (
     gmail_message_id text NOT NULL,
     found_at timestamp with time zone DEFAULT now() NOT NULL,
     reported_at timestamp with time zone,
+    tried_at timestamp with time zone,
     CONSTRAINT unmatched_mail_account_check CHECK ((account = lower(account)))
 );
 

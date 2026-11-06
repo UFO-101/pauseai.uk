@@ -781,8 +781,8 @@ async function readSome(startedBy: string, paceMs: number, readMs: number): Prom
       result.stoppedWhy = error.message;
     } else if (!(error instanceof TimeUp)) throw error;
   }
-  if (result.unreadable.length) problem(staffCopy.oldLetters.unreadable(result.unreadable.length));
-  if (result.unmatched.length) problem(staffCopy.oldLetters.matchedNothing(result.unmatched.length));
+  if (result.unreadable.length) problem(staffCopy.problems.job.unreadable, result.unreadable.join(", "));
+  if (result.unmatched.length) problem(staffCopy.problems.job.matchedNothing, result.unmatched.length);
   result.searchesDone = searchesDone.n;
   result.titles = await countedTitles();
   result.left = await leftToRead();

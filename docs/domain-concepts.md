@@ -390,7 +390,8 @@ navigation under Politicians, and on the politician's and supporter's pages.
   connected. Everyone else copies policy@ into theirs.
 - **Mail that matches nothing,** in policy@ and the group's archive, isn't kept,
   only its Gmail ID (`unmatched_mail`), to list its sender and subject, read again
-  from Gmail, in an email to the notification inbox at most once a day. The import
+  from Gmail, in an email to the notification inbox: at most once a day, whether
+  or not the last try's email went (`tried_at`), and the oldest 100 at a time, saying how many more wait. The import
   lists what it finds on its results instead, for staff with `supporters`.
 - **Who sees what.** Staff without `supporters` see the name and text of a thread
   only if every sender in it is a politician, on a parliament's domain, or one of
@@ -735,7 +736,7 @@ job does, it goes here, despite the name (`docs/code-structure.md`). Each runs o
 schedule or when staff press its button, and every run is recorded
 (`import_runs`): when, who started it (`nightly` or a staff email), how it
 ended, why it failed, what went wrong along the way without stopping it
-(its problems, `lib/server/problems.ts`), and the job's own account of what
+(its problems, `lib/server/problems.ts`, each a fixed sentence with any count or list as its error), and the job's own account of what
 it found. A run with problems is amber, "Problems", and lists them under its
 line; staff are emailed about a failure, or a problem the run before didn't
 have, once, until a run goes right (`lib/server/import-runs.ts`). A problem

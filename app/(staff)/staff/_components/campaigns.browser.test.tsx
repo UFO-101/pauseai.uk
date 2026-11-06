@@ -487,7 +487,7 @@ describe("the import of old letters' run", () => {
     await says("form: 40");
     await says("Jane Smith <jane@example.com>: A question");
     // What went wrong is under the line, as the run's problems, not in the summary.
-    expect(document.body.textContent).not.toContain(words.unreadable(1));
+    expect(document.body.textContent).not.toContain(staffCopy.problems.job.unreadable);
     expect(document.body.textContent).not.toContain(words.stoppedByGmail);
     await rerender(
       <Run

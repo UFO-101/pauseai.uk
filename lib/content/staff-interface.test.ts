@@ -158,7 +158,6 @@ it("says one and many of each of the new pages' counts", () => {
     [campaigns.versionLine(null, 1), campaigns.versionLine("1 Jan", 2)],
     [oneOff.threads(1), oneOff.threads(2)],
     [oneOff.unmatchedAlert.subject(1), oneOff.unmatchedAlert.subject(2)],
-    [oldLetters.unreadable(1), oldLetters.unreadable(2)],
     [gmailReading.oneOffs(1), gmailReading.oneOffs(2)],
     [asks.page.letters(1), asks.page.letters(2)],
     [asks.page.way(1, "mailing"), asks.page.way(2, "campaign")],
@@ -178,18 +177,6 @@ it("says one and many of each of the new pages' counts", () => {
   };
   const { sending, tidying } = staffCopy;
   const { job, anywhere, logs } = staffCopy.problems;
-  for (const words of [
-    job.heldBack,
-    job.noOnePolitician,
-    job.politicianNotHere,
-    job.noPolitician,
-    job.mpNotFound,
-    job.notUnderstood,
-  ]) {
-    expect(words(1)).not.toContain("1 emails");
-    expect(words(1)).not.toMatch(/\b1 (emails|letters|MPs|messages)\b/);
-    expect(words(2)).toMatch(/\b2 (emails|letters|MPs|messages)\b/);
-  }
   for (const words of [job.couldntRead, job.nameUnknown, logs.tokenNotRevoked]) {
     expect(words("jo@pauseai.uk")).toContain("jo@pauseai.uk");
   }

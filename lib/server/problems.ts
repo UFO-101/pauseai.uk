@@ -29,7 +29,8 @@ export function registerRunStore(find: () => Run | undefined): void {
 
 /**
  * Reports something that went wrong without stopping the work: `what` in our
- * words, and the error, if there was one. `told` if staff have been emailed
+ * words, and the error, if there was one. `what` is how the run's email tells
+ * a new problem from an old one, so a count or a list goes in `error`. `told` if staff have been emailed
  * about it already, by an alert of its own.
  */
 export function problem(what: string, error?: unknown, { told = false } = {}): void {
