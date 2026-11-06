@@ -106,11 +106,11 @@ function Rows({
     ));
   // A run shown whole: its counts in their columns where it has them, and its
   // words under them, spanning the table; or just its words, for a failure or
-  // a job without counts. A problem keeps its tint (lib/run-log.ts).
+  // a job whose one column is words. A problem keeps its tint (lib/run-log.ts).
   const run = runs[0];
   const tinted = tone ? styles[tone] : "";
   const words = <Run run={run} decide={decide} open={open} people={people} bare />;
-  if (columns.length > 0 && run.status !== "failed")
+  if (columns.length > 1 && run.status !== "failed")
     return (
       <>
         <tr className={`${styles.lead} ${tinted}`}>

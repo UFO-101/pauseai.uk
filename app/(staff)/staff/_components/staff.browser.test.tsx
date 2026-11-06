@@ -2967,6 +2967,19 @@ describe("RunList", () => {
       `11:00${staffCopy.runs.status.ok} · ${staffCopy.runs.by("jo@pauseai.uk")} · ${staffCopy.members.result(members)}`,
     );
     expect(getComputedStyle(pressed.element().querySelector("td")!).backgroundColor).toBe("rgba(0, 0, 0, 0)");
+    // A Gmail read with problems is one row too: its column is words, not counts.
+    const couldntRead = { what: staffCopy.problems.job.couldntRead("al@pauseai.uk"), error: "403" };
+    await rerender(
+      <RunList
+        runs={[
+          ran("read-gmail", exampleGmailResult, { id: 1, at: at(3, 12) }),
+          ran("read-gmail", exampleGmailResult, { id: 2, at: at(3, 11), problems: [couldntRead] }),
+        ]}
+        none="None"
+      />,
+    );
+    expect(page.getByRole("row").all()).toHaveLength(2);
+    expect(page.getByRole("row").all()[1].element().textContent).toContain(`11:00${staffCopy.runs.status.problems}`);
     // Rows are counted across days, so a day can start with a folded stretch: the header goes on its first table shown.
     const luma = (id: number, at: string) =>
       ran("import-luma", exampleLumaResult, { id, at, status: id === 99 ? "unchanged" : "ok" });
