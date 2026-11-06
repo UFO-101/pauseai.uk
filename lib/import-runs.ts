@@ -280,6 +280,8 @@ export type OldLettersImportResult = {
   searchesDone?: number;
   /** The last letter whose garbled text it has read again: its place, between its calls. */
   textsDone?: number;
+  /** The first message of the last kept thread whose missing messages it has listed: its place, between its calls. */
+  threadsDone?: number;
   /** Messages listed and read this run, and how many are left. */
   listed: number;
   read: number;

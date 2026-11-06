@@ -1,7 +1,7 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import { NIGHTLY } from "@/lib/import-runs";
 import { latestRun } from "./import-runs";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import {
@@ -401,6 +401,70 @@ Please join 40 of your colleagues.')`,
     expect(finished).toBe(true);
     expect((await outcomeOf("0b08")).outcome).toBe("one_off");
     expect(await query("SELECT 1 FROM one_off_messages WHERE gmail_message_id = '0b08'")).toHaveLength(1);
+  });
+
+  describe("catching up the threads kept", () => {
+    /** A message the regular read kept, in a thread of its own. */
+    const keptByRead = async (account: string, id: string, thread: string) => {
+      const [{ threadId }] = await query<{ threadId: number }>(
+        'INSERT INTO one_off_threads (latest_at) VALUES (now()) RETURNING id::int AS "threadId"',
+      );
+      const [{ row }] = await query<{ row: number }>(
+        `INSERT INTO one_off_messages (thread_id, account, gmail_message_id, gmail_thread_id, from_address, addresses, at, from_us, blob_key, size)
+         VALUES ($1, $2, $3, $4, 'x@example.com', '{}', now(), false, $5, 1) RETURNING id::int AS row`,
+        [threadId, account, id, thread, `one-off/${id}`],
+      );
+      return row;
+    };
+
+    it("keeps what's missing of a thread another read kept, reading no more of it, and only in its own mailboxes", async () => {
+      await seed();
+      await keptByRead("joseph@pauseai.uk", "0a41", "t-read");
+      await keptByRead("jo@pauseai.uk", "z", "t-someone-elses");
+      const { finished } = await run();
+      expect(finished).toBe(true);
+      expect((await outcomeOf("0a40")).outcome).toBe("one_off");
+      expect(await query("SELECT 1 FROM one_off_messages WHERE gmail_message_id = '0a40'")).toHaveLength(1);
+      expect(await outcomeOf("0a41")).toBeUndefined();
+    });
+
+    it("carries on from its place after Gmail refuses", async () => {
+      await seed();
+      const first = await keptByRead("joseph@pauseai.uk", "0a41", "t-read");
+      await keptByRead("joseph@pauseai.uk", "r", "t-refused");
+      let refuse = true;
+      const asked = vi.fn();
+      server.use(
+        http.get(`${GMAIL}/threads/t-refused`, () =>
+          refuse ? new HttpResponse("{}", { status: 429 }) : HttpResponse.json({ messages: [{ id: "r" }] }),
+        ),
+      );
+      server.events.on("request:start", ({ request }) => {
+        if (request.url.includes("/threads/t-read")) asked();
+      });
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      const stopped = await run();
+      expect(stopped.finished).toBe(false);
+      expect(stopped.threadsDone).toBe(first);
+      refuse = false;
+      const again = await run();
+      expect(again.finished).toBe(true);
+      expect(asked).toHaveBeenCalledTimes(1);
+      server.events.removeAllListeners("request:start");
+    });
+
+    it("passes over a thread that's gone, and notes one Gmail won't give", async () => {
+      await seed();
+      await keptByRead("joseph@pauseai.uk", "g", "t-gone");
+      await keptByRead("joseph@pauseai.uk", "r", "t-refused");
+      server.use(
+        http.get(`${GMAIL}/threads/t-gone`, () => new HttpResponse("{}", { status: 404 })),
+        http.get(`${GMAIL}/threads/t-refused`, () => new HttpResponse("{}", { status: 400 })),
+      );
+      const { finished, unreadable } = await run();
+      expect(finished).toBe(true);
+      expect(unreadable).toEqual(["t-refused"]);
+    });
   });
 
   it("passes over mail that's none of its business, or a copy of what it's read, and lists neither ours nor what it has", async () => {

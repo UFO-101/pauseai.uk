@@ -244,6 +244,35 @@ const OLD_MAIL: readonly OldMail[] = [
     },
     "Sam asked me to confirm.",
   ),
+  // A thread the regular read kept part of: only asking Gmail for the thread finds either.
+  mail(
+    JOSEPH_MAILBOX,
+    "0a40",
+    "t-read",
+    ["INBOX", "THREAD"],
+    "2026-08-02T08:00:00.000Z",
+    {
+      From: "Fay Friend <fay.friend@example.com>",
+      To: JOSEPH_MAILBOX,
+      Subject: "Your MP",
+      "Message-ID": "<0a40@example.com>",
+    },
+    "Have you asked her?",
+  ),
+  mail(
+    JOSEPH_MAILBOX,
+    "0a41",
+    "t-read",
+    ["INBOX", "THREAD"],
+    "2026-08-02T08:30:00.000Z",
+    {
+      From: `Polly Placeholder <${POLLY}>`,
+      To: JOSEPH_MAILBOX,
+      Subject: "Re: Your MP",
+      "Message-ID": "<0a41@parliament.example>",
+    },
+    "Thank you.",
+  ),
   // Mail from no politician that a search found anyway; an automatic reply to no letter.
   got("0a22", "t-friend", "2026-08-04T09:00:00.000Z", "Fay Friend <fay.friend@example.com>", "Lunch?", "Lunch?"),
   got(

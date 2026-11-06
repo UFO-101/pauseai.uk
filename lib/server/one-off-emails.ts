@@ -87,11 +87,14 @@ function isGroupMail(headers: Map<string, string>): boolean {
   return /policy(-archive)?\.pauseai\.uk/i.test(headers.get("list-id") ?? "");
 }
 
+/** The hash of a Message-ID that one_off_erased keeps, in SQL. */
+const RFC_HASH = (rfc: string) => `encode(sha256(convert_to(${rfc}, 'UTF8')), 'hex')`;
+
 /**
  * Keeps a message of a thread with a politician, once, in the thread it
  * answers, or that its Gmail thread is in, or a new one. Threads a message
  * joins together become one, and a thread has its earliest message's subject.
- * Gives what it kept, or nothing if it's kept.
+ * Gives what it kept, or nothing if it's kept, or was and has been erased.
  */
 export async function keepOneOff(
   account: string,
@@ -103,7 +106,8 @@ export async function keepOneOff(
 ): Promise<number | undefined> {
   const rfc = rfcIdOf(message.headers);
   const [kept] = await query(
-    "SELECT 1 FROM one_off_messages WHERE (account = $1 AND gmail_message_id = $2) OR rfc_message_id = $3",
+    `SELECT 1 FROM one_off_messages WHERE (account = $1 AND gmail_message_id = $2) OR rfc_message_id = $3::text
+     UNION ALL SELECT 1 FROM one_off_erased WHERE (account = $1 AND gmail_message_id = $2) OR rfc_sha256 = ${RFC_HASH("$3::text")}`,
     [account, message.id, rfc],
   );
   if (kept) return undefined;
@@ -462,13 +466,20 @@ export async function getOneOffThread(
 
 /**
  * Deletes every one-off message with a supporter's address on it, for their
- * erasure, and any thread left empty. Gives the blobs to delete after.
+ * erasure, and any thread left empty, noting each in one_off_erased so that
+ * reading its thread again doesn't keep it again. Gives the blobs to delete after.
  */
 export async function eraseOneOffs(supporterId: number, db: Queryable): Promise<string[]> {
   const gone = await query<{ blobKey: string; threadId: number }>(
-    `DELETE FROM one_off_messages m USING supporter_links k
-     WHERE k.supporter_id = $1 AND k.matched_value = ANY(m.addresses)
-     RETURNING m.blob_key AS "blobKey", m.thread_id::int AS "threadId"`,
+    `WITH gone AS (
+       DELETE FROM one_off_messages m USING supporter_links k
+       WHERE k.supporter_id = $1 AND k.matched_value = ANY(m.addresses)
+       RETURNING m.account, m.gmail_message_id, m.rfc_message_id, m.blob_key, m.thread_id
+     ), noted AS (
+       INSERT INTO one_off_erased (account, gmail_message_id, rfc_sha256)
+       SELECT account, gmail_message_id, ${RFC_HASH("rfc_message_id")} FROM gone
+     )
+     SELECT blob_key AS "blobKey", thread_id::int AS "threadId" FROM gone`,
     [supporterId],
     db,
   );

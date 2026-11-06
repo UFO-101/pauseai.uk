@@ -282,6 +282,7 @@ INSERT INTO members (id, email, name, phone, city, postcode, joined_at, created_
 -- Erin, erased with her Luma user (the audit log's erasure), is still in
 -- Airtable's table: the import skips her.
 INSERT INTO members_erased (id, erased_at) VALUES ('recMemberErased', now() - interval '15 days');
+INSERT INTO one_off_erased (account, gmail_message_id, rfc_sha256, erased_at) VALUES ('policy@pauseai.uk', 'gmailErased', encode(sha256('erased@example.com'::bytea), 'hex'), now() - interval '15 days');
 
 -- --------------------------------------------------------------- places
 

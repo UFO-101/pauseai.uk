@@ -63,7 +63,8 @@ import { problem } from "./problems";
 // more; a press goes through it all again, skipping what's kept. Its order: make
 // the mailings, copy the form letters' text, put right what's kept, read each sent
 // email and join it, read the replies, keep the one-off emails, then the templates
-// and replied_at. Text goes right before templates, as they're never rebuilt.
+// and replied_at, then what's missing of each thread kept. Text goes right before
+// templates, as they're never rebuilt.
 // It reads at most two a second, and stops the moment Gmail refuses.
 
 const JOB = "import-old-letters";
@@ -702,6 +703,39 @@ async function requeueKeptThreads(reader: Reader): Promise<boolean> {
   return back.length > 0;
 }
 
+/**
+ * Lists what's missing of each Gmail thread kept, whichever read kept it, so a
+ * thread with no new message still comes to be kept whole. `done` is its place,
+ * the first message of the last thread it asked for. Only the mailboxes it reads.
+ */
+async function listKeptThreads(reader: Reader, done: { id: number }): Promise<void> {
+  for (;;) {
+    const batch = await query<{ account: string; threadId: string; first: number }>(
+      `SELECT account, gmail_thread_id AS "threadId", min(id)::int AS first FROM one_off_messages
+       WHERE account = ANY($2::text[]) GROUP BY 1, 2 HAVING min(id) > $1 ORDER BY first LIMIT 20`,
+      [done.id, [...reader.tokens.keys()]],
+    );
+    if (!batch.length) return;
+    for (const { account, threadId, first } of batch) {
+      await reader.turn();
+      try {
+        const ids = await gmailThreadMessageIds(reader.tokens.get(account)!, threadId).catch(unlessGone);
+        await query(
+          `INSERT INTO old_letters_mail (account, gmail_message_id, gmail_thread_id, source)
+           SELECT $1, mate, $2, 'thread' FROM unnest($3::text[]) AS mate
+           WHERE NOT EXISTS (SELECT 1 FROM one_off_messages m WHERE m.account = $1 AND m.gmail_message_id = mate)
+           ON CONFLICT DO NOTHING`,
+          [account, threadId, ids ?? []],
+        );
+      } catch (error) {
+        if (!(error instanceof GmailError && error.status === 400)) throw error;
+        reader.result.unreadable.push(threadId);
+      }
+      done.id = first;
+    }
+  }
+}
+
 /** Works through what's listed, oldest first in each mailbox, sent mail before replies, until the run's time is up. */
 async function readQueue(reader: Reader): Promise<void> {
   for (;;) {
@@ -861,6 +895,7 @@ async function readSome(startedBy: string, paceMs: number, readMs: number): Prom
   const result = emptyResult();
   const searchesDone = { n: carrying?.searchesDone ?? 0 };
   const textsDone = { id: carrying?.textsDone ?? 0 };
+  const threadsDone = { id: carrying?.threadsDone ?? 0 };
   const reader: Reader = {
     turn: pacer(paceMs, Date.now() + readMs, result),
     book: await politicianBook(),
@@ -884,6 +919,8 @@ async function readSome(startedBy: string, paceMs: number, readMs: number): Prom
     await placeUnjoined(reader);
     await buildTemplates(reader);
     await setRepliedAt(reader);
+    await listKeptThreads(reader, threadsDone);
+    await readQueue(reader);
     result.finished = true;
   } catch (error) {
     if (error instanceof GmailError && (error.status === 403 || error.status === 429)) {
@@ -897,6 +934,7 @@ async function readSome(startedBy: string, paceMs: number, readMs: number): Prom
   if (result.unmatched.length) problem(staffCopy.problems.job.matchedNothing, result.unmatched.length);
   result.searchesDone = searchesDone.n;
   result.textsDone = textsDone.id;
+  result.threadsDone = threadsDone.id;
   result.titles = await countedTitles();
   result.left = await leftToRead();
   await recordRun(JOB, startedBy, "ok", result);

@@ -233,6 +233,33 @@ describeWithDatabase("one-off emails", () => {
     await deleteOneOffBlobs([]);
   });
 
+  it("doesn't keep an erased message again, nor its copy in another mailbox, with or without a Message-ID", async () => {
+    await addFormEntry("march-2026-11", {
+      name: "Vera Volunteer",
+      email: "vera@example.com",
+      phone: null,
+      city: null,
+      postcode: null,
+      consent: false,
+      utmSource: null,
+    });
+    const [{ supporter, email }] = await query<{ supporter: number; email: string }>(
+      `SELECT supporter_id::int AS supporter, matched_value AS email FROM supporter_links LIMIT 1`,
+    );
+    await keep({ id: "a", from: email, to: POLLY });
+    await keep({ id: "b", from: email, to: POLLY, rfc: "" });
+    await eraseSupporter(supporter, "ICO-1", "jo@pauseai.uk");
+    expect(await query("SELECT rfc_sha256 IS NULL AS blank FROM one_off_erased ORDER BY gmail_message_id")).toEqual([
+      { blank: false },
+      { blank: true },
+    ]);
+    expect(await keep({ id: "a", from: email, to: POLLY })).toBeUndefined();
+    expect(await keep({ id: "b", from: email, to: POLLY, rfc: "" })).toBeUndefined();
+    const copy = { ...headers({ id: "a", from: email, to: POLLY }), id: "copy" };
+    expect(await keepOneOff("joseph@pauseai.uk", copy, Buffer.from("x"), await politicianBook(), [])).toBeUndefined();
+    expect(await query("SELECT 1 FROM one_off_messages")).toEqual([]);
+  });
+
   describe("the regular read", () => {
     const fetched = (token: string, id: string) => gmailMessageHeaders(token, id, ONE_OFF_HEADERS);
     const shared = async (id: string) => {
