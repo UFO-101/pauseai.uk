@@ -241,12 +241,30 @@ test("An old letter's page", async ({ page, request, flowDatabase }) => {
   );
   const [polly] = runSql(flowDatabase, "SELECT id FROM notable_people WHERE airtable_id = 'recPlaceholder'");
   const [mailing] = runSql(flowDatabase, "SELECT id FROM mailings WHERE old_letters_key = 'deepmind-august'");
+  const paragraph = (...content: object[]) => ({ type: "paragraph", content });
+  const field = (name: string) => ({ type: "field", attrs: { field: name } });
+  const august = {
+    type: "doc",
+    content: [
+      paragraph(field("greeting")),
+      paragraph({ type: "text", text: "Please join " }, field("colleagues"), {
+        type: "text",
+        text: " of your colleagues.",
+      }),
+      paragraph(field("own")),
+    ],
+  };
+  runSql(
+    flowDatabase,
+    `UPDATE mailings SET imported_text = '${JSON.stringify(august)}', imported_text_approximate = true, from_name = 'Joseph'
+     WHERE id = ${mailing}`,
+  );
   const [letter] = runSql(
     flowDatabase,
     `WITH made AS (INSERT INTO letters (kind, notable_person_id, status, created_at, sent_at)
        VALUES ('pauseai', ${polly}, 'sent', '2025-08-08 09:00+00', '2025-08-08 09:00+00') RETURNING id)
      INSERT INTO letters_from_pauseai (id, mailing_id, merge_values)
-     SELECT id, ${mailing}, '{"values":{"greeting":"Dear Ms Placeholder,","colleagues":"50"},"meets":[]}' FROM made RETURNING id`,
+     SELECT id, ${mailing}, '{"values":{"greeting":"Dear Ms Placeholder,","colleagues":"50","own":"You spoke well on the Bill."},"meets":[]}' FROM made RETURNING id`,
   );
   await page.goto(`${BASE}/staff/mailings/${mailing}`);
   await expect(page.getByText(staffCopy.letterThread.approximate)).toBeVisible();
@@ -254,6 +272,8 @@ test("An old letter's page", async ({ page, request, flowDatabase }) => {
   await page.goto(`${BASE}/staff/mailings/${mailing}/letters/${letter}`);
   await expect(page.getByText(staffCopy.letterThread.approximate)).toBeVisible();
   await expect(page.getByText("Please join 50 of your colleagues.")).toBeVisible();
+  await expect(page.getByText("You spoke well on the Bill.")).toBeVisible();
+  await expect(page.getByText("Joseph", { exact: true }).first()).toBeVisible();
   await frame(page, "A letter from August");
 });
 
