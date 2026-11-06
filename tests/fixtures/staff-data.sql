@@ -872,6 +872,11 @@ UPDATE supporters s SET first_seen_at = f.first_seen_at FROM supporter_first_see
 
 -- Notes: two on Jane, one Jo's from an hour ago, with a link, which she can
 -- still change, and a colleague's, edited; and one on Polly, from last week.
+INSERT INTO saved_filters (list, name, params, created_by, created_at) VALUES
+  ('politicians', 'Labour in the Commons', '{"house": "commons", "party": "Labour"}', 'jo@pauseai.uk', now() - interval '2 days'),
+  ('supporters', 'Near Leeds', '{"near": "Leeds", "within": "25"}', 'sam@pauseai.uk', now() - interval '5 days'),
+  ('events', 'Past talks', '{"when": "past", "tag": "Talk"}', 'jo@pauseai.uk', now() - interval '9 days');
+
 INSERT INTO notes (supporter_id, body, written_by, created_at, edited_at)
 SELECT k.supporter_id, n.body, n.written_by, n.created_at, n.edited_at
 FROM supporter_links k, (VALUES

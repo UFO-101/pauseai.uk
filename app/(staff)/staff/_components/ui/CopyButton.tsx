@@ -14,8 +14,9 @@ const SAYS_COPIED = 4000;
  * and a moment later `note`, what to do with it, opens in the page under
  * it, a Notice, so the eye goes from one to the other. The note stays, as
  * it may take a while to act on, till its × closes it, and opens afresh at
- * each copy; a screen reader hears it too. `close` names the ×. If the browser refuses the clipboard,
- * nothing changes.
+ * each copy; a screen reader hears it too. `close` names the ×. With
+ * `fromHere`, `text` is a path, copied with this site's address before it.
+ * If the browser refuses the clipboard, nothing changes.
  */
 export default function CopyButton({
   text,
@@ -23,12 +24,14 @@ export default function CopyButton({
   copied,
   note,
   close,
+  fromHere = false,
 }: {
   text: string;
   label: string;
   copied: string;
   note?: ReactNode;
   close: string;
+  fromHere?: boolean;
 }) {
   const [done, setDone] = useState(false);
   // How many times it has copied: the note's key, so it opens afresh each time.
@@ -36,7 +39,7 @@ export default function CopyButton({
   const [open, setOpen] = useState(false);
   async function copy() {
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(fromHere ? `${location.origin}${text}` : text);
     } catch {
       return;
     }

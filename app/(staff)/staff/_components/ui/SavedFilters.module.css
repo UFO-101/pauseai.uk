@@ -1,0 +1,236 @@
+/* A list's saved filters: a white lozenge, or two halves of one, at the right
+   of the filter bar's first row, the rest of the bar in lines beside it. On a
+   phone it takes its own row under the search. */
+.chip {
+  float: right;
+  display: flex;
+  max-width: 100%;
+  margin: 0 0 var(--space-3) var(--space-3);
+}
+
+@media (max-width: 720px) {
+  .chip {
+    float: none;
+    margin-left: 0;
+  }
+}
+
+.half {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-width: 0;
+  height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.menuHalf::after {
+  content: "▾" / "";
+}
+
+.chip > .half:first-of-type:not(:last-of-type) {
+  border-right-width: 0;
+  border-radius: 999px 0 0 999px;
+}
+
+.chip > .half:last-of-type:not(:first-of-type) {
+  border-radius: 0 999px 999px 0;
+}
+
+.save {
+  color: var(--accent);
+}
+
+.icon {
+  flex: none;
+}
+
+.loaded {
+  color: var(--accent);
+}
+
+/* A long name stops here, its whole self on hover and in the list; "edited" after it is never cut. */
+.name {
+  overflow: hidden;
+  max-width: 17rem;
+  text-overflow: ellipsis;
+}
+
+.edited {
+  flex: none;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 500;
+}
+
+/* The list: a row is a link, and its menu's button. */
+.rows {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  position: relative;
+}
+
+.row[hidden] {
+  display: none;
+}
+
+.rowLink {
+  display: block;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.rowLink:hover,
+.rowLink:focus-visible {
+  background: var(--surface-2);
+}
+
+.rowLink[aria-current] {
+  background: var(--accent-light);
+}
+
+.rowTop {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: space-between;
+  padding-right: var(--space-5);
+}
+
+.rowName {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.rowBy,
+.summary {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.rowBy {
+  flex: none;
+  white-space: nowrap;
+}
+
+.summary {
+  display: block;
+}
+
+.rowButton {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-2);
+  padding: 0 var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+/* Where there's a mouse, a row's button shows on the row it's over. */
+@media (hover: hover) {
+  .row:not(:hover, :focus-within, :has(:popover-open)) .rowButton {
+    opacity: 0;
+  }
+}
+
+.rowActions {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+
+.empty {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.count {
+  margin: var(--space-2) 0 0;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+/* The choices after an edit: a plain line each. */
+.choices {
+  display: grid;
+  min-width: 13rem;
+}
+
+.choice {
+  display: block;
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.choice:hover {
+  background: var(--surface-2);
+}
+
+/* The name's form. */
+.nameForm {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.heading {
+  margin: 0;
+  font-weight: 700;
+}
+
+.hint {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.buttons {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+/* The bubble round the name's form. */
+.wide {
+  --bubble-width: 25rem;
+}
+
+/* In the notice that part of a saved filter has gone: its two ways out. */
+.goneActions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-left: var(--space-2);
+  vertical-align: middle;
+}

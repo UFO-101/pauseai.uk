@@ -168,6 +168,27 @@ describe("Menu", () => {
   });
 });
 
+describe("Menu, named and wide", () => {
+  it("takes its button's name from `name`, for a label that's only a glyph", async () => {
+    await render(
+      <Menu id="m" label="⋯" name="More">
+        <p>Inside</p>
+      </Menu>,
+    );
+    await expect.element(page.getByRole("button", { name: "More" })).toBeVisible();
+  });
+
+  it("is wider than its usual box with `wide`, however little it holds", async () => {
+    await render(
+      <Menu id="m" label="Choose" wide>
+        <p>In</p>
+      </Menu>,
+    );
+    await page.getByRole("button", { name: "Choose" }).click();
+    expect(document.querySelector("#m")!.getBoundingClientRect().width).toBeGreaterThan(22 * 16);
+  });
+});
+
 describe("Bubble", () => {
   /** The middle of a box, across. */
   const middle = (el: Element) => {
@@ -860,6 +881,14 @@ describe("DownloadMenu", () => {
 describe("CopyButton", () => {
   // The note's live region, there while empty, hidden then.
   const status = () => document.querySelector<HTMLElement>('[role="status"]')!;
+
+  it("copies a path with this site's address before it, with `fromHere`", async () => {
+    const write = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+    await render(<CopyButton text="/staff/events" fromHere label="Copy" copied="Copied!" close="Close" />);
+    await page.getByRole("button", { name: "Copy" }).click();
+    expect(write).toHaveBeenCalledWith(`${location.origin}/staff/events`);
+    write.mockRestore();
+  });
 
   it("copies its text and says so a few seconds; its note stays till closed, and opens again at the next copy", async () => {
     const write = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();

@@ -55,7 +55,8 @@ function Press({
  * a second, which sends the form, with `name` set to `value`; it turns back
  * if the second doesn't come within ARMED_FOR, or focus goes elsewhere.
  * `danger` makes the first red too, among a form's own buttons (a note's
- * Save and Cancel), and `short` asks for the second in fewer words.
+ * Save and Cancel), and `short` asks for the second in fewer words. `fields`
+ * are any more values for the form to send.
  */
 export function DeleteTwice({
   name,
@@ -64,6 +65,7 @@ export function DeleteTwice({
   disabled = false,
   danger = false,
   short = false,
+  fields = {},
   action,
 }: {
   name: string;
@@ -72,11 +74,15 @@ export function DeleteTwice({
   disabled?: boolean;
   danger?: boolean;
   short?: boolean;
+  fields?: Record<string, string>;
   action: (form: FormData) => void | Promise<void>;
 }) {
   return (
     <form action={action}>
       <input type="hidden" name={name} value={value} />
+      {Object.entries(fields).map(([field, one]) => (
+        <input key={field} type="hidden" name={field} value={one} />
+      ))}
       <Press label={label} disabled={disabled} danger={danger} short={short} />
     </form>
   );

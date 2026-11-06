@@ -211,6 +211,8 @@ export type PoliticiansSearch = {
   tab: string;
   /** While choosing, the lines of names pasted, to show on the pasted tab. */
   pasted: string[];
+  /** The saved filter loaded, by ID. */
+  saved: string;
 };
 
 /**
@@ -223,8 +225,8 @@ export type PoliticiansSearch = {
 export function politiciansSearch(params: Partial<Record<keyof PoliticiansSearch, ParamValue>>): PoliticiansSearch & {
   filter: PoliticianFilter;
 } {
-  const [q, house, status, ask, answer, sort, dir, page, mailing, tab] = (
-    ["q", "house", "status", "ask", "answer", "sort", "dir", "page", "mailing", "tab"] as const
+  const [q, house, status, ask, answer, sort, dir, page, mailing, tab, saved] = (
+    ["q", "house", "status", "ask", "answer", "sort", "dir", "page", "mailing", "tab", "saved"] as const
   ).map((name) => firstOf(params[name]));
   const [party, flag, nation, email, mailed, pasted] = (
     ["party", "flag", "nation", "email", "mailed", "pasted"] as const
@@ -272,6 +274,7 @@ export function politiciansSearch(params: Partial<Record<keyof PoliticiansSearch
     mailing: /^\d+$/.test(mailing) ? mailing : "",
     tab: tab === "ticked" || tab === "pasted" ? tab : "",
     pasted,
+    saved,
     filter,
   };
 }

@@ -262,6 +262,19 @@ describeWithDatabase("eraseSupporter", () => {
     expect(await query("SELECT 1 FROM one_off_threads")).toEqual([]);
   });
 
+  it("takes their details out of saved filters, while it can still find them", async () => {
+    const mp = await addTestMp();
+    const id = await janeWithEverything(mp);
+    const [filter] = await query<{ id: number }>(
+      `INSERT INTO saved_filters (list, name, params, created_by)
+       VALUES ('supporters', 'Supporters: Search jane.fixture@example.com', '{"q": "jane.fixture@example.com"}', 'sam@pauseai.uk')
+       RETURNING id::int AS id`,
+    );
+    await eraseSupporter(id, "ICO-1", "jo@pauseai.uk");
+    const [after] = await query("SELECT name, params FROM saved_filters WHERE id = $1", [filter.id]);
+    expect(after).toEqual({ name: "Supporters: Search", params: {} });
+  });
+
   it("does nothing for a supporter that doesn't exist", async () => {
     expect(await eraseSupporter(999, "ref", "jo@pauseai.uk")).toBeUndefined();
     expect(await query("SELECT count(*)::int AS n FROM audit_log")).toEqual([{ n: 0 }]);

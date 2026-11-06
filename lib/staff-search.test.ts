@@ -187,6 +187,7 @@ describe("eventsSearch", () => {
     sort: "",
     dir: "",
     page: "",
+    saved: "",
   };
   const none = {
     search: undefined,
@@ -257,6 +258,7 @@ describe("supportersSearch", () => {
     page: "",
     erased: "",
     why: "",
+    saved: "",
   };
 
   it("reads each filter as typed and as applied, a repeated one as a list, its values marked ! left out", () => {

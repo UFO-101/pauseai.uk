@@ -2,6 +2,7 @@
 // (undefined) rather than guessed at.
 import { ASK_STATUSES, ASKERS, type Asker, type AskKind, type AskStatus } from "@/lib/asks";
 import { answeredByHand } from "@/lib/email-your-mp";
+import { SAVED_LISTS, type SavedList } from "@/lib/saved-filters";
 import { PERMISSIONS, type Permission } from "@/lib/staff-permissions";
 
 function text(form: FormData, name: string): string {
@@ -13,6 +14,21 @@ function text(form: FormData, name: string): string {
 export function idFrom(form: FormData, name = "id"): number | undefined {
   const value = text(form, name);
   return /^\d+$/.test(value) && Number(value) > 0 ? Number(value) : undefined;
+}
+
+/** The list a saved filter's form is for, if it's one that has them. */
+export function savedListFrom(form: FormData): SavedList | undefined {
+  return SAVED_LISTS.find((list) => list === text(form, "list"));
+}
+
+/** What a staff member needs to change the saved filters of the list a form is for: its own permission. */
+export function savedFilterNeeds(form: FormData): "supporters" | "account" {
+  return savedListFrom(form) === "supporters" ? "supporters" : "account";
+}
+
+/** A saved filter's name, as typed: one line, or blank. */
+export function savedNameFrom(form: FormData): string {
+  return text(form, "name").replace(/\s+/g, " ");
 }
 
 export type StatusForm = { politicianId: number; ask: string; status: AskStatus | null; note: string };

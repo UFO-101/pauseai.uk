@@ -2243,8 +2243,39 @@ export const staffCopy = {
     narrow: "Search these",
     // A place filter's distance, for a screen reader.
     within: "Within",
-    // A list's page title, in the browser's tab, with its search and filters that are on, shortened.
+    // A list's page title, in the browser's tab, with its search and filters that are on, shortened;
+    // and a saved filter's name to start with, in full.
     pageTitle: (title: string, filters: string) => `${title}: ${filters}`,
+    // The chip at the right of a list's filters: its saved filters, and saving what's on.
+    saved: {
+      chip: "⁂ Saved",
+      save: "⁂ Save",
+      edited: "⁂ edited",
+      saveTitle: "⁂ Save this filter",
+      name: "⁂ Name",
+      shared: "⁂ All staff who can open this page will see it.",
+      cancel: "⁂ Cancel",
+      find: "⁂ Find a saved filter",
+      count: (n: number) => `⁂ ${n} saved ${n === 1 ? "filter" : "filters"}, shared by all staff`,
+      none: "⁂ No saved filters yet. Choose some filters, then press Save.",
+      update: "⁂ Update for everyone",
+      saveAsNew: "⁂ Save as new",
+      undo: "⁂ Undo my changes",
+      // A row's menu, its button named after the row.
+      rowMenu: (name: string) => `⁂ More for ${name}`,
+      rename: "⁂ Rename",
+      copyLink: "⁂ Copy link",
+      linkCopied: "⁂ Copied",
+      closeNote: "⁂ Close",
+      deleteForEveryone: "⁂ Delete for everyone",
+      // Over the list, when a saved filter names something that has gone.
+      gone: (what: string) =>
+        `⁂ Part of this saved filter no longer exists: ${what}. It has been left out, so this list may be longer than it was.`,
+      goneUpdate: "⁂ Update it",
+      goneDelete: "⁂ Delete it",
+      // A saved filter's name when erasing a supporter's details leaves none of it.
+      erasedName: "⁂ Saved filter",
+    },
   },
   // Under a list of more than one page.
   paging: {
@@ -2331,6 +2362,8 @@ export const staffCopy = {
       previous: "Before",
       url: "Google Doc",
     } as Record<string, string>,
+    // A saved filter saved, changed or deleted: which list it's on, and its ID, never its name.
+    savedFilter: (list: string, id: string) => `⁂ ${list}, saved filter ${id}`,
     // A held MP import decided, linked to the import's page.
     run: (id: string) => `Import run ${id}`,
     // After each number an import, a sync, an erasure or the end of sessions logged: what it counted, for one and for more.

@@ -13,6 +13,13 @@
   font-size: var(--text-sm);
 }
 
+/* For rows too long for the usual box: that much wider, and always that wide. */
+.wide {
+  width: min(26rem, calc(100vw - 2 * var(--space-4)));
+  max-width: none;
+  box-sizing: border-box;
+}
+
 /* Hung from its button's bottom left, where the browser can anchor it;
    flipped to the left, or above the button, where there isn't room. */
 @supports (position-area: bottom) {

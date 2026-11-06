@@ -31,6 +31,8 @@ const ALLOWED: Record<string, string> = {
   "StaffForms.module.css .short": "a field",
   "FilterBar.module.css .search > :first-child": "the search, so its label fits",
   "Menu.module.css .menu": "a popover",
+  "SavedFilters.module.css .name": "a long name's longest, in the chip",
+  "SavedFilters.module.css .chip": "in the filter bar's row, never wider than it",
   "StaffAccountsTable.module.css .add input": "a field",
 };
 

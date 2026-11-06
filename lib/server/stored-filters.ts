@@ -4,6 +4,8 @@ import { contactState } from "@/lib/contact-permissions";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { campaignBySlug } from "@/lib/email-your-mp";
 import { COUNTRIES, EMAIL_STATES, POLITICIAN_FLAGS } from "@/lib/politician-filters";
+import type { SavedList } from "@/lib/saved-filters";
+import { NO_OWNER, ONLINE } from "@/lib/staff-events-list";
 import {
   FILTER_LISTS,
   notValue,
@@ -18,12 +20,13 @@ import {
 import { NEAR_MILES, SUPPORTER_BADGES } from "@/lib/supporters";
 import { query } from "./db";
 import { HOUSES, PERSON_STATUSES } from "./politicians";
+import { eventChoices } from "./staff-events";
 import { MP_CHOICES } from "./supporters";
 
-// A mailing's stored filter (StoredFilter, lib/staff-search.ts), read back
-// strictly: a value the site no longer knows, such as a deleted event or a
-// renamed party, is a problem to fix, as the list's parser would drop it
-// and the filter would quietly find more people.
+// A mailing's stored filter (StoredFilter, lib/staff-search.ts), or a saved
+// filter's choices, read back strictly: a value the site no longer knows,
+// such as a deleted event or a renamed party, is a problem to fix, as the
+// list's parser would drop it and the filter would quietly find more people.
 
 /** Whether `params` are a list's parameters that choose who, each text or a list of text. */
 function isWhoParams(list: FilterList, params: unknown): params is Params {
@@ -111,13 +114,31 @@ async function supporterValues(params: Params): Promise<Known> {
   };
 }
 
+async function eventValues(): Promise<Known> {
+  const { staff, tags, cities } = await eventChoices();
+  return {
+    q: "any",
+    owner: [NO_OWNER, ...staff],
+    tag: tags,
+    place: [ONLINE, ...cities],
+    removed: Object.keys(staffCopy.events.filters.removed),
+  };
+}
+
+const VALUES: Record<SavedList, (params: Params) => Promise<Known>> = {
+  politicians: politicianValues,
+  supporters: supporterValues,
+  events: eventValues,
+};
+
 /**
- * The values of a stored filter the site no longer knows, each as
+ * The values of a filter the site no longer knows, each as
  * "<parameter>=<value>": none, for one that can be run as it was chosen.
+ * `params` are those that choose what it finds, as WHO_PARAMS has them.
  */
-export async function filterProblems(filter: StoredFilter): Promise<string[]> {
+export async function filterProblems(filter: { list: SavedList; params: Params; picked?: Picked }): Promise<string[]> {
   if (filter.picked) return pickedProblems(filter.picked.ids);
-  const known = await (filter.list === "politicians" ? politicianValues : supporterValues)(filter.params);
+  const known = await VALUES[filter.list](filter.params);
   return Object.entries(filter.params).flatMap(([name, value]) =>
     valuesOf(value)
       .filter((one) => known[name] !== "any" && !known[name].includes(notValue(one).value))

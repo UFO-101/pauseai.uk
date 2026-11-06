@@ -3658,6 +3658,7 @@ describe("ChangesTable", () => {
       "Polly Placeholder",
       "Jane Example",
       copy.gone("6"),
+      ...Array(4).fill(copy.savedFilter("events", "3")),
     ]);
     const href = (i: number) => rows[i].element().children[4].querySelector("a")?.getAttribute("href");
     expect([0, 1, 4, 7, 8, 14, 23, 24, 25].map(href)).toEqual([

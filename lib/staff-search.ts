@@ -317,6 +317,8 @@ export type SupportersSearch = {
   /** After an erasure: "1", or "partly" with what couldn't be cleared in `why`, as codes. */
   erased: string;
   why: string;
+  /** The saved filter loaded, by ID. */
+  saved: string;
 };
 
 /** What an erasure can leave behind when its clean-up fails. */
@@ -339,8 +341,8 @@ export function eraseLeftovers(why: string): EraseLeftover[] {
 export function supportersSearch(
   params: Partial<Record<keyof SupportersSearch, ParamValue>>,
 ): SupportersSearch & { filter: SupporterFilter } {
-  const [q, campaign, wrote, near, within, sort, dir, page, erased, why] = (
-    ["q", "campaign", "wrote", "near", "within", "sort", "dir", "page", "erased", "why"] as const
+  const [q, campaign, wrote, near, within, sort, dir, page, erased, why, saved] = (
+    ["q", "campaign", "wrote", "near", "within", "sort", "dir", "page", "erased", "why", "saved"] as const
   ).map((name) => firstOf(params[name]));
   const [activity, contact, event, nation, mp] = (["activity", "contact", "event", "nation", "mp"] as const).map(
     (name) => valuesOf(params[name]),
@@ -385,6 +387,7 @@ export function supportersSearch(
     page,
     erased,
     why,
+    saved,
     filter,
   };
 }
@@ -403,15 +406,17 @@ export type EventsSearch = {
   sort: string;
   dir: string;
   page: string;
+  /** The saved filter loaded, by ID. */
+  saved: string;
 };
 
 /** The events list's tab, filters and sort, each as typed and as applied. */
 export function eventsSearch(
   params: Partial<Record<keyof EventsSearch, ParamValue>>,
 ): EventsSearch & { filter: EventFilter } {
-  const [when, q, removed, sort, dir, page] = (["when", "q", "removed", "sort", "dir", "page"] as const).map((name) =>
-    firstOf(params[name]),
-  );
+  const [when, q, removed, sort, dir, page, saved] = (
+    ["when", "q", "removed", "sort", "dir", "page", "saved"] as const
+  ).map((name) => firstOf(params[name]));
   const [owner, tag, place] = (["owner", "tag", "place"] as const).map((name) => valuesOf(params[name]));
   const tab = when === "past" ? "past" : "future";
   const [owners, notOwners] = anyAndNone(owner, (values) => values);
@@ -428,7 +433,7 @@ export function eventsSearch(
     sort: parseSort(EVENT_SORTS[tab], "start", sort, dir),
     page: pageNumber(page),
   };
-  return { when, q, owner, tag, place, removed, sort, dir, page, filter };
+  return { when, q, owner, tag, place, removed, sort, dir, page, saved, filter };
 }
 
 /** The accounts page's notice, after a refused change. */

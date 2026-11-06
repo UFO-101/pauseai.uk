@@ -38,7 +38,7 @@ import Strip from "@/app/(staff)/staff/_components/ui/Strip";
 import Tabs from "@/app/(staff)/staff/_components/ui/Tabs";
 import Tag from "@/components/ui/Tag";
 import type { Group } from "../_components/types";
-import { NoticeExample, DeleteTwiceExample } from "./staff.client";
+import { NoticeExample, DeleteTwiceExample, SavedFilterExample, SavedFilterGoneExample } from "./staff.client";
 
 /** A list's rows, for the list frame: a name, a place and a count, the place long enough to wrap. */
 type ExampleRow = { name: string; place: string; count: number };
@@ -939,6 +939,38 @@ export const staffKit: Group = {
               />
             </StaffPage>
           ),
+        },
+      ],
+    },
+    {
+      name: "SavedFilters",
+      file: "app/(staff)/staff/_components/ui/SavedFilters.tsx",
+      variants: [
+        {
+          label: "Nothing on: the chip alone",
+          render: () => <SavedFilterExample state="none" />,
+        },
+        {
+          label: "A filter on: Save is its second half",
+          render: () => <SavedFilterExample state="unsaved" />,
+        },
+        {
+          label: "Loaded, unchanged: named for the filter, its bookmark filled",
+          render: () => <SavedFilterExample state="loaded" />,
+        },
+        {
+          label: "Loaded and edited, with a long name: cut short, 'edited' whole, Save a menu",
+          render: () => <SavedFilterExample state="edited" />,
+        },
+      ],
+    },
+    {
+      name: "SavedFilterGone",
+      file: "app/(staff)/staff/_components/ui/SavedFilters.tsx",
+      variants: [
+        {
+          label: "A saved filter naming something that has gone",
+          render: () => <SavedFilterGoneExample />,
         },
       ],
     },

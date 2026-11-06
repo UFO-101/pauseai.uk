@@ -1,8 +1,10 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import { NO_OWNER, ONLINE } from "@/lib/staff-events-list";
-import type { EventsSearch } from "@/lib/staff-search";
+import type { SavedFiltersState } from "@/lib/server/saved-filters";
+import { eventsSearch, firstOf, type EventsSearch, type Params } from "@/lib/staff-search";
 import { eventFiltersOf } from "./EventsTable";
-import FilterBar, { filterWords, type Filter } from "./ui/FilterBar";
+import FilterBar, { filteredName, filterWords, type Filter } from "./ui/FilterBar";
+import { savedFiltersProps, type SavedFilterActions } from "./ui/SavedFilters";
 
 /** The choices the events list's filters offer: every staff account, and every tag and city our events have. */
 export type EventChoices = { staff: readonly string[]; tags: string[]; cities: string[] };
@@ -48,8 +50,22 @@ export function eventWords(search: EventsSearch, choices: EventChoices): string[
   return filterWords(eventFilters(choices), eventFiltersOf(search), "q");
 }
 
-/** Search and filter the events list, keeping its tab. */
-export default function EventFilters({ search, choices }: { search: EventsSearch; choices: EventChoices }) {
+/** A saved filter of the events list, in words: the Past tab, if it's on, and its search and filters. */
+function savedEventWords(params: Params, choices: EventChoices): string[] {
+  const past = firstOf(params.when) === "past" ? [staffCopy.events.tabs.past] : [];
+  return [...past, ...eventWords(eventsSearch(params), choices)];
+}
+
+/** Search and filter the events list, keeping its tab, with its `saved` filters. */
+export default function EventFilters({
+  search,
+  choices,
+  saved,
+}: {
+  search: EventsSearch;
+  choices: EventChoices;
+  saved?: { state: SavedFiltersState; actions: SavedFilterActions };
+}) {
   return (
     <FilterBar
       path="/staff/events"
@@ -57,6 +73,17 @@ export default function EventFilters({ search, choices }: { search: EventsSearch
       search={{ name: "q", label: staffCopy.events.filters.search }}
       filters={eventFilters(choices)}
       keep={["when"]}
+      saved={
+        saved &&
+        savedFiltersProps({
+          ...saved,
+          list: "events",
+          values: eventFiltersOf(search),
+          path: "/staff/events",
+          name: filteredName(staffCopy.events.title, eventWords(search, choices)),
+          summary: (params) => savedEventWords(params, choices),
+        })
+      }
     />
   );
 }

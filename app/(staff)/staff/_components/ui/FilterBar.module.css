@@ -12,6 +12,33 @@
   border-bottom: 1px solid var(--border);
 }
 
+/* With saved filters, whose chip stays at the right of the first row while
+   the rest wrap around it: the row's items in lines beside it, as a flex row
+   can't have a line shorter than the next. */
+.withSaved {
+  display: flow-root;
+  padding-bottom: var(--space-1);
+}
+
+.withSaved > .search,
+.withSaved > .pair,
+.withSaved > .chip,
+.withSaved > .add,
+.withSaved > .clearAll {
+  margin: 0 var(--space-3) var(--space-3) 0;
+  vertical-align: bottom;
+}
+
+.withSaved > .search,
+.withSaved > .pair,
+.withSaved > .clearAll {
+  display: inline-flex;
+}
+
+.withSaved > .clearAll {
+  margin-left: var(--space-1);
+}
+
 /* The search box and its button, side by side. */
 .search {
   display: flex;
