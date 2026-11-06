@@ -68,7 +68,7 @@ new token there. An alpha uses a token's `-rgb` channels:
 | `--accent-light`             | `#F0D4BC` | Light accent fills, tag backgrounds |
 | `--accent-bg`                | `#FFFFFF` | Accent sections                     |
 
-### Borders and shadows
+### Border and shadow colours
 
 | Token             | Hex                      | Usage                  |
 | ----------------- | ------------------------ | ---------------------- |
