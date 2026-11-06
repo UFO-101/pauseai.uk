@@ -236,9 +236,9 @@ export const staffCopy = {
       // The chart of new supporters: its name, which only screen readers read, and the note under it.
       bySourceName: (what: string, days: number, points: number) =>
         days === 7
-          ? `⁂ Bars of ${what} by source, week by week over the last ${points} weeks`
-          : `⁂ Bars of ${what} by source, ${days} days at a time over the last ${days * points} days`,
-      bySourceNote: "⁂ Each supporter counts once, under their earliest source.",
+          ? `Bars of ${what} by source, week by week over the last ${points} weeks`
+          : `Bars of ${what} by source, ${days} days at a time over the last ${days * points} days`,
+      bySourceNote: "Supporters shown under earliest source.",
       // A point's label: the window it counts, by the day it begins.
       seriesPoint: (days: number, from: string, n: number) =>
         days === 7 ? `Week beginning ${from}: ${n}` : `${days} days beginning ${from}: ${n}`,
@@ -936,7 +936,7 @@ export const staffCopy = {
     // A new mailing's page's title, and the button that starts an empty one: on the mailings page, and on the politicians list with no filter.
     newTitle: "New mailing",
     // On the politicians list with a filter: the button that starts one to everyone it finds.
-    mailThese: (n: number) => (n === 1 ? "⁂ Mail this one…" : `Mail these ${n}…`),
+    mailThese: (n: number) => (n === 1 ? "Mail this one…" : `Mail these ${n}…`),
     // A draft with no subject yet, in the list and as its page's title.
     untitled: "Untitled draft",
     // At the top of a new mailing, until a channel sends.

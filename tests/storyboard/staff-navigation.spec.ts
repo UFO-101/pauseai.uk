@@ -221,7 +221,9 @@ test("An MP signs", async ({ page, request, flowDatabase }) => {
   await expect(page).toHaveURL(`${BASE}/staff`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.home.title);
   await expect(page.getByText(staffEmail()).first()).toBeAttached();
-  await expect(page.getByRole("heading", { level: 2, name: staffCopy.nav.sections.politicians })).toBeVisible();
+  await expect(
+    page.getByRole("main").getByRole("heading", { level: 2, name: staffCopy.nav.sections.politicians }),
+  ).toBeVisible();
   await frame(page, "The dashboard");
   story("They open Politicians from the sidebar (on a phone, from the menu). The test politicians are left out.");
 
