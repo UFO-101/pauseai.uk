@@ -43,7 +43,7 @@ import {
   examplePolitician,
   examplePoliticianHistory,
 } from "./PoliticianTable.examples";
-import AsksTable, { askColumns } from "./AsksTable";
+import AsksList, { askColumns } from "./AsksList";
 import ResultBox, { OPEN_UP_TO } from "./ResultBox";
 import { ImportJobPage, ImportOverview } from "./ImportJob";
 import { exampleOldLettersResult } from "./CampaignPages.examples";
@@ -2730,78 +2730,70 @@ describe("PoliticianTable headings", () => {
   });
 });
 
-describe("AsksTable", () => {
+describe("AsksList", () => {
   it("picks out the ask a link led to: its row, by its slug, tinted and current", async () => {
-    await render(<AsksTable asks={exampleAsksWithCounts} picked={exampleAsks[1].slug} />);
-    const current = document.querySelectorAll("tr[aria-current=true]");
+    await render(<AsksList asks={exampleAsksWithCounts} picked={exampleAsks[1].slug} />);
+    const current = document.querySelectorAll("li[aria-current=true]");
     expect([...current].map((row) => row.id)).toEqual([exampleAsks[1].slug]);
     expect(document.getElementById(exampleAsks[0].slug)!.hasAttribute("aria-current")).toBe(false);
   });
 
-  it("lists each ask: its kind, title linked to its page, who asks it, how, each answer's count, linked to who gave it", async () => {
-    await render(<AsksTable asks={exampleAsksWithCounts} />);
-    const row = (title: string) => page.getByRole("row").filter({ hasText: title });
-    const cells = (title: string) =>
-      row(title)
-        .getByRole("cell")
-        .all()
-        .map((c) => c.element().textContent);
+  it("lists each ask: how many agreed, its kind, title linked to its page, each answer's count, linked to who gave it, who asks it and how", async () => {
     const copy = staffCopy.asks;
-    expect(cells(exampleAsks[0].title)).toEqual([
-      copy.kinds.event,
-      exampleAsks[0].title,
-      copy.askedBy.pauseai,
-      copy.page.way(1, "mailing"),
-      // The answers in the order the kind lists them.
-      [
-        copy.count(staffCopy.statuses.going, 3),
-        copy.count(staffCopy.statuses.declined, 50),
-        copy.count(staffCopy.statuses.passed_on, 1),
-      ].join(" · "),
-      "186",
-      "54",
-      "1 Nov 2026",
-      // The code names it, so it has no Edit.
-      "",
-    ]);
-    // Asked by nobody we record.
-    expect(cells(exampleAsks[1].title)[2]).toBe("");
-    // No date; asked by both.
-    expect(cells(exampleAsks[3].title)).toEqual([
-      copy.kinds.letter,
-      exampleAsks[3].title,
-      `${copy.askedBy.supporters}${copy.askedBy.pauseai}`,
-      `${copy.page.way(1, "campaign")} · ${copy.page.way(2, "mailing")}`,
-      [copy.count(staffCopy.statuses.signed, 10), copy.count(staffCopy.statuses.declined, 2)].join(" · "),
-      "40",
-      "12",
-      "",
-      "",
-    ]);
-    expect(cells(exampleAsks[2].title)[4]).toBe(copy.noAnswers);
-    // Nobody written to, nor any way of asking.
-    expect(cells(exampleAsks[1].title)[3]).toBe("–");
-    expect(cells(exampleAsks[1].title).slice(5, 7)).toEqual(["–", "5"]);
-    // Each leads to its own page.
+    await render(<AsksList asks={exampleAsksWithCounts} />);
+    const row = (title: string) => page.getByRole("listitem").filter({ hasText: title }).first();
+    const text = (title: string) => row(title).element().textContent;
+    await expect.element(page.getByText(copy.total(exampleAsksWithCounts.length))).toBeVisible();
+    // How many agreed leads it, then what's asked, its answers in the kind's order, and the facts.
+    const first = text(exampleAsks[0].title);
+    expect(first).toContain(`3${staffCopy.statuses.going}`);
+    expect(first).toContain(copy.kinds.event);
+    expect(first).toContain(
+      `${copy.count(staffCopy.statuses.going, 3)}${copy.count(staffCopy.statuses.declined, 50)}${copy.count(staffCopy.statuses.passed_on, 1)}`,
+    );
+    expect(first).toContain("1 Nov 2026");
+    expect(first).toContain(copy.askedBy.pauseai);
+    expect(first).toContain(`186 ${copy.page.writtenTo}`);
+    expect(first).toContain(copy.page.way(1, "mailing"));
+    // The code names it, so it has no Edit.
+    expect(row(exampleAsks[0].title).getByRole("link", { name: copy.edit }).query()).toBeNull();
+    // None agreed, and asked by nobody we record; no answers, nobody written to, nor any way of asking.
+    expect(text(exampleAsks[2].title)).toContain(`0${staffCopy.statuses.signed}`);
+    expect(text(exampleAsks[2].title)).toContain(copy.count(staffCopy.statuses.noAnswer, 4));
+    expect(text(exampleAsks[1].title)).not.toContain(copy.page.writtenTo);
+    // No date; asked by both, and both ways of asking.
+    expect(text(exampleAsks[3].title)).toContain(`${copy.askedBy.supporters}${copy.askedBy.pauseai}`);
+    expect(text(exampleAsks[3].title)).toContain(`${copy.page.way(1, "campaign")} · ${copy.page.way(2, "mailing")}`);
+    // Each leads to its own page, each answer to who gave it, and no answer to its page, which lists them.
     await expect
       .element(row(exampleAsks[0].title).getByRole("link", { name: exampleAsks[0].title }))
       .toHaveAttribute("href", `/staff/asks/${exampleAsks[0].slug}`);
     await expect
       .element(page.getByRole("link", { name: copy.count(staffCopy.statuses.passed_on, 1) }))
       .toHaveAttribute("href", "/staff/politicians?ask=edinburgh-conference-2026&answer=passed_on");
+    await expect
+      .element(row(exampleAsks[0].title).getByRole("link", { name: copy.count(staffCopy.statuses.noAnswer, 132) }))
+      .toHaveAttribute("href", "/staff/asks/edinburgh-conference-2026?answer=none");
     expect(page.getByRole("status").query()).toBeNull();
   });
 
-  it("has Edit for an ask staff added, and says how a save or delete went", async () => {
+  it("has Edit for an ask staff added, says how a save or delete went, and marks the one a link picked", async () => {
     const added = { ...exampleAsksWithCounts[0], slug: "winter-reception-dec-2026", title: "Winter reception" };
     const copy = staffCopy.asks;
-    const { rerender } = await render(<AsksTable asks={[added]} notice="deleted" />);
+    const row = () => page.getByRole("listitem").filter({ hasText: "Winter reception" }).first();
+    const { rerender } = await render(<AsksList asks={[added]} notice="deleted" />);
     await expect
-      .element(page.getByRole("row").filter({ hasText: "Winter reception" }).getByRole("link", { name: copy.edit }))
+      .element(row().getByRole("link", { name: copy.edit }))
       .toHaveAttribute("href", "/staff/asks/winter-reception-dec-2026/edit");
     await expect.element(page.getByRole("status")).toHaveTextContent(copy.notices.deleted);
-    await rerender(<AsksTable asks={[added]} notice="in-use" />);
+    await expect.element(row()).not.toHaveAttribute("aria-current");
+    await rerender(<AsksList asks={[added]} notice="in-use" picked={added.slug} />);
     await expect.element(page.getByRole("status")).toHaveTextContent(copy.notices["in-use"]);
+    await expect.element(row()).toHaveAttribute("aria-current", "true");
+    await rerender(<AsksList asks={[{ ...added, counts: {}, noAnswer: 0 }]} />);
+    await expect.element(row().getByText(copy.noAnswers)).toBeVisible();
+    await rerender(<AsksList asks={[]} />);
+    await expect.element(page.getByText(copy.none)).toBeVisible();
   });
 });
 

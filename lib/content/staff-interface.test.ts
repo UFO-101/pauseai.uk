@@ -163,7 +163,6 @@ it("says one and many of each of the new pages' counts", () => {
     [gmailReading.oneOffs(1), gmailReading.oneOffs(2)],
     [asks.page.letters(1), asks.page.letters(2)],
     [asks.page.way(1, "mailing"), asks.page.way(2, "campaign")],
-    [asks.page.bar(1, 2, "letter"), asks.page.bar(1, 2, "event")],
   ]) {
     expect(words[0]).not.toBe(words[1]);
   }

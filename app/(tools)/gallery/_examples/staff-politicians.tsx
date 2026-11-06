@@ -14,7 +14,7 @@ import {
 } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
 import AskView from "@/app/(staff)/staff/_components/AskView";
 import { exampleAskPage } from "@/app/(staff)/staff/_components/CampaignPages.examples";
-import AsksTable from "@/app/(staff)/staff/_components/AsksTable";
+import AsksList from "@/app/(staff)/staff/_components/AsksList";
 import { AskLead, AskPreview, AskTitle } from "@/app/(staff)/staff/_components/AskLine";
 import type { Group } from "../_components/types";
 import {
@@ -398,6 +398,43 @@ export const staffPoliticians: Group = {
           ),
         },
         {
+          label: "An event, its rarer answers in a column together",
+          render: () => (
+            <StaffPage as="div">
+              <AskView
+                ask={{
+                  ...exampleAskPage,
+                  kind: "event",
+                  counts: { going: 1, tentative: 1, declined_surgery: 1 },
+                  groups: [
+                    { key: "going", total: 0, people: [] },
+                    {
+                      key: "other",
+                      total: 1,
+                      people: [{ ...exampleAskPage.groups[0].people[0], status: "tentative" }],
+                    },
+                    {
+                      key: "declined",
+                      total: 1,
+                      people: [{ ...exampleAskPage.groups[1].people[0], status: "declined_surgery" }],
+                    },
+                  ],
+                  noAnswer: 0,
+                }}
+                answer=""
+              />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "A letter, with one answer chosen",
+          render: () => (
+            <StaffPage as="div">
+              <AskView ask={exampleAskPage} answer="signed" />
+            </StaffPage>
+          ),
+        },
+        {
           label: "An event the code names, with no answers and nothing that put it",
           render: () => (
             <StaffPage as="div">
@@ -409,7 +446,9 @@ export const staffPoliticians: Group = {
                   fixed: true,
                   counts: {},
                   writtenTo: 0,
+                  noAnswer: 0,
                   ways: [],
+                  groups: [],
                   answers: [],
                 }}
                 answer=""
@@ -420,14 +459,14 @@ export const staffPoliticians: Group = {
       ],
     },
     {
-      name: "AsksTable",
-      file: "app/(staff)/staff/_components/AsksTable.tsx",
+      name: "AsksList",
+      file: "app/(staff)/staff/_components/AsksList.tsx",
       variants: [
         {
           label: "Every ask, with its answers",
           render: () => (
             <StaffPage as="div">
-              <AsksTable asks={exampleAsksWithCounts} />
+              <AsksList asks={exampleAsksWithCounts} />
             </StaffPage>
           ),
         },

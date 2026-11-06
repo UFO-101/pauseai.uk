@@ -200,53 +200,90 @@ describe("CampaignView", () => {
 });
 
 describe("AskView", () => {
-  it("leads with what they were asked, with its answers beside how we asked", async () => {
+  const path = `/staff/asks/${exampleAskPage.slug}`;
+  const words = staffCopy.asks.page;
+
+  it("leads with what they were asked and its counts, then its answers, then how we asked", async () => {
     await render(<AskView ask={exampleAskPage} answer="" />);
-    const answers = staffCopy.asks.page;
     expect(document.body.textContent).toContain(staffCopy.politician.askedThem("PauseAI", "letter").slice(0, 8));
     await expect.element(link(exampleAskPage.ways[0].title)).toHaveAttribute("href", exampleAskPage.ways[0].href);
-    await says(answers.letters(19));
-    await says(answers.bar(2, 40, "letter"));
-    await expect.element(link(staffCopy.asks.edit)).toHaveAttribute("href", `/staff/asks/${exampleAskPage.slug}/edit`);
-    expect(page.getByRole("link", { name: new RegExp(answers.answered) }).query()).toBeNull();
+    await says(`${words.way(1, "campaign")} · ${words.way(1, "mailing")} · ${words.letters(40)}`);
+    await expect.element(link(staffCopy.asks.edit)).toHaveAttribute("href", `${path}/edit`);
+    await says(words.agreed);
     await expect.element(link("Polly Placeholder")).toHaveAttribute("href", "/staff/politicians/1");
   });
 
-  it("shows those who gave an answer, or none, from its pill, and pressed again, them all", async () => {
-    const path = `/staff/asks/${exampleAskPage.slug}`;
-    const pill = (words: string, n: number) => page.getByRole("link", { name: `${words} ${n}`, exact: true });
-    const signed = () => pill(staffCopy.statuses.signed, exampleAskPage.counts.signed!);
-    const none = () => pill(staffCopy.statuses.noAnswer, exampleAskPage.noAnswer);
+  it("gives each answer a column, its count leading to all who gave it", async () => {
+    const column = (name: string) => page.getByRole("link", { name, exact: true });
     const { rerender } = await render(<AskView ask={exampleAskPage} answer="" />);
-    await expect.element(signed()).toHaveAttribute("href", `${path}?answer=signed`);
-    await expect.element(signed()).not.toHaveAttribute("aria-current");
-    await expect.element(none()).toHaveAttribute("href", `${path}?answer=none`);
-    await says(staffCopy.asks.page.lastWrittenTo);
-    await rerender(<AskView ask={exampleAskPage} answer="signed" />);
+    await expect.element(column(`${staffCopy.statuses.signed} 2`)).toHaveAttribute("href", `${path}?answer=signed`);
+    await expect.element(column(`${staffCopy.statuses.noAnswer} 37`)).toHaveAttribute("href", `${path}?answer=none`);
+    // More than it shows: a link to the rest. All shown: none.
+    await expect.element(link(words.allOf(37))).toHaveAttribute("href", `${path}?answer=none`);
+    await expect.element(link(words.allOf(2))).toHaveAttribute("href", `${path}?answer=signed`);
+    expect(link(words.allOf(1)).query()).toBeNull();
+    // Each person's answer is only tagged when the column's name doesn't say it.
+    expect(page.getByText(staffCopy.statuses.signed, { exact: true }).all()).toHaveLength(1);
+    await rerender(
+      <AskView
+        ask={{
+          ...exampleAskPage,
+          kind: "event",
+          counts: { tentative: 1, declined_surgery: 1 },
+          noAnswer: 0,
+          groups: [
+            { key: "going", total: 0, people: [] },
+            { key: "other", total: 1, people: [{ ...exampleAskPage.groups[0].people[0], status: "tentative" }] },
+            {
+              key: "declined",
+              total: 1,
+              people: [{ ...exampleAskPage.groups[1].people[0], status: "declined_surgery" }],
+            },
+          ],
+        }}
+        answer=""
+      />,
+    );
+    await says(`${words.otherAnswers} 1`);
+    await says(staffCopy.statuses.tentative);
+    await says(staffCopy.statuses.declined_surgery);
+    // Nobody gave it: no link, and it says so.
+    await says(`${staffCopy.statuses.going} 0`);
+    expect(column(`${staffCopy.statuses.going} 0`).query()).toBeNull();
+    await says(words.none);
+  });
+
+  it("shows those who gave an answer chosen, with a lozenge for each, and pressed again, the columns", async () => {
+    const pill = (name: string, n: number) => page.getByRole("link", { name: `${name} ${n}`, exact: true });
+    const signed = () => pill(staffCopy.statuses.signed, 2);
+    const none = () => pill(staffCopy.statuses.noAnswer, 37);
+    const { rerender } = await render(<AskView ask={exampleAskPage} answer="signed" />);
     await expect.element(signed()).toHaveAttribute("href", path);
     await expect.element(signed()).toHaveAttribute("aria-current", "true");
-    await expect.element(signed()).toHaveAttribute("title", staffCopy.asks.page.showAll);
-    // Someone written to with no answer, and no one left unanswered: no pill for it.
+    await expect.element(signed()).toHaveAttribute("title", words.showAll);
+    await expect.element(none()).toHaveAttribute("href", `${path}?answer=none`);
+    await expect.element(none()).not.toHaveAttribute("aria-current");
+    await says(words.lastWrittenTo);
+    await says(staffCopy.statuses.declined);
+    await says("1 Oct 2026");
+    await expect.element(link(words.everyone)).toHaveAttribute("href", `/staff/politicians?ask=${exampleAskPage.slug}`);
+    // Those with no answer, and no lozenge for an answer nobody gave.
     await rerender(
       <AskView
         ask={{
           ...exampleAskPage,
           answers: [{ ...exampleAskPage.answers[0], status: null }],
+          groups: [{ ...exampleAskPage.groups[0], total: 0 }, exampleAskPage.groups[2]],
         }}
         answer="none"
       />,
     );
     await expect.element(none()).toHaveAttribute("aria-current", "true");
     await says(staffCopy.statuses.noAnswer);
-    await rerender(<AskView ask={{ ...exampleAskPage, noAnswer: 0 }} answer="" />);
-    expect(page.getByRole("link", { name: new RegExp(staffCopy.statuses.noAnswer) }).query()).toBeNull();
-    // Nobody has answered, but some were written to: the pill still shows them.
-    await rerender(<AskView ask={{ ...exampleAskPage, counts: {}, answers: [] }} answer="" />);
-    await expect.element(none()).toBeVisible();
+    expect(signed().query()).toBeNull();
   });
 
   it("pages through the answers, keeping the answer chosen", async () => {
-    const path = `/staff/asks/${exampleAskPage.slug}`;
     await render(<AskView ask={{ ...exampleAskPage, answersTotal: 150, pages: 2 }} answer="signed" />);
     await says(staffCopy.campaigns.politicians(150));
     await expect
@@ -259,30 +296,12 @@ describe("AskView", () => {
     await says("23 Nov 2026");
   });
 
-  it("an event the code names: no Edit, its answers its own, a link on our site or another's, and when there's nothing", async () => {
-    const event = {
-      ...exampleAskPage,
-      kind: "event" as const,
-      fixed: true,
-      date: null,
-      url: "/events",
-      counts: { going: 1, passed_on: 1 },
-    };
+  it("an event the code names: no Edit, a link on our site or another's, and when there's nothing", async () => {
     const { rerender } = await render(
-      <AskView
-        ask={{
-          ...event,
-          answers: [
-            { ...event.answers[0], status: "going" },
-            { ...event.answers[1], status: "passed_on" },
-          ],
-          ways: [{ ...event.ways[0], from: null, to: null }],
-        }}
-        answer="going"
-      />,
+      <AskView ask={{ ...exampleAskPage, kind: "event", fixed: true, url: "/events" }} answer="" />,
     );
     expect(link(staffCopy.asks.edit).query()).toBeNull();
-    await expect.element(link(staffCopy.asks.page.theLink.event)).toHaveAttribute("href", "/events");
+    await expect.element(link(words.theLink.event)).toHaveAttribute("href", "/events");
     await rerender(
       <AskView
         ask={{
@@ -291,27 +310,19 @@ describe("AskView", () => {
           counts: {},
           noAnswer: 0,
           ways: [],
+          groups: [],
           answers: [],
           writtenTo: 0,
         }}
         answer=""
       />,
     );
-    await expect.element(link(staffCopy.asks.page.theLink.letter)).toHaveAttribute("target", "_blank");
-    await says(staffCopy.asks.page.noWay);
-    await says(staffCopy.asks.page.none);
-    expect(document.querySelector("progress")).toBeNull();
-    await rerender(
-      <AskView
-        ask={{
-          ...exampleAskPage,
-          url: null,
-          ways: [{ ...exampleAskPage.ways[1], from: "2026-01-01T09:00:00Z", to: "2026-01-01T09:00:00Z" }],
-        }}
-        answer=""
-      />,
-    );
-    expect(document.body.textContent).toContain("1 Jan 2026");
+    await expect.element(link(words.theLink.letter)).toHaveAttribute("target", "_blank");
+    await says(words.noWay);
+    await says(words.none);
+    // Nobody has answered, but some were written to: their column still shows.
+    await rerender(<AskView ask={{ ...exampleAskPage, counts: {} }} answer="" />);
+    await expect.element(link(`${staffCopy.statuses.noAnswer} 37`)).toBeVisible();
   });
 });
 

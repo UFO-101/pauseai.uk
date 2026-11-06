@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { askSlug, asksAgreed } from "./asks";
+import { ANSWER_GROUPS, ASK_STATUSES, askSlug, asksAgreed, type AskKind } from "./asks";
 
 describe("askSlug", () => {
   it("makes a slug of the title's letters and digits, then the date's month and year", () => {
@@ -14,5 +14,13 @@ describe("asksAgreed", () => {
     const answers = { a: "signed", b: "going", c: "meeting_staff", d: "tentative", e: "declined" } as const;
     expect(asksAgreed(Object.fromEntries(Object.entries(answers).map(([ask, status]) => [ask, { status }])))).toBe(2);
     expect(asksAgreed({})).toBe(0);
+  });
+});
+
+describe("ANSWER_GROUPS", () => {
+  it("has every answer a kind allows in exactly one column", () => {
+    for (const kind of Object.keys(ASK_STATUSES) as AskKind[]) {
+      expect(ANSWER_GROUPS[kind].flatMap((group) => group.statuses).sort()).toEqual([...ASK_STATUSES[kind]].sort());
+    }
   });
 });

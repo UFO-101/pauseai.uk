@@ -1242,25 +1242,25 @@ export const staffCopy = {
       agreed: "agreed",
       howWeAsked: "How we asked",
       answersTitle: "Answers",
+      // Pressing the answer chosen goes back to all its columns.
       showAll: "Show all the answers",
+      // The column of the rarer answers an event can have (ANSWER_GROUPS).
+      otherAnswers: "⁂ Other answers",
+      // At the foot of a column with more people than it shows.
+      allOf: (n: number) => `⁂ All ${n.toLocaleString("en-GB")} →`,
       none: "No answers yet.",
       noWay: "No mailing or campaign has put this.",
       politician: "Politician",
       answer: "Answer",
       lastWrittenTo: "Last written to",
       everyone: "Every politician with this ask →",
-      // Of everyone asked: written to by a campaign or mailing, or with an answer recorded.
-      bar: (agreed: number, of: number, kind: string) =>
-        `${agreed} of ${of} asked have ${kind === "letter" ? "signed" : "agreed to attend"}`,
-      campaign: "Campaign",
-      mailing: "Mailing",
       letters: (n: number) => `${n} ${n === 1 ? "letter" : "letters"}`,
       way: (n: number, word: "campaign" | "mailing") => `${n} ${word}${n === 1 ? "" : "s"}`,
     },
     askedBy: { supporters: "Supporters", pauseai: "PauseAI", controlai: "ControlAI" },
     noAnswers: "No answers yet",
-    // Each answer's count links to the politicians who gave it.
-    count: (status: string, n: number) => `${status}: ${n}`,
+    // Each answer's lozenge on the list, which links to the politicians who gave it.
+    count: (status: string, n: number) => `${status} ${n}`,
   },
   politician: {
     statusesTitle: "Asks",

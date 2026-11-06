@@ -49,16 +49,24 @@ export const exampleAsks: Ask[] = [
 
 /** The asks with how many gave each answer: a letter signed and declined, an event answered every way it allows, and one nobody has answered. */
 export const exampleAsksWithCounts: AskWithCounts[] = [
-  { ...exampleAsks[0], counts: { declined: 50, passed_on: 1, going: 3 }, writtenTo: 186, campaigns: 0, mailings: 1 },
+  {
+    ...exampleAsks[0],
+    counts: { declined: 50, passed_on: 1, going: 3 },
+    writtenTo: 186,
+    noAnswer: 132,
+    campaigns: 0,
+    mailings: 1,
+  },
   {
     ...exampleAsks[1],
     counts: { going: 2, tentative: 1, meeting_staff: 1, declined_surgery: 1 },
     writtenTo: 0,
+    noAnswer: 0,
     campaigns: 0,
     mailings: 0,
   },
-  { ...exampleAsks[2], counts: {}, writtenTo: 4, campaigns: 1, mailings: 0 },
-  { ...exampleAsks[3], counts: { signed: 10, declined: 2 }, writtenTo: 40, campaigns: 1, mailings: 2 },
+  { ...exampleAsks[2], counts: {}, writtenTo: 4, noAnswer: 4, campaigns: 1, mailings: 0 },
+  { ...exampleAsks[3], counts: { signed: 10, declined: 2 }, writtenTo: 40, noAnswer: 28, campaigns: 1, mailings: 2 },
 ];
 
 /** An MP in office who has signed the letter to the PM, and declined the conference, from Airtable. */

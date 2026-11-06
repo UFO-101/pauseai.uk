@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { askColumns } from "../../../_components/AsksTable";
+import { askColumns } from "../../../_components/AsksList";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { asksWithCounts } from "@/lib/server/asks";
 import { requireStaff } from "@/lib/server/staff-auth";
