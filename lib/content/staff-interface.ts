@@ -2074,8 +2074,9 @@ export const staffCopy = {
     // letter from the web, Luma and the members.
     pageTitle: "Import data",
     // Each import's icons, named for screen readers and on hover: where it's
-    // from, and whether it only checks. Then how often it runs, the overview's
-    // headings and a lozenge on the job's page.
+    // from. Then how often it runs, the overview's headings and a lozenge on
+    // the job's page, and the lozenges after some jobs' names: the one that
+    // only checks, the one that sends, and the one that keeps the site tidy.
     airtable: "Airtable",
     web: "Web",
     database: "Database",
@@ -2088,6 +2089,8 @@ export const staffCopy = {
     hourly: "Hourly",
     oneOff: "One-off",
     checkOnly: "Check only",
+    takesAction: "Takes action",
+    siteAdmin: "Site admin",
   },
   letters: {
     title: "Letters to MPs",

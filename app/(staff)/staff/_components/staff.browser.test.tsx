@@ -2440,8 +2440,12 @@ describe("ImportOverview", () => {
       "/staff/audit-log",
       "/staff/mailings",
     ]);
-    // The MP check says it changes nothing, after its name.
+    // After its name, the MP check says it changes nothing, the sending that it acts, the tidying that it's housekeeping.
     expect(cards[6].querySelector("h3")!.textContent).toBe(`${jobTitles["check-mps"]}${staffCopy.import.checkOnly}`);
+    expect(cards[4].querySelector("h3")!.textContent).toBe(
+      `${jobTitles["send-mailings"]}${staffCopy.import.takesAction}`,
+    );
+    expect(cards[8].querySelector("h3")!.textContent).toBe(`${jobTitles["tidy-logs"]}${staffCopy.import.siteAdmin}`);
     expect(cards[9].querySelector("h3")!.textContent).toBe(jobTitles["sync-emails"]);
   });
 

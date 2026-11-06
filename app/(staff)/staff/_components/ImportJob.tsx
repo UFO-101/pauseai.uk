@@ -50,9 +50,16 @@ const SOURCES: Record<ImportJob, ImportSource> = {
   "tidy-logs": "database",
 };
 
-/** The check that changes nothing, said so in a lozenge after its name. */
-function CheckOnly({ job }: { job: ImportJob }) {
-  return job === "check-mps" ? <Tag>{words.checkOnly}</Tag> : null;
+/** What sets a job apart, in a lozenge after its name: the check that changes nothing, the sending that acts on the world, the tidying that's the site's housekeeping. */
+const TAGS: Partial<Record<ImportJob, string>> = {
+  "check-mps": words.checkOnly,
+  "send-mailings": words.takesAction,
+  "tidy-logs": words.siteAdmin,
+};
+
+function JobTag({ job }: { job: ImportJob }) {
+  const tag = TAGS[job];
+  return tag ? <Tag>{tag}</Tag> : null;
 }
 
 /** Each job's description, around a link to where it reads from, and its button and what to say before its first run. */
@@ -228,7 +235,7 @@ export function ImportOverview({
                   title={jobTitles[job]}
                   href={importPath(job)}
                   icon={<ImportIcon source={SOURCES[job]} />}
-                  tags={<CheckOnly job={job} />}
+                  tags={<JobTag job={job} />}
                   intro={<Intro job={job} airtableTable={airtableTable} />}
                 >
                   <NewestRun job={job} run={newest[i]} press={presses[i]} />
@@ -242,7 +249,7 @@ export function ImportOverview({
   );
 }
 
-/** One job's page: the way back, its icon, name, how often it runs and whether it only checks, what it does, its button, then every run it has made, newest first. */
+/** One job's page: the way back, its icon, name, how often it runs and what sets it apart, what it does, its button, then every run it has made, newest first. */
 export function ImportJobPage({
   job,
   runs,
@@ -275,7 +282,7 @@ export function ImportJobPage({
         <h1 className={styles.heading}>
           {jobTitles[job]}
           <Tag>{words[JOB_SCHEDULES[job]]}</Tag>
-          <CheckOnly job={job} />
+          <JobTag job={job} />
         </h1>
       </div>
       <p>
