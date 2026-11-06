@@ -30,7 +30,7 @@ async function logIn(page: Page, database: string) {
  */
 async function startFromList(page: Page, filters: string, n: number) {
   await page.goto(`${BASE}/staff/politicians?${filters}`);
-  await page.getByRole("button", { name: copy.newTitle }).click();
+  await page.getByRole("button", { name: copy.mailThese(n) }).click();
   await expect(page.getByText(copy.choosingNew)).toBeVisible();
   const bar = page.getByRole("region", { name: copy.choosingCount(n) });
   await bar.getByRole("link", { name: copy.writeToThese(n) }).click();
@@ -149,9 +149,22 @@ test("A new mailing", async ({ page, request, flowDatabase }) => {
   await expect(page.getByLabel(copy.fromLegend, { exact: false })).toHaveValue(staffEmail());
 });
 
+test("A new mailing from the whole list", async ({ page, request, flowDatabase }) => {
+  story("On the politicians list with no filter, the button is New mailing.");
+  await syncPoliticians(request, BASE);
+  await logIn(page, flowDatabase);
+  await page.goto(`${BASE}/staff/politicians`);
+  await frame(page, "The politicians list");
+  story("It makes an empty draft, with no one ticked, rather than one to everyone.");
+  await page.getByRole("button", { name: copy.newTitle }).click();
+  await expect(page.getByText(copy.choosingNew)).toBeVisible();
+  await expect(page.getByText(copy.noneTicked)).toBeVisible();
+  await frame(page, "Choosing, with no one ticked", { window: true });
+});
+
 test("Changing and deleting a draft", async ({ page, request, flowDatabase }) => {
   story(
-    "On the politicians list, staff choose the Lords and press New mailing: everyone the list finds is ticked for it.",
+    "On the politicians list, staff choose the Lords and press Mail these: everyone the list finds is ticked for it.",
   );
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
@@ -217,11 +230,11 @@ test("Changing and deleting a draft", async ({ page, request, flowDatabase }) =>
 });
 
 test("Pasting names", async ({ page, request, flowDatabase }) => {
-  story("On the Commons, staff press New mailing: all three MPs it finds are ticked, and the box over them too.");
+  story("On the Commons, staff press Mail these: all three MPs it finds are ticked, and the box over them too.");
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
   await page.goto(`${BASE}/staff/politicians?house=commons`);
-  await page.getByRole("button", { name: copy.newTitle }).click();
+  await page.getByRole("button", { name: copy.mailThese(3) }).click();
   await expect(page.getByText(copy.choosingNew)).toBeVisible();
   await expect(page.getByRole("checkbox", { name: copy.tickAll(3) })).toBeChecked();
   await frame(page, "The Commons, all ticked", { window: true });

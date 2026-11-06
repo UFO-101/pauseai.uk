@@ -1,3 +1,5 @@
+import type { AccountSort } from "@/lib/staff-account-sort";
+import type { SortDirection } from "@/lib/staff-sort";
 import { expect, it } from "vitest";
 import { query } from "@/lib/server/db";
 import { createSession, sessionEmail } from "@/lib/server/staff-auth";
@@ -18,6 +20,24 @@ const log = () =>
 
 describeWithDatabase("staff accounts", () => {
   useTestDatabase();
+
+  it("sorts by a column, those with nothing in it last either way, then by address", async () => {
+    await query(
+      `INSERT INTO staff_accounts (email, permissions, added_by, added_at, last_seen_at) VALUES
+         ('a@pauseai.uk', '{}', 'x', '2026-01-02T00:00:00Z', NULL),
+         ('b@pauseai.uk', '{}', 'x', '2026-01-03T00:00:00Z', '2026-02-01T00:00:00Z'),
+         ('c@pauseai.uk', '{}', 'x', '2026-01-01T00:00:00Z', '2026-03-01T00:00:00Z')`,
+    );
+    const emails = async (key: AccountSort, dir: SortDirection) =>
+      (await listStaffAccounts({ key, dir })).map((account) => account.email[0]);
+    expect((await listStaffAccounts()).map((account) => account.email[0])).toEqual(["a", "b", "c"]);
+    expect(await emails("added", "desc")).toEqual(["b", "a", "c"]);
+    expect(await emails("lastSeen", "desc")).toEqual(["c", "b", "a"]);
+    expect(await emails("lastSeen", "asc")).toEqual(["b", "c", "a"]);
+    expect(await emails("sessions", "desc")).toEqual(["a", "b", "c"]);
+    expect(await emails("lastLogin", "asc")).toEqual(["a", "b", "c"]);
+    expect(await emails("email", "desc")).toEqual(["c", "b", "a"]);
+  });
 
   it("has nobody before anyone is added (the migration's admin is emptied with the rest in tests)", async () => {
     expect(await accountOf("jo@pauseai.uk")).toBeUndefined();

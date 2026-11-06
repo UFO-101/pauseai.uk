@@ -20,6 +20,7 @@ import Counts from "./ui/Counts";
 import Grid, { Card, spanClass } from "./ui/Grid";
 import { ListTable, type ListColumn } from "./ui/ListFrame";
 import styles from "./Details.module.css";
+import TestTag from "./TestTag";
 
 const copy = staffCopy.supporters;
 
@@ -275,7 +276,12 @@ const letterColumns: ListColumn<SupporterLetter>[] = [
   {
     key: "to",
     label: copy.detail.columns.to,
-    cell: (l) => <StaffLink href={`/staff/politicians/${l.politicianId}`}>{l.mpName}</StaffLink>,
+    cell: (l) => (
+      <>
+        <StaffLink href={`/staff/politicians/${l.politicianId}`}>{l.mpName}</StaffLink>
+        <TestTag isTest={l.isTest} />
+      </>
+    ),
   },
   {
     key: "campaign",

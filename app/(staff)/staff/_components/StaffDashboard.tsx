@@ -17,11 +17,15 @@ import {
   SERIES_POINTS,
   signedHref,
 } from "@/lib/staff-dashboard";
+import { SUPPORTER_SOURCES } from "@/lib/supporters";
 import type { Permission } from "@/lib/staff-permissions";
 import { staffDate, staffDay, staffTime } from "@/lib/staff-time";
 import Grid, { spanClass } from "./ui/Grid";
 import Strip from "./ui/Strip";
+import Tabs from "./ui/Tabs";
 import Sparkline from "./Sparkline";
+import StackedBars from "./StackedBars";
+import TestTag from "./TestTag";
 import styles from "./StaffDashboard.module.css";
 import { buttonClass } from "@/components/ui/Button";
 import { Muted } from "@/components/ui/Text";
@@ -42,7 +46,10 @@ function Action({ action }: { action: DashboardAction }) {
         ]
       : action.kind === "blocked-mp"
         ? [
-            words.blockedMp(action.name),
+            <>
+              {words.blockedMp(action.name)}
+              <TestTag isTest={action.isTest} />
+            </>,
             words.blockedMpDetail,
             words.openMp,
             `/staff/politicians/${action.politicianId}`,
@@ -116,6 +123,32 @@ function CampaignBar({ counts }: { counts: Record<string, number> }) {
   );
 }
 
+/** New supporters in bars by the window, each split by their earliest source, and saying so. */
+function SourceBars({ dashboard, label }: { dashboard: Dashboard; label: string }) {
+  const sources = staffCopy.supporters.sources;
+  const points = dashboard.supportersBySource;
+  return (
+    <>
+      <StackedBars
+        name={copy.bySourceName(label, dashboard.days, SERIES_POINTS)}
+        parts={SUPPORTER_SOURCES.map((key) => ({ key, label: sources[key] }))}
+        bars={points.map((point) => ({
+          counts: point.sources,
+          label: [
+            copy.seriesPoint(dashboard.days, staffDate(point.from), point.count),
+            ...SUPPORTER_SOURCES.filter((key) => point.sources[key]).map(
+              (key) => `${sources[key]} ${point.sources[key]}`,
+            ),
+          ].join(" · "),
+        }))}
+        from={staffDate(points[0].from)}
+        to={staffDate(dashboard.asOf)}
+      />
+      <Muted>{copy.bySourceNote}</Muted>
+    </>
+  );
+}
+
 /** A tile: the window's number, what it counts, a bar or a line where the metric has one, and how it moved. The whole tile is a link to its page, where the person may see it. */
 function Tile({
   metric,
@@ -126,14 +159,15 @@ function Tile({
   dashboard: Dashboard;
   permissions: readonly Permission[];
 }) {
-  const { permission, worse } = METRIC_LINKS[metric];
+  const { permissions: needed, worse } = METRIC_LINKS[metric];
   const href = metric === "mpsSigned" ? signedHref(dashboard) : METRIC_LINKS[metric].href;
   const count = dashboard.counts[metric];
   const label = copy.metrics[metric](count.current);
-  // A bar only when some campaign counted, a line only when some window counted; the tile is a third, not a sixth, only to fit one.
+  // A bar only when some campaign counted, a line or bars by source only when some window counted; the tile is a third, not a sixth, only to fit one.
   const bar = isCampaignMetric(metric) && Object.values(dashboard.byCampaign[metric]).some((n) => n > 0);
   const series = isSeriesMetric(metric) ? dashboard.series[metric] : [];
   const line = series.some((point) => point.count > 0);
+  const bySource = metric === "supportersAdded" && dashboard.supportersBySource.some((point) => point.count > 0);
   const inside = (
     <>
       <span className={styles.number}>
@@ -153,12 +187,13 @@ function Tile({
           to={staffDate(dashboard.asOf)}
         />
       )}
+      {bySource && <SourceBars dashboard={dashboard} label={label} />}
       <Change count={count} worse={worse === true} days={dashboard.days} />
     </>
   );
-  const linked = href !== undefined && (!permission || permissions.includes(permission));
+  const linked = needed.every((permission) => permissions.includes(permission));
   return (
-    <li className={spanClass(bar || line ? 2 : 1)}>
+    <li className={spanClass(bar || line || bySource ? 2 : 1)}>
       {linked ? (
         <StaffLink href={href} className={styles.tile}>
           {inside}
@@ -183,8 +218,8 @@ function Tiles({
   const metrics: readonly DashboardMetric[] = DASHBOARD_SECTIONS[section];
   return (
     <>
-      <h2 className={styles.heading}>{copy.sections[section]}</h2>
-      <Grid as="ul" label={copy.sections[section]} even>
+      <h2 className={styles.heading}>{staffCopy.nav.sections[section]}</h2>
+      <Grid as="ul" label={staffCopy.nav.sections[section]} even>
         {metrics.map((metric) => (
           <Tile key={metric} metric={metric} dashboard={dashboard} permissions={permissions} />
         ))}
@@ -195,8 +230,8 @@ function Tiles({
 
 /**
  * The home page's dashboard: what needs a person, a strip each, only
- * when something does; the day and the window, with the other windows as links; the
- * window's numbers in three groups, each against the window before.
+ * when something does; the day, and the windows as tabs; the window's numbers
+ * in three groups, each against the window before.
  */
 export default function StaffDashboard({
   dashboard,
@@ -216,21 +251,16 @@ export default function StaffDashboard({
       )}
       <p className={styles.window}>
         <strong>{staffDay(dashboard.asOf)}</strong>
-        <span className={styles.windows}>
-          <Muted>{copy.windows}</Muted>
-          {DASHBOARD_WINDOWS.map((days) =>
-            days === dashboard.days ? (
-              <strong key={days} aria-current="true">
-                {copy.window(days)}
-              </strong>
-            ) : (
-              <StaffLink key={days} href={days === DASHBOARD_WINDOWS[0] ? "/staff" : `/staff?days=${days}`}>
-                {copy.window(days)}
-              </StaffLink>
-            ),
-          )}
-        </span>
       </p>
+      <Tabs
+        label={copy.windows}
+        current={String(dashboard.days)}
+        tabs={DASHBOARD_WINDOWS.map((days) => ({
+          key: String(days),
+          label: copy.window(days),
+          href: days === DASHBOARD_WINDOWS[0] ? "/staff" : `/staff?days=${days}`,
+        }))}
+      />
       {(Object.keys(DASHBOARD_SECTIONS) as DashboardSection[]).map((section) => (
         <Tiles key={section} section={section} dashboard={dashboard} permissions={permissions} />
       ))}

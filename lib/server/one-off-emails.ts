@@ -342,7 +342,7 @@ export type OneOffThreadRow = {
   someoneElse: boolean;
   latestAt: string;
   messages: number;
-  people: { id: number; name: string }[];
+  people: { id: number; name: string; isTest: boolean }[];
   /** Who wrote in it, each once, in the order they first wrote; null when hidden. */
   participants: string[] | null;
   /** The mailboxes it was read from; null when hidden. */
@@ -353,8 +353,9 @@ export type OneOffThreadRow = {
 
 const PAGE_SIZE = 100;
 
-const PEOPLE = `coalesce((SELECT json_agg(json_build_object('id', n.id, 'name', n.name) ORDER BY n.name)
-    FROM one_off_thread_people tp JOIN notable_people n ON n.id = tp.notable_person_id WHERE tp.thread_id = t.id), '[]')`;
+const PEOPLE = `coalesce((SELECT json_agg(json_build_object('id', n.id, 'name', n.name, 'isTest', coalesce(p.is_test, false)) ORDER BY n.name)
+    FROM one_off_thread_people tp JOIN notable_people n ON n.id = tp.notable_person_id
+    LEFT JOIN politicians p ON p.id = n.id WHERE tp.thread_id = t.id), '[]')`;
 
 type Sender = { name: string; address: string };
 

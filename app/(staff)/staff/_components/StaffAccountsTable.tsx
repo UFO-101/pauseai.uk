@@ -6,16 +6,21 @@ import { Checkbox, TextInput } from "@/components/ui/Controls";
 import { FieldError } from "@/components/ui/Field";
 import Table from "@/components/ui/Table";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { ACCOUNT_SORTS, type AccountSort } from "@/lib/staff-account-sort";
 import { ADDED_BY_LOGIN, isStaffEmail, PERMISSIONS, type Permission } from "@/lib/staff-permissions";
+import { sortHref, type SortSpec } from "@/lib/staff-sort";
 import type { StaffAccount } from "@/lib/server/staff-accounts";
 import { staffTime } from "@/lib/staff-time";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Muted } from "@/components/ui/Text";
 import { DeleteTwice } from "./DeleteTwice";
+import SortHeading from "./SortHeading";
 import Bubble from "./ui/Bubble";
 import styles from "./StaffAccountsTable.module.css";
 
 type Action = (form: FormData) => void | Promise<void>;
+
+const PATH = "/staff/accounts";
 
 /** The form an account's permissions are saved with: whose, and "permission:<name>" for each ticked (lib/staff-forms.ts). */
 function accountForm(email: string, permissions: readonly Permission[]): FormData {
@@ -168,16 +173,17 @@ export function AddStaff({ accounts, add }: { accounts: StaffAccount[]; add: Act
 }
 
 /**
- * Every account: its permissions, and Edit to change them; when and by
- * whom it was added; when it last logged in and was seen; its sessions
- * open; and at the right, a button to end those sessions and one to remove
- * it, pressed twice. Its last row is everyone else at pauseai.uk, who can
+ * Every account, sorted by any heading but its permissions: its permissions,
+ * and Edit to change them; when and by whom it was added; when it last logged
+ * in and was seen; its sessions open; and at the right, a button to end those
+ * sessions and one to remove it, pressed twice. Its last row is everyone else at pauseai.uk, who can
  * log in with no permissions, said across the row from Added on. Then, under its own heading, what each
  * permission opens.
  */
 export default function StaffAccountsTable({
   accounts,
   you,
+  sort,
   save,
   remove,
   endSessions,
@@ -185,6 +191,7 @@ export default function StaffAccountsTable({
   accounts: StaffAccount[];
   /** The admin looking, whose own row warns that ending its sessions ends theirs. */
   you: string;
+  sort: SortSpec<AccountSort>;
   /** Gives an address an account with exactly the permissions in the form, adding it if it has none. */
   save: Action;
   remove: Action;
@@ -192,17 +199,22 @@ export default function StaffAccountsTable({
 }) {
   const copy = staffCopy.accounts;
   const columns = copy.columns;
+  const heading = (key: AccountSort, label: string) => (
+    <SortHeading sortKey={key} current={sort} href={sortHref(PATH, {}, ACCOUNT_SORTS, sort, key)}>
+      {label}
+    </SortHeading>
+  );
   return (
     <>
       <Table align="middle">
         <thead>
           <tr>
-            <th>{columns.email}</th>
+            {heading("email", columns.email)}
             <th>{columns.permissions}</th>
-            <th>{columns.added}</th>
-            <th>{columns.lastLogin}</th>
-            <th>{columns.lastSeen}</th>
-            <th>{columns.sessions}</th>
+            {heading("added", columns.added)}
+            {heading("lastLogin", columns.lastLogin)}
+            {heading("lastSeen", columns.lastSeen)}
+            {heading("sessions", columns.sessions)}
             <th />
           </tr>
         </thead>

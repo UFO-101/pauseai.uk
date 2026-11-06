@@ -1,5 +1,6 @@
 import type { ImportJob } from "./import-runs";
 import type { Permission } from "./staff-permissions";
+import type { SupporterSource } from "./supporters";
 
 // The staff home's dashboard: what needs a person, and what happened in
 // the window against the window before. The
@@ -15,14 +16,14 @@ export function dashboardWindow(days: string | undefined): DashboardWindow {
   return found ?? DASHBOARD_WINDOWS[0];
 }
 
-/** How many windows a sparkline shows, the current one last. */
+/** How many windows a sparkline or a chart of bars shows, the current one last. */
 export const SERIES_POINTS = 8;
 
-/** The tiles, in three groups: MPs, events, supporters. */
+/** The tiles, in three groups, in the sidebar's order and under its names. */
 export const DASHBOARD_SECTIONS = {
-  mps: ["lettersSent", "lettersReplied", "mpsSigned"],
-  events: ["eventRegistrations", "eventsHeld"],
   supporters: ["supportersAdded", "unsubscribes"],
+  politicians: ["lettersSent", "lettersReplied", "mpsSigned"],
+  events: ["eventRegistrations", "eventsHeld"],
 } as const;
 export type DashboardSection = keyof typeof DASHBOARD_SECTIONS;
 export type DashboardMetric = (typeof DASHBOARD_SECTIONS)[DashboardSection][number];
@@ -32,7 +33,7 @@ export const BY_CAMPAIGN = ["lettersSent", "mpsSigned"] as const satisfies reado
 export type CampaignMetric = (typeof BY_CAMPAIGN)[number];
 
 /** The metrics shown with a sparkline: counts that move and mean something. */
-export const WITH_SERIES = ["eventRegistrations", "supportersAdded"] as const satisfies readonly DashboardMetric[];
+export const WITH_SERIES = ["eventRegistrations"] as const satisfies readonly DashboardMetric[];
 export type SeriesMetric = (typeof WITH_SERIES)[number];
 
 /** One metric: how many in the window, and how many in the window before it. */
@@ -41,31 +42,36 @@ export type Count = { current: number; previous: number };
 /** One point of a sparkline: the count in a window starting at `from`, ISO. */
 export type SeriesPoint = { from: string; count: number };
 
+/** One bar of new supporters: those first seen in a window starting at `from`, ISO, each under their earliest source. */
+export type SourcePoint = SeriesPoint & { sources: Partial<Record<SupporterSource, number>> };
+
 /**
  * Where each tile leads: the page that lists what it counts, and the
- * permission it needs, if any. A tile without a page is no link; the MPs
- * signed tile's page depends on who signed (signedHref). `worse`
- * marks a number that's bad when it rises, so its change is coloured the
- * other way round.
+ * permissions it takes to see it there; without them the tile is no link.
+ * The MPs signed tile's page depends on who signed (signedHref). The letters
+ * are in the sent emails, which only an admin opens, and only one who may see
+ * supporters finds letters in. `worse` marks a number that's bad when it
+ * rises, so its change is coloured the other way round.
  */
-export const METRIC_LINKS: Record<DashboardMetric, { href?: string; permission?: Permission; worse?: true }> = {
-  lettersSent: { href: "/staff/campaigns", permission: "supporters" },
-  lettersReplied: { href: "/staff/campaigns", permission: "supporters" },
-  mpsSigned: { href: "/staff/politicians" },
-  eventRegistrations: { href: "/staff/supporters?activity=registered", permission: "supporters" },
-  eventsHeld: {},
-  supportersAdded: { href: "/staff/supporters", permission: "supporters" },
-  unsubscribes: {
-    href: "/staff/supporters?contact=email:luma-calendar:no",
-    permission: "supporters",
-    worse: true,
-  },
-};
+export const METRIC_LINKS: Record<DashboardMetric, { href: string; permissions: readonly Permission[]; worse?: true }> =
+  {
+    lettersSent: { href: "/staff/sent-emails?purpose=letter&link=campaign", permissions: ["admin", "supporters"] },
+    lettersReplied: { href: "/staff/sent-emails?purpose=forwarded-reply", permissions: ["admin", "supporters"] },
+    mpsSigned: { href: "/staff/politicians", permissions: [] },
+    eventRegistrations: { href: "/staff/supporters?activity=registered", permissions: ["supporters"] },
+    eventsHeld: { href: "/staff/events?when=past", permissions: [] },
+    supportersAdded: { href: "/staff/supporters?sort=first&dir=desc", permissions: ["supporters"] },
+    unsubscribes: {
+      href: "/staff/supporters?contact=email:luma-calendar:unsubscribed",
+      permissions: ["supporters"],
+      worse: true,
+    },
+  };
 
 /** Something waiting for a person, with where its button goes. */
 export type DashboardAction =
   | { kind: "held-sync"; at: string; added: number; removed: number; changed: number }
-  | { kind: "blocked-mp"; politicianId: number; name: string; at: string }
+  | { kind: "blocked-mp"; politicianId: number; name: string; isTest: boolean; at: string }
   | { kind: "failed-import"; job: ImportJob; at: string; error: string }
   | { kind: "letters-inbox"; inbox: string; count: number; at: string };
 
@@ -85,6 +91,8 @@ export type Dashboard = {
   signedMp: number | null;
   /** SERIES_POINTS windows of `days`, oldest first, the current one last, for the tiles with a sparkline. */
   series: Record<SeriesMetric, SeriesPoint[]>;
+  /** SERIES_POINTS windows of `days`, oldest first, the current one last, of new supporters by their earliest source. */
+  supportersBySource: SourcePoint[];
   actions: DashboardAction[];
 };
 

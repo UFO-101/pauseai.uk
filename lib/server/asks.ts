@@ -71,6 +71,7 @@ export type AskWay = {
 export type AskAnswer = {
   politicianId: number;
   name: string;
+  isTest: boolean;
   constituency: string | null;
   party: string | null;
   /** Null for someone written to who hasn't answered. */
@@ -142,7 +143,7 @@ export async function askPageData(slug: string, status?: string, page = 1): Prom
     ),
     query<AskAnswer>(
       `WITH ${WRITTEN_TO}
-       SELECT n.id::int AS "politicianId", n.name, p.constituency, p.party, s.status, w.at AS "lastWrittenTo"
+       SELECT n.id::int AS "politicianId", n.name, p.is_test AS "isTest", p.constituency, p.party, s.status, w.at AS "lastWrittenTo"
        ${ANSWERS_FROM}
        ORDER BY CASE WHEN $2::text = 'none' THEN w.at END, n.name
        LIMIT ${ANSWERS_PAGE_SIZE} OFFSET ${(page - 1) * ANSWERS_PAGE_SIZE}`,

@@ -8,6 +8,7 @@ import { importPath } from "@/lib/import-runs";
 import type { LoggedChange, Named } from "@/lib/server/audit";
 import CampaignName from "./CampaignName";
 import { DotParts } from "./Logged";
+import ExternalLink from "./ui/ExternalLink";
 
 const copy = staffCopy.changes;
 
@@ -67,11 +68,7 @@ function Field({ name, value, airtableTable }: { name: string; value: unknown; a
   }
   let shown: ReactNode;
   if (name === "airtableId") {
-    shown = (
-      <a href={`${airtableTable}/${String(value)}`} target="_blank" rel="noreferrer">
-        {String(value)}
-      </a>
-    );
+    shown = <ExternalLink href={`${airtableTable}/${String(value)}`}>{String(value)}</ExternalLink>;
   } else if (name === "kind") shown = staffCopy.emails.kinds[String(value)] ?? String(value);
   else if (name === "status") shown = staffCopy.statuses[String(value)] ?? String(value);
   else if (name === "from" || name === "to" || name === "permissions") shown = permissionNames(value);

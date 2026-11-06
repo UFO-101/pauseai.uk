@@ -14,18 +14,22 @@ export type Note = {
 /** Who's looking: their email, and their permissions. */
 export type NoteReader = { email: string; permissions: readonly Permission[] };
 
-/** How long after writing a note its writer may edit or delete it, as a message app lets you. */
+/** How long after writing a note it may be edited or deleted, as a message app lets you. */
 export const NOTE_EDIT_HOURS = 24;
 
-/** Whether `reader` wrote the note, no more than NOTE_EDIT_HOURS before `at`. */
-export function canEditNote(note: Pick<Note, "writtenBy" | "createdAt">, reader: NoteReader, at: Date): boolean {
-  const age = at.getTime() - new Date(note.createdAt).getTime();
-  return note.writtenBy === reader.email && age <= NOTE_EDIT_HOURS * 60 * 60 * 1000;
+/** Whether the note was written no more than NOTE_EDIT_HOURS before `at`. */
+function stillYoung(note: Pick<Note, "createdAt">, at: Date): boolean {
+  return at.getTime() - new Date(note.createdAt).getTime() <= NOTE_EDIT_HOURS * 60 * 60 * 1000;
 }
 
-/** Whether `reader` may delete the note: its writer while they may edit it, or an admin at any time. */
+/** Whether `reader` may edit the note: its writer, while it's young enough. */
+export function canEditNote(note: Pick<Note, "writtenBy" | "createdAt">, reader: NoteReader, at: Date): boolean {
+  return note.writtenBy === reader.email && stillYoung(note, at);
+}
+
+/** Whether `reader` may delete the note: its writer or an admin, while it's young enough. */
 export function canDeleteNote(note: Pick<Note, "writtenBy" | "createdAt">, reader: NoteReader, at: Date): boolean {
-  return reader.permissions.includes("admin") || canEditNote(note, reader, at);
+  return (note.writtenBy === reader.email || reader.permissions.includes("admin")) && stillYoung(note, at);
 }
 
 /** A stretch of a note's text: words, or a link, as written and where it leads. */

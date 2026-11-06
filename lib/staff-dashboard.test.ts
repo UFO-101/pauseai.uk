@@ -14,7 +14,7 @@ describe("dashboardWindow", () => {
 it("knows which metrics have a bar by campaign, and which a sparkline", () => {
   expect(isCampaignMetric("lettersSent")).toBe(true);
   expect(isCampaignMetric("eventsHeld")).toBe(false);
-  expect(isSeriesMetric("supportersAdded")).toBe(true);
+  expect(isSeriesMetric("eventRegistrations")).toBe(true);
   expect(isSeriesMetric("lettersSent")).toBe(false);
 });
 

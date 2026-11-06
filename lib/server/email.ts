@@ -251,7 +251,7 @@ export type EmailBlock = {
   /** The bounce was read from a staff member's Gmail, not reported by Postmark. */
   foundInGmail: boolean;
   /** The politicians with this address. */
-  politicians: { id: number; name: string }[];
+  politicians: { id: number; name: string; isTest: boolean }[];
   /** The letter whose email found it out, if one did, and the politician it was to. */
   letter: SentLetter | null;
   /** What the email that found it out was, if the site has a record of sending it. */
@@ -263,8 +263,8 @@ export type EmailBlock = {
 const SELECT_BLOCKS = `
   SELECT b.address, p.kind, p.reason, p.at AS since, p.can_reset AS "canReset",
     p.gmail_message_id IS NOT NULL AS "foundInGmail",
-    coalesce((SELECT json_agg(json_build_object('id', pol.id, 'name', pol.name) ORDER BY pol.name)
-              FROM notable_people pol WHERE lower(pol.email) = b.address), '[]') AS politicians,
+    coalesce((SELECT json_agg(json_build_object('id', pol.id, 'name', pol.name, 'isTest', coalesce(seat.is_test, false)) ORDER BY pol.name)
+              FROM notable_people pol LEFT JOIN politicians seat ON seat.id = pol.id WHERE lower(pol.email) = b.address), '[]') AS politicians,
     (SELECT json_build_object('id', l.id, 'to', pol.name)
      FROM email_sends s JOIN letters l ON l.id = s.letter_id JOIN notable_people pol ON pol.id = l.notable_person_id
      WHERE s.message_id = p.message_id) AS letter,

@@ -1,5 +1,7 @@
 import "server-only";
+import type { AccountSort } from "@/lib/staff-account-sort";
 import { ADDED_BY_LOGIN, isStaffEmail, type Permission } from "@/lib/staff-permissions";
+import type { SortSpec } from "@/lib/staff-sort";
 import { logChange } from "./audit";
 import { query, transaction, type Queryable } from "./db";
 
@@ -47,15 +49,26 @@ export async function accountOnLogin(email: string): Promise<void> {
   });
 }
 
-/** Every account, by address, with when it last logged in and was seen, and its sessions open. */
-export async function listStaffAccounts(): Promise<StaffAccount[]> {
+/** Each sort's column in the query. */
+const SORT_COLUMNS: Record<AccountSort, string> = {
+  email: "a.email",
+  added: "a.added_at",
+  lastLogin: "a.last_login_at",
+  lastSeen: "a.last_seen_at",
+  sessions: "coalesce(s.sessions, 0)",
+};
+
+/** Every account, by address unless asked otherwise, with when it last logged in and was seen, and its sessions open. */
+export async function listStaffAccounts(
+  sort: SortSpec<AccountSort> = { key: "email", dir: "asc" },
+): Promise<StaffAccount[]> {
   return query<StaffAccount>(
     `SELECT a.email, a.permissions, a.added_by AS "addedBy", a.added_at AS "addedAt",
        a.last_login_at AS "lastLoginAt", a.last_seen_at AS "lastSeenAt", coalesce(s.sessions, 0) AS sessions
      FROM staff_accounts a
      LEFT JOIN (SELECT lower(email) AS email, count(*)::int AS sessions FROM staff_sessions
                 WHERE expires_at > now() GROUP BY lower(email)) s ON s.email = a.email
-     ORDER BY a.email`,
+     ORDER BY ${SORT_COLUMNS[sort.key]} ${sort.dir === "asc" ? "ASC" : "DESC"} NULLS LAST, a.email`,
   );
 }
 

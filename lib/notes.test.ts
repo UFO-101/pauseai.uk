@@ -17,8 +17,9 @@ describe("canEditNote and canDeleteNote", () => {
     expect(canDeleteNote(note, sam, hours(1))).toBe(false);
   });
 
-  it("let an admin delete anyone's note at any time, but not edit it", () => {
-    expect(canDeleteNote(note, admin, hours(1000))).toBe(true);
+  it("let an admin delete anyone's note for a day, but not edit it", () => {
+    expect(canDeleteNote(note, admin, hours(NOTE_EDIT_HOURS))).toBe(true);
+    expect(canDeleteNote(note, admin, hours(NOTE_EDIT_HOURS + 0.01))).toBe(false);
     expect(canEditNote(note, admin, hours(1))).toBe(false);
   });
 });

@@ -11,6 +11,7 @@ import { SENT_EMAIL_SORTS } from "@/lib/sent-email-sort";
 import { POLITICIAN_FLAGS, type PoliticianFlag } from "@/lib/politician-filters";
 import { parseSort, type SortSpec } from "@/lib/staff-sort";
 import { EVENT_SORTS, type EventFilter } from "@/lib/staff-events-list";
+import { ACCOUNT_SORTS, type AccountSort } from "@/lib/staff-account-sort";
 import { isSupporterBadge, NEAR_MILES, SUPPORTER_SORTS, type SupporterFilter } from "@/lib/supporters";
 
 /** Which of a campaign's letters its counts can show: those that arrived, failed, were replied to, whose politician answered its ask, or whose text was changed. */
@@ -431,8 +432,14 @@ export function eventsSearch(
 }
 
 /** The accounts page's notice, after a refused change. */
-export function accountsSearch({ notice = "" }: { notice?: string }): { notice: string } {
-  return { notice: ["last-admin", "not-pauseai", "removed"].includes(notice) ? notice : "" };
+export function accountsSearch({ notice = "", sort, dir }: { notice?: string; sort?: string; dir?: string }): {
+  notice: string;
+  sort: SortSpec<AccountSort>;
+} {
+  return {
+    notice: ["last-admin", "not-pauseai", "removed"].includes(notice) ? notice : "",
+    sort: parseSort(ACCOUNT_SORTS, "email", sort, dir),
+  };
 }
 
 /**

@@ -328,11 +328,18 @@ describe("supportersSearch", () => {
 
 describe("accountsSearch", () => {
   it("keeps only the notice it knows", () => {
-    expect(accountsSearch({ notice: "last-admin" })).toEqual({ notice: "last-admin" });
-    expect(accountsSearch({ notice: "not-pauseai" })).toEqual({ notice: "not-pauseai" });
-    expect(accountsSearch({ notice: "removed" })).toEqual({ notice: "removed" });
-    expect(accountsSearch({ notice: "x" })).toEqual({ notice: "" });
-    expect(accountsSearch({})).toEqual({ notice: "" });
+    expect(accountsSearch({ notice: "last-admin" }).notice).toBe("last-admin");
+    expect(accountsSearch({ notice: "not-pauseai" }).notice).toBe("not-pauseai");
+    expect(accountsSearch({ notice: "removed" }).notice).toBe("removed");
+    expect(accountsSearch({ notice: "x" }).notice).toBe("");
+    expect(accountsSearch({}).notice).toBe("");
+  });
+
+  it("reads the sort, by address if none's known, each in its natural direction", () => {
+    expect(accountsSearch({}).sort).toEqual({ key: "email", dir: "asc" });
+    expect(accountsSearch({ sort: "nonsense" }).sort).toEqual({ key: "email", dir: "asc" });
+    expect(accountsSearch({ sort: "lastSeen" }).sort).toEqual({ key: "lastSeen", dir: "desc" });
+    expect(accountsSearch({ sort: "added", dir: "asc" }).sort).toEqual({ key: "added", dir: "asc" });
   });
 });
 

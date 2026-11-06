@@ -113,7 +113,7 @@ export async function editNoteNow(form: FormData): Promise<boolean> {
   return Boolean(target);
 }
 
-/** The button under a note its writer may still change, or under any for an admin: deletes it; false if it can't. */
+/** The button under a note still young enough, for its writer or an admin: deletes it; false if it can't. */
 export async function deleteNoteNow(form: FormData): Promise<boolean> {
   const staff = await requireStaff();
   const id = idFrom(form);

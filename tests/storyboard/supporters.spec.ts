@@ -308,7 +308,7 @@ test("Notes on a supporter", async ({ page, request, flowDatabase }) => {
   await expect(notes.first().getByRole("textbox")).toBeHidden();
   await frame(page, "The note, edited");
 
-  story("An admin can delete anyone's note. Delete asks to be pressed a second time.");
+  story("For its first day, an admin can delete anyone's note. Delete asks to be pressed a second time.");
   // An admin can delete anyone's note.
   addStaffAccount(flowDatabase, staffEmail(), ["admin", "supporters"]);
   await page.reload();

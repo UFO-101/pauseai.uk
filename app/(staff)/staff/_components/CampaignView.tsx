@@ -16,6 +16,8 @@ import ListFrame, { type ListColumn } from "./ui/ListFrame";
 import Progress from "./ui/Progress";
 import StaffLink from "./ui/StaffLink";
 import styles from "./MailingView.module.css";
+import TestTag from "./TestTag";
+import ExternalLink from "./ui/ExternalLink";
 
 const copy = staffCopy.campaigns;
 const words = staffCopy.letters;
@@ -38,7 +40,10 @@ const campaignLetterColumns: ListColumn<LetterSummary>[] = [
     label: copy.columns.politician,
     cell: (l) => (
       <span className={styles.who}>
-        <StaffLink href={`/staff/politicians/${l.politicianId}`}>{l.mpName}</StaffLink>
+        <span>
+          <StaffLink href={`/staff/politicians/${l.politicianId}`}>{l.mpName}</StaffLink>
+          <TestTag isTest={l.isTest} />
+        </span>
         <Muted>{[l.constituency, l.party].filter(Boolean).join(" · ")}</Muted>
         {l.answer && <span className={styles.answer}>✓ {staffCopy.statuses[l.answer]}</span>}
       </span>
@@ -92,11 +97,7 @@ function PublicPage({ campaign }: { campaign: CampaignSummary }) {
   const code = campaignBySlug(campaign.slug);
   if (code) return <StaffLink href={campaignPath(code)}>{copy.seePublicPage}</StaffLink>;
   if (!campaign.url) return <Muted>–</Muted>;
-  return (
-    <a href={campaign.url} target="_blank" rel="noreferrer">
-      {copy.seePublicPage}
-    </a>
-  );
+  return <ExternalLink href={campaign.url}>{copy.seePublicPage}</ExternalLink>;
 }
 
 /**

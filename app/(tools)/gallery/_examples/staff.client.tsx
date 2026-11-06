@@ -413,6 +413,7 @@ export function StaffAccountsTableExample() {
           remove={log("removeStaffAccount")}
           endSessions={log("endStaffSessions")}
           you="jo@pauseai.uk"
+          sort={{ key: "email", dir: "asc" }}
           accounts={[
             {
               email: "admin@pauseai.uk",

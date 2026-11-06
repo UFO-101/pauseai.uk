@@ -21,7 +21,9 @@ import Withheld from "@/app/(staff)/staff/_components/ui/Withheld";
 import ChoiceSearch from "@/app/(staff)/staff/_components/ui/ChoiceSearch";
 import NavFold from "@/app/(staff)/staff/_components/ui/NavFold";
 import FormPending from "@/app/(staff)/staff/_components/ui/FormPending";
+import ExternalLink from "@/app/(staff)/staff/_components/ui/ExternalLink";
 import StaffLink from "@/app/(staff)/staff/_components/ui/StaffLink";
+import TestTag from "@/app/(staff)/staff/_components/TestTag";
 import NavIcon from "@/app/(staff)/staff/_components/NavIcon";
 import SortHeading from "@/app/(staff)/staff/_components/SortHeading";
 import Table from "@/components/ui/Table";
@@ -219,6 +221,41 @@ export const staffKit: Group = {
           render: () => (
             <StaffPage as="div">
               <StaffLink href="/gallery/staff">Next page</StaffLink>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "ExternalLink",
+      file: "app/(staff)/staff/_components/ui/ExternalLink.tsx",
+      variants: [
+        {
+          label: "A link out of the site, with its arrow: in a new tab, as a screen reader hears",
+          render: () => (
+            <StaffPage as="div">
+              <p>
+                See <ExternalLink href="https://example.org/">the letter</ExternalLink> for the wording.
+              </p>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "TestTag",
+      file: "app/(staff)/staff/_components/TestTag.tsx",
+      variants: [
+        {
+          label: "Beside a test politician's name, and nothing beside anyone else's",
+          render: () => (
+            <StaffPage as="div">
+              <p>
+                Testy McTestface MP <TestTag isTest />
+              </p>
+              <p>
+                Polly Placeholder <TestTag isTest={false} />
+              </p>
             </StaffPage>
           ),
         },

@@ -15,6 +15,8 @@ import Progress from "./ui/Progress";
 import StaffLink from "./ui/StaffLink";
 import SegmentLinks from "./ui/SegmentLinks";
 import styles from "./AskView.module.css";
+import TestTag from "./TestTag";
+import ExternalLink from "./ui/ExternalLink";
 
 const copy = staffCopy.asks;
 const page = copy.page;
@@ -48,6 +50,7 @@ const answerColumns: ListColumn<AskAnswer>[] = [
     cell: (a) => (
       <>
         <StaffLink href={`/staff/politicians/${a.politicianId}`}>{a.name}</StaffLink>
+        <TestTag isTest={a.isTest} />
         <div>
           <Muted>{[a.constituency, a.party].filter(Boolean).join(" · ")}</Muted>
         </div>
@@ -113,9 +116,7 @@ export default function AskView({ ask, answer }: { ask: AskPageData; answer: str
             (ask.url.startsWith("/") ? (
               <StaffLink href={ask.url}>{page.theLink[ask.kind]}</StaffLink>
             ) : (
-              <a href={ask.url} target="_blank" rel="noreferrer">
-                {page.theLink[ask.kind]}
-              </a>
+              <ExternalLink href={ask.url}>{page.theLink[ask.kind]}</ExternalLink>
             ))}
         </BandFact>
       </Band>

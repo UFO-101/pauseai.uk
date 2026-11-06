@@ -13,14 +13,16 @@ import {
   SERIES_POINTS,
   type SeriesMetric,
   type SeriesPoint,
+  type SourcePoint,
   WITH_SERIES,
 } from "@/lib/staff-dashboard";
+import type { SupporterSource } from "@/lib/supporters";
 import { query } from "./db";
 import { latestRun } from "./import-runs";
 
 // Fills the staff home's dashboard (lib/staff-dashboard.ts): the counts in
-// the window and the one before it, in one query; the campaign breakdowns
-// and the sparklines' series, a query each; and what needs a person,
+// the window and the one before it, in one query; the campaign breakdowns,
+// the sparklines' series and new supporters by source, a query each; and what needs a person,
 // including any import whose newest run failed.
 
 /** Letters, statuses and their politician, so test MPs can be left out. */
@@ -43,7 +45,12 @@ const SOURCES: Record<DashboardMetric, { from: string; at: string }> = {
   },
   eventsHeld: { from: "luma_events WHERE removed_at IS NULL", at: "start_at" },
   supportersAdded: { from: "supporters WHERE true", at: "first_seen_at" },
-  unsubscribes: { from: "contact_unsubscribes WHERE channel = 'email' AND topic = 'luma-calendar'", at: "at" },
+  // Only an address that's still a supporter's: an opt-out outlives its contact, so that they're never emailed.
+  unsubscribes: {
+    from: `contact_unsubscribes u WHERE u.channel = 'email' AND u.topic = 'luma-calendar'
+      AND EXISTS (SELECT 1 FROM supporter_identity i WHERE i.email = u.address)`,
+    at: "u.at",
+  },
 };
 
 /** Letters to test MPs, counted apart from the letters tile's number. */
@@ -95,6 +102,30 @@ async function series(metric: SeriesMetric, until: Date, days: DashboardWindow):
   });
 }
 
+/** SERIES_POINTS windows of `days` ending now, oldest first: the supporters first seen in each, once each, under their earliest source. */
+async function supportersBySource(until: Date, days: DashboardWindow): Promise<SourcePoint[]> {
+  const windowMs = days * DAY_MS;
+  const start = new Date(until.getTime() - SERIES_POINTS * windowMs);
+  const rows = await query<{ bucket: number; source: SupporterSource; count: number }>(
+    `SELECT floor(extract(epoch FROM ($2::timestamptz - s.first_seen_at)) / $3)::int AS bucket, first.source,
+            count(*)::int AS count
+     FROM supporters s
+     CROSS JOIN LATERAL (SELECT i.source FROM supporter_identity i WHERE i.supporter_id = s.id
+                         ORDER BY i.seen_at, i.source LIMIT 1) first
+     WHERE s.first_seen_at >= $1 AND s.first_seen_at <= $2 GROUP BY bucket, first.source`,
+    [start.toISOString(), until.toISOString(), days * 24 * 60 * 60],
+  );
+  return Array.from({ length: SERIES_POINTS }, (_, i) => {
+    const bucket = SERIES_POINTS - 1 - i;
+    const those = rows.filter((row) => row.bucket === bucket);
+    return {
+      from: new Date(until.getTime() - (bucket + 1) * windowMs).toISOString(),
+      count: those.reduce((sum, row) => sum + row.count, 0),
+      sources: Object.fromEntries(those.map((row) => [row.source, row.count])),
+    };
+  });
+}
+
 /** Every politician sync still held for a decision, oldest first. */
 async function heldSyncs(): Promise<DashboardAction[]> {
   const rows = await query<{ at: Date; added: number; removed: number; changed: number }>(
@@ -108,9 +139,10 @@ async function heldSyncs(): Promise<DashboardAction[]> {
 
 /** Every politician in office whose address is blocked, with the problem that blocked it, oldest first. */
 async function blockedMps(): Promise<DashboardAction[]> {
-  const rows = await query<{ politicianId: number; name: string; at: Date }>(
-    `SELECT p.id::int AS "politicianId", p.name, pr.at
+  const rows = await query<{ politicianId: number; name: string; isTest: boolean; at: Date }>(
+    `SELECT p.id::int AS "politicianId", p.name, coalesce(seat.is_test, false) AS "isTest", pr.at
      FROM notable_people p JOIN email_blocks b ON b.address = lower(p.email) JOIN email_problems pr ON pr.id = b.problem_id
+     LEFT JOIN politicians seat ON seat.id = p.id
      WHERE p.status = 'in_office' ORDER BY pr.at, p.id`,
   );
   return rows.map(({ at, ...rest }) => ({ kind: "blocked-mp", at: at.toISOString(), ...rest }));
@@ -132,11 +164,12 @@ export async function dashboard(days: DashboardWindow): Promise<Dashboard> {
   const until = at.toISOString();
   const since = new Date(at.getTime() - days * DAY_MS).toISOString();
   const before = new Date(at.getTime() - 2 * days * DAY_MS).toISOString();
-  const [[row], [letterCampaigns, signedCampaigns], [registrations, supporters], signer, held, blocked, imports] =
+  const [[row], [letterCampaigns, signedCampaigns], [registrations], bySource, signer, held, blocked, imports] =
     await Promise.all([
       query<Record<string, number>>(`SELECT ${COUNTS}`, [since, before, until]),
       Promise.all(BY_CAMPAIGN.map((metric) => byCampaign(metric, since, until))),
       Promise.all(WITH_SERIES.map((metric) => series(metric, at, days))),
+      supportersBySource(at, days),
       signedMp(since, until),
       heldSyncs(),
       blockedMps(),
@@ -178,7 +211,8 @@ export async function dashboard(days: DashboardWindow): Promise<Dashboard> {
     testLetters: row.testLetters,
     byCampaign: { lettersSent: letterCampaigns, mpsSigned: signedCampaigns },
     signedMp: signer,
-    series: { eventRegistrations: registrations, supportersAdded: supporters },
+    series: { eventRegistrations: registrations },
+    supportersBySource: bySource,
     actions: [...held, ...blocked, ...failed, ...inbox],
   };
 }

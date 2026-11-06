@@ -46,6 +46,7 @@ import StaffHome from "@/app/(staff)/staff/_components/StaffHome";
 import StaffSessions from "@/app/(staff)/staff/_components/StaffSessions";
 import { exampleDashboard, exampleQuietDashboard } from "@/app/(staff)/staff/_components/StaffDashboard.examples";
 import Sparkline from "@/app/(staff)/staff/_components/Sparkline";
+import StackedBars from "@/app/(staff)/staff/_components/StackedBars";
 import PermissionTiles from "@/app/(staff)/staff/_components/PermissionTiles";
 import {
   exampleBlockedPermissions,
@@ -384,6 +385,35 @@ export const staffAdmin: Group = {
           render: () => (
             <StaffPage as="div">
               <StaffDashboard dashboard={exampleQuietDashboard} permissions={["supporters"]} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "StackedBars",
+      file: "app/(staff)/staff/_components/StackedBars.tsx",
+      variants: [
+        {
+          label: "Eight weeks of new supporters by their earliest source: point at a bar for what it holds",
+          render: () => (
+            <StaffPage as="div">
+              <div style={{ maxWidth: "24rem" }}>
+                <StackedBars
+                  name="New supporters, the last eight weeks"
+                  parts={[
+                    { key: "luma", label: "Luma" },
+                    { key: "member", label: "Member" },
+                    { key: "email-your-mp", label: "Letter" },
+                  ]}
+                  bars={exampleDashboard.supportersBySource.map((point) => ({
+                    counts: point.sources,
+                    label: `From ${point.from.slice(0, 10)}: ${point.count}`,
+                  }))}
+                  from={exampleDashboard.supportersBySource[0].from.slice(0, 10)}
+                  to={exampleDashboard.asOf.slice(0, 10)}
+                />
+              </div>
             </StaffPage>
           ),
         },

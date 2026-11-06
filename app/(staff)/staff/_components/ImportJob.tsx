@@ -25,6 +25,7 @@ import type { Decide } from "./Run";
 import RunList from "./RunList";
 import Tag from "@/components/ui/Tag";
 import Strip from "./ui/Strip";
+import ExternalLink from "./ui/ExternalLink";
 
 // Every import and check: the overview at /staff/import-data, a card each,
 // and each job's own page, with its button and every run it has made.
@@ -159,19 +160,13 @@ function Intro({ job, airtableTable }: { job: ImportJob; airtableTable: string }
   return (
     <>
       {intro.before}
-      <a
-        href={href?.startsWith("tbl") ? airtableTable.replace(/[^/]*$/, href) : (href ?? airtableTable)}
-        target="_blank"
-        rel="noreferrer"
-      >
+      <ExternalLink href={href?.startsWith("tbl") ? airtableTable.replace(/[^/]*$/, href) : (href ?? airtableTable)}>
         {intro.link}
-      </a>
+      </ExternalLink>
       {intro.after}
       {then && (
         <>
-          <a href={then.href} target="_blank" rel="noreferrer">
-            {then.link}
-          </a>
+          <ExternalLink href={then.href}>{then.link}</ExternalLink>
           {then.after}
         </>
       )}

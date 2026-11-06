@@ -117,6 +117,7 @@ export type SupporterLetter = {
   sentAt: string | null;
   mpName: string;
   politicianId: number;
+  isTest: boolean;
   campaign: string;
   /** The campaign's title, as the campaigns table has it. */
   campaignTitle: string;

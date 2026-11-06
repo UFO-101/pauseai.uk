@@ -6,6 +6,7 @@ import { staffTime } from "@/lib/staff-time";
 import ListFrame, { ListTable, type ListColumn } from "./ui/ListFrame";
 import StaffLink from "./ui/StaffLink";
 import Withheld from "./ui/Withheld";
+import TestTag from "./TestTag";
 
 const PATH = "/staff/one-off";
 const copy = staffCopy.oneOff;
@@ -39,6 +40,7 @@ const oneOffColumns: ListColumn<OneOffThreadRow>[] = [
         t.people.map((person) => (
           <div key={person.id}>
             <StaffLink href={`/staff/politicians/${person.id}`}>{person.name}</StaffLink>
+            <TestTag isTest={person.isTest} />
           </div>
         ))
       ),
