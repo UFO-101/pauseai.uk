@@ -87,11 +87,13 @@ export const POLITICIANS_FORMULA = "NOT({Test})";
 
 /**
  * The fields that record an answer to an ask (lib/asks.ts), each with the
- * ask and the status each of its values means: a tick box means signed, and
- * a select one of its answers. A value it doesn't know is refused.
+ * ask and the status each of its values means: a tick box means what it's
+ * called, and a select one of its answers. A value it doesn't know is refused.
+ * Of two fields for one ask, the later wins, so a signature outranks declining.
  */
 const ASK_FIELDS: Record<string, { ask: string; statuses: Record<string, AskStatus> }> = {
   "Signed Frontier AI Letter": { ask: FRONTIER_AI_LETTER_ASK, statuses: { true: "signed" } },
+  "Declined DeepMind Letter": { ask: DEEPMIND_LETTER_ASK, statuses: { true: "declined" } },
   "Signed DeepMind Letter": { ask: DEEPMIND_LETTER_ASK, statuses: { true: "signed" } },
   "ControlAI Signatory": { ask: CONTROLAI_STATEMENT_ASK, statuses: { true: "signed" } },
   "Edinburgh Conference November 2026": {
@@ -189,7 +191,7 @@ export async function fetchPoliticians(token: string): Promise<PoliticianRecord[
 }
 
 /** The asks the politicians' records answer, which the sync alone sets from them. */
-export const AIRTABLE_ASKS = Object.values(ASK_FIELDS).map((field) => field.ask);
+export const AIRTABLE_ASKS = [...new Set(Object.values(ASK_FIELDS).map((field) => field.ask))];
 
 /** A link to records in another table: their IDs. */
 function links(record: AirtableRecord, field: string): string[] {

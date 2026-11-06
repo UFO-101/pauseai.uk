@@ -445,5 +445,24 @@ export function placeReply(
 /** Who a message is really from: the group rewrote many Froms as "'Some MP' via PauseAI UK", with the real one elsewhere. */
 export function realSender(from: string, originalFrom?: string, replyTo?: string): string {
   if (originalFrom) return originalFrom;
-  return / via /i.test(from) && replyTo ? replyTo : from;
+  return / via /i.test(from) && replyTo ? firstMailbox(replyTo) : from;
+}
+
+/** The first of the addresses on a header's line, a comma inside a quoted name not ending it. */
+function firstMailbox(line: string): string {
+  return /^(?:"[^"]*"|[^,"])*/.exec(line)![0].trim();
+}
+
+/**
+ * Curly quotes and dashes as Joseph's sends have them: whatever sent those mail
+ * kept only each character's low byte, which leaves a control character.
+ */
+export const CUT_DOWN_CHARACTERS = "\x13\x14\x18\x19\x1c\x1d";
+
+/** The characters those were, in the same order. */
+export const WHOLE_CHARACTERS = "\u2013\u2014\u2018\u2019\u201c\u201d";
+
+/** A text with its cut-down characters whole again. */
+export function restoreCutDown(text: string): string {
+  return text.replace(/[\x13\x14\x18\x19\x1c\x1d]/g, (c) => WHOLE_CHARACTERS[CUT_DOWN_CHARACTERS.indexOf(c)]);
 }

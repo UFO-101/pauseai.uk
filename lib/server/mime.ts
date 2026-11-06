@@ -216,15 +216,25 @@ export function allParts(part: MimePart): MimePart[] {
   return [part, ...part.parts.flatMap(allParts)];
 }
 
-/** A part's body as text, in its charset. */
-export function partText(part: MimePart): string {
-  const charset = headerParameter(part.headers.get("content-type"), "charset") ?? "utf-8";
+/**
+ * Bytes as text, in the charset a Content-Type names. Some mail's bytes aren't
+ * valid in the charset it names, so those are read a byte to a character.
+ */
+export function decodedText(body: Buffer, contentType: string | undefined): string {
+  const charset = headerParameter(contentType, "charset") ?? "utf-8";
+  let text: string;
   try {
-    return new TextDecoder(charset).decode(part.body);
+    text = new TextDecoder(charset).decode(body);
   } catch (error) {
     problem(staffCopy.problems.anywhere.charsetUnknown(charset), error);
-    return part.body.toString("utf8");
+    text = body.toString("utf8");
   }
+  return text.includes("\uFFFD") ? body.toString("latin1") : text;
+}
+
+/** A part's body as text, in its charset. */
+export function partText(part: MimePart): string {
+  return decodedText(part.body, part.headers.get("content-type"));
 }
 
 /** A message's first part of a type, such as text/plain, that isn't an attachment. */

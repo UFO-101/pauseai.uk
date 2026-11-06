@@ -1,6 +1,6 @@
 import "server-only";
 import { saveRawToOutbox, saveToOutbox } from "@/tests/fixtures/outbox";
-import { messageIds, toMime, type MimeEmail } from "../mime";
+import { decodedText, messageIds, toMime, type MimeEmail } from "../mime";
 import { outsideFetch } from "./outside-fetch";
 import { problem } from "../problems";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -352,7 +352,8 @@ export async function gmailFullMessage(accessToken: string, id: string): Promise
   }>(accessToken, `/messages/${id}?format=full`);
   const found = { plain: "", html: "", files: [] as string[] };
   const walk = (part: GmailPart) => {
-    const text = part.body?.data ? Buffer.from(part.body.data, "base64url").toString("utf8") : "";
+    const contentType = part.headers?.find((header) => header.name.toLowerCase() === "content-type")?.value;
+    const text = part.body?.data ? decodedText(Buffer.from(part.body.data, "base64url"), contentType) : "";
     if (part.filename) found.files.push(part.filename);
     else if (part.mimeType === "text/plain") found.plain += text;
     else if (part.mimeType === "text/html") found.html += text;

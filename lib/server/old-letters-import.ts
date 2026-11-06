@@ -6,6 +6,7 @@ import {
   addressesIn,
   augustColleagues,
   augustTemplate,
+  CUT_DOWN_CHARACTERS,
   fitTemplate,
   formDraft,
   formVersionAt,
@@ -17,8 +18,10 @@ import {
   mailingOfNewLetter,
   OLD_MAILINGS,
   placeReply,
+  restoreCutDown,
   templateDoc,
   templateOf,
+  WHOLE_CHARACTERS,
   type ReplyCandidate,
 } from "@/lib/old-letters";
 import {
@@ -58,8 +61,9 @@ import { problem } from "./problems";
 // carries on from where the last stopped: old_letters_mail has what's read, and
 // the last run how far listing got. Once one finishes, the schedule does nothing
 // more; a press goes through it all again, skipping what's kept. Its order: make
-// the mailings, copy the form letters' text, read each sent email and join it,
-// read the replies, keep the one-off emails, then the templates and replied_at.
+// the mailings, copy the form letters' text, put right what's kept, read each sent
+// email and join it, read the replies, keep the one-off emails, then the templates
+// and replied_at. Text goes right before templates, as they're never rebuilt.
 // It reads at most two a second, and stops the moment Gmail refuses.
 
 const JOB = "import-old-letters";
@@ -245,7 +249,7 @@ type Handled = { outcome: string; letterId?: number; mailingKey?: string; rfc?: 
 
 /** A message's text from the API's answer: its plain text if it has any, or its HTML's. */
 function textFrom(message: { plain: string; html: string }): string {
-  return message.plain.trim() ? message.plain.replace(/\r\n/g, "\n").trim() : htmlAsText(message.html);
+  return restoreCutDown(message.plain.trim() ? message.plain.replace(/\r\n/g, "\n").trim() : htmlAsText(message.html));
 }
 
 /** The ID of the mailing with `key`. */
@@ -356,6 +360,16 @@ async function asOneOff(
   return { outcome: "one_off" };
 }
 
+/** The form letter a supporter wrote to one of these politicians: a repeat of it has no letter of its own. */
+async function formLetterFrom(address: string, people: number[]) {
+  const [letter] = await query<{ id: number; campaign: string }>(
+    `SELECT s.id::int AS id, s.campaign FROM letters_from_supporters s JOIN letters l USING (id) JOIN form_entries f ON f.id = s.entry_id
+     WHERE s.airtable_id IS NOT NULL AND lower(f.email) = $1 AND l.notable_person_id = ANY($2::bigint[]) ORDER BY l.id LIMIT 1`,
+    [address, people],
+  );
+  return letter;
+}
+
 /** Handles one message of Joseph's Sent mail. */
 async function handleSent(reader: Reader, account: string, id: string): Promise<Handled> {
   if (await sentBySite(account, id)) return { outcome: "skipped" };
@@ -404,7 +418,15 @@ async function handleSent(reader: Reader, account: string, id: string): Promise<
     await recordSent(letter.id, "mailing", account, message, address(), from, rfc);
     return { outcome: "joined", letterId: letter.id, mailingKey: key, rfc };
   }
-  const key = people.length ? mailingOfNewLetter(subject, text, at) : undefined;
+  // Only PauseAI's own mail is a letter of PauseAI's. A supporter's is their form letter sent again, or a one-off.
+  const ours = isPauseaiAddress(from, reader.connected);
+  const repeat = people.length && !ours ? await formLetterFrom(from, people) : undefined;
+  if (repeat) {
+    count(reader.result.joined, repeat.campaign);
+    await recordSent(repeat.id, "letter", account, message, address(), from, rfc);
+    return { outcome: "joined", letterId: repeat.id, rfc };
+  }
+  const key = people.length && ours ? mailingOfNewLetter(subject, text, at) : undefined;
   if (key) {
     count(reader.result.added, key);
     const [{ id: letterId }] = await query<{ id: number }>(
@@ -598,6 +620,69 @@ async function handleOne(reader: Reader, account: string, id: string, source: st
   }
 }
 
+/**
+ * Puts right what's kept, needing no mail read. An email added as PauseAI's own
+ * letter though a supporter sent it goes back on the list, with what joined that
+ * letter, to be read again as what it is. A send keeps its first address alone,
+ * and a letter's text its whole characters.
+ */
+async function putRightWhatsKept(reader: Reader): Promise<void> {
+  const added = await query<{ id: number; from: string }>(
+    `SELECT o.letter_id::int AS id, split_part(e.from_address, ',', 1) AS from
+     FROM old_letters_mail o JOIN email_sends e ON e.letter_id = o.letter_id AND e.message_id = o.gmail_message_id
+     WHERE o.outcome = 'added'`,
+  );
+  for (const { id, from } of added) {
+    if (isPauseaiAddress(from, reader.connected)) continue;
+    await transaction(async (db) => {
+      await query("DELETE FROM email_sends WHERE letter_id = $1 AND imported", [id], db);
+      await query(
+        `UPDATE old_letters_mail SET outcome = NULL, letter_id = NULL, mailing_key = NULL, rfc_message_id = NULL, quoted = NULL WHERE letter_id = $1`,
+        [id],
+        db,
+      );
+      await query("DELETE FROM letters WHERE id = $1", [id], db);
+    });
+  }
+  await query(
+    `UPDATE email_sends SET from_address = split_part(from_address, ',', 1) WHERE imported AND from_address LIKE '%,%'`,
+  );
+  await query(
+    "UPDATE letters_from_pauseai SET own_text = translate(own_text, $1, $2) WHERE own_text ~ ('[' || $1 || ']')",
+    [CUT_DOWN_CHARACTERS, WHOLE_CHARACTERS],
+  );
+}
+
+/**
+ * Reads again the letters whose kept text has a replacement character, as a
+ * character was lost in decoding it. `done` is its place, so one that stays that
+ * way is passed over and can't hold up the rest.
+ */
+async function readGarbledAgain(reader: Reader, done: { id: number }): Promise<void> {
+  for (;;) {
+    const batch = await query<{ id: number; account: string; messageId: string }>(
+      `SELECT p.id::int AS id, e.sender AS account, e.message_id AS "messageId"
+       FROM letters_from_pauseai p JOIN email_sends e ON e.letter_id = p.id AND e.imported
+       WHERE p.own_text LIKE '%' || chr(65533) || '%' AND p.id > $1 ORDER BY p.id LIMIT 20`,
+      [done.id],
+    );
+    if (!batch.length) return;
+    for (const { id, account, messageId } of batch) {
+      await reader.turn();
+      try {
+        const message = await gmailFullMessage(reader.tokens.get(account)!, messageId).catch(unlessGone);
+        if (message)
+          await query("UPDATE letters_from_pauseai SET own_text = $2 WHERE id = $1", [id, textFrom(message)]);
+        reader.result.read++;
+      } catch (error) {
+        if (!(error instanceof GmailError && error.status === 400)) throw error;
+        reader.result.unreadable.push(messageId);
+      }
+      done.id = id;
+    }
+  }
+}
+
 /** Works through what's listed, oldest first in each mailbox, sent mail before replies, until the run's time is up. */
 async function readQueue(reader: Reader): Promise<void> {
   for (;;) {
@@ -753,6 +838,7 @@ async function readSome(startedBy: string, paceMs: number, readMs: number): Prom
   const carrying = last?.finished === false ? last : undefined;
   const result = emptyResult();
   const searchesDone = { n: carrying?.searchesDone ?? 0 };
+  const textsDone = { id: carrying?.textsDone ?? 0 };
   const reader: Reader = {
     turn: pacer(paceMs, Date.now() + readMs, result),
     book: await politicianBook(),
@@ -768,7 +854,9 @@ async function readSome(startedBy: string, paceMs: number, readMs: number): Prom
       await makeMailings();
       await copyFormTexts(reader);
     }
+    await putRightWhatsKept(reader);
     await list(reader, searchesDone);
+    await readGarbledAgain(reader, textsDone);
     await readQueue(reader);
     await placeUnjoined(reader);
     await buildTemplates(reader);
@@ -784,6 +872,7 @@ async function readSome(startedBy: string, paceMs: number, readMs: number): Prom
   if (result.unreadable.length) problem(staffCopy.problems.job.unreadable, result.unreadable.join(", "));
   if (result.unmatched.length) problem(staffCopy.problems.job.matchedNothing, result.unmatched.length);
   result.searchesDone = searchesDone.n;
+  result.textsDone = textsDone.id;
   result.titles = await countedTitles();
   result.left = await leftToRead();
   await recordRun(JOB, startedBy, "ok", result);
