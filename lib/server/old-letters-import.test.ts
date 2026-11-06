@@ -917,19 +917,15 @@ Please join 40 of your colleagues.')`,
     expect(again).toMatchObject({ finished: true, left: 0, listed: 0 });
   });
 
-  it("carries on from where the last run stopped when its time is up, without listing again", async () => {
+  it("carries on from where the last run stopped when its time is up", async () => {
     await seed();
     await connectTestGmail("joseph@pauseai.uk");
     await connectTestGmail("policy@pauseai.uk");
-    let last = await importOldLetters("jo@pauseai.uk", 0, 40);
-    let runs = 1;
-    while (!last.finished) {
-      last = await importOldLetters("jo@pauseai.uk", 0, 40);
-      runs++;
-    }
-    expect(runs).toBeGreaterThan(1);
-    expect(await query("SELECT 1 FROM import_runs WHERE job = 'import-old-letters'")).toHaveLength(runs);
-    expect(last.left).toBe(0);
+    const stopped = await importOldLetters("jo@pauseai.uk", 0, 1);
+    expect(stopped.finished).toBe(false);
+    const last = await importOldLetters("jo@pauseai.uk", 0, 60_000);
+    expect(last).toMatchObject({ finished: true, left: 0 });
+    expect(await query("SELECT 1 FROM import_runs WHERE job = 'import-old-letters'")).toHaveLength(2);
   });
 
   it("does nothing on its schedule once finished, while a press goes through it all again", async () => {
