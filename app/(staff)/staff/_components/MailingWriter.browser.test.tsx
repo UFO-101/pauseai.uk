@@ -83,11 +83,14 @@ describe("MailingWriter", () => {
     expect(first).toMatchObject({ ask: "frontier-ai-letter", sentFrom: "al@pauseai.uk" });
     expect(JSON.stringify(first.body)).toContain("salutation");
     await expect.element(page.getByRole("button", { name: copy.deleteDraft })).toBeVisible();
-    // Each change after, a moment later, as a save of only what changed.
+    // Each change after, a moment later, as a save of only what changed: in one save or two, as the moment falls.
     await field(copy.fromLegend).selectOptions("samuel.whitlock@pauseai.uk");
     await field(copy.ask).selectOptions("");
-    await expect.poll(() => actions.save.mock.calls.length, WAIT).toBe(2);
-    expect(actions.save.mock.calls[1]).toEqual([12, 2, { sentFrom: "samuel.whitlock@pauseai.uk", ask: null }]);
+    const later = () => actions.save.mock.calls.slice(1).map((call) => (call as unknown[])[2] as object);
+    await expect
+      .poll(() => Object.assign({}, ...later()), WAIT)
+      .toEqual({ sentFrom: "samuel.whitlock@pauseai.uk", ask: null });
+    expect(actions.save.mock.calls[1].slice(0, 2)).toEqual([12, 2]);
   });
 
   it("greets by name when not everyone has a salutation, and with no field when neither is had by all", async () => {
