@@ -75,11 +75,15 @@ test("The import fails", async ({ page, flowDatabase }) => {
 test("A second press", async ({ page, flowDatabase }) => {
   story("The import is already running. Its page says so, and pressing again starts nothing.");
   await logIn(page, flowDatabase, ["supporters", "admin"]);
-  // The run before it stopped short.
+  // The run before it stopped short, with what it reported.
   const stopped = JSON.stringify(exampleOldLettersResult).replaceAll("'", "''");
+  const problems = JSON.stringify([{ what: words.unreadable(1) }, { what: words.matchedNothing(1) }]).replaceAll(
+    "'",
+    "''",
+  );
   runSql(
     flowDatabase,
-    `INSERT INTO import_runs (job, started_by, status, result, at) VALUES ('import-old-letters', 'jo@pauseai.uk', 'ok', '${stopped}', '2026-11-01T10:00:00Z')`,
+    `INSERT INTO import_runs (job, started_by, status, result, problems, at) VALUES ('import-old-letters', 'jo@pauseai.uk', 'ok', '${stopped}', '${problems}', '2026-11-01T10:00:00Z')`,
   );
   runSql(flowDatabase, "INSERT INTO job_presses (job, started_by) VALUES ('import-old-letters', 'jo@pauseai.uk')");
   await page.goto(`${BASE}${importPath("import-old-letters")}`);

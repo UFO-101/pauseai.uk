@@ -149,13 +149,39 @@ const RUNS: Record<ImportJob, Variant> = {
       "A read of Gmail, one account unread; one that disconnected an account; one with mail in the letters inbox not understood",
     render: () => (
       <StaffPage as="div">
-        <Run run={exampleRun("read-gmail", exampleGmailResult)} open />
-        <Run run={exampleRun("read-gmail", { accounts: [exampleLettersInboxRead] }, { id: 4 })} open />
+        <Run
+          run={exampleRun("read-gmail", exampleGmailResult, {
+            problems: [
+              {
+                what: staffCopy.problems.job.couldntRead("jo@pauseai.uk"),
+                error: "Gmail answered 500 for /history",
+              },
+            ],
+          })}
+          open
+        />
+        <Run
+          run={exampleRun(
+            "read-gmail",
+            { accounts: [exampleLettersInboxRead] },
+            { id: 4, problems: [{ what: staffCopy.problems.job.notUnderstood(2), told: true }] },
+          )}
+          open
+        />
         <Run
           run={exampleRun(
             "read-gmail",
             { accounts: [exampleGmailResult.accounts[0], exampleDisconnectedGmail] },
-            { id: 3 },
+            {
+              id: 3,
+              problems: [
+                {
+                  what: staffCopy.problems.job.couldntRead("al@pauseai.uk"),
+                  error: "Google refused the token request: 400 invalid_grant",
+                  told: true,
+                },
+              ],
+            },
           )}
           open
         />
@@ -206,7 +232,10 @@ const RUNS: Record<ImportJob, Variant> = {
     render: () => (
       <StaffPage as="div">
         <Run
-          run={exampleRun("import-old-letters", exampleOldLettersResult, { startedBy: "jo@pauseai.uk" })}
+          run={exampleRun("import-old-letters", exampleOldLettersResult, {
+            startedBy: "jo@pauseai.uk",
+            problems: [{ what: staffCopy.oldLetters.unreadable(1) }, { what: staffCopy.oldLetters.matchedNothing(1) }],
+          })}
           open
           people
         />
@@ -218,7 +247,15 @@ const RUNS: Record<ImportJob, Variant> = {
               stoppedBy: "gmail",
               stoppedWhy: "Gmail answered 403 for /messages/1a2b: Too many",
             },
-            { id: 2, startedBy: "jo@pauseai.uk" },
+            {
+              id: 2,
+              startedBy: "jo@pauseai.uk",
+              problems: [
+                { what: staffCopy.oldLetters.stoppedByGmail, error: "Gmail answered 403 for /messages/1a2b: Too many" },
+                { what: staffCopy.oldLetters.unreadable(1) },
+                { what: staffCopy.oldLetters.matchedNothing(1) },
+              ],
+            },
           )}
           open
         />
@@ -229,7 +266,15 @@ const RUNS: Record<ImportJob, Variant> = {
     label: "PauseAI's emails, some held back",
     render: () => (
       <StaffPage as="div">
-        <Run run={exampleRun("sync-emails", exampleEmailsResult)} />
+        <Run
+          run={exampleRun("sync-emails", exampleEmailsResult, {
+            problems: [
+              { what: staffCopy.problems.job.noOnePolitician(1), error: "recEmail3" },
+              { what: staffCopy.problems.job.politicianNotHere(1), error: "recEmail4" },
+              { what: staffCopy.problems.job.heldBack(2), error: "recEmail1, recEmail2" },
+            ],
+          })}
+        />
       </StaffPage>
     ),
   },
