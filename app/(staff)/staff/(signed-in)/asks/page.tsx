@@ -5,7 +5,6 @@ import { asksWithCounts } from "@/lib/server/asks";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { askFormSearch, firstOf, type ParamValue } from "@/lib/staff-search";
 import AsksTable from "../../_components/AsksTable";
-import PageIntro from "../../_components/ui/PageIntro";
 import PageTitle from "../../_components/ui/PageTitle";
 import StaffLink from "../../_components/ui/StaffLink";
 
@@ -19,6 +18,7 @@ export default async function AsksPage({ searchParams }: { searchParams: Promise
   return (
     <>
       <PageTitle
+        intro={staffCopy.asks.intro}
         action={
           <StaffLink className={buttonClass({ variant: "primary", fit: true })} href="/staff/asks/new">
             {staffCopy.asks.newTitle}
@@ -27,7 +27,6 @@ export default async function AsksPage({ searchParams }: { searchParams: Promise
       >
         {staffCopy.asks.title}
       </PageTitle>
-      <PageIntro>{staffCopy.asks.intro}</PageIntro>
       <AsksTable asks={asks} notice={notice} picked={firstOf(params.ask)} />
     </>
   );

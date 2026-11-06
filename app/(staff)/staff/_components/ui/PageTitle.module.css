@@ -8,6 +8,13 @@
   column-gap: var(--space-4);
 }
 
+/* The title and any subheading: they take what room the buttons leave, and the
+   buttons wrap under them once that's too narrow to read. */
+.words {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
 /* First on the page, it starts where a title with no row does: StaffPage takes
    the margin off the first thing on the page, which here is the row, not the title. */
 .title:first-child h1 {

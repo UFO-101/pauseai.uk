@@ -459,6 +459,23 @@ export const staffKit: Group = {
             </StaffPage>
           ),
         },
+        {
+          label: "With a subheading right under the title, the button beside them both",
+          render: () => (
+            <StaffPage as="div">
+              <PageTitle
+                intro="Emails PauseAI sends to many notable people at once."
+                action={
+                  <ButtonLink variant="primary" fit href="#">
+                    New mailing
+                  </ButtonLink>
+                }
+              >
+                Mailings
+              </PageTitle>
+            </StaffPage>
+          ),
+        },
       ],
     },
     {

@@ -99,6 +99,24 @@ describe("StaffPage", () => {
 });
 
 describe("PageTitle", () => {
+  it("puts a subheading right under the title, clear of the button at any width", async () => {
+    await render(
+      <div style={{ width: "22rem" }}>
+        <PageTitle
+          action={<button type="button">New mailing with long words</button>}
+          intro="What the page is, at length"
+        >
+          Mailings
+        </PageTitle>
+      </div>,
+    );
+    const words = page.getByText("What the page is, at length").element().getBoundingClientRect();
+    const title = page.getByRole("heading", { level: 1 }).element().getBoundingClientRect();
+    const button = page.getByRole("button").element().getBoundingClientRect();
+    expect(words.top).toBeGreaterThanOrEqual(title.top);
+    expect(words.bottom <= button.top || words.right <= button.left).toBe(true);
+  });
+
   it("is the page's heading, with its button beside it", async () => {
     await render(<PageTitle action={<button type="button">New mailing</button>}>Mailings</PageTitle>);
     await expect.element(page.getByRole("heading", { level: 1, name: "Mailings" })).toBeVisible();
