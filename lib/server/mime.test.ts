@@ -9,6 +9,7 @@ import {
   newMessageId,
   parseHeaders,
   parseMime,
+  decodedText,
   partText,
   relayMime,
   toMime,
@@ -145,6 +146,15 @@ describe("reading a message", () => {
       "Content-Type: text/plain; charset=utf-8\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\nCaf=C3=A9 =\r\nis =ZZ open",
     );
     expect(partText(part)).toBe("Café is =ZZ open");
+  });
+
+  it("reads bytes not valid in the charset they name a byte to a character, and those that are in it", () => {
+    const cut = Buffer.from("Ms N\u00ed\u00a0Chuil\u00edn", "latin1");
+    expect(decodedText(cut, "text/plain; charset=utf-8")).toBe("Ms N\u00ed\u00a0Chuil\u00edn");
+    expect(decodedText(cut, undefined)).toBe("Ms N\u00ed\u00a0Chuil\u00edn");
+    expect(decodedText(cut, "text/plain; charset=iso-8859-1")).toBe("Ms N\u00ed\u00a0Chuil\u00edn");
+    expect(decodedText(Buffer.from("Caf\u00e9 \u2019"), "text/plain; charset=utf-8")).toBe("Caf\u00e9 \u2019");
+    expect(decodedText(cut, "text/plain; charset=no-such-charset")).toBe("Ms N\u00ed\u00a0Chuil\u00edn");
   });
 
   it("reads a part with no body, and plain text with no type as text in its charset", () => {

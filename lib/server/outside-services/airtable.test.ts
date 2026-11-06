@@ -75,6 +75,7 @@ describe("fetchPoliticians", () => {
             {
               "Full name or Title": "Di",
               Body: "Northern Ireland Assembly",
+              "Declined DeepMind Letter": true,
               "Edinburgh Conference November 2026": "Going",
             },
             "recD",
@@ -161,7 +162,7 @@ describe("fetchPoliticians", () => {
       ["recA", "lords", "died", ""],
       ["recZ", "scottish-parliament", "in_office", "Met once.\nRecommended"],
     ]);
-    expect(by("recD").statuses).toEqual({ "edinburgh-conference-2026": "going" });
+    expect(by("recD").statuses).toEqual({ "deepmind-letter": "declined", "edinburgh-conference-2026": "going" });
     expect(by("recE").statuses).toEqual({ "edinburgh-conference-2026": "declined" });
     expect(by("recF").statuses).toEqual({});
     const url = new URL(requests[1].url);

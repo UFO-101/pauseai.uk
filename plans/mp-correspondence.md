@@ -178,8 +178,8 @@ debate or liability has useful answers recorded: Airtable has 2 responses
 to the Documentary and none for the others. Airtable's "London 2026 Panel"
 has 4 ticks, too few to be worth one.
 
-The job also copies Airtable's 49 "Declined DeepMind Letter" as `declined` on
-`deepmind-letter`, once. Production has only the 63 signed. "Responded
+The politicians' sync copies Airtable's 49 "Declined DeepMind Letter" as
+`declined` on `deepmind-letter`, beside the 63 signed. "Responded
 DeepMind Letter" isn't copied, as it isn't an answer; replies show on the
 letters.
 

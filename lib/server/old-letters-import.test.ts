@@ -74,6 +74,54 @@ async function run() {
   return importOldLetters("jo@pauseai.uk", 0);
 }
 
+/** The fake Gmail's copy of a message, replaced: its headers and bytes, in whichever format it's asked for. */
+function mailIs(id: string, threadId: string, at: string, headers: Record<string, string>, body: Buffer) {
+  const lines = Object.entries(headers);
+  server.use(
+    http.get(`${GMAIL}/messages/${id}`, ({ request }) => {
+      const base = { id, threadId, labelIds: ["SENT"], internalDate: String(Date.parse(at)) };
+      if (new URL(request.url).searchParams.get("format") === "raw") {
+        const head = lines.map(([name, value]) => `${name}: ${value}`).join("\r\n");
+        const raw = Buffer.concat([Buffer.from(`${head}\r\n\r\n`), body]);
+        return HttpResponse.json({ ...base, raw: raw.toString("base64url") });
+      }
+      return HttpResponse.json({
+        ...base,
+        payload: {
+          headers: lines.map(([name, value]) => ({ name, value })),
+          mimeType: "text/plain",
+          body: { data: body.toString("base64url") },
+        },
+      });
+    }),
+  );
+}
+
+/** A form letter's email, From rewritten and its sender to reply to, as pauseai.info's form sent them. */
+const fromTheForm = (name: string, address: string, to: string) => ({
+  From: `'${name}' via PauseAI <joseph@pauseai.info>`,
+  "Reply-To": `${address}, info@pauseai.info`,
+  To: to,
+  Subject: "Request to co-sign letter on Google's breach of AI safety pledges",
+  "Message-ID": "<repeat@mail.gmail.com>",
+  "Content-Type": "text/plain; charset=utf-8",
+});
+
+/** The text kept of the letter that a message's mail row names. */
+const ownTextOf = async (id: string) =>
+  (
+    await query<{ own: string | null }>(
+      `SELECT p.own_text AS own FROM old_letters_mail o JOIN letters_from_pauseai p ON p.id = o.letter_id WHERE o.gmail_message_id = $1`,
+      [id],
+    )
+  )[0].own;
+
+const garble = (id: string, text: string) =>
+  query(
+    `UPDATE letters_from_pauseai SET own_text = $2 WHERE id = (SELECT letter_id FROM old_letters_mail WHERE gmail_message_id = $1)`,
+    [id, text],
+  );
+
 const outcomeOf = async (id: string) =>
   (
     await query<{ outcome: string; letterId: number | null }>(
@@ -393,6 +441,159 @@ Please join 40 of your colleagues.')`,
     );
     expect(own).toContain("Would you speak, in HTML?");
     expect(person).toBe(mo);
+  });
+
+  it("reads a letter whose bytes aren't in the charset it names, with its curly quotes whole", async () => {
+    await seed();
+    mailIs(
+      "0a12",
+      "t-russell",
+      "2026-07-01T09:00:00Z",
+      {
+        From: "joseph@pauseai.info",
+        To: "mp90003.office@parliament.uk",
+        Subject: "Invitation to speak on panel with Professor Stuart Russell",
+        "Content-Type": "text/plain; charset=utf-8",
+      },
+      Buffer.from("Dear Ms N\u00ed,\n\nI\x19m asking\u00a0you.", "latin1"),
+    );
+    await run();
+    expect(await ownTextOf("0a12")).toBe("Dear Ms N\u00ed,\n\nI\u2019m asking\u00a0you.");
+  });
+
+  it("makes kept text's characters whole again, reading none", async () => {
+    await seed();
+    await run();
+    await garble("0a12", "I\x19m \x1cwhole\x1d.");
+    const again = await run();
+    expect(await ownTextOf("0a12")).toBe("I\u2019m \u201cwhole\u201d.");
+    expect(again.read).toBe(0);
+  });
+
+  it("reads a garbled letter again, its text from the mail, and counts it", async () => {
+    await seed();
+    await run();
+    await garble("0a12", "Dear Mx Example,\n\nWould you\uFFFDspeak?");
+    const again = await run();
+    expect(await ownTextOf("0a12")).toContain("Would you speak?");
+    expect(again.read).toBe(1);
+    expect(again.textsDone).toBeGreaterThan(0);
+  });
+
+  it("passes over a letter that stays garbled, is gone, or that Gmail won't give, and finishes", async () => {
+    await seed();
+    await run();
+    await garble("0a12", "gone \uFFFD");
+    await garble("0a25", "kept \uFFFD");
+    await garble("0a27", "refused \uFFFD");
+    const stays = Buffer.from("still \uFFFD");
+    mailIs("0a25", "t-wh-1", "2025-12-05T09:00:00Z", { "Content-Type": "text/plain; charset=utf-8" }, stays);
+    server.use(
+      http.get(`${GMAIL}/messages/0a12`, () => new HttpResponse("{}", { status: 404 })),
+      http.get(`${GMAIL}/messages/0a27`, () => new HttpResponse("{}", { status: 400 })),
+    );
+    const again = await run();
+    expect(again.finished).toBe(true);
+    expect(again.unreadable).toEqual(["0a27"]);
+    expect(await ownTextOf("0a12")).toBe("gone \uFFFD");
+    expect(await ownTextOf("0a27")).toBe("refused \uFFFD");
+  });
+
+  it("carries on reading garbled letters from where a refusal stopped it, reading none twice", async () => {
+    await seed();
+    await run();
+    await garble("0a12", "first \uFFFD");
+    await garble("0a27", "second \uFFFD");
+    server.use(
+      http.get(`${GMAIL}/messages/0a27`, () => HttpResponse.json({ error: { message: "Too many" } }, { status: 403 }), {
+        once: true,
+      }),
+    );
+    const stopped = await run();
+    expect(stopped).toMatchObject({ stoppedBy: "gmail", finished: false, read: 1 });
+    await garble("0a12", "first again \uFFFD");
+    const after = await run();
+    expect(after).toMatchObject({ finished: true, read: 1 });
+    expect(await ownTextOf("0a12")).toBe("first again \uFFFD");
+    expect(await ownTextOf("0a27")).toContain("of all people");
+  });
+
+  it("puts a supporter's repeat of their form letter on that letter, with one address", async () => {
+    const { form } = await seed();
+    mailIs(
+      "0a28",
+      "t-staffer",
+      "2026-10-01T09:00:00Z",
+      fromTheForm("Wendy Webform", "wendy.webform@example.com", "polly.placeholder.mp@parliament.uk"),
+      Buffer.from("Dear Ms Placeholder,"),
+    );
+    const result = await run();
+    expect(await outcomeOf("0a28")).toEqual({ outcome: "joined", letterId: form });
+    expect(result.joined["pauseai-info-frontier-ai"]).toBe(2);
+    const sends = await query<{ from: string; purpose: string }>(
+      `SELECT from_address AS from, purpose FROM email_sends WHERE letter_id = $1 AND message_id = '0a28'`,
+      [form],
+    );
+    expect(sends).toEqual([{ from: "wendy.webform@example.com", purpose: "letter" }]);
+  });
+
+  it("keeps a stranger's email to a politician as a one-off, though its subject is a mailing's", async () => {
+    await seed();
+    mailIs(
+      "0a28",
+      "t-staffer",
+      "2026-10-01T09:00:00Z",
+      fromTheForm("Nell Nobody", "nell.nobody@example.com", "polly.placeholder.mp@parliament.uk"),
+      Buffer.from("Dear Ms Placeholder,"),
+    );
+    await run();
+    expect(await outcomeOf("0a28")).toEqual({ outcome: "one_off", letterId: null });
+    const [{ from }] = await query<{ from: string }>(
+      "SELECT from_address AS from FROM one_off_messages WHERE gmail_message_id = '0a28'",
+    );
+    expect(from).toBe("nell.nobody@example.com");
+  });
+
+  it("reads again, as what it is, an email kept as PauseAI's letter though a supporter sent it, with what joined that letter", async () => {
+    await seed();
+    await run();
+    const [{ letterId }] = await query<{ letterId: number }>(
+      "SELECT letter_id::int AS \"letterId\" FROM old_letters_mail WHERE gmail_message_id = '0a12'",
+    );
+    await query(
+      "UPDATE email_sends SET from_address = 'nell.nobody@example.com, info@pauseai.info' WHERE letter_id = $1",
+      [letterId],
+    );
+    await query("UPDATE old_letters_mail SET letter_id = $1 WHERE gmail_message_id = '0a23'", [letterId]);
+    mailIs(
+      "0a12",
+      "t-russell",
+      "2026-07-01T09:00:00Z",
+      fromTheForm("Nell Nobody", "nell.nobody@example.com", "mp90003.office@parliament.uk"),
+      Buffer.from("Dear Mx Example,"),
+    );
+    const again = await run();
+    expect(again.read).toBe(2);
+    expect(await outcomeOf("0a12")).toEqual({ outcome: "one_off", letterId: null });
+    expect(await query("SELECT 1 FROM letters WHERE id = $1", [letterId])).toEqual([]);
+    expect(await query("SELECT 1 FROM email_sends WHERE letter_id = $1 OR message_id = '0a12'", [letterId])).toEqual(
+      [],
+    );
+  });
+
+  it("keeps only the first of two addresses a send has", async () => {
+    const seeded = await seed();
+    await run();
+    await query(
+      "UPDATE email_sends SET from_address = 'wendy.webform@example.com, info@pauseai.info' WHERE letter_id = $1",
+      [seeded.form],
+    );
+    await run();
+    const [{ from }] = await query<{ from: string }>(
+      "SELECT from_address AS from FROM email_sends WHERE letter_id = $1",
+      [seeded.form],
+    );
+    expect(from).toBe("wendy.webform@example.com");
   });
 
   it("notes a message Gmail won't give, and goes on", async () => {

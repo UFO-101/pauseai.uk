@@ -176,6 +176,24 @@ describe("the Gmail API", () => {
     expect(await gmailFullMessage("tok", "m2")).toMatchObject({ plain: "", html: "", files: [] });
   });
 
+  it("reads a part in the charset its own headers name", async () => {
+    server.use(
+      http.get(`${API}/messages/m1`, () =>
+        HttpResponse.json({
+          id: "m1",
+          threadId: "t1",
+          internalDate: "5",
+          payload: {
+            mimeType: "text/plain",
+            headers: [{ name: "Content-Type", value: "text/plain; charset=ISO-8859-1" }],
+            body: { data: Buffer.from("Caf\u00e9", "latin1").toString("base64url") },
+          },
+        }),
+      ),
+    );
+    expect((await gmailFullMessage("tok", "m1")).plain).toBe("Caf\u00e9");
+  });
+
   it("lists every message a search finds, oldest first, page by page, waiting its turn for each", async () => {
     server.use(
       http.get(`${API}/messages`, ({ request }) => {

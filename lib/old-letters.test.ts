@@ -20,6 +20,7 @@ import {
   plainSubject,
   quotedHeaders,
   realSender,
+  restoreCutDown,
   sameSubject,
   templateDoc,
   templateOf,
@@ -328,6 +329,20 @@ describe("who a message is from", () => {
     expect(realSender("'Mo' via PauseAI UK <p@x.uk>", undefined, "mo@x.uk")).toBe("mo@x.uk");
     expect(realSender("'Mo' via PauseAI UK <p@x.uk>")).toBe("'Mo' via PauseAI UK <p@x.uk>");
     expect(realSender("Mo <mo@x.uk>", undefined, "other@x.uk")).toBe("Mo <mo@x.uk>");
+  });
+
+  it("takes the first of several addresses it's told to reply to, a comma in a name not ending it", () => {
+    const from = "'Mo' via PauseAI UK <p@x.uk>";
+    expect(realSender(from, undefined, "mo@x.uk, info@x.uk")).toBe("mo@x.uk");
+    expect(realSender(from, undefined, '"Mo, MP" <mo@x.uk>, info@x.uk')).toBe('"Mo, MP" <mo@x.uk>');
+  });
+});
+
+describe("a text whose characters were cut down to a byte", () => {
+  it("has its curly quotes and dashes whole again, and nothing else changed", () => {
+    expect(restoreCutDown("I\x19m \x18a\x19 \x1cb\x1d \x13 \x14 caf\u00e9\n")).toBe(
+      "I\u2019m \u2018a\u2019 \u201cb\u201d \u2013 \u2014 caf\u00e9\n",
+    );
   });
 });
 

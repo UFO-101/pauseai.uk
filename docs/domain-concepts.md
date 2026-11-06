@@ -347,7 +347,15 @@ Gmail refuses; a mailbox's limit applies to all its reading, the regular read's 
   record in the first dated mailing by ID, so it stays with the first.
 - **Joining.** A letter joins a sent email to the politician's address, sent from
   25 minutes before its time in production to 5 seconds after it (`joinSent`). A
-  sent email with no letter is one if its subject says so (`mailingOfNewLetter`).
+  sent email from PauseAI with no letter is one if its subject says so
+  (`mailingOfNewLetter`). One from a supporter, who may send a form letter twice
+  though production keeps one, goes on their letter to that politician, or else
+  is a one-off.
+- **Text.** Many of Joseph's sends kept only each character's low byte, whatever
+  charset they name. Bytes not valid in that charset are read one to a character
+  (`decodedText`), and the control characters that curly quotes and dashes became
+  are made whole (`restoreCutDown`). Characters whose low byte is an ordinary one,
+  such as an ellipsis as `&`, can't be told apart.
 - **What's stored.** A mailing's template in `imported_text`, in `body`'s format,
   its subject and who it went from; each letter that fits it, its greeting and own
   paragraph in `merge_values`, and one that doesn't, its whole text in `own_text`.
