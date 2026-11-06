@@ -71,7 +71,12 @@ export const askColumns: DownloadColumn<AskWithCounts>[] = [
  * leading to its own page, which lists them.
  */
 function Answers({ ask }: { ask: AskWithCounts }) {
-  if (answersOf(ask).length === 0 && !ask.noAnswer) return <Muted>{copy.noAnswers}</Muted>;
+  if (answersOf(ask).length === 0 && !ask.noAnswer)
+    return (
+      <span className={styles.nothing}>
+        <Muted>{copy.noAnswers}</Muted>
+      </span>
+    );
   return (
     <div className={styles.answers}>
       {answersOf(ask).map((status) => (

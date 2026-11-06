@@ -32,12 +32,31 @@
   border-top: 1px solid var(--border);
 }
 
-/* The one a link picked out, in the accent's tint, a bar of it at its left, a little below the window's top. */
+/* The one a link picked out, a little below the window's top, with a bar of
+   the accent at its left, in a deep tint of it. As the page appears it swells
+   into that tint from plain, glowing a little past it before it settles, so
+   the eye is drawn to it. A change of colour, not a movement, so it stays
+   with motion turned off. */
 .ask[aria-current] {
   scroll-margin-top: var(--space-8);
   box-shadow:
     inset 4px 0 var(--accent),
     inset 0 0 0 100vmax rgb(var(--pause-orange-rgb) / 0.4);
+  animation: picked 1.4s 0.15s ease-in-out backwards;
+}
+
+@keyframes picked {
+  0% {
+    box-shadow:
+      inset 4px 0 var(--accent),
+      inset 0 0 0 100vmax rgb(var(--pause-orange-rgb) / 0);
+  }
+
+  40% {
+    box-shadow:
+      inset 4px 0 var(--accent),
+      inset 0 0 0 100vmax rgb(var(--pause-orange-rgb) / 0.6);
+  }
 }
 
 .agreed {
@@ -82,7 +101,13 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+  align-items: center;
   margin-top: var(--space-1);
+}
+
+/* Nothing to show yet: as small as the lozenges would be. */
+.nothing {
+  font-size: var(--tag-font-size);
 }
 
 .answers a {
