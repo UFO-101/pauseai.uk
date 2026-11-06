@@ -71,7 +71,7 @@ export function withoutValues(params: RawParams, gone: string[]): Params {
 }
 
 /** The link that loads saved filter `id`, with `carried` from the list's URL. */
-export function savedFilterHref(list: SavedList, id: number, params: Params, carried: Params = {}): string {
+export function savedFilterHref(list: SavedList, id: number, params: Params, carried: Params): string {
   return filtersPath(SAVED_LIST_PATHS[list], { ...params, ...carried, saved: String(id) });
 }
 

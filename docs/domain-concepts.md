@@ -805,7 +805,7 @@ browser: each page compares its URL with the filter it names, ignoring
 order and blanks, to know whether it's been edited. An ID that's unknown,
 deleted or another list's loads nothing. A value that no longer exists
 (`filterProblems()`) is left out of the list, says so over it and doesn't
-count as an edit; updating the filter takes it out for good.
+count as an edit; saving an edit to the filter takes it out for good.
 
 Erasing a supporter takes their exact names, emails, phone numbers and
 postcode, ignoring case, out of every saved filter's name and typed

@@ -189,12 +189,6 @@ test("A saved filter naming something that has gone", async ({ page, request, fl
   await expect(page.getByRole("button", { name: `${staffCopy.fields.party}: Reform Group` })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Reform Group and important" })).not.toContainText(copy.edited);
   await frame(page, "What has gone, said");
-
-  story("Update takes the missing party out of the saved filter for good, and the notice goes.");
-  await page.getByRole("button", { name: copy.goneUpdate }).click();
-  await expect(page.getByText(copy.gone(`${staffCopy.fields.party}: Reform Group`))).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Reform Group and important" })).toBeVisible();
-  await frame(page, "Updated");
 });
 
 test("Who can see saved filters", async ({ page, request, flowDatabase }) => {

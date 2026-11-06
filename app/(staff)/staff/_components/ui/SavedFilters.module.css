@@ -1,16 +1,16 @@
-/* A list's saved filters: a white lozenge, or two halves of one, at the right
-   of the filter bar's first row, the rest of the bar in lines beside it. On a
-   phone it takes its own row under the search. */
+/* A list's saved filters: a white lozenge, or two halves of one, last on the
+   filter bar's first line, at the right. */
 .chip {
-  float: right;
+  order: 2;
   display: flex;
+  flex: none;
   max-width: 100%;
-  margin: 0 0 var(--space-3) var(--space-3);
+  margin-left: auto;
 }
 
+/* On a phone it shares the search's row if it fits as it is, or else has a line of its own. */
 @media (max-width: 720px) {
   .chip {
-    float: none;
     margin-left: 0;
   }
 }
@@ -110,7 +110,7 @@
   display: flex;
   gap: var(--space-3);
   justify-content: space-between;
-  padding-right: var(--space-5);
+  padding-right: var(--space-6);
 }
 
 .rowName {
@@ -131,21 +131,18 @@
 
 .summary {
   display: block;
+  padding-right: var(--space-6);
 }
 
+/* Its menu's button, a raised disc (IconButton) that shows on any row's tint,
+   centred on the row at its right. */
 .rowButton {
+  --icon-button-size: 24px;
+
   position: absolute;
-  top: var(--space-1);
-  right: var(--space-2);
-  padding: 0 var(--space-1);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--text);
-  font: inherit;
-  font-size: var(--text-xs);
-  line-height: 1.4;
-  cursor: pointer;
+  top: 50%;
+  right: var(--space-1);
+  transform: translateY(-50%);
 }
 
 /* Where there's a mouse, a row's button shows on the row it's over. */
@@ -153,12 +150,6 @@
   .row:not(:hover, :focus-within, :has(:popover-open)) .rowButton {
     opacity: 0;
   }
-}
-
-.rowActions {
-  display: grid;
-  gap: var(--space-2);
-  justify-items: start;
 }
 
 .empty {
@@ -224,13 +215,4 @@
 /* The bubble round the name's form. */
 .wide {
   --bubble-width: 25rem;
-}
-
-/* In the notice that part of a saved filter has gone: its two ways out. */
-.goneActions {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-left: var(--space-2);
-  vertical-align: middle;
 }

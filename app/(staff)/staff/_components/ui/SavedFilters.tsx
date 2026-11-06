@@ -1,4 +1,4 @@
-import { Button, buttonClass } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import { TextArea } from "@/components/ui/Controls";
 import { Field } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -11,12 +11,23 @@ import Alert from "../Alert";
 import { DeleteTwice } from "../DeleteTwice";
 import Bubble from "./Bubble";
 import ChoiceSearch from "./ChoiceSearch";
-import CopyButton from "./CopyButton";
-import Menu from "./Menu";
+import Menu, { menuItemClass, menuItemsClass } from "./Menu";
 import StaffLink from "./StaffLink";
 import styles from "./SavedFilters.module.css";
+import { iconButtonClass } from "@/components/ui/IconButton";
 
 const copy = staffCopy.filters.saved;
+
+/** Three dots, drawn so they're evenly spaced in any browser, whatever its fonts have for "⋯". */
+function MoreDots() {
+  return (
+    <svg width="14" height="4" viewBox="0 0 14 4" fill="currentColor" aria-hidden="true">
+      <circle cx="2" cy="2" r="1.5" />
+      <circle cx="7" cy="2" r="1.5" />
+      <circle cx="12" cy="2" r="1.5" />
+    </svg>
+  );
+}
 
 /** What the saved filters' forms do (app/(staff)/staff/saved-filter-actions.ts), which the page hands in. */
 export type SavedFilterActions = Record<
@@ -32,9 +43,8 @@ type Row = {
   /** The address before the @ of who made it, and the day. */
   by: string;
   date: string;
-  /** Its link for this page, and to share. */
+  /** The link that loads it. */
   href: string;
-  link: string;
 };
 
 export type SavedFiltersProps = {
@@ -81,7 +91,6 @@ export function savedFiltersProps({
       by: row.createdBy.split("@")[0],
       date: staffDate(row.createdAt),
       href: savedFilterHref(list, row.id, row.params, carried),
-      link: savedFilterHref(list, row.id, row.params),
     })),
     loaded: loaded && {
       id: loaded.id,
@@ -191,14 +200,14 @@ function SavedRow({
         </span>
         <span className={styles.summary}>{row.summary}</span>
       </StaffLink>
-      <Menu id={`saved-filter-${row.id}`} trigger={styles.rowButton} name={copy.rowMenu(row.name)} label="⋯">
-        <div className={styles.rowActions}>
-          <Bubble
-            id={rename}
-            trigger={buttonClass({ variant: "ghost", size: "small", fit: true })}
-            label={copy.rename}
-            className={styles.wide}
-          >
+      <Menu
+        id={`saved-filter-${row.id}`}
+        trigger={iconButtonClass("raised", styles.rowButton)}
+        name={copy.rowMenu(row.name)}
+        label={<MoreDots />}
+      >
+        <div className={menuItemsClass}>
+          <Bubble id={rename} trigger={menuItemClass} label={copy.rename} className={styles.wide}>
             <NameForm
               bubble={rename}
               title={copy.rename}
@@ -208,13 +217,12 @@ function SavedRow({
               action={actions.rename}
             />
           </Bubble>
-          <CopyButton text={row.link} fromHere label={copy.copyLink} copied={copy.linkCopied} close={copy.closeNote} />
           <DeleteTwice
             name="id"
             value={String(row.id)}
             fields={{ list, back }}
             label={copy.deleteForEveryone}
-            danger
+            menuItem
             action={actions.remove}
           />
         </div>
@@ -315,33 +323,8 @@ export default function SavedFilters({ canSave, ...props }: SavedFiltersProps & 
   return <span className={styles.chip}>{chooser}</span>;
 }
 
-/**
- * Says what a loaded saved filter names that no longer exists, in `words`,
- * and has been left out: Update takes it out for good, or it can be deleted.
- * Nothing for one with nothing gone.
- */
-export function SavedFilterGone({ words, saved }: { words: string[]; saved: SavedFiltersProps }) {
+/** Says what a loaded saved filter names that no longer exists, in `words`, and has been left out. Nothing for one with nothing gone. */
+export function SavedFilterGone({ words }: { words: string[] }) {
   if (!words.length) return null;
-  const { list, back, actions } = saved;
-  const loaded = saved.loaded!;
-  return (
-    <Alert tone="amber">
-      {copy.gone(words.join(", "))}
-      <span className={styles.goneActions}>
-        <form action={actions.update}>
-          <FormFields list={list} id={loaded.id} back={loaded.undo} />
-          <SubmitButton variant="ghost" size="small" fit>
-            {copy.goneUpdate}
-          </SubmitButton>
-        </form>
-        <DeleteTwice
-          name="id"
-          value={String(loaded.id)}
-          fields={{ list, back }}
-          label={copy.goneDelete}
-          action={actions.remove}
-        />
-      </span>
-    </Alert>
-  );
+  return <Alert tone="amber">{copy.gone(words.join(", "))}</Alert>;
 }

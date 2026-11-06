@@ -183,17 +183,12 @@ describe("SavedFilters' list", () => {
     await expect.element(page.getByRole("link", { name: /Conservatives/ })).toBeVisible();
   });
 
-  it("has a menu on each row that renames, copies its link and deletes twice, without loading it", async () => {
-    const write = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+  it("has a menu on each row that renames and deletes twice, without loading it", async () => {
     const did = await bar({ mailing: "12" }, { rows });
     await chip().click();
     await page.getByRole("button", { name: copy.rowMenu("Scottish MPs") }).click();
     // Still open under it: a menu within a menu.
     await expect.element(page.getByRole("searchbox", { name: copy.find })).toBeVisible();
-
-    await page.getByRole("button", { name: copy.copyLink }).click();
-    // Without who a mailing's for, which is this person's own.
-    expect(write).toHaveBeenCalledWith(`${location.origin}/staff/politicians?nation=scotland&saved=2`);
 
     await page.getByRole("button", { name: copy.rename, exact: true }).click();
     const name = page.getByRole("textbox", { name: copy.name });
@@ -205,6 +200,15 @@ describe("SavedFilters' list", () => {
     expect(renamed.get("back")).toBeNull();
     await userEvent.keyboard("{Escape}");
 
+    // The first press only asks: nothing's sent, and it asks no more once the focus has gone.
+    await page.getByRole("button", { name: copy.deleteForEveryone }).click();
+    const again = page.getByRole("button", { name: staffCopy.deleteIt });
+    await expect.element(again).toHaveFocus();
+    expect(did.remove).not.toHaveBeenCalled();
+    (again.element() as HTMLElement).blur();
+    await expect.element(page.getByRole("button", { name: copy.deleteForEveryone })).toBeVisible();
+    expect(did.remove).not.toHaveBeenCalled();
+
     await page.getByRole("button", { name: copy.deleteForEveryone }).click();
     await page.getByRole("button", { name: staffCopy.deleteIt }).click();
     await expect.poll(() => (did.remove as ReturnType<typeof vi.fn>).mock.calls.length).toBe(1);
@@ -212,18 +216,17 @@ describe("SavedFilters' list", () => {
     expect(removed.get("id")).toBe("2");
     expect(removed.get("list")).toBe("politicians");
     expect(removed.get("back")).toBe("/staff/politicians?mailing=12");
-    write.mockRestore();
   });
 });
 
 describe("SavedFilterGone", () => {
   it("says nothing with nothing gone", async () => {
     await bar({ saved: "7" }, { rows: [row(7, "One")], loaded: LOADED });
-    await expect.element(page.getByRole("button", { name: copy.goneUpdate })).not.toBeInTheDocument();
+    await expect.element(page.getByRole("status")).not.toBeInTheDocument();
   });
 
-  it("says what's gone in the chips' words, and updates it to what's left, or deletes it", async () => {
-    const did = await bar(
+  it("says what's gone in the chips' words", async () => {
+    await bar(
       { saved: "7", party: "Labour" },
       {
         rows: [row(7, "One")],
@@ -233,13 +236,6 @@ describe("SavedFilterGone", () => {
     await expect
       .poll(() => document.body.textContent)
       .toContain(copy.gone("Party: Reform=Group, Nation: not atlantis, moon"));
-    await page.getByRole("button", { name: copy.goneUpdate }).click();
-    await expect.poll(() => (did.update as ReturnType<typeof vi.fn>).mock.calls.length).toBe(1);
-    const sent = (did.update as ReturnType<typeof vi.fn>).mock.calls[0][0] as FormData;
-    expect(sent.get("back")).toBe("/staff/politicians?party=Labour&saved=7");
-    await page.getByRole("button", { name: copy.goneDelete }).click();
-    await page.getByRole("button", { name: staffCopy.deleteIt }).click();
-    await expect.poll(() => (did.remove as ReturnType<typeof vi.fn>).mock.calls.length).toBe(1);
   });
 });
 

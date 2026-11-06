@@ -82,7 +82,7 @@ describe("withoutValues", () => {
 
 describe("savedFilterHref", () => {
   it("is the list's page with the filter and its ID", () => {
-    expect(savedFilterHref("events", 7, { when: "past" })).toBe("/staff/events?when=past&saved=7");
+    expect(savedFilterHref("events", 7, { when: "past" }, {})).toBe("/staff/events?when=past&saved=7");
   });
 
   it("keeps what's carried", () => {

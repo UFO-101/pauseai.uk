@@ -38,6 +38,7 @@ import Strip from "@/app/(staff)/staff/_components/ui/Strip";
 import Tabs from "@/app/(staff)/staff/_components/ui/Tabs";
 import Tag from "@/components/ui/Tag";
 import type { Group } from "../_components/types";
+import FilterBarLines from "@/app/(staff)/staff/_components/ui/FilterBarLines";
 import { NoticeExample, DeleteTwiceExample, SavedFilterExample, SavedFilterGoneExample } from "./staff.client";
 
 /** A list's rows, for the list frame: a name, a place and a count, the place long enough to wrap. */
@@ -961,6 +962,23 @@ export const staffKit: Group = {
         {
           label: "Loaded and edited, with a long name: cut short, 'edited' whole, Save a menu",
           render: () => <SavedFilterExample state="edited" />,
+        },
+      ],
+    },
+    {
+      name: "FilterBarLines",
+      file: "app/(staff)/staff/_components/ui/FilterBarLines.tsx",
+      variants: [
+        {
+          label: "Unseen, around a filter bar's row: its last child takes its own line when they don't all fit",
+          render: () => (
+            <StaffPage as="div">
+              <FilterBarLines className="">
+                <span>Search</span>
+                <span>Chips</span>
+              </FilterBarLines>
+            </StaffPage>
+          ),
         },
       ],
     },

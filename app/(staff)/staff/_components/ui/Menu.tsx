@@ -1,6 +1,13 @@
 import type { CSSProperties, ReactNode } from "react";
 import styles from "./Menu.module.css";
 
+/** A list of choices that do something, in a menu's box, and one of them, a button or a link. */
+export const menuItemsClass = styles.items;
+export const menuItemClass = styles.item;
+/** One that destroys something: red words, and red all over when asking to be pressed again. */
+export const menuItemDangerClass = `${styles.item} ${styles.danger}`;
+export const menuItemArmedClass = `${styles.item} ${styles.armed}`;
+
 /**
  * A button that opens a box under it: choices, or a small form. The box is
  * a popover, so it needs no script: a click elsewhere, or Escape, closes it.

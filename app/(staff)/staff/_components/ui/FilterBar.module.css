@@ -12,31 +12,22 @@
   border-bottom: 1px solid var(--border);
 }
 
-/* With saved filters, whose chip stays at the right of the first row while
-   the rest wrap around it: the row's items in lines beside it, as a flex row
-   can't have a line shorter than the next. */
-.withSaved {
-  display: flow-root;
-  padding-bottom: var(--space-1);
+/* The chips, + Filter and Clear filters, as one block: after the search if
+   all the bar has fits on its line, or else on a line of their own, under
+   the rest (FilterBarLines). */
+.chips {
+  order: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: end;
+  min-width: 0;
+  max-width: 100%;
 }
 
-.withSaved > .search,
-.withSaved > .pair,
-.withSaved > .chip,
-.withSaved > .add,
-.withSaved > .clearAll {
-  margin: 0 var(--space-3) var(--space-3) 0;
-  vertical-align: bottom;
-}
-
-.withSaved > .search,
-.withSaved > .pair,
-.withSaved > .clearAll {
-  display: inline-flex;
-}
-
-.withSaved > .clearAll {
-  margin-left: var(--space-1);
+.bar[data-stacked] > .chips {
+  order: 3;
+  flex-basis: 100%;
 }
 
 /* The search box and its button, side by side. */
@@ -48,14 +39,17 @@
 
 /* Wide enough for the fields it searches, which are its placeholder. */
 .search > :first-child {
-  width: 20rem;
+  width: 15rem;
 }
 
-/* On a phone, the search takes the row, its box what the button leaves
-   (the button fits its text, as Button's phone width is 720px down). */
+/* On a phone, the search and the saved filters' lozenge share the row between
+   them, the box taking what the rest leave (the button fits its text, as
+   Button's phone width is 720px down). The search stays wide enough to use,
+   so on the narrowest the lozenge goes to a line of its own under it. */
 @media (max-width: 720px) {
   .search {
-    width: 100%;
+    flex: 1 1 12rem;
+    min-width: 0;
   }
 
   .search > :first-child {

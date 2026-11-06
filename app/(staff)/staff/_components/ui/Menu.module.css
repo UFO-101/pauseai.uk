@@ -20,6 +20,41 @@
   box-sizing: border-box;
 }
 
+/* Choices that do something: a line each, as wide as the box. */
+.items {
+  display: grid;
+  gap: 2px;
+}
+
+.item {
+  display: block;
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.item:hover {
+  background: var(--surface-2);
+}
+
+.danger {
+  color: var(--status-red);
+}
+
+.armed,
+.armed:hover {
+  background: var(--status-red);
+  color: var(--white);
+}
+
 /* Hung from its button's bottom left, where the browser can anchor it;
    flipped to the left, or above the button, where there isn't room. */
 @supports (position-area: bottom) {

@@ -2248,33 +2248,27 @@ export const staffCopy = {
     pageTitle: (title: string, filters: string) => `${title}: ${filters}`,
     // The chip at the right of a list's filters: its saved filters, and saving what's on.
     saved: {
-      chip: "⁂ Saved",
-      save: "⁂ Save",
-      edited: "⁂ edited",
-      saveTitle: "⁂ Save this filter",
-      name: "⁂ Name",
-      shared: "⁂ All staff who can open this page will see it.",
-      cancel: "⁂ Cancel",
-      find: "⁂ Find a saved filter",
-      count: (n: number) => `⁂ ${n} saved ${n === 1 ? "filter" : "filters"}, shared by all staff`,
-      none: "⁂ No saved filters yet. Choose some filters, then press Save.",
-      update: "⁂ Update for everyone",
-      saveAsNew: "⁂ Save as new",
-      undo: "⁂ Undo my changes",
+      chip: "Saved",
+      save: "Save",
+      edited: "edited",
+      saveTitle: "Save this filter",
+      name: "Name",
+      shared: "All staff see the same saved filters.",
+      cancel: "Cancel",
+      find: "Find a saved filter",
+      count: (n: number) => `${n} saved ${n === 1 ? "filter" : "filters"}, shared by all staff`,
+      none: "No saved filters yet. Set some filters and press Save.",
+      update: "Update for all",
+      saveAsNew: "Save as new",
+      undo: "Undo my changes",
       // A row's menu, its button named after the row.
-      rowMenu: (name: string) => `⁂ More for ${name}`,
-      rename: "⁂ Rename",
-      copyLink: "⁂ Copy link",
-      linkCopied: "⁂ Copied",
-      closeNote: "⁂ Close",
-      deleteForEveryone: "⁂ Delete for everyone",
+      rowMenu: (name: string) => `More for ${name}`,
+      rename: "Rename",
+      deleteForEveryone: "Delete for all",
       // Over the list, when a saved filter names something that has gone.
-      gone: (what: string) =>
-        `⁂ Part of this saved filter no longer exists: ${what}. It has been left out, so this list may be longer than it was.`,
-      goneUpdate: "⁂ Update it",
-      goneDelete: "⁂ Delete it",
+      gone: (what: string) => `Part of this saved filter no longer exists: “${what}”. It has been left out.`,
       // A saved filter's name when erasing a supporter's details leaves none of it.
-      erasedName: "⁂ Saved filter",
+      erasedName: "Saved filter",
     },
   },
   // Under a list of more than one page.
@@ -2363,7 +2357,7 @@ export const staffCopy = {
       url: "Google Doc",
     } as Record<string, string>,
     // A saved filter saved, changed or deleted: which list it's on, and its ID, never its name.
-    savedFilter: (list: string, id: string) => `⁂ ${list}, saved filter ${id}`,
+    savedFilter: (list: string, id: string) => `${list}, saved filter ${id}`,
     // A held MP import decided, linked to the import's page.
     run: (id: string) => `Import run ${id}`,
     // After each number an import, a sync, an erasure or the end of sessions logged: what it counted, for one and for more.

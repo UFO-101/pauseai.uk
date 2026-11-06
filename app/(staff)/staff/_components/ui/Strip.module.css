@@ -4,8 +4,8 @@
 .strip {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2) var(--space-3);
-  align-items: center;
+  gap: var(--space-3);
+  align-items: flex-start;
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
   /* Plain is the second tint, or white on a card that's tinted itself (ui/Grid). */
@@ -78,12 +78,15 @@
   margin: 0;
 }
 
+/* Its action centred on the words, however many lines they run to, and a
+   small button no taller than one line of them. */
 .action {
   flex-shrink: 0;
+  align-self: center;
+  margin-block: calc(-1 * var(--space-1));
 }
 
-/* The icon by the first line, however many lines follow. */
+/* The icon centred on the first line, however many lines follow. */
 .strip > svg {
-  align-self: flex-start;
-  margin-top: 2px;
+  margin-top: calc((1lh - 1.25rem) / 2);
 }

@@ -6,6 +6,7 @@ import { TextInput } from "@/components/ui/Controls";
 import ExternalLink from "./ExternalLink";
 import StaffPage from "./StaffPage";
 import Tabs from "./Tabs";
+import FilterBarLines from "./FilterBarLines";
 import FilterBar, { filteredTitle, filterWords, type Filter } from "./FilterBar";
 import Menu from "./Menu";
 import Bubble, { BubbleBox } from "./Bubble";
@@ -35,6 +36,32 @@ describe("ExternalLink", () => {
     await expect.element(link).toHaveAccessibleDescription("(opens in a new tab)");
     expect(link.element().textContent).toBe("The letter");
     expect(getComputedStyle(link.element(), "::after").maskImage).toContain("svg");
+  });
+});
+
+describe("FilterBarLines", () => {
+  const lines = (width: string) => (
+    <div style={{ width }}>
+      <style>{".row, .row > :last-child { column-gap: 12px; }"}</style>
+      <FilterBarLines className="row">
+        <span style={{ display: "inline-block", width: "100px" }}>Search</span>
+        <span style={{ display: "inline-block", width: "100px" }}>Saved</span>
+        <span>
+          <span style={{ display: "inline-block", width: "100px" }}>One</span>
+          <span style={{ display: "inline-block", width: "100px" }}>Two</span>
+        </span>
+      </FilterBarLines>
+    </div>
+  );
+  const stacked = () => document.querySelector(".row")!.hasAttribute("data-stacked");
+
+  it("is stacked only when all it holds wouldn't fit on one line, counting the last child's children side by side", async () => {
+    const { rerender } = await render(lines("500px"));
+    await expect.poll(stacked).toBe(false);
+    await rerender(lines("350px"));
+    await expect.poll(stacked).toBe(true);
+    await rerender(lines("500px"));
+    await expect.poll(stacked).toBe(false);
   });
 });
 
@@ -80,6 +107,10 @@ describe("StaffPage", () => {
     expect(getComputedStyle(container.firstElementChild!).gridTemplateColumns.split(" ")).toHaveLength(2);
     await page.viewport(390, 800);
     expect(nav.getBoundingClientRect().bottom).toBeLessThanOrEqual(heading.getBoundingClientRect().top);
+    // A short page keeps its spare height: the navigation's row is only as tall as the navigation.
+    const padding = parseFloat(getComputedStyle(side).paddingTop) + parseFloat(getComputedStyle(side).paddingBottom);
+    const border = parseFloat(getComputedStyle(side).borderBottomWidth);
+    expect(side.getBoundingClientRect().height).toBeCloseTo(nav.getBoundingClientRect().height + padding + border, 0);
   });
 
   it("sets the compact density on what's in it", async () => {
@@ -881,14 +912,6 @@ describe("DownloadMenu", () => {
 describe("CopyButton", () => {
   // The note's live region, there while empty, hidden then.
   const status = () => document.querySelector<HTMLElement>('[role="status"]')!;
-
-  it("copies a path with this site's address before it, with `fromHere`", async () => {
-    const write = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
-    await render(<CopyButton text="/staff/events" fromHere label="Copy" copied="Copied!" close="Close" />);
-    await page.getByRole("button", { name: "Copy" }).click();
-    expect(write).toHaveBeenCalledWith(`${location.origin}/staff/events`);
-    write.mockRestore();
-  });
 
   it("copies its text and says so a few seconds; its note stays till closed, and opens again at the next copy", async () => {
     const write = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
