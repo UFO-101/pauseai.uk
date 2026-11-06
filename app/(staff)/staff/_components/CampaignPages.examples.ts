@@ -110,12 +110,21 @@ export const exampleAskPage: AskPageData = {
     {
       politicianId: 1,
       name: "Polly Placeholder",
+      isTest: false,
       constituency: "Seat One",
       party: "Example Party",
       status: "signed",
       lastWrittenTo: "2026-10-01T09:00:00Z",
     },
-    { politicianId: 2, name: "Dee Dummy", constituency: null, party: null, status: "declined", lastWrittenTo: null },
+    {
+      politicianId: 2,
+      name: "Dee Dummy",
+      isTest: true,
+      constituency: null,
+      party: null,
+      status: "declined",
+      lastWrittenTo: null,
+    },
   ],
 };
 
@@ -127,7 +136,7 @@ export const exampleOneOffs: OneOffThreadRow[] = [
     someoneElse: false,
     latestAt: "2026-10-20T09:00:00Z",
     messages: 2,
-    people: [{ id: 1, name: "Polly Placeholder" }],
+    people: [{ id: 1, name: "Polly Placeholder", isTest: false }],
     participants: ["Joseph Example", "Polly Placeholder"],
     mailboxes: ["joseph@pauseai.uk", "policy@pauseai.uk"],
     answered: true,

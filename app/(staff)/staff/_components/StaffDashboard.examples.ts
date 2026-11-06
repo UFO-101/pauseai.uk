@@ -1,4 +1,4 @@
-import type { Dashboard, SeriesPoint } from "@/lib/staff-dashboard";
+import type { Dashboard, SeriesPoint, SourcePoint } from "@/lib/staff-dashboard";
 
 /** Counts as a sparkline's points, windows of `days`, the last ending at the example's `asOf`. */
 function windows(counts: number[], days = 7): SeriesPoint[] {
@@ -6,6 +6,18 @@ function windows(counts: number[], days = 7): SeriesPoint[] {
     from: new Date(Date.UTC(2026, 9, 21, 12) - (counts.length - i) * days * 24 * 60 * 60 * 1000).toISOString(),
     count,
   }));
+}
+
+/** Counts as bars of new supporters, windows of `days`: each mostly from Luma, some members, a few who first wrote to their MP. */
+function bySource(counts: number[], days = 7): SourcePoint[] {
+  return windows(counts, days).map((point) => {
+    const member = Math.floor(point.count / 4);
+    const letter = Math.floor(point.count / 10);
+    return {
+      ...point,
+      sources: point.count ? { luma: point.count - member - letter, member, "email-your-mp": letter } : {},
+    };
+  });
 }
 
 /**
@@ -34,14 +46,15 @@ export const exampleDashboard: Dashboard = {
   signedMp: null,
   series: {
     eventRegistrations: windows([70, 105, 376, 144, 220, 338, 498, 277]),
-    supportersAdded: windows([37, 57, 168, 58, 157, 223, 437, 176]),
   },
+  supportersBySource: bySource([37, 57, 168, 58, 157, 223, 437, 176]),
   actions: [
     { kind: "held-sync", at: "2026-10-21T00:00:00.000Z", added: 0, removed: 21, changed: 3 },
     {
       kind: "blocked-mp",
       politicianId: 7,
       name: "Bouncy McTestface MP",
+      isTest: true,
       at: "2026-10-19T09:30:00.000Z",
     },
     { kind: "failed-import", job: "import-controlai", at: "2026-10-21T02:00:00.000Z", error: "No PDF linked" },
@@ -68,7 +81,7 @@ export const exampleQuietDashboard: Dashboard = {
   signedMp: null,
   series: {
     eventRegistrations: windows([0, 2, 0, 1, 3, 0, 4, 4], 30),
-    supportersAdded: windows([0, 0, 0, 0, 0, 0, 2, 0], 30),
   },
+  supportersBySource: bySource([0, 0, 0, 0, 0, 0, 2, 0], 30),
   actions: [],
 };

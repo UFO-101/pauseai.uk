@@ -272,7 +272,7 @@ to, so there are four places, one for each kind of adding:
 "+" marks a small control that adds to something already on the screen,
 a filter or a part of the letter, never a button that makes a new thing.
 
-Buttons that act on what a list's filters found ("New mailing", to
+Buttons that act on what a list's filters found ("Mail these 42…", to
 them, Download) aren't adding. They sit over the table, in the list frame's
 count row. A page whose list isn't a table has Download (`ui/DownloadMenu`, the
 same button) beside its title's button instead.
@@ -304,7 +304,7 @@ page is as it always is, but for that, and two bars:
   this button too, there even with no one ticked; a new mailing's appears
   once someone is.
 
-The page's own button for the same thing (New mailing) goes while it's
+The page's own button for the same thing (New mailing, or Mail these) goes while it's
 choosing, so there's one way on. The person chooses with tools they
 already know. The top always says what they're doing and how to stop,
 and the foot always shows the result and the way on, however far they've
@@ -768,8 +768,12 @@ march sign-up").
 - A link set in text that should stand out: `.inline-link`, bold, underlined on hover
 - Footer links: light on the dark footer
 - A link out of the site opens in a new tab and sends no referrer:
-  `target="_blank" rel="noreferrer"`, with no icon or other mark. Links
-  within the site, `mailto:` and `#anchor` links open in place.
+  `target="_blank" rel="noreferrer"`. On public pages it has no icon or
+  other mark. On staff pages it's `ui/ExternalLink`, with an arrow after its
+  words (↗), as "→" is for a link within them. That's for a link to another
+  site, not a file of our own, or a link inside a letter's preview, which
+  shows the letter as it's sent. Links within the site, `mailto:` and
+  `#anchor` links open in place.
 
 ## Interface text
 

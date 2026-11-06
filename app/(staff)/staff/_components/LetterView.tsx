@@ -12,6 +12,7 @@ import CampaignName from "./CampaignName";
 import { historyOf, LetterHistory, letterTitle, statusOf } from "./LetterHistory";
 import Grid, { Card, Column, spanClass } from "./ui/Grid";
 import styles from "./LetterView.module.css";
+import TestTag from "./TestTag";
 
 type SetStatus = (form: FormData) => void | Promise<void>;
 
@@ -100,7 +101,7 @@ export default function LetterView({
       <div className={styles.heading}>
         <h1>{letterTitle(letter)}</h1>
         <StatusTag status={letter.status} answered={Boolean(ask && politician.statuses[ask.slug])} />
-        {politician.isTest && <Tag>{staffCopy.politicians.flags.test}</Tag>}
+        <TestTag isTest={politician.isTest} />
       </div>
       <p className={styles.about}>
         <StaffLink href={`/staff/politicians/${letter.politicianId}`}>{letter.mpName}</StaffLink>

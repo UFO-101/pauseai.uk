@@ -112,6 +112,29 @@ test("Following a sidebar link", async ({ page, flowDatabase }) => {
   await frame(page, "The Asks page");
 });
 
+test("The dashboard's tabs and numbers", async ({ page, flowDatabase }) => {
+  story("The dashboard shows the last week. A tab shows the last 30 days instead.");
+  await logIn(page, flowDatabase, ["supporters", "admin"]);
+  await page.goto(`${BASE}/staff`);
+  await frame(page, "The dashboard");
+  const tabs = page.getByRole("navigation", { name: staffCopy.home.dashboard.windows });
+  await tabs.getByRole("link", { name: staffCopy.home.dashboard.window(30) }).click();
+  await expect(tabs.getByRole("link", { name: staffCopy.home.dashboard.window(30) })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await frame(page, "The last 30 days");
+  story("The events held tile leads to the past events.");
+  await page.locator('a[href="/staff/events?when=past"]').click();
+  await expect(page).toHaveURL(`${BASE}/staff/events?when=past`);
+  await frame(page, "Past events");
+  story("The letters tile leads to the letters in the sent emails.");
+  await page.goto(`${BASE}/staff`);
+  await page.locator('a[href="/staff/sent-emails?purpose=letter&link=campaign"]').click();
+  await expect(page).toHaveURL(/\/staff\/sent-emails\?purpose=letter&link=campaign$/);
+  await frame(page, "Letters in the sent emails");
+});
+
 test("The MPs signed tile", async ({ page, request, flowDatabase }) => {
   story(
     "An admin records that Polly Placeholder signed the Frontier AI letter to the Prime Minister. The dashboard's MPs signed tile counts her.",
@@ -198,7 +221,8 @@ test("An MP signs", async ({ page, request, flowDatabase }) => {
   await expect(page).toHaveURL(`${BASE}/staff`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.home.title);
   await expect(page.getByText(staffEmail()).first()).toBeAttached();
-  await expect(page.getByRole("heading", { level: 2, name: staffCopy.home.dashboard.sections.mps })).toBeVisible();
+  // The sidebar has a heading of the same name, before the dashboard's.
+  await expect(page.getByRole("heading", { level: 2, name: staffCopy.nav.sections.politicians }).last()).toBeVisible();
   await frame(page, "The dashboard");
   story("They open Politicians from the sidebar (on a phone, from the menu). The test politicians are left out.");
 

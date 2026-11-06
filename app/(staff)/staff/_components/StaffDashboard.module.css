@@ -1,4 +1,4 @@
-/* The home page's dashboard: what needs a person, the day and the window,
+/* The home page's dashboard: what needs a person, the windows' tabs,
    then three groups of tiles, each a grid (ui/Grid). */
 
 .heading {
@@ -6,7 +6,7 @@
   font-size: var(--text-lg);
 }
 
-/* What needs a person, at the top: a strip each, a little apart; then room before the day. */
+/* What needs a person, at the top: a strip each, a little apart; then room before the tabs. */
 .actions {
   display: grid;
   gap: var(--space-2);
@@ -15,26 +15,13 @@
   list-style: none;
 }
 
-/* The day, then the windows: the one shown in bold, the others links. */
-.window {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
-  margin: 0;
-}
-
-.windows {
-  display: flex;
-  gap: var(--space-2);
-}
-
 /* A tile: the window's number large, what it counts under it, a bar or a
    line where it has one, then how it moved. The whole tile is the link, in
    the text's colour; hovering one brings its border and number up to the
    accent. */
 .tile {
-  /* A sparkline is as tall as it would be in a tile one column wide, though
-     its tile is two (Sparkline): that tile's inner width, from this one's,
+  /* A sparkline is as tall as it would be in a tile one column wide, though its
+     tile is two (Sparkline), and bars by source, in a tile three wide, a little taller: that tile's inner width, from this one's,
      the grid's gap and the padding at the sides. */
   --tile-side: var(--space-5);
   --sparkline-width: calc((100cqi + 2 * var(--tile-side) - var(--grid-gap)) / 2 - 2 * var(--tile-side));

@@ -21,8 +21,9 @@ type Change = (form: FormData) => boolean | void | Promise<boolean | void>;
  * place of the text, saved by Save or Ctrl+Enter (Cmd+Enter on a Mac), and
  * Save, Cancel and Delete, red, pressed twice, in
  * place of Edit; saving or cancelling puts the text back. Anyone else who
- * may delete it, an admin, has Delete alone. If the server refuses, as it
- * does once the day is up on a page left open, it stays open and says why.
+ * may delete it, an admin in that same day, has Delete alone. If the server
+ * refuses, as it does once the day is up on a page left open, it stays open
+ * and says why.
  */
 export default function NoteChanges({
   note,

@@ -334,14 +334,15 @@ function tickColumn(
 }
 
 /**
- * The politicians page's list, in the list frame: how many, New mailing, its
- * downloads, the table and the way through its pages; or, when a search
+ * The politicians page's list, in the list frame: how many, the button that
+ * starts a mailing, its downloads, the table and the way through its pages; or, when a search
  * finds no one, the nearest names. Under it, how many the search finds in
  * other houses, out of office or among the test politicians, linked to
- * them; while choosing, the nearest names have tick boxes too. New
- * mailing makes one with everyone the filters find ticked, and
- * chooses for it. While choosing, each row has a tick box, New mailing
- * goes, and the bar at the foot goes on to the draft; the paste tab is in
+ * them; while choosing, the nearest names have tick boxes too. With no filter
+ * the button is New mailing, which makes an empty one; with one it's Mail
+ * these, which makes one with everyone the filters find ticked, and goes when
+ * they find no one. Either chooses for it. While choosing, each row has a tick
+ * box, that button goes, and the bar at the foot goes on to the draft; the paste tab is in
  * place of the list. A new filter or sort starts
  * from the first page.
  */
@@ -359,7 +360,7 @@ export default function PoliticiansList({
   list: PoliticiansPage;
   search: PoliticiansSearch;
   asks: Ask[];
-  /** Makes a new mailing to everyone the form's filter finds (mailing-actions.ts). */
+  /** Makes a new mailing: empty, or with `found`, to everyone the form's filter finds (mailing-actions.ts). */
   newMailing: FormAction;
   /** The draft it's choosing for, how many of those the filters find are ticked, and the lines pasted. */
   choosing?: Choosing;
@@ -371,6 +372,7 @@ export default function PoliticiansList({
 }) {
   const filters = { ...search, page: "" };
   const who = storedFilter("politicians", search).params;
+  const filtered = Object.keys(who).length > 0;
   const columns = politicianColumns(asks, filters);
   if (choosing && search.tab === "pasted") {
     return (
@@ -409,14 +411,15 @@ export default function PoliticiansList({
           href={(n) => filtersPath(PATH, search, pageParam(n))}
           download={(format) => filtersPath(`${PATH}/download`, filters, { format })}
           actions={
-            !choosing && (
+            !choosing &&
+            (!filtered || list.total > 0) && (
               <form action={newMailing}>
                 {Object.entries(who).flatMap(([name, value]) =>
                   valuesOf(value).map((one) => <input key={`${name}=${one}`} type="hidden" name={name} value={one} />),
                 )}
-                <input type="hidden" name="found" value="1" />
+                {filtered && <input type="hidden" name="found" value="1" />}
                 <SubmitButton variant="primary" size="small" fit>
-                  {mailingCopy.newTitle}
+                  {filtered ? mailingCopy.mailThese(list.total) : mailingCopy.newTitle}
                 </SubmitButton>
               </form>
             )

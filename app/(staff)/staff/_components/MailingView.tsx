@@ -26,6 +26,7 @@ import Strip from "./ui/Strip";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
 import Bubble from "./ui/Bubble";
 import styles from "./MailingView.module.css";
+import TestTag from "./TestTag";
 
 const copy = staffCopy.mailingPages;
 
@@ -76,7 +77,10 @@ function recipientColumns(mailing: Mailing): ListColumn<MailingRecipient>[] {
       label: staffCopy.mailings.recipientColumns.name,
       cell: (r) => (
         <span className={styles.who}>
-          <StaffLink href={`/staff/politicians/${r.politicianId}`}>{r.name}</StaffLink>
+          <span>
+            <StaffLink href={`/staff/politicians/${r.politicianId}`}>{r.name}</StaffLink>
+            <TestTag isTest={r.isTest} />
+          </span>
           <Muted>
             {[r.constituency, r.party, mailing.imported && r.personalised && staffCopy.mailings.personalised]
               .filter(Boolean)

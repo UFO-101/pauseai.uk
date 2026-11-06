@@ -5,6 +5,7 @@ import { staffTime } from "@/lib/staff-time";
 import NoteChanges from "./NoteChanges";
 import NoteForm from "./NoteForm";
 import styles from "./Notes.module.css";
+import ExternalLink from "./ui/ExternalLink";
 
 const copy = staffCopy.notes;
 
@@ -29,9 +30,9 @@ export function NoteText({ body, className }: { body: string; className?: string
     <p className={className ?? styles.body}>
       {noteParts(body).map((part, i) =>
         part.href ? (
-          <a key={i} href={part.href} target="_blank" rel="noreferrer">
+          <ExternalLink key={i} href={part.href}>
             {part.text}
-          </a>
+          </ExternalLink>
         ) : (
           part.text
         ),

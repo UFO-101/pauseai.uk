@@ -1,3 +1,4 @@
+import { FIXTURE_NOW } from "../fixture-env.mjs";
 import { campaigns } from "@/lib/content/email-your-mp";
 import type { Page } from "@playwright/test";
 import { marchSignupCopy } from "@/lib/content/march-signup";
@@ -65,7 +66,7 @@ test("Filtering supporters", async ({ page, request, flowDatabase }) => {
   );
   await importLuma(request, BASE);
   await logInWithSupporters(page, flowDatabase);
-  await page.getByRole("link", { name: staffCopy.nav.supporters }).first().click();
+  await page.goto(`${BASE}/staff/supporters`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.title);
   // Five guests, a contact who never registered, and a host who never registered.
   await expect(page.getByText(copy.total(7))).toBeVisible();
@@ -308,14 +309,24 @@ test("Notes on a supporter", async ({ page, request, flowDatabase }) => {
   await expect(notes.first().getByRole("textbox")).toBeHidden();
   await frame(page, "The note, edited");
 
-  story("An admin can delete anyone's note. Delete asks to be pressed a second time.");
-  // An admin can delete anyone's note.
+  story("An admin can't delete the colleague's note from last week, as its day is up. They can delete one from today.");
   addStaffAccount(flowDatabase, staffEmail(), ["admin", "supporters"]);
+  runSql(
+    flowDatabase,
+    `INSERT INTO notes (supporter_id, body, written_by, created_at)
+     VALUES (${jane}, 'Wrong supporter, sorry.', 'sam.example@pauseai.uk', '${FIXTURE_NOW}'::timestamptz - interval '1 hour')`,
+  );
   await page.reload();
-  await notes.last().getByRole("button", { name: staffCopy.notes.delete }).click();
+  const oldNote = notes.filter({ hasText: "Asked about the Manchester group." });
+  const newNote = notes.filter({ hasText: "Wrong supporter, sorry." });
+  await expect(oldNote.getByRole("button", { name: staffCopy.notes.delete })).toHaveCount(0);
+  await expect(newNote.getByRole("button", { name: staffCopy.notes.delete })).toBeVisible();
+  await frame(page, "An admin, with Delete on today's note only");
+  story("Delete asks to be pressed a second time.");
+  await newNote.getByRole("button", { name: staffCopy.notes.delete }).click();
   await frame(page, "Deleting the colleague's note");
-  await notes.last().getByRole("button", { name: staffCopy.deleteItShort }).click();
-  await expect(notes).toHaveCount(1);
+  await newNote.getByRole("button", { name: staffCopy.deleteItShort }).click();
+  await expect(notes).toHaveCount(2);
   await frame(page, "The note, deleted");
   story("The audit log records who added, edited and deleted a note on Jane.");
 

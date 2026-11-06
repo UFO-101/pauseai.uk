@@ -41,7 +41,7 @@ describe("the staff examples", () => {
 
   it("logs a new note, as each reader sees the notes", async () => {
     const { unmount } = await render(<NotesExample as="admin" />);
-    await expect.element(page.getByRole("button", { name: staffCopy.notes.delete }).nth(2)).toBeVisible();
+    await expect.element(page.getByRole("button", { name: staffCopy.notes.delete }).nth(1)).toBeVisible();
     await unmount();
     await render(<NotesExample as="empty" />);
     await page.getByRole("button", { name: staffCopy.notes.write }).click();

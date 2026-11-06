@@ -41,6 +41,7 @@ export const exampleSupporterDetails: SupporterDetails = {
       sentAt: "2026-10-05T09:00:00Z",
       mpName: "Polly Placeholder",
       politicianId: 1,
+      isTest: false,
       campaign: "regulate-letter-pm",
       campaignTitle: "Regulate AI developers now",
       status: "sent",

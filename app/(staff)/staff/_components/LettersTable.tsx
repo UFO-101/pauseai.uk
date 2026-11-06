@@ -5,7 +5,7 @@ import { staffTime } from "@/lib/staff-time";
 import type { LetterSummary } from "@/lib/server/letters";
 import { ListTable, type ListColumn } from "./ui/ListFrame";
 import { Muted } from "@/components/ui/Text";
-import Tag from "@/components/ui/Tag";
+import TestTag from "./TestTag";
 
 const copy = staffCopy.letters;
 
@@ -55,8 +55,8 @@ const columns: ListColumn<LetterSummary>[] = [
     label: copy.columns.to,
     cell: (l) => (
       <>
-        <StaffLink href={`/staff/politicians/${l.politicianId}`}>{l.mpName}</StaffLink>{" "}
-        {l.isTest && <Tag>{staffCopy.politicians.flags.test}</Tag>}
+        <StaffLink href={`/staff/politicians/${l.politicianId}`}>{l.mpName}</StaffLink>
+        <TestTag isTest={l.isTest} />
       </>
     ),
   },

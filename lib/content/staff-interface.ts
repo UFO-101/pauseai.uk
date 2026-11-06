@@ -16,6 +16,8 @@ const askLimits = {
 
 export const staffCopy = {
   metaTitle: "PauseAI Staff",
+  // The tooltip on a link out of the site, beside its arrow, which a screen reader reads as its description.
+  opensInNewTab: "(opens in a new tab)",
   login: {
     title: "Staff log in",
     intro: "Enter your staff email to sign in on this browser.",
@@ -202,14 +204,9 @@ export const staffCopy = {
         // Its button, to the run's page, which lists each with why it wasn't relayed and a link to it in Gmail.
         lettersInboxButton: "See emails",
       },
-      // The window: its length in days, each a link but the one shown.
+      // The windows: each a tab, its length in days; "Show" is the tabs' name, read out by a screen reader.
       window: (days: number) => `${days} days`,
       windows: "Show",
-      sections: {
-        mps: "MPs",
-        events: "Events",
-        supporters: "Supporters",
-      } as Record<string, string>,
       // After each number: what it counts, for one and for more.
       metrics: {
         lettersSent: (n: number) => (n === 1 ? "letter to an MP" : "letters to MPs"),
@@ -236,6 +233,11 @@ export const staffCopy = {
         days === 7
           ? `Sparkline of ${what}, week by week over the last ${points} weeks`
           : `Sparkline of ${what}, ${days} days at a time over the last ${days * points} days`,
+      // The chart of new supporters' name, which only screen readers read.
+      bySourceName: (what: string, days: number, points: number) =>
+        days === 7
+          ? `Bars of ${what} by source, week by week over the last ${points} weeks`
+          : `Bars of ${what} by source, ${days} days at a time over the last ${days * points} days`,
       // A point's label: the window it counts, by the day it begins.
       seriesPoint: (days: number, from: string, n: number) =>
         days === 7 ? `Week beginning ${from}: ${n}` : `${days} days beginning ${from}: ${n}`,
@@ -930,8 +932,10 @@ export const staffCopy = {
       stopped: "stopped",
       answered: "answer",
     },
-    // A new mailing's page's title, and the mailings page's button that starts one.
+    // A new mailing's page's title, and the button that starts an empty one: on the mailings page, and on the politicians list with no filter.
     newTitle: "New mailing",
+    // On the politicians list with a filter: the button that starts one to everyone it finds.
+    mailThese: (n: number) => (n === 1 ? "Mail this one…" : `Mail these ${n}…`),
     // A draft with no subject yet, in the list and as its page's title.
     untitled: "Untitled draft",
     // At the top of a new mailing, until a channel sends.
@@ -2270,7 +2274,7 @@ export const staffCopy = {
     edited: "edited",
     // The field's name, for a screen reader.
     note: "Note",
-    // Under a note's buttons, when the server wouldn't change it: its writer's day is up.
+    // Under a note's buttons, when the server wouldn't change it: its day is up.
     tooLate: {
       edit: "Notes can only be edited for 24 hours.",
       delete: "Notes can only be deleted for 24 hours.",

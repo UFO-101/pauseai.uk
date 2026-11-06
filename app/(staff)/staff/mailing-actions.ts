@@ -124,9 +124,9 @@ function formParams(form: FormData, skip: string[]): Params {
 
 /**
  * Makes a new mailing, a draft, and opens the politicians list choosing
- * who it's for. From the list, with its filter's fields and `found`, it
+ * who it's for. From the list with a filter, with its fields and `found`, it
  * starts with everyone the filter finds ticked, on that filter; from the
- * list of mailings, with no one.
+ * list with none, or the list of mailings, with no one.
  */
 export async function newMailing(form: FormData): Promise<void> {
   const { email } = await requireStaff();

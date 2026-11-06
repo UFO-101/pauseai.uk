@@ -1,5 +1,5 @@
-/* A subheading: greyer than the page's text, and close under the title it explains. */
+/* A subheading: greyer than the page's text, and right under the title it explains. */
 .intro {
-  margin-top: calc(-1 * var(--space-4));
+  margin-top: calc(-1 * var(--space-5));
   color: var(--muted);
 }

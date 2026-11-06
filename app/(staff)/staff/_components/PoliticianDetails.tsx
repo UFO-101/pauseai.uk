@@ -26,6 +26,8 @@ import NoteHistory from "./NoteHistory";
 import { NoteEntry, NoteText, type NotesProps } from "./Notes";
 import Tag from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
+import TestTag from "./TestTag";
+import ExternalLink from "./ui/ExternalLink";
 
 const copy = staffCopy.politician;
 
@@ -234,7 +236,7 @@ function PoliticianBand({
       subtitle={copy.role(copy.roles[politician.house], politician.constituency, inOffice)}
       tag={
         <>
-          {politician.isTest && <Tag>{staffCopy.politicians.flags.test}</Tag>}
+          <TestTag isTest={politician.isTest} />
           {politician.importantTarget && <Tag tone="amber">{copy.importantTarget}</Tag>}
           {politician.personalConnection && <Tag>{copy.personalConnection}</Tag>}
           {politician.airtableRemovedAt && (
@@ -247,9 +249,7 @@ function PoliticianBand({
           {copy.source}{" "}
           {politician.airtableId ? (
             <>
-              <a href={`${airtableTable}/${politician.airtableId}`} target="_blank" rel="noreferrer">
-                {source}
-              </a>
+              <ExternalLink href={`${airtableTable}/${politician.airtableId}`}>{source}</ExternalLink>
               {copy.editInAirtable}
             </>
           ) : (
@@ -397,13 +397,11 @@ export default function PoliticianDetails({
                   <h3>{copy.blocked.wrong.title}</h3>
                   <p>
                     {copy.blocked.wrong.before}
-                    <a
+                    <ExternalLink
                       href={politician.airtableId ? `${airtableTable}/${politician.airtableId}` : airtableTable}
-                      target="_blank"
-                      rel="noreferrer"
                     >
                       {copy.blocked.wrong.airtable}
-                    </a>
+                    </ExternalLink>
                     {copy.blocked.wrong.middle}
                     <StaffLink href={importPath("sync-politicians")}>{copy.blocked.wrong.link}</StaffLink>
                     {copy.blocked.wrong.after}

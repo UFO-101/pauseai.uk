@@ -79,6 +79,7 @@ describeWithDatabase("mailings", () => {
         letterId: letter,
         politicianId: polly,
         name: "Polly Placeholder",
+        isTest: false,
         constituency: expect.any(String),
         party: expect.any(String),
         status: "sent",

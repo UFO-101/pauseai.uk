@@ -369,8 +369,8 @@ describeWithDatabase("listBlocks, blockOn and recentProblems", () => {
         canReset: true,
         foundInGmail: false,
         politicians: [
-          { id: polly, name: "Polly Placeholder" },
-          { id: mp, name: "Testy McTestface MP" },
+          { id: polly, name: "Polly Placeholder", isTest: false },
+          { id: mp, name: "Testy McTestface MP", isTest: true },
         ],
         letter: { id: letterId, to: "Testy McTestface MP" },
         purpose: "letter",

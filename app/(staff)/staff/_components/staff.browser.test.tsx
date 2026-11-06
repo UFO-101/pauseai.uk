@@ -75,6 +75,7 @@ import { spanClass } from "./ui/Grid";
 import StaffDashboard from "./StaffDashboard";
 import { exampleDashboard, exampleQuietDashboard } from "./StaffDashboard.examples";
 import Sparkline from "./Sparkline";
+import StackedBars from "./StackedBars";
 import StaffHome from "./StaffHome";
 import AccountsNotice from "./AccountsNotice";
 import Alert from "./Alert";
@@ -287,14 +288,17 @@ describe("StaffSessions", () => {
 });
 
 describe("StaffHome", () => {
-  it("shows the dashboard under a title only screen readers hear", async () => {
+  it("shows the dashboard under its title and the day, with its groups in the sidebar's order and under its names", async () => {
     await render(<StaffHome permissions={["admin", "supporters"]} dashboard={exampleDashboard} />);
-    const title = page.getByRole("heading", { level: 1, name: staffCopy.home.title });
-    await expect.element(title).toBeInTheDocument();
-    expect(title.element().getBoundingClientRect().width).toBeLessThanOrEqual(1);
-    await expect
-      .element(page.getByRole("heading", { level: 2, name: staffCopy.home.dashboard.sections.mps }))
-      .toBeVisible();
+    await expect.element(page.getByRole("heading", { level: 1, name: staffCopy.home.title })).toBeVisible();
+    await expect.element(page.getByText("Wednesday 21 October")).toBeVisible();
+    const sections = staffCopy.nav.sections;
+    expect(
+      page
+        .getByRole("heading", { level: 2 })
+        .all()
+        .map((heading) => heading.element().textContent),
+    ).toEqual([sections.supporters, sections.politicians, sections.events]);
   });
 });
 
@@ -307,7 +311,7 @@ describe("StaffDashboard", () => {
     const items = list.getByRole("listitem").all();
     expect(items.map((item) => item.element().textContent)).toEqual([
       `${copy.actions.heldSync(24)}${copy.actions.heldSyncDetail}${copy.actions.decide}`,
-      `${copy.actions.blockedMp("Bouncy McTestface MP")}${copy.actions.blockedMpDetail}${copy.actions.openMp}`,
+      `${copy.actions.blockedMp("Bouncy McTestface MP")} ${staffCopy.politicians.flags.test}${copy.actions.blockedMpDetail}${copy.actions.openMp}`,
       `${copy.actions.failedImport(jobTitles["import-controlai"])}${copy.actions.failedImportDetail("No PDF linked", "21 Oct 2026, 02:00")}${copy.actions.seeRun}`,
       `${staffCopy.lettersInbox.alert.subject(2, "fixture-letters@pauseai.uk")}${copy.actions.lettersInboxDetail("21 Oct 2026, 03:20")}${copy.actions.lettersInboxButton}`,
     ]);
@@ -343,25 +347,26 @@ describe("StaffDashboard", () => {
     expect(page.getByRole("list", { name: copy.actionsTitle }).all()).toHaveLength(0);
   });
 
-  it("heads the numbers with the day and the window, the other windows as links", async () => {
+  it("heads the numbers with the windows as tabs", async () => {
     const { rerender } = await render(<StaffDashboard dashboard={exampleDashboard} permissions={[]} />);
-    await expect.element(page.getByText("Wednesday 21 October")).toBeVisible();
-    const current = page.getByText(copy.window(7));
-    await expect.element(current).toHaveAttribute("aria-current", "true");
-    expect(current.element().closest("a")).toBeNull();
-    await expect.element(page.getByRole("link", { name: copy.window(30) })).toHaveAttribute("href", "/staff?days=30");
-    await expect.element(page.getByRole("link", { name: copy.window(90) })).toHaveAttribute("href", "/staff?days=90");
+    const tabs = page.getByRole("navigation", { name: copy.windows });
+    await expect.element(tabs.getByRole("link", { name: copy.window(7) })).toHaveAttribute("aria-current", "page");
+    await expect.element(tabs.getByRole("link", { name: copy.window(7) })).toHaveAttribute("href", "/staff");
+    await expect.element(tabs.getByRole("link", { name: copy.window(30) })).toHaveAttribute("href", "/staff?days=30");
+    await expect.element(tabs.getByRole("link", { name: copy.window(90) })).toHaveAttribute("href", "/staff?days=90");
 
     await rerender(<StaffDashboard dashboard={exampleQuietDashboard} permissions={[]} />);
-    await expect.element(page.getByRole("link", { name: copy.window(7) })).toHaveAttribute("href", "/staff");
-    expect(page.getByText(copy.window(30)).element().closest("a")).toBeNull();
+    await expect.element(tabs.getByRole("link", { name: copy.window(30) })).toHaveAttribute("aria-current", "page");
+    await expect.element(tabs.getByRole("link", { name: copy.window(7) })).not.toHaveAttribute("aria-current");
   });
 
   it("shows each number in its group with its change on the window before, linked where the person may see it", async () => {
-    const { rerender } = await render(<StaffDashboard dashboard={exampleDashboard} permissions={["supporters"]} />);
+    const { rerender } = await render(
+      <StaffDashboard dashboard={exampleDashboard} permissions={["admin", "supporters"]} />,
+    );
     const group = (section: string) =>
-      page.getByRole("list", { name: copy.sections[section] }).getByRole("listitem").all();
-    const mps = group("mps");
+      page.getByRole("list", { name: staffCopy.nav.sections[section] }).getByRole("listitem").all();
+    const mps = group("politicians");
     const events = group("events");
     const supporters = group("supporters");
     expect(mps).toHaveLength(3);
@@ -390,10 +395,30 @@ describe("StaffDashboard", () => {
     expect(changeClass(mps[0])).toMatch(/good/);
     expect(changeClass(mps[1])).toMatch(/bad/);
     expect(changeClass(supporters[1])).toMatch(/good/);
-    // The sparklines, on registrations and new supporters only, with the week's count on each point.
+    // A sparkline on registrations, with the week's count on each point.
     const sparkline = (label: string) => page.getByRole("img", { name: copy.series(label, 7, 8) });
     await expect.element(sparkline(copy.metrics.eventRegistrations(277))).toBeVisible();
-    await expect.element(sparkline(copy.metrics.supportersAdded(176))).toBeVisible();
+    // New supporters in bars by source, with the week's count of each source in the legend, and half the grid to fit them.
+    const sourceBars = page.getByRole("img", { name: copy.bySourceName(copy.metrics.supportersAdded(176), 7, 8) });
+    await expect.element(sourceBars).toBeVisible();
+    expect(supporters[0].element().textContent).toContain(`${staffCopy.supporters.sources.luma} · 115`);
+    expect(supporters[0].element().textContent).toContain(`${staffCopy.supporters.sources.member} · 44`);
+    expect(supporters[0].element().textContent).not.toContain(staffCopy.supporters.sources["web-form"]);
+    expect(supporters[0].element().className).toBe(spanClass(3));
+    // Pointing at a bar says its week's count and what it's made of.
+    const barsBox = sourceBars.element().getBoundingClientRect();
+    sourceBars
+      .element()
+      .dispatchEvent(
+        new PointerEvent("pointermove", { clientX: barsBox.right - 1, clientY: barsBox.top, bubbles: true }),
+      );
+    await expect
+      .element(page.getByRole("status"))
+      .toHaveTextContent(
+        `${copy.seriesPoint(7, staffDate(exampleDashboard.supportersBySource[7].from), 176)} · ${staffCopy.supporters.sources.luma} 115 · ${staffCopy.supporters.sources.member} 44 · ${staffCopy.supporters.sources["email-your-mp"]} 17`,
+      );
+    sourceBars.element().dispatchEvent(new PointerEvent("pointerout", { bubbles: true, relatedTarget: document.body }));
+    await expect.element(page.getByRole("status")).not.toBeInTheDocument();
     // Pointing at a point names its week by the day it begins.
     const line = sparkline(copy.metrics.eventRegistrations(277)).element();
     const box = line.getBoundingClientRect();
@@ -402,17 +427,29 @@ describe("StaffDashboard", () => {
       .element(page.getByRole("status"))
       .toHaveTextContent(copy.seriesPoint(7, staffDate(exampleDashboard.series.eventRegistrations[7].from), 277));
     expect(page.getByRole("img").all()).toHaveLength(2);
-    // The whole tile is the link; a tile with no page isn't one.
+    // The whole tile is the link, to the page that lists what it counts.
     const tileLink = (text: string) => page.getByText(text).element().closest("a");
-    expect(tileLink(copy.metrics.lettersReplied(3))?.getAttribute("href")).toBe("/staff/campaigns");
-    expect(tileLink(copy.metrics.supportersAdded(176))?.getAttribute("href")).toBe("/staff/supporters");
-    expect(tileLink(copy.metrics.eventsHeld(9))).toBeNull();
+    const lands = (text: string) => tileLink(text)?.getAttribute("href");
+    expect(lands(copy.metrics.lettersSent(12))).toBe("/staff/sent-emails?purpose=letter&link=campaign");
+    expect(lands(copy.metrics.lettersReplied(3))).toBe("/staff/sent-emails?purpose=forwarded-reply");
+    expect(lands(copy.metrics.supportersAdded(176))).toBe("/staff/supporters?sort=first&dir=desc");
+    expect(lands(copy.metrics.eventRegistrations(277))).toBe("/staff/supporters?activity=registered");
+    expect(lands(copy.metrics.unsubscribes(1))).toBe("/staff/supporters?contact=email:luma-calendar:unsubscribed");
+    expect(lands(copy.metrics.eventsHeld(9))).toBe("/staff/events?when=past");
+
+    // An admin who can't see supporters, and supporters staff who aren't admins, find no letters in the sent emails.
+    await rerender(<StaffDashboard dashboard={exampleDashboard} permissions={["admin"]} />);
+    expect(tileLink(copy.metrics.lettersSent(12))).toBeNull();
+    await rerender(<StaffDashboard dashboard={exampleDashboard} permissions={["supporters"]} />);
+    expect(tileLink(copy.metrics.lettersReplied(3))).toBeNull();
+    expect(lands(copy.metrics.supportersAdded(176))).toBe("/staff/supporters?sort=first&dir=desc");
 
     await rerender(<StaffDashboard dashboard={exampleDashboard} permissions={[]} />);
     expect(tileLink(copy.metrics.supportersAdded(176))).toBeNull();
     await expect.element(page.getByText(copy.metrics.supportersAdded(176))).toBeVisible();
-    // The letters are supporter data: the tiles count them, but lead nowhere.
     expect(tileLink(copy.metrics.lettersSent(12))).toBeNull();
+    // Our events are open to all staff.
+    expect(lands(copy.metrics.eventsHeld(9))).toBe("/staff/events?when=past");
     // Several signed: everyone who signed anything, newest first.
     expect(tileLink(copy.metrics.mpsSigned(5))?.getAttribute("href")).toBe(
       "/staff/politicians?answer=signed&sort=asks",
@@ -441,7 +478,7 @@ describe("StaffDashboard", () => {
     await expect
       .element(page.getByRole("status"))
       .toHaveTextContent(copy.seriesPoint(30, staffDate(exampleQuietDashboard.series.eventRegistrations[7].from), 4));
-    const quiet = group("mps");
+    const quiet = group("politicians");
     await expect
       .element(quiet[0])
       .toHaveTextContent(`${copy.none}${copy.metrics.lettersSent(0)}${copy.change.same(30)}`);
@@ -455,19 +492,71 @@ describe("StaffDashboard", () => {
     expect(quiet[0].element().className).toBe(spanClass(1));
     const flat = {
       ...exampleQuietDashboard,
-      series: {
-        ...exampleQuietDashboard.series,
-        supportersAdded: exampleQuietDashboard.series.supportersAdded.map((point) => ({ ...point, count: 0 })),
-      },
+      supportersBySource: exampleQuietDashboard.supportersBySource.map((point) => ({
+        ...point,
+        count: 0,
+        sources: {},
+      })),
     };
     await rerender(<StaffDashboard dashboard={flat} permissions={[]} />);
     await expect
-      .element(page.getByRole("img", { name: copy.series(copy.metrics.supportersAdded(0), 30, 8) }))
+      .element(page.getByRole("img", { name: copy.bySourceName(copy.metrics.supportersAdded(0), 30, 8) }))
       .not.toBeInTheDocument();
     await expect
       .element(page.getByRole("img", { name: copy.series(copy.metrics.eventRegistrations(4), 30, 8) }))
       .toBeVisible();
     await expect.element(page.getByText(copy.testLetters(0))).not.toBeInTheDocument();
+  });
+});
+
+describe("StackedBars", () => {
+  const parts = [
+    { key: "a", label: "Ay" },
+    { key: "b", label: "Bee" },
+    { key: "c", label: "Sea" },
+  ];
+
+  it("draws each bar as tall as its share of the tallest, split into its parts, the legend only those any bar has", async () => {
+    const screen = await render(
+      <StackedBars
+        parts={parts}
+        bars={[
+          { label: "First", counts: { a: 1, b: undefined } },
+          { label: "Second", counts: { a: 2, b: 2 } },
+        ]}
+        name="Chart"
+        from="1 Oct"
+        to="8 Oct"
+      />,
+    );
+    const chart = page.getByRole("img", { name: "Chart" }).element();
+    const bars = [...chart.children] as HTMLElement[];
+    expect(bars.map((bar) => bar.style.height)).toEqual(["25%", "100%"]);
+    expect([...bars[1].children].map((part) => (part as HTMLElement).style.flexGrow)).toEqual(["2", "2", "0"]);
+    expect(screen.container.textContent).toContain("Ay · 2");
+    expect(screen.container.textContent).toContain("Bee · 2");
+    expect(screen.container.textContent).not.toContain("Sea");
+    // The nearest bar to the pointer, at either end, kept over the chart.
+    const box = chart.getBoundingClientRect();
+    const point = (clientX: number) =>
+      chart.dispatchEvent(new PointerEvent("pointerdown", { clientX, clientY: box.top, bubbles: true }));
+    point(box.left - 5);
+    await expect.element(page.getByRole("status")).toHaveTextContent("First");
+    point(box.right + 5);
+    await expect.element(page.getByRole("status")).toHaveTextContent("Second");
+    expect((page.getByRole("status").element() as HTMLElement).style.left).toBe("100%");
+  });
+
+  it("draws a single bar, and no height for a count of nothing, with nothing in the legend", async () => {
+    const screen = await render(
+      <StackedBars parts={parts} bars={[{ label: "Only", counts: {} }]} name="Chart" from="1 Oct" to="8 Oct" />,
+    );
+    const chart = page.getByRole("img", { name: "Chart" }).element();
+    expect((chart.children[0] as HTMLElement).style.height).toBe("0%");
+    expect(screen.container.textContent).not.toContain("Ay");
+    chart.dispatchEvent(new PointerEvent("pointermove", { clientX: 0, bubbles: true }));
+    await expect.element(page.getByRole("status")).toHaveTextContent("Only");
+    expect((page.getByRole("status").element() as HTMLElement).style.left).toBe("0%");
   });
 });
 
@@ -614,10 +703,22 @@ describe("StaffAccountsTable", () => {
         endSessions={end.fn}
         accounts={accounts}
         you="admin@pauseai.uk"
+        sort={{ key: "lastSeen", dir: "desc" }}
       />,
     );
     return { save, remove, end };
   };
+
+  it("sorts by each heading but the permissions, the way the table is sorted now turned round", async () => {
+    await renderTable();
+    const copy = staffCopy.accounts.columns;
+    const heading = (name: string) => page.getByRole("link", { name, exact: true });
+    expect(heading(copy.lastSeen).element().closest("th")!.getAttribute("aria-sort")).toBe("descending");
+    await expect.element(heading(copy.lastSeen)).toHaveAttribute("href", "/staff/accounts?sort=lastSeen&dir=asc");
+    await expect.element(heading(copy.email)).toHaveAttribute("href", "/staff/accounts?sort=email&dir=asc");
+    await expect.element(heading(copy.sessions)).toHaveAttribute("href", "/staff/accounts?sort=sessions&dir=desc");
+    await expect.element(heading(copy.permissions)).not.toBeInTheDocument();
+  });
 
   it("says when each was added and by whom, or by its login, when last logged in and seen, and its sessions open", async () => {
     await renderTable();
@@ -988,7 +1089,7 @@ describe("PoliticiansList", () => {
     }),
   });
 
-  it("makes a new mailing to who the filters find, with New mailing", async () => {
+  it("makes a new mailing to who the filters find, with Mail these", async () => {
     const newMailing = vi.fn(async (form: FormData) => {
       expect([...form.entries()]).toEqual([
         ["q", "pol"],
@@ -1007,8 +1108,49 @@ describe("PoliticiansList", () => {
       />,
     );
     expect(page.getByRole("checkbox").all()).toHaveLength(0);
+    await page.getByRole("button", { name: mailingCopy.mailThese(150) }).click();
+    await expect.poll(() => newMailing.mock.calls.length).toBe(1);
+  });
+
+  it("makes an empty mailing with New mailing, given no filter", async () => {
+    const newMailing = vi.fn(async (form: FormData) => {
+      expect([...form.entries()]).toEqual([]);
+    });
+    await render(
+      <PoliticiansList
+        list={{ ...examplePoliticiansPage, total: 150 }}
+        search={{ ...search, q: "" }}
+        asks={exampleAsks}
+        newMailing={newMailing}
+        actions={actions()}
+      />,
+    );
     await page.getByRole("button", { name: mailingCopy.newTitle }).click();
     await expect.poll(() => newMailing.mock.calls.length).toBe(1);
+  });
+
+  it("names one person found as this one, and has no button when the filters find no one", async () => {
+    const { rerender } = await render(
+      <PoliticiansList
+        list={{ ...examplePoliticiansPage, total: 1 }}
+        search={search}
+        asks={exampleAsks}
+        newMailing={vi.fn()}
+        actions={actions()}
+      />,
+    );
+    await expect.element(page.getByRole("button", { name: mailingCopy.mailThese(1) })).toBeVisible();
+    await rerender(
+      <PoliticiansList
+        list={{ ...examplePoliticiansPage, politicians: [], total: 0 }}
+        search={search}
+        asks={exampleAsks}
+        newMailing={vi.fn()}
+        actions={actions()}
+      />,
+    );
+    await expect.element(page.getByRole("button", { name: mailingCopy.mailThese(1) })).not.toBeInTheDocument();
+    await expect.element(page.getByRole("button", { name: mailingCopy.newTitle })).not.toBeInTheDocument();
   });
 
   it("choosing, ticks and unticks a row, and everyone the filters find with the box over them", async () => {
@@ -2249,8 +2391,8 @@ describe("EmailBlocksTable", () => {
           {
             ...exampleComplaint,
             politicians: [
-              { id: 1, name: "A" },
-              { id: 2, name: "B" },
+              { id: 1, name: "A", isTest: false },
+              { id: 2, name: "B", isTest: false },
             ],
           },
           { ...exampleBlock, address: "unknown@example.org", letter: null, purpose: null },
@@ -4372,6 +4514,7 @@ describe("SupporterDetails", () => {
               sentAt: null,
               mpName: "An MP",
               politicianId: 9,
+              isTest: false,
               campaign: "gone-campaign",
               campaignTitle: "Gone campaign",
               status: "odd",

@@ -70,7 +70,7 @@ describeWithDatabase("notes", () => {
     expect((await notesOn({ supporterId })).map((n) => n.body)).toEqual(["Keen to flyer"]);
   });
 
-  it("lets the writer edit or delete a note for a day, and an admin delete one at any time", async () => {
+  it("lets the writer edit or delete a note for a day, and an admin delete one for a day too", async () => {
     const supporterId = await supporter("07700 900001");
     await addNote({ supporterId }, "First", jo);
     await addNote({ supporterId }, "Second", jo);
@@ -79,10 +79,11 @@ describeWithDatabase("notes", () => {
     expect(await deleteNote(1, sam)).toBeUndefined();
     expect(await editNote(1, "First, fixed", jo)).toEqual({ supporterId });
     expect(await deleteNote(99, jo)).toBeUndefined();
+    expect(await deleteNote(2, admin)).toEqual({ supporterId });
     at("2026-11-03T09:00:01Z");
     expect(await editNote(1, "Too late", jo)).toBeUndefined();
-    expect(await deleteNote(2, jo)).toBeUndefined();
-    expect(await deleteNote(2, admin)).toEqual({ supporterId });
+    expect(await deleteNote(1, jo)).toBeUndefined();
+    expect(await deleteNote(1, admin)).toBeUndefined();
     expect(await notesOn({ supporterId })).toEqual([
       expect.objectContaining({ id: 1, body: "First, fixed", editedAt: new Date("2026-11-03T09:00:00Z") }),
     ]);

@@ -391,7 +391,8 @@ export async function getSupporter(given: number): Promise<SupporterDetails | un
         )
       : [],
     query<SupporterLetter>(
-      `SELECT l.id::int AS id, l.sent_at AS "sentAt", n.name AS "mpName", n.id::int AS "politicianId", s.campaign,
+      `SELECT l.id::int AS id, l.sent_at AS "sentAt", n.name AS "mpName", n.id::int AS "politicianId",
+         coalesce((SELECT p.is_test FROM politicians p WHERE p.id = n.id), false) AS "isTest", s.campaign,
          c.title AS "campaignTitle", l.status
        FROM supporter_links k JOIN letters_from_supporters s ON s.entry_id = k.form_entry_id
          JOIN campaigns c ON c.slug = s.campaign

@@ -284,6 +284,18 @@ test("Logging out everywhere", async ({ page, browser, flowDatabase }) => {
   await other.context().close();
 });
 
+test("Sorting the accounts", async ({ page, flowDatabase }) => {
+  story(
+    "An admin sorts the accounts page by when each was last seen, the latest first, with those never seen at the end.",
+  );
+  await logIn(page, flowDatabase, ["admin"]);
+  await page.goto(`${BASE}/staff/accounts`);
+  await page.getByRole("link", { name: staffCopy.accounts.columns.lastSeen }).click();
+  await expect(page.locator('th[aria-sort="descending"]')).toContainText(staffCopy.accounts.columns.lastSeen);
+  await expect(page.getByRole("row").nth(1)).toContainText(staffEmail());
+  await frame(page, "The accounts, last seen first");
+});
+
 test("Logging a colleague out", async ({ page, browser, flowDatabase }, testInfo) => {
   story(
     "An admin opens the accounts page. It shows how each account was added, when it last logged in, and its sessions. Their own row warns that ending its sessions logs them out.",

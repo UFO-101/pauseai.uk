@@ -23,6 +23,7 @@ import RunBox from "./RunBox";
 import { Muted } from "@/components/ui/Text";
 import Withheld from "./ui/Withheld";
 import Table from "@/components/ui/Table";
+import ExternalLink from "./ui/ExternalLink";
 
 /** The Server Action that applies or discards a held politician sync. */
 export type Decide = (formData: FormData) => void | Promise<void>;
@@ -356,9 +357,9 @@ function GmailRun({ run, open, bare }: { run: GmailReading; open?: boolean; bare
                   {a.notUnderstood.map((m) => (
                     <li key={m.gmailMessageId}>
                       {m.from}, &ldquo;{m.subject}&rdquo;: {inbox.reasons[m.reason]}.{" "}
-                      <a href={gmailMessageLink(a.account, m.gmailMessageId)} target="_blank" rel="noreferrer">
+                      <ExternalLink href={gmailMessageLink(a.account, m.gmailMessageId)}>
                         {inbox.openInGmail}
-                      </a>
+                      </ExternalLink>
                     </li>
                   ))}
                 </ul>

@@ -21,6 +21,7 @@ import ListFrame, { type ListColumn } from "./ui/ListFrame";
 import StaffLink from "./ui/StaffLink";
 import Tabs from "./ui/Tabs";
 import styles from "./EventsTable.module.css";
+import ExternalLink from "./ui/ExternalLink";
 
 const PATH = "/staff/events";
 const copy = staffCopy.events;
@@ -118,11 +119,7 @@ function Hosts({ hosts }: { hosts: EventHost[] }) {
 /** The link to an event's Google Doc, opening in a new tab. */
 function Doc({ doc, needed }: { doc: string | null; needed: boolean }) {
   if (!doc) return <Missing needed={needed}>{copy.noDoc}</Missing>;
-  return (
-    <a href={doc} target="_blank" rel="noreferrer">
-      {copy.doc}
-    </a>
-  );
+  return <ExternalLink href={doc}>{copy.doc}</ExternalLink>;
 }
 
 /**
@@ -168,7 +165,7 @@ function eventColumns(
       heading: heading("name", copy.columns.name),
       cell: (event) => (
         <span className={styles.name}>
-          <a href={event.url}>{event.name}</a>
+          <ExternalLink href={event.url}>{event.name}</ExternalLink>
           {event.removed && <Tag>{copy.removed}</Tag>}
         </span>
       ),

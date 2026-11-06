@@ -91,11 +91,12 @@ describe("Notes", () => {
     await expect.element(first.getByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("lets an admin delete any note, but edit none of them", async () => {
+  it("lets an admin delete any note still young enough, but edit none of them", async () => {
     await renderNotes(exampleNoteAdmin);
-    for (const i of [0, 1, 2]) {
+    for (const i of [0, 1]) {
       await expect.element(notes().nth(i).getByRole("button", { name: copy.delete })).toBeVisible();
     }
+    await expect.element(notes().nth(2).getByRole("button", { name: copy.delete })).not.toBeInTheDocument();
     await expect.element(page.getByText(copy.edit, { exact: true })).not.toBeInTheDocument();
   });
 

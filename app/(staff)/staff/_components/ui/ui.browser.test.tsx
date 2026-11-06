@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
 import { TextInput } from "@/components/ui/Controls";
+import ExternalLink from "./ExternalLink";
 import StaffPage from "./StaffPage";
 import Tabs from "./Tabs";
 import FilterBar, { filteredTitle, filterWords, type Filter } from "./FilterBar";
@@ -23,6 +24,19 @@ import CopyButton from "./CopyButton";
 import { renderToString } from "react-dom/server";
 import { NAV_FOLD_KEY } from "@/lib/staff-nav";
 import { staffCopy } from "@/lib/content/staff-interface";
+
+describe("ExternalLink", () => {
+  it("opens in a new tab with no referrer, with an arrow, and a description saying so", async () => {
+    await render(<ExternalLink href="https://example.org/">The letter</ExternalLink>);
+    const link = page.getByRole("link", { name: "The letter", exact: true });
+    await expect.element(link).toHaveAttribute("href", "https://example.org/");
+    await expect.element(link).toHaveAttribute("target", "_blank");
+    await expect.element(link).toHaveAttribute("rel", "noreferrer");
+    await expect.element(link).toHaveAccessibleDescription("(opens in a new tab)");
+    expect(link.element().textContent).toBe("The letter");
+    expect(getComputedStyle(link.element(), "::after").maskImage).toContain("svg");
+  });
+});
 
 describe("StaffPage", () => {
   it("is the page's main landmark, the full width", async () => {
@@ -85,6 +99,24 @@ describe("StaffPage", () => {
 });
 
 describe("PageTitle", () => {
+  it("puts a subheading right under the title, clear of the button at any width", async () => {
+    await render(
+      <div style={{ width: "22rem" }}>
+        <PageTitle
+          action={<button type="button">New mailing with long words</button>}
+          intro="What the page is, at length"
+        >
+          Mailings
+        </PageTitle>
+      </div>,
+    );
+    const words = page.getByText("What the page is, at length").element().getBoundingClientRect();
+    const title = page.getByRole("heading", { level: 1 }).element().getBoundingClientRect();
+    const button = page.getByRole("button").element().getBoundingClientRect();
+    expect(words.top).toBeGreaterThanOrEqual(title.top);
+    expect(words.bottom <= button.top || words.right <= button.left).toBe(true);
+  });
+
   it("is the page's heading, with its button beside it", async () => {
     await render(<PageTitle action={<button type="button">New mailing</button>}>Mailings</PageTitle>);
     await expect.element(page.getByRole("heading", { level: 1, name: "Mailings" })).toBeVisible();

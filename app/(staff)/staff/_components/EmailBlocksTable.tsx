@@ -8,6 +8,7 @@ import Reason from "./BounceReason";
 import LetterLink from "./LetterLink";
 import UnblockForm from "./UnblockForm";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
+import TestTag from "./TestTag";
 
 const copy = staffCopy.emails;
 
@@ -39,6 +40,7 @@ export function blockColumns(
           <span key={p.id}>
             {i > 0 && ", "}
             <StaffLink href={`/staff/politicians/${p.id}`}>{p.name}</StaffLink>
+            <TestTag isTest={p.isTest} />
           </span>
         )),
     },

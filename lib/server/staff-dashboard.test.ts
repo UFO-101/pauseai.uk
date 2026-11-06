@@ -65,7 +65,16 @@ describeWithDatabase("dashboard", () => {
        INSERT INTO opt_outs (address, list, source, source_ref, unsubscribed_at, resubscribed_at) VALUES
          ('u1@example.com', 'luma-calendar', 'luma-webhook', 'r1', '2026-10-20T00:00:00Z', NULL),
          ('u2@example.com', 'luma-calendar', 'luma-webhook', 'r2', '2026-10-20T00:00:00Z', '2026-10-21T00:00:00Z'),
-         ('u3@example.com', 'luma-calendar', 'luma-webhook', 'r3', '2026-10-20T00:00:00Z', NULL);`,
+         ('u3@example.com', 'luma-calendar', 'luma-webhook', 'r3', '2026-10-20T00:00:00Z', NULL),
+         ('deleted.contact@example.com', 'luma-calendar', 'luma-webhook', 'r4', '2026-10-20T00:00:00Z', NULL);
+       -- Sources: this week's supporter was a member before they were a Luma contact; last week's is on Luma; five weeks ago's has no record to say; u3 has an opt-out that counts.
+       INSERT INTO members (id, email, name, joined_at, created_at, keep_informed, share_permission, source_modified_at) VALUES
+         ('m1', 'u1@example.com', 'U1', '2026-10-01T00:00:00Z', '2026-10-01T00:00:00Z', true, false, '2026-10-01T00:00:00Z');
+       INSERT INTO supporter_links (supporter_id, luma_user_id, member_id, matched_by, matched_value) VALUES
+         ((SELECT id FROM supporters WHERE first_seen_at = '2026-10-20T00:00:00Z'), 'u1', NULL, 'email', 'u1@example.com'),
+         ((SELECT id FROM supporters WHERE first_seen_at = '2026-10-20T00:00:00Z'), NULL, 'm1', 'email', 'u1@example.com'),
+         ((SELECT id FROM supporters WHERE first_seen_at = '2026-10-10T00:00:00Z'), 'u2', NULL, 'email', 'u2@example.com'),
+         ((SELECT id FROM supporters WHERE first_seen_at IS NULL), 'u3', NULL, 'email', 'u3@example.com');`,
     );
     // Blocked: the real MP's address, which needs a person; a politician who has left, and a supporter, which don't.
     await query(
@@ -111,7 +120,10 @@ describeWithDatabase("dashboard", () => {
     expect(result.signedMp).toBe(real);
     // Eight weeks, oldest first, the current week last: the registration three weeks ago, then this week's two.
     expect(result.series.eventRegistrations.map((point) => point.count)).toEqual([0, 0, 0, 0, 0, 1, 0, 2]);
-    expect(result.series.supportersAdded.map((point) => point.count)).toEqual([0, 0, 1, 0, 0, 0, 1, 1]);
+    // New supporters once each, under their earliest source: the member who later joined Luma, and last week's on Luma.
+    expect(result.supportersBySource.map((point) => point.count)).toEqual([0, 0, 0, 0, 0, 0, 1, 1]);
+    expect(result.supportersBySource.slice(-2).map((point) => point.sources)).toEqual([{ luma: 1 }, { member: 1 }]);
+    expect(result.supportersBySource[7].from).toBe(result.since);
     expect(result.series.eventRegistrations[0].from).toBe("2026-08-26T12:00:00.000Z");
     expect(result.series.eventRegistrations[7].from).toBe(result.since);
     expect(result.actions).toEqual([
@@ -120,6 +132,7 @@ describeWithDatabase("dashboard", () => {
         kind: "blocked-mp",
         politicianId: real,
         name: "Polly Placeholder",
+        isTest: false,
         at: "2026-10-19T09:30:00.000Z",
       },
       { kind: "failed-import", job: "import-luma", at: expect.any(String), error: "Luma answered 500" },
@@ -134,8 +147,9 @@ describeWithDatabase("dashboard", () => {
     expect(result.counts.eventsHeld).toEqual({ current: 2, previous: 0 });
     expect(result.counts.lettersSent).toEqual({ current: 2, previous: 1 });
     expect(result.counts.supportersAdded).toEqual({ current: 2, previous: 1 });
-    expect(result.series.supportersAdded.map((point) => point.count)).toEqual([0, 0, 0, 0, 0, 0, 1, 2]);
-    expect(result.series.supportersAdded[7].from).toBe(result.since);
+    expect(result.supportersBySource.map((point) => point.count)).toEqual([0, 0, 0, 0, 0, 0, 0, 2]);
+    expect(result.supportersBySource[7].sources).toEqual({ luma: 1, member: 1 });
+    expect(result.supportersBySource[7].from).toBe(result.since);
     expect(result.signedMp).toBe(real);
   });
 

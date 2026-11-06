@@ -11,10 +11,14 @@ import PageTitle from "../../_components/ui/PageTitle";
 /** Who may use the staff pages, and what each may do, for admins to change. */
 export const metadata: Metadata = { title: staffCopy.accounts.title };
 
-export default async function AccountsPage({ searchParams }: { searchParams: Promise<{ notice?: string }> }) {
+export default async function AccountsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ notice?: string; sort?: string; dir?: string }>;
+}) {
   const { email } = await requireStaff("admin");
-  const { notice } = accountsSearch(await searchParams);
-  const accounts = await listStaffAccounts();
+  const { notice, sort } = accountsSearch(await searchParams);
+  const accounts = await listStaffAccounts(sort);
   return (
     <>
       <PageTitle action={<AddStaff accounts={accounts} add={saveStaffAccountNow} />}>
@@ -24,6 +28,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
       <StaffAccountsTable
         accounts={accounts}
         you={email}
+        sort={sort}
         save={saveStaffAccountNow}
         remove={removeStaffAccountNow}
         endSessions={endStaffSessionsNow}
