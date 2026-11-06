@@ -124,11 +124,12 @@ const scheduled = (
   result: object,
   status = "ok",
   minutes = 5,
+  problems: object[] = [],
 ) =>
   runSql(
     database,
-    `INSERT INTO import_runs (job, started_by, status, result, at)
-     SELECT '${job}', 'nightly', '${status}', '${JSON.stringify(result).replaceAll("'", "''")}', now() - interval '${from}' - n * interval '${minutes} minutes'
+    `INSERT INTO import_runs (job, started_by, status, result, problems, at)
+     SELECT '${job}', 'nightly', '${status}', '${JSON.stringify(result).replaceAll("'", "''")}', '${JSON.stringify(problems).replaceAll("'", "''")}', now() - interval '${from}' - n * interval '${minutes} minutes'
      FROM generate_series(0, ${count - 1}) n`,
   );
 
@@ -155,7 +156,7 @@ test("The Luma import's log", async ({ page, flowDatabase }) => {
 
 test("The Gmail reading's log", async ({ page, flowDatabase }) => {
   story(
-    "Gmail is read every 5 minutes too. A read that found something says which account and what. A mailbox that couldn't be read shows whole, in red.",
+    "Gmail is read every 5 minutes too. A read that found something says which account and what. A mailbox that couldn't be read shows whole, in amber, saying so under its line.",
   );
   await logIn(page, flowDatabase);
   const account = (email: string, extra = {}) => ({ account: email, replies: 0, autoReplies: 0, bounces: 0, ...extra });
@@ -163,17 +164,15 @@ test("The Gmail reading's log", async ({ page, flowDatabase }) => {
   const replied = {
     accounts: [account("joseph@pauseai.uk", { replies: 1 }), account("policy@pauseai.uk", { oneOffs: 1 })],
   };
+  const refusal = "Gmail answered 403 for /settings/sendAs: User-rate limit exceeded";
   const refused = {
-    accounts: [
-      account("joseph@pauseai.uk", {
-        error: "Error: Gmail answered 403 for /settings/sendAs: User-rate limit exceeded",
-      }),
-      account("policy@pauseai.uk"),
-    ],
+    accounts: [account("joseph@pauseai.uk", { error: refusal }), account("policy@pauseai.uk")],
   };
   scheduled(flowDatabase, "read-gmail", 1, "0 minutes", replied);
   scheduled(flowDatabase, "read-gmail", 6, "5 minutes", quiet, "unchanged");
-  scheduled(flowDatabase, "read-gmail", 1, "35 minutes", refused);
+  scheduled(flowDatabase, "read-gmail", 1, "35 minutes", refused, "ok", 5, [
+    { what: staffCopy.problems.job.couldntRead("joseph@pauseai.uk"), error: refusal },
+  ]);
   scheduled(flowDatabase, "read-gmail", 8, "40 minutes", quiet, "unchanged");
   scheduled(flowDatabase, "read-gmail", 3, "80 minutes", replied);
   scheduled(flowDatabase, "read-gmail", 40, "95 minutes", quiet, "unchanged");

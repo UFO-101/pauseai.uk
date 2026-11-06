@@ -113,12 +113,22 @@ const lettersResult = (extra: object) =>
   }).replaceAll("'", "''");
 
 /** `count` runs of the job on its schedule, five minutes apart, the newest `from` before now. */
-const runsOf = (database: string, job: string, count: number, from: string, result: string, status = "ok") =>
+const runsOf = (
+  database: string,
+  job: string,
+  count: number,
+  from: string,
+  result: string,
+  status = "ok",
+  problems: object[] = [],
+) =>
   runSql(
     database,
-    `INSERT INTO import_runs (job, started_by, status, result, at)
-     SELECT '${job}', 'nightly', '${status}', '${result}', now() - interval '${from}' - n * interval '5 minutes' FROM generate_series(0, ${count - 1}) n`,
+    `INSERT INTO import_runs (job, started_by, status, result, problems, at)
+     SELECT '${job}', 'nightly', '${status}', '${result}', '${JSON.stringify(problems).replaceAll("'", "''")}', now() - interval '${from}' - n * interval '5 minutes' FROM generate_series(0, ${count - 1}) n`,
   );
+
+const GMAIL_REFUSAL = "Gmail answered 403 for /messages/0a02: User-rate limit exceeded";
 
 test("The import running by itself", async ({ page, flowDatabase }) => {
   story(
@@ -141,11 +151,15 @@ test("The import running by itself", async ({ page, flowDatabase }) => {
     lettersResult({
       read: 12,
       stoppedBy: "gmail",
-      stoppedWhy: "Gmail answered 403 for /messages/0a02: User-rate limit exceeded",
+      stoppedWhy: GMAIL_REFUSAL,
     }),
+    "ok",
+    [{ what: words.stoppedByGmail, error: GMAIL_REFUSAL }],
   );
   runsOf(flowDatabase, "import-old-letters", 3, "50 minutes", lettersResult({}));
-  runsOf(flowDatabase, "import-old-letters", 1, "65 minutes", lettersResult({ unreadable: ["18f0a"] }));
+  runsOf(flowDatabase, "import-old-letters", 1, "65 minutes", lettersResult({ unreadable: ["18f0a"] }), "ok", [
+    { what: words.unreadable(1) },
+  ]);
   runsOf(flowDatabase, "import-old-letters", 30, "70 minutes", lettersResult({}));
   await page.goto(`${BASE}${importPath("import-old-letters")}`);
   await expect(page.getByRole("progressbar")).toBeVisible();
