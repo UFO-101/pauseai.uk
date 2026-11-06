@@ -50,10 +50,11 @@ const SOURCES: Record<ImportJob, ImportSource> = {
   "tidy-logs": "database",
 };
 
-/** What sets a job apart, in a lozenge after its name: the check that changes nothing, the sending that acts on the world, the tidying that's the site's housekeeping. */
+/** What sets a job apart, in a lozenge after its name: the check that changes nothing, the jobs that send mail to people outside, the tidying that's the site's housekeeping. */
 const TAGS: Partial<Record<ImportJob, string>> = {
   "check-mps": words.checkOnly,
   "send-mailings": words.takesAction,
+  "read-gmail": words.takesAction,
   "tidy-logs": words.siteAdmin,
 };
 

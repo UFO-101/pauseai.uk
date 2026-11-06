@@ -1589,7 +1589,8 @@ export const staffCopy = {
     intro: {
       before: "Reads the replies to our letters, and their bounces, in each ",
       link: "connected Gmail account",
-      after: ". From policy@ and Joseph's, it also imports any threads with politicians as one-off emails.",
+      after:
+        ". From policy@ and Joseph's, it also imports any threads with politicians as one-off emails. In the letters inbox, it relays mail between supporters and their MPs' offices, both ways, and emails the policy inbox about anything it couldn't place.",
     },
     readNow: "Read Gmail now",
     never: "Not read yet.",

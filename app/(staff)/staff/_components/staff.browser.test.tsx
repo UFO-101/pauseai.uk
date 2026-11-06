@@ -2446,6 +2446,7 @@ describe("ImportOverview", () => {
       `${jobTitles["send-mailings"]}${staffCopy.import.takesAction}`,
     );
     expect(cards[8].querySelector("h3")!.textContent).toBe(`${jobTitles["tidy-logs"]}${staffCopy.import.siteAdmin}`);
+    expect(cards[2].querySelector("h3")!.textContent).toBe(`${jobTitles["read-gmail"]}${staffCopy.import.takesAction}`);
     expect(cards[9].querySelector("h3")!.textContent).toBe(jobTitles["sync-emails"]);
   });
 
