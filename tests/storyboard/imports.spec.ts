@@ -135,7 +135,7 @@ const scheduled = (
 
 test("The Luma import's log", async ({ page, flowDatabase }) => {
   story(
-    "Luma is copied every 5 minutes. Runs that found nothing gather into a line, those that did are a row each, and one that stopped short shows whole.",
+    "Luma is copied every 5 minutes. The newest run is whole; the rest of the day is one table. Runs that found nothing gather into a row, those that did are a row each, and one that stopped short is tinted, its words under its counts.",
   );
   await logIn(page, flowDatabase);
   scheduled(flowDatabase, "import-luma", 1, "0 minutes", exampleLumaResult);
@@ -156,7 +156,7 @@ test("The Luma import's log", async ({ page, flowDatabase }) => {
 
 test("The Gmail reading's log", async ({ page, flowDatabase }) => {
   story(
-    "Gmail is read every 5 minutes too. A read that found something says which account and what. A mailbox that couldn't be read shows whole, in amber, saying so under its line.",
+    "Gmail is read every 5 minutes too. A read that found something says which account and what. A mailbox that couldn't be read is an amber row, saying so under its line.",
   );
   await logIn(page, flowDatabase);
   const account = (email: string, extra = {}) => ({ account: email, replies: 0, autoReplies: 0, bounces: 0, ...extra });
@@ -182,7 +182,9 @@ test("The Gmail reading's log", async ({ page, flowDatabase }) => {
 });
 
 test("The members import's log", async ({ page, flowDatabase }) => {
-  story("Members are copied hourly. Hours with nothing new gather into a line; one with new members shows whole.");
+  story(
+    "Members are copied hourly. Hours with nothing new gather into a row; one with new members is a row of its own words.",
+  );
   await logIn(page, flowDatabase);
   scheduled(flowDatabase, "import-members", 1, "0 minutes", exampleMembersResult);
   scheduled(flowDatabase, "import-members", 3, "1 hour", exampleMembersResult, "unchanged", 60);

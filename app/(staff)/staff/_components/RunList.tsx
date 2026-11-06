@@ -1,12 +1,11 @@
 import { Fragment } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { AnyImportRun } from "@/lib/import-runs";
-import { type LogEntry, runLog } from "@/lib/run-log";
+import { type LogEntry, runLog, tabled } from "@/lib/run-log";
 import type { JobPress } from "@/lib/server/import-runs";
 import { staffClock } from "@/lib/staff-time";
 import Run, { type Decide } from "./Run";
-import RunRows from "./RunRows";
-import { Muted } from "@/components/ui/Text";
+import RunTable from "./RunTable";
 import styles from "./RunList.module.css";
 
 type Props = {
@@ -21,29 +20,9 @@ type Props = {
   press?: JobPress;
 };
 
-/** A stretch of runs in the words of `say`, its times oldest first. */
-function stretch(runs: AnyImportRun[], say: (from: string, to: string, n: number) => string) {
-  return say(staffClock(runs.at(-1)!.at), staffClock(runs[0].at), runs.length);
-}
-
-/** One entry of a job's log, as lib/run-log.ts lays it out. */
-function Entry({ entry, decide, people }: { entry: LogEntry } & Pick<Props, "decide" | "people">) {
-  const { shape, runs, tone, open, folded } = entry;
-  if (shape === "quiet")
-    return (
-      <p>
-        <Muted>{stretch(runs, staffCopy.runs.quiet)}</Muted>
-      </p>
-    );
-  if (shape === "rows" && folded) {
-    return (
-      <details className={styles.stretch}>
-        <summary>{stretch(runs, staffCopy.runs.stretch)}</summary>
-        <RunRows runs={runs} />
-      </details>
-    );
-  }
-  if (shape === "rows") return <RunRows runs={runs} />;
+/** A run shown whole, in its box, tinted by its tone. */
+function Whole({ entry, decide, people }: { entry: LogEntry } & Pick<Props, "decide" | "people">) {
+  const { runs, tone, open } = entry;
   return (
     <div className={tone && styles[tone]}>
       <Run run={runs[0]} decide={decide} open={open} people={people} />
@@ -52,19 +31,64 @@ function Entry({ entry, decide, people }: { entry: LogEntry } & Pick<Props, "dec
 }
 
 /**
+ * A day of a job that runs often: the job's state now, whole, if the day
+ * has it, then the rest as one table. Rows too far down to show are folded,
+ * a line each, and the table carries on under it, headed only the first time.
+ */
+function DayTable({ entries, decide, people }: { entries: LogEntry[] } & Pick<Props, "decide" | "people">) {
+  const current = entries[0].current ? entries[0] : undefined;
+  const segments: LogEntry[][] = [];
+  for (const entry of current ? entries.slice(1) : entries) {
+    const last = segments.at(-1);
+    if (last && !entry.folded && !last[0].folded) last.push(entry);
+    else segments.push([entry]);
+  }
+  const firstShown = segments.find((segment) => !segment[0].folded);
+  return (
+    <>
+      {current && <Whole entry={current} decide={decide} people={people} />}
+      {segments.map((segment) =>
+        segment[0].folded ? (
+          <details key={segment[0].runs[0].id} className={styles.stretch}>
+            <summary>
+              {staffCopy.runs.range(staffClock(segment[0].runs.at(-1)!.at), staffClock(segment[0].runs[0].at))}:{" "}
+              {staffCopy.runs.stretch(segment[0].runs.length)}
+            </summary>
+            <RunTable entries={segment} header={false} decide={decide} people={people} />
+          </details>
+        ) : (
+          <RunTable
+            key={segment[0].runs[0].id}
+            entries={segment}
+            header={segment === firstShown}
+            decide={decide}
+            people={people}
+          />
+        ),
+      )}
+    </>
+  );
+}
+
+/**
  * Runs from the import log, under a heading for each day, or a line saying there
  * are none. The newest is the job's state now: tinted by how it ended, and
  * unfolded however long its detail. Further down, each is laid out by
  * lib/run-log.ts: whole, plain and folded when long, or for a job that runs
- * often, a row or a line. While a press runs, that's the state instead, so the
+ * often, a row of the day's table. While a press runs, that's the state instead, so the
  * newest is treated as an older one.
  */
 export default function RunList({ runs, none, decide, people, press }: Props) {
   if (runs.length === 0) return <p>{none}</p>;
-  return runLog(runs, !!press).map((entry) => (
-    <Fragment key={entry.runs[0].id}>
-      {entry.day && <h2>{entry.day}</h2>}
-      <Entry entry={entry} decide={decide} people={people} />
+  const table = tabled(runs[0].job);
+  return runLog(runs, !!press).map(({ day, entries }) => (
+    <Fragment key={day}>
+      <h2>{day}</h2>
+      {table ? (
+        <DayTable entries={entries} decide={decide} people={people} />
+      ) : (
+        entries.map((entry) => <Whole key={entry.runs[0].id} entry={entry} decide={decide} people={people} />)
+      )}
     </Fragment>
   ));
 }

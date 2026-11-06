@@ -19,7 +19,7 @@ import { ImportOverview } from "@/app/(staff)/staff/_components/ImportJob";
 import CountsByMailing from "@/app/(staff)/staff/_components/CountsByMailing";
 import OldLettersProgressBar from "@/app/(staff)/staff/_components/OldLettersProgressBar";
 import RunList from "@/app/(staff)/staff/_components/RunList";
-import RunRows from "@/app/(staff)/staff/_components/RunRows";
+import RunTable from "@/app/(staff)/staff/_components/RunTable";
 import {
   exampleAppliedSync,
   exampleControlAiResult,
@@ -1060,30 +1060,73 @@ export const staffAdmin: Group = {
       ],
     },
     {
-      name: "RunRows",
-      file: "app/(staff)/staff/_components/RunRows.tsx",
+      name: "RunTable",
+      file: "app/(staff)/staff/_components/RunTable.tsx",
       variants: [
         {
           label: "The import of old letters",
           render: () => (
             <StaffPage as="div">
-              <RunRows runs={[exampleRun("import-old-letters", exampleOldLettersResult, { id: 21 })]} />
+              <RunTable
+                header
+                entries={[
+                  { shape: "rows", runs: [exampleRun("import-old-letters", exampleOldLettersResult, { id: 21 })] },
+                ]}
+              />
             </StaffPage>
           ),
         },
         {
-          label: "Luma",
+          label: "Luma: a run that stopped short, then a stretch that found nothing",
           render: () => (
             <StaffPage as="div">
-              <RunRows runs={[exampleRun("import-luma", exampleLumaResult, { id: 22 })]} />
+              <RunTable
+                header
+                entries={[
+                  { shape: "rows", runs: [exampleRun("import-luma", exampleLumaResult, { id: 22 })] },
+                  {
+                    shape: "run",
+                    tone: "amber",
+                    runs: [exampleRun("import-luma", { ...exampleLumaResult, stoppedBy: "time" }, { id: 23 })],
+                  },
+                  {
+                    shape: "quiet",
+                    runs: [
+                      exampleRun("import-luma", exampleLumaResult, { id: 24, status: "unchanged" }),
+                      exampleRun("import-luma", exampleLumaResult, {
+                        id: 25,
+                        at: "2026-10-15T01:55:00Z",
+                        status: "unchanged",
+                      }),
+                    ],
+                  },
+                ]}
+              />
             </StaffPage>
           ),
         },
         {
-          label: "Gmail",
+          label: "Gmail: a read that found something, and one that failed",
           render: () => (
             <StaffPage as="div">
-              <RunRows runs={[exampleRun("read-gmail", exampleGmailResult, { id: 23 })]} />
+              <RunTable
+                header
+                entries={[
+                  { shape: "rows", runs: [exampleRun("read-gmail", exampleGmailResult, { id: 26 })] },
+                  { shape: "run", tone: "red", runs: [exampleFailedRun("read-gmail", "Database down", { id: 27 })] },
+                ]}
+              />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "A job without counts: the members, hourly, its run's words spanning the table",
+          render: () => (
+            <StaffPage as="div">
+              <RunTable
+                header
+                entries={[{ shape: "run", runs: [exampleRun("import-members", exampleMembersResult, { id: 28 })] }]}
+              />
             </StaffPage>
           ),
         },
@@ -1094,7 +1137,8 @@ export const staffAdmin: Group = {
       file: "app/(staff)/staff/_components/RunList.tsx",
       variants: [
         {
-          label: "A job that runs often: the newest whole, then rows and a line for runs that found nothing",
+          label:
+            "A job that runs often: the newest whole, then the day's table, with a row for runs that found nothing and a tinted one for a problem",
           render: () => (
             <StaffPage as="div">
               <RunList

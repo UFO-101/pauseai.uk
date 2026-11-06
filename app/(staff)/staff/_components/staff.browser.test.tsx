@@ -49,7 +49,7 @@ import { ImportJobPage, ImportOverview } from "./ImportJob";
 import { exampleOldLettersResult } from "./CampaignPages.examples";
 import OldLettersProgressBar from "./OldLettersProgressBar";
 import RunList from "./RunList";
-import RunRows from "./RunRows";
+import RunTable from "./RunTable";
 import {
   exampleAppliedSync,
   exampleControlAiResult,
@@ -115,6 +115,8 @@ const ask = (slug: string) => exampleAsks.find((a) => a.slug === slug)!;
 const ran = exampleRun;
 const failed = exampleFailedRun;
 const AT = "15 Oct 2026, 02:00";
+/** A colour token's hex as the browser computes it. */
+const toRgb = (hex: string) => `rgb(${[1, 3, 5].map((i) => parseInt(hex.trim().slice(i, i + 2), 16)).join(", ")})`;
 
 /** A stand-in Server Action that keeps what it was sent. */
 function action() {
@@ -2875,7 +2877,7 @@ describe("RunList", () => {
     await expect.element(page.getByText("Seat 1: MP 1", { exact: true })).toBeVisible();
   });
 
-  it("lays out a job that runs often: rows, a line for quiet runs, and older rows folded", async () => {
+  it("lays out a job that runs often as a table a day: rows, a row for quiet runs, and older rows folded", async () => {
     const letters = staffCopy.oldLetters.columns;
     const minutes = (n: number) => `2026-11-03T12:${String(59 - n).padStart(2, "0")}:00Z`;
     const row = (id: number) =>
@@ -2886,14 +2888,102 @@ describe("RunList", () => {
       );
     const quiet = (id: number) => ran("import-luma", exampleLumaResult, { id, at: minutes(id), status: "unchanged" });
     const { rerender } = await render(<RunList runs={Array.from({ length: 16 }, (_, i) => row(i))} none="None" />);
-    await expect.element(page.getByRole("cell", { name: letters.joined })).toBeVisible();
+    // The newest is whole in its box; the rest are rows under one header.
+    expect(document.querySelectorAll("section")).toHaveLength(1);
+    const headings = () => [...document.querySelectorAll("th")].map((th) => th.textContent);
+    expect(headings().filter((h) => h === letters.joined)).toHaveLength(1);
     await expect.element(page.getByRole("cell", { name: "101", exact: true })).toBeVisible();
-    await expect.element(page.getByText(staffCopy.runs.stretch("12:44", "12:46", 3))).toBeVisible();
+    const fold = page.getByText(`${staffCopy.runs.range("12:44", "12:46")}: ${staffCopy.runs.stretch(3)}`);
+    await expect.element(fold).toBeVisible();
     await expect.element(page.getByText("115", { exact: true })).not.toBeVisible();
-    await page.getByText(staffCopy.runs.stretch("12:44", "12:46", 3)).click();
+    await fold.click();
     await expect.element(page.getByText("115", { exact: true })).toBeVisible();
+    // The opened stretch is a table of the same columns, with no header of its own.
+    expect(document.querySelectorAll("table")).toHaveLength(2);
+    expect(headings()).toHaveLength(7);
     await rerender(<RunList runs={[quiet(0), quiet(1), quiet(2)]} none="None" />);
-    await expect.element(page.getByText(staffCopy.runs.quiet("12:57", "12:58", 2))).toBeVisible();
+    const range = page.getByRole("cell", { name: staffCopy.runs.range("12:57", "12:58") });
+    await expect.element(range).toBeVisible();
+    await expect.element(page.getByRole("cell", { name: staffCopy.runs.quiet(2) })).toBeVisible();
+    expect(getComputedStyle(range.element()).color).toBe(
+      toRgb(getComputedStyle(document.body).getPropertyValue("--muted")),
+    );
+  });
+
+  it("puts a problem in the table as a tinted row of its counts with its words under them, a failure as one row", async () => {
+    const luma = exampleLumaResult;
+    const at = (n: number) => `2026-11-03T12:${String(50 - n * 5).padStart(2, "0")}:00Z`;
+    await render(
+      <RunList
+        runs={[
+          ran("import-luma", luma, { id: 1, at: at(0) }),
+          ran("import-luma", { ...luma, stoppedBy: "rate-limit" }, { id: 2, at: at(1) }),
+          failed("import-luma", "Luma answered 500", { id: 3, at: at(2) }),
+          ran("import-luma", luma, { id: 4, at: at(3) }),
+        ]}
+        none="None"
+      />,
+    );
+    const rows = page.getByRole("row").all();
+    // The header, the problem's counts and its words, the failure, the routine run.
+    expect(rows).toHaveLength(5);
+    const tint = (row: Element) => getComputedStyle(row.querySelector("td")!).backgroundColor;
+    const amber = getComputedStyle(document.body).getPropertyValue("--status-amber-bg");
+    expect(tint(rows[1].element())).toBe(toRgb(amber));
+    expect(tint(rows[2].element())).toBe(toRgb(amber));
+    expect(tint(rows[3].element())).toBe(toRgb(getComputedStyle(document.body).getPropertyValue("--status-red-bg")));
+    expect(tint(rows[4].element())).not.toBe(toRgb(amber));
+    await expect.element(rows[1].getByRole("cell", { name: "12:45" })).toBeVisible();
+    // Its words leave out the time and the schedule, which the row says.
+    expect(rows[2].element().textContent).toBe(
+      `${staffCopy.runs.status.incomplete} · ${staffCopy.luma.result(luma)} ${staffCopy.luma.stoppedBy["rate-limit"]}`,
+    );
+    expect(rows[3].element().textContent).toBe(
+      `12:40${staffCopy.runs.status.failed} · ${staffCopy.runs.error("Luma answered 500")}`,
+    );
+    expect(rows[2].element().querySelector("section")).not.toBeNull();
+    expect(getComputedStyle(rows[2].element().querySelector("section")!).borderLeftWidth).toBe("0px");
+  });
+
+  it("tables an hourly job without counts under Time and what it found, saying who pressed it, and heads a day whose first rows are folded", async () => {
+    const members = exampleMembersResult;
+    const at = (day: number, hour: number) => `2026-11-0${day}T${String(hour).padStart(2, "0")}:00:00Z`;
+    const { rerender } = await render(
+      <RunList
+        runs={[
+          ran("import-members", members, { id: 1, at: at(3, 12) }),
+          ran("import-members", members, { id: 2, at: at(3, 11), startedBy: "jo@pauseai.uk" }),
+          ran("import-members", members, { id: 3, at: at(3, 10), status: "unchanged" }),
+        ]}
+        none="None"
+      />,
+    );
+    expect([...document.querySelectorAll("th")].map((th) => th.textContent)).toEqual([
+      staffCopy.runs.time,
+      staffCopy.runs.found,
+    ]);
+    const pressed = page.getByRole("row").all()[1];
+    expect(pressed.element().textContent).toBe(
+      `11:00${staffCopy.runs.status.ok} · ${staffCopy.runs.by("jo@pauseai.uk")} · ${staffCopy.members.result(members)}`,
+    );
+    expect(getComputedStyle(pressed.element().querySelector("td")!).backgroundColor).toBe("rgba(0, 0, 0, 0)");
+    // Rows are counted across days, so a day can start with a folded stretch: the header goes on its first table shown.
+    const luma = (id: number, at: string) =>
+      ran("import-luma", exampleLumaResult, { id, at, status: id === 99 ? "unchanged" : "ok" });
+    await rerender(
+      <RunList
+        runs={[
+          ...Array.from({ length: 14 }, (_, i) => luma(i, at(3, 23 - i))),
+          luma(20, at(2, 23)),
+          luma(99, at(2, 22)),
+          luma(21, at(2, 21)),
+        ]}
+        none="None"
+      />,
+    );
+    const tables = [...document.querySelectorAll("table")];
+    expect(tables.map((t) => t.querySelectorAll("th").length)).toEqual([7, 0, 0, 7, 0]);
+    expect(document.querySelectorAll("details")).toHaveLength(3);
   });
 
   it("keeps a failure plain further down on a job that runs rarely", async () => {
@@ -2910,9 +3000,12 @@ describe("RunList", () => {
 
   it("shows Luma's and Gmail's routine runs as rows, a Gmail read saying only the accounts that had anything", async () => {
     const luma = ran("import-luma", { ...exampleLumaResult, hostsChanged: undefined, guestsChanged: 77 }, { id: 1 });
-    const { rerender } = await render(<RunRows runs={[luma]} />);
+    const rows = (...runs: AnyImportRun[]) => [{ shape: "rows" as const, runs }];
+    const { rerender } = await render(<RunTable header entries={rows(luma)} />);
     await expect.element(page.getByRole("cell", { name: "77", exact: true })).toBeVisible();
-    await rerender(<RunRows runs={[ran("import-luma", { ...exampleLumaResult, hostsChanged: 55 }, { id: 2 })]} />);
+    await rerender(
+      <RunTable header entries={rows(ran("import-luma", { ...exampleLumaResult, hostsChanged: 55 }, { id: 2 }))} />,
+    );
     await expect.element(page.getByRole("cell", { name: "55", exact: true })).toBeVisible();
     const account = (email: string, extra = {}) => ({
       account: email,
@@ -2927,12 +3020,17 @@ describe("RunList", () => {
       account("policy@pauseai.uk", { oneOffs: 2 }),
       account("write.to@pauseai.uk", { relayed: 3, spam: 0, uncertain: 0 }),
     ];
-    await rerender(<RunRows runs={[ran("read-gmail", { accounts }, { id: 3 })]} />);
+    await rerender(<RunTable header entries={rows(ran("read-gmail", { accounts }, { id: 3 }))} />);
     const text = document.body.textContent!;
     expect(text).not.toContain("silent@pauseai.uk");
     expect(text).toContain(staffCopy.gmailReading.account(accounts[1]));
     expect(text).toContain(staffCopy.gmailReading.oneOffs(2));
     expect(text).toContain(staffCopy.lettersInbox.result({ relayed: 3, spam: 0, uncertain: 0 }));
+    // Its one column of words needs no minimum width; a table of counts keeps one, scrolling on a phone.
+    const table = () => page.getByRole("table").element() as HTMLElement;
+    expect(getComputedStyle(table()).minWidth).toBe("0px");
+    await rerender(<RunTable header entries={rows(luma)} />);
+    expect(getComputedStyle(table()).minWidth).not.toBe("0px");
   });
 
   it("says how far the import of old letters has got, or nothing before it has listed anything", async () => {
@@ -3177,11 +3275,10 @@ describe("RunList", () => {
       .toHaveTextContent(
         `${staffCopy.runs.status.ok} ${AT} · ${staffCopy.import.hourly} · ${staffCopy.members.result(exampleMembersResult)}`,
       );
+    // Further down, in the day's table, the row says the time and the job's page the schedule.
     await expect
       .element(second)
-      .toHaveTextContent(
-        `${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.hourly} · ${staffCopy.runs.error("Airtable answered 503")}`,
-      );
+      .toHaveTextContent(`${staffCopy.runs.status.failed} · ${staffCopy.runs.error("Airtable answered 503")}`);
   });
 
   it("shows a Gmail read's totals, then each account, with one searched afresh and one that couldn't be read", async () => {
@@ -3304,12 +3401,10 @@ describe("RunList", () => {
     expect(first.element().textContent).not.toContain(staffCopy.runs.status.incomplete);
     await expect
       .element(second)
-      .toHaveTextContent(
-        `${staffCopy.runs.status.failed} ${AT} · ${staffCopy.import.frequent} · ${staffCopy.runs.error("Luma answered 500")}`,
-      );
+      .toHaveTextContent(`${staffCopy.runs.status.failed} · ${staffCopy.runs.error("Luma answered 500")}`);
     // The newest run is tinted by how it ended; a failure further down stays tinted on a job that runs this often.
     expect(first.element().closest("section")!.parentElement!.className).toMatch(/green/);
-    expect(second.element().closest("section")!.parentElement!.className).toMatch(/red/);
+    expect(second.element().closest("tr")!.className).toMatch(/red/);
   });
 
   it("says why a Luma import stopped early, as incomplete in place of done, tinted amber as the newest run", async () => {

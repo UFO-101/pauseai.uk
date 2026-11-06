@@ -11,11 +11,15 @@
   background: var(--status-red-bg);
 }
 
-/* Rows too far down to show, a line until opened. */
+/* Rows too far down to show, a line until opened, between the day's tables. */
 .stretch {
   margin-block: var(--space-3);
 }
 
 .stretch summary {
   cursor: pointer;
+}
+
+.stretch[open] summary {
+  margin-bottom: var(--space-2);
 }
