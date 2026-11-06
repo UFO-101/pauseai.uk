@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
-import { addTestPolitician, connectTestGmail, describeWithDatabase, useTestDatabase } from "@/tests/database";
+import {
+  addTestLetter,
+  addTestPolitician,
+  connectTestGmail,
+  describeWithDatabase,
+  useTestDatabase,
+} from "@/tests/database";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { stubLettersInboxEnv } from "@/tests/gmail-sends";
 import { notifications } from "@/tests/notifications";
@@ -126,6 +132,23 @@ describeWithDatabase("one-off emails", () => {
     expect(await keep({ ...mail, id: "elsewhere", rfc: undefined }, "joseph@pauseai.uk")).toBeGreaterThan(0);
     expect(await query("SELECT 1 FROM one_off_messages")).toHaveLength(2);
     expect(await keep({ id: "a", from: "x@example.com", rfc: "none" })).toBeUndefined();
+  });
+
+  it("doesn't keep a message that's a letter's own, its reply or its send, as a one-off too", async () => {
+    const polly = await addTestPolitician();
+    const letter = await addTestLetter({ politicianId: polly, senderEmail: "wendy@example.com" });
+    await query(
+      `INSERT INTO letter_replies (letter_id, account, gmail_message_id, gmail_thread_id, from_address, at, from_us, blob_key, size)
+       VALUES ($1, 'policy@pauseai.uk', 'on-a-letter', 't', 'joseph@pauseai.info', now(), true, 'x', 1)`,
+      [letter],
+    );
+    await query(
+      `INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id, sender) VALUES ('letter', $1, 'x@parliament.uk', 'sent', 'sent-one', 'policy@pauseai.uk')`,
+      [letter],
+    );
+    expect(await keep({ id: "on-a-letter", from: `Polly <${POLLY}>` })).toBeUndefined();
+    expect(await keep({ id: "sent-one", from: `Polly <${POLLY}>` })).toBeUndefined();
+    expect(await query("SELECT 1 FROM one_off_messages")).toEqual([]);
   });
 
   it("threads across mailboxes by what a message answers, and in one by its Gmail thread", async () => {

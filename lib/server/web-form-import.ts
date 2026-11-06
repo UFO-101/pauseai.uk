@@ -22,7 +22,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 const JOB = "import-web-form-letters";
 
 /** Airtable's Campaign, as our campaigns for pauseai.info's letters. */
-const CAMPAIGNS: Record<string, string> = {
+export const CAMPAIGNS: Record<string, string> = {
   "Frontier AI letter": "pauseai-info-frontier-ai",
   "Liability letter": "pauseai-info-liability",
   "DeepMind letter": "pauseai-info-deepmind",

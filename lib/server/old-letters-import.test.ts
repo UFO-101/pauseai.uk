@@ -1,10 +1,10 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import { NIGHTLY } from "@/lib/import-runs";
-import { docFromMarkup } from "@/lib/letter-format";
 import { latestRun } from "./import-runs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
+import webForm from "@/tests/fixtures/airtable-web-form.json";
 import {
   addTestLetter,
   addTestPolitician,
@@ -612,13 +612,28 @@ Please join 40 of your colleagues.')`,
     expect(await ownTextOf("0a27")).toContain("of all people");
   });
 
-  it("puts a supporter's repeat of their form letter on that letter, with one address", async () => {
-    const { form } = await seed();
+  /** A repeat of Wendy's frontier AI form letter, at the moment Airtable has a record of one, to Polly. */
+  const wendysRepeat = (id = "0a28", at = "2026-10-01T09:00:30Z") =>
     mailIs(
-      "0a28",
+      id,
       "t-staffer",
-      "2026-10-01T09:00:00Z",
+      at,
       fromTheForm("Wendy Webform", "wendy.webform@example.com", "polly.placeholder.mp@parliament.uk"),
+      Buffer.from("Dear Ms Placeholder,"),
+    );
+  const pollyInAirtable = (polly: number) =>
+    query("UPDATE notable_people SET airtable_id = 'recPlaceholder' WHERE id = $1", [polly]);
+
+  it("puts a supporter's repeat of their form letter on that letter, with one address, reading Airtable once", async () => {
+    const { form, polly } = await seed();
+    await pollyInAirtable(polly);
+    wendysRepeat();
+    // Someone Airtable has no record of, read in the same run.
+    mailIs(
+      "0a27",
+      "t-wh-3",
+      "2026-10-01T09:00:40Z",
+      fromTheForm("Nell Nobody", "nell.nobody@example.com", "polly.placeholder.mp@parliament.uk"),
       Buffer.from("Dear Ms Placeholder,"),
     );
     const result = await run();
@@ -629,44 +644,87 @@ Please join 40 of your colleagues.')`,
       [form],
     );
     expect(sends).toEqual([{ from: "wendy.webform@example.com", purpose: "letter" }]);
+    expect(await outcomeOf("0a27")).toEqual({ outcome: "one_off", letterId: null });
   });
 
-  it("puts a repeat on the letter it reads like, of a supporter's letters in two campaigns", async () => {
+  it("puts a repeat on the letter of the campaign Airtable says, of a supporter's letters in two", async () => {
     const { form, polly } = await seed();
-    const other = await addTestLetter({
+    await pollyInAirtable(polly);
+    await query("UPDATE letters_from_supporters SET campaign = 'pauseai-info-liability' WHERE id = $1", [form]);
+    const frontier = await addTestLetter({
       politicianId: polly,
-      campaign: "pauseai-info-liability",
+      campaign: "pauseai-info-frontier-ai",
       senderName: "Wendy Webform",
       senderEmail: "wendy.webform@example.com",
     });
-    const text = (words: string) => JSON.stringify(docFromMarkup(words));
-    await query(
-      "UPDATE letters_from_supporters SET airtable_id = 'recLiability', postmark_mailbox = NULL, letter = $2 WHERE id = $1",
-      [other, text("Companies must be liable for the harm their systems cause to people.")],
+    await query("UPDATE letters_from_supporters SET airtable_id = 'recOther', postmark_mailbox = NULL WHERE id = $1", [
+      frontier,
+    ]);
+    wendysRepeat();
+    await run();
+    expect(await outcomeOf("0a28")).toEqual({ outcome: "joined", letterId: frontier });
+  });
+
+  it("keeps as a one-off a supporter's email Airtable has no record of at that time", async () => {
+    const { polly } = await seed();
+    await pollyInAirtable(polly);
+    wendysRepeat("0a28", "2026-10-09T09:00:00Z");
+    await run();
+    expect(await outcomeOf("0a28")).toEqual({ outcome: "one_off", letterId: null });
+  });
+
+  it("keeps as a one-off a repeat Airtable marks as spam, though the supporter has a letter", async () => {
+    const { polly } = await seed();
+    await pollyInAirtable(polly);
+    server.use(
+      http.get("https://api.airtable.com/v0/:base/tblkzjrRHiZiqMDGR", () =>
+        HttpResponse.json({
+          records: webForm.records.map((record) =>
+            record.id === "recWebWendyAgain" ? { ...record, fields: { ...record.fields, Spam: true } } : record,
+          ),
+        }),
+      ),
     );
+    wendysRepeat();
+    await run();
+    expect(await outcomeOf("0a28")).toEqual({ outcome: "one_off", letterId: null });
+  });
+
+  it("keeps as a one-off a repeat to a politician Airtable's record isn't to", async () => {
+    const { polly, dora } = await seed();
+    await pollyInAirtable(polly);
+    await addTestLetter({
+      politicianId: dora,
+      campaign: "pauseai-info-frontier-ai",
+      senderName: "Wendy Webform",
+      senderEmail: "wendy.webform@example.com",
+    });
     mailIs(
       "0a28",
       "t-staffer",
-      "2026-10-01T09:00:00Z",
-      fromTheForm("Wendy Webform", "wendy.webform@example.com", "polly.placeholder.mp@parliament.uk"),
-      Buffer.from("Companies must be liable for the harm their systems cause to people."),
+      "2026-10-01T09:00:30Z",
+      fromTheForm("Wendy Webform", "wendy.webform@example.com", "mp90001.office@parliament.uk"),
+      Buffer.from("Dear Ms Dummy,"),
     );
     await run();
-    expect((await outcomeOf("0a28")).letterId).toBe(other);
-    expect((await outcomeOf("0a07")).letterId).toBe(form);
+    expect(await outcomeOf("0a28")).toEqual({ outcome: "one_off", letterId: null });
   });
 
-  it("keeps a supporter's email like none of their letters as a one-off, as a form letter marked spam is", async () => {
+  it("keeps a stranger's email to a politician as a one-off, though its subject is a mailing's", async () => {
     await seed();
     mailIs(
       "0a28",
       "t-staffer",
       "2026-10-01T09:00:00Z",
-      fromTheForm("Wendy Webform", "wendy.webform@example.com", "polly.placeholder.mp@parliament.uk"),
-      Buffer.from("Something else altogether, on another subject, and in many other words than theirs."),
+      fromTheForm("Nell Nobody", "nell.nobody@example.com", "polly.placeholder.mp@parliament.uk"),
+      Buffer.from("Dear Ms Placeholder,"),
     );
     await run();
     expect(await outcomeOf("0a28")).toEqual({ outcome: "one_off", letterId: null });
+    const [{ from }] = await query<{ from: string }>(
+      "SELECT from_address AS from FROM one_off_messages WHERE gmail_message_id = '0a28'",
+    );
+    expect(from).toBe("nell.nobody@example.com");
   });
 
   it("puts a reply of ours on the letter its subject and politician say, though it's in no thread of the letter", async () => {
@@ -713,23 +771,6 @@ Please join 40 of your colleagues.')`,
     );
     expect(replies).toEqual([{ blob, fromUs: true }]);
     expect((await outcomeOf("0a13")).outcome).toBe("one_off");
-  });
-
-  it("keeps a stranger's email to a politician as a one-off, though its subject is a mailing's", async () => {
-    await seed();
-    mailIs(
-      "0a28",
-      "t-staffer",
-      "2026-10-01T09:00:00Z",
-      fromTheForm("Nell Nobody", "nell.nobody@example.com", "polly.placeholder.mp@parliament.uk"),
-      Buffer.from("Dear Ms Placeholder,"),
-    );
-    await run();
-    expect(await outcomeOf("0a28")).toEqual({ outcome: "one_off", letterId: null });
-    const [{ from }] = await query<{ from: string }>(
-      "SELECT from_address AS from FROM one_off_messages WHERE gmail_message_id = '0a28'",
-    );
-    expect(from).toBe("nell.nobody@example.com");
   });
 
   it("reads again, as what it is, an email kept as PauseAI's letter though a supporter sent it, with what joined that letter", async () => {

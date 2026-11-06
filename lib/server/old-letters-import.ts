@@ -40,7 +40,7 @@ import { keepingFailure, recordRun } from "./import-runs";
 import { wholeTextOf } from "./letter-threads";
 import { messageIds, parseMime } from "./mime";
 import { addressesOn, headerText, keepOneOff, ONE_OFF_HEADERS, rfcIdOf, senderOf } from "./one-off-emails";
-import { airtableToken, fetchWebFormLetters } from "./outside-services/airtable";
+import { airtableToken, fetchWebFormLetters, type WebFormLetterToImport } from "./outside-services/airtable";
 import {
   gmailFullMessage,
   gmailMessageHeaders,
@@ -54,6 +54,7 @@ import {
 import { connectedAccounts, politicianBook } from "./politician-book";
 import { isMachineReply } from "./postmark-webhooks";
 import { htmlAsText } from "./old-letters-text";
+import { CAMPAIGNS } from "./web-form-import";
 import { problem } from "./problems";
 
 // The import of the letters written before the site could send them
@@ -122,6 +123,8 @@ type Reader = {
   /** The result's list of mail that matched nothing, by mailbox and Gmail ID, as a message can come off it. */
   unmatched: Map<string, OldLettersImportResult["unmatched"][number]>;
   result: OldLettersImportResult;
+  /** Airtable's record of each form send, read once in a run, when one's needed. */
+  formSends?: Promise<WebFormLetterToImport[]>;
 };
 
 /** Waits for each Gmail request's turn, and stops the run when its time is up. */
@@ -364,25 +367,36 @@ async function asOneOff(
   return { outcome: "one_off" };
 }
 
-/** How much of a repeat of a form letter can be words the letter hasn't: more is a letter of another campaign. */
-const REPEAT_OWN_WORDS = 0.5;
-
 /**
- * The form letter a supporter's email to one of these politicians repeats, as
- * production keeps one for each ask: of their letters, the one it reads most
- * like, as one person can write to a politician in two campaigns, and a subject
- * is theirs to change. None if none is like it.
+ * The form letter a supporter's email repeats, as production keeps one for each
+ * ask: by Airtable's record of that send, which says its campaign, as a subject is
+ * theirs to change and they can write to a politician in two campaigns. None for
+ * one it has no record of, or marked as spam or invalid.
  */
-async function formLetterRepeated(address: string, people: number[], text: string) {
-  const letters = await query<{ id: number; campaign: string; letter: Parameters<typeof toText>[0] }>(
-    `SELECT s.id::int AS id, s.campaign, s.letter FROM letters_from_supporters s JOIN letters l USING (id) JOIN form_entries f ON f.id = s.entry_id
-     WHERE s.airtable_id IS NOT NULL AND s.letter IS NOT NULL AND lower(f.email) = $1 AND l.notable_person_id = ANY($2::bigint[])`,
-    [address, people],
+async function formLetterRepeated(reader: Reader, address: string, people: number[], at: Date) {
+  reader.formSends ??= fetchWebFormLetters(airtableToken());
+  const { from, to } = joinWindow(at);
+  const sends = (await reader.formSends).filter((send) => {
+    const sent = send.sentAt ? new Date(send.sentAt) : undefined;
+    return (
+      sent &&
+      sent >= from &&
+      sent <= to &&
+      !send.spam &&
+      !send.invalid &&
+      send.senderEmail.trim().toLowerCase() === address
+    );
+  });
+  if (!sends.length) return undefined;
+  const [letter] = await query<{ id: number; campaign: string }>(
+    `SELECT s.id::int AS id, s.campaign FROM letters_from_supporters s JOIN letters l USING (id)
+       JOIN form_entries f ON f.id = s.entry_id JOIN notable_people n ON n.id = l.notable_person_id
+     WHERE s.airtable_id IS NOT NULL AND lower(f.email) = $1 AND l.notable_person_id = ANY($2::bigint[])
+       AND n.airtable_id = ANY($3::text[]) AND s.campaign = ANY($4::text[])
+     ORDER BY l.id LIMIT 1`,
+    [address, people, sends.flatMap((send) => send.recipients), sends.map((send) => CAMPAIGNS[send.campaign])],
   );
-  const closest = letters
-    .map(({ id, campaign, letter }) => ({ id, campaign, own: ownWords(toText(letter), text) }))
-    .sort((a, b) => a.own - b.own)[0];
-  return closest && closest.own <= REPEAT_OWN_WORDS ? closest : undefined;
+  return letter;
 }
 
 /** Handles one message of Joseph's Sent mail. */
@@ -437,7 +451,7 @@ async function handleSent(reader: Reader, account: string, id: string): Promise<
   }
   // Only PauseAI's own mail is a letter of PauseAI's. A supporter's is their form letter sent again, or a one-off.
   const ours = isPauseaiAddress(from, reader.connected);
-  const repeat = people.length && !ours ? await formLetterRepeated(from, people, text) : undefined;
+  const repeat = people.length && !ours ? await formLetterRepeated(reader, from, people, at) : undefined;
   if (repeat) {
     count(reader.result.joined, repeat.campaign);
     await recordSent(repeat.id, "letter", account, message, address(), from, rfc);

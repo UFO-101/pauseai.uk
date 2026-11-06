@@ -94,7 +94,8 @@ const RFC_HASH = (rfc: string) => `encode(sha256(convert_to(${rfc}, 'UTF8')), 'h
  * Keeps a message of a thread with a politician, once, in the thread it
  * answers, or that its Gmail thread is in, or a new one. Threads a message
  * joins together become one, and a thread has its earliest message's subject.
- * Gives what it kept, or nothing if it's kept, or was and has been erased.
+ * Gives what it kept, or nothing if it's kept, was and has been erased, or is a
+ * letter's own.
  */
 export async function keepOneOff(
   account: string,
@@ -107,7 +108,9 @@ export async function keepOneOff(
   const rfc = rfcIdOf(message.headers);
   const [kept] = await query(
     `SELECT 1 FROM one_off_messages WHERE (account = $1 AND gmail_message_id = $2) OR rfc_message_id = $3::text
-     UNION ALL SELECT 1 FROM one_off_erased WHERE (account = $1 AND gmail_message_id = $2) OR rfc_sha256 = ${RFC_HASH("$3::text")}`,
+     UNION ALL SELECT 1 FROM one_off_erased WHERE (account = $1 AND gmail_message_id = $2) OR rfc_sha256 = ${RFC_HASH("$3::text")}
+     UNION ALL SELECT 1 FROM letter_replies WHERE account = $1 AND gmail_message_id = $2
+     UNION ALL SELECT 1 FROM email_sends WHERE sender = $1 AND message_id = $2`,
     [account, message.id, rfc],
   );
   if (kept) return undefined;
@@ -487,6 +490,29 @@ export async function eraseOneOffs(supporterId: number, db: Queryable): Promise<
     `DELETE FROM one_off_threads t WHERE t.id = ANY($1::bigint[])
        AND NOT EXISTS (SELECT 1 FROM one_off_messages m WHERE m.thread_id = t.id)`,
     [gone.map((row) => row.threadId)],
+    db,
+  );
+  return gone.map((row) => row.blobKey);
+}
+
+/**
+ * The blobs of the replies on these form entries' letters that no proxy holds,
+ * read from a staff mailbox, as the letter's deletion takes only their rows.
+ * Their IDs are kept in one_off_erased, so that reading their thread again
+ * doesn't keep them as one-offs.
+ */
+export async function eraseRepliesToFormLetters(entries: number[], db: Queryable): Promise<string[]> {
+  const gone = await query<{ blobKey: string }>(
+    `WITH gone AS (
+       SELECT r.account, r.gmail_message_id, r.rfc_message_id, r.blob_key FROM letter_replies r
+         JOIN letters_from_supporters s ON s.id = r.letter_id
+       WHERE s.entry_id = ANY($1::bigint[]) AND s.proxy_id IS NULL
+     ), noted AS (
+       INSERT INTO one_off_erased (account, gmail_message_id, rfc_sha256)
+       SELECT account, gmail_message_id, ${RFC_HASH("rfc_message_id")} FROM gone ON CONFLICT DO NOTHING
+     )
+     SELECT blob_key AS "blobKey" FROM gone`,
+    [entries],
     db,
   );
   return gone.map((row) => row.blobKey);
