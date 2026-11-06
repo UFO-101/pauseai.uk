@@ -413,7 +413,7 @@ describe("TemplatePicker", () => {
   });
 
   it("names one person's use in the singular", async () => {
-    render(
+    await render(
       <TemplatePicker templates={[{ ...exampleTemplates[0], lastUsedTo: 1 }]} onChoose={() => {}} onNew={() => {}} />,
     );
     await expect
