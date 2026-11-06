@@ -97,7 +97,7 @@ h1, h2, h3, h4, p { margin: 0; }
 #sidebar .tools label { display: flex; gap: 6px; align-items: center; color: #333; cursor: pointer; }
 /* All, Changed, Failed or Main failed: the buttons share the width, each count beside its name, on one line. */
 #show { display: flex; }
-#show button { flex: auto; white-space: nowrap; padding: 4px 8px; }
+#show button { flex: auto; white-space: nowrap; padding: 4px 5px; font-size: 13px; }
 #sidebar #show button[aria-pressed="true"] .count { color: #ddd; }
 #section-list { flex: 1; overflow: auto; overscroll-behavior: contain; padding: 0 0 40vh; }
 /* A part: the public site, the staff pages, the tools. */
