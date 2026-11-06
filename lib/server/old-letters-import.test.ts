@@ -374,6 +374,35 @@ Please join 40 of your colleagues.')`,
     expect(someone).toBe(true);
   });
 
+  it("keeps a thread whole in a mailbox listed whole: what came before the message that counts, and after, off the list of what matched nothing", async () => {
+    await seed();
+    const { unmatched } = await run();
+    for (const id of ["0b08", "0b09", "0b10"]) expect((await outcomeOf(id)).outcome).toBe("one_off");
+    const kept = await query<{ thread: number }>(
+      `SELECT DISTINCT thread_id::int AS thread FROM one_off_messages WHERE gmail_message_id IN ('0b08', '0b09', '0b10')`,
+    );
+    expect(kept).toHaveLength(1);
+    expect(await query("SELECT subject FROM one_off_threads WHERE id = $1", [kept[0].thread])).toEqual([
+      { subject: "Should I write to my MP?" },
+    ]);
+    expect(
+      await query("SELECT 1 FROM one_off_messages WHERE gmail_message_id IN ('0b08', '0b09', '0b10')"),
+    ).toHaveLength(3);
+    expect(unmatched.map((m) => m.subject)).not.toContain("Should I write to my MP?");
+    expect(unmatched.map((m) => m.subject)).not.toContain("Re: Should I write to my MP?");
+  });
+
+  it("keeps on a later press what an earlier run left as matching nothing in a thread since kept", async () => {
+    await seed();
+    await run();
+    await query("DELETE FROM one_off_messages WHERE gmail_message_id = '0b08'");
+    await query("UPDATE old_letters_mail SET source = 'policy', outcome = 'unmatched' WHERE gmail_message_id = '0b08'");
+    const { finished } = await run();
+    expect(finished).toBe(true);
+    expect((await outcomeOf("0b08")).outcome).toBe("one_off");
+    expect(await query("SELECT 1 FROM one_off_messages WHERE gmail_message_id = '0b08'")).toHaveLength(1);
+  });
+
   it("passes over mail that's none of its business, or a copy of what it's read, and lists neither ours nor what it has", async () => {
     await seed();
     const { unmatched } = await run();

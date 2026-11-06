@@ -20,8 +20,16 @@ import { messageContent, wholeTextOf } from "./letter-threads";
 import { decodeWords, fromAddress, messageIds, parseMime } from "./mime";
 import { notifyStaff, staffLink } from "./notifications";
 import { deleteLetterReply, saveLetterReply } from "./outside-services/blobs";
-import { gmailMessageHeaders, gmailRawMessage, unlessGone, type GmailMessageHeaders } from "./outside-services/gmail";
+import {
+  GmailError,
+  gmailMessageHeaders,
+  gmailRawMessage,
+  gmailThreadMessageIds,
+  unlessGone,
+  type GmailMessageHeaders,
+} from "./outside-services/gmail";
 import { connectedAccounts, politicianBook } from "./politician-book";
+import { problem } from "./problems";
 
 // One-off emails: threads with a politician that aren't a letter of a campaign
 // or mailing, read from a mailbox and kept whole, in Netlify Blobs with a row
@@ -82,7 +90,8 @@ function isGroupMail(headers: Map<string, string>): boolean {
 /**
  * Keeps a message of a thread with a politician, once, in the thread it
  * answers, or that its Gmail thread is in, or a new one. Threads a message
- * joins together become one. Gives what it kept, or nothing if it's kept.
+ * joins together become one, and a thread has its earliest message's subject.
+ * Gives what it kept, or nothing if it's kept.
  */
 export async function keepOneOff(
   account: string,
@@ -143,7 +152,9 @@ export async function keepOneOff(
     [threadId, [...new Set([...people, ...extraPeople])]],
   );
   await query(
-    `UPDATE one_off_threads SET latest_at = greatest(latest_at, $2), someone_else = someone_else OR $3 WHERE id = $1`,
+    `UPDATE one_off_threads SET latest_at = greatest(latest_at, $2), someone_else = someone_else OR $3,
+       subject = (SELECT m.subject FROM one_off_messages m WHERE m.thread_id = $1 ORDER BY m.at, m.id LIMIT 1)
+     WHERE id = $1`,
     [threadId, at, isSomeoneElse(book, from.address, connected)],
   );
   return threadId;
@@ -174,12 +185,63 @@ async function mergeThreads(into: number, other: number): Promise<void> {
 }
 
 /**
+ * Keeps a message of a thread being kept, by its ID. One deleted since is
+ * passed over, and one Gmail won't give, in a form it can't serve, reported, as
+ * it would stop the mailbox's reading at the same place every time.
+ */
+async function keepThreadMate(
+  account: string,
+  token: string,
+  id: string,
+  book: PoliticianBook,
+  connected: readonly string[],
+): Promise<void> {
+  try {
+    const mate = await gmailMessageHeaders(token, id, ONE_OFF_HEADERS);
+    await keepOneOff(account, mate, await gmailRawMessage(token, id), book, connected);
+  } catch (error) {
+    if (error instanceof GmailError && error.status === 400) problem(staffCopy.problems.job.unreadable, id);
+    else unlessGone(error);
+  }
+}
+
+/**
+ * Keeps a message and the rest of its Gmail thread. What came before it was
+ * passed over when it was read, as it didn't count alone. This runs for every
+ * message kept, so it also picks up whatever a read that stopped partway left.
+ */
+async function keepWholeThread(
+  account: string,
+  token: string,
+  message: GmailMessageHeaders,
+  raw: Buffer,
+  book: PoliticianBook,
+  connected: readonly string[],
+  people: number[],
+): Promise<void> {
+  const ids = [...new Set([...(await gmailThreadMessageIds(token, message.threadId)), message.id])];
+  const kept = await query<{ id: string }>(
+    "SELECT gmail_message_id AS id FROM one_off_messages WHERE account = $1 AND gmail_message_id = ANY($2::text[])",
+    [account, ids],
+  );
+  const done = new Set(kept.map((row) => row.id));
+  for (const id of ids.filter((id) => !done.has(id))) {
+    if (id === message.id) await keepOneOff(account, message, raw, book, connected, people);
+    else await keepThreadMate(account, token, id, book, connected);
+  }
+  await query(
+    "DELETE FROM unmatched_mail WHERE account = $1 AND gmail_message_id = ANY($2::text[]) AND reported_at IS NULL",
+    [account, ids],
+  );
+}
+
+/**
  * What the site's regular read does with a message in a keeping account that
- * isn't a letter's: keeps it if its headers count, or if it's shared mail
- * (policy@, or the group's), the addresses it quotes do; or it joins a thread
- * already kept. Other shared mail is noted, to report by its Gmail ID once.
- * The rest of a mailbox like Joseph's is left unread. `shared` is whether
- * the whole account is shared.
+ * isn't a letter's: keeps it and the rest of its thread if its headers count,
+ * or if it's shared mail (policy@, or the group's), the addresses it quotes
+ * do; or it joins a thread already kept. Other shared mail is noted, to report
+ * by its Gmail ID once. The rest of a mailbox like Joseph's is left unread.
+ * `shared` is whether the whole account is shared.
  */
 export async function keepIfPoliticianThread(
   account: string,
@@ -196,7 +258,7 @@ export async function keepIfPoliticianThread(
   );
   const addresses = addressesOn(message.headers);
   const keep = async (raw: Buffer, people: number[] = []) => {
-    await keepOneOff(account, message, raw, book, connected, people);
+    await keepWholeThread(account, token, message, raw, book, connected, people);
     return "kept" as const;
   };
   if (inThread || politiciansIn(book, addresses).counts) return keep(await gmailRawMessage(token, id));

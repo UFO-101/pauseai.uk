@@ -263,6 +263,96 @@ describeWithDatabase("one-off emails", () => {
       expect(await josephs("m3")).toBe("kept");
     });
 
+    describe("the rest of the thread", () => {
+      const inThread = (...ids: string[]) =>
+        server.use(http.get(`${GMAIL}/threads/t`, () => HttpResponse.json({ messages: ids.map((id) => ({ id })) })));
+      const keptIds = async () =>
+        (await query<{ id: string }>("SELECT gmail_message_id AS id FROM one_off_messages ORDER BY id")).map(
+          (m) => m.id,
+        );
+
+      it("keeps what came before the message that counts, and takes its subject from the first", async () => {
+        await addTestPolitician();
+        mailbox(
+          { id: "m1", from: "friend@example.com", thread: "t", subject: "A question" },
+          { id: "m2", from: POLLY, thread: "t", subject: "Re: A question" },
+        );
+        inThread("m1", "m2");
+        expect(await josephs("m1")).toBe("ignored");
+        expect(await keptIds()).toEqual([]);
+        expect(await josephs("m2")).toBe("kept");
+        expect(await keptIds()).toEqual(["m1", "m2"]);
+        expect(await query("SELECT subject FROM one_off_threads")).toEqual([{ subject: "A question" }]);
+      });
+
+      it("takes what came before off shared mail's report of what matched nothing, unless it's been reported", async () => {
+        await addTestPolitician();
+        mailbox(
+          { id: "m1", from: "sue@example.com", thread: "t" },
+          { id: "m2", from: "sue@example.com", thread: "t" },
+          { id: "m3", from: POLLY, thread: "t" },
+        );
+        inThread("m1", "m2", "m3");
+        await shared("m1");
+        await shared("m2");
+        await query("UPDATE unmatched_mail SET reported_at = now() WHERE gmail_message_id = 'm1'");
+        await shared("m3");
+        expect(await keptIds()).toEqual(["m1", "m2", "m3"]);
+        expect(await query("SELECT gmail_message_id AS id FROM unmatched_mail")).toEqual([{ id: "m1" }]);
+      });
+
+      it("reads only what isn't kept yet, picking up what a read that stopped partway left", async () => {
+        await addTestPolitician();
+        mailbox(
+          { id: "m1", from: "friend@example.com", thread: "t" },
+          { id: "m2", from: "friend@example.com", thread: "t" },
+          { id: "m3", from: POLLY, thread: "t" },
+          { id: "m4", from: "friend@example.com", thread: "t" },
+        );
+        inThread("m1", "m3");
+        await josephs("m3");
+        expect(await keptIds()).toEqual(["m1", "m3"]);
+        inThread("m1", "m2", "m3", "m4");
+        expect(await josephs("m4")).toBe("kept");
+        expect(await keptIds()).toEqual(["m1", "m2", "m3", "m4"]);
+        // Its own message read again changes nothing.
+        expect(await josephs("m4")).toBe("kept");
+        expect(await keptIds()).toEqual(["m1", "m2", "m3", "m4"]);
+      });
+
+      it("keeps a message of a thread that another mailbox's message joined it to", async () => {
+        await addTestPolitician();
+        mailbox(
+          { id: "m1", from: POLLY },
+          { id: "m2", from: "vera@example.com", thread: "t" },
+          { id: "m3", from: "vera@example.com", thread: "t", inReplyTo: "m1@example.org" },
+        );
+        inThread("m2", "m3");
+        await josephs("m1");
+        expect(await shared("m3")).toBe("kept");
+        expect(await keptIds()).toEqual(["m1", "m2", "m3"]);
+        expect(await threads()).toHaveLength(1);
+      });
+
+      it("passes over one that's gone, reports one Gmail won't give, and stops at any other failure", async () => {
+        const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+        await addTestPolitician();
+        mailbox({ id: "m3", from: POLLY, thread: "t" });
+        const failing = (id: string, status: number) =>
+          server.use(http.get(`${GMAIL}/messages/${id}`, () => new HttpResponse(null, { status })));
+        failing("m1", 404);
+        failing("m2", 400);
+        inThread("m1", "m2", "m3");
+        expect(await josephs("m3")).toBe("kept");
+        expect(await keptIds()).toEqual(["m3"]);
+        expect(logged).toHaveBeenCalledTimes(1);
+        expect(logged).toHaveBeenCalledWith(staffCopy.problems.job.unreadable, "m2");
+        failing("m1", 500);
+        await expect(josephs("m3")).rejects.toThrow();
+        logged.mockRestore();
+      });
+    });
+
     it("in Joseph's other mail, leaves it unread", async () => {
       mailbox({ id: "m1", from: "friend@example.com", text: `From: x@parliament.uk\nSent: 1 Jan 2026\nHello` });
       expect(await josephs("m1")).toBe("ignored");

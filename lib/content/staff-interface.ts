@@ -1939,7 +1939,7 @@ export const staffCopy = {
       nameUnknown: (account: string) => `Couldn't fetch name of ${account} from Gmail`,
       // The Gmail read: mail in the letters inbox that couldn't be matched to anything, so a person must look. How many follows.
       notUnderstood: "Messages in the letters inbox that couldn't be matched, so need a person to look at:",
-      // The old letters import: messages Gmail wouldn't give, by ID, which follow. They aren't tried again.
+      // The old letters import, where they aren't tried again, and the Gmail read, for a one-off thread's other messages, where they're tried with each new one: messages Gmail wouldn't give, by ID, which follow.
       unreadable: "Messages that Gmail has but refused to give us:",
       // The old letters import: messages that matched no campaign, mailing or politician. How many follows.
       matchedNothing: "Messages that didn't match to a campaign, mailing or politician:",

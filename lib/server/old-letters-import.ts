@@ -117,6 +117,8 @@ type Reader = {
   book: PoliticianBook;
   connected: string[];
   tokens: Map<string, string>;
+  /** The result's list of mail that matched nothing, by mailbox and Gmail ID, as a message can come off it. */
+  unmatched: Map<string, OldLettersImportResult["unmatched"][number]>;
   result: OldLettersImportResult;
 };
 
@@ -581,7 +583,7 @@ async function handleReceived(reader: Reader, account: string, id: string, sourc
   const quoted = politiciansIn(reader.book, quotedAddresses(wholeTextOf(parseMime(raw.toString("latin1")))));
   if (quoted.counts) return { ...(await asOneOff(reader, account, message, raw, quoted.people)), rfc };
   if (!isPauseaiAddress(from, reader.connected)) {
-    reader.result.unmatched.push({
+    reader.unmatched.set(`${account}/${id}`, {
       from: headerText(message.headers, "from"),
       subject: headerText(message.headers, "subject"),
     });
@@ -683,6 +685,23 @@ async function readGarbledAgain(reader: Reader, done: { id: number }): Promise<v
   }
 }
 
+/**
+ * Puts mail that matched nothing back on the list, to be kept, if its Gmail
+ * thread has been kept since: every message of a mailbox listed whole is on the
+ * list already, so a thread's listing can't add it. This includes what earlier
+ * runs read. Says whether there's any.
+ */
+async function requeueKeptThreads(reader: Reader): Promise<boolean> {
+  const back = await query<{ account: string; id: string }>(
+    `UPDATE old_letters_mail o SET source = 'thread', outcome = NULL
+     WHERE o.outcome = 'unmatched' AND EXISTS (
+       SELECT 1 FROM one_off_messages m WHERE m.account = o.account AND m.gmail_thread_id = o.gmail_thread_id)
+     RETURNING o.account, o.gmail_message_id AS id`,
+  );
+  for (const { account, id } of back) reader.unmatched.delete(`${account}/${id}`);
+  return back.length > 0;
+}
+
 /** Works through what's listed, oldest first in each mailbox, sent mail before replies, until the run's time is up. */
 async function readQueue(reader: Reader): Promise<void> {
   for (;;) {
@@ -693,7 +712,10 @@ async function readQueue(reader: Reader): Promise<void> {
          length(gmail_message_id), gmail_message_id
        LIMIT 20`,
     );
-    if (!batch.length) return;
+    if (!batch.length) {
+      if (await requeueKeptThreads(reader)) continue;
+      return;
+    }
     for (const { account, id, source } of batch) {
       const handled = await handleOne(reader, account, id, source);
       await query(
@@ -847,6 +869,7 @@ async function readSome(startedBy: string, paceMs: number, readMs: number): Prom
       [JOSEPH, await gmailAccess(JOSEPH)],
       [POLICY, await gmailAccess(POLICY)],
     ]),
+    unmatched: new Map(),
     result,
   };
   try {
@@ -869,6 +892,7 @@ async function readSome(startedBy: string, paceMs: number, readMs: number): Prom
       result.stoppedWhy = error.message;
     } else if (!(error instanceof TimeUp)) throw error;
   }
+  result.unmatched = [...reader.unmatched.values()];
   if (result.unreadable.length) problem(staffCopy.problems.job.unreadable, result.unreadable.join(", "));
   if (result.unmatched.length) problem(staffCopy.problems.job.matchedNothing, result.unmatched.length);
   result.searchesDone = searchesDone.n;
