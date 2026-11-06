@@ -236,7 +236,9 @@ test("An old letter's page", async ({ page, request, flowDatabase }) => {
   await expect(page.getByText("Would you speak?")).toBeVisible();
   await frame(page, "A letter that keeps its own text");
 
-  story("We can't read August's letters, so one is rebuilt from a reply quoting a similar letter, and says so.");
+  story(
+    "We can't read August's letters, so one is built from the send before and the person's earlier letter, and says so.",
+  );
   const [polly] = runSql(flowDatabase, "SELECT id FROM notable_people WHERE airtable_id = 'recPlaceholder'");
   const [mailing] = runSql(flowDatabase, "SELECT id FROM mailings WHERE old_letters_key = 'deepmind-august'");
   const [letter] = runSql(

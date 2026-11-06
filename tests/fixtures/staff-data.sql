@@ -963,13 +963,14 @@ WHERE id = (SELECT min(id) FROM letters_from_supporters WHERE postmark_mailbox I
 
 -- The mailings the import of old letters makes, each kind of text: one of a
 -- template, with one letter that fits and one that doesn't; one each its own;
--- and August's, rebuilt from quotes, approximate, with no sent email.
+-- and August's, from the send before and earlier letters, approximate, with no sent email.
 INSERT INTO mailings (title, subject, ask, airtable_sent_between, audience, channel, state, sent_from, old_letters_key, imported_text, imported_text_approximate) VALUES
   ('DeepMind: join 25 of your colleagues', 'Request to co-sign letter on Google''s breach of AI safety pledges', 'deepmind-letter', '[2025-07-08,2025-07-23)', 'politicians', 'email', 'sent', 'joseph@pauseai.info', 'deepmind-25',
    '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"field","attrs":{"field":"greeting"}}]},{"type":"paragraph","content":[{"type":"text","text":"Google broke its promise. Please join 25 of your colleagues."}]},{"type":"paragraph","content":[{"type":"field","attrs":{"field":"own"}}]},{"type":"paragraph","content":[{"type":"text","text":"Thank you for your consideration,"}]}]}', false),
   ('DeepMind: August, from the personal Gmail', 'Request to co-sign letter on Google''s breach of AI safety pledges', 'deepmind-letter', '[2025-08-06,2025-08-23)', 'politicians', 'email', 'sent', NULL, 'deepmind-august',
    '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"field","attrs":{"field":"greeting"}}]},{"type":"paragraph","content":[{"type":"text","text":"Please join "},{"type":"field","attrs":{"field":"colleagues"}},{"type":"text","text":" of your colleagues."}]}]}', true),
   ('Stuart Russell panel: invitation to speak', 'Invitation to speak on panel with Professor Stuart Russell', NULL, '[2026-06-15,2026-08-04)', 'politicians', 'email', 'sent', 'joseph@pauseai.info', 'russell-speak', NULL, false);
+UPDATE mailings SET from_name = 'Joseph' WHERE old_letters_key = 'deepmind-august';
 CREATE TEMP TABLE seed_old (politician text, key text, sent interval, merge_values jsonb, own_text text, reply text) ON COMMIT DROP;
 INSERT INTO seed_old VALUES
   ('recPlaceholder', 'deepmind-25', '480 days', '{"values":{"greeting":"Dear Ms Placeholder,","own":"You spoke so well on the Bill."},"meets":[]}', NULL, NULL),

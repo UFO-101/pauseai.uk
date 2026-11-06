@@ -214,7 +214,10 @@ function ImportedText({ mailing }: { mailing: Mailing }) {
   const doc = checkMailingDoc(mailing.importedText);
   if (!doc) return <p>{staffCopy.mailings.noText}</p>;
   return (
-    <MailEmail from={mailing.sentFrom ?? staffCopy.mailings.notRecorded} subject={mailing.importedSubject}>
+    <MailEmail
+      from={mailing.sentFrom ?? mailing.fromName ?? staffCopy.mailings.notRecorded}
+      subject={mailing.importedSubject}
+    >
       {mailing.importedTextApproximate && <Strip tone="amber">{staffCopy.letterThread.approximate}</Strip>}
       <MailingLetter doc={doc} fields={staffCopy.mailings.importedFields} conditions={{}} />
     </MailEmail>
@@ -275,7 +278,9 @@ export default function MailingView({
         <BandFact label={copy.from} detail={written?.fromName}>
           {written
             ? written.sentFrom
-            : (mailing.sentFrom ?? (mailing.oldLetters ? staffCopy.mailings.notRecorded : staffCopy.mailings.imported))}
+            : (mailing.sentFrom ??
+              mailing.fromName ??
+              (mailing.oldLetters ? staffCopy.mailings.notRecorded : staffCopy.mailings.imported))}
         </BandFact>
         <BandFact label={copy.to} detail={who && staffCopy.campaigns.politicians(mailing.to)}>
           {who ?? staffCopy.campaigns.politicians(mailing.to)}

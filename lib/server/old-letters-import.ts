@@ -1,5 +1,6 @@
 import "server-only";
 import { docFromMarkup, toText } from "@/lib/letter-format";
+import type { MailingDoc } from "@/lib/mailing-doc";
 import { type ImportJob, NIGHTLY, type OldLettersImportResult, type OldLettersProgress } from "@/lib/import-runs";
 import { ownWords } from "@/lib/letter-changes";
 import {
@@ -252,7 +253,7 @@ const count = (counts: Record<string, number>, key: string) => {
 };
 
 /** What's said of a message once handled. */
-type Handled = { outcome: string; letterId?: number; mailingKey?: string; rfc?: string | null; quoted?: string };
+type Handled = { outcome: string; letterId?: number; mailingKey?: string; rfc?: string | null };
 
 /** A message's text from the API's answer: its plain text if it has any, or its HTML's. */
 function textFrom(message: { plain: string; html: string }): string {
@@ -502,9 +503,6 @@ function isAutomatic(message: GmailMessageHeaders): boolean {
   return isMachineReply((name) => message.headers.get(name), subject) || isAcknowledgement(subject);
 }
 
-/** The subject the August letters went under: only replies to one quote it. */
-const AUGUST_SUBJECT = /co-sign letter on google/i;
-
 /** A politician's message read from any mailbox: a reply to a letter, an automatic one, or a one-off. */
 async function handlePoliticianMessage(
   reader: Reader,
@@ -535,16 +533,7 @@ async function handlePoliticianMessage(
   if (!letter) return { ...(await asOneOff(reader, account, message, raw, people)), rfc };
   await keepReply(account, token, letter, message, { raw, from: senderOf(message.headers), fromUs: false });
   reader.result.replies++;
-  const quoted =
-    AUGUST_SUBJECT.test(subject) && /join \d+ of your/.test(text.replace(/\s+/g, " ")) ? quotedLetter(text) : undefined;
-  return { outcome: "reply", letterId: letter, rfc, quoted };
-}
-
-/** What a reply quotes, once its quote's headers are past: the letter, for rebuilding a text we can't read. */
-function quotedLetter(text: string): string {
-  const clean = text.replace(/\r/g, "").replace(/^[> ]+/gm, "");
-  const start = clean.search(/^(dear|hi|hello)\b.*$/im);
-  return start < 0 ? clean : clean.slice(start);
+  return { outcome: "reply", letterId: letter, rfc };
 }
 
 /** Whether a message is a copy of a mail already handled, by its Message-ID. */
@@ -715,7 +704,7 @@ async function putRightWhatsKept(reader: Reader): Promise<void> {
     await transaction(async (db) => {
       await query("DELETE FROM email_sends WHERE letter_id = $1 AND imported", [id], db);
       await query(
-        `UPDATE old_letters_mail SET outcome = NULL, letter_id = NULL, mailing_key = NULL, rfc_message_id = NULL, quoted = NULL WHERE letter_id = $1`,
+        `UPDATE old_letters_mail SET outcome = NULL, letter_id = NULL, mailing_key = NULL, rfc_message_id = NULL WHERE letter_id = $1`,
         [id],
         db,
       );
@@ -829,17 +818,9 @@ async function readQueue(reader: Reader): Promise<void> {
     for (const { account, id, source } of batch) {
       const handled = await handleOne(reader, account, id, source);
       await query(
-        `UPDATE old_letters_mail SET outcome = $3, letter_id = $4, mailing_key = $5, rfc_message_id = $6, quoted = $7
+        `UPDATE old_letters_mail SET outcome = $3, letter_id = $4, mailing_key = $5, rfc_message_id = $6
          WHERE account = $1 AND gmail_message_id = $2`,
-        [
-          account,
-          id,
-          handled.outcome,
-          handled.letterId ?? null,
-          handled.mailingKey ?? null,
-          handled.rfc ?? null,
-          handled.quoted ?? null,
-        ],
+        [account, id, handled.outcome, handled.letterId ?? null, handled.mailingKey ?? null, handled.rfc ?? null],
       );
       reader.result.read++;
     }
@@ -922,17 +903,40 @@ async function buildTemplates(reader: Reader): Promise<void> {
       ]);
     }
   }
-  const quotes = await query<{ quoted: string }>("SELECT quoted FROM old_letters_mail WHERE quoted IS NOT NULL");
-  const august = augustTemplate(quotes.map((row) => row.quoted));
-  if (august) {
-    reader.result.templates++;
-    await query(
-      `UPDATE mailings SET imported_text = $1, imported_text_approximate = true, subject = (SELECT subject FROM mailings WHERE old_letters_key = 'deepmind-40')
-       WHERE old_letters_key = 'deepmind-august'`,
-      [JSON.stringify(august)],
-    );
-    await query("UPDATE old_letters_mail SET quoted = NULL WHERE quoted IS NOT NULL");
-  }
+  await buildAugust(reader);
+}
+
+/**
+ * The August letters, from Joseph's personal Gmail, whose own text we can't read:
+ * their template is that of the send before, and each letter's own paragraph that
+ * of the person's latest letter before it, as it rarely changed between sends. So
+ * it's marked approximate. It says who they're from by name, not by that address.
+ */
+async function buildAugust(reader: Reader): Promise<void> {
+  const [before] = await query<{ doc: MailingDoc | null }>(
+    "SELECT imported_text AS doc FROM mailings WHERE old_letters_key = 'deepmind-40'",
+  );
+  if (!before.doc) return;
+  const made = await query(
+    `UPDATE mailings SET imported_text = $1, imported_text_approximate = true, from_name = 'Joseph',
+       subject = (SELECT subject FROM mailings WHERE old_letters_key = 'deepmind-40')
+     WHERE old_letters_key = 'deepmind-august' AND imported_text IS NULL RETURNING id`,
+    [JSON.stringify(augustTemplate(before.doc))],
+  );
+  reader.result.templates += made.length;
+  await query(
+    `UPDATE letters_from_pauseai p SET merge_values = jsonb_set(p.merge_values, '{values,own}', to_jsonb(earlier.own))
+     FROM letters l CROSS JOIN LATERAL (
+       SELECT e.merge_values #>> '{values,own}' AS own
+       FROM letters_from_pauseai e JOIN letters el ON el.id = e.id JOIN mailings m ON m.id = e.mailing_id
+       WHERE el.notable_person_id = l.notable_person_id AND el.sent_at < l.sent_at
+         AND m.old_letters_key IN ('deepmind-40', 'deepmind-25', 'deepmind-30-june')
+         AND coalesce(e.merge_values #>> '{values,own}', '') <> ''
+       ORDER BY el.sent_at DESC LIMIT 1
+     ) earlier
+     WHERE p.id = l.id AND p.mailing_id = (SELECT id FROM mailings WHERE old_letters_key = 'deepmind-august')
+       AND coalesce(p.merge_values #>> '{values,own}', '') = ''`,
+  );
 }
 
 /** The last step: each letter with a person's reply is marked with when the first came. */

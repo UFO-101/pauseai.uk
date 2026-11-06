@@ -133,7 +133,7 @@ const OLD_MAIL: readonly OldMail[] = [
     "I'm away.",
     { "In-Reply-To": "<0a06@mail.gmail.com>", "Auto-Submitted": "auto-replied" },
   ),
-  // A reply quoting an August letter, whose own text we can't read: the only way to know what it said.
+  // A reply quoting an August letter, whose own text we can't read.
   got(
     "0a19",
     "t-august",

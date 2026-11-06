@@ -188,7 +188,7 @@ letters.
 - **Who a mailing went from:** the import sets `mailings.sent_from` from the
   sent emails: joseph@pauseai.info for DeepMind, Documentary and Westminster
   Hall; joseph@pauseai.uk for CSRB and Edinburgh; policy@pauseai.uk for Ben
-  Lake's debate. The August DeepMind mailing has none.
+  Lake's debate. The August DeepMind mailing has no address, only the name Joseph.
 - **A mailing's template:** its subject in `mailings.subject`, and a new
   `mailings.imported_text`, in `body`'s format. `body` itself can't be
   used: `body IS NOT NULL` is how the code recognises a mailing written on
@@ -228,12 +228,12 @@ ones, from the audit log.
 
 ### Letters whose text we can't read
 
-The 910 August 2025 DeepMind letters seem to have gone from Joseph's personal
-Gmail: 10 of the 20 replies that quote one name it as the sender. So they
-keep no text of their own. Their template is rebuilt from those quotes, of
-which 9 are "join 40" and 2 "join 50". A letter's page shows it labelled as
-approximate, and never as what that person received, saying it was probably one
-of them if it can't be told which. Replies join by rules 2 and 3 above.
+The 910 August 2025 DeepMind letters went from Joseph's personal Gmail. So they
+keep no text of their own. Their template is the "join 40" mailing's, and each
+one's own paragraph that of the person's latest letter before it. The one such
+email found fits that word for word, but for the number, and of 805 politicians
+sent both "join 25" and "join 40", 800 had the same paragraph in each. A letter's
+page shows it labelled as approximate. Replies join by rules 2 and 3 above.
 
 ### The import job
 

@@ -45,7 +45,9 @@ function Thread({ link, children }: { link?: ReactNode; children: ReactNode }) {
  */
 export default function LetterThread({ thread, link }: { thread: Thread; link?: ReactNode }) {
   const politician = named(thread.to.name, thread.to.email);
-  const ours = thread.sentFrom ? named(thread.fromName, thread.sentFrom) : staffCopy.letters.fromPauseai;
+  const ours = thread.sentFrom
+    ? named(thread.fromName, thread.sentFrom)
+    : (thread.fromName ?? staffCopy.letters.fromPauseai);
   const kept = thread.letter !== null;
   return (
     <Thread link={kept && link}>

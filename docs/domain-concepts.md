@@ -353,10 +353,12 @@ Gmail refuses; a mailbox's limit applies to all its reading, the regular read's 
   kept whole, an automatic one is an event on the letter. Anything else is a
   one-off email.
 - **Letters whose text we can't read.** The August 2025 DeepMind letters went from
-  Joseph's personal Gmail. Their template is rebuilt from replies quoting one,
-  marked `imported_text_approximate`, and a letter's page says it's not what they
-  received. Those quotes say "join 40" until 7 August and "join 50" from the 8th,
-  so its number goes by its date.
+  Joseph's personal Gmail, which the site can't read. Their template is the "join
+  40" mailing's, and each letter's own paragraph that of the person's latest letter
+  before it, marked `imported_text_approximate`, and a letter's page says it's not
+  exactly what they received. The one such email found matches that, and replies
+  quoting others say "join 40" until 7 August and "join 50" from the 8th, so its
+  number goes by its date. The mailing says it's from Joseph, with no address.
 
 ## One-off emails
 
