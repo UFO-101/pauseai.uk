@@ -16,6 +16,8 @@ type Props = {
   problems?: ReactNode;
   /** Buttons that stay outside the fold, such as apply and discard. */
   actions?: ReactNode;
+  /** Without the box: in a row of a table, which is its edge. */
+  bare?: boolean;
   /** The detail: lists or a table. None, and there's nothing to fold. */
   children?: ReactNode;
   "aria-label"?: string;
@@ -23,12 +25,13 @@ type Props = {
 
 /**
  * The box every import's and check's result is shown in: a summary line,
- * and under it, folded with the browser's arrow, the detail.
+ * and under it, folded with the browser's arrow, the detail. Bare, it's
+ * the same without the box, for a row of a table.
  */
-export default function ResultBox({ summary, lines = 0, open, problems, actions, children, ...rest }: Props) {
+export default function ResultBox({ summary, lines = 0, open, problems, actions, bare, children, ...rest }: Props) {
   const line = <span>{summary}</span>;
   return (
-    <section className={styles.sync} aria-label={rest["aria-label"]}>
+    <section className={bare ? styles.bare : styles.sync} aria-label={rest["aria-label"]}>
       {children ? (
         <details open={open ?? lines <= OPEN_UP_TO}>
           <summary>{line}</summary>

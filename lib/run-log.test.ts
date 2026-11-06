@@ -8,7 +8,7 @@ import {
 } from "@/app/(staff)/staff/_components/RunList.examples";
 import { exampleOldLettersResult } from "@/app/(staff)/staff/_components/CampaignPages.examples";
 import type { AnyImportRun } from "./import-runs";
-import { runLog, runShape } from "./run-log";
+import { runLog, runShape, tabled } from "./run-log";
 
 const AT = "2026-11-03T12:00:00Z";
 const routine = { ...exampleOldLettersResult, finished: false, unmatched: [], unreadable: [], formTexts: 0 };
@@ -16,9 +16,17 @@ const letters = (id: number, extra = {}, at = AT) =>
   exampleRun("import-old-letters", { ...routine, ...extra }, { id, at });
 const quietLuma = (id: number, at = AT) =>
   exampleRun("import-luma", exampleLumaResult, { id, at, status: "unchanged" });
-const shapes = (entries: ReturnType<typeof runLog>) => entries.map((e) => [e.shape, e.runs.length]);
+const flat = (days: ReturnType<typeof runLog>) => days.flatMap((d) => d.entries);
+const shapes = (days: ReturnType<typeof runLog>) => flat(days).map((e) => [e.shape, e.runs.length]);
 
 describe("how a run shows", () => {
+  it("is in a table of the day's runs on a job that runs every 5 minutes or hourly, and whole otherwise", () => {
+    expect(tabled("import-luma")).toBe(true);
+    expect(tabled("import-members")).toBe(true);
+    expect(tabled("check-mps")).toBe(false);
+    expect(tabled("sync-emails")).toBe(false);
+  });
+
   it("is whole for a job that runs rarely, whatever it did", () => {
     const check = exampleRun("check-mps", { problems: [] }, { status: "unchanged" });
     expect(runShape(check)).toBe("run");
@@ -73,19 +81,27 @@ describe("how a run shows", () => {
 });
 
 describe("a job's page", () => {
-  it("has the newest whole and tinted, then rows and lines gathered, each new day headed", () => {
-    const entries = runLog(
+  it("has the newest whole, tinted and current, then rows and lines gathered, under each day", () => {
+    const days = runLog(
       [letters(5), letters(4), letters(3), quietLuma(2), quietLuma(1, "2026-11-02T12:00:00Z")],
       false,
     );
-    expect(shapes(entries)).toEqual([
+    expect(shapes(days)).toEqual([
       ["run", 1],
       ["rows", 2],
       ["quiet", 1],
       ["quiet", 1],
     ]);
-    expect(entries.map((e) => e.day)).toEqual(["3 Nov 2026", undefined, undefined, "2 Nov 2026"]);
-    expect(entries[0]).toMatchObject({ tone: "amber", open: true });
+    expect(days.map((d) => [d.day, d.entries.length])).toEqual([
+      ["3 Nov 2026", 3],
+      ["2 Nov 2026", 1],
+    ]);
+    expect(days[0].entries[0]).toMatchObject({ tone: "amber", open: true, current: true });
+    expect(
+      flat(days)
+        .slice(1)
+        .every((e) => e.current === undefined),
+    ).toBe(true);
   });
 
   it("keeps a frequent job's problems tinted further down, but not a rare job's or a good one", () => {
@@ -95,20 +111,28 @@ describe("a job's page", () => {
       exampleFailedRun("read-gmail", "boom", { id: 2 }),
       letters(1, { finished: true }),
     ];
-    expect(runLog(runs, false).map((e) => e.tone)).toEqual(["amber", "amber", "red", undefined]);
+    expect(flat(runLog(runs, false)).map((e) => e.tone)).toEqual(["amber", "amber", "red", undefined]);
     const rare = [exampleRun("check-mps", { problems: [] }, {}), exampleFailedRun("check-mps", "boom", { id: 2 })];
-    expect(runLog(rare, false).map((e) => e.tone)).toEqual(["green", undefined]);
+    expect(flat(runLog(rare, false)).map((e) => e.tone)).toEqual(["green", undefined]);
   });
 
   it("treats the newest as an older one while a press runs", () => {
-    const [first, second] = runLog([letters(2, { stoppedBy: "gmail" }), letters(1)], true);
+    const [first, second] = flat(runLog([letters(2, { stoppedBy: "gmail" }), letters(1)], true));
     expect(first).toMatchObject({ shape: "run", tone: undefined, open: undefined });
+    expect(first.current).toBeUndefined();
     expect(second.shape).toBe("rows");
   });
 
   it("folds whole runs past the newest few, and rows past the most recent", () => {
     const whole = [1, 2, 3, 4, 5, 6].map((id) => exampleRun("check-mps", { problems: [] }, { id }));
-    expect(runLog(whole, false).map((e) => e.open)).toEqual([true, undefined, undefined, undefined, undefined, false]);
+    expect(flat(runLog(whole, false)).map((e) => e.open)).toEqual([
+      true,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      false,
+    ]);
     const rows = Array.from({ length: 20 }, (_, id) => letters(id));
     const entries = runLog(rows, false);
     expect(shapes(entries)).toEqual([
@@ -116,7 +140,7 @@ describe("a job's page", () => {
       ["rows", 12],
       ["rows", 7],
     ]);
-    expect(entries.map((e) => e.folded)).toEqual([undefined, false, true]);
+    expect(flat(entries).map((e) => e.folded)).toEqual([undefined, false, true]);
   });
 
   it("doesn't gather rows across a run shown whole, or of different jobs", () => {

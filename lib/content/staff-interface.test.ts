@@ -145,10 +145,12 @@ describe("the lists' counts", () => {
 
 it("says one and many of each of the new pages' counts", () => {
   const { campaigns, oneOff, oldLetters, gmailReading, asks, runs } = staffCopy;
-  expect(runs.quiet("09:00", "09:00", 1)).toContain("09:00: 1 run,");
-  expect(runs.quiet("09:00", "09:05", 2)).toContain("09:00–09:05: 2 runs,");
-  expect(runs.stretch("09:00", "09:00", 1)).toContain("09:00: 1 run,");
-  expect(runs.stretch("09:00", "09:05", 2)).toContain("09:00–09:05: 2 runs,");
+  expect(runs.range("09:00", "09:00")).toBe("09:00");
+  expect(runs.range("09:00", "09:05")).toBe("09:00–09:05");
+  expect(runs.quiet(1)).toContain("1 run,");
+  expect(runs.quiet(2)).toContain("2 runs,");
+  expect(runs.stretch(1)).toContain("1 run,");
+  expect(runs.stretch(2)).toContain("2 runs,");
   expect(oldLetters.progress.refusals(1)).toContain("1 run.");
   expect(oldLetters.progress.refusals(2)).toContain("2 runs.");
   for (const words of [

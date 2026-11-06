@@ -1,0 +1,39 @@
+/* A day's runs as one table: the time column fixed, so every table of the
+   day lines up, and a table of counts kept wide enough for its headings,
+   scrolling on a phone (ui/Table). */
+.wide {
+  --table-min-width: 44rem;
+}
+
+.time {
+  width: 8rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.count {
+  font-variant-numeric: tabular-nums;
+}
+
+/* A stretch that found nothing: a muted row, its time range in the time column. */
+.quiet td {
+  color: var(--muted);
+}
+
+/* A run shown whole with counts: no rule between them and its words under them. */
+.lead td {
+  border-bottom: 0;
+}
+
+/* The newest run's rows, by how it ended, and a problem's further down. */
+.green {
+  --row-bg: var(--status-green-bg);
+}
+
+.amber {
+  --row-bg: var(--status-amber-bg);
+}
+
+.red {
+  --row-bg: var(--status-red-bg);
+}

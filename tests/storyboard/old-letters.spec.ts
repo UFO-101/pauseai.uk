@@ -176,7 +176,7 @@ test("The import running by itself", async ({ page, flowDatabase }) => {
   await expect(page.getByText(`${words.mailingTitles["deepmind-25"]}: 200`)).toBeVisible();
   await frame(page, "What it has joined, by mailing");
 
-  story("Older runs are folded into a line, which opens.");
+  story("Older runs are folded into a line, which opens into more of the day's table.");
   await page
     .locator("summary", { hasText: /no problems/ })
     .first()

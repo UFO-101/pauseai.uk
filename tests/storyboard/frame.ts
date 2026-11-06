@@ -65,8 +65,13 @@ export async function frame(
       // Loaded isn't decoded: an image painted before it is can be drawn a
       // shade differently, a few pixels off between runs.
       await Promise.all([...document.images].map((img) => img.decode().catch(() => {})));
+      // At rest means the same place for three ticks in a row (settle.ts,
+      // scrollSettled): an anchor's smooth scroll starts a tick or two after
+      // the click on a slow machine, and one tick of no movement caught the
+      // picture before it had begun.
       const tick = () => new Promise<void>((done) => requestAnimationFrame(() => setTimeout(done, 50)));
-      for (let last = -1, tries = 0; tries < 40 && last !== window.scrollY; tries++) {
+      for (let last = -1, same = 0, tries = 0; tries < 40 && same < 3; tries++) {
+        same = window.scrollY === last ? same + 1 : 1;
         last = window.scrollY;
         await tick();
       }

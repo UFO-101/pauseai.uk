@@ -1589,7 +1589,8 @@ export const staffCopy = {
     intro: {
       before: "Reads the replies to our letters, and their bounces, in each ",
       link: "connected Gmail account",
-      after: ". From policy@ and Joseph's, it also imports any threads with politicians as one-off emails.",
+      after:
+        ". From policy@ and Joseph's, it also imports any threads with politicians as one-off emails. In the letters inbox, it relays mail between supporters and their MPs' offices, both ways, and emails the policy inbox about anything it couldn't place.",
     },
     readNow: "Read Gmail now",
     never: "Not read yet.",
@@ -1598,8 +1599,6 @@ export const staffCopy = {
       `${accounts.length} ${accounts.length === 1 ? "account" : "accounts"} read: ${accounts.reduce((n, a) => n + a.replies, 0)} replies, ${accounts.reduce((n, a) => n + a.autoReplies, 0)} automatic replies, ${accounts.reduce((n, a) => n + a.bounces, 0)} bounces.`,
     account: (a: { account: string; replies: number; autoReplies: number; bounces: number }) =>
       `${a.account}: ${a.replies} replies, ${a.autoReplies} automatic replies, ${a.bounces} bounces.`,
-    // In a table of runs: the accounts that had anything.
-    found: "What it found",
     // After an account's line: its history had gone, so the last few days were searched instead.
     restarted: "Searched the last three days again, as Gmail had forgotten where we were up to.",
     failed: (error: string) => `Couldn't be read: ${error}`,
@@ -2035,12 +2034,13 @@ export const staffCopy = {
     // A failed run's error, as it came.
     error: (error: string) => `Error: "${error}"`,
     decidedBy: (who: string) => `decided by ${who}`,
-    // A job's frequent runs, in a table, and the stretches of them that are folded.
+    // A job's frequent runs, in a table: its columns' headings, where a job has
+    // no counts of its own, the time of a stretch of runs, and what a stretch was.
     time: "Time",
-    quiet: (from: string, to: string, n: number) =>
-      `${from === to ? from : `${from}–${to}`}: ${n} ${n === 1 ? "run" : "runs"}, nothing new`,
-    stretch: (from: string, to: string, n: number) =>
-      `${from === to ? from : `${from}–${to}`}: ${n} ${n === 1 ? "run" : "runs"}, no problems`,
+    found: "What it found",
+    range: (from: string, to: string) => (from === to ? from : `${from}–${to}`),
+    quiet: (n: number) => `${n} ${n === 1 ? "run" : "runs"}, nothing new`,
+    stretch: (n: number) => `${n} ${n === 1 ? "run" : "runs"}, no problems`,
   },
   check: {
     title: "Members of Parliament against Parliament's list",
@@ -2075,8 +2075,9 @@ export const staffCopy = {
     // letter from the web, Luma and the members.
     pageTitle: "Import data",
     // Each import's icons, named for screen readers and on hover: where it's
-    // from, and whether it only checks. Then how often it runs, the overview's
-    // headings and a lozenge on the job's page.
+    // from. Then how often it runs, the overview's headings and a lozenge on
+    // the job's page, and the lozenges after some jobs' names: the one that
+    // only checks, the one that sends, and the one that keeps the site tidy.
     airtable: "Airtable",
     web: "Web",
     database: "Database",
@@ -2089,6 +2090,8 @@ export const staffCopy = {
     hourly: "Hourly",
     oneOff: "One-off",
     checkOnly: "Check only",
+    takesAction: "Takes action",
+    siteAdmin: "Site admin",
   },
   letters: {
     title: "Letters to MPs",

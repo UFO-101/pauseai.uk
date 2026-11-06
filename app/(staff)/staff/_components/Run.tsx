@@ -91,8 +91,18 @@ function Decision({ id, decision, decide }: { id: number; decision: "apply" | "d
  * changed, whose names changed, and the statuses it set. A held one can be
  * applied or discarded, given `decide`.
  */
-function SyncRun({ run, decide, open }: { run: PoliticianSync; decide?: Decide; open?: boolean }) {
-  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} />;
+function SyncRun({
+  run,
+  decide,
+  open,
+  bare,
+}: {
+  run: PoliticianSync;
+  decide?: Decide;
+  open?: boolean;
+  bare?: boolean;
+}) {
+  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} bare={bare} />;
   const { added, removed, changed } = run.result.changes;
   const renamed = run.result.renamed ?? [];
   const count = changeCount(run.result.changes);
@@ -100,6 +110,7 @@ function SyncRun({ run, decide, open }: { run: PoliticianSync; decide?: Decide; 
     <RunBox
       run={run}
       open={open}
+      bare={bare}
 
       lines={count}
       summary={
@@ -147,14 +158,15 @@ function sides(problem: MpProblem): [string, string] {
 }
 
 /** A check of Airtable's MPs against Parliament's: where they disagree. */
-function CheckRun({ run, open }: { run: MpCheck; open?: boolean }) {
-  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} />;
+function CheckRun({ run, open, bare }: { run: MpCheck; open?: boolean; bare?: boolean }) {
+  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} bare={bare} />;
   const { problems } = run.result;
   const count = problems.length;
   return (
     <RunBox
       run={run}
       open={open}
+      bare={bare}
 
       lines={count}
       summary={count === 0 ? staffCopy.check.allGood : staffCopy.check.problems(count)}
@@ -189,11 +201,17 @@ function CheckRun({ run, open }: { run: MpCheck; open?: boolean }) {
 }
 
 /** A copy of ControlAI's letter's signatories: what it did, and the names it couldn't place. */
-function ControlAiRun({ run, open }: { run: ControlAiImport; open?: boolean }) {
-  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} />;
+function ControlAiRun({ run, open, bare }: { run: ControlAiImport; open?: boolean; bare?: boolean }) {
+  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} bare={bare} />;
   const { result } = run;
   return (
-    <RunBox run={run} summary={staffCopy.controlAi.result(result)} lines={result.problems.length} open={open}>
+    <RunBox
+      run={run}
+      summary={staffCopy.controlAi.result(result)}
+      lines={result.problems.length}
+      open={open}
+      bare={bare}
+    >
       {result.problems.length > 0 && (
         <Table>
           <thead>
@@ -220,11 +238,17 @@ function ControlAiRun({ run, open }: { run: ControlAiImport; open?: boolean }) {
 }
 
 /** A copy of PauseAI's emails from Airtable: the counts, and the emails held back for a mailing nobody has added. */
-function EmailsRun({ run, open }: { run: EmailSync; open?: boolean }) {
-  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} />;
+function EmailsRun({ run, open, bare }: { run: EmailSync; open?: boolean; bare?: boolean }) {
+  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} bare={bare} />;
   const { unplaced } = run.result;
   return (
-    <RunBox run={run} summary={staffCopy.pauseaiEmails.result(run.result)} lines={unplaced.length} open={open}>
+    <RunBox
+      run={run}
+      summary={staffCopy.pauseaiEmails.result(run.result)}
+      lines={unplaced.length}
+      open={open}
+      bare={bare}
+    >
       {unplaced.length > 0 && (
         <>
           <h4>
@@ -244,31 +268,38 @@ function EmailsRun({ run, open }: { run: EmailSync; open?: boolean }) {
 }
 
 /** The one-off copy of pauseai.info's web form letters: the counts. */
-function WebFormRun({ run, open }: { run: WebFormImport; open?: boolean }) {
+function WebFormRun({ run, open, bare }: { run: WebFormImport; open?: boolean; bare?: boolean }) {
   return (
-    <RunBox run={run} summary={run.status === "failed" ? null : staffCopy.webForm.result(run.result)} open={open} />
+    <RunBox
+      run={run}
+      summary={run.status === "failed" ? null : staffCopy.webForm.result(run.result)}
+      open={open}
+      bare={bare}
+    />
   );
 }
 
 /** The one-off copy of Go to Parliament's meetings: the counts. */
-function GoToParliamentRun({ run, open }: { run: GoToParliamentImport; open?: boolean }) {
+function GoToParliamentRun({ run, open, bare }: { run: GoToParliamentImport; open?: boolean; bare?: boolean }) {
   return (
     <RunBox
       run={run}
       summary={run.status === "failed" ? null : staffCopy.goToParliament.result(run.result)}
       open={open}
+      bare={bare}
     />
   );
 }
 
 /** A copy of the Luma calendar: the counts, the hosts changed, the places looked up, and why it stopped early if it did. */
-function LumaRun({ run, open }: { run: LumaImport; open?: boolean }) {
-  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} />;
+function LumaRun({ run, open, bare }: { run: LumaImport; open?: boolean; bare?: boolean }) {
+  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} bare={bare} />;
   const { stoppedBy, hostsChanged, contactPages, places } = run.result;
   return (
     <RunBox
       run={run}
       open={open}
+      bare={bare}
       summary={
         <>
           {staffCopy.luma.result(run.result)}
@@ -283,9 +314,14 @@ function LumaRun({ run, open }: { run: LumaImport; open?: boolean }) {
 }
 
 /** A copy of the members: the counts. */
-function MembersRun({ run, open }: { run: MembersImport; open?: boolean }) {
+function MembersRun({ run, open, bare }: { run: MembersImport; open?: boolean; bare?: boolean }) {
   return (
-    <RunBox run={run} summary={run.status === "failed" ? null : staffCopy.members.result(run.result)} open={open} />
+    <RunBox
+      run={run}
+      summary={run.status === "failed" ? null : staffCopy.members.result(run.result)}
+      open={open}
+      bare={bare}
+    />
   );
 }
 
@@ -295,14 +331,14 @@ function MembersRun({ run, open }: { run: MembersImport; open?: boolean }) {
  * relayed, and each message it couldn't account for, with a link to it in
  * Gmail.
  */
-function GmailRun({ run, open }: { run: GmailReading; open?: boolean }) {
-  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} />;
+function GmailRun({ run, open, bare }: { run: GmailReading; open?: boolean; bare?: boolean }) {
+  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} bare={bare} />;
   const words = staffCopy.gmailReading;
   const inbox = staffCopy.lettersInbox;
   const { accounts } = run.result;
   const lines = accounts.reduce((n, a) => n + 1 + (a.notUnderstood?.length ?? 0), 0);
   return (
-    <RunBox run={run} summary={words.result(accounts)} lines={lines} open={open}>
+    <RunBox run={run} summary={words.result(accounts)} lines={lines} open={open} bare={bare}>
       <ul>
         {accounts.map((a) => (
           <li key={a.account}>
@@ -341,8 +377,18 @@ function GmailRun({ run, open }: { run: GmailReading; open?: boolean }) {
  * nothing, by sender and subject, only to staff who see supporters, as its
  * senders are people.
  */
-function OldLettersRun({ run, open, people }: { run: OldLettersImport; open?: boolean; people?: boolean }) {
-  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} />;
+function OldLettersRun({
+  run,
+  open,
+  people,
+  bare,
+}: {
+  run: OldLettersImport;
+  open?: boolean;
+  people?: boolean;
+  bare?: boolean;
+}) {
+  if (run.status === "failed") return <RunBox run={run} summary={null} open={open} bare={bare} />;
   const words = staffCopy.oldLetters;
   const { result } = run;
   const lines =
@@ -351,7 +397,7 @@ function OldLettersRun({ run, open, people }: { run: OldLettersImport; open?: bo
     Object.keys(result.notJoined).length +
     result.unmatched.length;
   return (
-    <RunBox run={run} open={open} lines={lines} summary={<>{words.result(result)}</>}>
+    <RunBox run={run} open={open} bare={bare} lines={lines} summary={<>{words.result(result)}</>}>
       <CountsByMailing heading={words.joined} counts={result.joined} titles={result.titles} />
       <CountsByMailing heading={words.added} counts={result.added} titles={result.titles} />
       <CountsByMailing heading={words.notJoined} counts={result.notJoined} titles={result.titles} />
@@ -377,55 +423,72 @@ function OldLettersRun({ run, open, people }: { run: OldLettersImport; open?: bo
 }
 
 /** An hour's sending: the counts. */
-function SendingRun({ run, open }: { run: Sending; open?: boolean }) {
+function SendingRun({ run, open, bare }: { run: Sending; open?: boolean; bare?: boolean }) {
   return (
-    <RunBox run={run} summary={run.status === "failed" ? null : staffCopy.sending.result(run.result)} open={open} />
+    <RunBox
+      run={run}
+      summary={run.status === "failed" ? null : staffCopy.sending.result(run.result)}
+      open={open}
+      bare={bare}
+    />
   );
 }
 
 /** A night's tidying: the counts. */
-function TidyingRun({ run, open }: { run: Tidying; open?: boolean }) {
+function TidyingRun({ run, open, bare }: { run: Tidying; open?: boolean; bare?: boolean }) {
   return (
-    <RunBox run={run} summary={run.status === "failed" ? null : staffCopy.tidying.result(run.result)} open={open} />
+    <RunBox
+      run={run}
+      summary={run.status === "failed" ? null : staffCopy.tidying.result(run.result)}
+      open={open}
+      bare={bare}
+    />
   );
 }
 
-/** One run from the import log, as its job's page shows it; `open` says whether its detail starts unfolded, and left out, its length does. `people`: who mail that matched nothing is from may show. */
+/**
+ * One run from the import log, as its job's page shows it; `open` says
+ * whether its detail starts unfolded, and left out, its length does.
+ * `people`: who mail that matched nothing is from may show. `bare`: in a
+ * row of a table, without the box (RunBox).
+ */
 export default function Run({
   run,
   decide,
   open,
   people,
+  bare,
 }: {
   run: AnyImportRun;
   decide?: Decide;
   open?: boolean;
   people?: boolean;
+  bare?: boolean;
 }) {
   switch (run.job) {
     case "sync-politicians":
-      return <SyncRun run={run} decide={decide} open={open} />;
+      return <SyncRun run={run} decide={decide} open={open} bare={bare} />;
     case "sync-emails":
-      return <EmailsRun run={run} open={open} />;
+      return <EmailsRun run={run} open={open} bare={bare} />;
     case "import-web-form-letters":
-      return <WebFormRun run={run} open={open} />;
+      return <WebFormRun run={run} open={open} bare={bare} />;
     case "import-go-to-parliament":
-      return <GoToParliamentRun run={run} open={open} />;
+      return <GoToParliamentRun run={run} open={open} bare={bare} />;
     case "check-mps":
-      return <CheckRun run={run} open={open} />;
+      return <CheckRun run={run} open={open} bare={bare} />;
     case "import-controlai":
-      return <ControlAiRun run={run} open={open} />;
+      return <ControlAiRun run={run} open={open} bare={bare} />;
     case "import-luma":
-      return <LumaRun run={run} open={open} />;
+      return <LumaRun run={run} open={open} bare={bare} />;
     case "import-members":
-      return <MembersRun run={run} open={open} />;
+      return <MembersRun run={run} open={open} bare={bare} />;
     case "read-gmail":
-      return <GmailRun run={run} open={open} />;
+      return <GmailRun run={run} open={open} bare={bare} />;
     case "import-old-letters":
-      return <OldLettersRun run={run} open={open} people={people} />;
+      return <OldLettersRun run={run} open={open} people={people} bare={bare} />;
     case "send-mailings":
-      return <SendingRun run={run} open={open} />;
+      return <SendingRun run={run} open={open} bare={bare} />;
     case "tidy-logs":
-      return <TidyingRun run={run} open={open} />;
+      return <TidyingRun run={run} open={open} bare={bare} />;
   }
 }

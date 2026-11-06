@@ -12,9 +12,20 @@
   font-size: var(--table-font-size);
 }
 
-/* Striped: every other row tinted, so the eye keeps to a row across. */
+/* Columns as wide as the first row sets them, whatever's in the rest. */
+.fixed {
+  table-layout: fixed;
+  min-width: var(--table-min-width, 0);
+}
+
+/* Striped: every other row tinted, so the eye keeps to a row across. A row
+   that sets --row-bg is tinted that instead, striped or not. */
+.table td {
+  background: var(--row-bg);
+}
+
 .table > tbody > tr:nth-child(even) > td {
-  background: var(--table-stripe);
+  background: var(--row-bg, var(--table-stripe));
 }
 
 .table th,

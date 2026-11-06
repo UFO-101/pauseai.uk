@@ -6,19 +6,32 @@
   margin-block: 1rem;
 }
 
-.sync ul {
-  margin: 0.25rem 0 0.75rem;
-}
-
-/* The summary line is the fold's handle, with the browser's arrow. */
-.sync p {
+/* The same without the box, in a row of a table. */
+.bare {
   margin: 0;
 }
 
-.sync summary {
+.sync ul,
+.bare ul {
+  margin: 0.25rem 0 0.75rem;
+}
+
+.bare ul:last-child {
+  margin-bottom: 0;
+}
+
+/* The summary line is the fold's handle, with the browser's arrow. */
+.sync p,
+.bare p {
+  margin: 0;
+}
+
+.sync summary,
+.bare summary {
   cursor: pointer;
 }
 
-.sync details[open] summary {
+.sync details[open] summary,
+.bare details[open] summary {
   margin-bottom: 0.5rem;
 }

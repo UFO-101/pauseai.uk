@@ -1,9 +1,10 @@
-import { type AnyImportRun, JOB_SCHEDULES, runStatus, runTone } from "./import-runs";
+import { type AnyImportRun, type ImportJob, JOB_SCHEDULES, runStatus, runTone } from "./import-runs";
 import { staffDate } from "./staff-time";
 
 // How a job's page lays out its runs. A job that runs every few minutes makes
-// hundreds a day, nearly all alike, so what matters shows whole, the routine
-// ones as rows of a table, and those that found nothing as a line.
+// hundreds a day, nearly all alike, so each day is one table: the newest run
+// a tinted row, the routine ones a row each, those that found nothing
+// gathered into a row, and a problem a tinted row.
 
 /** How many runs, newest first, may start unfolded. Those further down start folded, however short. */
 const UNFOLDED_RUNS = 5;
@@ -13,6 +14,12 @@ const RECENT_ROWS = 12;
 
 /** A run shown whole, in a table's row, or as part of a line saying nothing happened. */
 type Shape = "run" | "rows" | "quiet";
+
+/** Whether a job's page lays its history out as a table of the day's runs: the jobs that run every 5 minutes or hourly. */
+export function tabled(job: ImportJob): boolean {
+  const schedule = JOB_SCHEDULES[job];
+  return schedule === "frequent" || schedule === "hourly";
+}
 
 /** How a run shows when it isn't the newest. */
 export function runShape(run: AnyImportRun): Shape {
@@ -36,13 +43,13 @@ export function runShape(run: AnyImportRun): Shape {
   }
 }
 
-/** One thing on a job's page: a run or several, under a heading if it's a new day. */
+/** One thing on a job's page: a run or several. */
 export type LogEntry = {
   shape: Shape;
   /** Newest first. */
   runs: AnyImportRun[];
-  /** The day's heading, if it starts one. */
-  day?: string;
+  /** The job's state now: the newest run, with no press running. */
+  current?: boolean;
   /** The tint of a run shown whole: how it ended, for the newest, or a problem. */
   tone?: "green" | "amber" | "red";
   /** Whether a run shown whole starts unfolded; left out, its length says. */
@@ -57,32 +64,35 @@ function problemTone(run: AnyImportRun): LogEntry["tone"] {
   return runShape(run) === "run" && JOB_SCHEDULES[run.job] === "frequent" && tone !== "green" ? tone : undefined;
 }
 
-/** A job's runs, newest first, laid out. While a press runs, that's the job's state, so the newest is treated as an older one. */
-export function runLog(runs: AnyImportRun[], pressing: boolean): LogEntry[] {
-  const entries: LogEntry[] = [];
+/** A day of a job's page: its heading, and what's under it, newest first. */
+export type LogDay = { day: string; entries: LogEntry[] };
+
+/** A job's runs, newest first, laid out by day. While a press runs, that's the job's state, so the newest is treated as an older one. */
+export function runLog(runs: AnyImportRun[], pressing: boolean): LogDay[] {
+  const days: LogDay[] = [];
   let whole = 0;
   let rows = 0;
   runs.forEach((run, i) => {
     const current = i === 0 && !pressing;
     const shape = current ? "run" : runShape(run);
-    const previous = entries.at(-1);
     const day = staffDate(run.at);
-    const sameDay = previous && staffDate(previous.runs[0].at) === day;
-    const heading = sameDay ? {} : { day };
+    if (days.at(-1)?.day !== day) days.push({ day, entries: [] });
+    const { entries } = days.at(-1)!;
+    const previous = entries.at(-1);
     if (shape === "run") {
       const tone = current ? runTone(run) : i === 0 ? undefined : problemTone(run);
       const open = current ? true : whole < UNFOLDED_RUNS ? undefined : false;
       whole++;
-      entries.push({ shape, runs: [run], tone, open, ...heading });
+      entries.push({ shape, runs: [run], tone, open, ...(current && { current }) });
       return;
     }
     const folded = shape === "rows" && rows >= RECENT_ROWS;
     if (shape === "rows") rows++;
-    if (sameDay && previous.shape === shape && !!previous.folded === folded && previous.runs[0].job === run.job) {
+    if (previous && previous.shape === shape && !!previous.folded === folded && previous.runs[0].job === run.job) {
       previous.runs.push(run);
     } else {
-      entries.push({ shape, runs: [run], folded, ...heading });
+      entries.push({ shape, runs: [run], folded });
     }
   });
-  return entries;
+  return days;
 }
