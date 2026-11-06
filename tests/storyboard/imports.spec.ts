@@ -156,7 +156,7 @@ test("The Luma import's log", async ({ page, flowDatabase }) => {
 
 test("The Gmail reading's log", async ({ page, flowDatabase }) => {
   story(
-    "Gmail is read every 5 minutes too. A read that found something says which account and what. A mailbox that couldn't be read is an amber row, saying so under its line.",
+    "Gmail is read every 5 minutes too, its counts over every account it read. A mailbox that couldn't be read is an amber row, saying which under its counts.",
   );
   await logIn(page, flowDatabase);
   const account = (email: string, extra = {}) => ({ account: email, replies: 0, autoReplies: 0, bounces: 0, ...extra });

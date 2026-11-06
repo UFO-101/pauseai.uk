@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
-import type { AnyImportRun, GmailReading, ImportJob, LumaImport, OldLettersImport } from "@/lib/import-runs";
+import type { AnyImportRun, GmailRead, GmailReading, ImportJob, LumaImport, OldLettersImport } from "@/lib/import-runs";
 import type { LogEntry } from "@/lib/run-log";
 import { staffClock } from "@/lib/staff-time";
 import Run, { type Decide } from "./Run";
@@ -33,23 +33,19 @@ const LUMA: Column<LumaImport>[] = [
   { heading: lumaWords.supporters, cell: (run) => run.result.supportersAdded },
 ];
 
-/** The accounts of a read of Gmail that had anything, each in the words of its own line. */
-function gmailFound(run: GmailReading): string {
-  return run.result.accounts
-    .filter((a) => a.replies + a.autoReplies + a.bounces + (a.oneOffs ?? 0) + (a.relayed ?? 0) + (a.spam ?? 0) > 0)
-    .map((a) => {
-      const inbox =
-        a.relayed === undefined
-          ? ""
-          : ` ${staffCopy.lettersInbox.result({ relayed: a.relayed, spam: a.spam!, uncertain: a.uncertain! })}`;
-      const oneOffs = a.oneOffs ? ` ${staffCopy.gmailReading.oneOffs(a.oneOffs)}` : "";
-      return `${staffCopy.gmailReading.account(a)}${inbox}${oneOffs}`;
-    })
-    .join(" ");
-}
-const GMAIL: Column<GmailReading>[] = [{ heading: staffCopy.runs.found, cell: gmailFound }];
+/** A count over every account a read of Gmail read. */
+const overAccounts = (run: GmailReading, count: (a: GmailRead) => number | undefined) =>
+  run.result.accounts.reduce((total, a) => total + (count(a) ?? 0), 0);
+const GMAIL: Column<GmailReading>[] = [
+  { heading: lettersWords.replies, cell: (run) => overAccounts(run, (a) => a.replies) },
+  { heading: lettersWords.autoReplies, cell: (run) => overAccounts(run, (a) => a.autoReplies) },
+  { heading: staffCopy.sentEmails.outcomes.bounced, cell: (run) => overAccounts(run, (a) => a.bounces) },
+  { heading: lettersWords.oneOffs, cell: (run) => overAccounts(run, (a) => a.oneOffs) },
+  { heading: staffCopy.lettersInbox.labels.relayed, cell: (run) => overAccounts(run, (a) => a.relayed) },
+  { heading: staffCopy.lettersInbox.labels.spam, cell: (run) => overAccounts(run, (a) => a.spam) },
+];
 
-/** The columns of a job's table: the jobs with routine runs (lib/run-log.ts) have their counts; the rest have none, and a run's own words span the table. */
+/** The columns of a job's table: the jobs with routine runs (lib/run-log.ts) have their counts, Gmail's over every account read; the rest have none, and a run's own words span the table. */
 function columnsOf(job: ImportJob): Column<never>[] {
   switch (job) {
     case "import-old-letters":

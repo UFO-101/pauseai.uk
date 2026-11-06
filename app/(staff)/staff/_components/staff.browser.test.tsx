@@ -2973,19 +2973,7 @@ describe("RunList", () => {
       `11:00${staffCopy.runs.status.ok} · ${staffCopy.runs.by("jo@pauseai.uk")} · ${staffCopy.members.result(members)}`,
     );
     expect(pressed.element().className).toBe("");
-    // A Gmail read with problems is one row too: its column is words, not counts.
-    const couldntRead = { what: staffCopy.problems.job.couldntRead("al@pauseai.uk"), error: "403" };
-    await rerender(
-      <RunList
-        runs={[
-          ran("read-gmail", exampleGmailResult, { id: 1, at: at(3, 12) }),
-          ran("read-gmail", exampleGmailResult, { id: 2, at: at(3, 11), problems: [couldntRead] }),
-        ]}
-        none="None"
-      />,
-    );
-    expect(page.getByRole("row").all()).toHaveLength(3);
-    expect(page.getByRole("row").all()[2].element().textContent).toContain(`11:00${staffCopy.runs.status.problems}`);
+
     // Rows are counted across days, so a day can start with a folded stretch: the header goes on its first table shown.
     const luma = (id: number, at: string) =>
       ran("import-luma", exampleLumaResult, { id, at, status: id === 99 ? "unchanged" : "ok" });
@@ -3017,7 +3005,7 @@ describe("RunList", () => {
     expect(getComputedStyle(second.element().closest("section")!).backgroundColor).toBe("rgba(0, 0, 0, 0)");
   });
 
-  it("shows Luma's and Gmail's routine runs as rows, a Gmail read saying only the accounts that had anything", async () => {
+  it("shows Luma's and Gmail's routine runs as rows, a Gmail read's counts over every account", async () => {
     const luma = ran("import-luma", { ...exampleLumaResult, hostsChanged: undefined, guestsChanged: 77 }, { id: 1 });
     const rows = (...runs: AnyImportRun[]) => [{ shape: "rows" as const, runs }];
     const { rerender } = await render(<RunTable header entries={rows(luma)} />);
@@ -3040,16 +3028,17 @@ describe("RunList", () => {
       account("write.to@pauseai.uk", { relayed: 3, spam: 0, uncertain: 0 }),
     ];
     await rerender(<RunTable header entries={rows(ran("read-gmail", { accounts }, { id: 3 }))} />);
-    const text = document.body.textContent!;
-    expect(text).not.toContain("silent@pauseai.uk");
-    expect(text).toContain(staffCopy.gmailReading.account(accounts[1]));
-    expect(text).toContain(staffCopy.gmailReading.oneOffs(2));
-    expect(text).toContain(staffCopy.lettersInbox.result({ relayed: 3, spam: 0, uncertain: 0 }));
-    // Its one column of words needs no minimum width; a table of counts keeps one, scrolling on a phone.
+    const cells = () => [...document.querySelectorAll("tbody td")].map((td) => td.textContent);
+    expect(document.body.textContent).not.toContain("silent@pauseai.uk");
+    // Replies, automatic replies, bounces, one-offs, relayed, spam: over the accounts, a count missing as 0.
+    expect(cells().slice(1)).toEqual(["1", "0", "0", "2", "3", "0"]);
+    // A table of counts keeps a width, scrolling on a phone; one column of words needs none.
     const table = () => page.getByRole("table").element() as HTMLElement;
-    expect(getComputedStyle(table()).minWidth).toBe("0px");
-    await rerender(<RunTable header entries={rows(luma)} />);
     expect(getComputedStyle(table()).minWidth).not.toBe("0px");
+    await rerender(
+      <RunTable header entries={[{ shape: "run", runs: [ran("import-members", exampleMembersResult, { id: 4 })] }]} />,
+    );
+    expect(getComputedStyle(table()).minWidth).toBe("0px");
   });
 
   it("says how far the import of old letters has got, or nothing before it has listed anything", async () => {
