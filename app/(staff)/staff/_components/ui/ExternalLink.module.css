@@ -1,11 +1,9 @@
-/* The arrow after its words, a shape in the text's colour, so it adds nothing for a screen reader to read. */
+/* The arrow after its words, a shape in the text's colour on a space that won't
+   break from them, so it stays on their line and adds nothing to read aloud. */
 .link::after {
-  display: inline-block;
-  width: 0.75em;
-  height: 0.75em;
-  margin-left: 0.2em;
+  padding-left: 0.6em;
   background: currentcolor;
-  content: "";
+  content: "\00a0";
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='black' stroke-width='1.5'%3E%3Cpath d='M2.5 9.5 9.5 2.5M4 2.5h5.5V8'/%3E%3C/svg%3E")
-    center / contain no-repeat;
+    right center / 0.75em no-repeat;
 }
