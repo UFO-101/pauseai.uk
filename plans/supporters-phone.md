@@ -72,7 +72,9 @@ kept after erasure. A resume in WhatsApp's settings closes the stop it
 made; a new yes, on a form or to staff, closes any.
 
 These stops don't cover calls, which have their own ("Calls"). Global
-doesn't call or text, so all of them are ours alone.
+doesn't call or text, so all of them are ours alone, though CiviCRM
+has "Do not phone" and "Do not SMS" flags and its chapter contacts API
+could carry phone stops later (`plans/supporters-email.md`).
 
 ## 1. Groundwork
 
