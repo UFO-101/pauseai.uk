@@ -531,6 +531,28 @@ logged is hidden. Beside it, a {} button (`LoggedJson`) opens the JSON
 exactly as stored, in a bubble by the button. That's the fallback, for
 checking exactly what was recorded or a field the words don't cover yet.
 
+**A history** (`LetterHistory`). A letter's events, newest first, each
+with its fields in words and a {} for what it recorded. Every email in it
+says who it went to, and its tag says what sent or brought it, Postmark or
+Gmail (as its event recorded, or, for one recorded before events did,
+what the letter went by). A Sent with no event of its own comes from the
+letter's dates. What belongs to another entry goes under it, a size
+smaller:
+
+- under a reply, its relay: every entry naming the reply's message in
+  Gmail (relayed, waiting, held, bounced, uncertain, not relayed, and the
+  MP's office told it can't be passed on);
+- under Sent, the supporter's copy (sent, held, bounced, delayed): under
+  the last Sent before it, or the first if it was recorded a moment
+  earlier;
+- under what it tells of, a notice to the supporter: one that the letter
+  bounced under the last bounce before it, and one that it went again
+  under the last Sent; a relay's bounce or sending again is under its
+  reply, so the notice goes there, beside it.
+
+Anything else, and a notice with nothing before it to go under, stays in
+the list, in its place.
+
 **The sidebar** (`StaffNav`). Each page has its icon (`NavIcon`) beside
 its name. Fold, at its foot, folds it to a rail of the icons on wider
 screens, the sections a rule apart, each name showing beside its icon on
@@ -721,6 +743,24 @@ introduction under it `Foreword`.
 - **White** (`tone="white"`): `var(--accent-bg)`.
 
 A boxed message inside a section is `Callout`.
+
+## The briefings and the march
+
+Two parts of the site have a look of their own. How their styles are
+organised is in `docs/code-structure.md` ("The weekly briefings", "The
+march sign-up").
+
+- **The weekly briefings** (`/campaigns/briefings`) follow their
+  designer's A4 layout: a white sheet on the page, a masthead (logo,
+  byline, the week's calendar, title, an orange rule), then boxes ruled in
+  a topic's colour with the heading on a tab, and charts of their own. The
+  sizes are the design's, scaled so the text is 16px, and the topic
+  colours are the `--briefing-*` tokens.
+- **The march sign-up** (`/protests/march-against-ai-extinction-nov-26`)
+  is a poster, deliberately unlike the rest of the site: ink and paper, a
+  hotter orange (the `--march-*` tokens), Anton for headings, square
+  corners and hard shadows, with a header of its own and the site's
+  footer.
 
 ## Links
 

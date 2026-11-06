@@ -428,11 +428,8 @@ only a variant. The look itself (colours, type, buttons, cards) is in
 ### The weekly briefings
 
 `/campaigns/briefings` follows its designer's A4 layout, made as an HTML
-page each week: a white sheet on the page, a masthead (logo, byline,
-the week's calendar, title, an orange rule), then boxes ruled in a topic's
-colour with the heading on a tab, and its own charts. Its sizes are the
-design's, scaled so the text is 16px. It follows the rules above, with these
-particulars:
+page each week (`docs/style-guide.md`, "The briefings and the march"). It
+follows the rules above, with these particulars:
 
 - **A briefing is data and its kit.** `lib/content/briefings.tsx` gives each
   briefing's week and key stories as data (its summary is the key stories'
@@ -452,10 +449,9 @@ particulars:
 ### The march sign-up
 
 `/protests/march-against-ai-extinction-nov-26` (`app/(march)/protests/march-against-ai-extinction-nov-26/`)
-is a sub-site in its
-own poster style, deliberately unlike the rest of the site: ink and paper,
-a hotter orange, Anton for headings, square corners and hard shadows. It
-follows the rules above, with these exceptions:
+is a sub-site in its own poster style (`docs/style-guide.md`, "The
+briefings and the march"). It follows the rules above, with these
+exceptions:
 
 - **One stylesheet for the sub-site.** Its components share
   `_components/march.module.css`, in the order its rules cascade, and take
