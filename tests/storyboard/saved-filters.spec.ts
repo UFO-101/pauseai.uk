@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { runSql } from "@/scripts/fresh-database.mjs";
-import { addFilter, changeFilter, syncPoliticians } from "../steps";
+import { addFilter, changeFilter, importLuma, syncPoliticians } from "../steps";
 import { BASE, expect, frame, story, test } from "./fixtures";
 import { logIn, staffEmail } from "./staff-steps";
 
@@ -251,4 +251,36 @@ test("Loading a saved filter while choosing who a mailing goes to", async ({ pag
   await page.getByRole("link", { name: staffCopy.mailingPages.pickedTab }).first().click();
   await expect(page.getByRole("button", { name: "Labour MPs" })).toHaveCount(0);
   await frame(page, "The ticked tab");
+});
+
+test("Loading a saved filter while choosing who a message goes to", async ({ page, request, flowDatabase }) => {
+  story("Staff write an email to supporters, then Change who: the supporters list is choosing who it's for.");
+  const messages = staffCopy.messagePages;
+  await importLuma(request, BASE);
+  await logIn(page, flowDatabase, ["supporters"]);
+  addSaved(flowDatabase, "supporters", "Fixture emails", { contact: "email:luma-calendar:yes", q: "fixture" });
+  await page.goto(`${BASE}/staff/supporters?contact=email%3Aluma-calendar%3Ayes`);
+  await page.getByRole("button", { name: messages.messageButton(3) }).click();
+  await expect(page).toHaveURL(/\/staff\/messages\/\d+$/);
+  await page.getByLabel(messages.subject).fill("Saved for later");
+  await expect(page.getByRole("status").first()).toHaveText(staffCopy.mailingPages.savePill.saved);
+  await page.getByRole("link", { name: staffCopy.mailingPages.changeWho }).click();
+  await expect(page.getByText(messages.choosing("Saved for later"))).toBeVisible();
+  await openList(page);
+  await frame(page, "Choosing, with the list open", { window: true });
+
+  story("Loading one keeps the message: the list is still choosing for it, and the bar counts who the filter finds.");
+  await page.getByRole("link", { name: /Fixture emails/ }).click();
+  await expect(page).toHaveURL(/message=\d+.*saved=\d+/);
+  await expect(page.getByText(messages.choosing("Saved for later"))).toBeVisible();
+  await expect(page.getByRole("button", { name: "Fixture emails" })).toBeVisible();
+  const bar = page.getByRole("region", { name: messages.choosingLabel });
+  await expect(bar.getByRole("button", { name: messages.useThese(3) })).toBeVisible();
+  await frame(page, "Still choosing, the filter loaded", { window: true });
+
+  story("Using them takes the draft those the filter found.");
+  await bar.getByRole("button", { name: messages.useThese(3) }).click();
+  await expect(page).toHaveURL(/\/staff\/messages\/\d+$/);
+  await expect(page.getByRole("list", { name: staffCopy.mailingPages.whoLabel })).toContainText("fixture");
+  await frame(page, "The draft, to those found");
 });
