@@ -105,7 +105,7 @@ describeWithDatabase("send", () => {
       }),
     );
     expect(await send({ ...EMAIL, To: email }, "mailing")).toEqual({ sent: false, reason: "blocked" });
-    expect(alerts).toEqual([staffCopy.alert.subject("Testy McTestface MP")]);
+    expect(alerts).toEqual([staffCopy.alert.notALetter.subject("Testy McTestface MP")]);
     expect(await send({ ...EMAIL, To: email }, "mailing")).toEqual({ sent: false, reason: "blocked" });
     expect(alerts).toHaveLength(1);
   });

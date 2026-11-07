@@ -56,7 +56,7 @@ describeWithDatabase("handleDeliveryProblem", () => {
   const letter = async () => (await query<{ status: string }>("SELECT status FROM letters"))[0].status;
   const events = () => query("SELECT status, details FROM letter_events");
 
-  it("marks a mailing's letter that bounced, emails staff once as its address is blocked, then not for another", async () => {
+  it("marks a mailing's letter that bounced, leaving staff to the day's report", async () => {
     const mp = await addTestMp();
     const [{ id }] = await query<{ id: number }>(
       "INSERT INTO letters (kind, notable_person_id, status) VALUES ('pauseai', $1, 'sent') RETURNING id::int AS id",
@@ -70,12 +70,7 @@ describeWithDatabase("handleDeliveryProblem", () => {
     await handleDeliveryProblem(BOUNCE, REQUEST);
     expect(await letter()).toBe("bounced");
     expect(await events()).toMatchObject([{ status: "bounced" }]);
-    expect(sent).toMatchObject([
-      { To: "notifications@pauseai.uk", Subject: staffCopy.alert.subject("Testy McTestface MP") },
-    ]);
-    expect(sent[0].TextBody).toContain("https://pauseai.uk/staff/politicians/blocked-emails");
-    await handleDeliveryProblem(BOUNCE, REQUEST);
-    expect(sent).toHaveLength(1);
+    expect(sent).toEqual([]);
   });
 
   it.each(["office-notice", null] as const)(
@@ -85,7 +80,16 @@ describeWithDatabase("handleDeliveryProblem", () => {
       else await addTestMp();
       const sent = postmark();
       await handleDeliveryProblem({ ...BOUNCE, address: `"Test" <${BOUNCE.address.toUpperCase()}>` }, REQUEST);
-      expect(sent).toMatchObject([{ Subject: staffCopy.alert.subject("Testy McTestface MP") }]);
+      const words = staffCopy.alert.notALetter;
+      expect(sent).toMatchObject([{ Subject: words.subject("Testy McTestface MP") }]);
+      expect(sent[0].TextBody).toBe(
+        words.body(
+          "Testy McTestface MP",
+          "test-mp@parliament.example",
+          "Unknown user",
+          "https://pauseai.uk/staff/politicians/blocked-emails",
+        ),
+      );
     },
   );
 

@@ -12,7 +12,7 @@ import { relayBounced } from "./relays";
 
 type Sent = { purpose: Purpose; letterId: number | null; rfcMessageId: string | null };
 
-/** What a purpose does about its email's problem. Says whether it has told staff. */
+/** What a purpose does about its email's problem. Says whether staff have been told, or will be. */
 type Hook = (sent: Sent, problem: DeliveryProblem, request: Request | undefined) => Promise<boolean>;
 
 const nothing: Hook = async () => false;
@@ -91,10 +91,14 @@ const copyProblem: Hook = async ({ letterId }, problem) => {
   return false;
 };
 
-/** A mailing's letter's bounce: the letter says so, and its mailing's page counts it. */
+/**
+ * A mailing's letter's bounce: the letter says so, and its mailing's page
+ * counts it. As a mailing goes to many, staff are told of them together, in
+ * the day's report (reportMailingBounces).
+ */
 const mailingProblem: Hook = async ({ letterId }, problem) => {
   await markLetter(letterId, problem);
-  return false;
+  return true;
 };
 
 const HOOKS: Record<Purpose, Hook> = {
@@ -115,8 +119,8 @@ const HOOKS: Record<Purpose, Hook> = {
 /**
  * Records a bounce or complaint, then hands it to the purpose of the email
  * it was about, if we sent it. A politician's address it blocks, from any
- * email or none we can place, is told to staff once, if the purpose hasn't
- * told them already. `request` is the call that brought it,
+ * email or none we can place, is told to staff once, unless its purpose
+ * sees to that. `request` is the call that brought it,
  * Postmark's webhook or the job that reads Gmail, for staffLink(); none when
  * staff read Gmail from its page.
  */
