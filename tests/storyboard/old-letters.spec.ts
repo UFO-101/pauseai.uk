@@ -304,12 +304,12 @@ test("One-off emails", async ({ page, request, flowDatabase }) => {
 
   story("An out-of-office in the thread shows only its first paragraph, the rest folded under it.");
   const away = page.getByRole("article", { name: "Automatic reply: Coffee next week?" });
-  const rest = away.getByText(staffCopy.letterChanges.more(1));
+  const rest = away.getByText(staffCopy.letterChanges.more(2));
   await rest.scrollIntoViewIfNeeded();
-  await expect(away.getByText("may be confidential")).toBeHidden();
+  await expect(away.getByText("working for everyone")).toBeHidden();
   await frame(page, "An out-of-office, folded");
   await rest.click();
-  await expect(away.getByText("may be confidential")).toBeVisible();
+  await expect(away.getByText("working for everyone")).toBeVisible();
   await frame(page, "An out-of-office, unfolded");
 
   story("A politician's page lists theirs.");

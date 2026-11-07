@@ -144,7 +144,7 @@ test("A letter's page", async ({ page, flowDatabase }) => {
   const letter = page.getByRole("article");
   await expect(letter).toContainText(sender);
   // Sent as the campaign drafted it, so its text is folded away.
-  await expect(letter.getByRole("button", { name: /unchanged/ })).toBeVisible();
+  await expect(letter.getByText(/unchanged/)).toBeVisible();
   await frame(page, "Jane's letter");
   story("Copy Gmail search copies a search for the letter, and says where to paste it.");
 
