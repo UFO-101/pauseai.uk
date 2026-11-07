@@ -22,8 +22,9 @@ export function savedListFrom(form: FormData): SavedList | undefined {
 }
 
 /** What a staff member needs to change the saved filters of the list a form is for: its own permission. */
-export function savedFilterNeeds(form: FormData): "supporters" | "account" {
-  return savedListFrom(form) === "supporters" ? "supporters" : "account";
+export function savedFilterNeeds(form: FormData): "supporters" | "admin" | "account" {
+  const list = savedListFrom(form);
+  return list === "supporters" ? "supporters" : list === "audit-log" ? "admin" : "account";
 }
 
 /** A saved filter's name, as typed: one line, or blank. */

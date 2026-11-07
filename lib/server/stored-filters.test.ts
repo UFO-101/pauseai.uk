@@ -9,6 +9,7 @@ import {
 } from "@/tests/database";
 import { query } from "./db";
 import { storedFilter } from "@/lib/staff-search";
+import { logChange } from "./audit";
 import { checkStoredFilter, filterProblems } from "./stored-filters";
 
 describe("storedFilter", () => {
@@ -116,6 +117,13 @@ describeWithDatabase("filterProblems", () => {
       }),
     ).toEqual([]);
     expect(await filterProblems({ list: "politicians", params: { answer: "going" } })).toEqual([]);
+    await logChange("jo@pauseai.uk", "add note", { noteId: 1 });
+    expect(
+      await filterProblems({
+        list: "audit-log",
+        params: { q: "x", actor: ["jo@pauseai.uk", "!gone@pauseai.uk"], action: "add note", when: "5" },
+      }),
+    ).toEqual(["actor=!gone@pauseai.uk", "when=5"]);
   });
 
   it("names each politician ticked who isn't one any more", async () => {

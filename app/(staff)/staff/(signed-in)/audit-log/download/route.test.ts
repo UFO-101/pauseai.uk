@@ -23,6 +23,23 @@ describeWithDatabase("GET /staff/audit-log/download", () => {
     expect(rows).toContainEqual(expect.objectContaining({ action: "erase supporter", json: '{"id":9}' }));
   });
 
+  it("gives what the log's filters find, in the order chosen, named for them", async () => {
+    await logChange("jo@pauseai.uk", "add note", { noteId: 1 });
+    await logChange("sam@pauseai.uk", "add note", { noteId: 2 });
+    await logChange("sam@pauseai.uk", "edit event", {});
+    const response = await downloadAs(
+      GET,
+      "https://pauseai.uk/staff/audit-log/download?format=json&action=add+note&sort=actor&dir=asc",
+      ["admin", "supporters"],
+    );
+    expect(response.headers.get("Content-Disposition")).toContain("what_add_note");
+    const rows: { actor: string; action: string }[] = await response.json();
+    expect(rows.map((row) => [row.actor, row.action])).toEqual([
+      ["jo@pauseai.uk", "add note"],
+      ["sam@pauseai.uk", "add note"],
+    ]);
+  });
+
   it("leaves out entries about supporters for an admin who doesn't", async () => {
     await logChange("jo@pauseai.uk", "erase supporter", { id: 9 });
     const rows = await (

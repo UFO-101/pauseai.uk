@@ -2295,9 +2295,13 @@ All events: ${link}`,
     except: "Except",
     exceptHeading: "Leave out those with",
     notChip: (label: string, value: string) => `${label}: not ${value}`,
-    // In a chip's menu: the same choice, left out instead of found, or found instead of left out.
+    // The choices of a filter on one chip, in its words, which finds any of them, or leaves them all out.
+    anyOf: (values: string[]) => values.join(" or "),
+    // In a chip's menu: the same choice, left out instead of found, or found instead of left out; then for several.
     exceptInstead: "Except this instead",
     onlyInstead: "Only this instead",
+    exceptAllInstead: "⁂ Except these instead",
+    onlyAllInstead: "⁂ Only these instead",
     remove: "Remove",
     // Over a long list of a filter's choices: narrows them as it's typed in.
     narrow: "Search these",
@@ -2381,7 +2385,9 @@ All events: ${link}`,
     title: "Audit log",
     // Over the list: how many entries there are.
     total: (n: number) => `${n} ${n === 1 ? "entry" : "entries"}`,
-    none: "Nothing logged yet.",
+    none: "⁂ No entries match.",
+    // The search box: what it searches, whom an entry is about too.
+    search: "⁂ Who, what, details or name",
     // The column of the day, before the time.
     day: "Date",
     at: "When",

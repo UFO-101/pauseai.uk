@@ -5,6 +5,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { campaignBySlug } from "@/lib/email-your-mp";
 import { COUNTRIES, EMAIL_STATES, POLITICIAN_FLAGS } from "@/lib/politician-filters";
 import type { SavedList } from "@/lib/saved-filters";
+import { DASHBOARD_WINDOWS } from "@/lib/staff-dashboard";
 import { NO_OWNER, ONLINE } from "@/lib/staff-events-list";
 import {
   FILTER_LISTS,
@@ -18,6 +19,7 @@ import {
   type StoredFilter,
 } from "@/lib/staff-search";
 import { NEAR_MILES, SUPPORTER_BADGES } from "@/lib/supporters";
+import { changeChoices } from "./audit";
 import { query } from "./db";
 import { HOUSES, PERSON_STATUSES } from "./politicians";
 import { eventChoices } from "./staff-events";
@@ -125,10 +127,16 @@ async function eventValues(): Promise<Known> {
   };
 }
 
+async function changeValues(): Promise<Known> {
+  const { actors, actions } = await changeChoices(true);
+  return { q: "any", actor: actors, action: actions, when: DASHBOARD_WINDOWS.map(String) };
+}
+
 const VALUES: Record<SavedList, (params: Params) => Promise<Known>> = {
   politicians: politicianValues,
   supporters: supporterValues,
   events: eventValues,
+  "audit-log": changeValues,
 };
 
 /**

@@ -85,6 +85,17 @@ export async function savedFiltersState(
   };
 }
 
+/** A list's saved filters' state for those allowed them; others get the URL's parameters alone. */
+export async function savedFiltersIf(
+  allowed: boolean,
+  list: SavedList,
+  params: Partial<Record<string, ParamValue>>,
+): Promise<{ state?: SavedFiltersState; params: Params }> {
+  if (!allowed) return { params: withoutValues(params, []) };
+  const state = await savedFiltersState(list, params);
+  return { state, params: state.params };
+}
+
 /** Saves `params` as a new filter on `list`, as `by`. Returns its ID. */
 export async function createSavedFilter(list: SavedList, name: string, params: Params, by: string): Promise<number> {
   return transaction(async (db) => {

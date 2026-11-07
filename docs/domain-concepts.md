@@ -797,8 +797,10 @@ its result what's left.
 
 A saved filter is a staff list's filters under a name, for everyone who can
 open that list (`saved_filters`, `lib/server/saved-filters.ts`, and
-`ui/SavedFilters` for how it looks). Politicians, Supporters and Events have
-them. Anyone who can open the list can update, rename or delete any of them,
+`ui/SavedFilters` for how it looks). Politicians, Supporters, Events and the
+audit log have them. The audit log shows them only to admins who may see
+supporters, as one's name or search can name a supporter. Anyone who can open
+the list can update, rename or delete any of them,
 and the audit log records each change by its ID and list, never its name or
 parameters, which can name a supporter.
 
@@ -824,8 +826,9 @@ parameters (`docs/data-protection.md`).
 Every change made by staff, or by something acting on its own, records who,
 what and the details (`audit_log`, `lib/server/audit.ts`). The actor is a
 staff email, or the name of what did it: `sync`, `controlai`, `postmark`.
-Staff read it at `/staff/audit-log`. A new kind of change logs itself the
-same way, inside the same transaction as the change.
+Staff read it at `/staff/audit-log`, searched and filtered by who, what and
+how recent, and sorted by date, who or what. A new kind of change logs itself
+the same way, inside the same transaction as the change.
 
 ### What is logged, and when
 

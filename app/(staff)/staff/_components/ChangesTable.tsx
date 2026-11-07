@@ -1,9 +1,12 @@
 import { staffCopy } from "@/lib/content/staff-interface";
-import { pagePath } from "@/lib/staff-search";
+import { CHANGE_SORTS, type ChangeSort } from "@/lib/change-sort";
+import { filtersPath, pageParam, type ChangesSearch, type Params } from "@/lib/staff-search";
+import { parseSort, sortHref } from "@/lib/staff-sort";
 import { staffClock, staffDate } from "@/lib/staff-time";
 import type { ChangesPage, LoggedChange } from "@/lib/server/audit";
 import AuditDetail from "./AuditDetail";
 import { LoggedJson } from "./Logged";
+import SortHeading from "./SortHeading";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
 import Withheld from "./ui/Withheld";
 import styles from "./ChangesTable.module.css";
@@ -38,19 +41,52 @@ export function changeColumns(airtableTable: string): ListColumn<LoggedChange>[]
   ];
 }
 
-/** The log of who changed what, newest first, in the list frame: how many, its downloads, a page of it and the way through the pages. */
+/** What the log's URL says but its page: its filters and sort. */
+export function changeFiltersOf(search: ChangesSearch): Params {
+  const { page, filter, ...kept } = search as ChangesSearch & { filter?: unknown };
+  void page;
+  void filter;
+  return kept;
+}
+
+/**
+ * The log of who changed what, in the list frame: how many, its downloads of
+ * what the filters find, in the order chosen, a page of it and the way through
+ * the pages. The date, who and what sort it, newest first unless another is chosen.
+ */
 export default function ChangesTable({
   log,
+  search,
   page,
   supporters = true,
   airtableTable,
 }: {
   log: ChangesPage;
+  search: ChangesSearch;
   page: number;
   /** Whether they may see entries about supporters; if not, it says they're left out. */
   supporters?: boolean;
   airtableTable: string;
 }) {
+  const kept = changeFiltersOf(search);
+  const current = parseSort(CHANGE_SORTS, "day", search.sort, search.dir);
+  const columns = changeColumns(airtableTable).map((column) =>
+    column.key in CHANGE_SORTS
+      ? {
+          ...column,
+          heading: (
+            <SortHeading
+              key={column.key}
+              sortKey={column.key as ChangeSort}
+              current={current}
+              href={sortHref(PATH, kept, CHANGE_SORTS, current, column.key as ChangeSort)}
+            >
+              {column.label}
+            </SortHeading>
+          ),
+        }
+      : column,
+  );
   return (
     <>
       {!supporters && (
@@ -64,9 +100,9 @@ export default function ChangesTable({
         page={page}
         pages={log.pages}
         pageSize={log.pageSize}
-        href={(n) => pagePath(PATH, n)}
-        download={(format) => `${PATH}/download?format=${format}`}
-        columns={changeColumns(airtableTable)}
+        href={(n) => filtersPath(PATH, kept, pageParam(n))}
+        download={(format) => filtersPath(`${PATH}/download`, { format, ...kept, saved: "" })}
+        columns={columns}
         rows={log.changes}
         rowKey={(c) => c.id}
         empty={copy.none}

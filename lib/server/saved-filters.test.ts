@@ -8,6 +8,7 @@ import {
   deleteSavedFilter,
   eraseFromSavedFilters,
   renameSavedFilter,
+  savedFiltersIf,
   savedFiltersState,
   updateSavedFilter,
 } from "./saved-filters";
@@ -39,6 +40,19 @@ const stored = async (id: number) =>
       [id],
     )
   )[0];
+
+describeWithDatabase("savedFiltersIf", () => {
+  useTestDatabase();
+
+  it("gives those not allowed only the URL's parameters, and those allowed the state too", async () => {
+    const id = await createSavedFilter("audit-log", "Jo's", { actor: "jo@pauseai.uk" }, "jo@pauseai.uk");
+    const url = { actor: "jo@pauseai.uk", saved: String(id) };
+    expect(await savedFiltersIf(false, "audit-log", url)).toEqual({ params: url });
+    const { state, params } = await savedFiltersIf(true, "audit-log", url);
+    expect(state!.rows.map((row) => row.name)).toEqual(["Jo's"]);
+    expect(params.actor).toEqual(["jo@pauseai.uk"]);
+  });
+});
 
 describeWithDatabase("saved filters", () => {
   useTestDatabase();

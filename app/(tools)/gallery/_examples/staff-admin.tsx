@@ -5,6 +5,7 @@ import { exampleOldLettersResult, exampleSentEmails } from "@/app/(staff)/staff/
 // Their links go to /staff pages, which send anyone without a session to the
 // login page.
 import { Button } from "@/components/ui/Button";
+import ChangesFilters from "@/app/(staff)/staff/_components/ChangesFilters";
 import ChangesTable from "@/app/(staff)/staff/_components/ChangesTable";
 import { exampleChanges } from "@/app/(staff)/staff/_components/ChangesTable.examples";
 import AuditDetail, { FieldChanges } from "@/app/(staff)/staff/_components/AuditDetail";
@@ -58,6 +59,7 @@ import Tag from "@/components/ui/Tag";
 import { GmailConnect, GmailOutcome, SentToday } from "@/app/(staff)/staff/_components/GmailConnect";
 import AccountTitle from "@/app/(staff)/staff/_components/AccountTitle";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { changesSearch } from "@/lib/staff-search";
 import type { ImportJob } from "@/lib/import-runs";
 import type { Group, Variant } from "../_components/types";
 import {
@@ -283,6 +285,9 @@ const RUNS: Record<ImportJob, Variant> = {
     ),
   },
 };
+
+/** What a saved filter's form does in the gallery: nothing. */
+const noAction = async () => {};
 
 export const staffAdmin: Group = {
   id: "staff-admin",
@@ -935,6 +940,24 @@ export const staffAdmin: Group = {
       ],
     },
     {
+      name: "ChangesFilters",
+      file: "app/(staff)/staff/_components/ChangesFilters.tsx",
+      variants: [
+        {
+          label: "Several of who chosen, one of what left out, and how recent",
+          render: () => (
+            <StaffPage as="div">
+              <ChangesFilters
+                search={changesSearch({ actor: ["jo@pauseai.uk", "sync"], action: "!add note", when: "30" })}
+                choices={{ actors: ["jo@pauseai.uk", "sync"], actions: ["add note", "edit event"] }}
+                actions={{ save: noAction, update: noAction, rename: noAction, remove: noAction }}
+              />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
       name: "ChangesTable",
       file: "app/(staff)/staff/_components/ChangesTable.tsx",
       variants: [
@@ -943,6 +966,7 @@ export const staffAdmin: Group = {
           render: () => (
             <StaffPage as="div">
               <ChangesTable
+                search={changesSearch({})}
                 log={{ changes: exampleChanges, total: exampleChanges.length, pages: 1, pageSize: 100 }}
                 page={1}
                 airtableTable="https://airtable.com/app/tbl"

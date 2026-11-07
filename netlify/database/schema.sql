@@ -1845,7 +1845,7 @@ CREATE TABLE public.saved_filters (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_by text,
     updated_at timestamp with time zone,
-    CONSTRAINT saved_filters_list_check CHECK ((list = ANY (ARRAY['politicians'::text, 'supporters'::text, 'events'::text])))
+    CONSTRAINT saved_filters_list_check CHECK ((list = ANY (ARRAY['politicians'::text, 'supporters'::text, 'events'::text, 'audit-log'::text])))
 );
 
 --

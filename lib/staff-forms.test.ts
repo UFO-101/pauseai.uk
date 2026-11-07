@@ -193,6 +193,7 @@ describe("a saved filter's form", () => {
   it("needs the supporters permission only for that list", () => {
     expect(savedFilterNeeds(form({ list: "supporters" }))).toBe("supporters");
     expect(savedFilterNeeds(form({ list: "politicians" }))).toBe("account");
+    expect(savedFilterNeeds(form({ list: "audit-log" }))).toBe("admin");
     expect(savedFilterNeeds(form({ list: "nonsense" }))).toBe("account");
   });
 

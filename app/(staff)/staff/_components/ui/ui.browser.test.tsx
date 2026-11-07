@@ -476,6 +476,90 @@ describe("FilterBar", () => {
     expect(halves[0].element().querySelector("span")).toBeNull();
   });
 
+  describe("a filter that repeats", () => {
+    const kind: Filter = {
+      name: "kind",
+      label: "Kind",
+      repeat: true,
+      options: [
+        { value: "", label: "Any" },
+        { value: "a", label: "A" },
+        { value: "b", label: "B" },
+        { value: "c", label: "C" },
+        { value: "two", label: "Two", seconds: [{ value: "two", label: "Both" }] },
+      ],
+    };
+    const bar = (values: string[]) => (
+      <FilterBar path="/list" values={{ kind: values }} search={{ name: "q", label: "Search" }} filters={[kind]} />
+    );
+    const choices = () =>
+      [...document.querySelectorAll<HTMLAnchorElement>("[popover]:popover-open a")].map((a) => [
+        a.textContent,
+        a.getAttribute("href"),
+        a.getAttribute("aria-current"),
+      ]);
+
+    it("says all it finds on one chip, whose choices add to it and take off it", async () => {
+      await render(bar(["a", "b"]));
+      await page.getByRole("button", { name: "Kind: A or B" }).click();
+      expect(choices()).toEqual([
+        ["A", "/list?kind=b", "true"],
+        ["B", "/list?kind=a", "true"],
+        ["C", "/list?kind=a&kind=b&kind=c", null],
+        ["Two", "/list?kind=a&kind=b&kind=two", null],
+        [staffCopy.filters.exceptAllInstead, "/list?kind=%21a&kind=%21b", null],
+        [staffCopy.filters.remove, "/list", null],
+      ]);
+    });
+
+    it("says all it leaves out on another, and each chip's menu keeps the other's, and offers none of its", async () => {
+      await render(bar(["a", "!b", "!c"]));
+      await page.getByRole("button", { name: staffCopy.filters.notChip("Kind", "B or C") }).click();
+      expect(choices()).toEqual([
+        ["B", "/list?kind=a&kind=%21c", "true"],
+        ["C", "/list?kind=a&kind=%21b", "true"],
+        ["Two", "/list?kind=a&kind=%21b&kind=%21c&kind=%21two", null],
+        [staffCopy.filters.onlyAllInstead, "/list?kind=a&kind=b&kind=c", null],
+        [staffCopy.filters.remove, "/list?kind=a", null],
+      ]);
+    });
+
+    it("turns one choice the other way with the words for one", async () => {
+      const { rerender } = await render(bar(["a"]));
+      await page.getByRole("button", { name: "Kind: A" }).click();
+      expect(choices().slice(-2)).toEqual([
+        [staffCopy.filters.exceptInstead, "/list?kind=%21a", null],
+        [staffCopy.filters.remove, "/list", null],
+      ]);
+      await userEvent.keyboard("{Escape}");
+      await rerender(bar(["!a"]));
+      await page.getByRole("button", { name: staffCopy.filters.notChip("Kind", "A") }).click();
+      expect(choices().slice(-2)).toEqual([
+        [staffCopy.filters.onlyInstead, "/list?kind=a", null],
+        [staffCopy.filters.remove, "/list", null],
+      ]);
+    });
+
+    it("keeps a choice it doesn't know on the chip, to take off; one in two parts has its own, and isn't offered again", async () => {
+      await render(bar(["gone", "two"]));
+      expect(page.getByRole("group", { name: "Kind" }).element().textContent).toContain("Both");
+      await page.getByRole("button", { name: "Kind: gone" }).click();
+      expect(choices().slice(0, 4)).toEqual([
+        ["gone", "/list?kind=two", "true"],
+        ["A", "/list?kind=gone&kind=two&kind=a", null],
+        ["B", "/list?kind=gone&kind=two&kind=b", null],
+        ["C", "/list?kind=gone&kind=two&kind=c", null],
+      ]);
+    });
+
+    it("marks a chosen choice with its × while one clicked is on its way", async () => {
+      await render(bar(["a"]));
+      await page.getByRole("button", { name: "Kind: A" }).click();
+      const chosen = document.querySelector("[popover]:popover-open a[aria-current]")!;
+      expect(getComputedStyle(chosen, "::after").content).toContain("×");
+    });
+  });
+
   it("shows a searchable filter's choices only once something's typed, those that have it", async () => {
     await render(
       <FilterBar
@@ -795,8 +879,7 @@ describe("filterWords", () => {
     ];
     expect(filterWords(filters, { q: ["jo", "x"], kind: ["a", "b", "!a"], near: "LS1" }, "q")).toEqual([
       `${staffCopy.search} jo`,
-      "Kind A",
-      "Kind b",
+      `Kind ${staffCopy.filters.anyOf(["A", "b"])}`,
       staffCopy.filters.notChip("Kind", "A"),
       "Near LS1",
     ]);
