@@ -4,6 +4,12 @@ import { COUNTRIES, PERSON_STATUSES } from "@/lib/server/politicians";
 import { staffCopy } from "./staff-interface";
 
 describe("staff interface copy", () => {
+  it("says one or more of what the dashboard and the Luma import count", () => {
+    const { eventRegistrations } = staffCopy.home.dashboard.metrics;
+    expect(eventRegistrations(1)).not.toBe(eventRegistrations(2));
+    expect(staffCopy.luma.eventsTagged(1)).not.toBe(staffCopy.luma.eventsTagged(2).replace("2", "1"));
+  });
+
   it("puts the counts into each import's result", () => {
     const sync = staffCopy.syncs.statuses({ added: 12, changed: 3, removed: 4 });
     for (const n of ["12", "3", "4"]) expect(sync).toContain(n);

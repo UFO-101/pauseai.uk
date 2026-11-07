@@ -492,8 +492,10 @@ describe("StaffDashboard", () => {
       .element(quiet[1])
       .toHaveTextContent(`${copy.none}${copy.metrics.lettersReplied(0)}${copy.change.down(1, 30)}`);
     expect(quiet[0].element().querySelectorAll("[data-campaign]")).toHaveLength(0);
-    // Nobody signed: every politician.
-    expect(tileLink(copy.metrics.mpsSigned(0))?.getAttribute("href")).toBe("/staff/politicians");
+    // With no signature in the window: its list, empty, as the tile says none.
+    expect(tileLink(copy.metrics.mpsSigned(0))?.getAttribute("href")).toBe(
+      "/staff/politicians?signed=30&status=any&sort=asks",
+    );
     // With no bar the letters tile takes a sixth like the rest; a line of nothing but zeros isn't drawn.
     expect(quiet[0].element().className).toBe(spanClass(1));
     const flat = {

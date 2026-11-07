@@ -1,6 +1,6 @@
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { runSql } from "@/scripts/fresh-database.mjs";
-import { lockTable, syncPoliticians } from "../steps";
+import { importLuma, lockTable, syncPoliticians } from "../steps";
 import { BASE, expect, frame, story, test } from "./fixtures";
 import { PM_LETTER, staffEmail, logIn, holdNextPage, loadingLine } from "./staff-steps";
 
@@ -142,6 +142,22 @@ test("The dashboard's tabs and numbers", async ({ page, flowDatabase }) => {
   await frame(page, "All the letters, in those 30 days");
 });
 
+test("Pointing at a bar on the dashboard", { tag: "@desktop-only" }, async ({ page, request, flowDatabase }) => {
+  story(
+    "New supporters' bars split by where they came from. Pointing at the last one says what it holds, a line each, in a box as wide as it needs.",
+  );
+  await importLuma(request, BASE);
+  await logIn(page, flowDatabase, ["supporters"]);
+  await page.goto(`${BASE}/staff?days=90`);
+  const bars = page.getByRole("img", { name: /by source/ });
+  const box = (await bars.boundingBox())!;
+  await page.mouse.move(box.x + box.width - 2, box.y + box.height - 2);
+  const label = page.getByRole("status");
+  await expect(label).toBeVisible();
+  expect((await label.boundingBox())!.width).toBeGreaterThan(box.width / 8);
+  await frame(page, "A bar pointed at", { window: true, hover: bars.locator(":scope > span").last() });
+});
+
 test("The MPs signed tile", async ({ page, request, flowDatabase }) => {
   story(
     "An admin records that Polly Placeholder signed the Frontier AI letter to the Prime Minister. The dashboard's MPs signed tile counts her.",
@@ -182,10 +198,8 @@ test("The MPs signed tile", async ({ page, request, flowDatabase }) => {
     .getByRole("link")
     .filter({ hasText: staffCopy.home.dashboard.metrics.mpsSigned(2) })
     .click();
-  await expect(page).toHaveURL(`${BASE}/staff/politicians?answer=signed&sort=asks`);
-  await expect(
-    page.getByRole("button", { name: `${staffCopy.politicians.answer}: ${staffCopy.statuses.signed}` }),
-  ).toBeVisible();
+  await expect(page).toHaveURL(`${BASE}/staff/politicians?signed=7&status=any&sort=asks`);
+  await expect(page.getByRole("button", { name: new RegExp(`^${staffCopy.politicians.signedIn}`) })).toBeVisible();
   await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toHaveCount(0);
   await frame(page, "Everyone who signed");

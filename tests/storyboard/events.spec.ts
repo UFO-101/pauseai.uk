@@ -76,7 +76,7 @@ test("Tagging new events on Luma", async ({ page, request, flowDatabase }) => {
     "The first import copies the calendar. Then two new events appear on Luma with no tags: one in Oxford, and one in Tunbridge Wells, where no tag fits.",
   );
   await importLuma(request, BASE);
-  const unclear = `Kent flyering ${test.info().testId}`;
+  const unclear = "Kent flyering";
   runSql(
     flowDatabase,
     `INSERT INTO luma_events (id, name, url, start_at, access, city, region, location_type) VALUES
