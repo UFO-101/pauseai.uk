@@ -53,9 +53,10 @@ test("A note on a politician", async ({ page, request, flowDatabase }) => {
   await openPolitician(page, "Polly Placeholder");
   const history = page.getByRole("region", { name: copy.historyTitle });
   await history.getByRole("button", { name: staffCopy.notes.write }).click();
-  await history
-    .getByRole("textbox", { name: staffCopy.notes.note })
-    .fill("Her office says write to www.example.org/contact");
+  const box = history.getByRole("textbox", { name: staffCopy.notes.note });
+  await box.fill("Her office says write to www.example.org/contact");
+  // Where focus leaves the window varies, so it's put in one place.
+  await box.evaluate((el) => el.scrollIntoView({ block: "center", behavior: "instant" }));
   await frame(page, "The note, written");
   story(
     "Once added, the note is the newest thing in her history, and the web address in it is a link. Airtable's notes on her stay where they were, beside it.",
