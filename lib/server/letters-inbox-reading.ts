@@ -8,7 +8,7 @@ import { sentBy } from "./email";
 import { readBounce } from "./gmail-reading";
 import { letterEvent } from "./letter-sending";
 import { isLettersInboxAddress, proxyTag } from "./letters-inbox";
-import { decodeWords, fromAddress, messageIds } from "./mime";
+import { decodeWords, fromAddress, messageIds } from "@/lib/email-parsing/mime";
 import { saveLetterReply } from "./outside-services/blobs";
 import { notifyDomain } from "./outside-services/postmark";
 import {
@@ -19,7 +19,7 @@ import {
   labelGmailMessage,
   type GmailMessageHeaders,
 } from "./outside-services/gmail";
-import { isMachineReply } from "./postmark-webhooks";
+import { isMachineReply } from "@/lib/email-parsing/subjects";
 import { overRelayCap, relay } from "./relays";
 
 // Reading the letters inbox (lib/server/letters-inbox.ts), from the

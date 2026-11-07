@@ -24,7 +24,7 @@ import { answerLabels } from "@/lib/mailing-fields";
 import StaffLink from "./ui/StaffLink";
 import { DEFAULT_SENDER } from "@/lib/gmail-connect";
 import { looksLikeEmail } from "@/lib/email-your-mp";
-import { named } from "@/lib/named-address";
+import { named } from "@/lib/email-parsing/addresses";
 import { leavePage } from "@/lib/leave-page";
 import { scheduleProblems } from "@/lib/mailing-schedule";
 import { filtersPath } from "@/lib/staff-search";

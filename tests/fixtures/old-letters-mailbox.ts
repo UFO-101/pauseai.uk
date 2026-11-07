@@ -226,7 +226,7 @@ const OLD_MAIL: readonly OldMail[] = [
     "2026-08-02T09:00:00.000Z",
     `Polly Placeholder <${POLLY}>`,
     "Re: Coffee next week?",
-    "Thursday works.",
+    "Thursday works. *Come to Portcullis House.*\n\nDirections: https://example.org/portcullis-house",
     { "In-Reply-To": "<0a13@mail.gmail.com>", References: "<0a13@mail.gmail.com>" },
   ),
   // In the same thread, a message no search finds, from someone else: kept as the thread is.

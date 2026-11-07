@@ -15,7 +15,7 @@ import {
   isSeriesMetric,
   METRIC_LINKS,
   SERIES_POINTS,
-  signedHref,
+  agreedHref,
 } from "@/lib/staff-dashboard";
 import { SUPPORTER_SOURCES } from "@/lib/supporters";
 import type { Permission } from "@/lib/staff-permissions";
@@ -133,12 +133,7 @@ function SourceBars({ dashboard, label }: { dashboard: Dashboard; label: string 
       parts={SUPPORTER_SOURCES.map((key) => ({ key, label: sources[key] }))}
       bars={points.map((point) => ({
         counts: point.sources,
-        label: [
-          copy.seriesPoint(dashboard.days, staffDate(point.from), point.count),
-          ...SUPPORTER_SOURCES.filter((key) => point.sources[key]).map(
-            (key) => `${sources[key]} ${point.sources[key]}`,
-          ),
-        ].join(" · "),
+        title: copy.seriesPoint(dashboard.days, staffDate(point.from), point.count),
       }))}
       from={staffDate(points[0].from)}
       to={staffDate(dashboard.asOf)}
@@ -157,7 +152,7 @@ function Tile({
   permissions: readonly Permission[];
 }) {
   const { permissions: needed, worse } = METRIC_LINKS[metric];
-  const href = metric === "mpsSigned" ? signedHref(dashboard) : METRIC_LINKS[metric].href;
+  const href = metric === "politiciansAgreed" ? agreedHref(dashboard) : METRIC_LINKS[metric].href(dashboard.days);
   const count = dashboard.counts[metric];
   const label = copy.metrics[metric](count.current);
   // A bar only when some campaign counted, a line or bars by source only when some window counted; the tile is a third, not a sixth, only to fit one, and half for the bars by source.
@@ -167,12 +162,7 @@ function Tile({
   const bySource = metric === "supportersAdded" && dashboard.supportersBySource.some((point) => point.count > 0);
   const inside = (
     <>
-      <span className={styles.number}>
-        {count.current === 0 ? copy.none : count.current}
-        {metric === "lettersSent" && dashboard.testLetters > 0 && (
-          <span className={styles.test}>{copy.testLetters(dashboard.testLetters)}</span>
-        )}
-      </span>
+      <span className={styles.number}>{count.current === 0 ? copy.none : count.current}</span>
       <span className={styles.label}>{label}</span>
       {bar && <CampaignBar counts={dashboard.byCampaign[metric as CampaignMetric]} />}
       {line && (

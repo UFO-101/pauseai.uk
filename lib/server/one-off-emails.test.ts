@@ -20,7 +20,6 @@ import {
   getOneOffThread,
   keepIfPoliticianThread,
   keepOneOff,
-  listOneOffThreads,
   ONE_OFF_HEADERS,
   oneOffInbox,
   politicianOneOffs,
@@ -191,25 +190,24 @@ describeWithDatabase("one-off emails", () => {
     const polly = await addTestPolitician();
     await keep({ id: "a", from: `Polly <${POLLY}>`, subject: "Ours", at: 1790000000000 });
     await keep({ id: "b", from: "Vera <vera@example.com>", to: POLLY, subject: "Theirs", at: 1790000009000 });
-    const all = await listOneOffThreads(["supporters"]);
-    expect(all.threads.map((t) => t.subject)).toEqual(["Theirs", "Ours"]);
-    expect(all.threads[0]).toMatchObject({
+    const all = await politicianOneOffs(polly, ["supporters"]);
+    expect(all.map((t) => t.subject)).toEqual(["Theirs", "Ours"]);
+    expect(all[0]).toMatchObject({
       participants: ["Vera"],
       someoneElse: true,
       messages: 1,
       people: [{ id: polly, name: "Polly Placeholder" }],
     });
-    expect(all.total).toBe(2);
-    const limited = await listOneOffThreads([]);
-    expect(limited.threads[0]).toMatchObject({
+    const limited = await politicianOneOffs(polly, []);
+    expect(limited[0]).toMatchObject({
       subject: null,
       participants: null,
       mailboxes: null,
       answered: null,
       someoneElse: true,
     });
-    expect(limited.threads[1]).toMatchObject({ subject: "Ours", participants: ["Polly"], answered: false });
-    expect(limited.threads[1].mailboxes).toHaveLength(1);
+    expect(limited[1]).toMatchObject({ subject: "Ours", participants: ["Polly"], answered: false });
+    expect(limited[1].mailboxes).toHaveLength(1);
   });
 
   it("opens a thread's messages, its text from its blob; for staff without supporters, not one with someone else", async () => {

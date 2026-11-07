@@ -1,5 +1,5 @@
 import { staffCopy } from "@/lib/content/staff-interface";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import {
@@ -12,7 +12,6 @@ import {
 } from "@/tests/database";
 import { query } from "./db";
 import {
-  bareAddress,
   blockOn,
   type DeliveryProblem,
   isBlocked,
@@ -47,13 +46,6 @@ const sends = () =>
     'SELECT purpose, letter_id AS "letterId", address, outcome, message_id AS "messageId" FROM email_sends ORDER BY id',
   );
 const audit = () => query("SELECT actor, action, details FROM audit_log ORDER BY id");
-
-describe("bareAddress", () => {
-  it("takes the address out of a To header, lowercased", () => {
-    expect(bareAddress('"Jo Bloggs MP" <Jo@Example.org>')).toBe("jo@example.org");
-    expect(bareAddress(" Jo@Example.org ")).toBe("jo@example.org");
-  });
-});
 
 describeWithDatabase("send", () => {
   useTestDatabase();

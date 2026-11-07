@@ -1,4 +1,5 @@
-import { addressesIn, quotedHeaders } from "./old-letters";
+import { addressesIn } from "@/lib/email-parsing/addresses";
+import { quotedHeaders } from "@/lib/email-parsing/quoted";
 
 // One-off emails: threads with a politician that aren't a letter of a
 // campaign or mailing. What counts as one, and who a thread's people are
@@ -67,21 +68,6 @@ export function participants(senders: { name: string; address: string }[]): stri
   return [...new Set(senders.map(({ name, address }) => name || address))];
 }
 
-/** The people on a header's line, name and address, reading commas inside quotes as part of a name. */
-export function mailboxes(line: string): { name: string; address: string }[] {
-  const parts = line.match(/(?:"[^"]*"|<[^>]*>|[^,])+/g) ?? [];
-  return parts
-    .filter((part) => part.trim())
-    .map((part) => {
-      const address = addressesIn(part)[0] ?? "";
-      const name = part
-        .replace(/<[^>]*>/, "")
-        .trim()
-        .replace(/^"|"$/g, "");
-      return { name: name.toLowerCase() === address ? "" : name, address };
-    });
-}
-
 /** Which politician each address is, leaving out one that several share, as it can't say whose. */
 export function politicianAddresses(book: PoliticianBook, addresses: string[]): Record<string, number> {
   const known = addresses.map((address) => [address, politiciansOf(book, address)] as const);
@@ -91,6 +77,11 @@ export function politicianAddresses(book: PoliticianBook, addresses: string[]): 
 /** Whether an address is one of PauseAI's: a connected Gmail or an alias. */
 export function isPauseaiAddress(address: string, connected: readonly string[]): boolean {
   return connected.includes(address) || PAUSEAI_ALIASES.includes(address);
+}
+
+/** Whether an address is anyone's at PauseAI, connected or not. */
+export function isAtPauseai(address: string): boolean {
+  return /@pauseai\.(uk|info)$/.test(address);
 }
 
 /** Whether a sender hides its thread from staff without `supporters`: neither a politician, nor on a parliament's domain, nor PauseAI's. */

@@ -1,4 +1,4 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { query, transaction } from "@/lib/server/db";
 import { migrate } from "@/scripts/db-migrate.mjs";
 import {
@@ -370,6 +370,17 @@ describeWithDatabase("listSupporters and getSupporter", () => {
   }
   const names = async (filter: Partial<SupporterFilter>) =>
     (await listSupporters({ sort: "active", dir: "desc", page: 1, ...filter })).supporters.map((s) => s.name);
+
+  it("finds those first seen, registered or unsubscribed in the last so many days", async () => {
+    await people();
+    vi.stubEnv("FIXTURE_NOW", "2026-10-15T00:00:00.000Z");
+    expect(await names({ registeredDays: 7 })).toEqual(["Jane"]);
+    expect(await names({ unsubscribedDays: 7 })).toEqual(["Sam"]);
+    expect(await names({ firstDays: 7 })).toEqual([]);
+    vi.stubEnv("FIXTURE_NOW", "2026-06-02T00:00:00.000Z");
+    expect(await names({ firstDays: 7 })).toEqual(["Pat"]);
+    vi.unstubAllEnvs();
+  });
 
   it("lists everyone newest activity first, with what's known of each, and pages", async () => {
     await people();

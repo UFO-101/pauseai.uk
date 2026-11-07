@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { menuItemArmedClass, menuItemDangerClass } from "./ui/Menu";
+import MenuSubmit from "./ui/MenuSubmit";
 
 /** How long a delete waits for its second press. */
 const ARMED_FOR = 4000;
@@ -39,16 +40,9 @@ function Press({
   if (menuItem) {
     // Two buttons, not one that changes: one turning into submit as it's clicked would send the form on the first press.
     return armed || pending ? (
-      <button
-        key="armed"
-        type="submit"
-        className={menuItemArmedClass}
-        disabled={pending}
-        autoFocus
-        onBlur={() => setArmed(false)}
-      >
+      <MenuSubmit key="armed" className={menuItemArmedClass} autoFocus onBlur={() => setArmed(false)}>
         {staffCopy.deleteIt}
-      </button>
+      </MenuSubmit>
     ) : (
       <button key="first" type="button" className={menuItemDangerClass} onClick={() => setArmed(true)}>
         {label}

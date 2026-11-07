@@ -1,7 +1,7 @@
 import "server-only";
 import type { LumaEvent } from "@/lib/events";
 import { now } from "@/lib/now";
-import { LUMA_PAGE_SIZE, lumaList, type LumaPage } from "./luma-api";
+import { LUMA_PAGE_SIZE, lumaList, lumaPost, type LumaPage } from "./luma-api";
 import { outsideFetch } from "./outside-fetch";
 import { problem } from "../problems";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -158,6 +158,26 @@ export async function listCalendarEvents(cursor?: string): Promise<LumaPage<Cale
       ];
     }),
   };
+}
+
+/** The names of the calendar's event tags (https://docs.luma.com/reference/get_v1-calendars-event-tags-list). Throws as lumaList does. */
+export async function listEventTags(): Promise<string[]> {
+  const page = await lumaList<{ name?: string } | null>("/v1/calendars/event-tags/list", new URLSearchParams());
+  return page.entries.flatMap((tag) => (tag?.name ? [tag.name] : []));
+}
+
+/**
+ * Gives an event on our calendar one of the calendar's tags, by name
+ * (https://docs.luma.com/reference/post_v1-calendars-event-tags-apply), which
+ * does nothing to one that has it. Throws as lumaPost does, or if Luma says the
+ * event isn't on the calendar.
+ */
+export async function applyEventTag(tag: string, eventId: string): Promise<void> {
+  const { skipped_count } = await lumaPost<{ skipped_count?: number }>("/v1/calendars/event-tags/apply", {
+    tag,
+    event_ids: [eventId],
+  });
+  if (skipped_count) throw new Error(`Luma skipped event ${eventId}: it isn't on the calendar`);
 }
 
 /** A contact of the calendar, and since when. */

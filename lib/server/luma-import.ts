@@ -7,6 +7,7 @@ import { refreshSupporterFacts, refreshSupportersList } from "./supporter-facts"
 import { lookUpPlaces } from "./supporter-places";
 import { linkSupporters } from "./supporters";
 import { assignRuleOwners, ownerEmails } from "./staff-events";
+import { tagUpcomingEvents, unclearEventEmails, type UnclearEvent } from "./event-tagging";
 import { LumaRateLimited, type LumaPage } from "./outside-services/luma-api";
 import {
   type CalendarEvent,
@@ -23,7 +24,8 @@ import { staffCopy } from "@/lib/content/staff-interface";
 // luma_event_hosts: every public event, the guests who registered for each,
 // our own events' hosts, and the calendar's contacts, and from them who has
 // left the calendar or come back (recordContactsPass); then where new supporters and events are
-// (supporter-places.ts), and owners for events with none (staff-events.ts). Every 5 minutes (app/api/cron/import-luma) or when staff
+// (supporter-places.ts), tags on Luma for upcoming events with none (event-tagging.ts), and owners for events
+// with none (staff-events.ts). Every 5 minutes (app/api/cron/import-luma) or when staff
 // ask, each run in the import log (import-runs.ts, as "import-luma").
 //
 // A run has about 20 seconds (Netlify's scheduled functions stop at 30) and
@@ -132,13 +134,14 @@ async function saveState(list: ImportList, cursor: string, finished: boolean, db
 /** Upserts an event, listed again if it was removed; returns whether anything was new or different. */
 async function upsertEvent(event: CalendarEvent, db: Queryable): Promise<boolean> {
   const rows = await query(
-    `INSERT INTO luma_events (id, name, url, start_at, access, city, latitude, longitude, tags, created_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    `INSERT INTO luma_events (id, name, url, start_at, access, city, latitude, longitude, tags, created_at, location_type, region)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, url = EXCLUDED.url, start_at = EXCLUDED.start_at,
        access = EXCLUDED.access, city = EXCLUDED.city, latitude = EXCLUDED.latitude, longitude = EXCLUDED.longitude,
-       tags = EXCLUDED.tags, created_at = EXCLUDED.created_at, removed_at = NULL, changed_at = now()
-     WHERE (luma_events.name, luma_events.url, luma_events.start_at, luma_events.access, luma_events.city, luma_events.latitude, luma_events.longitude, luma_events.tags, luma_events.created_at, luma_events.removed_at)
-       IS DISTINCT FROM (EXCLUDED.name, EXCLUDED.url, EXCLUDED.start_at, EXCLUDED.access, EXCLUDED.city, EXCLUDED.latitude, EXCLUDED.longitude, EXCLUDED.tags, EXCLUDED.created_at, NULL)
+       tags = EXCLUDED.tags, created_at = EXCLUDED.created_at, location_type = EXCLUDED.location_type, region = EXCLUDED.region,
+       removed_at = NULL, changed_at = now()
+     WHERE (luma_events.name, luma_events.url, luma_events.start_at, luma_events.access, luma_events.city, luma_events.latitude, luma_events.longitude, luma_events.tags, luma_events.created_at, luma_events.location_type, luma_events.region, luma_events.removed_at)
+       IS DISTINCT FROM (EXCLUDED.name, EXCLUDED.url, EXCLUDED.start_at, EXCLUDED.access, EXCLUDED.city, EXCLUDED.latitude, EXCLUDED.longitude, EXCLUDED.tags, EXCLUDED.created_at, EXCLUDED.location_type, EXCLUDED.region, NULL)
      RETURNING id`,
     [
       event.id,
@@ -151,6 +154,8 @@ async function upsertEvent(event: CalendarEvent, db: Queryable): Promise<boolean
       event.place?.longitude ?? null,
       event.tags,
       event.createdAt,
+      event.location_type ?? null,
+      event.geo_address_info?.region ?? null,
     ],
     db,
   );
@@ -479,9 +484,10 @@ async function importContacts(budget: Budget, db: Queryable): Promise<{ changed:
 export function importLuma(startedBy: string, budgetMs = BUDGET_MS): Promise<LumaImportResult> {
   return keepingFailure(JOB, startedBy, async () => {
     try {
-      const { result, owners } = await run(startedBy, budgetMs);
+      const { result, owners, unclear } = await run(startedBy, budgetMs);
       // Once what the run gave them is kept.
       await ownerEmails(owners);
+      await unclearEventEmails(unclear);
       return result;
     } catch (error) {
       if (!(error instanceof ContactsPassFailed)) throw error;
@@ -491,11 +497,11 @@ export function importLuma(startedBy: string, budgetMs = BUDGET_MS): Promise<Lum
   });
 }
 
-/** A run: what it did, and the owners the rules gave events to, to be told. */
+/** A run: what it did, the owners the rules gave events to, to be told, and the events it couldn't tag, to be asked about. */
 function run(
   startedBy: string,
   budgetMs: number,
-): Promise<{ result: LumaImportResult; owners: Map<string, string[]> }> {
+): Promise<{ result: LumaImportResult; owners: Map<string, string[]>; unclear: UnclearEvent[] }> {
   return transaction(async (db) => {
     const result: LumaImportResult = {
       events: 0,
@@ -517,7 +523,7 @@ function run(
     if (!locked) {
       result.stoppedBy = "running";
       await recordRun(JOB, startedBy, "unchanged", result, db);
-      return { result, owners: new Map() };
+      return { result, owners: new Map(), unclear: [] };
     }
     const budget = new Budget(budgetMs);
     result.events = await importEvents(budget, db);
@@ -545,8 +551,11 @@ function run(
     result.supportersAdded = links.supportersAdded;
     result.linked = links.linked;
     result.places = await lookUpPlaces(db);
+    const tagging = await tagUpcomingEvents(db);
+    result.eventsTagged = tagging.tagged;
     const changed =
       result.events +
+        tagging.tagged +
         result.guestsChanged +
         result.hostsChanged! +
         result.people +
@@ -562,11 +571,11 @@ function run(
       await refreshSupportersList(db);
       result.refreshed = true;
     }
-    // New events, and any whose owner's account went, get their owners by the rules.
+    // New events, and any whose owner's account went, get their owners by the rules, which go by their tags too.
     const owners = await assignRuleOwners(db);
-    result.requests = budget.requests;
+    result.requests = budget.requests + tagging.requests;
     if (budget.stoppedBy) result.stoppedBy = budget.stoppedBy;
     await recordRun(JOB, startedBy, changed ? "ok" : "unchanged", result, db);
-    return { result, owners };
+    return { result, owners, unclear: tagging.unclear };
   });
 }

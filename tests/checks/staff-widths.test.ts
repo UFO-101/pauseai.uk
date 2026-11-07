@@ -16,6 +16,7 @@ const ALLOWED: Record<string, string> = {
   // Over the page, where the grid doesn't reach.
   "DeletePolitician.module.css .confirm": "a popover",
   "MailingEditor.module.css .partMenu": "a popover",
+  "StackedBars.module.css .label": "a tooltip, wider than its chart",
   "MailingWriter.module.css .ask": "a field",
   "MailingWriter.module.css .sender": "a field",
   "MailingWriter.module.css .day": "a field",

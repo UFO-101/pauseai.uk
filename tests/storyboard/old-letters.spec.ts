@@ -287,12 +287,16 @@ test("One-off emails", async ({ page, request, flowDatabase }) => {
   story("One-off emails are threads with politicians that aren't part of a mailing or campaign.");
   await ready(page, flowDatabase, request);
   await press(page, flowDatabase);
-  await page.goto(`${BASE}/staff/one-off`);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(oneOff.title);
+  await page.goto(`${BASE}/staff/emails?type=one-off`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.allLetters.title);
   await frame(page, "The one-off emails");
 
   story("A thread shows every message, from whichever mailbox kept it.");
-  await page.getByRole("link", { name: "Coffee next week?" }).click();
+  await page
+    .getByRole("row")
+    .filter({ hasText: "Coffee next week?" })
+    .getByRole("link", { name: staffCopy.allLetters.theThread })
+    .click();
   await expect(page.getByText("Thursday works.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Polly Placeholder" }).first()).toBeVisible();
   await frame(page, "A thread");
@@ -305,9 +309,10 @@ test("One-off emails", async ({ page, request, flowDatabase }) => {
 
   story("Staff without the supporters permission can't read a thread with someone else in it, or see who.");
   await logIn(page, flowDatabase, []);
-  await page.goto(`${BASE}/staff/one-off`);
+  await page.goto(`${BASE}/staff/emails?type=one-off`);
+  await expect(page.getByText(staffCopy.allLetters.withheld)).toBeVisible();
   await expect(page.getByText("Vera Volunteer")).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Coffee next week?" })).toBeVisible();
+  await expect(page.getByRole("row").filter({ hasText: "Coffee next week?" })).toBeVisible();
   await frame(page, "Without the permission");
   const [hidden] = runSql(flowDatabase, "SELECT id FROM one_off_threads WHERE someone_else LIMIT 1");
   await page.goto(`${BASE}/staff/one-off/${hidden}`);

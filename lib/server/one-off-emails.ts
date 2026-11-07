@@ -1,9 +1,11 @@
 import "server-only";
+import { headerText } from "@/lib/email-parsing/mime";
 import { gzipSync } from "node:zlib";
-import { addressesIn, realSender } from "@/lib/old-letters";
+import { addressesIn, realSender } from "@/lib/email-parsing/addresses";
 import {
   isPauseaiAddress,
   isRecognisedMail,
+  isAtPauseai,
   isSomeoneElse,
   participants,
   politicianAddresses,
@@ -16,8 +18,9 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { now } from "@/lib/now";
 import type { Permission } from "@/lib/staff-permissions";
 import { query, type Queryable } from "./db";
-import { messageContent, wholeTextOf } from "./letter-threads";
-import { decodeWords, fromAddress, messageIds, parseMime } from "./mime";
+import { messageContent } from "./letter-threads";
+import { wholeTextOf } from "@/lib/email-parsing/mime";
+import { decodeWords, fromAddress, messageIds, parseMime } from "@/lib/email-parsing/mime";
 import { notifyStaff, staffLink } from "./notifications";
 import { deleteLetterReply, saveLetterReply } from "./outside-services/blobs";
 import {
@@ -58,11 +61,6 @@ export const ONE_OFF_HEADERS = [
 /** The shared inbox one-off emails are copied to, as the page says: POLICY_INBOX, or else its usual address. */
 export function oneOffInbox(): string {
   return process.env.POLICY_INBOX || "policy@pauseai.uk";
-}
-
-/** A header's text, decoded; blank if the message hasn't one. */
-export function headerText(headers: Map<string, string>, name: string): string {
-  return decodeWords(headers.get(name) ?? "");
 }
 
 /** A message's Message-ID, if it has one. */
@@ -320,7 +318,7 @@ export async function reportUnmatchedMail(token: (account: string) => Promise<st
     lines.length &&
     !(await notifyStaff(
       words.subject(lines.length),
-      words.body(more ? [...lines, words.more(more)] : lines, staffLink("/staff/one-off", undefined)),
+      words.body(more ? [...lines, words.more(more)] : lines, staffLink("/staff/emails?type=one-off", undefined)),
       null,
       "staff-report",
     ))
@@ -351,25 +349,51 @@ export type OneOffThreadRow = {
   answered: boolean | null;
 };
 
-const PAGE_SIZE = 100;
-
 const PEOPLE = `coalesce((SELECT json_agg(json_build_object('id', n.id, 'name', n.name, 'isTest', coalesce(p.is_test, false)) ORDER BY n.name)
     FROM one_off_thread_people tp JOIN notable_people n ON n.id = tp.notable_person_id
     LEFT JOIN politicians p ON p.id = n.id WHERE tp.thread_id = t.id), '[]')`;
 
 type Sender = { name: string; address: string };
 
+/**
+ * The threads staff without `supporters` don't see: any with someone on one of
+ * its messages, its sender or on its To or Cc, who's neither PauseAI nor a
+ * politician, or that reading it marked so. Worked out as it's asked for, so it
+ * follows who the politicians and our accounts are.
+ */
+export async function threadsWithSomeoneElse(): Promise<number[]> {
+  const [rows, book, connected] = await Promise.all([
+    query<{ id: number; marked: boolean; addresses: string[] }>(
+      `SELECT t.id::int AS id, t.someone_else AS marked, coalesce(array_agg(address) FILTER (WHERE address IS NOT NULL), '{}') AS addresses
+       FROM one_off_threads t LEFT JOIN one_off_messages m ON m.thread_id = t.id
+         LEFT JOIN LATERAL unnest(m.addresses) address ON true
+       GROUP BY t.id`,
+    ),
+    politicianBook(),
+    connectedAccounts(),
+  ]);
+  return rows
+    .filter(
+      ({ marked, addresses }) =>
+        marked || addresses.some((address) => !isAtPauseai(address) && isSomeoneElse(book, address, connected)),
+    )
+    .map(({ id }) => id);
+}
+
 /** One-off threads, newest first, matching `where`: with permission, everything; otherwise, a thread with someone else in it shows only that it's there. */
 async function threadRows(where: string, params: unknown[], supporters: boolean, limit: number, offset: number) {
-  const visible = (column: string) => (supporters ? column : `CASE WHEN t.someone_else THEN NULL ELSE ${column} END`);
+  const hidden = `$${params.length + 1}::bigint[]`;
+  const visible = (column: string) =>
+    supporters ? column : `CASE WHEN t.id = ANY(${hidden}) THEN NULL ELSE ${column} END`;
+  const someoneElse = await threadsWithSomeoneElse();
   const [rows, book] = await Promise.all([
     query<Omit<OneOffThreadRow, "answered" | "participants"> & { senders: Sender[] | null }>(
-      `SELECT t.id::int AS id, ${visible("t.subject")} AS subject, t.someone_else AS "someoneElse", t.latest_at AS "latestAt",
+      `SELECT t.id::int AS id, ${visible("t.subject")} AS subject, t.id = ANY(${hidden}) AS "someoneElse", t.latest_at AS "latestAt",
        (SELECT count(*)::int FROM one_off_messages m WHERE m.thread_id = t.id) AS messages, ${PEOPLE} AS people,
        ${visible("(SELECT array_agg(DISTINCT m.account ORDER BY m.account) FROM one_off_messages m WHERE m.thread_id = t.id)")} AS mailboxes,
        ${visible("(SELECT json_agg(json_build_object('name', m.from_name, 'address', m.from_address) ORDER BY m.at, m.id) FROM one_off_messages m WHERE m.thread_id = t.id)")} AS senders
      FROM one_off_threads t WHERE ${where} ORDER BY t.latest_at DESC, t.id DESC LIMIT ${limit} OFFSET ${offset}`,
-      params,
+      [...params, someoneElse],
     ),
     politicianBook(),
   ]);
@@ -383,19 +407,6 @@ async function threadRows(where: string, params: unknown[], supporters: boolean,
         senders.map((sender) => sender.address),
       ),
   }));
-}
-
-/** A page of the one-off emails. */
-export async function listOneOffThreads(
-  permissions: readonly Permission[],
-  page = 1,
-): Promise<{ threads: OneOffThreadRow[]; total: number; pages: number; page: number; pageSize: number }> {
-  const supporters = permissions.includes("supporters");
-  const [threads, [{ total }]] = await Promise.all([
-    threadRows("true", [], supporters, PAGE_SIZE, (page - 1) * PAGE_SIZE),
-    query<{ total: number }>("SELECT count(*)::int AS total FROM one_off_threads"),
-  ]);
-  return { threads, total, page, pageSize: PAGE_SIZE, pages: Math.max(1, Math.ceil(total / PAGE_SIZE)) };
 }
 
 /** A politician's one-off emails, newest first. */

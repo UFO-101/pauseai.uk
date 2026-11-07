@@ -4,13 +4,11 @@ import type { MailingDoc } from "@/lib/mailing-doc";
 import { type ImportJob, type OldLettersImportResult, type OldLettersProgress } from "@/lib/import-runs";
 import { ownWords } from "@/lib/letter-changes";
 import {
-  addressesIn,
   augustColleagues,
   augustTemplate,
   fitTemplate,
   formDraft,
   formVersionAt,
-  isAcknowledgement,
   isReplySubject,
   joinSent,
   joinWindow,
@@ -19,11 +17,13 @@ import {
   OLD_MAILINGS,
   placeOurReply,
   placeReply,
-  restoreCutDown,
   templateDoc,
   templateOf,
   type ReplyCandidate,
 } from "@/lib/old-letters";
+import { addressesIn } from "@/lib/email-parsing/addresses";
+import { restoreCutDown } from "@/lib/email-parsing/quoted";
+import { isAcknowledgement } from "@/lib/email-parsing/subjects";
 import {
   PARLIAMENT_DOMAINS,
   isPauseaiAddress,
@@ -36,9 +36,10 @@ import { query, transaction } from "./db";
 import { gmailAccess } from "./gmail-accounts";
 import { keepReply, noteAutoReply } from "./gmail-reading";
 import { keepingFailure, recordRun } from "./import-runs";
-import { wholeTextOf } from "./letter-threads";
-import { messageIds, parseMime } from "./mime";
-import { addressesOn, headerText, keepOneOff, ONE_OFF_HEADERS, rfcIdOf, senderOf } from "./one-off-emails";
+import { wholeTextOf } from "@/lib/email-parsing/mime";
+import { messageIds, parseMime } from "@/lib/email-parsing/mime";
+import { addressesOn, keepOneOff, ONE_OFF_HEADERS, rfcIdOf, senderOf } from "./one-off-emails";
+import { headerText } from "@/lib/email-parsing/mime";
 import { airtableToken, fetchWebFormLetters, type WebFormLetterToImport } from "./outside-services/airtable";
 import {
   gmailFullMessage,
@@ -51,8 +52,8 @@ import {
   type GmailMessageHeaders,
 } from "./outside-services/gmail";
 import { connectedAccounts, politicianBook } from "./politician-book";
-import { isMachineReply } from "./postmark-webhooks";
-import { htmlAsText } from "./old-letters-text";
+import { isMachineReply } from "@/lib/email-parsing/subjects";
+import { htmlAsText } from "@/lib/email-parsing/mime";
 import { CAMPAIGNS } from "./web-form-import";
 import { problem } from "./problems";
 

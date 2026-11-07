@@ -79,9 +79,9 @@ describe("EventsTable", () => {
     // The owner's address may break before its @, so the column takes little room.
     const owner = protest.getByRole("cell").nth(5).element().querySelector("strong")!;
     expect(owner.innerHTML).toBe("joseph<wbr>@pauseai.uk");
-    // To come with no owner or doc: errors.
+    // To come with no owner: an error. With no doc: only a dash.
     await expect.element(row("AI risk talk").getByRole("cell").nth(5).getByText(copy.noOwner)).toHaveClass(/missing/);
-    await expect.element(row("AI risk talk").getByText(copy.noDoc)).toHaveClass(/missing/);
+    expect(cells("AI risk talk")[6]).toBe("–");
     // Sorted by when, soonest first: its heading says so, and leads to the other way; the doc's sorts too.
     const when = th(copy.columns.when);
     expect(when.getAttribute("aria-sort")).toBe("ascending");
@@ -98,7 +98,7 @@ describe("EventsTable", () => {
     await renderTable({ when: "past" });
     expect(names()).toEqual(["Lobbying your MP (online training)", "PauseAI London March"]);
     expect(cells("online training")[2]).toBe(copy.online);
-    await expect.element(row("London March").getByText(copy.noDoc)).not.toHaveClass(/missing/);
+    expect(cells("London March")[6]).toBe("–");
     const when = th(copy.columns.when);
     expect(when.getAttribute("aria-sort")).toBe("descending");
     // Its links keep the tab.
@@ -112,7 +112,6 @@ describe("EventsTable", () => {
     await expect
       .element(row("Manchester Social").getByRole("cell").nth(5).getByText(copy.noOwner))
       .not.toHaveClass(/missing/);
-    await expect.element(row("Manchester Social").getByText(copy.noDoc)).not.toHaveClass(/missing/);
   });
 
   it("doesn't call one to come with no owner an error once it's been taken off Luma", async () => {

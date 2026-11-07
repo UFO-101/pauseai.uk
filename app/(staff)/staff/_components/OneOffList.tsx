@@ -1,9 +1,8 @@
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { OneOffThreadRow } from "@/lib/server/one-off-emails";
-import { filtersPath, pageParam } from "@/lib/staff-search";
 import { staffTime } from "@/lib/staff-time";
-import ListFrame, { ListTable, type ListColumn } from "./ui/ListFrame";
+import { ListTable, type ListColumn } from "./ui/ListFrame";
 import StaffLink from "./ui/StaffLink";
 import Withheld from "./ui/Withheld";
 import TestTag from "./TestTag";
@@ -60,35 +59,5 @@ export function OneOffTable({ threads }: { threads: OneOffThreadRow[] }) {
       <h2>{copy.onPageTitle}</h2>
       <ListTable columns={oneOffColumns} rows={threads} rowKey={(t) => t.id} />
     </>
-  );
-}
-
-/** The one-off emails: a row for each thread, newest first. */
-export default function OneOffList({
-  threads,
-  total,
-  page,
-  pages,
-  pageSize,
-}: {
-  threads: OneOffThreadRow[];
-  total: number;
-  page: number;
-  pages: number;
-  pageSize: number;
-}) {
-  return (
-    <ListFrame
-      count={copy.threads(total)}
-      total={total}
-      page={page}
-      pages={pages}
-      pageSize={pageSize}
-      href={(n) => filtersPath(PATH, {}, pageParam(n))}
-      columns={oneOffColumns}
-      rows={threads}
-      rowKey={(t) => t.id}
-      empty={copy.none}
-    />
   );
 }

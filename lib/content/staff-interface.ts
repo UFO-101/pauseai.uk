@@ -76,7 +76,7 @@ export const staffCopy = {
     import: "Import data",
     changes: "Audit log",
     campaigns: "Campaigns",
-    oneOff: "One-off emails",
+    emails: "All emails",
     sentEmails: "Sent emails",
     // Beside a page the staff member first saw in the last 3 days.
     newTag: "new",
@@ -211,18 +211,17 @@ export const staffCopy = {
       windows: "Show",
       // After each number: what it counts, for one and for more.
       metrics: {
-        lettersSent: (n: number) => (n === 1 ? "letter to an MP" : "letters to MPs"),
-        lettersReplied: (n: number) => (n === 1 ? "letter got a reply" : "letters got a reply"),
-        mpsSigned: (n: number) => (n === 1 ? "MP signed" : "MPs signed"),
-        eventRegistrations: (n: number) => (n === 1 ? "event registration" : "event registrations"),
+        lettersSent: (n: number) => (n === 1 ? "supporter email to politicians" : "supporter emails to politicians"),
+        lettersReplied: (n: number) => (n === 1 ? "reply from politicians" : "replies from politicians"),
+        politiciansAgreed: (n: number) => (n === 1 ? "politician agreed to an ask" : "politicians agreed to an ask"),
+        eventRegistrations: (n: number) =>
+          n === 1 ? "person registered for an event" : "people registered for an event",
         eventsHeld: (n: number) => (n === 1 ? "event held" : "events held"),
         supportersAdded: (n: number) => (n === 1 ? "new supporter" : "new supporters"),
         unsubscribes: (n: number) => (n === 1 ? "unsubscribe from Luma emails" : "unsubscribes from Luma emails"),
       } as Record<string, (n: number) => string>,
       // A count of nothing, instead of a 0.
       none: "No",
-      // Beside the letters' number: those to the test MPs, left out of it.
-      testLetters: (n: number) => `+${n} test`,
       // Under the number: against the window before.
       change: {
         up: (n: number, days: number) => `▲ ${n} on the ${days} days before`,
@@ -253,6 +252,10 @@ export const staffCopy = {
     total: (total: number) => `${total} ${total === 1 ? "supporter" : "supporters"}`,
     filters: {
       search: "Name, email or phone",
+      // The date filters: when they were first seen, last registered for an event, and unsubscribed from Luma's emails.
+      first: "First seen",
+      registered: "Registered for an event",
+      unsubscribed: "Unsubscribed from Luma",
       // Whether we have a phone number, or an email, for them.
       // The Near filter: a postcode or a town, and how far from it.
       near: "Near",
@@ -677,6 +680,8 @@ export const staffCopy = {
     allHouses: "All houses",
     // The filters: in office or not, Airtable's markers, and an answer to an ask.
     status: "Status",
+    // When they agreed to an ask, signing or going: the last so many days.
+    agreedIn: "Agreed",
     anyStatus: "Any status",
     // The Email filter's choices: whether we can write to them.
     emailStates: {
@@ -761,6 +766,8 @@ export const staffCopy = {
     // The list's search box, and its filters but Owner's: each Luma tag; each city, and Online; and taken off Luma
     // (`removed`), which finds only those, as they're left out otherwise.
     filters: {
+      // When it was held: the last so many days.
+      held: "Held",
       search: "Name, host or email",
       tag: "Tag",
       place: "Place",
@@ -775,7 +782,6 @@ export const staffCopy = {
     // An event's Google Doc: the link to it, in its column after the owner; with none, in red, with a warning,
     // on one coming up, as for no owner.
     doc: "Google Doc",
-    noDoc: "No doc",
     // The button at a row's right, and its name for a screen reader, which opens the form to change its owner and doc.
     edit: "Edit",
     editLabel: (event: string) => `Edit ${event}`,
@@ -793,6 +799,32 @@ export const staffCopy = {
     // The email when an event's owner changes: to the new owner, whoever chose them, copied to the one before, saying who
     // gave it to them and from whom; or, when the import gives events their owners by the rules, to each new owner,
     // listing them.
+    // To the notification inbox: an upcoming event the Luma import couldn't tell the tags of, sent once.
+    unclearTagEmail: {
+      subject: (name: string) => `Which Luma tag for ${name}?`,
+      // `url`: the event on Luma, where its tags are set; `link`: the events page.
+      body: ({
+        name,
+        when,
+        place,
+        url,
+        link,
+      }: {
+        name: string;
+        when: string;
+        place: string;
+        url: string;
+        link: string;
+      }) =>
+        `The Luma import couldn't tell which tag this event should have, so it left it untagged. Set it by hand in Luma.
+
+${name}
+${when}
+${place}
+${url}
+
+All events: ${link}`,
+    },
     ownerEmail: {
       subject: (n: number, first: string, owner: string) =>
         n === 1 ? `You're now owner for ${first}, ${owner}` : `You're now owner for ${n} events, ${owner}`,
@@ -1448,9 +1480,10 @@ export const staffCopy = {
   luma: {
     title: "Events and guests from Luma",
     intro: {
-      before: "The public events on ",
+      before: "Imports the public events on ",
       link: "our Luma calendar",
-      after: ", who registered for each, who the hosts are and who is subscribed to the calendar (the contacts).",
+      after:
+        ", who registered for each, who the hosts are and who is subscribed to the calendar (the contacts). Tags new upcoming events on Luma with location and online tags if it can.",
     },
     importNow: "Import Luma now",
     never: "Not imported yet.",
@@ -1479,6 +1512,8 @@ export const staffCopy = {
     hostsChanged: (n: number) => `${n} ${n === 1 ? "host" : "hosts"} changed.`,
     // After that, how many pages of contacts the run read (runs kept before this was recorded don't say).
     contactPages: (pages: number) => `${pages} pages of contacts read.`,
+    // After that, how many upcoming events the run tagged on Luma, when any.
+    eventsTagged: (n: number) => `${n} ${n === 1 ? "event" : "events"} tagged on Luma.`,
     // After that, the postcodes and towns looked up at postcodes.io for where supporters are (runs kept before this was recorded don't say).
     places: (p: { postcodes: number; towns: number }) =>
       `${p.postcodes} ${p.postcodes === 1 ? "postcode" : "postcodes"}, ${p.towns} ${p.towns === 1 ? "town" : "towns"} looked up.`,
@@ -1829,9 +1864,6 @@ export const staffCopy = {
   oneOff: {
     // The page's title, and a thread's way back.
     title: "One-off emails",
-    intro: (inbox: string) => `Threads copied to ${inbox} that aren't part of a mailing or a campaign.`,
-    threads: (n: number) => `${n} ${n === 1 ? "thread" : "threads"}`,
-    none: "No one-off emails yet.",
     columns: {
       when: "Last message",
       subject: "Subject",
@@ -1940,6 +1972,10 @@ export const staffCopy = {
       eventHosts: (event: string) => `Couldn't read the hosts of an event: ${event}`,
       // The Luma import: Luma's rate limit stopped the run early. The next run carries on.
       lumaRefused: "Luma rate limit reached",
+      // The Luma import couldn't read the calendar's tags, so tagged nothing this run.
+      lumaTagsUnread: "Luma wouldn't list its event tags, so no events were tagged",
+      // The Luma import's tag wouldn't go on one event; the next run tries again.
+      lumaTagRefused: (event: string) => `Luma wouldn't tag ${event}`,
       // The Emails sync: emails in Airtable that belong to no mailing here, or to several, so they weren't copied. Their records follow.
       heldBack: "Emails we couldn't match to a mailing here, so weren't imported:",
       // The Emails sync: emails in Airtable that don't name exactly one politician, so they weren't copied. Their records follow.
@@ -2085,6 +2121,40 @@ export const staffCopy = {
     takesAction: "Takes action",
     siteAdmin: "Site admin",
   },
+  allLetters: {
+    title: "All emails with politicians",
+    // Over the list: how many there are.
+    total: (total: number) => `${total} ${total === 1 ? "email" : "emails"}`,
+    search: "Sender, politician or topic",
+    // Who a letter is from, the filter's name and its choices.
+    from: "Started by",
+    fromKinds: {
+      supporter: "Supporters",
+      pauseai: "PauseAI",
+      politician: "Politicians",
+      other: "Other",
+    },
+    // In a one-off thread's first column, in place of a status.
+    oneOff: "One-off",
+    // The filter by what a row is, under the Topic column's name.
+    types: { campaign: "Campaign", mailing: "Mailing", "one-off": "One-off" },
+    // What opens a one-off thread, in its first column.
+    theThread: "Thread →",
+    // Over the list, for staff without the supporters permission.
+    withheld: "Emails with supporters on them are not shown, as you don't have the supporters permission.",
+    // Under the title: what the one-offs are.
+    intro: (inbox: string) =>
+      `One-off emails are threads copied to ${inbox} that aren't part of a mailing or a campaign.`,
+    // When it was sent.
+    sent: "Sent",
+    // Whether it got a written reply, or got one in a window.
+    replied: "Replied",
+    repliedChoices: { yes: "Any time", no: "No reply" },
+    // What a row is about, and after it, plain, which kind of thing that is.
+    topic: "Topic",
+    topicKinds: { campaign: "campaign", mailing: "mailing", subject: "subject" },
+    noneFound: "No emails found.",
+  },
   letters: {
     title: "Letters to MPs",
     // Over the list: how many there are.
@@ -2217,6 +2287,8 @@ export const staffCopy = {
   // A list's filters: the × in the search box, + Filter, which offers the filters not on, and on a filter's
   // chip, the way to take it off.
   filters: {
+    // A date filter's choices: those of the last so many days.
+    lastDays: (days: number) => `Last ${days} days`,
     clearSearch: "Clear the search",
     add: "+ Filter",
     // The other half of + Filter: adds a choice the list leaves out. Its menu's heading, and a left-out choice's chip.

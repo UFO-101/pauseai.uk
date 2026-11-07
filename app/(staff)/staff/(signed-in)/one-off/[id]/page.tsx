@@ -17,7 +17,7 @@ export default async function OneOffThreadPage({ params }: Params) {
   const thread = found(await getOneOffThread(found(letterId((await params).id)), permissions));
   return (
     <>
-      <Breadcrumb href="/staff/one-off">{staffCopy.oneOff.title}</Breadcrumb>
+      <Breadcrumb href="/staff/emails">{staffCopy.nav.emails}</Breadcrumb>
       <OneOffThreadView thread={thread} />
     </>
   );

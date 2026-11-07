@@ -1,4 +1,5 @@
 import "server-only";
+import { AGREED_STATUSES } from "@/lib/asks";
 import { campaignForAsk } from "@/lib/email-your-mp";
 import { IMPORT_JOBS } from "@/lib/import-runs";
 import { now } from "@/lib/now";
@@ -27,71 +28,89 @@ import { latestRun } from "./import-runs";
 
 /** Letters, statuses and their politician, so test MPs can be left out. */
 const LETTERS = "letters l JOIN politicians p ON p.id = l.notable_person_id";
-const SUPPORTER_LETTERS = `${LETTERS} JOIN letters_from_supporters sl ON sl.id = l.id`;
 const STATUSES = "ask_statuses s JOIN politicians p ON p.id = s.notable_person_id";
+/** The answers that agree to an ask, as SQL. */
+const AGREED = AGREED_STATUSES.map((status) => `'${status}'`).join(", ");
 
-/** Each metric's rows: a table with a condition, and the column that dates them. Counted in each window. */
-const SOURCES: Record<DashboardMetric, { from: string; at: string }> = {
-  lettersSent: { from: `${SUPPORTER_LETTERS} WHERE l.sent_at IS NOT NULL AND NOT p.is_test`, at: "l.sent_at" },
+/**
+ * Each metric's rows: a table with a condition, the column that dates them,
+ * and what's counted in each window, one row each unless it says. Each counts
+ * what its tile's list shows (METRIC_LINKS), a person or a politician once.
+ */
+const SOURCES: Record<DashboardMetric, { from: string; at: string; count?: string }> = {
+  lettersSent: {
+    from: `${LETTERS} WHERE l.kind = 'supporter' AND l.sent_at IS NOT NULL AND NOT p.is_test`,
+    at: "l.sent_at",
+  },
   lettersReplied: { from: `${LETTERS} WHERE l.replied_at IS NOT NULL AND NOT p.is_test`, at: "l.replied_at" },
-  // Not Airtable's: it records signatures from before the site, with no date.
-  mpsSigned: {
-    from: `${STATUSES} WHERE s.status = 'signed' AND s.updated_by <> 'airtable' AND NOT p.is_test`,
+  // Not Airtable's: it records answers from before the site, with no date.
+  politiciansAgreed: {
+    from: `${STATUSES} WHERE s.status IN (${AGREED}) AND s.updated_by <> 'airtable' AND NOT p.is_test`,
     at: "s.updated_at",
+    count: "DISTINCT p.id",
   },
   eventRegistrations: {
-    from: "luma_guests WHERE approval_status = 'approved' AND removed_at IS NULL",
-    at: "registered_at",
+    from: `luma_guests g JOIN supporter_links k ON k.luma_user_id = g.user_id
+      WHERE g.approval_status = 'approved' AND g.removed_at IS NULL`,
+    at: "g.registered_at",
+    count: "DISTINCT k.supporter_id",
   },
-  eventsHeld: { from: "luma_events WHERE removed_at IS NULL", at: "start_at" },
+  eventsHeld: { from: "luma_events WHERE access = 'manage' AND removed_at IS NULL", at: "start_at" },
   supportersAdded: { from: "supporters WHERE true", at: "first_seen_at" },
   // Only an address that's still a supporter's: an opt-out outlives its contact, so that they're never emailed.
   unsubscribes: {
-    from: `contact_unsubscribes u WHERE u.channel = 'email' AND u.topic = 'luma-calendar'
-      AND EXISTS (SELECT 1 FROM supporter_identity i WHERE i.email = u.address)`,
+    from: `contact_unsubscribes u JOIN supporter_identity i ON i.email = u.address
+      WHERE u.channel = 'email' AND u.topic = 'luma-calendar'`,
     at: "u.at",
+    count: "DISTINCT i.supporter_id",
   },
 };
 
-/** Letters to test MPs, counted apart from the letters tile's number. */
-const TEST_LETTERS = { from: `${LETTERS} WHERE l.sent_at IS NOT NULL AND p.is_test`, at: "l.sent_at" };
+/** A breakdown by campaign: the rows, and the column to group by: a supporter's letter's campaign, an answer's ask. */
+const CAMPAIGN_SOURCES: Record<CampaignMetric, { from: string; at: string; column: string }> = {
+  lettersSent: {
+    from: `${LETTERS} JOIN letters_from_supporters sl ON sl.id = l.id WHERE l.sent_at IS NOT NULL AND NOT p.is_test`,
+    at: "l.sent_at",
+    column: "sl.campaign",
+  },
+  politiciansAgreed: { from: SOURCES.politiciansAgreed.from, at: SOURCES.politiciansAgreed.at, column: "s.ask" },
+};
 
-/** The column a breakdown groups by: a letter's campaign, a signature's ask. */
-const CAMPAIGN_OF: Record<CampaignMetric, string> = { lettersSent: "sl.campaign", mpsSigned: "s.ask" };
+/** What a metric counts, as SQL. */
+const counted = (metric: DashboardMetric) => `count(${SOURCES[metric].count ?? "*"})::int`;
 
 /** $1 is the window's start, $2 the window before's, $3 now; the window runs up to now, and includes it. */
-const COUNTS = [
-  ...Object.entries(SOURCES).map(
+const COUNTS = Object.entries(SOURCES)
+  .map(
     ([metric, { from, at }]) =>
-      `(SELECT count(*)::int FROM ${from} AND ${at} >= $1 AND ${at} <= $3) AS "${metric}_current",
-       (SELECT count(*)::int FROM ${from} AND ${at} >= $2 AND ${at} < $1) AS "${metric}_previous"`,
-  ),
-  `(SELECT count(*)::int FROM ${TEST_LETTERS.from} AND ${TEST_LETTERS.at} >= $1 AND ${TEST_LETTERS.at} <= $3) AS "testLetters"`,
-].join(",\n");
+      `(SELECT ${counted(metric as DashboardMetric)} FROM ${from} AND ${at} >= $1 AND ${at} <= $3) AS "${metric}_current",
+       (SELECT ${counted(metric as DashboardMetric)} FROM ${from} AND ${at} >= $2 AND ${at} < $1) AS "${metric}_previous"`,
+  )
+  .join(",\n");
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** The window's count by campaign, as a map. */
 async function byCampaign(metric: CampaignMetric, since: string, until: string): Promise<Record<string, number>> {
-  const { from, at } = SOURCES[metric];
+  const { from, at, column } = CAMPAIGN_SOURCES[metric];
   const rows = await query<{ campaign: string; count: number }>(
-    `SELECT ${CAMPAIGN_OF[metric]} AS campaign, count(*)::int AS count FROM ${from} AND ${at} >= $1 AND ${at} <= $2
-     GROUP BY ${CAMPAIGN_OF[metric]} ORDER BY ${CAMPAIGN_OF[metric]}`,
+    `SELECT ${column} AS campaign, count(*)::int AS count FROM ${from} AND ${at} >= $1 AND ${at} <= $2
+     GROUP BY ${column} ORDER BY ${column}`,
     [since, until],
   );
-  // A signature is counted under the campaign that made its ask.
-  const key = (value: string) => (metric === "mpsSigned" ? (campaignForAsk(value)?.slug ?? value) : value);
+  // An answer is counted under the campaign that made its ask.
+  const key = (value: string) => (metric === "politiciansAgreed" ? (campaignForAsk(value)?.slug ?? value) : value);
   return Object.fromEntries(rows.map((row) => [key(row.campaign), row.count]));
 }
 
-/** SERIES_POINTS windows of `days` ending now, oldest first: how many rows fell in each. */
+/** SERIES_POINTS windows of `days` ending now, oldest first: how many fell in each. */
 async function series(metric: SeriesMetric, until: Date, days: DashboardWindow): Promise<SeriesPoint[]> {
   const { from, at } = SOURCES[metric];
   const windowMs = days * DAY_MS;
   const start = new Date(until.getTime() - SERIES_POINTS * windowMs);
   // Bucket 0 is the current window, counting back.
   const rows = await query<{ bucket: number; count: number }>(
-    `SELECT floor(extract(epoch FROM ($2::timestamptz - ${at})) / $3)::int AS bucket, count(*)::int AS count
+    `SELECT floor(extract(epoch FROM ($2::timestamptz - ${at})) / $3)::int AS bucket, ${counted(metric)} AS count
      FROM ${from} AND ${at} >= $1 AND ${at} <= $2 GROUP BY bucket`,
     [start.toISOString(), until.toISOString(), days * 24 * 60 * 60],
   );
@@ -148,9 +167,9 @@ async function blockedMps(): Promise<DashboardAction[]> {
   return rows.map(({ at, ...rest }) => ({ kind: "blocked-mp", at: at.toISOString(), ...rest }));
 }
 
-/** The politician who signed in the window, if only one did. */
-async function signedMp(since: string, until: string): Promise<number | null> {
-  const { from, at } = SOURCES.mpsSigned;
+/** The politician who agreed in the window, if only one did. */
+async function agreedMp(since: string, until: string): Promise<number | null> {
+  const { from, at } = SOURCES.politiciansAgreed;
   const rows = await query<{ id: number }>(
     `SELECT DISTINCT p.id::int AS id FROM ${from} AND ${at} >= $1 AND ${at} <= $2 LIMIT 2`,
     [since, until],
@@ -170,7 +189,7 @@ export async function dashboard(days: DashboardWindow): Promise<Dashboard> {
       Promise.all(BY_CAMPAIGN.map((metric) => byCampaign(metric, since, until))),
       Promise.all(WITH_SERIES.map((metric) => series(metric, at, days))),
       supportersBySource(at, days),
-      signedMp(since, until),
+      agreedMp(since, until),
       heldSyncs(),
       blockedMps(),
       Promise.all(IMPORT_JOBS.map((job) => latestRun(job))),
@@ -208,9 +227,8 @@ export async function dashboard(days: DashboardWindow): Promise<Dashboard> {
     asOf: until,
     since,
     counts,
-    testLetters: row.testLetters,
-    byCampaign: { lettersSent: letterCampaigns, mpsSigned: signedCampaigns },
-    signedMp: signer,
+    byCampaign: { lettersSent: letterCampaigns, politiciansAgreed: signedCampaigns },
+    agreedMp: signer,
     series: { eventRegistrations: registrations },
     supportersBySource: bySource,
     actions: [...held, ...blocked, ...failed, ...inbox],

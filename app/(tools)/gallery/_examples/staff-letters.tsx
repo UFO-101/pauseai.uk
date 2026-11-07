@@ -7,12 +7,14 @@ import { exampleProblems } from "@/app/(staff)/staff/_components/EmailBlocksTabl
 import EmailProblemsTable from "@/app/(staff)/staff/_components/EmailProblemsTable";
 import CampaignName from "@/app/(staff)/staff/_components/CampaignName";
 import LetterLink from "@/app/(staff)/staff/_components/LetterLink";
+import AllLetters from "@/app/(staff)/staff/_components/AllLetters";
 import LettersTable from "@/app/(staff)/staff/_components/LettersTable";
+import ThreadText from "@/app/(staff)/staff/_components/ThreadText";
 import MailEmail from "@/app/(staff)/staff/_components/MailEmail";
 import CampaignLetter from "@/app/(staff)/staff/_components/CampaignLetter";
 import CampaignsOverview, { CampaignAsk } from "@/app/(staff)/staff/_components/CampaignsOverview";
 import CampaignView from "@/app/(staff)/staff/_components/CampaignView";
-import OneOffList, { OneOffTable } from "@/app/(staff)/staff/_components/OneOffList";
+import { OneOffTable } from "@/app/(staff)/staff/_components/OneOffList";
 import OneOffThreadView from "@/app/(staff)/staff/_components/OneOffThreadView";
 import {
   exampleChanged,
@@ -459,26 +461,6 @@ export const staffLetters: Group = {
       ],
     },
     {
-      name: "OneOffList",
-      file: "app/(staff)/staff/_components/OneOffList.tsx",
-      variants: [
-        {
-          label: "A thread with PauseAI, one with someone else, and one hidden",
-          render: () => (
-            <StaffPage as="div">
-              <OneOffList
-                threads={[...exampleOneOffs, exampleHiddenOneOff]}
-                total={3}
-                page={1}
-                pages={1}
-                pageSize={100}
-              />
-            </StaffPage>
-          ),
-        },
-      ],
-    },
-    {
       name: "OneOffTable",
       file: "app/(staff)/staff/_components/OneOffList.tsx",
       variants: [
@@ -509,6 +491,82 @@ export const staffLetters: Group = {
           render: () => (
             <StaffPage as="div">
               <OneOffThreadView thread={{ ...exampleHiddenOneOff, messages_: null }} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "AllLetters",
+      file: "app/(staff)/staff/_components/AllLetters.tsx",
+      variants: [
+        {
+          label:
+            "A supporter's letter with a reply, one of PauseAI's not sent and a one-off thread, filtered to the last 30 days",
+          render: () => (
+            <StaffPage as="div">
+              <AllLetters
+                found={{
+                  letters: [
+                    {
+                      id: 1,
+                      kind: "supporter",
+                      status: "sent",
+                      sentAt: "2026-10-20T10:00:00Z",
+                      repliedAt: "2026-10-21T10:00:00Z",
+                      people: [{ id: 1, name: "Polly Placeholder" }],
+                      senderName: "Jane Smith",
+                      senderEmail: "jane.smith@example.com",
+                      supporterId: 1,
+                      campaign: "regulate-letter-pm",
+                      campaignTitle: "Regulate AI",
+                    },
+                    {
+                      id: 2,
+                      kind: "pauseai",
+                      status: "scheduled",
+                      sentAt: null,
+                      repliedAt: null,
+                      people: [{ id: 1, name: "Polly Placeholder" }],
+                      mailingId: 3,
+                      mailingTitle: "A letter about the march",
+                    },
+                    {
+                      id: 3,
+                      kind: "one-off",
+                      status: "one-off",
+                      sentAt: "2026-10-19T10:00:00Z",
+                      repliedAt: null,
+                      people: [{ id: 1, name: "Polly Placeholder" }],
+                      senderName: "Sam Jones",
+                      senderEmail: "sam@example.com",
+                      fromUs: false,
+                      recipients: [{ name: "", politicianId: null, pauseai: true }],
+                      subject: "Coffee next week?",
+                    },
+                  ],
+                  total: 3,
+                  pages: 1,
+                }}
+                search={{ q: "", from: [], type: [], to: [], sent: "30", replied: "", page: "" }}
+                people={[{ id: 1, name: "Polly Placeholder", constituency: "Cities of London and Westminster" }]}
+                supporters
+                inbox="policy@example.org"
+              />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "ThreadText",
+      file: "app/(staff)/staff/_components/ThreadText.tsx",
+      variants: [
+        {
+          label: "An email's plain text, with bold and a link",
+          render: () => (
+            <StaffPage as="div">
+              <ThreadText text={"Dear Jane,\n\n*Our letter is out: https://example.org/letter*\n\nKind regards"} />
             </StaffPage>
           ),
         },

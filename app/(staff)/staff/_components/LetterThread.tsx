@@ -3,9 +3,10 @@ import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { LetterThread as Thread } from "@/lib/server/letter-threads";
 import type { SupporterLetterDetails } from "@/lib/server/letters";
-import { named } from "@/lib/named-address";
+import { named } from "@/lib/email-parsing/addresses";
 import LetterChanges, { FoldedAutoReply } from "./LetterChanges";
 import ThreadEmail from "./ThreadEmail";
+import ThreadText from "./ThreadText";
 import { MailingLetter } from "./MailingLetter";
 import StaffLink from "./ui/StaffLink";
 import Strip from "./ui/Strip";
@@ -27,11 +28,15 @@ function NoText({ note, link }: { note: string; link: ReactNode }) {
 export function MessageText({ text, quoted }: { text: string; quoted: string }) {
   return (
     <>
-      <div className={styles.text}>{text}</div>
+      <div className={styles.text}>
+        <ThreadText text={text} />
+      </div>
       {quoted && (
         <details className={styles.quoted}>
           <summary>{copy.quoted}</summary>
-          <div className={styles.text}>{quoted}</div>
+          <div className={styles.text}>
+            <ThreadText text={quoted} />
+          </div>
         </details>
       )}
     </>

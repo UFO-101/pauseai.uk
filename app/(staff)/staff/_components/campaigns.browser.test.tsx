@@ -34,7 +34,7 @@ import PoliticianDetails from "./PoliticianDetails";
 import { examplePolitician } from "./PoliticianTable.examples";
 import { emptyLettersSearch, exampleLetter } from "./LettersTable.examples";
 import MyGmail from "./MyGmail";
-import OneOffList, { OneOffTable } from "./OneOffList";
+import { OneOffTable } from "./OneOffList";
 import OneOffThreadView from "./OneOffThreadView";
 import ListFrame from "./ui/ListFrame";
 import PageIntro from "./ui/PageIntro";
@@ -373,46 +373,22 @@ describe("ChangesTable, without the supporters permission", () => {
 });
 
 describe("the one-off emails", () => {
-  const list = () => (
-    <OneOffList
-      threads={[...exampleOneOffs, exampleHiddenOneOff, { ...exampleOneOffs[0], id: 3, subject: "" }]}
-      total={150}
-      page={1}
-      pages={2}
-      pageSize={100}
-    />
-  );
-
-  it("lists each thread, whose it is and when to the minute, and hides what staff can't read", async () => {
-    await render(list());
+  it("on a person's page, lists each thread, whose it is and when, and hides what staff can't read", async () => {
+    await render(
+      <OneOffTable
+        threads={[...exampleOneOffs, exampleHiddenOneOff, { ...exampleOneOffs[0], id: 3, subject: "", people: [] }]}
+      />,
+    );
     await says(staffTime(exampleOneOffs[0].latestAt));
-    const words = staffCopy.oneOff.columns;
-    expect([...document.querySelectorAll("th")].map((th) => th.textContent)).toEqual([
-      words.subject,
-      words.politician,
-      words.participants,
-      words.answered,
-      words.messages,
-      words.when,
-      words.mailbox,
-    ]);
     await says(exampleOneOffs[0].mailboxes!.join(", "));
     await says(exampleOneOffs[0].participants!.join(", "));
-    const cellsOf = (row: number) =>
-      [...document.querySelectorAll("tbody tr")][row].querySelectorAll("td")[3].textContent;
-    expect([cellsOf(0), cellsOf(1), cellsOf(2)]).toEqual([
-      staffCopy.oneOff.answers.yes,
-      staffCopy.oneOff.answers.no,
-      "–",
-    ]);
+    const answers = [...document.querySelectorAll("tbody tr")].map((row) => row.querySelectorAll("td")[3].textContent);
+    expect(answers.slice(0, 3)).toEqual([staffCopy.oneOff.answers.yes, staffCopy.oneOff.answers.no, "–"]);
     await expect.element(link(exampleOneOffs[0].subject!)).toHaveAttribute("href", "/staff/one-off/1");
     await says(staffCopy.oneOff.noPolitician);
     await says(staffCopy.oneOff.hidden);
     expect(link(staffCopy.oneOff.hidden).query()).toBeNull();
     await expect.element(link(staffCopy.oneOff.noSubject)).toBeVisible();
-    await expect
-      .element(page.getByRole("link", { name: staffCopy.paging.next }))
-      .toHaveAttribute("href", "/staff/one-off?page=2");
   });
 
   it("on a person's page, shows nothing with none", async () => {
@@ -696,9 +672,9 @@ describe("the rest", () => {
     expect(link(staffCopy.oneOff.hidden).query()).toBeNull();
   });
 
-  it("has the one-off emails in the menu, under Politicians", async () => {
+  it("has all emails in the menu, under Politicians", async () => {
     await render(<StaffNav email="jo@pauseai.uk" permissions={[]} />);
-    expect(document.querySelector('nav a[href="/staff/one-off"]')?.textContent).toContain(staffCopy.nav.oneOff);
+    expect(document.querySelector('nav a[href="/staff/emails"]')?.textContent).toContain(staffCopy.nav.emails);
   });
 
   it("marks new pages in the navigation", async () => {
@@ -719,7 +695,7 @@ describe("the rest", () => {
     const props = { me: "jo@pauseai.uk", account, outcome: "", disconnect: () => {} };
     const { rerender } = await render(<MyGmail {...props} keepsThreads />);
     await says(staffCopy.oneOff.kept.before);
-    await expect.element(link(staffCopy.oneOff.title)).toHaveAttribute("href", "/staff/one-off");
+    await expect.element(link(staffCopy.oneOff.title)).toHaveAttribute("href", "/staff/emails?type=one-off");
     await rerender(<MyGmail {...props} />);
     expect(link(staffCopy.oneOff.title).query()).toBeNull();
     await says(staffCopy.oneOff.notKept.before);

@@ -1,4 +1,6 @@
 import "server-only";
+import { windowStart } from "@/lib/staff-dashboard";
+import { now } from "@/lib/now";
 import type {
   NegatableSupporterFilter,
   SupporterActivity,
@@ -245,6 +247,23 @@ export async function listSupporters(
     where.push(
       `${filter.wrote ? "" : "NOT "}EXISTS (SELECT 1 FROM supporter_links k JOIN letters_from_supporters l ON l.entry_id = k.form_entry_id
        WHERE k.supporter_id = s.id AND l.campaign = ${add(filter.campaign)})`,
+    );
+  }
+  if (filter.firstDays) {
+    where.push(`s.first_seen_at >= ${add(windowStart(filter.firstDays))} AND s.first_seen_at <= ${add(now())}`);
+  }
+  if (filter.registeredDays) {
+    where.push(
+      `s.id IN (SELECT k.supporter_id FROM luma_guests g JOIN supporter_links k ON k.luma_user_id = g.user_id
+       WHERE g.approval_status = 'approved' AND g.removed_at IS NULL
+         AND g.registered_at >= ${add(windowStart(filter.registeredDays))} AND g.registered_at <= ${add(now())})`,
+    );
+  }
+  if (filter.unsubscribedDays) {
+    where.push(
+      `s.id IN (SELECT i.supporter_id FROM contact_unsubscribes u JOIN supporter_identity i ON i.email = u.address
+       WHERE u.channel = 'email' AND u.topic = 'luma-calendar'
+         AND u.at >= ${add(windowStart(filter.unsubscribedDays))} AND u.at <= ${add(now())})`,
     );
   }
   // What the Near filter's words are: a place, null for none, "failed"; or undefined with no Near filter.

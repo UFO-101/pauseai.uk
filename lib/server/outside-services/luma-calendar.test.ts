@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
-import { getEvents, listCalendarContacts, listCalendarEvents } from "./luma-calendar";
+import { applyEventTag, getEvents, listCalendarContacts, listCalendarEvents, listEventTags } from "./luma-calendar";
 
 const CALENDAR = "https://public-api.luma.com/v1/calendars/events/list";
 
@@ -305,5 +305,34 @@ describe("listCalendarContacts", () => {
     expect((await listCalendarContacts()).entries).toEqual([
       { userId: "usr-a", email: "a@example.com", name: "", createdAt: "2026-01-01T00:00:00Z" },
     ]);
+  });
+});
+
+describe("event tags", () => {
+  const TAGS = "https://public-api.luma.com/v1/calendars/event-tags";
+  beforeEach(() => vi.stubEnv("LUMA_API_KEY", "key"));
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("lists the calendar's tags by name, leaving out any without one", async () => {
+    server.use(
+      http.get(`${TAGS}/list`, () =>
+        HttpResponse.json({ entries: [{ id: "t1", name: "London" }, { id: "t2" }, null], has_more: false }),
+      ),
+    );
+    await expect(listEventTags()).resolves.toEqual(["London"]);
+  });
+
+  it("applies a tag to an event, and throws if Luma skips it as not on the calendar", async () => {
+    let sent: unknown;
+    server.use(
+      http.post(`${TAGS}/apply`, async ({ request }) => {
+        sent = await request.json();
+        return HttpResponse.json({ applied_count: 1, skipped_count: 0 });
+      }),
+    );
+    await applyEventTag("London", "evt-1");
+    expect(sent).toEqual({ tag: "London", event_ids: ["evt-1"] });
+    server.use(http.post(`${TAGS}/apply`, () => HttpResponse.json({ applied_count: 0, skipped_count: 1 })));
+    await expect(applyEventTag("London", "evt-1")).rejects.toThrow("isn't on the calendar");
   });
 });

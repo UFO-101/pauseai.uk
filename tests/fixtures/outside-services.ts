@@ -174,6 +174,25 @@ export function fixtureResponse(url: string, init?: RequestInit, scope?: string)
     // FIXTURE_NOW, and one erased there.
     return json(airtableMembers);
   }
+  if (hostname === "public-api.luma.com" && pathname === "/v1/calendars/event-tags/list") {
+    return json({
+      entries: [
+        { id: "tag-fixture-big-events", name: "Big events", color: "orange" },
+        { id: "tag-fixture-online", name: "Online", color: "cranberry" },
+        { id: "tag-fixture-london", name: "London", color: "purple" },
+        { id: "tag-fixture-manchester", name: "Manchester", color: "red" },
+        { id: "tag-fixture-oxford", name: "Oxford", color: "green" },
+        { id: "tag-fixture-scotland", name: "Scotland", color: "blue" },
+        { id: "tag-fixture-west-of-england", name: "West of England", color: "yellow" },
+        { id: "tag-fixture-leicester", name: "Leicester", color: "barney" },
+      ],
+      has_more: false,
+    });
+  }
+  if (hostname === "public-api.luma.com" && pathname === "/v1/calendars/event-tags/apply") {
+    const { event_ids } = JSON.parse(String(init!.body)) as { event_ids: string[] };
+    return json({ applied_count: event_ids.length, skipped_count: 0 });
+  }
   if (hostname === "public-api.luma.com" && pathname === "/v1/events/guests/add") {
     // The march sign-up. Luma takes every guest but two: one it skips, as if
     // they'd unsubscribed from the calendar, and one it fails on.

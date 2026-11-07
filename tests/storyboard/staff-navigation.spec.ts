@@ -1,6 +1,6 @@
 import { jobTitles, staffCopy } from "@/lib/content/staff-interface";
 import { runSql } from "@/scripts/fresh-database.mjs";
-import { lockTable, syncPoliticians } from "../steps";
+import { importLuma, lockTable, syncPoliticians } from "../steps";
 import { BASE, expect, frame, story, test } from "./fixtures";
 import { PM_LETTER, staffEmail, logIn, holdNextPage, loadingLine } from "./staff-steps";
 
@@ -124,20 +124,43 @@ test("The dashboard's tabs and numbers", async ({ page, flowDatabase }) => {
     "page",
   );
   await frame(page, "The last 30 days");
-  story("The events held tile leads to the past events.");
-  await page.locator('a[href="/staff/events?when=past"]').click();
-  await expect(page).toHaveURL(`${BASE}/staff/events?when=past`);
-  await frame(page, "Past events");
-  story("The letters tile leads to the letters in the sent emails.");
-  await page.goto(`${BASE}/staff`);
-  await page.locator('a[href="/staff/sent-emails?purpose=letter&link=campaign"]').click();
-  await expect(page).toHaveURL(/\/staff\/sent-emails\?purpose=letter&link=campaign$/);
-  await frame(page, "Letters in the sent emails");
+  story("The events held tile leads to the events held in those 30 days, as many as it says.");
+  await page.locator('a[href="/staff/events?when=past&held=30"]').click();
+  await expect(page).toHaveURL(`${BASE}/staff/events?when=past&held=30`);
+  await frame(page, "Past events, in those 30 days");
+  story("Going back, the dashboard is still on its 30 days.");
+  await page.goBack();
+  await expect(tabs.getByRole("link", { name: staffCopy.home.dashboard.window(30) })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await frame(page, "Back on the 30 days");
+  story("The supporter emails tile leads to those supporters sent in those days.");
+  await page.locator('a[href="/staff/emails?type=campaign&sent=30"]').click();
+  await expect(page).toHaveURL(`${BASE}/staff/emails?type=campaign&sent=30`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.allLetters.title);
+  await frame(page, "Supporter emails, in those 30 days");
 });
 
-test("The MPs signed tile", async ({ page, request, flowDatabase }) => {
+test("Pointing at a bar on the dashboard", { tag: "@desktop-only" }, async ({ page, request, flowDatabase }) => {
   story(
-    "An admin records that Polly Placeholder signed the Frontier AI letter to the Prime Minister. The dashboard's MPs signed tile counts her.",
+    "New supporters' bars split by where they came from. Pointing at the last one says what it holds, a line each, in a box as wide as it needs.",
+  );
+  await importLuma(request, BASE);
+  await logIn(page, flowDatabase, ["supporters"]);
+  await page.goto(`${BASE}/staff?days=90`);
+  const bars = page.getByRole("img", { name: /by source/ });
+  const box = (await bars.boundingBox())!;
+  await page.mouse.move(box.x + box.width - 2, box.y + box.height - 2);
+  const label = page.getByRole("status");
+  await expect(label).toBeVisible();
+  expect((await label.boundingBox())!.width).toBeGreaterThan(box.width / 8);
+  await frame(page, "A bar pointed at", { window: true, hover: bars.locator(":scope > span").last() });
+});
+
+test("The politicians agreed tile", async ({ page, request, flowDatabase }) => {
+  story(
+    "An admin records that Polly Placeholder signed the Frontier AI letter to the Prime Minister. The dashboard's politicians agreed tile counts her.",
   );
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase, ["admin"]);
@@ -156,32 +179,30 @@ test("The MPs signed tile", async ({ page, request, flowDatabase }) => {
 
   // One signed this week: the tile is their page.
   await page.goto(`${BASE}/staff`);
-  const tile = page.getByRole("link").filter({ hasText: staffCopy.home.dashboard.metrics.mpsSigned(1) });
+  const tile = page.getByRole("link").filter({ hasText: staffCopy.home.dashboard.metrics.politiciansAgreed(1) });
   await frame(page, "The dashboard");
-  story("With one MP signed, the tile leads to her page.");
+  story("With one politician agreed, the tile leads to her page.");
   await tile.click();
   await expect(page.getByRole("heading", { level: 1, name: "Polly Placeholder" })).toBeVisible();
   await frame(page, "Polly Placeholder's page");
   story(
-    "Importing ControlAI's letter records another signature. Now the tile leads to the politicians list of everyone who signed anything, the latest recorded first.",
+    "Importing ControlAI's letter records another signature. Now the tile leads to the politicians list of everyone who agreed, the latest recorded first.",
   );
 
-  // ControlAI's letter adds several: the tile is everyone who signed anything, the latest recorded first.
+  // ControlAI's letter adds several: the tile is everyone who agreed anything, the latest recorded first.
   await page.goto(`${BASE}/staff/import-data/controlai`);
   await page.getByRole("button", { name: staffCopy.controlAi.importNow }).click();
   await expect(page.getByText(/6 names/)).toBeVisible();
   await page.goto(`${BASE}/staff`);
   await page
     .getByRole("link")
-    .filter({ hasText: staffCopy.home.dashboard.metrics.mpsSigned(2) })
+    .filter({ hasText: staffCopy.home.dashboard.metrics.politiciansAgreed(2) })
     .click();
-  await expect(page).toHaveURL(`${BASE}/staff/politicians?answer=signed&sort=asks`);
-  await expect(
-    page.getByRole("button", { name: `${staffCopy.politicians.answer}: ${staffCopy.statuses.signed}` }),
-  ).toBeVisible();
+  await expect(page).toHaveURL(`${BASE}/staff/politicians?agreed=7&status=any&sort=asks`);
+  await expect(page.getByRole("button", { name: new RegExp(`^${staffCopy.politicians.agreedIn}`) })).toBeVisible();
   await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toHaveCount(0);
-  await frame(page, "Everyone who signed");
+  await frame(page, "Everyone who agreed");
 });
 
 test("A test MP's page", async ({ page, request, flowDatabase }) => {
@@ -227,7 +248,7 @@ test("An MP signs", async ({ page, request, flowDatabase }) => {
   story("They open Politicians from the sidebar (on a phone, from the menu). The test politicians are left out.");
 
   // The pages are in the sidebar; on a phone, behind the bar's menu.
-  const politicians = page.getByRole("link", { name: staffCopy.nav.politicians });
+  const politicians = page.getByRole("link", { name: staffCopy.nav.politicians, exact: true });
   if (!(await politicians.first().isVisible())) await page.locator("nav details > summary").click();
   await politicians.filter({ visible: true }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.politicians.title);

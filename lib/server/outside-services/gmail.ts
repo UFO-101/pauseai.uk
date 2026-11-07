@@ -1,6 +1,7 @@
 import "server-only";
 import { saveRawToOutbox, saveToOutbox } from "@/tests/fixtures/outbox";
-import { decodedText, messageIds, toMime, type MimeEmail } from "../mime";
+import { toMime, type MimeEmail } from "../mime";
+import { decodedText, messageIds } from "@/lib/email-parsing/mime";
 import { outsideFetch } from "./outside-fetch";
 import { problem } from "../problems";
 import { staffCopy } from "@/lib/content/staff-interface";

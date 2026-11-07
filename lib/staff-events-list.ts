@@ -2,6 +2,7 @@
 // as lib/server/staff-events.ts lists them. There are few enough events
 // to filter and sort them all here, rather than in SQL.
 import type { SearchedEvent, StaffEvent } from "@/lib/server/staff-events";
+import { windowStart } from "@/lib/staff-dashboard";
 import type { SortColumns, SortSpec } from "@/lib/staff-sort";
 
 /** The list's tabs: events still to come, and those past. */
@@ -41,6 +42,8 @@ export type EventFilter = {
   place?: string[];
   /** Only those taken off Luma, or, by default, only those still on it. */
   removed: boolean;
+  /** Only those that started in the last so many days. */
+  heldDays?: number;
   /** Those with none of these, each a filter above that repeats. */
   not?: Pick<EventFilter, NegatableEventFilter>;
   sort: SortSpec<EventSort>;
@@ -104,10 +107,12 @@ export function findEvents<E extends SearchedEvent>(
   now: string,
 ): Omit<EventsFound, "events"> & { events: E[] } {
   const search = filter.search?.toLowerCase();
+  const heldSince = filter.heldDays && windowStart(filter.heldDays);
   const matching = (removed: boolean) =>
     events.filter(
       (event) =>
         event.startAt >= now === (filter.tab === "future") &&
+        (!heldSince || (event.startAt >= heldSince && event.startAt <= now)) &&
         (!search || searchFinds(event, search)) &&
         event.removed === removed &&
         passes(event, filter),

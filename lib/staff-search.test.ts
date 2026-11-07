@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   sentEmailsSearch,
   accountsSearch,
+  allLettersSearch,
   askFormSearch,
   staffBack,
   emailsSearch,
@@ -184,6 +185,7 @@ describe("eventsSearch", () => {
     tag: [],
     place: [],
     removed: "",
+    held: "",
     sort: "",
     dir: "",
     page: "",
@@ -198,6 +200,20 @@ describe("eventsSearch", () => {
     not: undefined,
     page: 1,
   };
+
+  it("reads who an email is to, leaving out what's no ID", () => {
+    expect(allLettersSearch({ to: ["5", "!6", "x"] }).filter).toMatchObject({ to: [5], notTo: [6] });
+  });
+
+  it("reads the date filter, only a window of the dashboard's", () => {
+    expect(eventsSearch({ when: "past", held: "30" }).filter.heldDays).toBe(30);
+    expect(eventsSearch({ held: "31" }).filter.heldDays).toBeUndefined();
+    expect(supportersSearch({ first: "7", registered: "30", unsubscribed: "90" }).filter).toMatchObject({
+      firstDays: 7,
+      registeredDays: 30,
+      unsubscribedDays: 90,
+    });
+  });
 
   it("is the Future tab, soonest first, with those taken off Luma left out, nothing chosen; and Past, latest first", () => {
     expect(eventsSearch({})).toEqual({
@@ -253,6 +269,9 @@ describe("supportersSearch", () => {
     mp: [],
     near: "",
     within: "",
+    first: "",
+    registered: "",
+    unsubscribed: "",
     sort: "",
     dir: "",
     page: "",

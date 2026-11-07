@@ -6,7 +6,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import type { MailingGroup } from "@/lib/mailing-groups";
 import { mailingWhen } from "@/lib/mailing-groups";
 import type { MailingSummary } from "@/lib/server/mailings";
-import { named } from "@/lib/named-address";
+import { named } from "@/lib/email-parsing/addresses";
 import { londonWhenShort, staffDate } from "@/lib/staff-time";
 import Counts, { countsOpening } from "./ui/Counts";
 import Grid, { spanClass } from "./ui/Grid";

@@ -73,6 +73,7 @@ import { navigation } from "@/tests/browser/navigation";
 import StaffSessions from "./StaffSessions";
 import { spanClass } from "./ui/Grid";
 import StaffDashboard from "./StaffDashboard";
+import { DASHBOARD_WINDOWS } from "@/lib/staff-dashboard";
 import { exampleDashboard, exampleQuietDashboard } from "./StaffDashboard.examples";
 import Sparkline from "./Sparkline";
 import StackedBars from "./StackedBars";
@@ -372,16 +373,16 @@ describe("StaffDashboard", () => {
     expect(mps).toHaveLength(3);
     expect(events).toHaveLength(2);
     expect(supporters).toHaveLength(2);
-    // The letters tile: the number, the test letters apart, the label, the bar's legend, then the change.
+    // The letters tile: the number, the label, the bar's legend, then the change.
     await expect
       .element(mps[0])
-      .toHaveTextContent(
-        `12${copy.testLetters(2)}${copy.metrics.lettersSent(12)} ${pm.title} · 9 ${bill.title} · 3${copy.change.up(4, 7)}`,
-      );
+      .toHaveTextContent(`12${copy.metrics.lettersSent(12)} ${pm.title} · 9 ${bill.title} · 3${copy.change.up(4, 7)}`);
     await expect.element(mps[1]).toHaveTextContent(`3${copy.metrics.lettersReplied(3)}${copy.change.down(2, 7)}`);
     await expect
       .element(mps[2])
-      .toHaveTextContent(`5${copy.metrics.mpsSigned(5)} ${pm.title} · 3 ${bill.title} · 2${copy.change.up(2, 7)}`);
+      .toHaveTextContent(
+        `5${copy.metrics.politiciansAgreed(5)} ${pm.title} · 3 ${bill.title} · 2${copy.change.up(2, 7)}`,
+      );
     await expect.element(events[1]).toHaveTextContent(`9${copy.metrics.eventsHeld(9)}${copy.change.up(3, 7)}`);
     // With a bar, the letters tile takes a third of the grid, so its legend fits; the rest a sixth.
     expect(mps[0].element().className).toBe(spanClass(2));
@@ -415,7 +416,7 @@ describe("StaffDashboard", () => {
     await expect
       .element(page.getByRole("status"))
       .toHaveTextContent(
-        `${copy.seriesPoint(7, staffDate(exampleDashboard.supportersBySource[7].from), 176)} · ${staffCopy.supporters.sources.luma} 115 · ${staffCopy.supporters.sources.member} 44 · ${staffCopy.supporters.sources["email-your-mp"]} 17`,
+        `${copy.seriesPoint(7, staffDate(exampleDashboard.supportersBySource[7].from), 176)} ${staffCopy.supporters.sources.luma}115 ${staffCopy.supporters.sources.member}44 ${staffCopy.supporters.sources["email-your-mp"]}17`,
       );
     sourceBars.element().dispatchEvent(new PointerEvent("pointerout", { bubbles: true, relatedTarget: document.body }));
     await expect.element(page.getByRole("status")).not.toBeInTheDocument();
@@ -430,43 +431,43 @@ describe("StaffDashboard", () => {
     // The whole tile is the link, to the page that lists what it counts.
     const tileLink = (text: string) => page.getByText(text).element().closest("a");
     const lands = (text: string) => tileLink(text)?.getAttribute("href");
-    expect(lands(copy.metrics.lettersSent(12))).toBe("/staff/sent-emails?purpose=letter&link=campaign");
-    expect(lands(copy.metrics.lettersReplied(3))).toBe("/staff/sent-emails?purpose=forwarded-reply");
-    expect(lands(copy.metrics.supportersAdded(176))).toBe("/staff/supporters?sort=first&dir=desc");
-    expect(lands(copy.metrics.eventRegistrations(277))).toBe("/staff/supporters?activity=registered");
-    expect(lands(copy.metrics.unsubscribes(1))).toBe("/staff/supporters?contact=email:luma-calendar:unsubscribed");
-    expect(lands(copy.metrics.eventsHeld(9))).toBe("/staff/events?when=past");
+    expect(lands(copy.metrics.lettersSent(12))).toBe("/staff/emails?type=campaign&sent=7");
+    expect(lands(copy.metrics.lettersReplied(3))).toBe("/staff/emails?type=campaign&type=mailing&replied=7");
+    expect(lands(copy.metrics.supportersAdded(176))).toBe("/staff/supporters?first=7&sort=first&dir=desc");
+    expect(lands(copy.metrics.eventRegistrations(277))).toBe("/staff/supporters?registered=7");
+    expect(lands(copy.metrics.unsubscribes(1))).toBe("/staff/supporters?unsubscribed=7");
+    expect(lands(copy.metrics.eventsHeld(9))).toBe("/staff/events?when=past&held=7");
 
-    // An admin who can't see supporters, and supporters staff who aren't admins, find no letters in the sent emails.
+    // Letters are for staff who see supporters.
     await rerender(<StaffDashboard dashboard={exampleDashboard} permissions={["admin"]} />);
     expect(tileLink(copy.metrics.lettersSent(12))).toBeNull();
     await rerender(<StaffDashboard dashboard={exampleDashboard} permissions={["supporters"]} />);
-    expect(tileLink(copy.metrics.lettersReplied(3))).toBeNull();
-    expect(lands(copy.metrics.supportersAdded(176))).toBe("/staff/supporters?sort=first&dir=desc");
+    expect(lands(copy.metrics.lettersReplied(3))).toBe("/staff/emails?type=campaign&type=mailing&replied=7");
+    expect(lands(copy.metrics.supportersAdded(176))).toBe("/staff/supporters?first=7&sort=first&dir=desc");
 
     await rerender(<StaffDashboard dashboard={exampleDashboard} permissions={[]} />);
     expect(tileLink(copy.metrics.supportersAdded(176))).toBeNull();
     await expect.element(page.getByText(copy.metrics.supportersAdded(176))).toBeVisible();
     expect(tileLink(copy.metrics.lettersSent(12))).toBeNull();
     // Our events are open to all staff.
-    expect(lands(copy.metrics.eventsHeld(9))).toBe("/staff/events?when=past");
-    // Several signed: everyone who signed anything, newest first.
-    expect(tileLink(copy.metrics.mpsSigned(5))?.getAttribute("href")).toBe(
-      "/staff/politicians?answer=signed&sort=asks",
+    expect(lands(copy.metrics.eventsHeld(9))).toBe("/staff/events?when=past&held=7");
+    // Several signed: those who signed in the window, newest first.
+    expect(tileLink(copy.metrics.politiciansAgreed(5))?.getAttribute("href")).toBe(
+      "/staff/politicians?agreed=7&status=any&sort=asks",
     );
     // One signed: their page.
     await rerender(
       <StaffDashboard
         dashboard={{
           ...exampleDashboard,
-          counts: { ...exampleDashboard.counts, mpsSigned: { current: 1, previous: 3 } },
-          byCampaign: { ...exampleDashboard.byCampaign, mpsSigned: { [bill.slug]: 1 } },
-          signedMp: 7,
+          counts: { ...exampleDashboard.counts, politiciansAgreed: { current: 1, previous: 3 } },
+          byCampaign: { ...exampleDashboard.byCampaign, politiciansAgreed: { [bill.slug]: 1 } },
+          agreedMp: 7,
         }}
         permissions={[]}
       />,
     );
-    expect(tileLink(copy.metrics.mpsSigned(1))?.getAttribute("href")).toBe("/staff/politicians/7");
+    expect(tileLink(copy.metrics.politiciansAgreed(1))?.getAttribute("href")).toBe("/staff/politicians/7");
 
     // A quiet month: nothing reads "No", with no test letters and no bar; the change is over 30 days.
     await rerender(<StaffDashboard dashboard={exampleQuietDashboard} permissions={[]} />);
@@ -486,8 +487,10 @@ describe("StaffDashboard", () => {
       .element(quiet[1])
       .toHaveTextContent(`${copy.none}${copy.metrics.lettersReplied(0)}${copy.change.down(1, 30)}`);
     expect(quiet[0].element().querySelectorAll("[data-campaign]")).toHaveLength(0);
-    // Nobody signed: every politician.
-    expect(tileLink(copy.metrics.mpsSigned(0))?.getAttribute("href")).toBe("/staff/politicians");
+    // With no signature in the window: its list, empty, as the tile says none.
+    expect(tileLink(copy.metrics.politiciansAgreed(0))?.getAttribute("href")).toBe(
+      "/staff/politicians?agreed=30&status=any&sort=asks",
+    );
     // With no bar the letters tile takes a sixth like the rest; a line of nothing but zeros isn't drawn.
     expect(quiet[0].element().className).toBe(spanClass(1));
     const flat = {
@@ -505,7 +508,6 @@ describe("StaffDashboard", () => {
     await expect
       .element(page.getByRole("img", { name: copy.series(copy.metrics.eventRegistrations(4), 30, 8) }))
       .toBeVisible();
-    await expect.element(page.getByText(copy.testLetters(0))).not.toBeInTheDocument();
   });
 });
 
@@ -516,13 +518,13 @@ describe("StackedBars", () => {
     { key: "c", label: "Sea" },
   ];
 
-  it("draws each bar as tall as its share of the tallest, split into its parts, the legend only those any bar has", async () => {
+  it("draws each bar as tall as its share of the tallest, split into its parts, the legend only those the last bar has", async () => {
     const screen = await render(
       <StackedBars
         parts={parts}
         bars={[
-          { label: "First", counts: { a: 1, b: undefined } },
-          { label: "Second", counts: { a: 2, b: 2 } },
+          { title: "First", counts: { a: 1, b: undefined } },
+          { title: "Second", counts: { a: 2, b: 2 } },
         ]}
         name="Chart"
         from="1 Oct"
@@ -541,15 +543,37 @@ describe("StackedBars", () => {
     const point = (clientX: number) =>
       chart.dispatchEvent(new PointerEvent("pointerdown", { clientX, clientY: box.top, bubbles: true }));
     point(box.left - 5);
-    await expect.element(page.getByRole("status")).toHaveTextContent("First");
+    await expect.poll(() => page.getByRole("status").element().textContent).toContain("First");
     point(box.right + 5);
-    await expect.element(page.getByRole("status")).toHaveTextContent("Second");
-    expect((page.getByRole("status").element() as HTMLElement).style.left).toBe("100%");
+    await expect.poll(() => page.getByRole("status").element().textContent).toContain("Second");
+    const label = page.getByRole("status").element() as HTMLElement;
+    expect(label.style.left).toBe("100%");
+    // A line a part it holds, and wider than the room right of the chart's end would leave it.
+    expect(label.textContent).toContain("Ay2");
+    expect(label.textContent).not.toContain("Sea");
+    expect(label.getBoundingClientRect().width).toBeGreaterThan(20);
+  });
+
+  it("leaves out of the legend a part the last bar has none of, though an earlier bar has", async () => {
+    const screen = await render(
+      <StackedBars
+        parts={parts}
+        bars={[
+          { title: "First", counts: { a: 3, b: 1 } },
+          { title: "Second", counts: { a: 2, b: 0 } },
+        ]}
+        name="Chart"
+        from="1 Oct"
+        to="8 Oct"
+      />,
+    );
+    expect(screen.container.textContent).toContain("Ay · 2");
+    expect(screen.container.textContent).not.toContain("Bee");
   });
 
   it("draws a single bar, and no height for a count of nothing, with nothing in the legend", async () => {
     const screen = await render(
-      <StackedBars parts={parts} bars={[{ label: "Only", counts: {} }]} name="Chart" from="1 Oct" to="8 Oct" />,
+      <StackedBars parts={parts} bars={[{ title: "Only", counts: {} }]} name="Chart" from="1 Oct" to="8 Oct" />,
     );
     const chart = page.getByRole("img", { name: "Chart" }).element();
     expect((chart.children[0] as HTMLElement).style.height).toBe("0%");
@@ -2584,7 +2608,10 @@ describe("ImportOverview", () => {
       "/staff/audit-log",
       "/staff/mailings",
     ]);
-    // After its name, the MP check says it changes nothing, the sending that it acts, the tidying that it's housekeeping.
+    // After its name, the MP check says it changes nothing, the sending and the Luma import that they act, the tidying that it's housekeeping.
+    expect(cards[0].querySelector("h3")!.textContent).toBe(
+      `${jobTitles["import-luma"]}${staffCopy.import.takesAction}`,
+    );
     expect(cards[5].querySelector("h3")!.textContent).toBe(`${jobTitles["check-mps"]}${staffCopy.import.checkOnly}`);
     expect(cards[3].querySelector("h3")!.textContent).toBe(
       `${jobTitles["send-mailings"]}${staffCopy.import.takesAction}`,
@@ -3525,13 +3552,15 @@ describe("RunList", () => {
   it("says how many hosts a Luma run changed and how many pages of contacts it read", async () => {
     await render(
       <RunList
-        runs={[ran("import-luma", { ...exampleLumaResult, hostsChanged: 3, contactPages: 10 }, { id: 1 })]}
+        runs={[
+          ran("import-luma", { ...exampleLumaResult, hostsChanged: 3, contactPages: 10, eventsTagged: 2 }, { id: 1 }),
+        ]}
         none="None"
       />,
     );
     const [run] = page.getByRole("status").all();
     expect(run.element().textContent).toContain(
-      `${staffCopy.luma.result(exampleLumaResult)} ${staffCopy.luma.hostsChanged(3)} ${staffCopy.luma.contactPages(10)}`,
+      `${staffCopy.luma.result(exampleLumaResult)} ${staffCopy.luma.hostsChanged(3)} ${staffCopy.luma.contactPages(10)} ${staffCopy.luma.eventsTagged(2)}`,
     );
     expect(run.element().textContent).toMatch(new RegExp(`^${staffCopy.runs.status.ok} `));
   });
@@ -5330,6 +5359,7 @@ describe("PoliticianFilters", () => {
       "Green",
       ...Object.values(copy.emailStates),
       ...Object.values(copy.flags),
+      ...DASHBOARD_WINDOWS.map((days) => staffCopy.filters.lastDays(days)),
       // Those mailed about each ask.
       ...exampleAsks.map((ask) => ask.title),
     ]);
@@ -5352,6 +5382,7 @@ describe("PoliticianFilters", () => {
       staffCopy.fields.email,
       copy.flag,
       copy.ask,
+      copy.agreedIn,
       copy.mailed,
     ]);
     expect(page.getByRole("link", { name: staffCopy.resetFilters }).query()).toBeNull();
@@ -5512,6 +5543,21 @@ describe("SupporterFilters", () => {
     expect(SUBSCRIPTION_ORDER[0]).toEqual(["email", "site-forms"]);
   });
 
+  it("has a chip for a filter only a link turns on, to change or remove, though + Filter doesn't offer it", async () => {
+    const { filter, ...search } = supportersSearch({ registered: "30" });
+    void filter;
+    await render(<SupporterFilters search={search} choices={choices} />);
+    const chip = `${copy.filters.registered}: ${staffCopy.filters.lastDays(30)}`;
+    const choicesOfChip = await menu(chip);
+    expect(choicesOfChip.map(([text]) => text)).toContain(staffCopy.filters.lastDays(90));
+    expect(choicesOfChip.find(([text]) => text === staffCopy.filters.remove)![1]).toBe("/staff/supporters");
+    await page.getByRole("button", { name: chip }).click();
+    await page.getByRole("button", { name: staffCopy.filters.add }).click();
+    const offered = [...document.querySelectorAll("#filter-add details > summary")].map((p) => p.textContent);
+    expect(offered).not.toContain(copy.filters.registered);
+    expect(offered).not.toContain(copy.filters.unsubscribed);
+  });
+
   it("offers every filter in the columns' order, events by name and day", async () => {
     const { filter, ...search } = supportersSearch({});
     void filter;
@@ -5525,6 +5571,7 @@ describe("SupporterFilters", () => {
       copy.columns.subscriptions,
       copy.filters.event,
       copy.filters.campaign,
+      copy.filters.first,
     ]);
     const links = await menu(staffCopy.filters.add);
     expect(links).toContainEqual([

@@ -21,7 +21,9 @@ export default function FilterBarLines({ className, children }: { className: str
     const measure = () => {
       const kids = [...bar.children];
       const chips = kids.pop()!;
-      const needed = side(bar, [...kids.map(widthOf), side(chips, [...chips.children].map(widthOf))]);
+      // A chip's menu, beside it in the markup, opens over the page and takes no room in the row.
+      const inRow = [...chips.children].filter((chip) => !chip.hasAttribute("popover"));
+      const needed = side(bar, [...kids.map(widthOf), side(chips, inRow.map(widthOf))]);
       setStacked(needed > bar.clientWidth);
     };
     const observer = new ResizeObserver(measure);

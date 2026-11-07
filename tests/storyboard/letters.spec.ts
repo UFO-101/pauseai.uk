@@ -1,4 +1,5 @@
 import { campaigns, copy } from "@/lib/content/email-your-mp";
+import { runSql } from "@/scripts/fresh-database.mjs";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { fakeTurnstile, lookUpTestMp, newestEmail, openLookup } from "../steps";
 import { BASE, emailFrame, expect, madeUpAddress, frame, story, test } from "./fixtures";
@@ -54,6 +55,40 @@ test("Letters by count", async ({ page, request, flowDatabase }) => {
   await expect(sams).toBeVisible();
   await expect(page.getByRole("row").nth(1)).toContainText("Sam Smith");
   await frame(page, "All the letters again");
+});
+
+test("All emails", async ({ page, flowDatabase }) => {
+  story("Jane has written to her MP, who replied, and a mailing from PauseAI has gone to the same MP.");
+  await sentLetterId(page, flowDatabase, madeUpAddress("Jane Smith", 13));
+  // The page leaves out letters to test MPs, and a flow's letters can only go to one.
+  runSql(
+    flowDatabase,
+    `UPDATE politicians SET is_test = false, test_postcode = NULL;
+     UPDATE letters SET replied_at = '2026-10-15T10:00:00Z';
+     WITH m AS (
+       INSERT INTO mailings (title, airtable_field, audience, channel, state)
+       VALUES ('A letter about the march', 'march', 'politicians', 'email', 'sent') RETURNING id
+     ), l AS (
+       INSERT INTO letters (notable_person_id, status, sent_at, kind)
+       SELECT notable_person_id, 'sent', '2026-10-14T10:00:00Z', 'pauseai' FROM letters LIMIT 1 RETURNING id
+     )
+     INSERT INTO letters_from_pauseai (id, mailing_id) SELECT l.id, m.id FROM l, m`,
+  );
+  await page.goto(`${BASE}/staff/emails`);
+  await expect(page.getByRole("row")).toHaveCount(3);
+  await frame(page, "Both emails");
+
+  story("Filtered to those replied to in the last 30 days, the mailing's letter goes, leaving Jane's.");
+  await page.goto(`${BASE}/staff/emails?replied=30`);
+  await expect(page.getByRole("row")).toHaveCount(2);
+  await expect(page.getByRole("row").nth(1)).toContainText("Jane Smith");
+  await frame(page, "Those replied to");
+
+  story("The dashboard's supporter emails tile counts only Jane's, and opens only hers.");
+  await page.goto(`${BASE}/staff`);
+  const tile = page.locator('a[href="/staff/emails?type=campaign&sent=7"]');
+  await expect(tile).toContainText(staffCopy.home.dashboard.metrics.lettersSent(1));
+  await frame(page, "The supporter emails tile");
 });
 
 test("Replies to letters", async ({ page, request, flowDatabase }) => {

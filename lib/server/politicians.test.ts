@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { addTestLetter, addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query, transaction } from "./db";
 import {
@@ -80,6 +80,7 @@ describe("politiciansSearch", () => {
     expect(politiciansSearch(typed)).toEqual({
       ...typed,
       tab: "",
+      agreed: "",
       pasted: [],
       saved: "",
       filter: {
@@ -137,6 +138,7 @@ describe("politiciansSearch", () => {
       ask: "",
       answer: "",
       mailed: [],
+      agreed: "",
       sort: "",
       dir: "",
       page: "",
@@ -326,6 +328,28 @@ describeWithDatabase("politicians", () => {
     expect(await page({ page: 2 })).toMatchObject({ page: 2, politicians: [] });
   });
 
+  it("finds those who agreed in the last so many days, signing or going, once each, not by Airtable's record", async () => {
+    vi.stubEnv("FIXTURE_NOW", "2026-10-21T12:00:00.000Z");
+    const signer = await addTestPolitician();
+    const before = await addTestPolitician({ name: "Old Placeholder", airtableId: "recOld" });
+    const byAirtable = await addTestPolitician({ name: "Air Placeholder", airtableId: "recAir" });
+    const going = await addTestPolitician({ name: "Going Placeholder", airtableId: "recGoing" });
+    const tentative = await addTestPolitician({ name: "Maybe Placeholder", airtableId: "recMaybe" });
+    await query(
+      `INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, updated_by, updated_at) VALUES
+         ($1, 'frontier-ai-letter', 'letter', 'signed', 'x', '2026-10-20T00:00:00Z'),
+         ($1, 'deepmind-letter', 'letter', 'signed', 'x', '2026-10-19T00:00:00Z'),
+         ($2, 'deepmind-letter', 'letter', 'signed', 'x', '2026-09-30T00:00:00Z'),
+         ($3, 'deepmind-letter', 'letter', 'signed', 'airtable', '2026-10-20T00:00:00Z'),
+         ($4, 'edinburgh-conference-2026', 'event', 'going', 'x', '2026-10-20T00:00:00Z'),
+         ($5, 'edinburgh-conference-2026', 'event', 'tentative', 'x', '2026-10-20T00:00:00Z')`,
+      [signer, before, byAirtable, going, tentative],
+    );
+    expect((await listPoliticians({ agreedDays: 7 })).map((p) => p.id).sort()).toEqual([signer, going].sort());
+    expect((await listPoliticians({ agreedDays: 30 })).map((p) => p.id).sort()).toEqual([signer, before, going].sort());
+    vi.unstubAllEnvs();
+  });
+
   it("finds those in office, or out of it, and counts them", async () => {
     const mp = await addTestPolitician();
     const retired = await addTestPolitician({ name: "Old Placeholder", status: "retired", airtableId: "recOld" });
@@ -502,7 +526,7 @@ describeWithDatabase("politicians", () => {
         ...times.filter((t) => t === null),
       ]);
     }
-    // Everyone who signed anything, by their newest answer.
+    // Everyone who signed, by their newest answer.
     await setStatus(peer, BILL, { status: "signed", date: null, note: "" }, "jo@pauseai.uk");
     const signed = await listPoliticians({ answer: "signed", sort: { key: "asks", dir: "desc" } });
     expect(signed.map((p) => p.id)).toEqual([peer, mp]);

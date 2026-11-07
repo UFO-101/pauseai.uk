@@ -17,7 +17,7 @@ function KeptNote({ keeps }: { keeps: boolean }) {
       <em>
         {before}{" "}
         {keeps ? (
-          <StaffLink href="/staff/one-off">{words.title}</StaffLink>
+          <StaffLink href="/staff/emails?type=one-off">{words.title}</StaffLink>
         ) : (
           <StaffLink href="/staff/mailings">{staffCopy.mailings.title}</StaffLink>
         )}

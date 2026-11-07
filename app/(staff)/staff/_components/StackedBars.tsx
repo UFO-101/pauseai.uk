@@ -4,12 +4,12 @@ import { type PointerEvent, useState } from "react";
 import styles from "./StackedBars.module.css";
 
 type Part = { key: string; label: string };
-type Bar = { label: string; counts: Record<string, number | undefined> };
+type Bar = { title: string; counts: Record<string, number | undefined> };
 
 type Props = {
   /** What a bar is split into, bottom up: each has its colour by its place here. */
   parts: Part[];
-  /** The bars, oldest first, each with what to say when it's pointed at. */
+  /** The bars, oldest first, each with its heading when it's pointed at. */
   bars: Bar[];
   /** The chart's name for screen readers. */
   name: string;
@@ -23,8 +23,9 @@ const total = (bar: Bar) => Object.values(bar.counts).reduce<number>((sum, count
 /**
  * Bars of counts, each split into coloured parts, over a line that is zero:
  * the bottom is always zero and the tallest fills the height. Under its ends,
- * the dates it runs between; under those, the legend: the parts any bar has,
- * with the last bar's count of each. Pointing at a bar says what it holds.
+ * the dates it runs between; under those, the legend: the parts the last bar
+ * has, with its count of each. Pointing at a bar says what it holds, a line a
+ * part, in a box that may be wider than the chart.
  */
 export default function StackedBars({ parts, bars, name, from, to }: Props) {
   const [pointed, setPointed] = useState<number | null>(null);
@@ -60,7 +61,7 @@ export default function StackedBars({ parts, bars, name, from, to }: Props) {
           ))}
         </span>
         {pointed !== null && (
-          // Slid along by its bar's place, so it stays over the chart at either end.
+          // Slid along by its bar's place, so it hangs inward from the chart's edge at either end.
           <span
             className={styles.label}
             role="status"
@@ -69,7 +70,18 @@ export default function StackedBars({ parts, bars, name, from, to }: Props) {
               transform: `translate(-${(pointed / (last || 1)) * 100}%, -100%)`,
             }}
           >
-            {bars[pointed].label}
+            <strong className={styles.title}>{bars[pointed].title}</strong>
+            {parts.map(
+              (part, place) =>
+                Boolean(bars[pointed].counts[part.key]) && (
+                  <span key={part.key} className={styles.line}>
+                    <span>
+                      <span className={styles.swatch} data-part={place} aria-hidden="true" /> {part.label}
+                    </span>
+                    <span>{bars[pointed].counts[part.key]}</span>
+                  </span>
+                ),
+            )}
           </span>
         )}
       </span>
@@ -80,10 +92,10 @@ export default function StackedBars({ parts, bars, name, from, to }: Props) {
       <span className={styles.legend}>
         {parts.map(
           (part, place) =>
-            bars.some((bar) => bar.counts[part.key]) && (
+            Boolean(bars[last].counts[part.key]) && (
               <span key={part.key}>
                 <span className={styles.swatch} data-part={place} aria-hidden="true" /> {part.label} ·{" "}
-                {bars[last].counts[part.key] ?? 0}
+                {bars[last].counts[part.key]}
               </span>
             ),
         )}

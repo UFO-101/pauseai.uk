@@ -39,7 +39,13 @@ import Tabs from "@/app/(staff)/staff/_components/ui/Tabs";
 import Tag from "@/components/ui/Tag";
 import type { Group } from "../_components/types";
 import FilterBarLines from "@/app/(staff)/staff/_components/ui/FilterBarLines";
-import { NoticeExample, DeleteTwiceExample, SavedFilterExample, SavedFilterGoneExample } from "./staff.client";
+import {
+  NoticeExample,
+  DeleteTwiceExample,
+  MenuSubmitExample,
+  SavedFilterExample,
+  SavedFilterGoneExample,
+} from "./staff.client";
 
 /** A list's rows, for the list frame: a name, a place and a count, the place long enough to wrap. */
 type ExampleRow = { name: string; place: string; count: number };
@@ -94,7 +100,7 @@ const PAGES: Record<StaffPageName, true> = {
   politicians: true,
   asks: true,
   mailings: true,
-  oneOff: true,
+  emails: true,
   mpEmails: true,
   import: true,
   changes: true,
@@ -316,7 +322,7 @@ export const staffKit: Group = {
                     "politicians",
                     "asks",
                     "mailings",
-                    "oneOff",
+                    "emails",
                     "mpEmails",
                     "import",
                     "accounts",
@@ -1024,6 +1030,20 @@ export const staffKit: Group = {
                 <p>One</p>
                 <p>Two</p>
               </Menu>
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "MenuSubmit",
+      file: "app/(staff)/staff/_components/ui/MenuSubmit.tsx",
+      variants: [
+        {
+          label: "A menu's item that sends a form, the menu staying up while it waits",
+          render: () => (
+            <StaffPage as="div">
+              <MenuSubmitExample />
             </StaffPage>
           ),
         },

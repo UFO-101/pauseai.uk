@@ -39,7 +39,8 @@ export type FilterOption = {
  * in it, those that have it. A
  * `place` one takes words typed, a postcode or a town, and how far from it
  * (its parameter `place.within`), in a small form; its options give the
- * words found for what was typed.
+ * words found for what was typed. A `linkedOnly` one isn't offered by "+ Filter":
+ * it's on only from a link to the list, a chip like any other once it is.
  */
 export type Filter = {
   name: string;
@@ -49,6 +50,7 @@ export type Filter = {
   repeat?: boolean;
   searchable?: boolean;
   place?: { within: string; distances: FilterOption[]; placeholder: string };
+  linkedOnly?: boolean;
 };
 
 const copy = staffCopy.filters;
@@ -241,7 +243,7 @@ export default function FilterBar({
   // Those "+ Filter" offers, each with the choices it offers: one not on, or one that repeats, its other
   // choices, found or left out; a place, its form. Except offers those that repeat.
   const offered = filters
-    .filter((filter) => !filter.after && (filter.repeat || chosen(filter.name).length === 0))
+    .filter((filter) => !filter.after && !filter.linkedOnly && (filter.repeat || chosen(filter.name).length === 0))
     .map((filter) => {
       const taken = chosen(filter.name).map((value) => {
         const plain = notValue(value).value;

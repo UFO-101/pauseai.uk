@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { runSql } from "@/scripts/fresh-database.mjs";
+import { NOTIFICATION_INBOX } from "@/tests/fixture-env.mjs";
 import { addStaffAccount, importLuma, logInAsStaff, newestEmail } from "../steps";
 import { BASE, emailFrame, expect, frame, story, test } from "./fixtures";
 
@@ -68,6 +69,33 @@ test("Event owners", async ({ page, request, flowDatabase }) => {
   const seans = newestEmail((one) => one.To === "sean@pauseai.uk" && one.TextBody.includes(staffEmail()))!;
   expect(seans.TextBody).toContain("AI risk talk");
   await emailFrame(page, seans, "The email Sean gets");
+});
+
+test("Tagging new events on Luma", async ({ page, request, flowDatabase }) => {
+  story(
+    "The first import copies the calendar. Then two new events appear on Luma with no tags: one in Oxford, and one in Tunbridge Wells, where no tag fits.",
+  );
+  await importLuma(request, BASE);
+  const unclear = "Kent flyering";
+  runSql(
+    flowDatabase,
+    `INSERT INTO luma_events (id, name, url, start_at, access, city, region, location_type) VALUES
+       ('evt-new-oxford', 'Pub social in the city', 'https://luma.com/new-oxford', '2026-11-20T18:00:00Z', 'manage', 'Oxford', 'England', 'offline'),
+       ('evt-new-kent', '${unclear}', 'https://luma.com/new-kent', '2026-11-21T10:00:00Z', 'manage', 'Tunbridge Wells', 'England', 'offline')`,
+  );
+
+  story("The next import gives the Oxford event its tag on Luma, as its city says which.");
+  await importLuma(request, BASE);
+  await logIn(page, flowDatabase);
+  await page.goto(`${BASE}/staff/events`);
+  const oxford = page.getByRole("row").filter({ hasText: "Pub social in the city" });
+  await expect(oxford.getByText("Oxford", { exact: true }).last()).toBeVisible();
+  await frame(page, "The new events, one tagged");
+
+  story("It doesn't make a new tag for the other. The notification inbox is asked to look at it, once.");
+  const asked = newestEmail((one) => one.Subject === copy.unclearTagEmail.subject(unclear))!;
+  expect(asked.To).toBe(NOTIFICATION_INBOX);
+  await emailFrame(page, asked, "The email asking about the other");
 });
 
 test("Past events", async ({ page, request, flowDatabase }) => {

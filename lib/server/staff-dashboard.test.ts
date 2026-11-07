@@ -29,6 +29,17 @@ describeWithDatabase("dashboard", () => {
     ] as const) {
       await addTestLetter({ campaign, politicianId, senderEmail, status, sentAt, repliedAt });
     }
+    // A mailing's letter this week, which the tile of supporters' letters leaves out.
+    const [{ id: mailing }] = await query<{ id: number }>(
+      `INSERT INTO mailings (title, airtable_field, audience, channel, state) VALUES ('M', 'dashboard', 'politicians', 'email', 'sent')
+       ON CONFLICT (airtable_field) DO UPDATE SET title = EXCLUDED.title RETURNING id::int`,
+    );
+    const [{ id: pauseai }] = await query<{ id: number }>(
+      `INSERT INTO letters (notable_person_id, status, sent_at, kind)
+       VALUES ($1, 'sent', '2026-10-20T11:00:00Z', 'pauseai') RETURNING id::int`,
+      [real],
+    );
+    await query("INSERT INTO letters_from_pauseai (id, mailing_id) VALUES ($1, $2)", [pauseai, mailing]);
     // The real MP signed two letters this week, one of them an ask no campaign in code makes; the test MP's
     // status doesn't count, nor does Airtable's, which records signatures from before the site.
     await query(
@@ -36,7 +47,8 @@ describeWithDatabase("dashboard", () => {
        VALUES ($1, 'frontier-ai-letter', 'letter', 'signed', 'x', '2026-10-15T00:00:00Z'),
               ($1, 'deepmind-letter', 'letter', 'signed', 'x', '2026-10-17T00:00:00Z'),
               ($1, 'controlai-letter', 'letter', 'signed', 'airtable', '2026-10-18T00:00:00Z'),
-              ($2, 'controlai-letter', 'letter', 'signed', 'x', '2026-10-16T00:00:00Z')`,
+              ($2, 'controlai-letter', 'letter', 'signed', 'x', '2026-10-16T00:00:00Z'),
+              ($1, 'edinburgh-conference-2026', 'event', 'going', 'x', '2026-10-18T00:00:00Z')`,
       [real, test],
     );
     // Supporters first seen this week, the week before, and five weeks ago; and two linked this week, one first
@@ -104,20 +116,19 @@ describeWithDatabase("dashboard", () => {
     expect(result.counts).toEqual({
       lettersSent: { current: 1, previous: 1 },
       lettersReplied: { current: 1, previous: 0 },
-      mpsSigned: { current: 2, previous: 0 },
+      // One MP, though they signed two letters and are going to an event; a tentative yes is no yes.
+      politiciansAgreed: { current: 1, previous: 0 },
       eventRegistrations: { current: 2, previous: 0 },
       eventsHeld: { current: 1, previous: 1 },
       supportersAdded: { current: 1, previous: 1 },
       unsubscribes: { current: 1, previous: 0 },
     });
-    // The test MP's two letters: one delivered, one that bounced after it was sent.
-    expect(result.testLetters).toBe(2);
     expect(result.byCampaign).toEqual({
       lettersSent: { "regulate-letter-pm": 1 },
-      mpsSigned: { "regulate-letter-pm": 1, "deepmind-letter": 1 },
+      politiciansAgreed: { "regulate-letter-pm": 1, "deepmind-letter": 1, "edinburgh-conference-2026": 1 },
     });
     // Only the real MP signed, so the tile leads to them.
-    expect(result.signedMp).toBe(real);
+    expect(result.agreedMp).toBe(real);
     // Eight weeks, oldest first, the current week last: the registration three weeks ago, then this week's two.
     expect(result.series.eventRegistrations.map((point) => point.count)).toEqual([0, 0, 0, 0, 0, 1, 0, 2]);
     // New supporters once each, under their earliest source: the member who later joined Luma, and last week's on Luma.
@@ -150,7 +161,7 @@ describeWithDatabase("dashboard", () => {
     expect(result.supportersBySource.map((point) => point.count)).toEqual([0, 0, 0, 0, 0, 0, 0, 2]);
     expect(result.supportersBySource[7].sources).toEqual({ luma: 1, member: 1 });
     expect(result.supportersBySource[7].from).toBe(result.since);
-    expect(result.signedMp).toBe(real);
+    expect(result.agreedMp).toBe(real);
   });
 
   it("names no one politician when more than one signed", async () => {
@@ -167,7 +178,7 @@ describeWithDatabase("dashboard", () => {
        VALUES ($1, 'controlai-letter', 'letter', 'signed', 'x', '2026-10-17T00:00:00Z')`,
       [peer],
     );
-    expect((await dashboard(7)).signedMp).toBeNull();
+    expect((await dashboard(7)).agreedMp).toBeNull();
   });
 
   it("says when the newest read of Gmail left mail in the letters inbox for a person, and not when it left none", async () => {

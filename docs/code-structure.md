@@ -167,6 +167,9 @@ the code should go instead. The rules below say which ones are enforced.
   Files there import `server-only`, so they can't end up in a browser
   bundle.
 
+- **Reading email** is all in `lib/email-parsing/`: addresses, MIME and
+  headers, subjects and machine replies, the mail a message quotes, and a
+  plain text's links and bold. `lib/server/mime.ts` only writes it.
 - **Email** goes out only through `send()` (`lib/server/email.ts`), which
   skips blocked addresses and records each send (`docs/domain-concepts.md`).
   Only it may import `sendEmail` or `unsuppress` from Postmark's binding,

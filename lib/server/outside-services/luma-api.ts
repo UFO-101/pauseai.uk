@@ -61,3 +61,21 @@ export async function lumaList<T>(path: string, params: URLSearchParams, revalid
     remaining,
   };
 }
+
+/**
+ * Posts `body` to `path`: Luma's JSON answer. Throws as lumaGet does, for a
+ * missing key, a 429 or any other answer that isn't ok.
+ */
+export async function lumaPost<T>(path: string, body: unknown): Promise<T> {
+  const key = process.env.LUMA_API_KEY;
+  if (!key) throw new Error("LUMA_API_KEY is not set");
+  const res = await outsideFetch(`https://public-api.luma.com${path}`, {
+    method: "POST",
+    headers: { "x-luma-api-key": key, "content-type": "application/json", accept: "application/json" },
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+  if (res.status === 429) throw new LumaRateLimited(Number(res.headers.get("retry-after")) || 60);
+  if (!res.ok) throw new Error(`Luma answered ${res.status} for ${path}`);
+  return (await res.json()) as T;
+}
