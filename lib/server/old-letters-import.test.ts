@@ -1,7 +1,7 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import { NIGHTLY } from "@/lib/import-runs";
 import { latestRun } from "./import-runs";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import webForm from "@/tests/fixtures/airtable-web-form.json";
@@ -133,10 +133,21 @@ const outcomeOf = async (id: string) =>
 
 describeWithDatabase("the import of old letters", () => {
   useTestDatabase();
-  beforeEach(async () => {
+  const stubEnv = () => {
     stubLettersInboxEnv();
     vi.stubEnv("GMAIL_TOKEN_KEY", Buffer.alloc(32, 7).toString("base64"));
     vi.stubEnv("AIRTABLE_TOKEN", "fixture");
+  };
+  // A file's first import loads its code and plans its queries, which on a loaded
+  // CI runner has outlasted a test's time limit. So that's done once, before them.
+  beforeAll(async () => {
+    stubEnv();
+    await seed();
+    await run();
+    vi.unstubAllEnvs();
+  });
+  beforeEach(async () => {
+    stubEnv();
     // The mailings it fills outlast each test, and it keeps a template it has made.
     await query("UPDATE mailings SET imported_text = NULL WHERE old_letters_key IS NOT NULL");
   });
