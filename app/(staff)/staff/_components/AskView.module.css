@@ -103,6 +103,7 @@
 /* A phone: the counts under the title, with the room to keep each label on a line. */
 @media (max-width: 30rem) {
   .howCounts {
-    width: 100%;
+    width: 17rem;
+    max-width: 100%;
   }
 }
