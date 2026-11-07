@@ -29,6 +29,8 @@ const PATHS: Record<StaffPageId | "home" | "me" | "logout", ReactNode> = {
       <path d="M2.5 20c.7-3.6 3.3-5.5 6.5-5.5s5.8 1.9 6.5 5.5M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.8c1.9.7 3.1 2.4 3.5 5.2" />
     </>
   ),
+  // A speech bubble.
+  messages: <path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-5 4v-4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" />,
   // A pen writing on a page.
   campaigns: (
     <>

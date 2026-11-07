@@ -63,6 +63,10 @@ describeWithDatabase("the change log", () => {
     await logChange("postmark", "block address", { address: "jane@example.com" });
     await logChange("postmark", "block address", { address: email });
     await logChange("jo@pauseai.uk", "unblock address", { address: "jane@example.com", note: "Checked" });
+    await logChange("jo@pauseai.uk", "create message", { id: 1, channel: "email", topic: "luma-calendar" });
+    await logChange("jo@pauseai.uk", "schedule message", { id: 1, recipients: 3 });
+    await logChange("jo@pauseai.uk", "stop message", { id: 1, was: "scheduled" });
+    await logChange("jo@pauseai.uk", "reply to message", { id: 1 });
     await query("DELETE FROM audit_log WHERE action = 'add politician'");
     const limited = await recentChanges(false);
     expect(limited.total).toBe(2);
@@ -70,6 +74,6 @@ describeWithDatabase("the change log", () => {
       ["block address", { address: email }],
       ["add note", { noteId: 2, politicianId: polly }],
     ]);
-    expect((await recentChanges(true)).total).toBe(8);
+    expect((await recentChanges(true)).total).toBe(12);
   });
 });

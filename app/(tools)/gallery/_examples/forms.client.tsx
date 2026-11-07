@@ -4,7 +4,7 @@
 // components with no props, so the server-rendered gallery can place them.
 import { EditorContent, useEditor } from "@tiptap/react";
 import { useState } from "react";
-import { Checkbox, Segmented } from "@/components/ui/Controls";
+import { Checkbox, Radio, Segmented } from "@/components/ui/Controls";
 import { Label } from "@/components/ui/Field";
 import LinkBar from "@/components/ui/LinkBar";
 import LinkButton from "@/components/ui/LinkButton";
@@ -98,5 +98,20 @@ export function LinkBarExample() {
         <EditorContent editor={editor} />
       </div>
     </div>
+  );
+}
+
+/** Two radio buttons, each in its label. */
+export function RadioExample() {
+  const [chosen, setChosen] = useState("");
+  return (
+    <>
+      {["One", "Other"].map((one) => (
+        <label key={one}>
+          <Radio name="radio-example" value={one} onChange={() => setChosen(one)} /> {one}
+          {chosen === one && " (chosen)"}
+        </label>
+      ))}
+    </>
   );
 }

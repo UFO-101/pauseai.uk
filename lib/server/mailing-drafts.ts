@@ -51,7 +51,12 @@ export type WrittenMailing = {
 
 /** What a save can change. */
 export type MailingChanges = Partial<
-  Pick<WrittenMailing, "filter" | "subject" | "body" | "ask" | "sentFrom" | "fromName" | "dueAt">
+  Pick<WrittenMailing, "filter" | "subject" | "body" | "ask" | "sentFrom" | "fromName" | "dueAt"> & {
+    /** A text's, which has no subject to be its title. */
+    title: string;
+    /** The WhatsApp template a text goes on. */
+    templateId: number | null;
+  }
 >;
 
 /** Each change, by its column. */
@@ -63,6 +68,8 @@ const COLUMNS: Record<keyof MailingChanges, string> = {
   sentFrom: "sent_from",
   fromName: "from_name",
   dueAt: "due_at",
+  title: "title",
+  templateId: "template_id",
 };
 
 /** A save, or why not: someone else saved since, it's no longer a draft, or it's gone. */
@@ -210,17 +217,23 @@ export async function choosingFor(mailing: string): Promise<Choosing | undefined
   };
 }
 
-/** A mailing written here, as stored; undefined for none, or one imported from Airtable. */
-export async function getWrittenMailing(id: number): Promise<WrittenMailing | undefined> {
-  const [row] = await query<WrittenMailing>(`${SELECT_WRITTEN} AND m.id = $1`, [id]);
+/** A mailing written here to `audience`, as stored; undefined for none, or one imported from Airtable. */
+export async function getWrittenMailing(
+  id: number,
+  audience: "politicians" | "supporters" = "politicians",
+): Promise<WrittenMailing | undefined> {
+  const [row] = await query<WrittenMailing>(`${SELECT_WRITTEN} AND m.id = $1 AND m.audience = $2`, [id, audience]);
   if (!row) return undefined;
   return { ...row, filter: checkStoredFilter(row.filter)!, body: checkMailingDoc(row.body)! };
 }
 
-/** A mailing written here, as someone opens it, which keeps it from being tidied away. */
-export async function openWrittenMailing(id: number): Promise<WrittenMailing | undefined> {
+/** A mailing written here to `audience`, as someone opens it, which keeps it from being tidied away. */
+export async function openWrittenMailing(
+  id: number,
+  audience: "politicians" | "supporters" = "politicians",
+): Promise<WrittenMailing | undefined> {
   await query("UPDATE mailings SET opened_at = now() WHERE id = $1 AND body IS NOT NULL", [id]);
-  return getWrittenMailing(id);
+  return getWrittenMailing(id, audience);
 }
 
 /** Why a save to `id` at a version didn't happen. */
@@ -285,10 +298,12 @@ export async function removeAttachment(id: number, version: number, attachmentId
 export async function attachmentFile(
   mailingId: number,
   attachmentId: number,
+  audience: "politicians" | "supporters" = "politicians",
 ): Promise<{ filename: string; contentType: string; content: Buffer } | undefined> {
   const [file] = await query<{ filename: string; contentType: string; content: Buffer }>(
-    `SELECT filename, content_type AS "contentType", content FROM mailing_attachments WHERE id = $2 AND mailing_id = $1`,
-    [mailingId, attachmentId],
+    `SELECT a.filename, a.content_type AS "contentType", a.content FROM mailing_attachments a
+     JOIN mailings m ON m.id = a.mailing_id WHERE a.id = $2 AND a.mailing_id = $1 AND m.audience = $3`,
+    [mailingId, attachmentId, audience],
   );
   return file;
 }
@@ -452,7 +467,7 @@ export function emailFor(mailing: Pick<WrittenMailing, "subject" | "body">, reci
  */
 export async function sendTestCopy(
   mailing: WrittenMailing,
-  recipient: PoliticianRecipient,
+  recipient: MailingRecipientValues & Pick<PoliticianRecipient, "name">,
   to: string,
 ): Promise<ChannelResult> {
   const email = emailFor(mailing, recipient);

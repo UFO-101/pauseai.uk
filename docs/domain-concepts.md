@@ -248,6 +248,41 @@ written to and kept.
   be passed on (`lib/server/held-replies.ts`). A soft bounce is only
   noted.
 
+### Messages to supporters
+
+A message is a row of `mailings` with the audience `supporters`, but to staff
+it's apart from a mailing, in its own place: `/staff/messages`, under
+Supporters, behind the `supporters` permission. Mailings to politicians are
+open to every staff member, so their pages, actions and the `send-mailings`
+job all leave messages out.
+
+- **Channel and topic.** A message has one of each, fixed when it's made
+  from the supporters list's Contact filter: one topic, answered yes
+  (`messageTerms` in `lib/supporter-messages.ts`). "Not sure" isn't enough.
+  Staff choose email or text, never the backend.
+- **Who.** The list's filter, kept as its URL parameters; there are no
+  ticks. Change who opens the list choosing for the draft, and the draft
+  keeps the filters only while they say its channel and topic. Scheduling
+  fixes the recipients, a row of `messages_to_supporters` each, from
+  those `contact_permission()` says yes for (`lib/server/message-recipients.ts`).
+- **Fields.** No field is everyone's, so each has a fallback, and a
+  message can be scheduled with a field some lack, unlike a mailing to
+  politicians. Each field and part has a condition (`has:mp`), and the
+  preview has a case button for each.
+- **A text's words** are a WhatsApp template: one approved, chosen in the
+  writer and read-only, or new words, sent for approval on scheduling and held
+  until WhatsApp decides (`message_templates`). A template has no parts
+  only some get, as its words are the same for everyone. A text
+  stops sending a fixed three days after its time.
+- **Sending.** No backend sends messages yet (`lib/server/message-channels.ts`):
+  on the live site scheduling and replying are refused and the pages say so,
+  and only an email's test copy goes, by Postmark. A fixture build has
+  a fake backend, so its flows can be driven whole.
+- **Replies** are kept in `message_replies`, each from the supporter or, with
+  `sent_by`, from staff, and shown on the copy's page
+  (`/staff/messages/<id>/<copy>`) and the supporter's. A reply to a text is
+  free within 24 hours of the person's last message, and refused after.
+
 ### Mailings to politicians
 
 A mailing written on the site goes from a staff member's own Gmail, as if
@@ -925,7 +960,7 @@ log entry.
 A new permission is a name in `PERMISSIONS` and the table's `CHECK`, and the
 pages it opens given it in `STAFF_SECTIONS`.
 
-A link in the navigation shows a "new" tag for 3 days after that person first
+A page to try out that can't do its job yet, such as Messages with no backend for sending, has a "draft" tag instead, for everyone. A link in the navigation shows a "new" tag for 3 days after that person first
 sees it (a dot on the folded rail), for any page added to `STAFF_SECTIONS`, with
 nothing else to do. `staff_nav_seen` has a row for each account and page, with
 when they first saw it; the signed-in layout adds those they have none for

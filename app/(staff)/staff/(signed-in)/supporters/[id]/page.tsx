@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { found } from "@/lib/found";
 import { now } from "@/lib/now";
+import { messagesToSupporter } from "@/lib/server/message-pages";
 import { notesOn } from "@/lib/server/notes";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { getSupporter } from "@/lib/server/supporters";
@@ -10,6 +11,7 @@ import { canonicalSupporter, supporterTitle } from "@/lib/supporters";
 import { addNoteNow, deleteNoteNow, editNoteNow } from "../../../actions";
 import EraseLink from "../../../_components/EraseLink";
 import Notes from "../../../_components/Notes";
+import SupporterMessages from "../../../_components/SupporterMessages";
 import SupporterDetails from "../../../_components/SupporterDetails";
 import { supporterOneOffs } from "@/lib/server/one-off-emails";
 import { OneOffTable } from "../../../_components/OneOffList";
@@ -33,9 +35,10 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 export default async function SupporterPage({ params }: Params) {
   const staff = await requireStaff("supporters");
   const supporter = await supporterOf(params);
-  const [notes, oneOffs] = await Promise.all([
+  const [notes, oneOffs, messages] = await Promise.all([
     notesOn({ supporterId: supporter.summary.id }),
     supporterOneOffs(supporter.summary.id),
+    messagesToSupporter(supporter.summary.id),
   ]);
   return (
     <>
@@ -44,6 +47,7 @@ export default async function SupporterPage({ params }: Params) {
         supporter={supporter}
         erase={<EraseLink supporterId={supporter.summary.id} />}
         oneOffs={<OneOffTable threads={oneOffs} />}
+        messages={<SupporterMessages messages={messages} />}
         notes={
           <Notes
             notes={notes}

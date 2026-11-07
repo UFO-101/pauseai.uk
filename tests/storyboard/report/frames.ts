@@ -31,6 +31,7 @@ export const SECTIONS: { id: string; name: string; part: (typeof PARTS)[number] 
   { id: "staff-navigation", name: "Dashboard and getting around", part: "Staff pages" },
   { id: "politicians", name: "Politicians", part: "Staff pages" },
   { id: "mailings", name: "Mailings", part: "Staff pages" },
+  { id: "messages", name: "Messages to supporters", part: "Staff pages" },
   { id: "supporters", name: "Supporters", part: "Staff pages" },
   { id: "saved-filters", name: "Saved filters", part: "Staff pages" },
   { id: "staff-campaigns", name: "Campaigns, asks and sent emails", part: "Staff pages" },

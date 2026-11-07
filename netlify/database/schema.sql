@@ -1518,6 +1518,7 @@ CREATE TABLE public.mailings (
     imported_text jsonb,
     imported_text_approximate boolean DEFAULT false NOT NULL,
     old_letters_key text,
+    template_id bigint,
     CONSTRAINT mailings_audience_check CHECK ((audience = ANY (ARRAY['politicians'::text, 'supporters'::text]))),
     CONSTRAINT mailings_box_or_dates CHECK (((airtable_field IS NULL) OR (airtable_sent_between IS NULL))),
     CONSTRAINT mailings_channel_check CHECK ((channel = ANY (ARRAY['email'::text, 'text'::text, 'whatsapp'::text]))),
@@ -1529,6 +1530,7 @@ CREATE TABLE public.mailings (
     CONSTRAINT mailings_scheduled_complete CHECK (((body IS NULL) OR (state = 'draft'::text) OR ((due_at IS NOT NULL) AND (sent_from IS NOT NULL) AND (from_name IS NOT NULL)))),
     CONSTRAINT mailings_sent_from_check CHECK ((sent_from = lower(sent_from))),
     CONSTRAINT mailings_state_check CHECK ((state = ANY (ARRAY['draft'::text, 'scheduled'::text, 'sending'::text, 'sent'::text, 'cancelled'::text]))),
+    CONSTRAINT mailings_template_for_texts CHECK (((template_id IS NULL) OR (channel = 'text'::text))),
     CONSTRAINT mailings_topic_check CHECK ((topic = ANY (ARRAY['luma-calendar'::text, 'pauseai-updates'::text, 'site-forms'::text, 'volunteering'::text, 'march-day'::text]))),
     CONSTRAINT mailings_topic_for_supporters CHECK (((audience = 'supporters'::text) = (topic IS NOT NULL)))
 );
@@ -1565,7 +1567,7 @@ CREATE TABLE public.message_events (
     at timestamp with time zone DEFAULT now() NOT NULL,
     kind text NOT NULL,
     details jsonb DEFAULT '{}'::jsonb NOT NULL,
-    CONSTRAINT message_events_kind_check CHECK ((kind = ANY (ARRAY['sent'::text, 'delivered'::text, 'failed'::text, 'bounced'::text, 'opted-out'::text, 'replied'::text])))
+    CONSTRAINT message_events_kind_check CHECK ((kind = ANY (ARRAY['sent'::text, 'delivered'::text, 'read'::text, 'failed'::text, 'bounced'::text, 'opted-out'::text, 'replied'::text])))
 );
 
 --
@@ -1574,6 +1576,68 @@ CREATE TABLE public.message_events (
 
 ALTER TABLE public.message_events ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
     SEQUENCE NAME public.message_events_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
+-- Name: message_replies; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.message_replies (
+    id bigint NOT NULL,
+    message_id bigint NOT NULL,
+    at timestamp with time zone DEFAULT now() NOT NULL,
+    body text NOT NULL,
+    sent_by text,
+    CONSTRAINT message_replies_body_check CHECK ((body <> ''::text)),
+    CONSTRAINT message_replies_sent_by_check CHECK ((sent_by = lower(sent_by)))
+);
+
+--
+-- Name: message_replies_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.message_replies ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.message_replies_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
+-- Name: message_templates; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.message_templates (
+    id bigint NOT NULL,
+    name text NOT NULL,
+    body jsonb NOT NULL,
+    status text NOT NULL,
+    created_by text,
+    approved_at timestamp with time zone,
+    rejected_at timestamp with time zone,
+    rejected_reason text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT message_templates_check CHECK (((status = 'approved'::text) = (approved_at IS NOT NULL))),
+    CONSTRAINT message_templates_check1 CHECK (((status = 'rejected'::text) = (rejected_at IS NOT NULL))),
+    CONSTRAINT message_templates_check2 CHECK (((status = 'rejected'::text) = (rejected_reason IS NOT NULL))),
+    CONSTRAINT message_templates_created_by_check CHECK ((created_by = lower(created_by))),
+    CONSTRAINT message_templates_name_check CHECK ((name <> ''::text)),
+    CONSTRAINT message_templates_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text])))
+);
+
+--
+-- Name: message_templates_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.message_templates ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.message_templates_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1597,8 +1661,8 @@ CREATE TABLE public.messages_to_supporters (
     sent_at timestamp with time zone,
     CONSTRAINT messages_to_supporters_check CHECK (((status = 'skipped'::text) = (skip_reason IS NOT NULL))),
     CONSTRAINT messages_to_supporters_check1 CHECK (((supporter_id IS NOT NULL) OR ((address IS NULL) AND (merge_values IS NULL)))),
-    CONSTRAINT messages_to_supporters_skip_reason_check CHECK ((skip_reason = ANY (ARRAY['blocked'::text, 'unsubscribed'::text, 'no-permission'::text]))),
-    CONSTRAINT messages_to_supporters_status_check CHECK ((status = ANY (ARRAY['scheduled'::text, 'sent'::text, 'delivered'::text, 'failed'::text, 'skipped'::text])))
+    CONSTRAINT messages_to_supporters_skip_reason_check CHECK ((skip_reason = ANY (ARRAY['blocked'::text, 'unsubscribed'::text, 'no-permission'::text, 'not-on-whatsapp'::text]))),
+    CONSTRAINT messages_to_supporters_status_check CHECK ((status = ANY (ARRAY['scheduled'::text, 'sent'::text, 'delivered'::text, 'failed'::text, 'skipped'::text, 'cancelled'::text])))
 );
 
 --
@@ -2345,6 +2409,20 @@ ALTER TABLE ONLY public.message_events
     ADD CONSTRAINT message_events_pkey PRIMARY KEY (id);
 
 --
+-- Name: message_replies message_replies_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.message_replies
+    ADD CONSTRAINT message_replies_pkey PRIMARY KEY (id);
+
+--
+-- Name: message_templates message_templates_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.message_templates
+    ADD CONSTRAINT message_templates_pkey PRIMARY KEY (id);
+
+--
 -- Name: messages_to_supporters messages_to_supporters_mailing_id_supporter_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2808,6 +2886,12 @@ CREATE INDEX mailing_attachments_mailing ON public.mailing_attachments USING btr
 CREATE INDEX mailings_drafts ON public.mailings USING btree (opened_at) WHERE (state = 'draft'::text);
 
 --
+-- Name: mailings_template; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX mailings_template ON public.mailings USING btree (template_id) WHERE (template_id IS NOT NULL);
+
+--
 -- Name: members_email; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2824,6 +2908,18 @@ CREATE INDEX members_phone ON public.members USING btree (public.phone_number(ph
 --
 
 CREATE INDEX message_events_message ON public.message_events USING btree (message_id, at);
+
+--
+-- Name: message_replies_message; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX message_replies_message ON public.message_replies USING btree (message_id, at);
+
+--
+-- Name: messages_to_supporters_supporter; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX messages_to_supporters_supporter ON public.messages_to_supporters USING btree (supporter_id);
 
 --
 -- Name: notable_people_email; Type: INDEX; Schema: public; Owner: -
@@ -3171,11 +3267,25 @@ ALTER TABLE ONLY public.mailings
     ADD CONSTRAINT mailings_ask_fkey FOREIGN KEY (ask) REFERENCES public.asks(slug);
 
 --
+-- Name: mailings mailings_template_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.mailings
+    ADD CONSTRAINT mailings_template_id_fkey FOREIGN KEY (template_id) REFERENCES public.message_templates(id) ON DELETE SET NULL;
+
+--
 -- Name: message_events message_events_message_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.message_events
     ADD CONSTRAINT message_events_message_id_fkey FOREIGN KEY (message_id) REFERENCES public.messages_to_supporters(id) ON DELETE CASCADE;
+
+--
+-- Name: message_replies message_replies_message_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.message_replies
+    ADD CONSTRAINT message_replies_message_id_fkey FOREIGN KEY (message_id) REFERENCES public.messages_to_supporters(id) ON DELETE CASCADE;
 
 --
 -- Name: messages_to_supporters messages_to_supporters_mailing_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -

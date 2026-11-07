@@ -16,6 +16,7 @@ import Densities from "../_components/Densities";
 import type { Group } from "../_components/types";
 import {
   CheckboxExample,
+  RadioExample,
   LinkBarExample,
   LinkButtonExample,
   SegmentedExample,
@@ -252,6 +253,16 @@ export const forms: Group = {
         {
           label: "Ticked, and with a label that wraps",
           render: () => <Densities>{() => <CheckboxExample />}</Densities>,
+        },
+      ],
+    },
+    {
+      name: "Radio",
+      file: "components/ui/Controls.tsx",
+      variants: [
+        {
+          label: "In a label, as the staff writer's templates are",
+          render: () => <Densities>{() => <RadioExample />}</Densities>,
         },
       ],
     },

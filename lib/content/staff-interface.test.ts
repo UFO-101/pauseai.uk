@@ -199,3 +199,32 @@ it("says one and many of each of the new pages' counts", () => {
 it("says which inbox the one-off emails are copied to", () => {
   expect(staffCopy.oneOff.intro("policy@example.org")).toContain("policy@example.org");
 });
+
+describe("the words of messages to supporters", () => {
+  const copy = staffCopy.messagePages;
+
+  it("count one and many, by channel", () => {
+    for (const n of [1, 2]) {
+      for (const channel of ["email", "text"] as const) {
+        const said = [
+          copy.summary(n, channel, "PauseAI UK", null),
+          copy.schedule(n, channel),
+          copy.scheduledLine(n, channel, "PauseAI UK"),
+          copy.copySubtitle("A title", channel, n),
+        ];
+        for (const words of said) expect(words).toEqual(expect.any(String));
+      }
+      const others = [
+        copy.willGet(n),
+        copy.messageButton(n),
+        copy.choosingCount(n),
+        copy.scheduleOnceApproved(n),
+        copy.recipientsCount(n),
+        copy.templateUsed("1 Oct 2026", n),
+      ];
+      for (const words of others) expect(words).toContain(String(n));
+    }
+    expect(copy.schedule(1, "email")).not.toEqual(copy.schedule(2, "email"));
+    expect(copy.willGet(1)).toContain("1 supporter ");
+  });
+});

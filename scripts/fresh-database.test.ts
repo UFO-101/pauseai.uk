@@ -122,6 +122,17 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
         );
         expect(tables.length).toBeGreaterThan(15);
         for (const table of tables) expect(runSql(name, `SELECT count(*) FROM ${table}`), table).not.toEqual(["0"]);
+        // Messages by email and by text, each in every state a mailing has.
+        expect(
+          runSql(
+            name,
+            "SELECT channel || ' ' || state FROM mailings WHERE audience = 'supporters' GROUP BY channel, state ORDER BY 1",
+          ),
+        ).toEqual(
+          ["email", "text"].flatMap((channel) =>
+            ["cancelled", "draft", "scheduled", "sending", "sent"].map((state) => `${channel} ${state}`),
+          ),
+        );
         // No two politicians share a name, so a list of them never shows the same row twice.
         expect(runSql(name, "SELECT name FROM notable_people GROUP BY name HAVING count(*) > 1")).toEqual([]);
         // One supporter per email, with nothing left unlinked, and every kind of supporter among them.
@@ -272,6 +283,10 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
           "politicians scheduled",
           "politicians sending",
           "politicians sent",
+          "supporters cancelled",
+          "supporters draft",
+          "supporters scheduled",
+          "supporters sending",
           "supporters sent",
         ]);
         // Opt-outs told by every source, and every answer to whether we'd email someone.

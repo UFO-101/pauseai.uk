@@ -3,7 +3,7 @@
 // The Server Actions of the mailing pages. Each is a public endpoint, so
 // each calls requireStaff() before anything else (tests/checks/staff-auth.test.ts).
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { idFrom } from "@/lib/staff-forms";
 import { fromLondon } from "@/lib/staff-time";
 import type { Params } from "@/lib/staff-search";
@@ -26,13 +26,23 @@ import {
   type ScheduleResult,
 } from "@/lib/server/mailing-drafts";
 import { politicianAudience } from "@/lib/server/mailing-recipients";
+import { mailingAudience } from "@/lib/server/mailings";
 import { looksLikeEmail } from "@/lib/email-your-mp";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { filtersPath, staffBack, storedFilter } from "@/lib/staff-search";
 
+/**
+ * Turns away a mailing to supporters: every staff member can use these
+ * actions, but only those with the supporters permission its own.
+ */
+async function toPoliticians(id: number): Promise<void> {
+  if ((await mailingAudience(id)) === "supporters") notFound();
+}
+
 /** Saves a draft's changes, if no one else has saved it since `version`. */
 export async function saveMailing(id: number, version: number, changes: unknown): Promise<SaveResult | undefined> {
   await requireStaff();
+  await toPoliticians(id);
   const parsed = mailingChangesFrom(changes);
   return parsed && saveDraft(id, version, parsed);
 }
@@ -44,6 +54,7 @@ export async function attachToMailing(form: FormData) {
   const version = idFrom(form, "version");
   const file = form.get("file");
   if (!id || !version || !(file instanceof File) || !file.name) return undefined;
+  await toPoliticians(id);
   const saved = await addAttachment(id, version, {
     filename: file.name,
     contentType: file.type || "application/octet-stream",
@@ -55,6 +66,7 @@ export async function attachToMailing(form: FormData) {
 /** Takes a file off a draft at its version. */
 export async function detachFromMailing(id: number, version: number, attachmentId: number) {
   await requireStaff();
+  await toPoliticians(id);
   const saved = await removeAttachment(id, version, attachmentId);
   return { ...saved, attachments: (await getWrittenMailing(id))?.attachments ?? [] };
 }
@@ -77,6 +89,7 @@ export async function sendMailingTest(id: number, politicianId: number, to = "")
 /** Schedules a draft at its version, if nothing stops it. */
 export async function scheduleMailingNow(id: number, version: number): Promise<ScheduleResult> {
   const { email } = await requireStaff();
+  await toPoliticians(id);
   const result = await scheduleMailing(id, version, email);
   revalidatePath("/staff/mailings");
   return result;
@@ -86,7 +99,10 @@ export async function scheduleMailingNow(id: number, version: number): Promise<S
 export async function deleteMailingDraft(form: FormData): Promise<void> {
   const { email } = await requireStaff();
   const id = idFrom(form);
-  if (id) await deleteDraft(id, email);
+  if (id) {
+    await toPoliticians(id);
+    await deleteDraft(id, email);
+  }
   revalidatePath("/staff/mailings");
   redirect("/staff/mailings");
 }
@@ -96,6 +112,7 @@ export async function stopMailingNow(form: FormData): Promise<void> {
   const { email } = await requireStaff();
   const id = idFrom(form);
   if (!id) return;
+  await toPoliticians(id);
   await stopMailing(id, email);
   revalidatePath("/staff/mailings");
   revalidatePath(`/staff/mailings/${id}`);
@@ -108,6 +125,7 @@ export async function rescheduleMailingNow(form: FormData): Promise<void> {
   const day = form.get("day");
   const hour = Number(form.get("hour"));
   if (!id || typeof day !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(day) || !(hour >= 0 && hour < 24)) return;
+  await toPoliticians(id);
   await rescheduleMailing(id, fromLondon(day, hour), email);
   revalidatePath("/staff/mailings");
   revalidatePath(`/staff/mailings/${id}`);
@@ -141,6 +159,7 @@ export async function newMailing(form: FormData): Promise<void> {
 /** Ticks a politician for a draft, or unticks them. */
 export async function pickPolitician(mailing: number, politician: number, ticked: boolean): Promise<void> {
   await requireStaff();
+  await toPoliticians(mailing);
   await changePicks(mailing, ticked ? { tick: [politician] } : { untick: [politician] });
   revalidatePath("/staff/politicians");
 }
@@ -148,6 +167,7 @@ export async function pickPolitician(mailing: number, politician: number, ticked
 /** Ticks everyone the politicians list's `params` find for a draft, on every page, or unticks them. */
 export async function pickFound(mailing: number, params: Params, ticked: boolean): Promise<void> {
   await requireStaff();
+  await toPoliticians(mailing);
   await changePicks(mailing, ticked ? { found: params } : { untick: await foundIds(params) });
   revalidatePath("/staff/politicians");
 }
@@ -155,6 +175,7 @@ export async function pickFound(mailing: number, params: Params, ticked: boolean
 /** Unticks everyone for a draft, to start again: bound to its ID, for a form or a tick box. */
 export async function untickAll(mailing: number): Promise<void> {
   await requireStaff();
+  await toPoliticians(mailing);
   await changePicks(mailing, { clear: true });
   revalidatePath("/staff/politicians");
 }
@@ -187,6 +208,7 @@ export async function pasteNames(form: FormData): Promise<void> {
 /** Ticks these politicians for a draft, or unticks them: everyone a paste found, from the box over them. */
 export async function pickMany(mailing: number, politicians: number[], ticked: boolean): Promise<void> {
   await requireStaff();
+  await toPoliticians(mailing);
   await changePicks(mailing, ticked ? { tick: politicians } : { untick: politicians });
   revalidatePath("/staff/politicians");
 }

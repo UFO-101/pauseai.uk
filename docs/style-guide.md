@@ -584,6 +584,8 @@ so that's what opens it. Two exceptions: a name in a
 choice, such as a menu's option, picks it instead; and for staff who can't open
 the page, the name is plain.
 
+**A subheading** (`ui/PageIntro`) says in a grey line, close under the page's title, what the page is and who it's about. It's part of the title, so it has no full stop.
+
 **What a permission hides** (`ui/Withheld`). Words standing in for something
 a staff member's permissions keep from them must go in `Withheld`, a sealed
 envelope and muted italics, so it looks the same everywhere: a thread they

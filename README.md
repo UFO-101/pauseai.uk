@@ -10,7 +10,7 @@ The [pauseai.uk](https://pauseai.uk) website: Next.js 16 and React 19, deployed 
 - **Briefings:** `/campaigns/briefings`, from the Campaigns menu. Weekly AI news briefings, each laid out as its designer's A4 briefing (`docs/code-structure.md`, "The weekly briefings"), with an Atom feed of their own, `/campaigns/briefings/feed.xml`.
 - **Email your MP:** `/campaigns`. Postcode to MP, edit and send a campaign letter. It goes from the letters inbox, a Gmail account of ours, under a proxy address, so the MP never sees the sender's; their replies are relayed to the sender, and the sender's answers back, and staff see the whole thread.
 - **Volunteer tools:** collateral maker and QR codes (`/tools`); live results of activity days (`/trackers`).
-- **Staff interface:** `/staff`. Politicians and what they've signed, campaigns and their letters and replies, mailings, asks, one-off emails with politicians, our events and who on staff owns each, imports, blocked email addresses, sent emails, audit log.
+- **Staff interface:** `/staff`. Politicians and what they've signed, campaigns and their letters and replies, mailings, messages to supporters, asks, one-off emails with politicians, our events and who on staff owns each, imports, blocked email addresses, sent emails, audit log.
 - **Component gallery:** `/gallery`, fixture builds only.
 
 How they're built is in [docs/domain-concepts.md](docs/domain-concepts.md).

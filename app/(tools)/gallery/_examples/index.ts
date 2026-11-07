@@ -25,6 +25,7 @@ import { staffSupporters } from "./staff-supporters";
 import { staffLetters } from "./staff-letters";
 import { staffPoliticians } from "./staff-politicians";
 import { staffMailingsEvents } from "./staff-mailings-events";
+import { staffMessages } from "./staff-messages";
 import { staffAdmin } from "./staff-admin";
 
 export const GROUPS: Group[] = [
@@ -50,5 +51,6 @@ export const GROUPS: Group[] = [
   staffLetters,
   staffPoliticians,
   staffMailingsEvents,
+  staffMessages,
   staffAdmin,
 ];

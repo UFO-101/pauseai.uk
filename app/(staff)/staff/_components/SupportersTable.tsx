@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import StaffLink from "./ui/StaffLink";
 import { Muted } from "@/components/ui/Text";
 import { staffCopy } from "@/lib/content/staff-interface";
@@ -25,11 +26,12 @@ import styles from "./SupportersTable.module.css";
 const PATH = "/staff/supporters";
 const copy = staffCopy.supporters;
 
-/** The list's filters as typed, the URL's, without the page or the notice. */
+/** The list's filters as typed, the URL's, without the page or the notices. */
 export function supporterFiltersOf(search: SupportersSearch): Params {
-  const { page, erased, filter, ...rest } = search as SupportersSearch & { filter?: unknown };
+  const { page, erased, why, filter, ...rest } = search as SupportersSearch & { filter?: unknown };
   void page;
   void erased;
+  void why;
   void filter;
   return rest;
 }
@@ -257,7 +259,16 @@ function contactCard(states: ContactState[], s: SupporterRow): Contact {
 }
 
 /** The supporters found, in the list frame: a row each, their downloads and the way through the pages. */
-export default function SupportersTable({ page, search }: { page: SupportersPage; search: SupportersSearch }) {
+export default function SupportersTable({
+  page,
+  search,
+  actions,
+}: {
+  page: SupportersPage;
+  search: SupportersSearch;
+  /** Buttons for what can be done with everyone the filters find, before Download. */
+  actions?: ReactNode;
+}) {
   const filters = supporterFiltersOf(search);
   return (
     <ListFrame
@@ -268,6 +279,7 @@ export default function SupportersTable({ page, search }: { page: SupportersPage
       pageSize={SUPPORTERS_PAGE_SIZE}
       href={(n) => filtersPath(PATH, filters, pageParam(n))}
       download={(format) => filtersPath(`${PATH}/download`, filters, { format })}
+      actions={actions}
       formats={["csv", "json", "vcf"]}
       columns={supporterColumns(search)}
       rows={page.supporters}

@@ -22,6 +22,8 @@ export type MailingChoice = {
   id: string;
   label: string;
   lacking?: number;
+  /** A field with a word for those lacking a value, so it can be used all the same. */
+  fallback?: boolean;
   covers?: number;
   /** For a condition: the ask it's an answer to, and the answer, as a menu offers them, ask then answer. */
   group?: string;

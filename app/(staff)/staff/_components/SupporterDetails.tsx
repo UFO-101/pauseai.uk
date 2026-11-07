@@ -301,11 +301,14 @@ const letterColumns: ListColumn<SupporterLetter>[] = [
 export default function SupporterDetails({
   supporter,
   erase,
+  messages,
   notes,
   oneOffs,
 }: {
   supporter: Details;
   erase?: ReactNode;
+  /** The messages they were sent (SupporterMessages), under their letters. */
+  messages?: ReactNode;
   /** The notes card (Notes), under their letters. */
   notes?: ReactNode;
   /** Their one-off emails (OneOffTable). */
@@ -340,6 +343,7 @@ export default function SupporterDetails({
               <p className={styles.none}>{copy.detail.noLetters}</p>
             )}
           </section>
+          {messages}
           {oneOffs}
           {notes}
         </div>

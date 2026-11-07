@@ -55,6 +55,10 @@ describe("carriedParams", () => {
       pasted: ["Jo", "Al"],
     });
   });
+
+  it("is only who a message is being chosen for", () => {
+    expect(carriedParams({ message: "7", contact: "email", why: "contact" })).toEqual({ message: "7" });
+  });
 });
 
 describe("sameParams", () => {

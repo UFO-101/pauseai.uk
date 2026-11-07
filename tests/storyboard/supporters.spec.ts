@@ -69,7 +69,7 @@ test("Filtering supporters", async ({ page, request, flowDatabase }) => {
   await page.goto(`${BASE}/staff/supporters`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(copy.title);
   // Five guests, a contact who never registered, and a host who never registered.
-  await expect(page.getByText(copy.total(7))).toBeVisible();
+  await expect(page.getByText(copy.total(7), { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Fay Follower" })).toBeVisible();
   await frame(page, "The supporters list");
   story("They search for an address. Every supporter here has one at fixture@example, so all seven stay.");
@@ -79,7 +79,7 @@ test("Filtering supporters", async ({ page, request, flowDatabase }) => {
   await page.getByRole("button", { name: staffCopy.search }).click();
   await expect(page).toHaveURL(/\/staff\/supporters\?q=fixture%40example$/);
   // Every one of them has an address at fixture@example.
-  await expect(page.getByText(copy.total(7))).toBeVisible();
+  await expect(page.getByText(copy.total(7), { exact: true })).toBeVisible();
   await frame(page, "The list, searched");
   story(
     "They filter to those with Luma events among their activities, and sort by name. Five registered for an event. The one with no name comes last.",
@@ -90,7 +90,7 @@ test("Filtering supporters", async ({ page, request, flowDatabase }) => {
   await expect(page).toHaveURL(/sort=name/);
   await expect(page.getByRole("link", { name: "Fay Follower" })).toHaveCount(0);
   // Five: the fifth guest declined every event; the host with no name never registered, but hosts one.
-  await expect(page.getByText(copy.total(5))).toBeVisible();
+  await expect(page.getByText(copy.total(5), { exact: true })).toBeVisible();
   const names = await page.locator("tbody").getByRole("link").allTextContents();
   // By name, the one with none last.
   const named = names.filter((name) => name !== copy.noName);
@@ -106,7 +106,7 @@ test("Filtering supporters", async ({ page, request, flowDatabase }) => {
   // Reset clears every filter, and the sort.
   await page.getByRole("link", { name: staffCopy.resetFilters }).click();
   await expect(page).toHaveURL(`${BASE}/staff/supporters`);
-  await expect(page.getByText(copy.total(7))).toBeVisible();
+  await expect(page.getByText(copy.total(7), { exact: true })).toBeVisible();
   await expect(page.getByRole("searchbox", { name: copy.filters.search })).toHaveValue("");
   await expect(page.getByRole("button", { name: `${copy.columns.badges}: ${copy.badges.letter}` })).toHaveCount(0);
   await frame(page, "The supporters list, cleared");
@@ -129,7 +129,7 @@ test("Supporters not at an event", async ({ page, request, flowDatabase }) => {
   await importLuma(request, BASE);
   await logInWithSupporters(page, flowDatabase);
   await page.goto(`${BASE}/staff/supporters`);
-  await expect(page.getByText(copy.total(7))).toBeVisible();
+  await expect(page.getByText(copy.total(7), { exact: true })).toBeVisible();
   const march = copy.filters.eventChoice("PauseAI London March", staffDate("2026-02-14T12:00:00Z"));
   await page.getByRole("button", { name: staffCopy.filters.except }).click();
   await expect(page.locator("[popover]:popover-open").getByText(staffCopy.filters.exceptHeading)).toBeVisible();
@@ -145,7 +145,7 @@ test("Supporters not at an event", async ({ page, request, flowDatabase }) => {
   await expect(page).toHaveURL(/\/staff\/supporters\?event=%21/);
   // Four guests were approved for it; Dee declined, Fay follows the calendar but never registered, and the
   // protest's host with no name never registered either.
-  await expect(page.getByText(copy.total(3))).toBeVisible();
+  await expect(page.getByText(copy.total(3), { exact: true })).toBeVisible();
   expect(await page.locator("tbody").getByRole("link").allTextContents()).toEqual(
     expect.arrayContaining(["Dee Clined", "Fay Follower"]),
   );
@@ -158,7 +158,7 @@ test("Supporters not at an event", async ({ page, request, flowDatabase }) => {
   await frame(page, "The chip's menu");
   story("Now the list is the four guests approved for the march, with a column for each one's registration.");
   await page.locator("[popover]:popover-open").getByRole("link", { name: staffCopy.filters.onlyInstead }).click();
-  await expect(page.getByText(copy.total(4))).toBeVisible();
+  await expect(page.getByText(copy.total(4), { exact: true })).toBeVisible();
   await expect(page.getByRole("columnheader", { name: copy.columns.registrations })).toBeVisible();
   await expect(page.locator("tbody").getByText(copy.detail.registered).first()).toBeVisible();
   await frame(page, "Supporters at the London March");
@@ -172,7 +172,7 @@ test("Supporters by MP", async ({ page, request, flowDatabase }) => {
   await syncPoliticians(request, BASE);
   await logInWithSupporters(page, flowDatabase);
   await page.goto(`${BASE}/staff/supporters`);
-  await expect(page.getByText(copy.total(7))).toBeVisible();
+  await expect(page.getByText(copy.total(7), { exact: true })).toBeVisible();
   const mp = staffCopy.politician.roles.commons;
   const mo = copy.filters.mpChoice("Mo Example", "Manchester Central");
   await page.getByRole("button", { name: staffCopy.filters.add }).click();
@@ -185,7 +185,7 @@ test("Supporters by MP", async ({ page, request, flowDatabase }) => {
   await page.locator("[popover]:popover-open").getByRole("link", { name: mo, exact: true }).click();
   await expect(page).toHaveURL(/\/staff\/supporters\?mp=\d+$/);
   // Jane's postcode is the one in Manchester Central.
-  await expect(page.getByText(copy.total(1))).toBeVisible();
+  await expect(page.getByText(copy.total(1), { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Jane Fixture" })).toBeVisible();
   await expect(page).toHaveTitle(`${staffCopy.filters.pageTitle(copy.title, `${mp} ${mo}`)} - ${staffCopy.metaTitle}`);
   await frame(page, "Mo Example's constituents");
@@ -589,7 +589,7 @@ test("Erasing a supporter", async ({ page, request, flowDatabase }) => {
   await expect(page).toHaveURL(`${BASE}/staff/supporters?erased=1`);
   await expect(page.getByRole("status")).toHaveText(staffCopy.erase.done);
   await expect(page.getByRole("link", { name: "Sam Fixture" })).toHaveCount(0);
-  await expect(page.getByText(copy.total(6))).toBeVisible();
+  await expect(page.getByText(copy.total(6), { exact: true })).toBeVisible();
   await frame(page, "The supporters list, without Sam");
 
   story(
@@ -625,7 +625,7 @@ test("Erasing a member", async ({ page, request, flowDatabase }) => {
 
   await importMembers(request, BASE);
   await page.reload();
-  await expect(page.getByText(copy.total(7))).toBeVisible();
+  await expect(page.getByText(copy.total(7), { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Mara Member" })).toHaveCount(0);
   await frame(page, "The supporters list, after the members import");
 });

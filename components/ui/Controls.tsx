@@ -78,6 +78,11 @@ export function Checkbox({
   );
 }
 
+/** A radio button, for a row whose own label holds it. `onChange` says it's been chosen. */
+export function Radio({ name, value, onChange }: { name: string; value: string | number; onChange: () => void }) {
+  return <input type="radio" name={name} value={value} onChange={onChange} />;
+}
+
 /**
  * A row of mutually exclusive buttons, e.g. a QR code's size; each with an
  * icon before its words if it has one. One `quiet` is set apart from the

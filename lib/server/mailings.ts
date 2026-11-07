@@ -170,17 +170,30 @@ export async function mailingsPage(): Promise<{ groups: MailingGroup[]; now: str
   return { groups: mailingGroups(await mailingsOverview(), at), now: at.toISOString() };
 }
 
+/** Who a mailing is to, or undefined for no such mailing. */
+export async function mailingAudience(id: number): Promise<"politicians" | "supporters" | undefined> {
+  const [mailing] = await query<{ audience: "politicians" | "supporters" }>(
+    "SELECT audience FROM mailings WHERE id = $1",
+    [id],
+  );
+  return mailing?.audience;
+}
+
 /** A mailing's title, for its page's title, a draft's with none said so; or undefined for no such mailing. */
 export async function mailingTitle(id: number): Promise<string | undefined> {
-  const [mailing] = await query<{ title: string }>("SELECT title FROM mailings WHERE id = $1", [id]);
+  const [mailing] = await query<{ title: string }>(
+    "SELECT title FROM mailings WHERE id = $1 AND audience = 'politicians'",
+    [id],
+  );
   return mailing && (mailing.title || staffCopy.mailingPages.untitled);
 }
 
-/** One mailing, with a page, from 1, of its recipients in `tab`, by name, with their outcomes. */
+/** One mailing to politicians, with a page, from 1, of its recipients in `tab`, by name, with their outcomes. */
 export async function getMailing(id: number, page = 1, tab: RecipientTab = "all"): Promise<Mailing | undefined> {
-  const [mailing] = await query<MailingSummary>(`${SELECT_MAILINGS} WHERE m.id = $1 GROUP BY m.id, a.title, a.kind`, [
-    id,
-  ]);
+  const [mailing] = await query<MailingSummary>(
+    `${SELECT_MAILINGS} WHERE m.id = $1 AND m.audience = 'politicians' GROUP BY m.id, a.title, a.kind`,
+    [id],
+  );
   if (!mailing) return undefined;
   const from = `FROM letters_from_pauseai p JOIN letters l USING (id) JOIN notable_people n ON n.id = l.notable_person_id
     LEFT JOIN politicians seat ON seat.id = n.id

@@ -3,6 +3,7 @@ import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import { query } from "@/lib/server/db";
 import { createDraft, getWrittenMailing, saveDraft, type MailingChanges } from "@/lib/server/mailing-drafts";
+import { createMessageDraft, getWrittenMessage } from "@/lib/server/message-drafts";
 import { createSession } from "@/lib/server/staff-auth";
 import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { expectRedirect, requestCookies } from "@/tests/next-headers";
@@ -229,6 +230,13 @@ describeWithDatabase("the mailing pages' Server Actions", () => {
     expect((await getWrittenMailing(id))!.state).toBe("scheduled");
     await stopMailingNow(form({ id: String(id) }));
     expect((await getWrittenMailing(id))!.state).toBe("draft");
+  });
+
+  it("turns away a message to supporters, whose own actions ask for the permission", async () => {
+    requestCookies.set("staff_session", await createSession(JO));
+    const id = (await createMessageDraft(JO, { contact: "email:site-forms:yes" }))!;
+    await expect(saveMailing(id, 1, { subject: "Mine" })).rejects.toThrow();
+    expect((await getWrittenMessage(id))!.subject).toBe("");
   });
 });
 

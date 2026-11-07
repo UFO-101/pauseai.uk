@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
 import { Button } from "./Button";
-import { Checkbox, DateRange, FileInput, Segmented, Select, TextArea, TextInput } from "./Controls";
+import { Checkbox, DateRange, FileInput, Radio, Segmented, Select, TextArea, TextInput } from "./Controls";
 import { Field, FieldError, FieldGroup, FieldSet, Hint, Label } from "./Field";
 import { FilterForm, FormStack } from "./Form";
 
@@ -114,6 +114,17 @@ describe("the controls", () => {
     expect(document.activeElement).toBe(input);
     expect(style(input).outlineStyle).toBe("solid");
     expect(style(input).outlineWidth).toBe("2px");
+  });
+
+  it("choose a radio button by its label", async () => {
+    const onChange = vi.fn();
+    await render(
+      <label>
+        <Radio name="one" value="a" onChange={onChange} /> A
+      </label>,
+    );
+    await page.getByRole("radio", { name: "A" }).click();
+    expect(onChange).toHaveBeenCalled();
   });
 
   it("tick a checkbox by its label, saying whether it's ticked", async () => {

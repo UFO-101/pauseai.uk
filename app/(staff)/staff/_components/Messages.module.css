@@ -1,0 +1,195 @@
+/* The pieces only messages to supporters have: a text as a messaging app
+   shows it, the WhatsApp templates to choose from, and who a text is from. */
+
+/* The channel in a list's row, before who it's from. */
+.channel {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  margin-right: var(--space-2);
+}
+
+/* The wall a text's bubbles sit on. */
+.wall {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--chat-wall);
+}
+
+.bubble {
+  align-self: flex-start;
+  margin-right: var(--space-8);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  border-top-left-radius: 0;
+  background: var(--surface);
+  box-shadow: 0 1px 1px var(--shadow);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ours {
+  align-self: flex-end;
+  margin-right: 0;
+  margin-left: var(--space-8);
+  border-top-left-radius: var(--radius-md);
+  border-top-right-radius: 0;
+  background: var(--chat-ours);
+}
+
+.name {
+  display: block;
+  margin-bottom: var(--space-1);
+  color: var(--chat-their-name);
+  font-weight: 600;
+}
+
+.ourName {
+  color: var(--chat-our-name);
+}
+
+.time {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  text-align: right;
+}
+
+/* The Stop button under a marketing text. */
+.stop {
+  margin-right: var(--space-8);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: 0 1px 1px var(--shadow);
+  color: var(--chat-our-name);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-align: center;
+}
+
+/* The templates to choose from, as radio rows in one box. */
+.picker {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.templates {
+  margin-top: var(--space-3);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.template {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.template:first-child {
+  border-top: 0;
+}
+
+.templateText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.newTemplate {
+  background: var(--surface-2);
+}
+
+.templatesFoot {
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.templatesNone {
+  padding: var(--space-3) var(--space-4);
+}
+
+/* The template chosen: its words, read-only, with Change. */
+.chosen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.chosenHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+/* Who a text appears from: the account's picture, then its name and number. */
+.account {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.picture {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: var(--pause-orange);
+  color: var(--surface);
+  font-size: var(--text-lg);
+  font-weight: 800;
+}
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.replyForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+/* A recipient's cell: their name over where they are, or how it went over when. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+
+/* What they replied, on their page. */
+.replies {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
