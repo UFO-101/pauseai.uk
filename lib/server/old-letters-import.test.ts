@@ -1,5 +1,4 @@
 import { staffCopy } from "@/lib/content/staff-interface";
-import { NIGHTLY } from "@/lib/import-runs";
 import { latestRun } from "./import-runs";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
@@ -116,12 +115,6 @@ const ownTextOf = async (id: string) =>
       [id],
     )
   )[0].own;
-
-const garble = (id: string, text: string) =>
-  query(
-    `UPDATE letters_from_pauseai SET own_text = $2 WHERE id = (SELECT letter_id FROM old_letters_mail WHERE gmail_message_id = $1)`,
-    [id, text],
-  );
 
 const outcomeOf = async (id: string) =>
   (
@@ -400,150 +393,6 @@ describeWithDatabase("the import of old letters", () => {
     expect(text).toBeNull();
   });
 
-  describe("putting right mailings already built", () => {
-    const flatLetter = (own: string) =>
-      `Dear You, Would you join 40 of your colleagues? I lead a network in many countries, working on one risk. They promised to test their models before they released them. They broke that promise, and they won't say who tested them. ${own} We must act now. Yours sincerely, Jo`;
-    const mailingId = async (key: string) =>
-      (await query<{ id: number }>("SELECT id::int AS id FROM mailings WHERE old_letters_key = $1", [key]))[0].id;
-    const letterOf = async (id: number) =>
-      (
-        await query<{ values: { values: Record<string, string> } | null; own: string | null }>(
-          "SELECT merge_values AS values, own_text AS own FROM letters_from_pauseai WHERE id = $1",
-          [id],
-        )
-      )[0];
-    const textOf = async (key: string) =>
-      (
-        await query<{ text: unknown }>("SELECT imported_text AS text FROM mailings WHERE old_letters_key = $1", [key])
-      )[0].text;
-
-    /** A finished import with deepmind-40's letters read as one paragraph, and a signature all its text has. */
-    async function flatMailing() {
-      const { polly, mo, august, mailingLetter } = await seed();
-      await run();
-      const id = await mailingId("deepmind-40");
-      const letters = await Promise.all([
-        mailingLetter(polly, "DeepMind letter", "2025-08-01T09:00:00Z", "recX"),
-        mailingLetter(mo, "DeepMind letter", "2025-08-01T09:00:00Z", "recY"),
-        mailingLetter(mo, "DeepMind letter", "2025-08-01T10:00:00Z", "recZ"),
-      ]);
-      const texts = [
-        flatLetter("As you said so well."),
-        flatLetter("Another paragraph."),
-        `Dear You, ${"Quite different. ".repeat(15)}`.trim(),
-      ];
-      await Promise.all(
-        letters.map((letter, i) =>
-          query("UPDATE letters_from_pauseai SET mailing_id = $2, merge_values = $3, own_text = NULL WHERE id = $1", [
-            letter,
-            id,
-            JSON.stringify({ values: { greeting: texts[i], own: "" }, meets: [] }),
-          ]),
-        ),
-      );
-      await query("UPDATE mailings SET imported_text = $2 WHERE id = $1", [
-        id,
-        JSON.stringify({
-          type: "doc",
-          content: [{ type: "paragraph", content: [{ type: "text", text: "> Jo Bloggs > Director >" }] }],
-        }),
-      ]);
-      return { august, letters };
-    }
-
-    it("splits them, even once the import has finished, and August's letters follow", async () => {
-      const { august, letters } = await flatMailing();
-      const finished = await importOldLetters(NIGHTLY, 0);
-      expect(finished.finished).toBe(true);
-
-      expect((await letterOf(letters[0])).values?.values).toEqual({
-        greeting: "Dear You,",
-        own: "As you said so well.",
-      });
-      expect(await letterOf(letters[2])).toMatchObject({ values: null });
-      expect((await letterOf(letters[2])).own).toContain("Quite different.");
-
-      const text = JSON.stringify(await textOf("deepmind-40"));
-      expect(text).toContain("We must act now.");
-      expect(text).toContain('"type":"hardBreak"');
-      expect(text).not.toContain('">');
-
-      const made = JSON.stringify(await textOf("deepmind-august"));
-      expect(made).toContain('"field":"colleagues"');
-      expect(made).toContain("We must act now.");
-      expect((await letterOf(august)).values?.values).toMatchObject({ own: "As you said so well.", colleagues: "50" });
-
-      // Again, it has nothing to do.
-      const before = await textOf("deepmind-40");
-      await importOldLetters(NIGHTLY, 0);
-      expect(await textOf("deepmind-40")).toEqual(before);
-    });
-
-    it("leaves August's text alone when another mailing is split", async () => {
-      const { polly, mo, mailingLetter } = await seed();
-      await run();
-      const id = await mailingId("deepmind-25");
-      const before = await textOf("deepmind-august");
-      const letters = await Promise.all([
-        mailingLetter(polly, "DeepMind letter", "2025-07-20T09:00:00Z", "recX"),
-        mailingLetter(mo, "DeepMind letter", "2025-07-20T09:00:00Z", "recY"),
-      ]);
-      await Promise.all(
-        letters.map((letter, i) =>
-          query("UPDATE letters_from_pauseai SET mailing_id = $2, merge_values = $3, own_text = NULL WHERE id = $1", [
-            letter,
-            id,
-            JSON.stringify({ values: { greeting: flatLetter(`Own words ${"ab"[i]}.`), own: "" }, meets: [] }),
-          ]),
-        ),
-      );
-      await query("UPDATE mailings SET imported_text = $2 WHERE id = $1", [
-        id,
-        JSON.stringify({ type: "doc", content: [] }),
-      ]);
-      await importOldLetters(NIGHTLY, 0);
-      expect((await letterOf(letters[0])).values?.values.own).toBe("Own words a.");
-      expect(await textOf("deepmind-august")).toEqual(before);
-    });
-
-    it("leaves letters that share nothing as they are", async () => {
-      const { polly, mo, mailingLetter } = await seed();
-      await run();
-      const id = await mailingId("deepmind-25");
-      const greeting = (words: string) => `Dear You, ${`${words}. `.repeat(12)}`.trim();
-      const letters = await Promise.all([
-        mailingLetter(polly, "DeepMind letter", "2025-07-20T09:00:00Z", "recX"),
-        mailingLetter(mo, "DeepMind letter", "2025-07-20T09:00:00Z", "recY"),
-      ]);
-      await Promise.all(
-        letters.map((letter, i) =>
-          query("UPDATE letters_from_pauseai SET mailing_id = $2, merge_values = $3, own_text = NULL WHERE id = $1", [
-            letter,
-            id,
-            JSON.stringify({ values: { greeting: greeting(`Unlike any other ${"ab"[i]}`), own: "" }, meets: [] }),
-          ]),
-        ),
-      );
-      await query("UPDATE mailings SET imported_text = $2 WHERE id = $1", [
-        id,
-        JSON.stringify({ type: "doc", content: [] }),
-      ]);
-      await importOldLetters(NIGHTLY, 0);
-      expect((await letterOf(letters[0])).values?.values.greeting).toBe(greeting("Unlike any other a"));
-    });
-
-    it("removes the mailing of Joseph's own liability letters, as it has none", async () => {
-      await seed();
-      await run();
-      await query(
-        `INSERT INTO mailings (title, audience, channel, state, old_letters_key, airtable_sent_between)
-         SELECT 'Old', audience, channel, state, 'liability-own', airtable_sent_between FROM mailings WHERE old_letters_key = 'frontier-own'`,
-      );
-      await importOldLetters(NIGHTLY, 0);
-      expect(await query("SELECT 1 FROM mailings WHERE old_letters_key = 'liability-own'")).toEqual([]);
-    });
-  });
-
   it("keeps a forward with its Date over its From, once what matched nothing is queued again", async () => {
     await seed();
     await run();
@@ -752,63 +601,6 @@ describeWithDatabase("the import of old letters", () => {
     expect(await ownTextOf("0a12")).toBe("Dear Ms N\u00ed,\n\nI\u2019m asking\u00a0you.");
   });
 
-  it("makes kept text's characters whole again, reading none", async () => {
-    await seed();
-    await run();
-    await garble("0a12", "I\x19m \x1cwhole\x1d.");
-    const again = await run();
-    expect(await ownTextOf("0a12")).toBe("I\u2019m \u201cwhole\u201d.");
-    expect(again.read).toBe(0);
-  });
-
-  it("reads a garbled letter again, its text from the mail, and counts it", async () => {
-    await seed();
-    await run();
-    await garble("0a12", "Dear Mx Example,\n\nWould you\uFFFDspeak?");
-    const again = await run();
-    expect(await ownTextOf("0a12")).toContain("Would you speak?");
-    expect(again.read).toBe(1);
-    expect(again.textsDone).toBeGreaterThan(0);
-  });
-
-  it("passes over a letter that stays garbled, is gone, or that Gmail won't give, and finishes", async () => {
-    await seed();
-    await run();
-    await garble("0a12", "gone \uFFFD");
-    await garble("0a25", "kept \uFFFD");
-    await garble("0a27", "refused \uFFFD");
-    const stays = Buffer.from("still \uFFFD");
-    mailIs("0a25", "t-wh-1", "2025-12-05T09:00:00Z", { "Content-Type": "text/plain; charset=utf-8" }, stays);
-    server.use(
-      http.get(`${GMAIL}/messages/0a12`, () => new HttpResponse("{}", { status: 404 })),
-      http.get(`${GMAIL}/messages/0a27`, () => new HttpResponse("{}", { status: 400 })),
-    );
-    const again = await run();
-    expect(again.finished).toBe(true);
-    expect(again.unreadable).toEqual(["0a27"]);
-    expect(await ownTextOf("0a12")).toBe("gone \uFFFD");
-    expect(await ownTextOf("0a27")).toBe("refused \uFFFD");
-  });
-
-  it("carries on reading garbled letters from where a refusal stopped it, reading none twice", async () => {
-    await seed();
-    await run();
-    await garble("0a12", "first \uFFFD");
-    await garble("0a27", "second \uFFFD");
-    server.use(
-      http.get(`${GMAIL}/messages/0a27`, () => HttpResponse.json({ error: { message: "Too many" } }, { status: 403 }), {
-        once: true,
-      }),
-    );
-    const stopped = await run();
-    expect(stopped).toMatchObject({ stoppedBy: "gmail", finished: false, read: 1 });
-    await garble("0a12", "first again \uFFFD");
-    const after = await run();
-    expect(after).toMatchObject({ finished: true, read: 1 });
-    expect(await ownTextOf("0a12")).toBe("first again \uFFFD");
-    expect(await ownTextOf("0a27")).toContain("of all people");
-  });
-
   /** A repeat of Wendy's frontier AI form letter, at the moment Airtable has a record of one, to Polly. */
   const wendysRepeat = (id = "0a28", at = "2026-10-01T09:00:30Z") =>
     mailIs(
@@ -943,73 +735,23 @@ describeWithDatabase("the import of old letters", () => {
     expect(await outcomeOf("0a28")).toEqual({ outcome: "reply", letterId: deepmind });
   });
 
-  it("moves a reply of ours kept as a one-off to its letter, its stored mail with it, and its thread if that's all there was", async () => {
-    const { deepmind } = await seed();
-    await run();
-    const subject = "Re: Request to co-sign letter on Google's breach of AI safety pledges";
-    await query(
-      `UPDATE one_off_messages SET subject = $1, from_us = true, addresses = ARRAY['polly.placeholder.mp@parliament.uk'], at = '2025-07-20T09:00:00Z' WHERE gmail_message_id = '0a28'`,
-      [subject],
-    );
-    const [{ threadId, blob }] = await query<{ threadId: number; blob: string }>(
-      `SELECT thread_id::int AS "threadId", blob_key AS blob FROM one_off_messages WHERE gmail_message_id = '0a28'`,
-    );
-    await query("DELETE FROM one_off_messages WHERE thread_id = $1 AND gmail_message_id <> '0a28'", [threadId]);
-    // A reply nothing answers stays where it is.
-    await query("UPDATE one_off_messages SET subject = 'Re: Coffee next week?' WHERE gmail_message_id = '0a13'");
-    const again = await run();
-    expect(again.read).toBe(0);
-    expect(await outcomeOf("0a28")).toEqual({ outcome: "reply", letterId: deepmind });
-    expect(await query("SELECT 1 FROM one_off_messages WHERE gmail_message_id = '0a28'")).toEqual([]);
-    expect(await query("SELECT 1 FROM one_off_threads WHERE id = $1", [threadId])).toEqual([]);
-    const replies = await query<{ blob: string; fromUs: boolean }>(
-      `SELECT blob_key AS blob, from_us AS "fromUs" FROM letter_replies WHERE gmail_message_id = '0a28' AND letter_id = $1`,
-      [deepmind],
-    );
-    expect(replies).toEqual([{ blob, fromUs: true }]);
-    expect((await outcomeOf("0a13")).outcome).toBe("one_off");
-  });
-
-  it("reads again, as what it is, an email kept as PauseAI's letter though a supporter sent it, with what joined that letter", async () => {
+  it("keeps as a one-off a reply of ours to no letter of theirs", async () => {
     await seed();
-    await run();
-    const [{ letterId }] = await query<{ letterId: number }>(
-      "SELECT letter_id::int AS \"letterId\" FROM old_letters_mail WHERE gmail_message_id = '0a12'",
-    );
-    await query(
-      "UPDATE email_sends SET from_address = 'nell.nobody@example.com, info@pauseai.info' WHERE letter_id = $1",
-      [letterId],
-    );
-    await query("UPDATE old_letters_mail SET letter_id = $1 WHERE gmail_message_id = '0a23'", [letterId]);
     mailIs(
-      "0a12",
-      "t-russell",
-      "2026-07-01T09:00:00Z",
-      fromTheForm("Nell Nobody", "nell.nobody@example.com", "mp90003.office@parliament.uk"),
-      Buffer.from("Dear Mx Example,"),
-    );
-    const again = await run();
-    expect(again.read).toBe(2);
-    expect(await outcomeOf("0a12")).toEqual({ outcome: "one_off", letterId: null });
-    expect(await query("SELECT 1 FROM letters WHERE id = $1", [letterId])).toEqual([]);
-    expect(await query("SELECT 1 FROM email_sends WHERE letter_id = $1 OR message_id = '0a12'", [letterId])).toEqual(
-      [],
-    );
-  });
-
-  it("keeps only the first of two addresses a send has", async () => {
-    const seeded = await seed();
-    await run();
-    await query(
-      "UPDATE email_sends SET from_address = 'wendy.webform@example.com, info@pauseai.info' WHERE letter_id = $1",
-      [seeded.form],
+      "0a28",
+      "t-staffer",
+      "2025-07-20T09:00:00Z",
+      {
+        From: "Joseph Example <joseph@pauseai.info>",
+        To: "polly.placeholder.mp@parliament.uk",
+        Subject: "Re: Lunch next week",
+        "Message-ID": "<0a28@mail.gmail.com>",
+        "Content-Type": "text/plain; charset=utf-8",
+      },
+      Buffer.from("See you then."),
     );
     await run();
-    const [{ from }] = await query<{ from: string }>(
-      "SELECT from_address AS from FROM email_sends WHERE letter_id = $1",
-      [seeded.form],
-    );
-    expect(from).toBe("wendy.webform@example.com");
+    expect((await outcomeOf("0a28")).outcome).toBe("one_off");
   });
 
   it("notes a message Gmail won't give, and goes on", async () => {
@@ -1114,6 +856,17 @@ describeWithDatabase("the import of old letters", () => {
     expect(again).toMatchObject({ finished: true, left: 0, listed: 0 });
   });
 
+  it("reads at its pace, none when pressed on fixture data", async () => {
+    await seed();
+    await connectTestGmail("joseph@pauseai.uk");
+    await connectTestGmail("policy@pauseai.uk");
+    const paced = await importOldLetters("jo@pauseai.uk", 20, 100);
+    expect(paced.requests).toBeLessThan(10);
+    expect((await importOldLetters("jo@pauseai.uk", undefined, 1)).finished).toBe(false);
+    vi.stubEnv("DATA_FIXTURES", "1");
+    expect((await importOldLetters("jo@pauseai.uk", undefined, 60_000)).finished).toBe(true);
+  });
+
   it("carries on from where the last run stopped when its time is up", async () => {
     await seed();
     await connectTestGmail("joseph@pauseai.uk");
@@ -1123,19 +876,6 @@ describeWithDatabase("the import of old letters", () => {
     const last = await importOldLetters("jo@pauseai.uk", 0, 60_000);
     expect(last).toMatchObject({ finished: true, left: 0 });
     expect(await query("SELECT 1 FROM import_runs WHERE job = 'import-old-letters'")).toHaveLength(2);
-  });
-
-  it("does nothing on its schedule once finished, while a press goes through it all again", async () => {
-    await seed();
-    await connectTestGmail("joseph@pauseai.uk");
-    await connectTestGmail("policy@pauseai.uk");
-    const runs = () => query("SELECT 1 FROM import_runs WHERE job = 'import-old-letters'");
-    await expect(importOldLetters(NIGHTLY, 0, 60_000)).resolves.toMatchObject({ finished: true });
-    expect(await runs()).toHaveLength(1);
-    await expect(importOldLetters(NIGHTLY, 0, 60_000)).resolves.toMatchObject({ finished: true });
-    expect(await runs()).toHaveLength(1);
-    await expect(importOldLetters("jo@pauseai.uk", 0)).resolves.toMatchObject({ finished: true, read: 0 });
-    expect(await runs()).toHaveLength(2);
   });
 
   it("stops at once, leaving no record, while another run is going", async () => {

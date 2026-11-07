@@ -316,11 +316,11 @@ token is kept encrypted (`GMAIL_TOKEN_KEY`), and deleted on disconnecting.
 A one-off job (`import-old-letters`, `lib/server/old-letters-import.ts`, its
 rules in `lib/old-letters.ts`) reads the letters written before the site could
 send them from Joseph's and policy@'s mail, so each one's text, diff and replies
-show on its page. It runs every 5 minutes, and when its button is pressed, reading
-for 20 seconds each time. Its place is `old_letters_mail`, the Gmail ID of each
+show on its page. It runs when its button is pressed, reading for 20 seconds each
+time. Its place is `old_letters_mail`, the Gmail ID of each
 message it has listed and what became of it, and the last run's `searchesDone`,
-so each run carries on from the last and skips what's kept. Once a run finishes
-the schedule does nothing more, and a press goes through it all again. It reads at
+so each run carries on from the last and skips what's kept. Once a run finishes, a
+press goes through it all again. It reads at
 most two a second, as Gmail's limit is shared with the site, and stops the moment
 Gmail refuses; a mailbox's limit applies to all its reading, the regular read's too.
 

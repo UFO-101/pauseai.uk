@@ -1,13 +1,12 @@
 import "server-only";
 import { docFromMarkup, toText } from "@/lib/letter-format";
 import type { MailingDoc } from "@/lib/mailing-doc";
-import { type ImportJob, NIGHTLY, type OldLettersImportResult, type OldLettersProgress } from "@/lib/import-runs";
+import { type ImportJob, type OldLettersImportResult, type OldLettersProgress } from "@/lib/import-runs";
 import { ownWords } from "@/lib/letter-changes";
 import {
   addressesIn,
   augustColleagues,
   augustTemplate,
-  CUT_DOWN_CHARACTERS,
   fitTemplate,
   formDraft,
   formVersionAt,
@@ -22,12 +21,7 @@ import {
   placeReply,
   restoreCutDown,
   templateDoc,
-  LONGEST_GREETING,
-  sharedParagraphs,
-  splitFlatLetters,
   templateOf,
-  WHOLE_CHARACTERS,
-  withoutQuoteMarks,
   type ReplyCandidate,
 } from "@/lib/old-letters";
 import {
@@ -646,117 +640,6 @@ async function handleOne(reader: Reader, account: string, id: string, source: st
 }
 
 /**
- * A reply of ours kept as a one-off that a letter answers becomes that letter's,
- * with its stored mail, leaving its thread if that was all there was of it.
- */
-async function moveOurRepliesToLetters(reader: Reader): Promise<void> {
-  const kept = await query<{
-    id: number;
-    threadId: number;
-    account: string;
-    gmailId: string;
-    inReplyTo: string[];
-    addresses: string[];
-    subject: string;
-    at: Date;
-  }>(
-    `SELECT m.id::int AS id, m.thread_id::int AS "threadId", m.account, m.gmail_message_id AS "gmailId", m.in_reply_to AS "inReplyTo", m.addresses, m.subject, m.at
-     FROM one_off_messages m JOIN old_letters_mail o ON o.account = m.account AND o.gmail_message_id = m.gmail_message_id
-     WHERE o.source = 'sent' AND o.outcome = 'one_off' AND m.from_us`,
-  );
-  for (const { id, threadId, account, gmailId, inReplyTo, addresses, subject, at } of kept) {
-    if (!isReplySubject(subject, inReplyTo[0])) continue;
-    const { people } = politiciansIn(reader.book, addresses);
-    const letter = placeOurReply(await lettersTo(people), { at: new Date(at), subject, addresses });
-    if (!letter) continue;
-    await transaction(async (db) => {
-      await query(
-        `INSERT INTO letter_replies (letter_id, account, gmail_message_id, gmail_thread_id, rfc_message_id, from_address, from_name, subject, at, from_us, blob_key, size)
-         SELECT $2, account, gmail_message_id, gmail_thread_id, rfc_message_id, from_address, from_name, subject, at, true, blob_key, size
-         FROM one_off_messages WHERE id = $1 ON CONFLICT (account, gmail_message_id) DO NOTHING`,
-        [id, letter],
-        db,
-      );
-      await query("DELETE FROM one_off_messages WHERE id = $1", [id], db);
-      await query(
-        "DELETE FROM one_off_threads t WHERE t.id = $1 AND NOT EXISTS (SELECT 1 FROM one_off_messages m WHERE m.thread_id = t.id)",
-        [threadId],
-        db,
-      );
-      await query(
-        "UPDATE old_letters_mail SET outcome = 'reply', letter_id = $3 WHERE account = $1 AND gmail_message_id = $2",
-        [account, gmailId, letter],
-        db,
-      );
-    });
-  }
-}
-
-/**
- * Puts right what's kept, needing no mail read. An email added as PauseAI's own
- * letter though a supporter sent it goes back on the list, with what joined that
- * letter, to be read again as what it is. A reply of ours goes on its letter. A
- * send keeps its first address alone, and a letter's text its whole characters.
- */
-async function putRightWhatsKept(reader: Reader): Promise<void> {
-  const added = await query<{ id: number; from: string }>(
-    `SELECT o.letter_id::int AS id, split_part(e.from_address, ',', 1) AS from
-     FROM old_letters_mail o JOIN email_sends e ON e.letter_id = o.letter_id AND e.message_id = o.gmail_message_id
-     WHERE o.outcome = 'added'`,
-  );
-  for (const { id, from } of added) {
-    if (isPauseaiAddress(from, reader.connected)) continue;
-    await transaction(async (db) => {
-      await query("DELETE FROM email_sends WHERE letter_id = $1 AND imported", [id], db);
-      await query(
-        `UPDATE old_letters_mail SET outcome = NULL, letter_id = NULL, mailing_key = NULL, rfc_message_id = NULL WHERE letter_id = $1`,
-        [id],
-        db,
-      );
-      await query("DELETE FROM letters WHERE id = $1", [id], db);
-    });
-  }
-  await moveOurRepliesToLetters(reader);
-  await query(
-    `UPDATE email_sends SET from_address = split_part(from_address, ',', 1) WHERE imported AND from_address LIKE '%,%'`,
-  );
-  await query(
-    "UPDATE letters_from_pauseai SET own_text = translate(own_text, $1, $2) WHERE own_text ~ ('[' || $1 || ']')",
-    [CUT_DOWN_CHARACTERS, WHOLE_CHARACTERS],
-  );
-}
-
-/**
- * Reads again the letters whose kept text has a replacement character, as a
- * character was lost in decoding it. `done` is its place, so one that stays that
- * way is passed over and can't hold up the rest.
- */
-async function readGarbledAgain(reader: Reader, done: { id: number }): Promise<void> {
-  for (;;) {
-    const batch = await query<{ id: number; account: string; messageId: string }>(
-      `SELECT p.id::int AS id, e.sender AS account, e.message_id AS "messageId"
-       FROM letters_from_pauseai p JOIN email_sends e ON e.letter_id = p.id AND e.imported
-       WHERE p.own_text LIKE '%' || chr(65533) || '%' AND p.id > $1 ORDER BY p.id LIMIT 20`,
-      [done.id],
-    );
-    if (!batch.length) return;
-    for (const { id, account, messageId } of batch) {
-      await reader.turn();
-      try {
-        const message = await gmailFullMessage(reader.tokens.get(account)!, messageId).catch(unlessGone);
-        if (message)
-          await query("UPDATE letters_from_pauseai SET own_text = $2 WHERE id = $1", [id, textFrom(message)]);
-        reader.result.read++;
-      } catch (error) {
-        if (!(error instanceof GmailError && error.status === 400)) throw error;
-        reader.result.unreadable.push(messageId);
-      }
-      done.id = id;
-    }
-  }
-}
-
-/**
  * Puts mail that matched nothing back on the list, to be kept, if its Gmail
  * thread has been kept since: every message of a mailbox listed whole is on the
  * list already, so a thread's listing can't add it. This includes what earlier
@@ -949,67 +832,6 @@ async function fillAugust(): Promise<void> {
   );
 }
 
-/**
- * Puts right mailings already built, using only what's kept, so it needs no
- * mail and works once the import has finished: letters read as one paragraph
- * are split again, with August's text following the send it's made from; a
- * quote's "> " goes from each mailing's text; and a mailing that kept no
- * letters goes.
- */
-async function putRightMailings(): Promise<void> {
-  const flat = await query<{ id: number; mailing: number; key: string; doc: MailingDoc; greeting: string }>(
-    `SELECT p.id::int AS id, m.id::int AS mailing, m.old_letters_key AS key, m.imported_text AS doc,
-       p.merge_values #>> '{values,greeting}' AS greeting
-     FROM letters_from_pauseai p JOIN mailings m ON m.id = p.mailing_id
-     WHERE m.old_letters_key IS NOT NULL AND length(p.merge_values #>> '{values,greeting}') > $1 ORDER BY p.id`,
-    [LONGEST_GREETING],
-  );
-  for (const letters of Map.groupBy(flat, (letter) => letter.mailing).values()) {
-    const { mailing, key, doc } = letters[0];
-    const split = splitFlatLetters(
-      letters.map((letter) => letter.greeting),
-      sharedParagraphs(doc),
-    );
-    if (!split) continue;
-    await transaction(async (db) => {
-      await query("UPDATE mailings SET imported_text = $2 WHERE id = $1", [mailing, JSON.stringify(split.doc)], db);
-      if (key === "deepmind-40") {
-        await query(
-          "UPDATE mailings SET imported_text = $1 WHERE old_letters_key = 'deepmind-august'",
-          [JSON.stringify(augustTemplate(split.doc))],
-          db,
-        );
-      }
-      await query(
-        `UPDATE letters_from_pauseai p SET merge_values = x.merge_values, own_text = x.own_text
-         FROM jsonb_to_recordset($1::jsonb) AS x(id bigint, merge_values jsonb, own_text text) WHERE p.id = x.id`,
-        [
-          JSON.stringify(
-            letters.map(({ id }, i) => {
-              const letter = split.letters[i];
-              return typeof letter === "string"
-                ? { id, merge_values: null, own_text: letter }
-                : { id, merge_values: letter, own_text: null };
-            }),
-          ),
-        ],
-        db,
-      );
-    });
-  }
-  const quoted = await query<{ id: number; doc: MailingDoc }>(
-    `SELECT id::int AS id, imported_text AS doc FROM mailings WHERE imported_text::text LIKE '%"text": ">%'`,
-  );
-  for (const { id, doc } of quoted) {
-    await query("UPDATE mailings SET imported_text = $2 WHERE id = $1", [id, JSON.stringify(withoutQuoteMarks(doc))]);
-  }
-  await query(
-    `DELETE FROM mailings m WHERE m.old_letters_key = 'liability-own'
-       AND NOT EXISTS (SELECT 1 FROM letters_from_pauseai p WHERE p.mailing_id = m.id)`,
-  );
-  await fillAugust();
-}
-
 /** The last step: each letter with a person's reply is marked with when the first came. */
 async function setRepliedAt(reader: Reader): Promise<void> {
   const set = await query(
@@ -1040,13 +862,10 @@ async function lastRun(): Promise<OldLettersImportResult | undefined> {
 
 /** As far as a run gets in its time, keeping its place and its run. Gmail refusing stops it there, with the reason in its result. */
 async function readSome(startedBy: string, paceMs: number, readMs: number): Promise<OldLettersImportResult> {
-  await putRightMailings();
   const last = await lastRun();
-  if (startedBy === NIGHTLY && last?.finished) return last;
   const carrying = last?.finished === false ? last : undefined;
   const result = emptyResult();
   const searchesDone = { n: carrying?.searchesDone ?? 0 };
-  const textsDone = { id: carrying?.textsDone ?? 0 };
   const threadsDone = { id: carrying?.threadsDone ?? 0 };
   const reader: Reader = {
     turn: pacer(paceMs, Date.now() + readMs, result),
@@ -1064,9 +883,7 @@ async function readSome(startedBy: string, paceMs: number, readMs: number): Prom
       await makeMailings();
       await copyFormTexts(reader);
     }
-    await putRightWhatsKept(reader);
     await list(reader, searchesDone);
-    await readGarbledAgain(reader, textsDone);
     await readQueue(reader);
     await placeUnjoined(reader);
     await buildTemplates(reader);
@@ -1084,7 +901,6 @@ async function readSome(startedBy: string, paceMs: number, readMs: number): Prom
   result.unmatched = [...reader.unmatched.values()];
   if (result.unreadable.length) problem(staffCopy.problems.job.unreadable, result.unreadable.join(", "));
   result.searchesDone = searchesDone.n;
-  result.textsDone = textsDone.id;
   result.threadsDone = threadsDone.id;
   result.titles = await countedTitles();
   result.left = await leftToRead();

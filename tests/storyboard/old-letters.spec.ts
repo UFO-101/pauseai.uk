@@ -131,10 +131,8 @@ const runsOf = (
 
 const GMAIL_REFUSAL = "Gmail answered 403 for /messages/0a02: User-rate limit exceeded";
 
-test("The import running by itself", async ({ page, flowDatabase }) => {
-  story(
-    "Every 5 minutes the import reads a little more. Its page says how far it has got, its recent runs a row each, the older ones folded, and anything worth reading shown whole.",
-  );
+test("The import's log", async ({ page, flowDatabase }) => {
+  story("Each press of the button reads a little more. Its page says how far it has got, and its runs, a row each.");
   await logIn(page, flowDatabase, ["supporters", "admin"]);
   runSql(
     flowDatabase,
@@ -173,20 +171,13 @@ test("The import running by itself", async ({ page, flowDatabase }) => {
   await expect(page.getByText(`${words.mailingTitles["deepmind-25"]}: 200`)).toBeVisible();
   await frame(page, "What it has joined, by mailing");
 
-  story("Older runs are folded into a line, which opens into more of the day's table.");
-  await page
-    .locator("summary", { hasText: /no problems/ })
-    .first()
-    .click();
-  await frame(page, "An older stretch, opened");
-
-  story("It's listed with the imports that run every 5 minutes.");
+  story("It's listed with the one-off imports.");
   await page.goto(`${BASE}/staff/import-data`);
   await frame(page, "On the list of imports");
 });
 
 test("The import finishes", async ({ page, flowDatabase }) => {
-  story("The last run reads what's left, and says what it couldn't join. After that the schedule does nothing more.");
+  story("The last run reads what's left, and says what it couldn't join.");
   await logIn(page, flowDatabase, ["supporters", "admin"]);
   runSql(
     flowDatabase,

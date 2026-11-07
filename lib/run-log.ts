@@ -15,16 +15,17 @@ const RECENT_ROWS = 12;
 /** A run shown whole, in a table's row, or as part of a line saying nothing happened. */
 type Shape = "run" | "rows" | "quiet";
 
-/** Whether a job's page lays its history out as a table of the day's runs: the jobs that run every 5 minutes or hourly. */
+/** Whether a job makes many runs a day: one every 5 minutes, or the import of old letters, which did when it read its mail. */
+const runsOften = (job: ImportJob) => JOB_SCHEDULES[job] === "frequent" || job === "import-old-letters";
+
+/** Whether a job's page lays its history out as a table of the day's runs: one that runs often, or hourly. */
 export function tabled(job: ImportJob): boolean {
-  const schedule = JOB_SCHEDULES[job];
-  return schedule === "frequent" || schedule === "hourly";
+  return runsOften(job) || JOB_SCHEDULES[job] === "hourly";
 }
 
 /** How a run shows when it isn't the newest. */
 export function runShape(run: AnyImportRun): Shape {
-  const schedule = JOB_SCHEDULES[run.job];
-  if (schedule !== "frequent" && schedule !== "hourly") return "run";
+  if (!tabled(run.job)) return "run";
   const status = runStatus(run);
   if (status === "unchanged") return "quiet";
   if (run.status === "failed" || run.problems.length > 0) return "run";
@@ -61,7 +62,7 @@ export type LogEntry = {
 /** Whether a problem stays tinted further down: on a job that runs so often it would be lost. */
 function problemTone(run: AnyImportRun): LogEntry["tone"] {
   const tone = runTone(run);
-  return runShape(run) === "run" && JOB_SCHEDULES[run.job] === "frequent" && tone !== "green" ? tone : undefined;
+  return runShape(run) === "run" && runsOften(run.job) && tone !== "green" ? tone : undefined;
 }
 
 /** A day of a job's page: its heading, and what's under it, newest first. */
