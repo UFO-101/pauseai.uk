@@ -102,6 +102,8 @@ export const staffCopy = {
   // One of PauseAI's letters, and the replies in its thread.
   letterThread: {
     title: "Letter and replies",
+    // Folds the mail a message quotes and its footer, under its text.
+    quoted: "Quoted mail and footer",
     // An imported letter, whose text Airtable didn't keep.
     noText: "Text not available, as sent from Airtable.",
     // Over the text of a letter that's built from the send before it and the person's earlier letter.
@@ -1787,7 +1789,6 @@ export const staffCopy = {
       "russell-speak": "Stuart Russell panel: invitation to speak",
       "russell-cohost": "Stuart Russell panel: invitation to co-host",
       "conference-parliament": "Conference in Parliament",
-      "liability-own": "Liability letter: Joseph's own",
       "frontier-own": "Frontier AI letter: Joseph's own",
     } as Record<string, string>,
     result: (r: {
@@ -1933,7 +1934,6 @@ export const staffCopy = {
       // The old letters import, where they aren't tried again, and the Gmail read, for a one-off thread's other messages, where they're tried with each new one: messages Gmail wouldn't give, by ID, which follow.
       unreadable: "Messages that Gmail has but refused to give us:",
       // The old letters import: messages that matched no campaign, mailing or politician. How many follows.
-      matchedNothing: "Messages that didn't match to a campaign, mailing or politician:",
       // The Luma import: Luma errored on one event's guests. Its other events carry on.
       eventGuests: (event: string) => `Couldn't read the guests of an event: ${event}`,
       // The Luma import: Luma errored on one event's hosts. Its other events carry on.

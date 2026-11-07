@@ -30,6 +30,7 @@ export const exampleThread: LetterThread = {
       auto: false,
       subject: "Re: Edinburgh follow-up",
       text: "Dear Jo,\n\nThank you for writing to me. I'd be glad to meet.\n\nPolly",
+      quoted: "On 5 Jun 2026, Jo wrote:\n> Will you come and meet us?",
       cc: null,
     },
     {
@@ -42,6 +43,7 @@ export const exampleThread: LetterThread = {
       auto: false,
       subject: "Re: Edinburgh follow-up",
       text: null,
+      quoted: "",
       cc: null,
     },
   ],

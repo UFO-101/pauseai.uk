@@ -22,8 +22,12 @@ import {
   placeReply,
   restoreCutDown,
   templateDoc,
+  LONGEST_GREETING,
+  sharedParagraphs,
+  splitFlatLetters,
   templateOf,
   WHOLE_CHARACTERS,
+  withoutQuoteMarks,
   type ReplyCandidate,
 } from "@/lib/old-letters";
 import {
@@ -924,6 +928,11 @@ async function buildAugust(reader: Reader): Promise<void> {
     [JSON.stringify(augustTemplate(before.doc))],
   );
   reader.result.templates += made.length;
+  await fillAugust();
+}
+
+/** Each August letter's own paragraph, from that of the person's latest letter before it. */
+async function fillAugust(): Promise<void> {
   await query(
     `UPDATE letters_from_pauseai p SET merge_values = jsonb_set(p.merge_values, '{values,own}', to_jsonb(earlier.own))
      FROM letters l CROSS JOIN LATERAL (
@@ -937,6 +946,67 @@ async function buildAugust(reader: Reader): Promise<void> {
      WHERE p.id = l.id AND p.mailing_id = (SELECT id FROM mailings WHERE old_letters_key = 'deepmind-august')
        AND coalesce(p.merge_values #>> '{values,own}', '') = ''`,
   );
+}
+
+/**
+ * Puts right mailings already built, using only what's kept, so it needs no
+ * mail and works once the import has finished: letters read as one paragraph
+ * are split again, with August's text following the send it's made from; a
+ * quote's "> " goes from each mailing's text; and a mailing that kept no
+ * letters goes.
+ */
+async function putRightMailings(): Promise<void> {
+  const flat = await query<{ id: number; mailing: number; key: string; doc: MailingDoc; greeting: string }>(
+    `SELECT p.id::int AS id, m.id::int AS mailing, m.old_letters_key AS key, m.imported_text AS doc,
+       p.merge_values #>> '{values,greeting}' AS greeting
+     FROM letters_from_pauseai p JOIN mailings m ON m.id = p.mailing_id
+     WHERE m.old_letters_key IS NOT NULL AND length(p.merge_values #>> '{values,greeting}') > $1 ORDER BY p.id`,
+    [LONGEST_GREETING],
+  );
+  for (const letters of Map.groupBy(flat, (letter) => letter.mailing).values()) {
+    const { mailing, key, doc } = letters[0];
+    const split = splitFlatLetters(
+      letters.map((letter) => letter.greeting),
+      sharedParagraphs(doc),
+    );
+    if (!split) continue;
+    await transaction(async (db) => {
+      await query("UPDATE mailings SET imported_text = $2 WHERE id = $1", [mailing, JSON.stringify(split.doc)], db);
+      if (key === "deepmind-40") {
+        await query(
+          "UPDATE mailings SET imported_text = $1 WHERE old_letters_key = 'deepmind-august'",
+          [JSON.stringify(augustTemplate(split.doc))],
+          db,
+        );
+      }
+      await query(
+        `UPDATE letters_from_pauseai p SET merge_values = x.merge_values, own_text = x.own_text
+         FROM jsonb_to_recordset($1::jsonb) AS x(id bigint, merge_values jsonb, own_text text) WHERE p.id = x.id`,
+        [
+          JSON.stringify(
+            letters.map(({ id }, i) => {
+              const letter = split.letters[i];
+              return typeof letter === "string"
+                ? { id, merge_values: null, own_text: letter }
+                : { id, merge_values: letter, own_text: null };
+            }),
+          ),
+        ],
+        db,
+      );
+    });
+  }
+  const quoted = await query<{ id: number; doc: MailingDoc }>(
+    `SELECT id::int AS id, imported_text AS doc FROM mailings WHERE imported_text::text LIKE '%"text": ">%'`,
+  );
+  for (const { id, doc } of quoted) {
+    await query("UPDATE mailings SET imported_text = $2 WHERE id = $1", [id, JSON.stringify(withoutQuoteMarks(doc))]);
+  }
+  await query(
+    `DELETE FROM mailings m WHERE m.old_letters_key = 'liability-own'
+       AND NOT EXISTS (SELECT 1 FROM letters_from_pauseai p WHERE p.mailing_id = m.id)`,
+  );
+  await fillAugust();
 }
 
 /** The last step: each letter with a person's reply is marked with when the first came. */
@@ -969,6 +1039,7 @@ async function lastRun(): Promise<OldLettersImportResult | undefined> {
 
 /** As far as a run gets in its time, keeping its place and its run. Gmail refusing stops it there, with the reason in its result. */
 async function readSome(startedBy: string, paceMs: number, readMs: number): Promise<OldLettersImportResult> {
+  await putRightMailings();
   const last = await lastRun();
   if (startedBy === NIGHTLY && last?.finished) return last;
   const carrying = last?.finished === false ? last : undefined;
@@ -1011,7 +1082,6 @@ async function readSome(startedBy: string, paceMs: number, readMs: number): Prom
   }
   result.unmatched = [...reader.unmatched.values()];
   if (result.unreadable.length) problem(staffCopy.problems.job.unreadable, result.unreadable.join(", "));
-  if (result.unmatched.length) problem(staffCopy.problems.job.matchedNothing, result.unmatched.length);
   result.searchesDone = searchesDone.n;
   result.textsDone = textsDone.id;
   result.threadsDone = threadsDone.id;

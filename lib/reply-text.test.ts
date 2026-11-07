@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { replyText } from "./reply-text";
+import { letterText, replyParts } from "./reply-text";
+
+const replyText = (text: string) => replyParts(text).text;
 
 describe("replyText", () => {
   it("keeps a message that quotes nothing whole, even one ending “wrote:”", () => {
@@ -84,5 +86,98 @@ describe("replyText", () => {
   it("keeps the whole of a message that is nothing but a quote", () => {
     expect(replyText("> Will you?\n> Please.")).toBe("> Will you?\n> Please.");
     expect(replyText("-----Original Message-----\nDear Polly,")).toBe("-----Original Message-----\nDear Polly,");
+  });
+
+  it("keeps what it folds, the quote or footer below what the message says", () => {
+    expect(replyParts("Yes.\n\nOn 5 Jun 2026, Jo wrote:\n> Will you?")).toEqual({
+      text: "Yes.",
+      quoted: "On 5 Jun 2026, Jo wrote:\n> Will you?",
+    });
+    expect(replyParts("Thanks.")).toEqual({ text: "Thanks.", quoted: "" });
+    expect(replyParts("Sent from my iPhone")).toEqual({ text: "Sent from my iPhone", quoted: "" });
+  });
+
+  it("folds a forward, an unmarked “On … wrote:” and the Senedd's Welsh", () => {
+    expect(replyText("See below.\n---------- Forwarded message ---------\nFrom: Jo")).toBe("See below.");
+    expect(replyText("See below.\nBegin forwarded message:\nFrom: Jo")).toBe("See below.");
+    expect(replyText("Yes.\nOn 5 Jun 2026, at 14:03, Jo\nBloggs wrote:\n\nDear Polly,")).toBe("Yes.");
+    expect(replyText("Diolch.\nOddi wrth: Jo\nAnfonwyd: Heddiw\nAnnwyl Polly,")).toBe("Diolch.");
+    expect(replyText("Diolch.\n\nAr 5 Meh 2026, ysgrifennodd Jo:\n> Annwyl Polly,")).toBe(
+      "Diolch.\n\nAr 5 Meh 2026, ysgrifennodd Jo:",
+    );
+    expect(replyText("Diolch.\n\nAr 5 Meh 2026, 14:03 ysgrifennodd:\nAnnwyl Polly,")).toBe("Diolch.");
+  });
+
+  it("keeps an “On …” line of the message's own, one with no date, or with nothing or quotes under it", () => {
+    const own = ["On Monday my colleague wrote:", "Please call me."].join("\n");
+    expect(replyText(own)).toBe(own);
+    expect(replyText("On reflection, yes.\nThanks.")).toBe("On reflection, yes.\nThanks.");
+    expect(replyText("Yes.\nOn 5 Jun 2026 Jo wrote:")).toBe("Yes.\nOn 5 Jun 2026 Jo wrote:");
+    expect(replyText("On 5 Jun 2026, Jo wrote:\n> Will you?\nYes.")).toBe(
+      "On 5 Jun 2026, Jo wrote:\n> Will you?\nYes.",
+    );
+  });
+
+  it("folds the footers mailers and parliaments add", () => {
+    for (const footer of [
+      "UK Parliament Disclaimer: This e-mail is confidential to the intended recipient.",
+      "Sent from my iPhone",
+      "Get Outlook for iOS",
+      "DISCLAIMER: Views are the sender's.",
+      "This email and any attachments are confidential.",
+    ]) {
+      expect(replyParts(`Thanks.\n\n${footer}`)).toEqual({ text: "Thanks.", quoted: footer });
+    }
+    expect(replyText("This email is about your letter.\nThanks.")).toBe("This email is about your letter.\nThanks.");
+  });
+
+  it("undoes a mailer's wrapping, leaving lines their writer ended", () => {
+    const wrapped = [
+      "I am very glad to have received your letter about the safety of",
+      "advanced AI and I would like to meet you when the House next sits",
+      "if that suits.",
+    ].join("\n");
+    expect(replyText(wrapped)).toBe(wrapped.replaceAll("\n", " "));
+    const sentences = ["This line ends with a sentence of its own, as its writer meant it.", "So does this."].join(
+      "\n",
+    );
+    expect(replyText(sentences)).toBe(sentences);
+    const list = ["These are the points that I would most like to raise with you all", "- First", "- Second"].join(
+      "\n",
+    );
+    expect(replyText(list)).toBe(list);
+    const signature = ["Yours sincerely,", "Polly Placeholder MP", "Member of Parliament"].join("\n");
+    expect(replyText(signature)).toBe(signature);
+    const longLines = `${"A line longer than a mailer would ever wrap at, ".repeat(3)}\nand another`;
+    expect(replyText(longLines)).toBe(longLines);
+    const roomy = [
+      "A short line with room in it",
+      "here",
+      "and one much wider than either of those two lines above it was",
+    ].join("\n");
+    expect(replyText(roomy)).toBe(roomy);
+    expect(replyText("First paragraph.\n\nSecond paragraph.")).toBe("First paragraph.\n\nSecond paragraph.");
+  });
+});
+
+describe("letterText", () => {
+  it("takes off a mailer's quote marks and wrapping, keeping paragraphs and a link's bracket", () => {
+    expect(
+      letterText(
+        [
+          "Dear Ms Smith,",
+          "",
+          "I am very glad to be able to write to you about the safety of advanced",
+          "AI models <https://example.org>",
+          "",
+          "Jo Bloggs",
+          "> Director",
+          ">",
+          "> Example Street",
+        ].join("\n"),
+      ),
+    ).toBe(
+      "Dear Ms Smith,\n\nI am very glad to be able to write to you about the safety of advanced AI models <https://example.org>\n\nJo Bloggs\nDirector\n\nExample Street",
+    );
   });
 });

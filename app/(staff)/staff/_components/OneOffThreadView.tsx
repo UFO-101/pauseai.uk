@@ -4,6 +4,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { named } from "@/lib/named-address";
 import { mailboxes } from "@/lib/one-off";
 import type { OneOffThread } from "@/lib/server/one-off-emails";
+import { MessageText } from "./LetterThread";
 import ThreadEmail from "./ThreadEmail";
 import StaffLink from "./ui/StaffLink";
 import Withheld from "./ui/Withheld";
@@ -58,7 +59,7 @@ export default function OneOffThreadView({ thread }: { thread: OneOffThread }) {
               {message.text === null ? (
                 <Muted>{copy.unreadable}</Muted>
               ) : (
-                <div className={styles.text}>{message.text}</div>
+                <MessageText text={message.text} quoted={message.quoted} />
               )}
             </ThreadEmail>
           ))}

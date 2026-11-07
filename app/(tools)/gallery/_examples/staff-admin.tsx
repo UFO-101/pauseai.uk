@@ -237,7 +237,7 @@ const RUNS: Record<ImportJob, Variant> = {
             startedBy: "jo@pauseai.uk",
             problems: [
               { what: staffCopy.problems.job.unreadable, error: "18f0a" },
-              { what: staffCopy.problems.job.matchedNothing, error: "1" },
+              { what: staffCopy.problems.job.unreadable, error: "1" },
             ],
           })}
           open
@@ -257,7 +257,7 @@ const RUNS: Record<ImportJob, Variant> = {
               problems: [
                 { what: staffCopy.oldLetters.stoppedByGmail, error: "Gmail answered 403 for /messages/1a2b: Too many" },
                 { what: staffCopy.problems.job.unreadable, error: "18f0a" },
-                { what: staffCopy.problems.job.matchedNothing, error: "1" },
+                { what: staffCopy.problems.job.unreadable, error: "1" },
               ],
             },
           )}

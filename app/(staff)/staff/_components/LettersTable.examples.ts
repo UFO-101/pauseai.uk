@@ -156,6 +156,7 @@ export const exampleProxiedLetterDetails: SupporterLetterDetails = {
         auto: false,
         subject: "Re: Please back a pause on frontier AI",
         text: "Dear Jane,\n\nThank you for writing to me.\n\nTesty",
+        quoted: "",
         // The office copied their caseworker in.
         cc: "Casey Worker <casey.worker@parliament.uk>",
       },
@@ -169,6 +170,7 @@ export const exampleProxiedLetterDetails: SupporterLetterDetails = {
         auto: false,
         subject: "Re: Please back a pause on frontier AI",
         text: "Dear Mr McTestface,\n\nThank you. Could we meet?\n\nJane",
+        quoted: "",
         cc: null,
       },
     ],
@@ -196,6 +198,7 @@ export const exampleAutoRepliedLetterDetails: SupporterLetterDetails = {
           "If your matter is urgent, please call my constituency office.",
           "For my surgeries, please see my website.",
         ].join("\n\n"),
+        quoted: "",
         cc: null,
       },
       {
@@ -208,6 +211,7 @@ export const exampleAutoRepliedLetterDetails: SupporterLetterDetails = {
         auto: true,
         subject: "Out of office",
         text: "I'm away until Monday.",
+        quoted: "",
         cc: null,
       },
     ],

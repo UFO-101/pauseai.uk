@@ -40,6 +40,7 @@ import StaffPage from "@/app/(staff)/staff/_components/ui/StaffPage";
 import { campaigns } from "@/lib/content/email-your-mp";
 import BounceReason from "@/app/(staff)/staff/_components/BounceReason";
 import LetterChanges, { FoldedAutoReply } from "@/app/(staff)/staff/_components/LetterChanges";
+import { MessageText } from "@/app/(staff)/staff/_components/LetterThread";
 import ThreadEmail from "@/app/(staff)/staff/_components/ThreadEmail";
 import LetterThread, { SupporterLetterThread } from "@/app/(staff)/staff/_components/LetterThread";
 import { exampleImportedThread, exampleThread } from "@/app/(staff)/staff/_components/LetterThread.examples";
@@ -115,6 +116,23 @@ export const staffLetters: Group = {
           render: () => (
             <StaffPage as="div">
               <SupporterLetterThread letter={exampleAutoRepliedLetterDetails} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "MessageText",
+      file: "app/(staff)/staff/_components/LetterThread.tsx",
+      variants: [
+        {
+          label: "A reply, the mail it quotes folded under it",
+          render: () => (
+            <StaffPage as="div">
+              <MessageText
+                text={"Dear Jo,\n\nYes, I'd be glad to meet."}
+                quoted={"On 5 Jun 2026, Jo wrote:\n> Will you?"}
+              />
             </StaffPage>
           ),
         },
