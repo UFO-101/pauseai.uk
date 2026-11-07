@@ -179,6 +179,7 @@ export const emptyPoliticiansSearch: PoliticiansSearch = {
   nation: [],
   email: [],
   mailed: [],
+  signed: "",
   ask: "",
   answer: "",
   sort: "",

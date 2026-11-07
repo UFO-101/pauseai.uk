@@ -194,6 +194,7 @@ describeWithDatabase("importLuma", () => {
       people: 3,
       contacts: 2,
       contactPages: 1,
+      eventsTagged: 0,
       supportersAdded: 4,
       linked: 4,
       places: { postcodes: 1, towns: 1, failed: false },
@@ -251,6 +252,7 @@ describeWithDatabase("importLuma", () => {
       people: 0,
       contacts: 0,
       contactPages: 1,
+      eventsTagged: 0,
       supportersAdded: 0,
       linked: 0,
       // Nothing new to look up.
@@ -517,6 +519,7 @@ describeWithDatabase("importLuma", () => {
       contacts: 0,
       // A pass over the contacts begins, and none of it read.
       contactPages: 0,
+      eventsTagged: 0,
       supportersAdded: 0,
       linked: 0,
       places: { postcodes: 0, towns: 0, failed: false },

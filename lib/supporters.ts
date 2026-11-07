@@ -156,6 +156,10 @@ export type NegatableSupporterFilter = "activity" | "contact" | "event" | "count
 
 /** Who the list shows, as the server finds them. A filter that repeats finds those with any of its values. */
 export type SupporterWho = {
+  /** Those first seen, registered for an event, or unsubscribed from Luma's emails in the last so many days. */
+  firstDays?: number;
+  registeredDays?: number;
+  unsubscribedDays?: number;
   /** Over names, emails and phones. */
   search?: string;
   /** Has any of these lozenges in the Activities column. */

@@ -669,6 +669,8 @@ such as one that opens a menu, doesn't wait at all.
 - **A form's submit button** is `SubmitButton`. It's pending while a
   Server Action runs, and for a form that posts to a URL (logging in or
   out), until the next page comes.
+- **A menu's item that sends a form** is `MenuSubmit` (`ui/MenuSubmit`), with
+  the same grey and spinner. The menu stays up until the form's work is done.
 - **A button that does its work itself** (`onClick`) gives `Button` its
   `pending`, from its press until the work's done: Send test, Schedule,
   a download.

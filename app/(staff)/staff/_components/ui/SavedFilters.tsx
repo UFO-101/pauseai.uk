@@ -12,6 +12,7 @@ import { DeleteTwice } from "../DeleteTwice";
 import Bubble from "./Bubble";
 import ChoiceSearch from "./ChoiceSearch";
 import Menu, { menuItemClass, menuItemsClass } from "./Menu";
+import MenuSubmit from "./MenuSubmit";
 import StaffLink from "./StaffLink";
 import styles from "./SavedFilters.module.css";
 import { iconButtonClass } from "@/components/ui/IconButton";
@@ -236,17 +237,15 @@ function EditedChoices({ props }: { props: SavedFiltersProps & { loaded: { id: n
   const { list, loaded, back, name, actions } = props;
   const bubble = "saved-filter-save-as-new";
   return (
-    <div className={styles.choices}>
+    <div className={menuItemsClass}>
       <form action={actions.update}>
         <FormFields list={list} id={loaded.id} back={back} />
-        <button type="submit" className={styles.choice}>
-          {copy.update}
-        </button>
+        <MenuSubmit>{copy.update}</MenuSubmit>
       </form>
-      <Bubble id={bubble} trigger={styles.choice} label={copy.saveAsNew} className={styles.wide}>
+      <Bubble id={bubble} trigger={menuItemClass} label={copy.saveAsNew} className={styles.wide}>
         <NameForm bubble={bubble} title={copy.saveTitle} name={name} list={list} back={back} action={actions.save} />
       </Bubble>
-      <StaffLink href={loaded.undo} className={styles.choice}>
+      <StaffLink href={loaded.undo} className={menuItemClass}>
         {copy.undo}
       </StaffLink>
     </div>

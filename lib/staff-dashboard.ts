@@ -1,5 +1,7 @@
 import type { ImportJob } from "./import-runs";
 import type { Permission } from "./staff-permissions";
+import { staffCopy } from "./content/staff-interface";
+import { now } from "./now";
 import type { SupporterSource } from "./supporters";
 
 // The staff home's dashboard: what needs a person, and what happened in
@@ -14,6 +16,24 @@ export type DashboardWindow = (typeof DASHBOARD_WINDOWS)[number];
 export function dashboardWindow(days: string | undefined): DashboardWindow {
   const found = DASHBOARD_WINDOWS.find((window) => String(window) === days);
   return found ?? DASHBOARD_WINDOWS[0];
+}
+
+/** A list's date filter from its URL ("?first=30"): those of the last so many days, as a window; otherwise off. */
+export function listWindow(days: string): DashboardWindow | undefined {
+  return DASHBOARD_WINDOWS.find((window) => String(window) === days);
+}
+
+/** A date filter's choices. */
+export const WINDOW_OPTIONS = DASHBOARD_WINDOWS.map((days) => ({
+  value: String(days),
+  label: staffCopy.filters.lastDays(days),
+}));
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** The start of a window ending now, ISO. */
+export function windowStart(days: number): string {
+  return new Date(now().getTime() - days * DAY_MS).toISOString();
 }
 
 /** How many windows a sparkline or a chart of bars shows, the current one last. */
@@ -46,27 +66,34 @@ export type SeriesPoint = { from: string; count: number };
 export type SourcePoint = SeriesPoint & { sources: Partial<Record<SupporterSource, number>> };
 
 /**
- * Where each tile leads: the page that lists what it counts, and the
- * permissions it takes to see it there; without them the tile is no link.
- * The MPs signed tile's page depends on who signed (signedHref). The letters
- * are in the sent emails, which only an admin opens, and only one who may see
- * supporters finds letters in. `worse` marks a number that's bad when it
- * rises, so its change is coloured the other way round.
+ * Where each tile leads: the page that lists exactly what it counts in the
+ * window (`days`), and the permissions it takes to see it there; without them
+ * the tile is no link. The MPs signed tile's page depends on who signed
+ * (signedHref). `worse` marks a number that's bad when it rises, so its change
+ * is coloured the other way round.
  */
-export const METRIC_LINKS: Record<DashboardMetric, { href: string; permissions: readonly Permission[]; worse?: true }> =
-  {
-    lettersSent: { href: "/staff/sent-emails?purpose=letter&link=campaign", permissions: ["admin", "supporters"] },
-    lettersReplied: { href: "/staff/sent-emails?purpose=forwarded-reply", permissions: ["admin", "supporters"] },
-    mpsSigned: { href: "/staff/politicians", permissions: [] },
-    eventRegistrations: { href: "/staff/supporters?activity=registered", permissions: ["supporters"] },
-    eventsHeld: { href: "/staff/events?when=past", permissions: [] },
-    supportersAdded: { href: "/staff/supporters?sort=first&dir=desc", permissions: ["supporters"] },
-    unsubscribes: {
-      href: "/staff/supporters?contact=email:luma-calendar:unsubscribed",
-      permissions: ["supporters"],
-      worse: true,
-    },
-  };
+export const METRIC_LINKS: Record<
+  DashboardMetric,
+  { href: (days: DashboardWindow) => string; permissions: readonly Permission[]; worse?: true }
+> = {
+  lettersSent: { href: (days) => `/staff/letters/all?sent=${days}`, permissions: ["supporters"] },
+  lettersReplied: { href: (days) => `/staff/letters/all?replied=${days}`, permissions: ["supporters"] },
+  mpsSigned: { href: (days) => `/staff/politicians?signed=${days}&status=any&sort=asks`, permissions: [] },
+  eventRegistrations: { href: (days) => `/staff/supporters?registered=${days}`, permissions: ["supporters"] },
+  eventsHeld: { href: (days) => `/staff/events?when=past&held=${days}`, permissions: [] },
+  supportersAdded: {
+    href: (days) => `/staff/supporters?first=${days}&sort=first&dir=desc`,
+    permissions: ["supporters"],
+  },
+  unsubscribes: { href: (days) => `/staff/supporters?unsubscribed=${days}`, permissions: ["supporters"], worse: true },
+};
+
+/** The tiles of letters, which say how many were from supporters and how many from PauseAI. */
+export const BY_LETTER_KIND = ["lettersSent", "lettersReplied"] as const satisfies readonly DashboardMetric[];
+export type LetterKindMetric = (typeof BY_LETTER_KIND)[number];
+
+/** A window's letters by who they're from. */
+export type LetterKinds = { supporter: number; pauseai: number };
 
 /** Something waiting for a person, with where its button goes. */
 export type DashboardAction =
@@ -85,6 +112,8 @@ export type Dashboard = {
   counts: Record<DashboardMetric, Count>;
   /** Letters sent to test MPs in the window, which the letters tile leaves out of its number. */
   testLetters: number;
+  /** The window's letters by who they're from, for the letters' tiles. */
+  byLetterKind: Record<LetterKindMetric, LetterKinds>;
   /** The window's count by campaign slug, for the tiles with a bar. */
   byCampaign: Record<CampaignMetric, Record<string, number>>;
   /** The politician who signed in the window, when only one did, for any number of campaigns. */
@@ -96,18 +125,17 @@ export type Dashboard = {
   actions: DashboardAction[];
 };
 
-/**
- * Where the MPs signed tile leads: the page of the one politician who
- * signed in the window, or everyone who has signed anything, newest
- * first, or with no signatures in the window, all the politicians.
- */
-export function signedHref({ signedMp, counts }: Pick<Dashboard, "signedMp" | "counts">): string {
-  if (signedMp !== null) return `/staff/politicians/${signedMp}`;
-  return counts.mpsSigned.current > 0 ? "/staff/politicians?answer=signed&sort=asks" : "/staff/politicians";
+/** Where the MPs signed tile leads: the page of the one politician who signed in the window, or the list of those who did. */
+export function signedHref({ signedMp, days }: Pick<Dashboard, "signedMp" | "days">): string {
+  return signedMp !== null ? `/staff/politicians/${signedMp}` : METRIC_LINKS.mpsSigned.href(days);
 }
 
 export function isCampaignMetric(metric: DashboardMetric): metric is CampaignMetric {
   return (BY_CAMPAIGN as readonly DashboardMetric[]).includes(metric);
+}
+
+export function isLetterKindMetric(metric: DashboardMetric): metric is LetterKindMetric {
+  return (BY_LETTER_KIND as readonly DashboardMetric[]).includes(metric);
 }
 
 export function isSeriesMetric(metric: DashboardMetric): metric is SeriesMetric {

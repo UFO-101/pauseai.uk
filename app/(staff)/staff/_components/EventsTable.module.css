@@ -36,7 +36,7 @@
   display: block;
 }
 
-/* No owner, or no doc, for an event to come: an error. */
+/* No owner, for an event to come: an error. */
 .missing {
   display: flex;
   gap: var(--space-1);

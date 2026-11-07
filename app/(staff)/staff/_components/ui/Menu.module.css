@@ -45,6 +45,16 @@
   background: var(--surface-2);
 }
 
+/* Working, as a button does: greyed at once, a spinner on it if that takes a moment (MenuSubmit), or for a link, the line along the top of the page (StaffLink). */
+.item[aria-busy="true"],
+.item[data-pending] {
+  opacity: 0.6;
+}
+
+.item[aria-busy="true"] {
+  position: relative;
+}
+
 .danger {
   color: var(--status-red);
 }

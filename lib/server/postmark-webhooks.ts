@@ -1,4 +1,5 @@
 import "server-only";
+import { isMachineReply } from "@/lib/email-parsing/subjects";
 import { timingSafeEqual } from "node:crypto";
 import { copy } from "@/lib/content/email-your-mp";
 import { now } from "@/lib/now";
@@ -93,29 +94,12 @@ export async function recordAutoResponder(payload: PostmarkProblem): Promise<boo
 
 type Address = { Email?: string; Name?: string };
 
-const AUTO_REPLY_SUBJECT = /^\s*(automatic reply|auto[- ]?reply|auto[- ]?response|out of (the )?office)\b/i;
-
-/**
- * Whether an email was sent by a machine rather than a person: an office's
- * acknowledgement or out-of-office. By the headers that mark them (RFC 3834's
- * Auto-Submitted, and the older X-Autoreply, X-Autorespond and Precedence),
- * or failing those, a subject such as Outlook's "Automatic reply:".
- */
+/** isMachineReply(), for an inbound email in Postmark's form. */
 export function isAutoReply(email: InboundEmail): boolean {
   return isMachineReply(
     (name) => email.Headers?.find((h) => h.Name?.toLowerCase() === name)?.Value,
     email.Subject ?? "",
   );
-}
-
-/** isAutoReply(), for an email whatever it came in: `header` finds a header by its lowercased name. */
-export function isMachineReply(header: (name: string) => string | undefined, subject: string): boolean {
-  const value = (name: string) => header(name)?.trim().toLowerCase();
-  const autoSubmitted = value("auto-submitted");
-  if (autoSubmitted && autoSubmitted !== "no") return true;
-  if (value("x-autoreply") !== undefined || value("x-autorespond") !== undefined) return true;
-  if (["auto_reply", "bulk", "junk"].includes(value("precedence") ?? "")) return true;
-  return AUTO_REPLY_SUBJECT.test(subject);
 }
 
 /**

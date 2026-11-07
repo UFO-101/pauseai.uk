@@ -214,7 +214,8 @@ export const staffCopy = {
         lettersSent: (n: number) => (n === 1 ? "letter to an MP" : "letters to MPs"),
         lettersReplied: (n: number) => (n === 1 ? "letter got a reply" : "letters got a reply"),
         mpsSigned: (n: number) => (n === 1 ? "MP signed" : "MPs signed"),
-        eventRegistrations: (n: number) => (n === 1 ? "event registration" : "event registrations"),
+        eventRegistrations: (n: number) =>
+          n === 1 ? "⁂ person registered for an event" : "⁂ people registered for an event",
         eventsHeld: (n: number) => (n === 1 ? "event held" : "events held"),
         supportersAdded: (n: number) => (n === 1 ? "new supporter" : "new supporters"),
         unsubscribes: (n: number) => (n === 1 ? "unsubscribe from Luma emails" : "unsubscribes from Luma emails"),
@@ -223,6 +224,8 @@ export const staffCopy = {
       none: "No",
       // Beside the letters' number: those to the test MPs, left out of it.
       testLetters: (n: number) => `+${n} test`,
+      // Under the letters' numbers: who they're from.
+      letterKinds: (supporters: number, pauseai: number) => `⁂ ${supporters} from supporters, ${pauseai} from PauseAI`,
       // Under the number: against the window before.
       change: {
         up: (n: number, days: number) => `▲ ${n} on the ${days} days before`,
@@ -253,6 +256,10 @@ export const staffCopy = {
     total: (total: number) => `${total} ${total === 1 ? "supporter" : "supporters"}`,
     filters: {
       search: "Name, email or phone",
+      // The date filters: when they were first seen, last registered for an event, and unsubscribed from Luma's emails.
+      first: "⁂ First seen",
+      registered: "⁂ Registered for an event",
+      unsubscribed: "⁂ Unsubscribed from Luma emails",
       // Whether we have a phone number, or an email, for them.
       // The Near filter: a postcode or a town, and how far from it.
       near: "Near",
@@ -677,6 +684,8 @@ export const staffCopy = {
     allHouses: "All houses",
     // The filters: in office or not, Airtable's markers, and an answer to an ask.
     status: "Status",
+    // When they signed something: the last so many days.
+    signedIn: "⁂ Signed",
     anyStatus: "Any status",
     // The Email filter's choices: whether we can write to them.
     emailStates: {
@@ -761,6 +770,8 @@ export const staffCopy = {
     // The list's search box, and its filters but Owner's: each Luma tag; each city, and Online; and taken off Luma
     // (`removed`), which finds only those, as they're left out otherwise.
     filters: {
+      // When it was held: the last so many days.
+      held: "⁂ Held",
       search: "Name, host or email",
       tag: "Tag",
       place: "Place",
@@ -775,7 +786,6 @@ export const staffCopy = {
     // An event's Google Doc: the link to it, in its column after the owner; with none, in red, with a warning,
     // on one coming up, as for no owner.
     doc: "Google Doc",
-    noDoc: "No doc",
     // The button at a row's right, and its name for a screen reader, which opens the form to change its owner and doc.
     edit: "Edit",
     editLabel: (event: string) => `Edit ${event}`,
@@ -793,6 +803,32 @@ export const staffCopy = {
     // The email when an event's owner changes: to the new owner, whoever chose them, copied to the one before, saying who
     // gave it to them and from whom; or, when the import gives events their owners by the rules, to each new owner,
     // listing them.
+    // To the notification inbox: an upcoming event the Luma import couldn't tell the tags of, sent once.
+    unclearTagEmail: {
+      subject: (name: string) => `⁂ Which Luma tag for ${name}?`,
+      // `url`: the event on Luma, where its tags are set; `link`: the events page.
+      body: ({
+        name,
+        when,
+        place,
+        url,
+        link,
+      }: {
+        name: string;
+        when: string;
+        place: string;
+        url: string;
+        link: string;
+      }) =>
+        `⁂ The Luma import couldn't tell which tag this event should have, so it left it untagged. New tags are made by hand on Luma, so it may need one.
+
+${name}
+${when}
+${place}
+${url}
+
+All events: ${link}`,
+    },
     ownerEmail: {
       subject: (n: number, first: string, owner: string) =>
         n === 1 ? `You're now owner for ${first}, ${owner}` : `You're now owner for ${n} events, ${owner}`,
@@ -1479,6 +1515,8 @@ export const staffCopy = {
     hostsChanged: (n: number) => `${n} ${n === 1 ? "host" : "hosts"} changed.`,
     // After that, how many pages of contacts the run read (runs kept before this was recorded don't say).
     contactPages: (pages: number) => `${pages} pages of contacts read.`,
+    // After that, how many upcoming events the run tagged on Luma, when any.
+    eventsTagged: (n: number) => `⁂ ${n} ${n === 1 ? "event" : "events"} tagged on Luma.`,
     // After that, the postcodes and towns looked up at postcodes.io for where supporters are (runs kept before this was recorded don't say).
     places: (p: { postcodes: number; towns: number }) =>
       `${p.postcodes} ${p.postcodes === 1 ? "postcode" : "postcodes"}, ${p.towns} ${p.towns === 1 ? "town" : "towns"} looked up.`,
@@ -1940,6 +1978,10 @@ export const staffCopy = {
       eventHosts: (event: string) => `Couldn't read the hosts of an event: ${event}`,
       // The Luma import: Luma's rate limit stopped the run early. The next run carries on.
       lumaRefused: "Luma rate limit reached",
+      // The Luma import couldn't read the calendar's tags, so tagged nothing this run.
+      lumaTagsUnread: "⁂ Luma wouldn't list its event tags, so no events were tagged",
+      // The Luma import's tag wouldn't go on one event; the next run tries again.
+      lumaTagRefused: (event: string) => `⁂ Luma wouldn't tag ${event}`,
       // The Emails sync: emails in Airtable that belong to no mailing here, or to several, so they weren't copied. Their records follow.
       heldBack: "Emails we couldn't match to a mailing here, so weren't imported:",
       // The Emails sync: emails in Airtable that don't name exactly one politician, so they weren't copied. Their records follow.
@@ -2085,6 +2127,21 @@ export const staffCopy = {
     takesAction: "Takes action",
     siteAdmin: "Site admin",
   },
+  allLetters: {
+    title: "⁂ All letters",
+    search: "⁂ Sender, MP or mailing",
+    // Who a letter is from, the filter's name and its choices.
+    from: "⁂ From",
+    fromKinds: { supporter: "⁂ Supporters", pauseai: "⁂ PauseAI" },
+    // When it was sent.
+    sent: "⁂ Sent",
+    // Whether it got a written reply, or got one in a window.
+    replied: "⁂ Replied",
+    repliedChoices: { yes: "⁂ Any time", no: "⁂ No reply" },
+    // A letter's campaign or mailing.
+    about: "⁂ About",
+    noneFound: "⁂ No letters found.",
+  },
   letters: {
     title: "Letters to MPs",
     // Over the list: how many there are.
@@ -2217,6 +2274,8 @@ export const staffCopy = {
   // A list's filters: the × in the search box, + Filter, which offers the filters not on, and on a filter's
   // chip, the way to take it off.
   filters: {
+    // A date filter's choices: those of the last so many days.
+    lastDays: (days: number) => `⁂ Last ${days} days`,
     clearSearch: "Clear the search",
     add: "+ Filter",
     // The other half of + Filter: adds a choice the list leaves out. Its menu's heading, and a left-out choice's chip.

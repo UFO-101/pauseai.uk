@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { addTestLetter, addTestMp, addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query, transaction } from "./db";
 import {
@@ -80,6 +80,7 @@ describe("politiciansSearch", () => {
     expect(politiciansSearch(typed)).toEqual({
       ...typed,
       tab: "",
+      signed: "",
       pasted: [],
       saved: "",
       filter: {
@@ -137,6 +138,7 @@ describe("politiciansSearch", () => {
       ask: "",
       answer: "",
       mailed: [],
+      signed: "",
       sort: "",
       dir: "",
       page: "",
@@ -324,6 +326,24 @@ describeWithDatabase("politicians", () => {
     expect(await page({ ...hidden, not: undefined })).toMatchObject({ total: 1, tests: 0 });
     expect(await page({ ...hidden, not: { flags: ["removed"] } })).toMatchObject({ total: 1, tests: 0 });
     expect(await page({ page: 2 })).toMatchObject({ page: 2, politicians: [] });
+  });
+
+  it("finds those who signed in the last so many days, once each, not by Airtable's record", async () => {
+    vi.stubEnv("FIXTURE_NOW", "2026-10-21T12:00:00.000Z");
+    const signer = await addTestPolitician();
+    const before = await addTestPolitician({ name: "Old Placeholder", airtableId: "recOld" });
+    const byAirtable = await addTestPolitician({ name: "Air Placeholder", airtableId: "recAir" });
+    await query(
+      `INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, updated_by, updated_at) VALUES
+         ($1, 'frontier-ai-letter', 'letter', 'signed', 'x', '2026-10-20T00:00:00Z'),
+         ($1, 'deepmind-letter', 'letter', 'signed', 'x', '2026-10-19T00:00:00Z'),
+         ($2, 'deepmind-letter', 'letter', 'signed', 'x', '2026-09-30T00:00:00Z'),
+         ($3, 'deepmind-letter', 'letter', 'signed', 'airtable', '2026-10-20T00:00:00Z')`,
+      [signer, before, byAirtable],
+    );
+    expect((await listPoliticians({ signedDays: 7 })).map((p) => p.id)).toEqual([signer]);
+    expect((await listPoliticians({ signedDays: 30 })).map((p) => p.id).sort()).toEqual([signer, before].sort());
+    vi.unstubAllEnvs();
   });
 
   it("finds those in office, or out of it, and counts them", async () => {

@@ -7,7 +7,9 @@ import { exampleProblems } from "@/app/(staff)/staff/_components/EmailBlocksTabl
 import EmailProblemsTable from "@/app/(staff)/staff/_components/EmailProblemsTable";
 import CampaignName from "@/app/(staff)/staff/_components/CampaignName";
 import LetterLink from "@/app/(staff)/staff/_components/LetterLink";
+import AllLetters from "@/app/(staff)/staff/_components/AllLetters";
 import LettersTable from "@/app/(staff)/staff/_components/LettersTable";
+import ThreadText from "@/app/(staff)/staff/_components/ThreadText";
 import MailEmail from "@/app/(staff)/staff/_components/MailEmail";
 import CampaignLetter from "@/app/(staff)/staff/_components/CampaignLetter";
 import CampaignsOverview, { CampaignAsk } from "@/app/(staff)/staff/_components/CampaignsOverview";
@@ -509,6 +511,67 @@ export const staffLetters: Group = {
           render: () => (
             <StaffPage as="div">
               <OneOffThreadView thread={{ ...exampleHiddenOneOff, messages_: null }} />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "AllLetters",
+      file: "app/(staff)/staff/_components/AllLetters.tsx",
+      variants: [
+        {
+          label: "A supporter's letter with a reply, and one of PauseAI's not sent, filtered to the last 30 days",
+          render: () => (
+            <StaffPage as="div">
+              <AllLetters
+                found={{
+                  letters: [
+                    {
+                      id: 1,
+                      kind: "supporter",
+                      status: "sent",
+                      sentAt: "2026-10-20T10:00:00Z",
+                      repliedAt: "2026-10-21T10:00:00Z",
+                      mpName: "Polly Placeholder",
+                      politicianId: 1,
+                      senderName: "Jane Smith",
+                      senderEmail: "jane.smith@example.com",
+                      supporterId: 1,
+                      campaign: "regulate-letter-pm",
+                      campaignTitle: "Regulate AI",
+                    },
+                    {
+                      id: 2,
+                      kind: "pauseai",
+                      status: "scheduled",
+                      sentAt: null,
+                      repliedAt: null,
+                      mpName: "Polly Placeholder",
+                      politicianId: 1,
+                      mailingId: 3,
+                      mailingTitle: "A letter about the march",
+                    },
+                  ],
+                  total: 2,
+                  pages: 1,
+                }}
+                search={{ q: "", from: "", sent: "30", replied: "", page: "" }}
+              />
+            </StaffPage>
+          ),
+        },
+      ],
+    },
+    {
+      name: "ThreadText",
+      file: "app/(staff)/staff/_components/ThreadText.tsx",
+      variants: [
+        {
+          label: "An email's plain text, with bold and a link",
+          render: () => (
+            <StaffPage as="div">
+              <ThreadText text={"Dear Jane,\n\n*Our letter is out: https://example.org/letter*\n\nKind regards"} />
             </StaffPage>
           ),
         },

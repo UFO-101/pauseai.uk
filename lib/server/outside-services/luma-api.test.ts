@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
-import { LumaRateLimited, lumaList } from "./luma-api";
+import { LumaRateLimited, lumaList, lumaPost } from "./luma-api";
 
 const LIST = "https://public-api.luma.com/v1/things/list";
 
@@ -70,5 +70,37 @@ describe("lumaList", () => {
     );
     await expect(lumaList("/v1/things/list", new URLSearchParams())).rejects.toThrow("LUMA_API_KEY is not set");
     expect(called).toBe(false);
+  });
+});
+
+describe("lumaPost", () => {
+  const POST = "https://public-api.luma.com/v1/things/do";
+  beforeEach(() => vi.stubEnv("LUMA_API_KEY", "k"));
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("sends the body with the key, and gives Luma's answer", async () => {
+    let sent: unknown;
+    let key: string | null = null;
+    server.use(
+      http.post(POST, async ({ request }) => {
+        sent = await request.json();
+        key = request.headers.get("x-luma-api-key");
+        return HttpResponse.json({ done: true });
+      }),
+    );
+    await expect(lumaPost("/v1/things/do", { a: 1 })).resolves.toEqual({ done: true });
+    expect(sent).toEqual({ a: 1 });
+    expect(key).toBeTruthy();
+  });
+
+  it("throws on a 429, with Luma's retry-after or a minute, on any other refusal, and without the key", async () => {
+    server.use(http.post(POST, () => new HttpResponse(null, { status: 429, headers: { "retry-after": "30" } })));
+    await expect(lumaPost("/v1/things/do", {})).rejects.toMatchObject({ retryAfter: 30 });
+    server.use(http.post(POST, () => new HttpResponse(null, { status: 429 })));
+    await expect(lumaPost("/v1/things/do", {})).rejects.toMatchObject({ retryAfter: 60 });
+    server.use(http.post(POST, () => new HttpResponse(null, { status: 500 })));
+    await expect(lumaPost("/v1/things/do", {})).rejects.toThrow("Luma answered 500");
+    vi.stubEnv("LUMA_API_KEY", "");
+    await expect(lumaPost("/v1/things/do", {})).rejects.toThrow("LUMA_API_KEY is not set");
   });
 });

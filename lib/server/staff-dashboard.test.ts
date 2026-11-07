@@ -104,7 +104,8 @@ describeWithDatabase("dashboard", () => {
     expect(result.counts).toEqual({
       lettersSent: { current: 1, previous: 1 },
       lettersReplied: { current: 1, previous: 0 },
-      mpsSigned: { current: 2, previous: 0 },
+      // One MP, though they signed two letters.
+      mpsSigned: { current: 1, previous: 0 },
       eventRegistrations: { current: 2, previous: 0 },
       eventsHeld: { current: 1, previous: 1 },
       supportersAdded: { current: 1, previous: 1 },
@@ -112,6 +113,10 @@ describeWithDatabase("dashboard", () => {
     });
     // The test MP's two letters: one delivered, one that bounced after it was sent.
     expect(result.testLetters).toBe(2);
+    expect(result.byLetterKind).toEqual({
+      lettersSent: { supporter: 1, pauseai: 0 },
+      lettersReplied: { supporter: 1, pauseai: 0 },
+    });
     expect(result.byCampaign).toEqual({
       lettersSent: { "regulate-letter-pm": 1 },
       mpsSigned: { "regulate-letter-pm": 1, "deepmind-letter": 1 },

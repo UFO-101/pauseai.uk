@@ -150,6 +150,8 @@ export type LumaImportResult = {
   supportersAdded: number;
   linked: number;
   requests: number;
+  /** Upcoming events given tags on Luma (runs kept before events were tagged don't say). */
+  eventsTagged?: number;
   /** Pages of the calendar's contacts read. */
   contactPages?: number;
   /** The postcodes and towns looked up at the end of the run (runs kept before this was recorded don't say). */

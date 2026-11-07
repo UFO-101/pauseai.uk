@@ -116,9 +116,9 @@ function Hosts({ hosts }: { hosts: EventHost[] }) {
   );
 }
 
-/** The link to an event's Google Doc, opening in a new tab. */
-function Doc({ doc, needed }: { doc: string | null; needed: boolean }) {
-  if (!doc) return <Missing needed={needed}>{copy.noDoc}</Missing>;
+/** The link to an event's Google Doc, opening in a new tab, or a dash: many events never have one. */
+function Doc({ doc }: { doc: string | null }) {
+  if (!doc) return <Muted>–</Muted>;
   return <ExternalLink href={doc}>{copy.doc}</ExternalLink>;
 }
 
@@ -129,8 +129,7 @@ function Doc({ doc, needed }: { doc: string | null; needed: boolean }) {
  * Luma tags, which often say where too; how many are going; its hosts on
  * Luma, for staff who see supporters (`hosts`); then what we add, which
  * its Edit button changes, beside it: its owner and its Google Doc. On the
- * Future tab, one on Luma with no owner or no doc is an error. Every
- * column but the tags, the hosts and Edit sorts; by the doc, those with
+ * Future tab, one on Luma with no owner is an error. Every column but the tags, the hosts and Edit sorts; by the doc, those with
  * none come first.
  */
 function eventColumns(
@@ -149,7 +148,7 @@ function eventColumns(
       {label}
     </SortHeading>
   );
-  // Still to come and on Luma, so an owner and a doc are needed.
+  // Still to come and on Luma, so an owner is needed.
   const needed = (event: StaffEvent) => event.startAt >= now && !event.removed;
   return [
     {
@@ -209,7 +208,7 @@ function eventColumns(
       label: copy.doc,
       heading: heading("doc", copy.doc),
       short: true,
-      cell: (event) => <Doc doc={event.doc} needed={needed(event)} />,
+      cell: (event) => <Doc doc={event.doc} />,
     },
     {
       key: "edit",

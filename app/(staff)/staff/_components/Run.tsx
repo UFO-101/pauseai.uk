@@ -295,7 +295,7 @@ function GoToParliamentRun({ run, open, bare }: { run: GoToParliamentImport; ope
 /** A copy of the Luma calendar: the counts, the hosts changed, the places looked up, and why it stopped early if it did. */
 function LumaRun({ run, open, bare }: { run: LumaImport; open?: boolean; bare?: boolean }) {
   if (run.status === "failed") return <RunBox run={run} summary={null} open={open} bare={bare} />;
-  const { stoppedBy, hostsChanged, contactPages, places } = run.result;
+  const { stoppedBy, hostsChanged, contactPages, eventsTagged, places } = run.result;
   return (
     <RunBox
       run={run}
@@ -306,6 +306,7 @@ function LumaRun({ run, open, bare }: { run: LumaImport; open?: boolean; bare?: 
           {staffCopy.luma.result(run.result)}
           {hostsChanged !== undefined && <> {staffCopy.luma.hostsChanged(hostsChanged)}</>}
           {contactPages !== undefined && <> {staffCopy.luma.contactPages(contactPages)}</>}
+          {Boolean(eventsTagged) && <> {staffCopy.luma.eventsTagged(eventsTagged!)}</>}
           {places && <> {staffCopy.luma.places(places)}</>}
           {stoppedBy && <> {staffCopy.luma.stoppedBy[stoppedBy]}</>}
         </>

@@ -2,9 +2,9 @@ import "server-only";
 import { gunzipSync } from "node:zlib";
 import { checkMailingDoc, letterFor, type MailingRecipientValues } from "@/lib/mailing-doc";
 import { docFromMarkup, type LetterDoc } from "@/lib/letter-format";
-import { letterText, replyParts } from "@/lib/reply-text";
+import { firstOfType, decodeWords, parseMime, wholeTextOf } from "@/lib/email-parsing/mime";
+import { letterText, replyParts } from "@/lib/email-parsing/reply-text";
 import { query } from "./db";
-import { decodeWords, firstOfType, parseMime, partText } from "./mime";
 import { letterReply } from "./outside-services/blobs";
 
 // The thread of one of PauseAI's letters, for staff, below what its page
@@ -51,70 +51,6 @@ export type LetterThread = {
   messages: ThreadMessage[];
 };
 
-/** The entities mail's HTML names, beyond its numbered ones. */
-const HTML_ENTITIES: Record<string, string> = {
-  amp: "&",
-  apos: "'",
-  bull: "•",
-  euro: "€",
-  gt: ">",
-  hellip: "…",
-  ldquo: "“",
-  lsquo: "‘",
-  lt: "<",
-  mdash: "—",
-  nbsp: "\u00a0",
-  ndash: "–",
-  pound: "£",
-  quot: '"',
-  rdquo: "”",
-  rsquo: "’",
-};
-
-/** Some text with HTML's entities as characters: one it doesn't know stays as it is. */
-function entitiesRead(text: string): string {
-  return text.replace(/&(?:#(\d+)|#x([0-9a-f]+)|([a-z]+));/gi, (entity, decimal, hex, name) => {
-    if (decimal) return String.fromCodePoint(Number(decimal));
-    if (hex) return String.fromCodePoint(parseInt(hex, 16));
-    return HTML_ENTITIES[name] ?? entity;
-  });
-}
-
-/** Some HTML's text: its source's wrapping and its tags gone, a blank line between paragraphs, a line for each other break. */
-function tagsGone(html: string): string {
-  const lines = html
-    .replace(/\s+/g, " ")
-    .replace(/<li\b[^>]*>/gi, "\n- ")
-    .replace(/<\/(p|h\d)>/gi, "\n\n")
-    .replace(/<br\s*\/?>|<\/(div|tr)>/gi, "\n")
-    .replace(/<[^>]+>/g, "");
-  return entitiesRead(lines).replace(/ *\n */g, "\n");
-}
-
-/** An HTML part's text, what's in a blockquote marked with "> " as plain text quotes it. */
-function htmlText(html: string): string {
-  let depth = 0;
-  return html
-    .replace(/<!--[\s\S]*?-->/g, "")
-    .replace(/<(head|style|script)\b[^>]*>[\s\S]*?<\/\1>/gi, "")
-    .split(/(<\/?blockquote\b[^>]*>)/i)
-    .map((part) => {
-      if (/^<blockquote/i.test(part)) {
-        depth++;
-        return "\n";
-      }
-      if (/^<\/blockquote/i.test(part)) {
-        depth--;
-        return "\n";
-      }
-      const text = tagsGone(part);
-      return depth > 0 ? text.replace(/^/gm, "> ") : text;
-    })
-    .join("")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
-
 /**
  * A kept message's text and, apart, the mail it quotes and its footer: from
  * its plain text if it has one, else its HTML's; its text null if it has
@@ -131,14 +67,6 @@ export async function messageContent(
   const whole = firstOfType(message, "text/plain") || firstOfType(message, "text/html") ? wholeTextOf(message) : null;
   const parts = whole === null ? { text: null, quoted: "" } : replyParts(whole);
   return { ...parts, cc: cc ? decodeWords(cc) : null };
-}
-
-/** A message's whole text, the mail it quotes included: its plain text if it has one, else its HTML's; empty if neither. */
-export function wholeTextOf(message: ReturnType<typeof parseMime>): string {
-  const plain = firstOfType(message, "text/plain");
-  if (plain) return partText(plain).replace(/\r\n/g, "\n").trim();
-  const html = firstOfType(message, "text/html");
-  return html ? htmlText(partText(html)) : "";
 }
 
 /** One of a mailing's letters and its thread; undefined if the mailing has no such letter. */

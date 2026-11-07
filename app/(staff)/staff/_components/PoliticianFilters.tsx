@@ -3,6 +3,7 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import type { Ask } from "@/lib/server/asks";
 import { COUNTRIES, EMAIL_STATES, POLITICIAN_FLAGS } from "@/lib/politician-filters";
 import type { PoliticiansSearch } from "@/lib/server/politicians";
+import { WINDOW_OPTIONS } from "@/lib/staff-dashboard";
 import { firstOf, type Params } from "@/lib/staff-search";
 import type { SavedFiltersState } from "@/lib/server/saved-filters";
 import FilterBar, { filteredName, filterWords, type Filter } from "./ui/FilterBar";
@@ -63,6 +64,7 @@ export function politicianFilters(askSlug: string, parties: string[], asks: Ask[
       label: copy.ask,
       options: asks.map((a) => ({ value: a.slug, label: a.title })),
     },
+    { name: "signed", label: copy.signedIn, options: WINDOW_OPTIONS },
     {
       name: "mailed",
       label: copy.mailed,

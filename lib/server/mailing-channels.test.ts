@@ -5,7 +5,7 @@ import { addTestPolitician, connectTestGmail, describeWithDatabase, useTestDatab
 import { query } from "./db";
 import { GMAIL_DAILY_LIMIT } from "./gmail-accounts";
 import { gmailEmail, mailingChannel, postmarkEmail } from "./mailing-channels";
-import { parseMime } from "./mime";
+import { parseMime } from "@/lib/email-parsing/mime";
 
 describe("postmarkEmail", () => {
   const message = {

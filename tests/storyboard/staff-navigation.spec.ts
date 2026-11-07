@@ -124,15 +124,22 @@ test("The dashboard's tabs and numbers", async ({ page, flowDatabase }) => {
     "page",
   );
   await frame(page, "The last 30 days");
-  story("The events held tile leads to the past events.");
-  await page.locator('a[href="/staff/events?when=past"]').click();
-  await expect(page).toHaveURL(`${BASE}/staff/events?when=past`);
-  await frame(page, "Past events");
-  story("The letters tile leads to the letters in the sent emails.");
-  await page.goto(`${BASE}/staff`);
-  await page.locator('a[href="/staff/sent-emails?purpose=letter&link=campaign"]').click();
-  await expect(page).toHaveURL(/\/staff\/sent-emails\?purpose=letter&link=campaign$/);
-  await frame(page, "Letters in the sent emails");
+  story("The events held tile leads to the events held in those 30 days, as many as it says.");
+  await page.locator('a[href="/staff/events?when=past&held=30"]').click();
+  await expect(page).toHaveURL(`${BASE}/staff/events?when=past&held=30`);
+  await frame(page, "Past events, in those 30 days");
+  story("Going back, the dashboard is still on its 30 days.");
+  await page.goBack();
+  await expect(tabs.getByRole("link", { name: staffCopy.home.dashboard.window(30) })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await frame(page, "Back on the 30 days");
+  story("The letters tile leads to all the letters sent in those days, a supporter's or a mailing's.");
+  await page.locator('a[href="/staff/letters/all?sent=30"]').click();
+  await expect(page).toHaveURL(`${BASE}/staff/letters/all?sent=30`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.allLetters.title);
+  await frame(page, "All the letters, in those 30 days");
 });
 
 test("The MPs signed tile", async ({ page, request, flowDatabase }) => {

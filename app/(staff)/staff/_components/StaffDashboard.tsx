@@ -12,6 +12,7 @@ import {
   type DashboardSection,
   type DashboardWindow,
   isCampaignMetric,
+  isLetterKindMetric,
   isSeriesMetric,
   METRIC_LINKS,
   SERIES_POINTS,
@@ -133,12 +134,7 @@ function SourceBars({ dashboard, label }: { dashboard: Dashboard; label: string 
       parts={SUPPORTER_SOURCES.map((key) => ({ key, label: sources[key] }))}
       bars={points.map((point) => ({
         counts: point.sources,
-        label: [
-          copy.seriesPoint(dashboard.days, staffDate(point.from), point.count),
-          ...SUPPORTER_SOURCES.filter((key) => point.sources[key]).map(
-            (key) => `${sources[key]} ${point.sources[key]}`,
-          ),
-        ].join(" · "),
+        title: copy.seriesPoint(dashboard.days, staffDate(point.from), point.count),
       }))}
       from={staffDate(points[0].from)}
       to={staffDate(dashboard.asOf)}
@@ -157,7 +153,7 @@ function Tile({
   permissions: readonly Permission[];
 }) {
   const { permissions: needed, worse } = METRIC_LINKS[metric];
-  const href = metric === "mpsSigned" ? signedHref(dashboard) : METRIC_LINKS[metric].href;
+  const href = metric === "mpsSigned" ? signedHref(dashboard) : METRIC_LINKS[metric].href(dashboard.days);
   const count = dashboard.counts[metric];
   const label = copy.metrics[metric](count.current);
   // A bar only when some campaign counted, a line or bars by source only when some window counted; the tile is a third, not a sixth, only to fit one, and half for the bars by source.
@@ -174,6 +170,11 @@ function Tile({
         )}
       </span>
       <span className={styles.label}>{label}</span>
+      {isLetterKindMetric(metric) && count.current > 0 && (
+        <span className={styles.legend}>
+          {copy.letterKinds(dashboard.byLetterKind[metric].supporter, dashboard.byLetterKind[metric].pauseai)}
+        </span>
+      )}
       {bar && <CampaignBar counts={dashboard.byCampaign[metric as CampaignMetric]} />}
       {line && (
         <Sparkline

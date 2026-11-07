@@ -22,7 +22,7 @@ import {
   parseMime,
   partText,
   type MimePart,
-} from "./mime";
+} from "@/lib/email-parsing/mime";
 import { saveLetterReply } from "./outside-services/blobs";
 import {
   gmailHistory,
@@ -36,7 +36,7 @@ import {
   type GmailMessageHeaders,
 } from "./outside-services/gmail";
 import type { ReplyHandling } from "./letters";
-import { isMachineReply } from "./postmark-webhooks";
+import { isMachineReply } from "@/lib/email-parsing/subjects";
 import { describeError, problem } from "./problems";
 
 // Reading the connected Gmail accounts, every 5 minutes: the replies to PauseAI's

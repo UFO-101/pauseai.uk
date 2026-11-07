@@ -1,6 +1,7 @@
 import "server-only";
+import { headerText } from "@/lib/email-parsing/mime";
 import { gzipSync } from "node:zlib";
-import { addressesIn, realSender } from "@/lib/old-letters";
+import { addressesIn, realSender } from "@/lib/email-parsing/addresses";
 import {
   isPauseaiAddress,
   isRecognisedMail,
@@ -16,8 +17,9 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { now } from "@/lib/now";
 import type { Permission } from "@/lib/staff-permissions";
 import { query, type Queryable } from "./db";
-import { messageContent, wholeTextOf } from "./letter-threads";
-import { decodeWords, fromAddress, messageIds, parseMime } from "./mime";
+import { messageContent } from "./letter-threads";
+import { wholeTextOf } from "@/lib/email-parsing/mime";
+import { decodeWords, fromAddress, messageIds, parseMime } from "@/lib/email-parsing/mime";
 import { notifyStaff, staffLink } from "./notifications";
 import { deleteLetterReply, saveLetterReply } from "./outside-services/blobs";
 import {
@@ -58,11 +60,6 @@ export const ONE_OFF_HEADERS = [
 /** The shared inbox one-off emails are copied to, as the page says: POLICY_INBOX, or else its usual address. */
 export function oneOffInbox(): string {
   return process.env.POLICY_INBOX || "policy@pauseai.uk";
-}
-
-/** A header's text, decoded; blank if the message hasn't one. */
-export function headerText(headers: Map<string, string>, name: string): string {
-  return decodeWords(headers.get(name) ?? "");
 }
 
 /** A message's Message-ID, if it has one. */

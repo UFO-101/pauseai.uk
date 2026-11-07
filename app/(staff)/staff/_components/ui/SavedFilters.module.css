@@ -102,7 +102,9 @@
   background: var(--surface-2);
 }
 
-.rowLink[aria-current] {
+/* Chosen at once, while the filter loads. */
+.rowLink[aria-current],
+.rowLink[data-pending] {
   background: var(--accent-light);
 }
 
@@ -163,30 +165,6 @@
   border-top: 1px solid var(--border);
   color: var(--text-secondary);
   font-size: var(--text-xs);
-}
-
-/* The choices after an edit: a plain line each. */
-.choices {
-  display: grid;
-  min-width: 13rem;
-}
-
-.choice {
-  display: block;
-  width: 100%;
-  padding: var(--space-1) var(--space-2);
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: none;
-  color: var(--text);
-  font: inherit;
-  text-align: left;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.choice:hover {
-  background: var(--surface-2);
 }
 
 /* The name's form. */

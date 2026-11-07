@@ -6,6 +6,8 @@ import type { EmailBlock } from "@/lib/server/email";
 import type { Politician } from "@/lib/server/politicians";
 import EmailBlocksTable from "@/app/(staff)/staff/_components/EmailBlocksTable";
 import FilterBar from "@/app/(staff)/staff/_components/ui/FilterBar";
+import Menu, { menuItemsClass } from "@/app/(staff)/staff/_components/ui/Menu";
+import MenuSubmit from "@/app/(staff)/staff/_components/ui/MenuSubmit";
 import StaffPage from "@/app/(staff)/staff/_components/ui/StaffPage";
 import { savedFiltersProps } from "@/app/(staff)/staff/_components/ui/SavedFilters";
 import {
@@ -935,6 +937,21 @@ export function DeleteTwiceExample() {
           <DeleteTwice name="slug" value="winter-reception-dec-2026" label="Delete ask" action={log("delete")} />
           <DeleteTwice name="slug" value="frontier-ai-letter" label="Delete ask" disabled action={log("delete")} />
         </>
+      )}
+    </Logged>
+  );
+}
+
+/** A menu holding an item that sends a form, logged. */
+export function MenuSubmitExample() {
+  return (
+    <Logged>
+      {(log) => (
+        <Menu id="example-menu-submit" label="Choose">
+          <form action={log("update")} className={menuItemsClass}>
+            <MenuSubmit>Update for everyone</MenuSubmit>
+          </form>
+        </Menu>
       )}
     </Logged>
   );

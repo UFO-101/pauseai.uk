@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { runSql } from "@/scripts/fresh-database.mjs";
-import { addFilter, changeFilter, syncPoliticians } from "../steps";
+import { addFilter, changeFilter, lockTable, syncPoliticians } from "../steps";
 import { BASE, expect, frame, story, test } from "./fixtures";
 import { logIn, staffEmail } from "./staff-steps";
 
@@ -52,7 +52,12 @@ test("Saving a filter", { tag: "@phone" }, async ({ page, request, flowDatabase 
 
   story("Saving loads it, and the chip is named for it, with nothing left to save.");
   await name.fill("Labour MPs");
-  await page.locator("[popover]:popover-open").getByRole("button", { name: copy.save, exact: true }).click();
+  const saving = await lockTable(flowDatabase, "saved_filters");
+  const saveIt = page.locator("[popover]:popover-open").getByRole("button", { name: copy.save, exact: true });
+  await saveIt.click();
+  await expect(saveIt).toHaveAttribute("aria-busy", "true");
+  await frame(page, "Saving, the form still up", { window: true });
+  await saving();
   await expect(page).toHaveURL(/saved=\d+/);
   await expect(page.getByRole("button", { name: "Labour MPs" })).toBeVisible();
   await expect(save(page)).toHaveCount(0);
@@ -97,7 +102,13 @@ test("Loading a saved filter, then editing it", { tag: "@phone" }, async ({ page
   );
   await addFilter(page, staffCopy.politician.country, staffCopy.countries.scotland);
   await save(page).click();
-  await page.getByRole("button", { name: copy.update }).click();
+  const updating = await lockTable(flowDatabase, "saved_filters");
+  const update = page.getByRole("button", { name: copy.update });
+  await update.click();
+  await expect(update).toHaveAttribute("aria-busy", "true");
+  await frame(page, "Updating, the menu still up", { window: true });
+  story("The menu goes when that's done.");
+  await updating();
   await expect(page.getByRole("button", { name: "Labour MPs" })).not.toContainText(copy.edited);
   await expect(save(page)).toHaveCount(0);
   await expect(
@@ -166,7 +177,12 @@ test("Renaming and deleting a saved filter", async ({ page, request, flowDatabas
   await page.getByRole("button", { name: copy.rowMenu("Everyone in the Lords") }).click();
   await page.getByRole("button", { name: copy.deleteForEveryone }).click();
   await frame(page, "Asking again");
-  await page.getByRole("button", { name: staffCopy.deleteIt }).click();
+  const deleting = await lockTable(flowDatabase, "saved_filters");
+  const deleteIt = page.getByRole("button", { name: staffCopy.deleteIt });
+  await deleteIt.click();
+  await expect(deleteIt).toHaveAttribute("aria-busy", "true");
+  await frame(page, "Deleting, the menu still up", { window: true });
+  await deleting();
   await expect(page.getByRole("link", { name: /Everyone in the Lords/ })).toHaveCount(0);
   await expect(page.getByRole("searchbox", { name: copy.find })).toBeHidden();
   await openList(page);

@@ -16,7 +16,7 @@ export const SAVED_LIST_PATHS: Record<SavedList, string> = {
 /** Each list's parameters that choose what it shows, its tab apart on the events list. */
 const CHOOSING_PARAMS: Record<SavedList, readonly string[]> = {
   ...WHO_PARAMS,
-  events: ["q", "owner", "tag", "place", "removed"],
+  events: ["q", "owner", "tag", "place", "removed", "held"],
 };
 
 const SAVED_PARAMS: Record<SavedList, readonly string[]> = {

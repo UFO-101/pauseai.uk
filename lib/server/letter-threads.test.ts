@@ -2,8 +2,9 @@ import { gzipSync } from "node:zlib";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { addTestPolitician, describeWithDatabase, useTestDatabase } from "@/tests/database";
 import { query } from "./db";
-import { parseMime } from "./mime";
-import { letterThread, messageContent, replyFile, repliesAfter, wholeTextOf } from "./letter-threads";
+import { parseMime } from "@/lib/email-parsing/mime";
+import { letterThread, messageContent, replyFile, repliesAfter } from "./letter-threads";
+import { wholeTextOf } from "@/lib/email-parsing/mime";
 import { saveLetterReply } from "./outside-services/blobs";
 
 const LETTER = {

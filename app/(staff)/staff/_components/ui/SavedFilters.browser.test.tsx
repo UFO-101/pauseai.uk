@@ -67,6 +67,27 @@ const says = (name: RegExp, words: string) =>
   expect.poll(() => page.getByRole("link", { name }).element().textContent).toContain(words);
 
 describe("SavedFilters' chip", () => {
+  it("keeps Save's menu up while Update for everyone waits, greyed with a spinner, and pressable once", async () => {
+    const did = actions();
+    let finish = () => {};
+    did.update = vi.fn(() => new Promise<void>((done) => (finish = done)));
+    await bar(
+      { party: "Labour", saved: "7" },
+      { rows: [row(7, "Labour only")], loaded: { ...LOADED, edited: true } },
+      did,
+    );
+    await saveMenu().click();
+    const update = page.getByRole("button", { name: copy.update });
+    await update.click();
+    await expect.element(update).toHaveAttribute("aria-busy", "true");
+    await expect.element(update).toBeDisabled();
+    await expect.element(update).toBeVisible();
+    expect(getComputedStyle(update.element()).opacity).toBe("0.6");
+    expect(did.update).toHaveBeenCalledTimes(1);
+    finish();
+    await expect.element(update).not.toHaveAttribute("aria-busy");
+  });
+
   it("with nothing on, is only the list", async () => {
     await bar({ house: "commons" });
     await expect.element(chip()).toBeVisible();

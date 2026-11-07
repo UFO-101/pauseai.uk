@@ -1,4 +1,5 @@
 import "server-only";
+import { bareAddress } from "@/lib/email-parsing/addresses";
 import { logChange } from "./audit";
 import { query, transaction } from "./db";
 import { gmailAccess } from "./gmail-accounts";
@@ -80,11 +81,6 @@ export type DeliveryProblem = {
 
 /** Who the audit log says blocked an address. */
 const PROVIDER = "postmark";
-
-/** The bare address in a To header, lowercased: `"Jane" <Jane@example.org>` is jane@example.org. */
-export function bareAddress(to: string): string {
-  return (/<([^>]*)>\s*$/.exec(to)?.[1] ?? to).trim().toLowerCase();
-}
 
 /** The addresses Postmark's refusal names as inactive ("Found inactive addresses: a@x.org, b@y.org."), bare. */
 function inactiveAddresses(message: string): string[] {

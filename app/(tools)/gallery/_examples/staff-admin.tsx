@@ -408,7 +408,7 @@ export const staffAdmin: Group = {
                   ]}
                   bars={exampleDashboard.supportersBySource.map((point) => ({
                     counts: point.sources,
-                    label: `From ${point.from.slice(0, 10)}: ${point.count}`,
+                    title: `From ${point.from.slice(0, 10)}: ${point.count}`,
                   }))}
                   from={exampleDashboard.supportersBySource[0].from.slice(0, 10)}
                   to={exampleDashboard.asOf.slice(0, 10)}

@@ -480,7 +480,10 @@ Where they come from:
   fetches, and stops early if Luma answers 429. A run that changed nothing
   doesn't work out every supporter's facts and the supporters list again
   unless no run has in the last hour, as with many supporters they take a
-  few seconds.
+  few seconds. The import is the one thing that changes Luma's calendar, and
+  only on production: an upcoming event with no tags gets the calendar's tags
+  its name, city and region clearly say (`lib/event-tags.ts`), or the
+  notification inbox is asked, once. It makes no new tags.
 - **Our forms.** Each form entry ("Form entries", above). Its source in
   `supporter_identity`, `supporter_activity` and `supporter_contact` is its
   form, so staff see which; a letter is activity of the entry that sent it.

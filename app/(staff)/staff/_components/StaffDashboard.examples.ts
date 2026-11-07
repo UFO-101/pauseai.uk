@@ -43,6 +43,7 @@ export const exampleDashboard: Dashboard = {
     lettersSent: { "regulate-letter-pm": 9, "support-sobel-bill": 3 },
     mpsSigned: { "regulate-letter-pm": 3, "support-sobel-bill": 2 },
   },
+  byLetterKind: { lettersSent: { supporter: 10, pauseai: 2 }, lettersReplied: { supporter: 2, pauseai: 1 } },
   signedMp: null,
   series: {
     eventRegistrations: windows([70, 105, 376, 144, 220, 338, 498, 277]),
@@ -78,6 +79,7 @@ export const exampleQuietDashboard: Dashboard = {
   },
   testLetters: 0,
   byCampaign: { lettersSent: {}, mpsSigned: {} },
+  byLetterKind: { lettersSent: { supporter: 0, pauseai: 0 }, lettersReplied: { supporter: 0, pauseai: 0 } },
   signedMp: null,
   series: {
     eventRegistrations: windows([0, 2, 0, 1, 3, 0, 4, 4], 30),

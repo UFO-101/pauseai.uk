@@ -1,5 +1,15 @@
-import { describe, expect, it } from "vitest";
-import { type Dashboard, dashboardWindow, isCampaignMetric, isSeriesMetric, signedHref } from "./staff-dashboard";
+import { describe, expect, it, vi } from "vitest";
+import {
+  dashboardWindow,
+  isCampaignMetric,
+  isLetterKindMetric,
+  isSeriesMetric,
+  listWindow,
+  METRIC_LINKS,
+  signedHref,
+  windowStart,
+  WINDOW_OPTIONS,
+} from "./staff-dashboard";
 
 describe("dashboardWindow", () => {
   it("is the window the URL asks for, or the default", () => {
@@ -19,11 +29,35 @@ it("knows which metrics have a bar by campaign, and which a sparkline", () => {
 });
 
 describe("signedHref", () => {
-  const counts = (current: number) => ({ mpsSigned: { current, previous: 0 } }) as Dashboard["counts"];
+  it("leads to the one politician who signed, or to the list of those who did in the window", () => {
+    expect(signedHref({ signedMp: 7, days: 7 })).toBe("/staff/politicians/7");
+    expect(signedHref({ signedMp: null, days: 30 })).toBe("/staff/politicians?signed=30&status=any&sort=asks");
+  });
+});
 
-  it("leads to the one politician who signed, or everyone who signed anything, or every politician", () => {
-    expect(signedHref({ signedMp: 7, counts: counts(1) })).toBe("/staff/politicians/7");
-    expect(signedHref({ signedMp: null, counts: counts(4) })).toBe("/staff/politicians?answer=signed&sort=asks");
-    expect(signedHref({ signedMp: null, counts: counts(0) })).toBe("/staff/politicians");
+describe("a list's date filter", () => {
+  it("takes the windows, and nothing else", () => {
+    expect(listWindow("30")).toBe(30);
+    expect(listWindow("31")).toBeUndefined();
+    expect(listWindow("")).toBeUndefined();
+  });
+
+  it("starts that many days before now", () => {
+    vi.stubEnv("FIXTURE_NOW", "2026-10-21T12:00:00.000Z");
+    expect(windowStart(7)).toBe("2026-10-14T12:00:00.000Z");
+    vi.unstubAllEnvs();
+  });
+
+  it("offers each window", () => {
+    expect(WINDOW_OPTIONS.map((option) => option.value)).toEqual(["7", "30", "90"]);
+  });
+
+  it("knows the letters' tiles", () => {
+    expect(isLetterKindMetric("lettersReplied")).toBe(true);
+    expect(isLetterKindMetric("eventsHeld")).toBe(false);
+  });
+
+  it("gives every tile a list for its window", () => {
+    for (const { href } of Object.values(METRIC_LINKS)) expect(href(30)).toContain("30");
   });
 });

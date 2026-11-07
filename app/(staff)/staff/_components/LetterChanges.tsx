@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { changeBlocks, type Change } from "@/lib/letter-changes";
 import ThreadEmail from "./ThreadEmail";
+import ThreadText from "./ThreadText";
 import styles from "./LetterChanges.module.css";
 
 const copy = staffCopy.letterChanges;
@@ -55,7 +56,9 @@ export default function LetterChanges({
   if (draft === null) {
     return (
       <ThreadEmail {...email}>
-        <div className={styles.text}>{sent}</div>
+        <div className={styles.text}>
+          <ThreadText text={sent} />
+        </div>
       </ThreadEmail>
     );
   }
@@ -75,7 +78,9 @@ export default function LetterChanges({
   return (
     <ThreadEmail {...email} action={toggle}>
       {asSent ? (
-        <div className={styles.text}>{sent}</div>
+        <div className={styles.text}>
+          <ThreadText text={sent} />
+        </div>
       ) : (
         <div className={styles.changes}>
           {changeBlocks(draft, sent).map((block, i) =>
@@ -83,7 +88,7 @@ export default function LetterChanges({
               <Changes key={i} changes={block.changes} />
             ) : unfolded.includes(i) ? (
               <div key={i} className={styles.text}>
-                {block.paragraphs.join("\n\n")}
+                <ThreadText text={block.paragraphs.join("\n\n")} />
               </div>
             ) : (
               <button key={i} type="button" className={styles.fold} onClick={() => setUnfolded([...unfolded, i])}>
@@ -125,7 +130,9 @@ export function FoldedAutoReply({
   if (rest.length === 0) {
     return (
       <ThreadEmail {...email}>
-        <div className={styles.text}>{text}</div>
+        <div className={styles.text}>
+          <ThreadText text={text} />
+        </div>
       </ThreadEmail>
     );
   }
@@ -137,10 +144,14 @@ export function FoldedAutoReply({
   return (
     <ThreadEmail {...email} action={toggle}>
       {open ? (
-        <div className={styles.text}>{text}</div>
+        <div className={styles.text}>
+          <ThreadText text={text} />
+        </div>
       ) : (
         <div className={styles.changes}>
-          <div className={styles.text}>{first}</div>
+          <div className={styles.text}>
+            <ThreadText text={first} />
+          </div>
           <button type="button" className={styles.fold} onClick={() => setOpen(true)}>
             {copy.more(rest.length)}
           </button>

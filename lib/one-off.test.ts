@@ -4,7 +4,6 @@ import {
   isRecognisedMail,
   isSomeoneElse,
   keepsPoliticianThreads,
-  mailboxes,
   onParliamentDomain,
   participants,
   politicianAddresses,
@@ -14,6 +13,7 @@ import {
   quotedAddresses,
   type PoliticianBook,
 } from "./one-off";
+import { mailboxes } from "@/lib/email-parsing/addresses";
 
 const book: PoliticianBook = {
   addresses: new Map([

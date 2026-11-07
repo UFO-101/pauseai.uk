@@ -12,7 +12,6 @@ import {
 } from "@/tests/database";
 import { query } from "./db";
 import {
-  bareAddress,
   blockOn,
   type DeliveryProblem,
   isBlocked,
@@ -24,6 +23,7 @@ import {
   sentBy,
   unblock,
 } from "./email";
+import { bareAddress } from "@/lib/email-parsing/addresses";
 
 const POSTMARK = "https://api.postmarkapp.com/email";
 const UNSUPPRESS = "https://api.postmarkapp.com/message-streams/outbound/suppressions/delete";

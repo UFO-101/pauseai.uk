@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { named } from "./named-address";
+import { named } from "./addresses";
 
 it("names someone by name and address, or either alone", () => {
   expect(named("Jo Seed", "jo@pauseai.uk")).toBe("Jo Seed <jo@pauseai.uk>");

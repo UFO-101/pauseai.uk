@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { SearchedEvent } from "@/lib/server/staff-events";
 import { EVENTS_PAGE_SIZE, findEvents, type EventFilter } from "./staff-events-list";
 
@@ -48,6 +48,20 @@ const future = (more: Partial<EventFilter> = {}): EventFilter => ({
 const ids = (filter: EventFilter) => findEvents(events, filter, NOW).events.map((e) => e.id);
 
 describe("findEvents", () => {
+  it("finds those started in the last so many days", () => {
+    vi.stubEnv("FIXTURE_NOW", NOW);
+    const held = [
+      event("this-week", { startAt: "2026-10-30T18:00:00.000Z" }),
+      event("this-month", { startAt: "2026-10-10T18:00:00.000Z" }),
+      event("to-come", { startAt: "2026-11-20T18:00:00.000Z" }),
+    ];
+    const past = { ...future(), tab: "past" as const, sort: { key: "start" as const, dir: "desc" as const } };
+    const found = (heldDays: number) => findEvents(held, { ...past, heldDays }, NOW).events.map((e) => e.id);
+    expect(found(7)).toEqual(["this-week"]);
+    expect(found(30)).toEqual(["this-week", "this-month"]);
+    vi.unstubAllEnvs();
+  });
+
   it("finds those to come on Future, soonest first, a tie by ID; and those past on Past, latest first", () => {
     expect(ids(future())).toEqual(["b", "c", "a"]);
     expect(ids({ tab: "past", removed: false, sort: { key: "start", dir: "desc" }, page: 1 })).toEqual([

@@ -1,4 +1,5 @@
-import { addressesIn, quotedHeaders } from "./old-letters";
+import { addressesIn } from "@/lib/email-parsing/addresses";
+import { quotedHeaders } from "@/lib/email-parsing/quoted";
 
 // One-off emails: threads with a politician that aren't a letter of a
 // campaign or mailing. What counts as one, and who a thread's people are
@@ -65,21 +66,6 @@ export function politicianAnswered(book: PoliticianBook, senders: string[]): boo
 /** Who wrote in a thread, each once, in the order they first wrote, given its senders in order. */
 export function participants(senders: { name: string; address: string }[]): string[] {
   return [...new Set(senders.map(({ name, address }) => name || address))];
-}
-
-/** The people on a header's line, name and address, reading commas inside quotes as part of a name. */
-export function mailboxes(line: string): { name: string; address: string }[] {
-  const parts = line.match(/(?:"[^"]*"|<[^>]*>|[^,])+/g) ?? [];
-  return parts
-    .filter((part) => part.trim())
-    .map((part) => {
-      const address = addressesIn(part)[0] ?? "";
-      const name = part
-        .replace(/<[^>]*>/, "")
-        .trim()
-        .replace(/^"|"$/g, "");
-      return { name: name.toLowerCase() === address ? "" : name, address };
-    });
 }
 
 /** Which politician each address is, leaving out one that several share, as it can't say whose. */

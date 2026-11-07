@@ -4,6 +4,7 @@ import type { SavedFiltersState } from "@/lib/server/saved-filters";
 import { CHANNELS, SENDS, stateValue, waysKey, type Channel, type Topic } from "@/lib/contact-permissions";
 import { campaigns } from "@/lib/content/email-your-mp";
 import type { SupporterChoices, SupportersPage } from "@/lib/server/supporters";
+import { WINDOW_OPTIONS } from "@/lib/staff-dashboard";
 import { staffDate } from "@/lib/staff-time";
 import { NEAR_MILES, SUPPORTER_BADGES } from "@/lib/supporters";
 import ChannelIcon from "./ChannelIcon";
@@ -42,7 +43,8 @@ function nearWords(text: string, near: SupportersPage["near"]): string {
  * from `choices`. A contact filter's
  * choices are each topic, then blocked, a topic chosen as those we can
  * contact about it and another answer in its chip's second half; one by
- * email or phone shows that column.
+ * email or phone shows that column; and when they were first seen, last
+ * registered for an event or unsubscribed, the lists the dashboard's tiles open.
  * Activities, subscriptions, nations, MPs and events can each be chosen
  * more than once.
  */
@@ -133,6 +135,9 @@ function supporterFilters(
       after: "campaign",
       options: Object.entries(copy.wrote).map(([value, label]) => ({ value, label })),
     },
+    { name: "first", label: copy.first, options: WINDOW_OPTIONS },
+    { name: "registered", label: copy.registered, options: WINDOW_OPTIONS },
+    { name: "unsubscribed", label: copy.unsubscribed, options: WINDOW_OPTIONS },
   ];
 }
 

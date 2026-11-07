@@ -2,7 +2,7 @@
 // arriving at the letters inbox (tests/fixtures/letters-inbox.ts).
 import { http } from "msw";
 import { vi } from "vitest";
-import { parseMime, firstOfType, partText, type MimePart } from "@/lib/server/mime";
+import { parseMime, firstOfType, partText, type MimePart } from "@/lib/email-parsing/mime";
 import { server } from "./fixtures/msw";
 import { fixtureResponse } from "./fixtures/outside-services";
 

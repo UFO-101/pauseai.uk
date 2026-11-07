@@ -1,3 +1,5 @@
+import { type QuotedHeaders, quotedHeaders } from "@/lib/email-parsing/quoted";
+import { sameSubject } from "@/lib/email-parsing/subjects";
 import { docFromMarkup, toText } from "./letter-format";
 import { FORM_VERSIONS, type FormVersion } from "./content/pauseai-info-form";
 import type { MailingDoc } from "./mailing-doc";
@@ -281,37 +283,6 @@ export function formDraft(version: FormVersion, names: FormNames): string {
   return toText(docFromMarkup(filled));
 }
 
-/** What a reply's subject says beside the letter's: without Re:, Automatic reply: and the like, or a case's reference. */
-export function plainSubject(subject: string): string {
-  return subject
-    .replace(/\(?case ref:?[^)]*\)?/i, "")
-    .replace(
-      /^((re|fw|fwd|aw|automatic reply|auto(matic)? ?response|automated (reply|response)|out of office|ooo|autoreply|thank you for your email)\s*:\s*)+/gi,
-      "",
-    )
-    .trim()
-    .toLowerCase();
-}
-
-/** Whether a reply's subject is the letter's. */
-export function sameSubject(reply: string, letter: string): boolean {
-  const ours = plainSubject(letter);
-  return ours.length > 0 && plainSubject(reply).includes(ours);
-}
-
-/** A subject that says it's an acknowledgement, beyond those isMachineReply knows, which an office's system writes. */
-export function isAcknowledgement(subject: string): boolean {
-  return (
-    /^(automatic reply|auto(matic)?[ -]?(reply|response)|automated (reply|response)|out of office|ooo\b|autoreply)/i.test(
-      subject,
-    ) ||
-    /^(thank you for (contacting|your email|getting in touch|emailing)|thanks for (contacting|your email)|acknowledg)/i.test(
-      subject,
-    ) ||
-    /automatic reply|automated response|out of office/i.test(subject)
-  );
-}
-
 /** A letter a reply from its politician might answer. */
 export type ReplyCandidate = {
   id: number;
@@ -321,58 +292,8 @@ export type ReplyCandidate = {
   senderName?: string;
 };
 
-/** The headers of a quoted message: who it was from and to, and when it was sent, as written there. */
-export type QuotedHeaders = { from: string; sent: string; to: string; cc: string; subject: string };
-
 const ONE_MINUTE = 60_000;
 const DAY = 24 * 60 * ONE_MINUTE;
-
-/** Each message a text quotes or forwards, by its From, Sent, To and Cc block. */
-export function quotedHeaders(text: string): QuotedHeaders[] {
-  const clean = text.replace(/\r/g, "").replace(/^[> ]+/gm, "");
-  const lines = clean.split("\n");
-  const found: QuotedHeaders[] = [];
-  const field = (line: string, name: string) =>
-    new RegExp(`^\\*?${name}:\\*?\\s*(.*)$`, "i").exec(line.trim())?.[1]?.trim();
-  for (let i = 0; i < lines.length; i++) {
-    const from = field(lines[i], "from");
-    if (from === undefined) continue;
-    const block: QuotedHeaders = { from, sent: "", to: "", cc: "", subject: "" };
-    /** Takes a line's field into the block; false at a line that's no field, which ends the headers. */
-    const takeField = (line: string): boolean => {
-      if (!line.trim()) return true;
-      const sent = field(line, "sent") ?? field(line, "date");
-      const to = field(line, "to");
-      const cc = field(line, "cc");
-      const subject = field(line, "subject");
-      if (sent !== undefined) block.sent = sent;
-      else if (to !== undefined) block.to = to;
-      else if (cc !== undefined) block.cc = cc;
-      else if (subject !== undefined) block.subject = subject;
-      else return false;
-      return true;
-    };
-    lines.slice(i + 1, i + 12).every(takeField);
-    // Thunderbird's forward has its Subject and Date over its From.
-    if (!block.sent)
-      lines
-        .slice(Math.max(0, i - 11), i)
-        .reverse()
-        .every(takeField);
-    if (block.sent) found.push(block);
-  }
-  for (const match of clean.matchAll(
-    /^On (.{5,120}?),? (?:at )?.{0,60}?<?([\w.+'&-]+@[\w.-]+\.\w+)>?\s*wrote:\s*$/gim,
-  )) {
-    found.push({ from: match[2], sent: match[1], to: "", cc: "", subject: "" });
-  }
-  return found;
-}
-
-/** The addresses in some header's text, lowercased. */
-export function addressesIn(line: string): string[] {
-  return (line.toLowerCase().match(/[\w.+'&-]+@[\w.-]+\.\w+/g) ?? []).filter(Boolean);
-}
 
 /** A quoted time as a moment, whichever way its mailer wrote it. */
 function quotedTime(sent: string): number | undefined {
@@ -456,29 +377,4 @@ export function placeOurReply(
   const theirs = letters.filter((l) => l.senderEmail && reply.addresses.includes(l.senderEmail.trim().toLowerCase()));
   const candidates = theirs.length ? theirs : letters.filter((l) => !l.senderEmail);
   return placeReply(candidates, { at: reply.at, subject: reply.subject, text: reply.text, automatic: false })?.id;
-}
-
-/** Who a message is really from: the group rewrote many Froms as "'Some MP' via PauseAI UK", with the real one elsewhere. */
-export function realSender(from: string, originalFrom?: string, replyTo?: string): string {
-  if (originalFrom) return originalFrom;
-  return / via /i.test(from) && replyTo ? firstMailbox(replyTo) : from;
-}
-
-/** The first of the addresses on a header's line, a comma inside a quoted name not ending it. */
-function firstMailbox(line: string): string {
-  return /^(?:"[^"]*"|[^,"])*/.exec(line)![0].trim();
-}
-
-/**
- * Curly quotes and dashes as Joseph's sends have them: whatever sent those mail
- * kept only each character's low byte, which leaves a control character.
- */
-const CUT_DOWN_CHARACTERS = "\x13\x14\x18\x19\x1c\x1d";
-
-/** The characters those were, in the same order. */
-const WHOLE_CHARACTERS = "\u2013\u2014\u2018\u2019\u201c\u201d";
-
-/** A text with its cut-down characters whole again. */
-export function restoreCutDown(text: string): string {
-  return text.replace(/[\x13\x14\x18\x19\x1c\x1d]/g, (c) => WHOLE_CHARACTERS[CUT_DOWN_CHARACTERS.indexOf(c)]);
 }

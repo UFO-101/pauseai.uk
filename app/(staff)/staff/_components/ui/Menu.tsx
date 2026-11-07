@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import styles from "./Menu.module.css";
 
-/** A list of choices that do something, in a menu's box, and one of them, a button or a link. */
+/** A list of choices that do something, in a menu's box, and one of them, a button or a link; one that sends a form is MenuSubmit. */
 export const menuItemsClass = styles.items;
 export const menuItemClass = styles.item;
 /** One that destroys something: red words, and red all over when asking to be pressed again. */

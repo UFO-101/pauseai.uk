@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FORM_VERSIONS } from "./content/pauseai-info-form";
 import {
-  addressesIn,
   augustColleagues,
   augustTemplate,
   deepmindMailing,
@@ -9,7 +8,6 @@ import {
   fitTemplate,
   formDraft,
   formVersionAt,
-  isAcknowledgement,
   isReplySubject,
   joinSent,
   joinWindow,
@@ -18,14 +16,12 @@ import {
   paragraphs,
   placeOurReply,
   placeReply,
-  plainSubject,
-  quotedHeaders,
-  realSender,
-  restoreCutDown,
-  sameSubject,
   templateDoc,
   templateOf,
 } from "./old-letters";
+import { addressesIn, realSender } from "@/lib/email-parsing/addresses";
+import { isAcknowledgement, plainSubject, sameSubject } from "@/lib/email-parsing/subjects";
+import { quotedHeaders, restoreCutDown } from "@/lib/email-parsing/quoted";
 
 const at = (iso: string) => new Date(iso);
 

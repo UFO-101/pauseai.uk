@@ -2,6 +2,7 @@
 // it filters by, leaving out anything blank or unknown. lib/staff-forms.ts
 // reads their forms.
 import { staffCopy } from "@/lib/content/staff-interface";
+import { listWindow, type DashboardWindow } from "./staff-dashboard";
 import { contactState } from "@/lib/contact-permissions";
 import type { BlocksFilter } from "@/lib/server/email";
 import type { SentEmailsFilter } from "@/lib/server/sent-emails";
@@ -311,6 +312,10 @@ export type SupportersSearch = {
   /** A postcode, the first half of one, or a town; and how many miles from it. */
   near: string;
   within: string;
+  /** Those first seen, registered for an event, or unsubscribed from Luma's emails in the last so many days. */
+  first: string;
+  registered: string;
+  unsubscribed: string;
   sort: string;
   dir: string;
   page: string;
@@ -341,8 +346,23 @@ export function eraseLeftovers(why: string): EraseLeftover[] {
 export function supportersSearch(
   params: Partial<Record<keyof SupportersSearch, ParamValue>>,
 ): SupportersSearch & { filter: SupporterFilter } {
-  const [q, campaign, wrote, near, within, sort, dir, page, erased, why, saved] = (
-    ["q", "campaign", "wrote", "near", "within", "sort", "dir", "page", "erased", "why", "saved"] as const
+  const [q, campaign, wrote, near, within, first, registered, unsubscribed, sort, dir, page, erased, why, saved] = (
+    [
+      "q",
+      "campaign",
+      "wrote",
+      "near",
+      "within",
+      "first",
+      "registered",
+      "unsubscribed",
+      "sort",
+      "dir",
+      "page",
+      "erased",
+      "why",
+      "saved",
+    ] as const
   ).map((name) => firstOf(params[name]));
   const [activity, contact, event, nation, mp] = (["activity", "contact", "event", "nation", "mp"] as const).map(
     (name) => valuesOf(params[name]),
@@ -366,6 +386,9 @@ export function supportersSearch(
     country: countries,
     mp: mps,
     near: near.trim() ? { text: near.trim(), miles } : undefined,
+    firstDays: listWindow(first),
+    registeredDays: listWindow(registered),
+    unsubscribedDays: listWindow(unsubscribed),
     not: notOf({ activity: notBadges, contact: notStates, event: notEvents, country: notCountries, mp: notMps }),
     sort: sorting.key,
     dir: sorting.dir,
@@ -382,6 +405,9 @@ export function supportersSearch(
     mp,
     near,
     within,
+    first,
+    registered,
+    unsubscribed,
     sort,
     dir,
     page,
@@ -389,6 +415,53 @@ export function supportersSearch(
     why,
     saved,
     filter,
+  };
+}
+
+/** How many letters the all-letters page shows at once. */
+export const ALL_LETTERS_PAGE_SIZE = 100;
+
+/** The all-letters page's filters, each as typed in its URL. */
+export type AllLettersSearch = {
+  q: string;
+  /** Who it's from: "supporter" or "pauseai". */
+  from: string;
+  /** Those sent in the last so many days. */
+  sent: string;
+  /** "yes" or "no", whether it got a written reply; or a number, one in the last so many days. */
+  replied: string;
+  page: string;
+};
+
+/** Which letters the all-letters page shows, and which page of them. */
+export type AllLettersFilter = {
+  search?: string;
+  from?: "supporter" | "pauseai";
+  sentDays?: DashboardWindow;
+  replied?: "yes" | "no" | DashboardWindow;
+  page: number;
+};
+
+/** The all-letters page's filters, as typed and as applied. */
+export function allLettersSearch(
+  params: Partial<Record<keyof AllLettersSearch, ParamValue>>,
+): AllLettersSearch & { filter: AllLettersFilter } {
+  const [q, from, sent, replied, page] = (["q", "from", "sent", "replied", "page"] as const).map((name) =>
+    firstOf(params[name]),
+  );
+  return {
+    q,
+    from,
+    sent,
+    replied,
+    page,
+    filter: {
+      search: q.trim() || undefined,
+      from: from === "supporter" || from === "pauseai" ? from : undefined,
+      sentDays: listWindow(sent),
+      replied: replied === "yes" || replied === "no" ? replied : listWindow(replied),
+      page: pageNumber(page),
+    },
   };
 }
 
@@ -403,6 +476,8 @@ export type EventsSearch = {
   place: string[];
   /** "yes" for only those taken off Luma; blank leaves them out. */
   removed: string;
+  /** Those held in the last so many days. */
+  held: string;
   sort: string;
   dir: string;
   page: string;
@@ -414,8 +489,8 @@ export type EventsSearch = {
 export function eventsSearch(
   params: Partial<Record<keyof EventsSearch, ParamValue>>,
 ): EventsSearch & { filter: EventFilter } {
-  const [when, q, removed, sort, dir, page, saved] = (
-    ["when", "q", "removed", "sort", "dir", "page", "saved"] as const
+  const [when, q, removed, held, sort, dir, page, saved] = (
+    ["when", "q", "removed", "held", "sort", "dir", "page", "saved"] as const
   ).map((name) => firstOf(params[name]));
   const [owner, tag, place] = (["owner", "tag", "place"] as const).map((name) => valuesOf(params[name]));
   const tab = when === "past" ? "past" : "future";
@@ -429,11 +504,12 @@ export function eventsSearch(
     tag: tags,
     place: places,
     removed: removed === "yes",
+    heldDays: listWindow(held),
     not: notOf({ owner: notOwners, tag: notTags, place: notPlaces }),
     sort: parseSort(EVENT_SORTS[tab], "start", sort, dir),
     page: pageNumber(page),
   };
-  return { when, q, owner, tag, place, removed, sort, dir, page, saved, filter };
+  return { when, q, owner, tag, place, removed, held, sort, dir, page, saved, filter };
 }
 
 /** The accounts page's notice, after a refused change. */
@@ -484,8 +560,22 @@ export type StoredFilter = { list: FilterList; params: Params; picked?: Picked }
 
 /** Each list's parameters that choose who it shows. */
 export const WHO_PARAMS: Record<FilterList, readonly string[]> = {
-  politicians: ["q", "house", "status", "party", "flag", "nation", "email", "ask", "answer", "mailed"],
-  supporters: ["q", "activity", "contact", "event", "campaign", "wrote", "nation", "mp", "near", "within"],
+  politicians: ["q", "house", "status", "party", "flag", "nation", "email", "ask", "answer", "mailed", "signed"],
+  supporters: [
+    "q",
+    "activity",
+    "contact",
+    "event",
+    "campaign",
+    "wrote",
+    "nation",
+    "mp",
+    "near",
+    "within",
+    "first",
+    "registered",
+    "unsubscribed",
+  ],
 };
 
 /** Who a list's URL parameters show, without the sort, the page or anything else, nor blanks. */
