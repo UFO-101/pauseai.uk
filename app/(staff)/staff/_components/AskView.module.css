@@ -1,36 +1,109 @@
-/* An ask's page: its band, where it stands, then how we asked beside its answers, a gap apart. */
+/* An ask's page: its band, its answers, then how we asked, a gap apart. */
 .page {
   display: grid;
   gap: var(--space-4);
 }
 
-/* Each campaign or mailing that put it: when, what, how many letters. */
-.ways {
+/* A column per answer, side by side while there's room, one under another on a phone. */
+.columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.column {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  font-size: var(--text-sm);
+}
+
+/* The answer and how many, in the column's colour. */
+.columnHead {
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.columnHead > * {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  color: inherit;
+  text-decoration: none;
+}
+
+.columnHead a:hover {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.columnHead strong {
+  font-size: 1.75rem;
+  line-height: 1.2;
+}
+
+.column[data-tone="green"] .columnHead {
+  background: var(--status-green-bg);
+  color: var(--status-green);
+}
+
+.column[data-tone="amber"] .columnHead {
+  background: var(--status-amber-bg);
+  color: var(--status-amber);
+}
+
+.column[data-tone="red"] .columnHead {
+  background: var(--status-red-bg);
+  color: var(--status-red);
+}
+
+.people {
   margin: 0;
   padding: 0;
-  font-size: var(--text-sm);
   list-style: none;
 }
 
-.ways li {
+/* Who, with their party under them and any answer of their own at the right. */
+.people li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--border);
+  line-height: 1.35;
+}
+
+.person {
   display: grid;
-  grid-template-columns: 7.5rem minmax(0, 1fr) auto;
-  gap: var(--space-1) var(--space-3);
-  align-items: baseline;
-  padding: var(--space-2) 0;
-  border-bottom: 1px solid var(--border-strong);
+  justify-items: start;
+  min-width: 0;
 }
 
-.ways li:last-child {
-  border-bottom: 0;
+.columnFoot {
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--border);
+  font-size: var(--text-xs);
 }
 
-@media (max-width: 760px) {
-  .ways li {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
+/* Its kind's picture beside who asked them to do what. */
+.asked {
+  display: inline-flex;
+  gap: var(--space-1);
+  align-items: center;
+}
 
-  .ways li > :first-child {
-    grid-column: 1 / -1;
+/* A phone: the counts under the title, with the room to keep each label on a line. */
+@media (max-width: 30rem) {
+  .howCounts {
+    width: 17rem;
+    max-width: 100%;
   }
 }

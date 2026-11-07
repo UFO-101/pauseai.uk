@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { buttonClass } from "@/components/ui/Button";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { now } from "@/lib/now";
 import { asksWithCounts } from "@/lib/server/asks";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { askFormSearch, firstOf, type ParamValue } from "@/lib/staff-search";
-import AsksTable from "../../_components/AsksTable";
+import AsksList from "../../_components/AsksList";
 import PageTitle from "../../_components/ui/PageTitle";
 import StaffLink from "../../_components/ui/StaffLink";
 
@@ -27,7 +28,7 @@ export default async function AsksPage({ searchParams }: { searchParams: Promise
       >
         {staffCopy.asks.title}
       </PageTitle>
-      <AsksTable asks={asks} notice={notice} picked={firstOf(params.ask)} />
+      <AsksList asks={asks} now={now()} notice={notice} picked={firstOf(params.ask)} />
     </>
   );
 }

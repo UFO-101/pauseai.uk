@@ -44,30 +44,35 @@ test("No answer yet", async ({ page, flowDatabase }) => {
   await expect(page.getByRole("heading", { name: staffCopy.asks.page.howWeAsked })).toBeVisible();
   await expect(page.getByRole("link", { name: campaigns[0].title, exact: true })).toBeVisible();
 
-  story("No answer lists everyone written to who hasn't answered, longest wait first.");
+  story(
+    "No answer's column is the whole of who's been written to and hasn't answered. Pressed, it lists them, longest wait first.",
+  );
+  await frame(page, "The ask's answers");
   const unanswered = page.getByRole("link", { name: new RegExp(`^${staffCopy.statuses.noAnswer} \\d`) });
   await unanswered.click();
+  await expect(page).toHaveURL(/answer=none/);
   await expect(unanswered).toHaveAttribute("aria-current", "true");
   await frame(page, "Those with no answer");
 });
 
 test("Asks", async ({ page, request, flowDatabase }) => {
-  story("The asks page lists each ask, how we asked and its answers.");
+  story("The asks page lists each ask as the mailings page does: who asked, what they answered, and how it stands.");
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase, ["supporters"]);
   await importEmails(page);
   await page.goto(`${BASE}/staff/asks`);
   await frame(page, "The asks");
 
-  story("An ask's page says what they were asked, how we asked, and what they answered.");
+  story("An ask's page says what they were asked, then what they answered, a column each, then how we asked.");
   await page.getByRole("link", { name: "Edinburgh conference" }).first().click();
   await expect(page.getByText(staffCopy.politician.askedThem("PauseAI", "event"))).toBeVisible();
   await expect(page.getByRole("heading", { name: staffCopy.asks.page.howWeAsked })).toBeVisible();
   await frame(page, "An event's page");
 
-  story("Each answer's pill shows those who gave it.");
+  story("Pressing an answer's column lists those who gave it, with when they were last written to.");
   const going = page.getByRole("link", { name: new RegExp(`^${staffCopy.statuses.going} \\d`) });
   await going.click();
+  await expect(page).toHaveURL(/answer=going/);
   await expect(going).toHaveAttribute("aria-current", "true");
   await frame(page, "Those going");
 
@@ -85,7 +90,9 @@ test("Asks", async ({ page, request, flowDatabase }) => {
 });
 
 test("An ask's pages", async ({ page, flowDatabase }) => {
-  story("A hundred and fifty politicians have signed. The answers come a hundred to a page.");
+  story(
+    "A hundred and fifty politicians have signed. Their column shows the first few, and leads to them all, a hundred to a page.",
+  );
   runSql(
     flowDatabase,
     `INSERT INTO asks (slug, title, kind, asked_by) VALUES ('our-letter', 'Our letter', 'letter', '{pauseai}');
@@ -98,6 +105,8 @@ test("An ask's pages", async ({ page, flowDatabase }) => {
   );
   await logIn(page, flowDatabase, ["supporters"]);
   await page.goto(`${BASE}/staff/asks/our-letter`);
+  await frame(page, "The column of those who signed");
+  await page.getByRole("link", { name: staffCopy.asks.page.allOf(150) }).click();
   await expect(page.getByText(staffCopy.campaigns.politicians(150))).toBeVisible();
   await frame(page, "The first page");
 
@@ -140,11 +149,12 @@ test("A new ask", async ({ page, flowDatabase }) => {
   await frame(page, "The new ask, filled in");
   await page.getByRole("button", { name: asks.save }).click();
   await expect(page.getByText(asks.notices.added)).toBeVisible();
-  await expect(page.getByRole("row").filter({ hasText: "Winter reception" })).toBeVisible();
+  await expect(page.getByRole("listitem").filter({ hasText: "Winter reception" })).toBeVisible();
   await frame(page, "The ask, added");
 
   story("They edit it to add the event's web address. Its title links there.");
-  await page.getByRole("row").filter({ hasText: "Winter reception" }).getByRole("link", { name: asks.edit }).click();
+  await page.getByRole("link", { name: "Winter reception" }).click();
+  await page.getByRole("link", { name: asks.edit }).click();
   await expect(page.getByText("winter-reception-dec-2026", { exact: true })).toBeVisible();
   await page.getByLabel(asks.byKind.event.url).fill("https://luma.com/winter");
   await page.getByRole("button", { name: asks.save }).click();
@@ -157,12 +167,13 @@ test("A new ask", async ({ page, flowDatabase }) => {
   );
   await frame(page, "The ask, changed");
   story("Then they delete it. Delete asks to be pressed a second time.");
-  await page.getByRole("row").filter({ hasText: "Winter reception" }).getByRole("link", { name: asks.edit }).click();
+  await page.getByRole("link", { name: "Winter reception" }).click();
+  await page.getByRole("link", { name: asks.edit }).click();
   await page.getByRole("button", { name: asks.delete }).click();
   await expect(page.getByRole("button", { name: staffCopy.deleteIt })).toBeFocused();
   await frame(page, "Delete, pressed once", { window: true });
   await page.getByRole("button", { name: staffCopy.deleteIt }).click();
   await expect(page.getByText(asks.notices.deleted)).toBeVisible();
-  await expect(page.getByRole("row").filter({ hasText: "Winter reception" })).toHaveCount(0);
+  await expect(page.getByRole("listitem").filter({ hasText: "Winter reception" })).toHaveCount(0);
   await frame(page, "The ask, deleted");
 });

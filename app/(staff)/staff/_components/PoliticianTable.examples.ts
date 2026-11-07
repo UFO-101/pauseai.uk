@@ -1,6 +1,6 @@
 import type { Choosing } from "@/lib/server/mailing-drafts";
 import type { PastedLine } from "./PoliticiansList";
-import type { Ask, AskWithCounts } from "@/lib/server/asks";
+import type { Ask, AskWay, AskWithCounts } from "@/lib/server/asks";
 import type { Politician, PoliticianChange, PoliticiansPage, PoliticiansSearch } from "@/lib/server/politicians";
 
 /** The asks, as the migrations add them, newest first: two events and two letters, one with no date or link, linked to our pages and others'. */
@@ -47,18 +47,73 @@ export const exampleAsks: Ask[] = [
   },
 ];
 
+const campaignWay: AskWay = {
+  kind: "campaign",
+  href: "/staff/campaigns/open-letter",
+  title: "Sign the open letter",
+  letters: 12,
+};
+const mailingWay: AskWay = {
+  kind: "mailing",
+  href: "/staff/mailings/3",
+  title: "First mailing about the letter",
+  letters: 40,
+};
+
 /** The asks with how many gave each answer: a letter signed and declined, an event answered every way it allows, and one nobody has answered. */
 export const exampleAsksWithCounts: AskWithCounts[] = [
-  { ...exampleAsks[0], counts: { declined: 50, passed_on: 1, going: 3 }, writtenTo: 186, campaigns: 0, mailings: 1 },
+  {
+    ...exampleAsks[0],
+    counts: { declined: 50, passed_on: 1, going: 3 },
+    firstLetter: null,
+    lastLetter: null,
+    writtenTo: 186,
+    replied: 20,
+    noAnswer: 132,
+    campaigns: 0,
+    mailings: 1,
+    ways: [mailingWay],
+  },
   {
     ...exampleAsks[1],
     counts: { going: 2, tentative: 1, meeting_staff: 1, declined_surgery: 1 },
+    firstLetter: null,
+    lastLetter: null,
     writtenTo: 0,
+    replied: 0,
+    noAnswer: 0,
     campaigns: 0,
     mailings: 0,
+    ways: [],
   },
-  { ...exampleAsks[2], counts: {}, writtenTo: 4, campaigns: 1, mailings: 0 },
-  { ...exampleAsks[3], counts: { signed: 10, declined: 2 }, writtenTo: 40, campaigns: 1, mailings: 2 },
+  {
+    ...exampleAsks[2],
+    counts: {},
+    firstLetter: null,
+    lastLetter: null,
+    writtenTo: 4,
+    replied: 0,
+    noAnswer: 4,
+    campaigns: 1,
+    mailings: 0,
+    ways: [campaignWay],
+  },
+  {
+    ...exampleAsks[3],
+    counts: { signed: 10, declined: 2 },
+    firstLetter: "2026-06-18",
+    lastLetter: "2026-11-04",
+    writtenTo: 40,
+    replied: 0,
+    noAnswer: 28,
+    campaigns: 1,
+    mailings: 2,
+    ways: [
+      campaignWay,
+      mailingWay,
+      { ...mailingWay, href: "/staff/mailings/4", title: "Second mailing about the letter" },
+    ],
+  },
 ];
 
 /** An MP in office who has signed the letter to the PM, and declined the conference, from Airtable. */

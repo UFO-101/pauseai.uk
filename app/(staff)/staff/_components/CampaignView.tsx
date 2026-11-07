@@ -15,6 +15,7 @@ import Grid, { Card } from "./ui/Grid";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
 import Progress from "./ui/Progress";
 import StaffLink from "./ui/StaffLink";
+import AnswerWord from "./AnswerWord";
 import styles from "./MailingView.module.css";
 import TestTag from "./TestTag";
 import ExternalLink from "./ui/ExternalLink";
@@ -45,7 +46,11 @@ const campaignLetterColumns: ListColumn<LetterSummary>[] = [
           <TestTag isTest={l.isTest} />
         </span>
         <Muted>{[l.constituency, l.party].filter(Boolean).join(" · ")}</Muted>
-        {l.answer && <span className={styles.answer}>✓ {staffCopy.statuses[l.answer]}</span>}
+        {l.answer && (
+          <span className={styles.answer}>
+            <AnswerWord status={l.answer} />
+          </span>
+        )}
       </span>
     ),
   },

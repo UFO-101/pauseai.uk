@@ -79,7 +79,10 @@ export const exampleChanged = 6;
 export const exampleAskPage: AskPageData = {
   ...exampleAsks[3],
   counts: { signed: 2, declined: 1 },
+  firstLetter: "2026-06-18",
+  lastLetter: "2026-11-04",
   writtenTo: 40,
+  replied: 5,
   campaigns: 1,
   mailings: 1,
   fixed: false,
@@ -93,17 +96,60 @@ export const exampleAskPage: AskPageData = {
       kind: "campaign",
       href: "/staff/campaigns/pauseai-info-deepmind",
       title: "Call DeepMind to honour AI Safety Summit pledges",
-      from: "2025-07-23T09:00:00Z",
-      to: "2025-09-30T09:00:00Z",
       letters: 19,
     },
     {
       kind: "mailing",
       href: "/staff/mailings/3",
       title: "DeepMind: ten of your colleagues",
-      from: "2025-06-20T09:00:00Z",
-      to: "2025-06-20T10:00:00Z",
       letters: 21,
+    },
+  ],
+  groups: [
+    {
+      key: "signed",
+      total: 2,
+      people: [
+        {
+          politicianId: 1,
+          name: "Polly Placeholder",
+          isTest: false,
+          constituency: "Seat One",
+          party: "Example Party",
+          status: "signed",
+          lastWrittenTo: "2026-10-01T09:00:00Z",
+        },
+      ],
+    },
+    {
+      key: "declined",
+      total: 1,
+      people: [
+        {
+          politicianId: 2,
+          name: "Dee Dummy",
+          isTest: false,
+          constituency: null,
+          party: null,
+          status: "declined",
+          lastWrittenTo: null,
+        },
+      ],
+    },
+    {
+      key: "none",
+      total: 37,
+      people: [
+        {
+          politicianId: 3,
+          name: "Nia Nobody",
+          isTest: false,
+          constituency: null,
+          party: "Example Party",
+          status: null,
+          lastWrittenTo: null,
+        },
+      ],
     },
   ],
   answers: [

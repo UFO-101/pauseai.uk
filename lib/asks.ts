@@ -25,6 +25,23 @@ export type AskStatuses = Partial<Record<string, AskStatus>>;
  */
 export const AGREED_STATUSES: readonly AskStatus[] = ["signed", "going"];
 
+/**
+ * How an ask's page sets out its answers: a column each, the rarer answers an
+ * event can have sharing one, with each person tagged with theirs. A column's
+ * `key` is also how the page's address chooses it (`?answer=declined`).
+ */
+export const ANSWER_GROUPS: Record<AskKind, readonly { key: string; statuses: readonly AskStatus[] }[]> = {
+  letter: [
+    { key: "signed", statuses: ["signed"] },
+    { key: "declined", statuses: ["declined"] },
+  ],
+  event: [
+    { key: "going", statuses: ["going"] },
+    { key: "other", statuses: ["tentative", "meeting_staff", "tentative_staff", "passed_on"] },
+    { key: "declined", statuses: ["declined", "declined_surgery"] },
+  ],
+};
+
 /** How many asks someone agreed to, by their answers (AGREED_STATUSES). */
 export function asksAgreed(statuses: Record<string, { status: AskStatus }>): number {
   return Object.values(statuses).filter((answer) => AGREED_STATUSES.includes(answer.status)).length;

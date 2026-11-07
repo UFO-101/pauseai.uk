@@ -1,0 +1,158 @@
+/* How the last save or delete went, a step up from the list. */
+.notice {
+  margin-bottom: var(--space-4);
+}
+
+/* A group of asks, a heading over its rows. */
+.group + .group {
+  margin-top: var(--space-6);
+}
+
+.group h2 {
+  margin-bottom: var(--space-1);
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A row, as the list of mailings has them: the ask, how it was asked and how it
+   stands. They go by the room the list has, not the window's, as the sidebar
+   takes some of that. With less, how it was asked goes under the ask and
+   how it stands; with little, everything is one column. */
+.ask {
+  display: grid;
+  grid-template-areas:
+    "what standing"
+    "ways ways";
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2) var(--space-4);
+  align-items: start;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.how {
+  grid-area: ways;
+}
+
+/* With room, all the rows share columns: the ask as wide as the widest needs, up
+   to half, how it was asked taking what's left. */
+@container (min-width: 60rem) {
+  .list {
+    display: grid;
+    grid-template-columns: fit-content(50%) minmax(0, 1fr) auto;
+    column-gap: var(--space-5);
+  }
+
+  .ask {
+    grid-column: 1 / -1;
+    grid-template-areas: "what ways standing";
+    grid-template-columns: subgrid;
+  }
+}
+
+@container (max-width: 40rem) {
+  .ask {
+    grid-template-areas:
+      "what"
+      "ways"
+      "standing";
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The one a link picked out, a little below the window's top, with a bar of
+   the accent at its left, in a deep tint of it. As the page appears it swells
+   into that tint from plain, glowing a little past it before it settles, so
+   the eye is drawn to it. A change of colour, not a movement, so it stays
+   with motion turned off. */
+.ask[aria-current] {
+  margin-inline: calc(-1 * var(--space-3));
+  padding-inline: var(--space-3);
+  scroll-margin-top: var(--space-8);
+  box-shadow:
+    inset 4px 0 var(--accent),
+    inset 0 0 0 100vmax rgb(var(--pause-orange-rgb) / 0.4);
+  animation: picked 1.4s 0.15s ease-in-out backwards;
+}
+
+@keyframes picked {
+  0% {
+    box-shadow:
+      inset 4px 0 var(--accent),
+      inset 0 0 0 100vmax rgb(var(--pause-orange-rgb) / 0);
+  }
+
+  40% {
+    box-shadow:
+      inset 4px 0 var(--accent),
+      inset 0 0 0 100vmax rgb(var(--pause-orange-rgb) / 0.6);
+  }
+}
+
+/* What's asked, and under it how and what they answered. */
+.what {
+  grid-area: what;
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  font-size: var(--text-sm);
+}
+
+/* Its kind's picture beside who asked them to do what. */
+.asked {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.answers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  margin-top: var(--space-1);
+}
+
+/* Nothing to show yet: as small as the lozenges would be. */
+.nothing {
+  font-size: var(--tag-font-size);
+}
+
+/* The same size as the tags beside it, only outlined: nothing was answered. */
+.answers .noAnswer {
+  padding: var(--tag-padding);
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  color: var(--text-secondary);
+  font-size: var(--tag-font-size);
+  line-height: 1.5;
+}
+
+/* How it stands, at the row's right edge, so the boxes line up there. */
+.standing {
+  grid-area: standing;
+  display: flex;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+/* How it stands where it falls, not at the right. */
+@container (max-width: 40rem) {
+  .standing {
+    justify-content: flex-start;
+  }
+}

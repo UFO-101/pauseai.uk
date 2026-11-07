@@ -1,0 +1,68 @@
+/* The kinds side by side if there are both and room for them, else one under the other. */
+.ways {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  font-size: var(--text-xs);
+  line-height: 1.3;
+}
+
+.ways > div {
+  flex: 1 1 13rem;
+  min-width: 0;
+}
+
+.ways ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A long list flows into a second column, if it has the room. */
+.ways ul:has(> li:nth-child(4)) {
+  columns: 13rem;
+  column-gap: var(--space-4);
+}
+
+.ways li {
+  padding-bottom: var(--space-1);
+  break-inside: avoid;
+}
+
+.heading {
+  margin: 0 0 var(--space-1);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* Half the width each, even when there's only one, and on a phone one under the other. */
+.wide {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4) var(--space-6);
+  font-size: var(--text-sm);
+}
+
+/* Each on a ruled line, its letters at the end. */
+.wide ul:has(> li:nth-child(4)) {
+  columns: auto;
+}
+
+.wide li {
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+  justify-content: space-between;
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--border);
+}
+
+.wide li > :last-child {
+  flex: none;
+}
+
+@media (max-width: 760px) {
+  .wide {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

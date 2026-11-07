@@ -1,4 +1,5 @@
 import "server-only";
+import type { AskStatus } from "@/lib/asks";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { mailingGroups, type MailingGroup } from "@/lib/mailing-groups";
 import { now } from "@/lib/now";
@@ -70,7 +71,7 @@ export type MailingRecipient = {
   replies: number;
   personalised: boolean;
   /** Their answer to the mailing's ask, if any. */
-  answer: string | null;
+  answer: AskStatus | null;
   /** Why it wasn't sent, if it was skipped. */
   skipReason: SkipReason | null;
 };

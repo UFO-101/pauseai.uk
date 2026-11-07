@@ -25,6 +25,7 @@ import Progress from "./ui/Progress";
 import Strip from "./ui/Strip";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
 import Bubble from "./ui/Bubble";
+import AnswerWord from "./AnswerWord";
 import styles from "./MailingView.module.css";
 import TestTag from "./TestTag";
 
@@ -86,7 +87,11 @@ function recipientColumns(mailing: Mailing): ListColumn<MailingRecipient>[] {
               .filter(Boolean)
               .join(" · ")}
           </Muted>
-          {mailing.ask && r.answer && <span className={styles.answer}>✓ {staffCopy.statuses[r.answer]}</span>}
+          {mailing.ask && r.answer && (
+            <span className={styles.answer}>
+              <AnswerWord status={r.answer} />
+            </span>
+          )}
         </span>
       ),
     },

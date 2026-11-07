@@ -5,12 +5,13 @@ import { buttonClass } from "@/components/ui/Button";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { Segmented, TextInput } from "@/components/ui/Controls";
 import { FilterForm } from "@/components/ui/Form";
-import { AGREED_STATUSES, ASK_STATUSES } from "@/lib/asks";
+import { ASK_STATUSES } from "@/lib/asks";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { answeredByHand } from "@/lib/email-your-mp";
 import type { Ask } from "@/lib/server/asks";
 import type { Politician } from "@/lib/server/politicians";
 import { staffDate } from "@/lib/staff-time";
+import AnswerWord from "./AnswerWord";
 import { AskLead } from "./AskLine";
 import { BubbleBox } from "./ui/Bubble";
 import { bubbleTrigger } from "./ui/bubble-trigger";
@@ -62,7 +63,6 @@ export function AskRows({ children }: { children: ReactNode }) {
 }
 
 /** Answers that are a no, crossed; a yes (AGREED_STATUSES) is ticked in green. */
-const NO = ["declined", "declined_surgery"];
 
 /**
  * One ask, a row of the asks card: who asked them to do what, and when,
@@ -89,8 +89,6 @@ export default function AskRow({
   const status = politician.statuses[ask.slug];
   const byHand = answeredByHand(ask.slug);
   const editId = `edit-${ask.slug}`;
-  const tone =
-    status && (AGREED_STATUSES.includes(status.status) ? styles.yes : NO.includes(status.status) ? styles.no : "");
   const popover = useRef<HTMLDivElement>(null);
   const row = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -126,8 +124,8 @@ export default function AskRow({
           </span>
         )}
       </div>
-      <div className={`${styles.answer} ${tone || ""}`}>
-        <span>{status ? staffCopy.statuses[status.status] : staffCopy.statuses.noAnswer}</span>
+      <div className={styles.answer}>
+        <AnswerWord status={status?.status ?? null} />
         {status?.date && <span className={styles.askMeta}>{staffDate(status.date)}</span>}
         {byHand && (
           <button type="button" className={styles.edit} {...bubbleTrigger(editId)}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useOptimistic, useState, type ReactNode } from "react";
+import { useOptimistic, useState } from "react";
 import Actions from "@/components/ui/Actions";
 import { Button } from "@/components/ui/Button";
 import { Checkbox, Segmented, TextInput } from "@/components/ui/Controls";
@@ -11,6 +11,7 @@ import { ASK_STATUSES, ASKERS, askSlug, type AskKind, type Asker } from "@/lib/a
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { Ask } from "@/lib/server/asks";
 import { AskPreview } from "./AskLine";
+import AskKindIcon from "./AskKindIcon";
 import { DeleteTwice } from "./DeleteTwice";
 import Grid, { Card } from "./ui/Grid";
 import Strip from "./ui/Strip";
@@ -18,38 +19,6 @@ import styles from "./AskForm.module.css";
 import forms from "./StaffForms.module.css";
 
 const copy = staffCopy.asks;
-
-/** Each kind's picture, in strokes of the text's colour: a pen on a page, a calendar. */
-const KIND_ICONS: Record<AskKind, ReactNode> = {
-  letter: (
-    <svg
-      width="28"
-      height="28"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      aria-hidden="true"
-    >
-      <path d="M13 4H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6" />
-      <path d="M17.5 3.5l3 3L13 14l-3.5.5.5-3.5z" />
-    </svg>
-  ),
-  event: (
-    <svg
-      width="28"
-      height="28"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      aria-hidden="true"
-    >
-      <rect x="4" y="5" width="16" height="15" rx="1" />
-      <path d="M4 10h16M8 3v4M16 3v4" />
-    </svg>
-  ),
-};
 
 /** An ask to edit, with whether the code names it, its kind can change, and it can be deleted. */
 export type EditableAsk = Ask & { fixed: boolean; kindFixed: boolean; deletable: boolean };
@@ -116,7 +85,7 @@ export default function AskForm({
                   options={Object.keys(ASK_STATUSES).map((one) => ({
                     value: one as AskKind,
                     label: copy.kinds[one],
-                    icon: KIND_ICONS[one as AskKind],
+                    icon: <AskKindIcon kind={one as AskKind} />,
                   }))}
                   value={kind}
                   onChange={setKind}

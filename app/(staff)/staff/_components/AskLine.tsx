@@ -3,7 +3,19 @@ import { askHref } from "@/lib/asks";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { Ask } from "@/lib/server/asks";
 import { staffDate } from "@/lib/staff-time";
+import AnswerWord from "./AnswerWord";
 import styles from "./Details.module.css";
+
+/** Who asked and what, as a politician's page says it. */
+export function askedLine(ask: Pick<Ask, "askedBy" | "kind">): string {
+  const who = new Intl.ListFormat("en-GB").format(ask.askedBy.map((asker) => staffCopy.asks.askedBy[asker]));
+  return staffCopy.politician.askedThem(who, ask.kind);
+}
+
+/** Who asked and what, and when, if we know. */
+function askedAndWhen(ask: Pick<Ask, "askedBy" | "kind" | "date">): string {
+  return [askedLine(ask), ask.date && staffDate(ask.date)].filter(Boolean).join(" · ");
+}
 
 /** The ask's title, leading to its page. */
 export function AskTitle({ ask }: { ask: Pick<Ask, "slug" | "title"> }) {
@@ -15,13 +27,9 @@ export function AskTitle({ ask }: { ask: Pick<Ask, "slug" | "title"> }) {
  * and when, then its title, leading to its page but for a preview, whose ask may not exist yet.
  */
 export function AskLead({ ask, linked = true }: { ask: Ask; linked?: boolean }) {
-  const who = new Intl.ListFormat("en-GB").format(ask.askedBy.map((asker) => staffCopy.asks.askedBy[asker]));
-  const asked = [staffCopy.politician.askedThem(who, ask.kind), ask.date && staffDate(ask.date)]
-    .filter(Boolean)
-    .join(" · ");
   return (
     <>
-      <span className={styles.askMeta}>{asked}</span>
+      <span className={styles.askMeta}>{askedAndWhen(ask)}</span>
       {linked ? <AskTitle ask={ask} /> : <span>{ask.title}</span>}
     </>
   );
@@ -39,8 +47,8 @@ export function AskPreview({ ask }: { ask: Ask }) {
         <div className={styles.asked}>
           <AskLead ask={ask} linked={false} />
         </div>
-        <div className={`${styles.answer} ${styles.yes}`}>
-          <span>{staffCopy.statuses[ask.kind === "letter" ? "signed" : "going"]}</span>
+        <div className={styles.answer}>
+          <AnswerWord status={ask.kind === "letter" ? "signed" : "going"} />
           {ask.date && <span className={styles.askMeta}>{staffDate(ask.date)}</span>}
         </div>
       </div>

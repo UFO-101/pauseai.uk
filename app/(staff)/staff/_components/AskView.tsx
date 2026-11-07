@@ -1,19 +1,21 @@
 import { buttonClass } from "@/components/ui/Button";
 import { Muted } from "@/components/ui/Text";
-import Tag, { type TagTone } from "@/components/ui/Tag";
-import { AGREED_STATUSES, ASK_STATUSES } from "@/lib/asks";
+import Tag from "@/components/ui/Tag";
+import { askPeriod } from "@/lib/ask-groups";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { filtersPath, pageParam } from "@/lib/staff-search";
-import type { AskAnswer, AskPageData, AskWay } from "@/lib/server/asks";
+import type { AskAnswer, AskAnswerGroup, AskPageData } from "@/lib/server/asks";
 import { staffDate } from "@/lib/staff-time";
-import { answeredOf } from "./AsksTable";
+import { answeredOf, ANSWER_TONES, askCounts } from "./AsksList";
 import Band, { BandFact } from "./ui/Band";
 import Counts from "./ui/Counts";
 import Grid, { Card } from "./ui/Grid";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
-import Progress from "./ui/Progress";
 import StaffLink from "./ui/StaffLink";
 import SegmentLinks from "./ui/SegmentLinks";
+import { askedLine } from "./AskLine";
+import AskKindIcon from "./AskKindIcon";
+import AskWays from "./AskWays";
 import styles from "./AskView.module.css";
 import TestTag from "./TestTag";
 import ExternalLink from "./ui/ExternalLink";
@@ -21,27 +23,14 @@ import ExternalLink from "./ui/ExternalLink";
 const copy = staffCopy.asks;
 const page = copy.page;
 
-/** Who asked and what, in the words a politician's page uses. */
-function askedLine(ask: AskPageData): string {
-  const who = new Intl.ListFormat("en-GB").format(ask.askedBy.map((asker) => copy.askedBy[asker]));
-  return staffCopy.politician.askedThem(who, ask.kind);
+/** What a column of answers is called. */
+function groupName(key: string): string {
+  if (key === "other") return page.otherAnswers;
+  return staffCopy.statuses[key === "none" ? "noAnswer" : key];
 }
 
-/** A way's dates: its first and last days, or one day. */
-function dates(way: AskWay): string {
-  if (!way.from || !way.to) return "";
-  const from = staffDate(way.from);
-  const to = staffDate(way.to);
-  return from === to ? from : `${from} – ${to}`;
-}
-
-/** Answers that are a yes, in green; a no, in red. */
-const ANSWER_TONES: Record<string, TagTone | undefined> = {
-  signed: "green",
-  going: "green",
-  declined: "red",
-  declined_surgery: "red",
-};
+/** The colour over each column: that of its answer, and amber for the rarer ones together. */
+const GROUP_TONES: Record<string, string | undefined> = { ...ANSWER_TONES, other: "amber" };
 
 const answerColumns: ListColumn<AskAnswer>[] = [
   {
@@ -77,18 +66,102 @@ const answerColumns: ListColumn<AskAnswer>[] = [
 ];
 
 /**
- * An ask's page, in a mailing's shape: over its title what they were asked
- * to do, its date and where to read it, with its counts; how many answered;
- * then every campaign and mailing that put it, by date, beside its answers.
+ * One answer's column: how many gave it, leading to all of them, and the
+ * first few. Someone whose answer differs from the column's name is tagged
+ * with theirs.
+ */
+function AnswerColumn({ group, path }: { group: AskAnswerGroup; path: string }) {
+  const href = `${path}?answer=${group.key}`;
+  const heading = (
+    <>
+      <span>{groupName(group.key)}</span> <strong>{group.total.toLocaleString("en-GB")}</strong>
+    </>
+  );
+  return (
+    <section className={styles.column} data-tone={GROUP_TONES[group.key]}>
+      <h2 className={styles.columnHead}>
+        {group.total > 0 ? <StaffLink href={href}>{heading}</StaffLink> : <span>{heading}</span>}
+      </h2>
+      {group.people.length === 0 ? (
+        <p className={styles.columnFoot}>
+          <Muted>{page.none}</Muted>
+        </p>
+      ) : (
+        <ul className={styles.people}>
+          {group.people.map((person) => (
+            <li key={person.politicianId}>
+              <span className={styles.person}>
+                <StaffLink href={`/staff/politicians/${person.politicianId}`}>{person.name}</StaffLink>
+                <TestTag isTest={person.isTest} />
+                <Muted>{person.party}</Muted>
+              </span>
+              {person.status && person.status !== group.key && (
+                <Tag tone={ANSWER_TONES[person.status]}>{staffCopy.statuses[person.status]}</Tag>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {group.total > group.people.length && (
+        <p className={styles.columnFoot}>
+          <StaffLink href={href}>{page.allOf(group.total)}</StaffLink>
+        </p>
+      )}
+    </section>
+  );
+}
+
+/**
+ * Those who gave one answer, a page at a time, under a lozenge for each answer
+ * given, which chooses it; the one chosen, pressed again, goes back to the columns.
+ */
+function ChosenAnswer({ ask, answer, path }: { ask: AskPageData; answer: string; path: string }) {
+  return (
+    <Grid>
+      <Card span={6} as="div" title={page.answersTitle} id="answers">
+        <SegmentLinks
+          label={page.answersTitle}
+          links={ask.groups
+            .filter((group) => group.total > 0)
+            .map(({ key, total }) => ({
+              key,
+              words: `${groupName(key)} ${total.toLocaleString("en-GB")}`,
+              href: key === answer ? path : `${path}?answer=${key}`,
+              quiet: key === "none",
+              current: key === answer,
+              title: key === answer ? page.showAll : undefined,
+            }))}
+        />
+        <ListFrame
+          count={staffCopy.campaigns.politicians(ask.answersTotal)}
+          total={ask.answersTotal}
+          page={ask.page}
+          pages={ask.pages}
+          pageSize={ask.pageSize}
+          href={(n) => filtersPath(path, { answer, page: "" }, pageParam(n))}
+          columns={answerColumns}
+          rows={ask.answers}
+          rowKey={(a) => a.politicianId}
+          empty={page.none}
+        />
+        <p>
+          <StaffLink href={`/staff/politicians?ask=${ask.slug}`}>{page.everyone}</StaffLink>
+        </p>
+      </Card>
+    </Grid>
+  );
+}
+
+/**
+ * An ask's page, in a mailing's shape: over its title what they were asked to
+ * do, its date and where to read it; then its answers, a column each, or those
+ * of the one chosen; and last how we asked, how many were written to, its letters and
+ * who replied at its top right, and each campaign and mailing under its kind.
  * It has no letters of its own. An ask the code names can't be edited.
  */
 export default function AskView({ ask, answer }: { ask: AskPageData; answer: string }) {
   const path = `/staff/asks/${ask.slug}`;
-  const answers = ASK_STATUSES[ask.kind].filter((status) => ask.counts[status]);
   const answered = answeredOf(ask);
-  // Everyone asked: written to, or with an answer recorded however they were asked.
-  const asked = answered + ask.noAnswer;
-  const agreed = AGREED_STATUSES.reduce((total, status) => total + (ask.counts[status] ?? 0), 0);
   return (
     <div className={styles.page}>
       <Band
@@ -100,17 +173,14 @@ export default function AskView({ ask, answer }: { ask: AskPageData; answer: str
             </StaffLink>
           )
         }
-        aside={
-          <Counts
-            counts={[
-              { key: "writtenTo", n: ask.writtenTo, label: page.writtenTo },
-              { key: "answered", n: answered, label: page.answered },
-            ]}
-          />
-        }
       >
-        <BandFact label={page.asked}>{askedLine(ask)}</BandFact>
-        <BandFact label={ask.kind === "letter" ? page.started : page.on}>{ask.date && staffDate(ask.date)}</BandFact>
+        <BandFact label={page.asked}>
+          <span className={styles.asked}>
+            <AskKindIcon kind={ask.kind} size={18} />
+            {askedLine(ask)}
+          </span>
+        </BandFact>
+        <BandFact label={ask.kind === "letter" ? page.when : page.on}>{askPeriod(ask)}</BandFact>
         <BandFact label={page.readIt[ask.kind]}>
           {ask.url &&
             (ask.url.startsWith("/") ? (
@@ -120,74 +190,41 @@ export default function AskView({ ask, answer }: { ask: AskPageData; answer: str
             ))}
         </BandFact>
       </Band>
-      {asked > 0 && (
+      {answered === 0 && ask.noAnswer === 0 ? (
         <Grid>
-          <Card span={6} as="div">
-            <Progress value={agreed} max={asked} tone="green" label={page.agreed} big>
-              {page.bar(agreed, asked, ask.kind)}
-            </Progress>
+          <Card span={6} as="div" title={page.answersTitle} id="answers">
+            <p>
+              <Muted>{page.none}</Muted>
+            </p>
           </Card>
         </Grid>
+      ) : answer ? (
+        <ChosenAnswer ask={ask} answer={answer} path={path} />
+      ) : (
+        <section className={styles.columns} aria-label={page.answersTitle}>
+          {ask.groups.map((group) => (
+            <AnswerColumn key={group.key} group={group} path={path} />
+          ))}
+        </section>
       )}
       <Grid>
-        <Card span={3} look="aside" title={page.howWeAsked} id="how-we-asked">
+        <Card
+          span={6}
+          look="aside"
+          title={page.howWeAsked}
+          id="how-we-asked"
+          action={
+            <div className={styles.howCounts}>
+              <Counts small counts={askCounts(ask)} />
+            </div>
+          }
+        >
           {ask.ways.length === 0 ? (
             <p>
               <Muted>{page.noWay}</Muted>
             </p>
           ) : (
-            <ul className={styles.ways}>
-              {ask.ways.map((way) => (
-                <li key={way.href}>
-                  <Muted>{dates(way)}</Muted>
-                  <span>
-                    <Tag tone={way.kind === "campaign" ? "amber" : "blue"}>{page[way.kind]}</Tag>{" "}
-                    <StaffLink href={way.href}>{way.title}</StaffLink>
-                  </span>
-                  <span>{page.letters(way.letters)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-        <Card span={3} as="div" title={page.answersTitle} id="answers">
-          {answered === 0 && ask.noAnswer === 0 ? (
-            <p>
-              <Muted>{page.none}</Muted>
-            </p>
-          ) : (
-            <>
-              {/* Each shows those who gave that answer; pressed again, everyone. */}
-              <SegmentLinks
-                label={page.answersTitle}
-                links={[
-                  ...answers.map((status) => [status, staffCopy.statuses[status], ask.counts[status]!, false] as const),
-                  ...(ask.noAnswer ? [["none", staffCopy.statuses.noAnswer, ask.noAnswer, true] as const] : []),
-                ].map(([key, words, n, quiet]) => ({
-                  key,
-                  words: `${words} ${n}`,
-                  href: key === answer ? path : `${path}?answer=${key}`,
-                  quiet,
-                  current: key === answer,
-                  title: key === answer ? page.showAll : undefined,
-                }))}
-              />
-              <ListFrame
-                count={staffCopy.campaigns.politicians(ask.answersTotal)}
-                total={ask.answersTotal}
-                page={ask.page}
-                pages={ask.pages}
-                pageSize={ask.pageSize}
-                href={(n) => filtersPath(path, { answer, page: "" }, pageParam(n))}
-                columns={answerColumns}
-                rows={ask.answers}
-                rowKey={(a) => a.politicianId}
-                empty={page.none}
-              />
-              <p>
-                <StaffLink href={`/staff/politicians?ask=${ask.slug}`}>{page.everyone}</StaffLink>
-              </p>
-            </>
+            <AskWays ways={ask.ways} wide />
           )}
         </Card>
       </Grid>

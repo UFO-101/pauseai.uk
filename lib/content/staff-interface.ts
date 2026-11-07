@@ -646,11 +646,11 @@ export const staffCopy = {
   statuses: {
     signed: "Signed",
     going: "Going",
-    tentative: "Tentatively going",
-    meeting_staff: "Staff meeting instead",
+    tentative: "Tentative going",
+    meeting_staff: "Staff meeting",
     tentative_staff: "Staff tentative",
     declined: "Declined",
-    declined_surgery: "Declined, offered a surgery",
+    declined_surgery: "Declined, surgery",
     passed_on: "Passed on invite",
     // No answer to an ask, of any kind.
     noAnswer: "No answer",
@@ -1212,20 +1212,9 @@ export const staffCopy = {
       "in-use": askLimits.notDeletable,
       gone: "That ask has been deleted.",
     } as Record<string, string>,
-    // Over the list: how many there are.
-    total: (n: number) => `${n} ${n === 1 ? "ask" : "asks"}`,
     none: "No asks yet.",
-    columns: {
-      ask: "Title",
-      kind: "We ask them to",
-      date: "Date",
-      // Who asks it: supporters, in a campaign's letter, or PauseAI, in a mailing; or both.
-      askedBy: "Asked by",
-      answers: "Answers",
-      writtenTo: "Written to",
-      answered: "Answered",
-      how: "How we asked",
-    },
+    // Over the list's upcoming events; the rest go under their months and years.
+    comingUp: "Coming up",
     kinds: { letter: "Sign a letter", event: "Attend an event" } as Record<string, string>,
     // Over a mailing's or campaign's ask, and before it on their lists.
     askTo: { letter: "Ask to sign", event: "Ask to attend" } as Record<string, string>,
@@ -1233,34 +1222,33 @@ export const staffCopy = {
     // An ask's own page.
     page: {
       asked: "Asked",
-      started: "Started",
+      when: "When",
       on: "On",
       readIt: { letter: "Read it", event: "Find out more" } as Record<string, string>,
       theLink: { letter: "The letter", event: "The event" } as Record<string, string>,
       writtenTo: "written to",
-      answered: "answered",
-      agreed: "agreed",
+      lettersWord: (n: number) => (n === 1 ? "letter" : "letters"),
+      replied: "replies",
       howWeAsked: "How we asked",
       answersTitle: "Answers",
+      // Pressing the answer chosen goes back to all its columns.
       showAll: "Show all the answers",
+      // The column of the rarer answers an event can have (ANSWER_GROUPS).
+      otherAnswers: "Other answers",
+      // At the foot of a column with more people than it shows.
+      allOf: (n: number) => `All ${n.toLocaleString("en-GB")} →`,
       none: "No answers yet.",
       noWay: "No mailing or campaign has put this.",
       politician: "Politician",
       answer: "Answer",
       lastWrittenTo: "Last written to",
       everyone: "Every politician with this ask →",
-      // Of everyone asked: written to by a campaign or mailing, or with an answer recorded.
-      bar: (agreed: number, of: number, kind: string) =>
-        `${agreed} of ${of} asked have ${kind === "letter" ? "signed" : "agreed to attend"}`,
-      campaign: "Campaign",
-      mailing: "Mailing",
       letters: (n: number) => `${n} ${n === 1 ? "letter" : "letters"}`,
-      way: (n: number, word: "campaign" | "mailing") => `${n} ${word}${n === 1 ? "" : "s"}`,
     },
     askedBy: { supporters: "Supporters", pauseai: "PauseAI", controlai: "ControlAI" },
+    // Over the campaigns and mailings that asked it, on the list of asks.
+    waysOf: { campaign: "Supporter campaigns", mailing: "PauseAI mailings" },
     noAnswers: "No answers yet",
-    // Each answer's count links to the politicians who gave it.
-    count: (status: string, n: number) => `${status}: ${n}`,
   },
   politician: {
     statusesTitle: "Asks",

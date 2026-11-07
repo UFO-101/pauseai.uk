@@ -14,7 +14,10 @@ import {
 } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
 import AskView from "@/app/(staff)/staff/_components/AskView";
 import { exampleAskPage } from "@/app/(staff)/staff/_components/CampaignPages.examples";
-import AsksTable from "@/app/(staff)/staff/_components/AsksTable";
+import AnswerWord from "@/app/(staff)/staff/_components/AnswerWord";
+import AskWays from "@/app/(staff)/staff/_components/AskWays";
+import AskKindIcon from "@/app/(staff)/staff/_components/AskKindIcon";
+import AsksList from "@/app/(staff)/staff/_components/AsksList";
 import { AskLead, AskPreview, AskTitle } from "@/app/(staff)/staff/_components/AskLine";
 import type { Group } from "../_components/types";
 import {
@@ -398,6 +401,43 @@ export const staffPoliticians: Group = {
           ),
         },
         {
+          label: "An event, its rarer answers in a column together",
+          render: () => (
+            <StaffPage as="div">
+              <AskView
+                ask={{
+                  ...exampleAskPage,
+                  kind: "event",
+                  counts: { going: 1, tentative: 1, declined_surgery: 1 },
+                  groups: [
+                    { key: "going", total: 0, people: [] },
+                    {
+                      key: "other",
+                      total: 1,
+                      people: [{ ...exampleAskPage.groups[0].people[0], status: "tentative" }],
+                    },
+                    {
+                      key: "declined",
+                      total: 1,
+                      people: [{ ...exampleAskPage.groups[1].people[0], status: "declined_surgery" }],
+                    },
+                  ],
+                  noAnswer: 0,
+                }}
+                answer=""
+              />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "A letter, with one answer chosen",
+          render: () => (
+            <StaffPage as="div">
+              <AskView ask={exampleAskPage} answer="signed" />
+            </StaffPage>
+          ),
+        },
+        {
           label: "An event the code names, with no answers and nothing that put it",
           render: () => (
             <StaffPage as="div">
@@ -409,7 +449,9 @@ export const staffPoliticians: Group = {
                   fixed: true,
                   counts: {},
                   writtenTo: 0,
+                  noAnswer: 0,
                   ways: [],
+                  groups: [],
                   answers: [],
                 }}
                 answer=""
@@ -420,14 +462,54 @@ export const staffPoliticians: Group = {
       ],
     },
     {
-      name: "AsksTable",
-      file: "app/(staff)/staff/_components/AsksTable.tsx",
+      name: "AnswerWord",
+      file: "app/(staff)/staff/_components/AnswerWord.tsx",
+      variants: [
+        {
+          label: "A yes, a no, one in between, and none",
+          render: () => (
+            <div style={{ display: "grid" }}>
+              <AnswerWord status="signed" />
+              <AnswerWord status="declined_surgery" />
+              <AnswerWord status="tentative" />
+              <AnswerWord status={null} />
+            </div>
+          ),
+        },
+      ],
+    },
+    {
+      name: "AskWays",
+      file: "app/(staff)/staff/_components/AskWays.tsx",
+      variants: [
+        { label: "Named", render: () => <AskWays ways={exampleAskPage.ways} /> },
+        { label: "Wide, with their letters", render: () => <AskWays ways={exampleAskPage.ways} wide /> },
+      ],
+    },
+    {
+      name: "AskKindIcon",
+      file: "app/(staff)/staff/_components/AskKindIcon.tsx",
+      variants: [
+        {
+          label: "A letter and an event",
+          render: () => (
+            <>
+              <AskKindIcon kind="letter" />
+              <AskKindIcon kind="event" size={16} />
+            </>
+          ),
+        },
+      ],
+    },
+    {
+      name: "AsksList",
+      file: "app/(staff)/staff/_components/AsksList.tsx",
       variants: [
         {
           label: "Every ask, with its answers",
           render: () => (
             <StaffPage as="div">
-              <AsksTable asks={exampleAsksWithCounts} />
+              <AsksList asks={exampleAsksWithCounts} now={new Date("2026-10-01T12:00:00Z")} />
             </StaffPage>
           ),
         },
