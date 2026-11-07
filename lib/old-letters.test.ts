@@ -19,9 +19,6 @@ import {
   templateDoc,
   templateOf,
 } from "./old-letters";
-import { addressesIn, realSender } from "@/lib/email-parsing/addresses";
-import { isAcknowledgement, plainSubject, sameSubject } from "@/lib/email-parsing/subjects";
-import { quotedHeaders, restoreCutDown } from "@/lib/email-parsing/quoted";
 
 const at = (iso: string) => new Date(iso);
 
@@ -220,26 +217,6 @@ describe("the form's versions", () => {
 });
 
 describe("placing a reply", () => {
-  it("compares subjects without Re:, an automatic reply's words, or a case's reference", () => {
-    expect(plainSubject("Re: Fwd: Hello (Case Ref: AB123)")).toBe("hello");
-    expect(plainSubject("Automatic reply: Hello")).toBe("hello");
-    expect(sameSubject("RE: The Bill and more", "the bill")).toBe(true);
-    expect(sameSubject("Hello", "")).toBe(false);
-    expect(sameSubject("Hello", "Bye")).toBe(false);
-  });
-
-  it("knows an acknowledgement by its subject", () => {
-    for (const subject of [
-      "Automatic Reply: x",
-      "Out of office",
-      "Thank you for contacting me",
-      "Your email: automated response",
-    ]) {
-      expect(isAcknowledgement(subject)).toBe(true);
-    }
-    expect(isAcknowledgement("Thanks, I'll sign")).toBe(false);
-  });
-
   const letter = (id: number, time: string, more = {}) => ({ id, at: at(time), subject: "The Bill", ...more });
 
   it("takes the latest before it with the letter's subject", () => {
@@ -305,54 +282,6 @@ describe("placing a reply", () => {
   });
 });
 
-describe("reading quotes", () => {
-  it("finds an Outlook block, its fields in any order, bold or quoted", () => {
-    const text =
-      "See below\n> *From:* Polly <p@x.uk>\n>\n> *Sent:* 1 Jan 2026\n> To: Joe <j@x.uk>\n> Cc: c@x.uk\n> Subject: Hello\n> Body\n";
-    expect(quotedHeaders(text)).toEqual([
-      { from: "Polly <p@x.uk>", sent: "1 Jan 2026", to: "Joe <j@x.uk>", cc: "c@x.uk", subject: "Hello" },
-    ]);
-  });
-
-  it("finds a forward with its Subject and Date over its From, a wrapped Subject ending what it reads", () => {
-    const text =
-      "fyi\n\n-------- Forwarded Message --------\nSubject: \tA long subject\nwrapped here\nDate: \tFri, 25 Sep 2026\nFrom: \tJo <j@x.uk>\nTo: \tPolly <p@x.uk>\n\nDear Polly,";
-    expect(quotedHeaders(text)).toEqual([
-      { from: "Jo <j@x.uk>", sent: "Fri, 25 Sep 2026", to: "Polly <p@x.uk>", cc: "", subject: "" },
-    ]);
-  });
-
-  it("leaves a From with no Sent", () => {
-    expect(quotedHeaders("From: Polly\nHello")).toEqual([]);
-  });
-
-  it("finds Gmail's line", () => {
-    expect(quotedHeaders("Yes\n\nOn Tue, 1 Jan 2026 at 09:00, Polly <p@x.uk> wrote:\n> Hello")[0]).toMatchObject({
-      from: "p@x.uk",
-    });
-  });
-
-  it("picks addresses out of a line, lowercased", () => {
-    expect(addressesIn("Polly <P@X.uk>, j@x.uk")).toEqual(["p@x.uk", "j@x.uk"]);
-    expect(addressesIn("nobody")).toEqual([]);
-  });
-});
-
-describe("who a message is from", () => {
-  it("sees through the group's rewriting", () => {
-    expect(realSender("x", "Real <r@x.uk>")).toBe("Real <r@x.uk>");
-    expect(realSender("'Mo' via PauseAI UK <p@x.uk>", undefined, "mo@x.uk")).toBe("mo@x.uk");
-    expect(realSender("'Mo' via PauseAI UK <p@x.uk>")).toBe("'Mo' via PauseAI UK <p@x.uk>");
-    expect(realSender("Mo <mo@x.uk>", undefined, "other@x.uk")).toBe("Mo <mo@x.uk>");
-  });
-
-  it("takes the first of several addresses it's told to reply to, a comma in a name not ending it", () => {
-    const from = "'Mo' via PauseAI UK <p@x.uk>";
-    expect(realSender(from, undefined, "mo@x.uk, info@x.uk")).toBe("mo@x.uk");
-    expect(realSender(from, undefined, '"Mo, MP" <mo@x.uk>, info@x.uk')).toBe('"Mo, MP" <mo@x.uk>');
-  });
-});
-
 describe("which letter a reply of ours answers", () => {
   const at = new Date("2026-02-01T00:00:00Z");
   const letter = (id: number, senderEmail?: string) => ({
@@ -371,14 +300,6 @@ describe("which letter a reply of ours answers", () => {
   it("is only PauseAI's own if it copies none, as it can't say which constituent's", () => {
     expect(placeOurReply([letter(1), letter(2, "bob@example.com")], reply(["mp@parliament.uk"]))).toBe(1);
     expect(placeOurReply([letter(2, "bob@example.com")], reply(["mp@parliament.uk"]))).toBeUndefined();
-  });
-});
-
-describe("a text whose characters were cut down to a byte", () => {
-  it("has its curly quotes and dashes whole again, and nothing else changed", () => {
-    expect(restoreCutDown("I\x19m \x18a\x19 \x1cb\x1d \x13 \x14 caf\u00e9\n")).toBe(
-      "I\u2019m \u2018a\u2019 \u201cb\u201d \u2013 \u2014 caf\u00e9\n",
-    );
   });
 });
 

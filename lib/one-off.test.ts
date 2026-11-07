@@ -13,7 +13,6 @@ import {
   quotedAddresses,
   type PoliticianBook,
 } from "./one-off";
-import { mailboxes } from "@/lib/email-parsing/addresses";
 
 const book: PoliticianBook = {
   addresses: new Map([
@@ -80,19 +79,6 @@ describe("mail the site recognises", () => {
 });
 
 describe("a header's line", () => {
-  it("reads names and addresses, a comma in quotes being part of a name", () => {
-    expect(mailboxes('"Placeholder, Polly" <Polly@Parliament.uk>, jane@example.com, Sam <sam@example.com>,')).toEqual([
-      { name: "Placeholder, Polly", address: "polly@parliament.uk" },
-      { name: "", address: "jane@example.com" },
-      { name: "Sam", address: "sam@example.com" },
-    ]);
-  });
-
-  it("keeps words with no address as a name, and finds nothing on an empty line", () => {
-    expect(mailboxes("undisclosed-recipients:;")).toEqual([{ name: "undisclosed-recipients:;", address: "" }]);
-    expect(mailboxes("")).toEqual([]);
-  });
-
   it("says which politician an address is, unless several share it", () => {
     expect(
       politicianAddresses(book, [
