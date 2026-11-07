@@ -468,6 +468,33 @@ describeWithDatabase("the import of old letters", () => {
       expect(await textOf("deepmind-40")).toEqual(before);
     });
 
+    it("leaves August's text alone when another mailing is split", async () => {
+      const { polly, mo, mailingLetter } = await seed();
+      await run();
+      const id = await mailingId("deepmind-25");
+      const before = await textOf("deepmind-august");
+      const letters = await Promise.all([
+        mailingLetter(polly, "DeepMind letter", "2025-07-20T09:00:00Z", "recX"),
+        mailingLetter(mo, "DeepMind letter", "2025-07-20T09:00:00Z", "recY"),
+      ]);
+      await Promise.all(
+        letters.map((letter, i) =>
+          query("UPDATE letters_from_pauseai SET mailing_id = $2, merge_values = $3, own_text = NULL WHERE id = $1", [
+            letter,
+            id,
+            JSON.stringify({ values: { greeting: flatLetter(`Own words ${"ab"[i]}.`), own: "" }, meets: [] }),
+          ]),
+        ),
+      );
+      await query("UPDATE mailings SET imported_text = $2 WHERE id = $1", [
+        id,
+        JSON.stringify({ type: "doc", content: [] }),
+      ]);
+      await importOldLetters(NIGHTLY, 0);
+      expect((await letterOf(letters[0])).values?.values.own).toBe("Own words a.");
+      expect(await textOf("deepmind-august")).toEqual(before);
+    });
+
     it("leaves letters that share nothing as they are", async () => {
       const { polly, mo, mailingLetter } = await seed();
       await run();

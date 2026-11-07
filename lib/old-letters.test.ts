@@ -258,6 +258,18 @@ describe("letters read as one paragraph", () => {
 });
 
 describe("a mailing's text with a mailer's quote marks", () => {
+  it("reads the words of paragraphs that have none or only a field as nothing", () => {
+    const doc = {
+      type: "doc" as const,
+      content: [
+        { type: "paragraph" as const },
+        { type: "paragraph" as const, content: [{ type: "field" as const, attrs: { field: "own" } }] },
+      ],
+    };
+    expect(sharedParagraphs(doc)).toEqual([]);
+    expect(withoutQuoteMarks(doc).content[1]).toEqual(doc.content[1]);
+  });
+
   it("puts each quoted line on its own, leaving other paragraphs and a link's bracket", () => {
     const doc = withoutQuoteMarks({
       type: "doc",
