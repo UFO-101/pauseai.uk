@@ -423,6 +423,14 @@ describe("reading quotes", () => {
     ]);
   });
 
+  it("finds a forward with its Subject and Date over its From, a wrapped Subject ending what it reads", () => {
+    const text =
+      "fyi\n\n-------- Forwarded Message --------\nSubject: \tA long subject\nwrapped here\nDate: \tFri, 25 Sep 2026\nFrom: \tJo <j@x.uk>\nTo: \tPolly <p@x.uk>\n\nDear Polly,";
+    expect(quotedHeaders(text)).toEqual([
+      { from: "Jo <j@x.uk>", sent: "Fri, 25 Sep 2026", to: "Polly <p@x.uk>", cc: "", subject: "" },
+    ]);
+  });
+
   it("leaves a From with no Sent", () => {
     expect(quotedHeaders("From: Polly\nHello")).toEqual([]);
   });

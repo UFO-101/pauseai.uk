@@ -1,7 +1,7 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import { NIGHTLY } from "@/lib/import-runs";
 import { latestRun } from "./import-runs";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/fixtures/msw";
 import webForm from "@/tests/fixtures/airtable-web-form.json";
@@ -133,10 +133,21 @@ const outcomeOf = async (id: string) =>
 
 describeWithDatabase("the import of old letters", () => {
   useTestDatabase();
-  beforeEach(async () => {
+  const stubEnv = () => {
     stubLettersInboxEnv();
     vi.stubEnv("GMAIL_TOKEN_KEY", Buffer.alloc(32, 7).toString("base64"));
     vi.stubEnv("AIRTABLE_TOKEN", "fixture");
+  };
+  // A file's first import loads its code and plans its queries, which on a loaded
+  // CI runner has outlasted a test's time limit. So that's done once, before them.
+  beforeAll(async () => {
+    stubEnv();
+    await seed();
+    await run();
+    vi.unstubAllEnvs();
+  });
+  beforeEach(async () => {
+    stubEnv();
     // The mailings it fills outlast each test, and it keeps a template it has made.
     await query("UPDATE mailings SET imported_text = NULL WHERE old_letters_key IS NOT NULL");
   });
@@ -531,6 +542,24 @@ describeWithDatabase("the import of old letters", () => {
       await importOldLetters(NIGHTLY, 0);
       expect(await query("SELECT 1 FROM mailings WHERE old_letters_key = 'liability-own'")).toEqual([]);
     });
+  });
+
+  it("keeps a forward with its Date over its From, once what matched nothing is queued again", async () => {
+    await seed();
+    await run();
+    expect((await outcomeOf("0b07")).outcome).toBe("unmatched");
+    mailIs(
+      "0b07",
+      "t-ours",
+      "2026-10-31T10:04:00.000Z",
+      { From: "Vera Volunteer <vera.volunteer@example.com>", Subject: "Fwd: After our meeting" },
+      Buffer.from(
+        "fyi\n\n-------- Forwarded Message --------\nSubject: \tAfter our meeting\nDate: \tFri, 30 Oct 2026\nFrom: \tVera <vera.volunteer@example.com>\nTo: \tPolly <polly.placeholder.mp@parliament.uk>\n\nDear Polly,",
+      ),
+    );
+    await query("UPDATE old_letters_mail SET outcome = NULL WHERE outcome = 'unmatched'");
+    await run();
+    expect((await outcomeOf("0b07")).outcome).toBe("one_off");
   });
 
   it("keeps a thread whole: a message no search found, once its thread is kept", async () => {

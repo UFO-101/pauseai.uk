@@ -335,7 +335,9 @@ Gmail refuses; a mailbox's limit applies to all its reading, the regular read's 
   (`mailingOfNewLetter`). One from a supporter, who may send a form letter twice
   though production keeps one for each ask, goes on their letter in the campaign
   Airtable's record of that send says (`formLetterRepeated`). With no such record,
-  or one marked spam or invalid, it's a one-off.
+  or one marked spam or invalid, it's a one-off. Shared mail counts if a politician
+  is named in the headers of what it quotes or forwards (`quotedHeaders`), in either
+  order: Thunderbird puts the Date over the From.
 - **Text.** Many of Joseph's sends kept only each character's low byte, whatever
   charset they name. Bytes not valid in that charset are read one to a character
   (`decodedText`), and the control characters that curly quotes and dashes became
