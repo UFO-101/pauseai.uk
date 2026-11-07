@@ -103,7 +103,7 @@ export const staffCopy = {
   letterThread: {
     title: "Letter and replies",
     // Folds the mail a message quotes and its footer, under its text.
-    quoted: "⁂ Quoted mail and footer",
+    quoted: "Quoted mail and footer",
     // An imported letter, whose text Airtable didn't keep.
     noText: "Text not available, as sent from Airtable.",
     // Over the text of a letter that's built from the send before it and the person's earlier letter.
