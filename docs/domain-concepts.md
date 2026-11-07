@@ -369,8 +369,9 @@ Gmail refuses; a mailbox's limit applies to all its reading, the regular read's 
 Threads with a politician that aren't a letter of a campaign or mailing: Joseph's
 own emails, a volunteer copying policy@, an MP writing to us. Kept whole, in
 Netlify Blobs with a row in `one_off_messages`, in `one_off_threads`, by
-`lib/server/one-off-emails.ts`; read-only at `/staff/one-off`, in the
+`lib/server/one-off-emails.ts`; read-only on All emails (`/staff/emails`), in the
 navigation under Politicians, and on the politician's and supporter's pages.
+Staff without `supporters` don't see, there, supporters' letters or a thread with someone else in it.
 
 - **What counts** (`lib/one-off.ts`): a message with an address a politician has
   or has had (past ones from the audit log), one on a politician's own domain, or
@@ -400,9 +401,9 @@ navigation under Politicians, and on the politician's and supporter's pages.
   the oldest 100 at a time, saying how many more wait. The import
   lists what it finds on its results instead, for staff with `supporters`.
 - **Who sees what.** Staff without `supporters` see the name and text of a thread
-  only if every sender in it is a politician, on a parliament's domain, or one of
-  PauseAI's accounts (the connected Gmails, and `PAUSEAI_ALIASES`). Anyone else
-  writing in it (`someone_else`) hides it from them.
+  only if everyone on it, its senders and its To and Cc, is a politician, on a
+  parliament's domain, or at PauseAI (`threadsWithSomeoneElse()`). Anyone else
+  hides it from them.
 
 ## Form entries
 

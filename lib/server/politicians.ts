@@ -1,7 +1,7 @@
 import "server-only";
 import { listWindow, windowStart } from "@/lib/staff-dashboard";
 import { now } from "@/lib/now";
-import type { AskStatus } from "@/lib/asks";
+import { AGREED_STATUSES, type AskStatus } from "@/lib/asks";
 import type { Mp, MpStatuses } from "@/lib/email-your-mp";
 import { parseSort, type SortSpec } from "@/lib/staff-sort";
 import { among, anyAndNone, firstOf, notOf, pageNumber, valuesOf, type ParamValue } from "@/lib/staff-search";
@@ -173,8 +173,8 @@ export type PoliticianWho = {
   ask?: string;
   /** Only those who gave this answer, to `ask` or, without one, to any ask; "none" for those who gave none. */
   answer?: string;
-  /** Only those who signed something on the site, not by Airtable's record, in the last so many days. */
-  signedDays?: number;
+  /** Only those who agreed to an ask (AGREED_STATUSES), not by Airtable's record, in the last so many days. */
+  agreedDays?: number;
   /** Those with none of these, each a filter above that repeats. */
   not?: Pick<PoliticianWho, NegatablePoliticianFilter>;
 };
@@ -202,8 +202,8 @@ export type PoliticiansSearch = {
   ask: string;
   answer: string;
   mailed: string[];
-  /** Those who signed something in the last so many days. */
-  signed: string;
+  /** Those who agreed to an ask in the last so many days. */
+  agreed: string;
   sort: string;
   dir: string;
   page: string;
@@ -231,8 +231,8 @@ export type PoliticiansSearch = {
 export function politiciansSearch(params: Partial<Record<keyof PoliticiansSearch, ParamValue>>): PoliticiansSearch & {
   filter: PoliticianFilter;
 } {
-  const [q, house, status, ask, answer, signed, sort, dir, page, mailing, tab, saved] = (
-    ["q", "house", "status", "ask", "answer", "signed", "sort", "dir", "page", "mailing", "tab", "saved"] as const
+  const [q, house, status, ask, answer, agreed, sort, dir, page, mailing, tab, saved] = (
+    ["q", "house", "status", "ask", "answer", "agreed", "sort", "dir", "page", "mailing", "tab", "saved"] as const
   ).map((name) => firstOf(params[name]));
   const [party, flag, nation, email, mailed, pasted] = (
     ["party", "flag", "nation", "email", "mailed", "pasted"] as const
@@ -253,7 +253,7 @@ export function politiciansSearch(params: Partial<Record<keyof PoliticiansSearch
     mailed: mailedAbout,
     ask: ask || undefined,
     answer: answer || undefined,
-    signedDays: listWindow(signed),
+    agreedDays: listWindow(agreed),
     not: notOf({
       party: notParties,
       flags: flags?.includes("test") ? notFlags : [...new Set([...(notFlags ?? []), "test" as const])],
@@ -275,7 +275,7 @@ export function politiciansSearch(params: Partial<Record<keyof PoliticiansSearch
     ask,
     answer,
     mailed,
-    signed,
+    agreed,
     sort,
     dir,
     page,
@@ -341,10 +341,10 @@ function politicianWhere(filter: PoliticianWho, value: (v: unknown) => string, c
   if (filter.status === "out") where.push("n.status <> 'in_office'");
   else if (filter.status) where.push(`n.status = ${value(filter.status)}`);
   where.push(...anyOf(filter, value));
-  if (filter.signedDays) {
+  if (filter.agreedDays) {
     where.push(
-      `EXISTS (SELECT 1 FROM ask_statuses a WHERE a.notable_person_id = n.id AND a.status = 'signed' AND a.updated_by <> 'airtable'
-         AND a.updated_at >= ${value(windowStart(filter.signedDays))} AND a.updated_at <= ${value(now())})`,
+      `EXISTS (SELECT 1 FROM ask_statuses a WHERE a.notable_person_id = n.id AND a.status = ANY(${value(AGREED_STATUSES)}) AND a.updated_by <> 'airtable'
+         AND a.updated_at >= ${value(windowStart(filter.agreedDays))} AND a.updated_at <= ${value(now())})`,
     );
   }
   // What's left out: a filter's condition not true, so one with no value, such as no party, is kept.

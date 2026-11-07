@@ -14,8 +14,8 @@ export type EventChoices = { staff: readonly string[]; tags: string[]; cities: s
  * The events list's filters, in its columns' order: where it is, a city
  * or online; its tags; its owner, or none; and taken off Luma, which
  * finds only those, as the list leaves them out otherwise, as the
- * politicians list does test politicians; and when it was held, the list the
- * dashboard's tile opens. Where, tags and owner can be chosen more than once.
+ * politicians list does test politicians; and when it was held, only from the
+ * dashboard's tile. Where, tags and owner can be chosen more than once.
  */
 function eventFilters({ staff, tags, cities }: EventChoices): Filter[] {
   const copy = staffCopy.events;
@@ -43,7 +43,7 @@ function eventFilters({ staff, tags, cities }: EventChoices): Filter[] {
       label: copy.removed,
       options: Object.entries(copy.filters.removed).map(([value, label]) => ({ value, label })),
     },
-    { name: "held", label: copy.filters.held, options: WINDOW_OPTIONS },
+    { name: "held", label: copy.filters.held, options: WINDOW_OPTIONS, linkedOnly: true },
   ];
 }
 

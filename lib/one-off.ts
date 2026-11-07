@@ -79,6 +79,11 @@ export function isPauseaiAddress(address: string, connected: readonly string[]):
   return connected.includes(address) || PAUSEAI_ALIASES.includes(address);
 }
 
+/** Whether an address is anyone's at PauseAI, connected or not. */
+export function isAtPauseai(address: string): boolean {
+  return /@pauseai\.(uk|info)$/.test(address);
+}
+
 /** Whether a sender hides its thread from staff without `supporters`: neither a politician, nor on a parliament's domain, nor PauseAI's. */
 export function isSomeoneElse(book: PoliticianBook, address: string, connected: readonly string[]): boolean {
   return !isPauseaiAddress(address, connected) && !politiciansIn(book, [address]).counts;

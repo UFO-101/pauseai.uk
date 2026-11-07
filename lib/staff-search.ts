@@ -421,11 +421,23 @@ export function supportersSearch(
 /** How many letters the all-letters page shows at once. */
 export const ALL_LETTERS_PAGE_SIZE = 100;
 
-/** The all-letters page's filters, each as typed in its URL. */
+/** Who sent an email on the all emails page, a one-off thread by its first message. */
+export const EMAIL_SENDERS = ["supporter", "pauseai", "politician", "other"] as const;
+export type EmailSender = (typeof EMAIL_SENDERS)[number];
+
+/** What a row of the all emails page is: a campaign's letter, a mailing's, or a one-off thread. */
+export const EMAIL_TYPES = ["campaign", "mailing", "one-off"] as const;
+export type EmailType = (typeof EMAIL_TYPES)[number];
+
+/** The all emails page's filters, each as typed in its URL. */
 export type AllLettersSearch = {
   q: string;
-  /** Who it's from: "supporter" or "pauseai". */
-  from: string;
+  /** Senders, as EMAIL_SENDERS, those marked ! left out. */
+  from: string[];
+  /** Types, as EMAIL_TYPES, those marked ! left out. */
+  type: string[];
+  /** Politicians' IDs, those marked ! left out. */
+  to: string[];
   /** Those sent in the last so many days. */
   sent: string;
   /** "yes" or "no", whether it got a written reply; or a number, one in the last so many days. */
@@ -433,31 +445,45 @@ export type AllLettersSearch = {
   page: string;
 };
 
-/** Which letters the all-letters page shows, and which page of them. */
+/** Which emails the all emails page shows, and which page of them. */
 export type AllLettersFilter = {
   search?: string;
-  from?: "supporter" | "pauseai";
+  from?: EmailSender[];
+  notFrom?: EmailSender[];
+  type?: EmailType[];
+  notType?: EmailType[];
+  to?: number[];
+  notTo?: number[];
   sentDays?: DashboardWindow;
   replied?: "yes" | "no" | DashboardWindow;
   page: number;
 };
 
-/** The all-letters page's filters, as typed and as applied. */
+/** The all emails page's filters, as typed and as applied. */
 export function allLettersSearch(
   params: Partial<Record<keyof AllLettersSearch, ParamValue>>,
 ): AllLettersSearch & { filter: AllLettersFilter } {
-  const [q, from, sent, replied, page] = (["q", "from", "sent", "replied", "page"] as const).map((name) =>
-    firstOf(params[name]),
-  );
+  const [q, sent, replied, page] = (["q", "sent", "replied", "page"] as const).map((name) => firstOf(params[name]));
+  const [from, type, to] = (["from", "type", "to"] as const).map((name) => valuesOf(params[name]));
+  const [types, notTypes] = anyAndNone(type, (values) => among(values, EMAIL_TYPES));
+  const [kinds, notKinds] = anyAndNone(from, (values) => among(values, EMAIL_SENDERS));
+  const [people, notPeople] = anyAndNone(to, (values) => values.flatMap((value) => politicianId(value) ?? []));
   return {
     q,
     from,
+    type,
+    to,
     sent,
     replied,
     page,
     filter: {
       search: q.trim() || undefined,
-      from: from === "supporter" || from === "pauseai" ? from : undefined,
+      from: kinds,
+      notFrom: notKinds,
+      type: types,
+      notType: notTypes,
+      to: people,
+      notTo: notPeople,
       sentDays: listWindow(sent),
       replied: replied === "yes" || replied === "no" ? replied : listWindow(replied),
       page: pageNumber(page),
@@ -560,7 +586,7 @@ export type StoredFilter = { list: FilterList; params: Params; picked?: Picked }
 
 /** Each list's parameters that choose who it shows. */
 export const WHO_PARAMS: Record<FilterList, readonly string[]> = {
-  politicians: ["q", "house", "status", "party", "flag", "nation", "email", "ask", "answer", "mailed", "signed"],
+  politicians: ["q", "house", "status", "party", "flag", "nation", "email", "ask", "answer", "mailed", "agreed"],
   supporters: [
     "q",
     "activity",

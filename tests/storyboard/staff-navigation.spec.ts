@@ -135,11 +135,11 @@ test("The dashboard's tabs and numbers", async ({ page, flowDatabase }) => {
     "page",
   );
   await frame(page, "Back on the 30 days");
-  story("The letters tile leads to all the letters sent in those days, a supporter's or a mailing's.");
-  await page.locator('a[href="/staff/letters/all?sent=30"]').click();
-  await expect(page).toHaveURL(`${BASE}/staff/letters/all?sent=30`);
+  story("The supporter emails tile leads to those supporters sent in those days.");
+  await page.locator('a[href="/staff/emails?type=campaign&sent=30"]').click();
+  await expect(page).toHaveURL(`${BASE}/staff/emails?type=campaign&sent=30`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.allLetters.title);
-  await frame(page, "All the letters, in those 30 days");
+  await frame(page, "Supporter emails, in those 30 days");
 });
 
 test("Pointing at a bar on the dashboard", { tag: "@desktop-only" }, async ({ page, request, flowDatabase }) => {
@@ -158,9 +158,9 @@ test("Pointing at a bar on the dashboard", { tag: "@desktop-only" }, async ({ pa
   await frame(page, "A bar pointed at", { window: true, hover: bars.locator(":scope > span").last() });
 });
 
-test("The MPs signed tile", async ({ page, request, flowDatabase }) => {
+test("The politicians agreed tile", async ({ page, request, flowDatabase }) => {
   story(
-    "An admin records that Polly Placeholder signed the Frontier AI letter to the Prime Minister. The dashboard's MPs signed tile counts her.",
+    "An admin records that Polly Placeholder signed the Frontier AI letter to the Prime Minister. The dashboard's politicians agreed tile counts her.",
   );
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase, ["admin"]);
@@ -179,30 +179,30 @@ test("The MPs signed tile", async ({ page, request, flowDatabase }) => {
 
   // One signed this week: the tile is their page.
   await page.goto(`${BASE}/staff`);
-  const tile = page.getByRole("link").filter({ hasText: staffCopy.home.dashboard.metrics.mpsSigned(1) });
+  const tile = page.getByRole("link").filter({ hasText: staffCopy.home.dashboard.metrics.politiciansAgreed(1) });
   await frame(page, "The dashboard");
-  story("With one MP signed, the tile leads to her page.");
+  story("With one politician agreed, the tile leads to her page.");
   await tile.click();
   await expect(page.getByRole("heading", { level: 1, name: "Polly Placeholder" })).toBeVisible();
   await frame(page, "Polly Placeholder's page");
   story(
-    "Importing ControlAI's letter records another signature. Now the tile leads to the politicians list of everyone who signed anything, the latest recorded first.",
+    "Importing ControlAI's letter records another signature. Now the tile leads to the politicians list of everyone who agreed, the latest recorded first.",
   );
 
-  // ControlAI's letter adds several: the tile is everyone who signed anything, the latest recorded first.
+  // ControlAI's letter adds several: the tile is everyone who agreed anything, the latest recorded first.
   await page.goto(`${BASE}/staff/import-data/controlai`);
   await page.getByRole("button", { name: staffCopy.controlAi.importNow }).click();
   await expect(page.getByText(/6 names/)).toBeVisible();
   await page.goto(`${BASE}/staff`);
   await page
     .getByRole("link")
-    .filter({ hasText: staffCopy.home.dashboard.metrics.mpsSigned(2) })
+    .filter({ hasText: staffCopy.home.dashboard.metrics.politiciansAgreed(2) })
     .click();
-  await expect(page).toHaveURL(`${BASE}/staff/politicians?signed=7&status=any&sort=asks`);
-  await expect(page.getByRole("button", { name: new RegExp(`^${staffCopy.politicians.signedIn}`) })).toBeVisible();
+  await expect(page).toHaveURL(`${BASE}/staff/politicians?agreed=7&status=any&sort=asks`);
+  await expect(page.getByRole("button", { name: new RegExp(`^${staffCopy.politicians.agreedIn}`) })).toBeVisible();
   await expect(page.getByRole("row").filter({ hasText: "Polly Placeholder" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Testy McTestface MP" })).toHaveCount(0);
-  await frame(page, "Everyone who signed");
+  await frame(page, "Everyone who agreed");
 });
 
 test("A test MP's page", async ({ page, request, flowDatabase }) => {

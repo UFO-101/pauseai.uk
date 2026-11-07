@@ -42,14 +42,14 @@ export const SERIES_POINTS = 8;
 /** The tiles, in three groups, in the sidebar's order and under its names. */
 export const DASHBOARD_SECTIONS = {
   supporters: ["supportersAdded", "unsubscribes"],
-  politicians: ["lettersSent", "lettersReplied", "mpsSigned"],
+  politicians: ["lettersSent", "lettersReplied", "politiciansAgreed"],
   events: ["eventRegistrations", "eventsHeld"],
 } as const;
 export type DashboardSection = keyof typeof DASHBOARD_SECTIONS;
 export type DashboardMetric = (typeof DASHBOARD_SECTIONS)[DashboardSection][number];
 
 /** The metrics shown with a bar by campaign under the number. */
-export const BY_CAMPAIGN = ["lettersSent", "mpsSigned"] as const satisfies readonly DashboardMetric[];
+export const BY_CAMPAIGN = ["lettersSent", "politiciansAgreed"] as const satisfies readonly DashboardMetric[];
 export type CampaignMetric = (typeof BY_CAMPAIGN)[number];
 
 /** The metrics shown with a sparkline: counts that move and mean something. */
@@ -68,17 +68,20 @@ export type SourcePoint = SeriesPoint & { sources: Partial<Record<SupporterSourc
 /**
  * Where each tile leads: the page that lists exactly what it counts in the
  * window (`days`), and the permissions it takes to see it there; without them
- * the tile is no link. The MPs signed tile's page depends on who signed
- * (signedHref). `worse` marks a number that's bad when it rises, so its change
+ * the tile is no link. The politicians agreed tile's page depends on who agreed
+ * (agreedHref). `worse` marks a number that's bad when it rises, so its change
  * is coloured the other way round.
  */
 export const METRIC_LINKS: Record<
   DashboardMetric,
   { href: (days: DashboardWindow) => string; permissions: readonly Permission[]; worse?: true }
 > = {
-  lettersSent: { href: (days) => `/staff/letters/all?sent=${days}`, permissions: ["supporters"] },
-  lettersReplied: { href: (days) => `/staff/letters/all?replied=${days}`, permissions: ["supporters"] },
-  mpsSigned: { href: (days) => `/staff/politicians?signed=${days}&status=any&sort=asks`, permissions: [] },
+  lettersSent: { href: (days) => `/staff/emails?type=campaign&sent=${days}`, permissions: ["supporters"] },
+  lettersReplied: {
+    href: (days) => `/staff/emails?type=campaign&type=mailing&replied=${days}`,
+    permissions: ["supporters"],
+  },
+  politiciansAgreed: { href: (days) => `/staff/politicians?agreed=${days}&status=any&sort=asks`, permissions: [] },
   eventRegistrations: { href: (days) => `/staff/supporters?registered=${days}`, permissions: ["supporters"] },
   eventsHeld: { href: (days) => `/staff/events?when=past&held=${days}`, permissions: [] },
   supportersAdded: {
@@ -87,13 +90,6 @@ export const METRIC_LINKS: Record<
   },
   unsubscribes: { href: (days) => `/staff/supporters?unsubscribed=${days}`, permissions: ["supporters"], worse: true },
 };
-
-/** The tiles of letters, which say how many were from supporters and how many from PauseAI. */
-export const BY_LETTER_KIND = ["lettersSent", "lettersReplied"] as const satisfies readonly DashboardMetric[];
-export type LetterKindMetric = (typeof BY_LETTER_KIND)[number];
-
-/** A window's letters by who they're from. */
-export type LetterKinds = { supporter: number; pauseai: number };
 
 /** Something waiting for a person, with where its button goes. */
 export type DashboardAction =
@@ -110,14 +106,10 @@ export type Dashboard = {
   /** The start of the window, ISO. */
   since: string;
   counts: Record<DashboardMetric, Count>;
-  /** Letters sent to test MPs in the window, which the letters tile leaves out of its number. */
-  testLetters: number;
-  /** The window's letters by who they're from, for the letters' tiles. */
-  byLetterKind: Record<LetterKindMetric, LetterKinds>;
   /** The window's count by campaign slug, for the tiles with a bar. */
   byCampaign: Record<CampaignMetric, Record<string, number>>;
-  /** The politician who signed in the window, when only one did, for any number of campaigns. */
-  signedMp: number | null;
+  /** The politician who agreed in the window, when only one did, for any number of asks. */
+  agreedMp: number | null;
   /** SERIES_POINTS windows of `days`, oldest first, the current one last, for the tiles with a sparkline. */
   series: Record<SeriesMetric, SeriesPoint[]>;
   /** SERIES_POINTS windows of `days`, oldest first, the current one last, of new supporters by their earliest source. */
@@ -125,17 +117,13 @@ export type Dashboard = {
   actions: DashboardAction[];
 };
 
-/** Where the MPs signed tile leads: the page of the one politician who signed in the window, or the list of those who did. */
-export function signedHref({ signedMp, days }: Pick<Dashboard, "signedMp" | "days">): string {
-  return signedMp !== null ? `/staff/politicians/${signedMp}` : METRIC_LINKS.mpsSigned.href(days);
+/** Where the politicians agreed tile leads: the page of the one politician who agreed in the window, or the list of those who did. */
+export function agreedHref({ agreedMp, days }: Pick<Dashboard, "agreedMp" | "days">): string {
+  return agreedMp !== null ? `/staff/politicians/${agreedMp}` : METRIC_LINKS.politiciansAgreed.href(days);
 }
 
 export function isCampaignMetric(metric: DashboardMetric): metric is CampaignMetric {
   return (BY_CAMPAIGN as readonly DashboardMetric[]).includes(metric);
-}
-
-export function isLetterKindMetric(metric: DashboardMetric): metric is LetterKindMetric {
-  return (BY_LETTER_KIND as readonly DashboardMetric[]).includes(metric);
 }
 
 export function isSeriesMetric(metric: DashboardMetric): metric is SeriesMetric {

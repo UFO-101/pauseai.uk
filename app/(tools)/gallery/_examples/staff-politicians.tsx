@@ -49,7 +49,7 @@ const EMPTY_POLITICIAN_FILTERS = {
   ask: "",
   answer: "",
   mailed: [] as string[],
-  signed: "",
+  agreed: "",
   sort: "",
   dir: "",
   page: "",

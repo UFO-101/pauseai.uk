@@ -64,7 +64,7 @@ export function politicianFilters(askSlug: string, parties: string[], asks: Ask[
       label: copy.ask,
       options: asks.map((a) => ({ value: a.slug, label: a.title })),
     },
-    { name: "signed", label: copy.signedIn, options: WINDOW_OPTIONS },
+    { name: "agreed", label: copy.agreedIn, options: WINDOW_OPTIONS },
     {
       name: "mailed",
       label: copy.mailed,

@@ -2,11 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 import {
   dashboardWindow,
   isCampaignMetric,
-  isLetterKindMetric,
   isSeriesMetric,
   listWindow,
   METRIC_LINKS,
-  signedHref,
+  agreedHref,
   windowStart,
   WINDOW_OPTIONS,
 } from "./staff-dashboard";
@@ -28,10 +27,10 @@ it("knows which metrics have a bar by campaign, and which a sparkline", () => {
   expect(isSeriesMetric("lettersSent")).toBe(false);
 });
 
-describe("signedHref", () => {
-  it("leads to the one politician who signed, or to the list of those who did in the window", () => {
-    expect(signedHref({ signedMp: 7, days: 7 })).toBe("/staff/politicians/7");
-    expect(signedHref({ signedMp: null, days: 30 })).toBe("/staff/politicians?signed=30&status=any&sort=asks");
+describe("agreedHref", () => {
+  it("leads to the one politician who agreed, or to the list of those who did in the window", () => {
+    expect(agreedHref({ agreedMp: 7, days: 7 })).toBe("/staff/politicians/7");
+    expect(agreedHref({ agreedMp: null, days: 30 })).toBe("/staff/politicians?agreed=30&status=any&sort=asks");
   });
 });
 
@@ -50,11 +49,6 @@ describe("a list's date filter", () => {
 
   it("offers each window", () => {
     expect(WINDOW_OPTIONS.map((option) => option.value)).toEqual(["7", "30", "90"]);
-  });
-
-  it("knows the letters' tiles", () => {
-    expect(isLetterKindMetric("lettersReplied")).toBe(true);
-    expect(isLetterKindMetric("eventsHeld")).toBe(false);
   });
 
   it("gives every tile a list for its window", () => {

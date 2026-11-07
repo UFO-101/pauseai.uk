@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   sentEmailsSearch,
   accountsSearch,
+  allLettersSearch,
   askFormSearch,
   staffBack,
   emailsSearch,
@@ -199,6 +200,10 @@ describe("eventsSearch", () => {
     not: undefined,
     page: 1,
   };
+
+  it("reads who an email is to, leaving out what's no ID", () => {
+    expect(allLettersSearch({ to: ["5", "!6", "x"] }).filter).toMatchObject({ to: [5], notTo: [6] });
+  });
 
   it("reads the date filter, only a window of the dashboard's", () => {
     expect(eventsSearch({ when: "past", held: "30" }).filter.heldDays).toBe(30);

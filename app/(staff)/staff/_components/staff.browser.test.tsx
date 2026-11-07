@@ -373,18 +373,16 @@ describe("StaffDashboard", () => {
     expect(mps).toHaveLength(3);
     expect(events).toHaveLength(2);
     expect(supporters).toHaveLength(2);
-    // The letters tile: the number, the test letters apart, the label, the bar's legend, then the change.
+    // The letters tile: the number, the label, the bar's legend, then the change.
     await expect
       .element(mps[0])
-      .toHaveTextContent(
-        `12${copy.testLetters(2)}${copy.metrics.lettersSent(12)}${copy.letterKinds(10, 2)} ${pm.title} · 9 ${bill.title} · 3${copy.change.up(4, 7)}`,
-      );
-    await expect
-      .element(mps[1])
-      .toHaveTextContent(`3${copy.metrics.lettersReplied(3)}${copy.letterKinds(2, 1)}${copy.change.down(2, 7)}`);
+      .toHaveTextContent(`12${copy.metrics.lettersSent(12)} ${pm.title} · 9 ${bill.title} · 3${copy.change.up(4, 7)}`);
+    await expect.element(mps[1]).toHaveTextContent(`3${copy.metrics.lettersReplied(3)}${copy.change.down(2, 7)}`);
     await expect
       .element(mps[2])
-      .toHaveTextContent(`5${copy.metrics.mpsSigned(5)} ${pm.title} · 3 ${bill.title} · 2${copy.change.up(2, 7)}`);
+      .toHaveTextContent(
+        `5${copy.metrics.politiciansAgreed(5)} ${pm.title} · 3 ${bill.title} · 2${copy.change.up(2, 7)}`,
+      );
     await expect.element(events[1]).toHaveTextContent(`9${copy.metrics.eventsHeld(9)}${copy.change.up(3, 7)}`);
     // With a bar, the letters tile takes a third of the grid, so its legend fits; the rest a sixth.
     expect(mps[0].element().className).toBe(spanClass(2));
@@ -433,21 +431,18 @@ describe("StaffDashboard", () => {
     // The whole tile is the link, to the page that lists what it counts.
     const tileLink = (text: string) => page.getByText(text).element().closest("a");
     const lands = (text: string) => tileLink(text)?.getAttribute("href");
-    expect(lands(copy.metrics.lettersSent(12))).toBe("/staff/letters/all?sent=7");
-    expect(lands(copy.metrics.lettersReplied(3))).toBe("/staff/letters/all?replied=7");
+    expect(lands(copy.metrics.lettersSent(12))).toBe("/staff/emails?type=campaign&sent=7");
+    expect(lands(copy.metrics.lettersReplied(3))).toBe("/staff/emails?type=campaign&type=mailing&replied=7");
     expect(lands(copy.metrics.supportersAdded(176))).toBe("/staff/supporters?first=7&sort=first&dir=desc");
     expect(lands(copy.metrics.eventRegistrations(277))).toBe("/staff/supporters?registered=7");
     expect(lands(copy.metrics.unsubscribes(1))).toBe("/staff/supporters?unsubscribed=7");
     expect(lands(copy.metrics.eventsHeld(9))).toBe("/staff/events?when=past&held=7");
-    // Who the letters are from, under each letters number.
-    await expect.element(page.getByText(copy.letterKinds(10, 2))).toBeVisible();
-    await expect.element(page.getByText(copy.letterKinds(2, 1))).toBeVisible();
 
     // Letters are for staff who see supporters.
     await rerender(<StaffDashboard dashboard={exampleDashboard} permissions={["admin"]} />);
     expect(tileLink(copy.metrics.lettersSent(12))).toBeNull();
     await rerender(<StaffDashboard dashboard={exampleDashboard} permissions={["supporters"]} />);
-    expect(lands(copy.metrics.lettersReplied(3))).toBe("/staff/letters/all?replied=7");
+    expect(lands(copy.metrics.lettersReplied(3))).toBe("/staff/emails?type=campaign&type=mailing&replied=7");
     expect(lands(copy.metrics.supportersAdded(176))).toBe("/staff/supporters?first=7&sort=first&dir=desc");
 
     await rerender(<StaffDashboard dashboard={exampleDashboard} permissions={[]} />);
@@ -457,22 +452,22 @@ describe("StaffDashboard", () => {
     // Our events are open to all staff.
     expect(lands(copy.metrics.eventsHeld(9))).toBe("/staff/events?when=past&held=7");
     // Several signed: those who signed in the window, newest first.
-    expect(tileLink(copy.metrics.mpsSigned(5))?.getAttribute("href")).toBe(
-      "/staff/politicians?signed=7&status=any&sort=asks",
+    expect(tileLink(copy.metrics.politiciansAgreed(5))?.getAttribute("href")).toBe(
+      "/staff/politicians?agreed=7&status=any&sort=asks",
     );
     // One signed: their page.
     await rerender(
       <StaffDashboard
         dashboard={{
           ...exampleDashboard,
-          counts: { ...exampleDashboard.counts, mpsSigned: { current: 1, previous: 3 } },
-          byCampaign: { ...exampleDashboard.byCampaign, mpsSigned: { [bill.slug]: 1 } },
-          signedMp: 7,
+          counts: { ...exampleDashboard.counts, politiciansAgreed: { current: 1, previous: 3 } },
+          byCampaign: { ...exampleDashboard.byCampaign, politiciansAgreed: { [bill.slug]: 1 } },
+          agreedMp: 7,
         }}
         permissions={[]}
       />,
     );
-    expect(tileLink(copy.metrics.mpsSigned(1))?.getAttribute("href")).toBe("/staff/politicians/7");
+    expect(tileLink(copy.metrics.politiciansAgreed(1))?.getAttribute("href")).toBe("/staff/politicians/7");
 
     // A quiet month: nothing reads "No", with no test letters and no bar; the change is over 30 days.
     await rerender(<StaffDashboard dashboard={exampleQuietDashboard} permissions={[]} />);
@@ -493,8 +488,8 @@ describe("StaffDashboard", () => {
       .toHaveTextContent(`${copy.none}${copy.metrics.lettersReplied(0)}${copy.change.down(1, 30)}`);
     expect(quiet[0].element().querySelectorAll("[data-campaign]")).toHaveLength(0);
     // With no signature in the window: its list, empty, as the tile says none.
-    expect(tileLink(copy.metrics.mpsSigned(0))?.getAttribute("href")).toBe(
-      "/staff/politicians?signed=30&status=any&sort=asks",
+    expect(tileLink(copy.metrics.politiciansAgreed(0))?.getAttribute("href")).toBe(
+      "/staff/politicians?agreed=30&status=any&sort=asks",
     );
     // With no bar the letters tile takes a sixth like the rest; a line of nothing but zeros isn't drawn.
     expect(quiet[0].element().className).toBe(spanClass(1));
@@ -513,7 +508,6 @@ describe("StaffDashboard", () => {
     await expect
       .element(page.getByRole("img", { name: copy.series(copy.metrics.eventRegistrations(4), 30, 8) }))
       .toBeVisible();
-    await expect.element(page.getByText(copy.testLetters(0))).not.toBeInTheDocument();
   });
 });
 
@@ -5388,7 +5382,7 @@ describe("PoliticianFilters", () => {
       staffCopy.fields.email,
       copy.flag,
       copy.ask,
-      copy.signedIn,
+      copy.agreedIn,
       copy.mailed,
     ]);
     expect(page.getByRole("link", { name: staffCopy.resetFilters }).query()).toBeNull();
@@ -5549,6 +5543,21 @@ describe("SupporterFilters", () => {
     expect(SUBSCRIPTION_ORDER[0]).toEqual(["email", "site-forms"]);
   });
 
+  it("has a chip for a filter only a link turns on, to change or remove, though + Filter doesn't offer it", async () => {
+    const { filter, ...search } = supportersSearch({ registered: "30" });
+    void filter;
+    await render(<SupporterFilters search={search} choices={choices} />);
+    const chip = `${copy.filters.registered}: ${staffCopy.filters.lastDays(30)}`;
+    const choicesOfChip = await menu(chip);
+    expect(choicesOfChip.map(([text]) => text)).toContain(staffCopy.filters.lastDays(90));
+    expect(choicesOfChip.find(([text]) => text === staffCopy.filters.remove)![1]).toBe("/staff/supporters");
+    await page.getByRole("button", { name: chip }).click();
+    await page.getByRole("button", { name: staffCopy.filters.add }).click();
+    const offered = [...document.querySelectorAll("#filter-add details > summary")].map((p) => p.textContent);
+    expect(offered).not.toContain(copy.filters.registered);
+    expect(offered).not.toContain(copy.filters.unsubscribed);
+  });
+
   it("offers every filter in the columns' order, events by name and day", async () => {
     const { filter, ...search } = supportersSearch({});
     void filter;
@@ -5563,8 +5572,6 @@ describe("SupporterFilters", () => {
       copy.filters.event,
       copy.filters.campaign,
       copy.filters.first,
-      copy.filters.registered,
-      copy.filters.unsubscribed,
     ]);
     const links = await menu(staffCopy.filters.add);
     expect(links).toContainEqual([

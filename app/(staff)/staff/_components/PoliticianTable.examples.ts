@@ -179,7 +179,7 @@ export const emptyPoliticiansSearch: PoliticiansSearch = {
   nation: [],
   email: [],
   mailed: [],
-  signed: "",
+  agreed: "",
   ask: "",
   answer: "",
   sort: "",

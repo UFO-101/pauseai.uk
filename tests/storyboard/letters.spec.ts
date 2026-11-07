@@ -57,7 +57,7 @@ test("Letters by count", async ({ page, request, flowDatabase }) => {
   await frame(page, "All the letters again");
 });
 
-test("All letters", async ({ page, flowDatabase }) => {
+test("All emails", async ({ page, flowDatabase }) => {
   story("Jane has written to her MP, who replied, and a mailing from PauseAI has gone to the same MP.");
   await sentLetterId(page, flowDatabase, madeUpAddress("Jane Smith", 13));
   // The page leaves out letters to test MPs, and a flow's letters can only go to one.
@@ -74,21 +74,21 @@ test("All letters", async ({ page, flowDatabase }) => {
      )
      INSERT INTO letters_from_pauseai (id, mailing_id) SELECT l.id, m.id FROM l, m`,
   );
-  await page.goto(`${BASE}/staff/letters/all`);
+  await page.goto(`${BASE}/staff/emails`);
   await expect(page.getByRole("row")).toHaveCount(3);
-  await frame(page, "Both letters");
+  await frame(page, "Both emails");
 
   story("Filtered to those replied to in the last 30 days, the mailing's letter goes, leaving Jane's.");
-  await page.goto(`${BASE}/staff/letters/all?replied=30`);
+  await page.goto(`${BASE}/staff/emails?replied=30`);
   await expect(page.getByRole("row")).toHaveCount(2);
   await expect(page.getByRole("row").nth(1)).toContainText("Jane Smith");
   await frame(page, "Those replied to");
 
-  story("The dashboard's letters tile says who they're from, and opens the same letters.");
+  story("The dashboard's supporter emails tile counts only Jane's, and opens only hers.");
   await page.goto(`${BASE}/staff`);
-  const tile = page.locator('a[href="/staff/letters/all?sent=7"]');
-  await expect(tile).toContainText(staffCopy.home.dashboard.letterKinds(1, 1));
-  await frame(page, "The letters tile");
+  const tile = page.locator('a[href="/staff/emails?type=campaign&sent=7"]');
+  await expect(tile).toContainText(staffCopy.home.dashboard.metrics.lettersSent(1));
+  await frame(page, "The supporter emails tile");
 });
 
 test("Replies to letters", async ({ page, request, flowDatabase }) => {

@@ -157,7 +157,7 @@ it("says one and many of each of the new pages' counts", () => {
     [campaigns.politicians(1), campaigns.politicians(2)],
     [campaigns.lettersTo(1, 1), campaigns.lettersTo(2, 2)],
     [campaigns.versionLine(null, 1), campaigns.versionLine("1 Jan", 2)],
-    [oneOff.threads(1), oneOff.threads(2)],
+    [staffCopy.allLetters.total(1), staffCopy.allLetters.total(2)],
     [oneOff.unmatchedAlert.subject(1), oneOff.unmatchedAlert.subject(2)],
     [gmailReading.oneOffs(1), gmailReading.oneOffs(2)],
     [asks.page.letters(1), asks.page.letters(2)],
@@ -203,5 +203,5 @@ it("says one and many of each of the new pages' counts", () => {
 });
 
 it("says which inbox the one-off emails are copied to", () => {
-  expect(staffCopy.oneOff.intro("policy@example.org")).toContain("policy@example.org");
+  expect(staffCopy.allLetters.intro("policy@example.org")).toContain("policy@example.org");
 });

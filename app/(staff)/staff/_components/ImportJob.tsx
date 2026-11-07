@@ -135,7 +135,7 @@ const ABOUT: Record<
   },
   "import-old-letters": {
     intro: staffCopy.oldLetters.intro,
-    href: "/staff/one-off",
+    href: "/staff/emails",
     button: staffCopy.oldLetters.importNow,
     none: staffCopy.oldLetters.never,
   },

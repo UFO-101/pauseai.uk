@@ -354,6 +354,12 @@ shows only those it counts, underlined, and pressed again, everyone, with
 "Show everyone" as its tooltip. The same white box, small, is a row's in a
 list of such records (the mailings), the whole box leading to the record.
 
+**The dashboard's numbers** (`METRIC_LINKS`). A tile leads to a page showing the
+number it shows: a tile saying 12 opens a list of 12. So a tile counts what its
+list has a row for, a person or a politician once, and its link carries the
+window chosen. A tile with no such page is no link. A filter added for this
+alone is hidden ("Filters", below).
+
 **Progress** (`ui/Progress`). How far something has got is a sentence
 over a thin bar: blue while it's going out, green for answers. In its
 own card under a band, and thin in a list's row.
@@ -452,6 +458,9 @@ are:
   every column gets one, only those someone will filter by. A filter with
   no column of its own goes beside the column it's about: Near and MP by
   Place, Event by Luma events.
+- A filter that only a dashboard tile needs, and that isn't useful on its own,
+  is hidden as a rule (`linkedOnly`): it isn't in "+ Filter", and is on only from
+  that link, a chip like any other.
 - A filter that makes sense more than once (`repeat`: a party, a nation,
   an event) can be chosen again, a chip each, and finds what has any of
   them; different filters must all match. An ask's answer doesn't repeat.
@@ -579,8 +588,7 @@ page, so a thing that looks the same goes to the same place. A number can go
 elsewhere, to a filter or a list of what it counts. A link to somewhere else
 has words of its own ("See it", not the name). A letter or email with no name of its own is
 opened by "Letter →", everywhere, and its status stays plain words beside it, so
-a status never looks like a link; a politician's answer in their history is plain too. A one-off thread has its subject as its name,
-so that's what opens it. Two exceptions: a name in a
+a status never looks like a link; a politician's answer in their history is plain too. A one-off thread has its subject as its name, so that's what opens it, but for All emails, where it's among letters and opened as they are, by "Thread →". Two exceptions: a name in a
 choice, such as a menu's option, picks it instead; and for staff who can't open
 the page, the name is plain.
 
