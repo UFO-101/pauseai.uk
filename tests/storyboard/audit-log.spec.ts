@@ -68,7 +68,7 @@ test("Filtering the audit log", { tag: "@phone" }, async ({ page, flowDatabase }
   await addFilter(page, copy.at, filters.lastDays(7));
   await page.getByRole("table").getByRole("link", { name: copy.action }).click();
   await expect(page).toHaveURL(/sort=action/);
-  await expect.poll(() => whoAndWhat(page)).toEqual([`${JO} save filter`, `${SAM} save filter`, `${SAM} edit event`]);
+  await expect.poll(() => whoAndWhat(page)).toEqual([`${SAM} edit event`, `${JO} save filter`, `${SAM} save filter`]);
   await frame(page, "The last week's, by what");
 
   story("Leaving out the saved filters, from Except.");

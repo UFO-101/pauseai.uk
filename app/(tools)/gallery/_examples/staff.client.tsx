@@ -2,6 +2,8 @@
 
 // The staff screens' examples whose Server Actions are props: client
 // components with no props, each action logged rather than sent.
+import ChangesFilters from "@/app/(staff)/staff/_components/ChangesFilters";
+import { changesSearch } from "@/lib/staff-search";
 import type { EmailBlock } from "@/lib/server/email";
 import type { Politician } from "@/lib/server/politicians";
 import EmailBlocksTable from "@/app/(staff)/staff/_components/EmailBlocksTable";
@@ -975,6 +977,23 @@ const SAVED_STATES = {
   edited: { values: { party: "Green", saved: "1" }, loaded: { edited: true, gone: [] } },
   gone: { values: { party: "Labour", saved: "1" }, loaded: { edited: false, gone: ["party=Reform Group"] } },
 };
+
+/** The audit log's filters: several of who chosen, one of what left out, and how recent. */
+export function ChangesFiltersExample() {
+  return (
+    <Logged>
+      {(log) => (
+        <StaffPage as="div">
+          <ChangesFilters
+            search={changesSearch({ actor: ["jo@pauseai.uk", "sync"], action: "!add note", when: "30" })}
+            choices={{ actors: ["jo@pauseai.uk", "sync"], actions: ["add note", "edit event"] }}
+            actions={{ save: log("save"), update: log("update"), rename: log("rename"), remove: log("remove") }}
+          />
+        </StaffPage>
+      )}
+    </Logged>
+  );
+}
 
 /** A filter bar with saved filters, in one of its states. */
 export function SavedFilterExample({ state }: { state: keyof typeof SAVED_STATES }) {

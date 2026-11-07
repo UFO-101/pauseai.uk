@@ -552,7 +552,19 @@ describe("FilterBar", () => {
       ]);
     });
 
-    it("marks a chosen choice with its × while one clicked is on its way", async () => {
+    it("offers what the other chip has, known or not, on neither", async () => {
+      await render(bar(["a", "!gone", "!b"]));
+      await page.getByRole("button", { name: "Kind: A" }).click();
+      expect(choices().map(([text]) => text)).toEqual([
+        "A",
+        "C",
+        "Two",
+        staffCopy.filters.exceptInstead,
+        staffCopy.filters.remove,
+      ]);
+    });
+
+    it("marks a chosen choice with an ×", async () => {
       await render(bar(["a"]));
       await page.getByRole("button", { name: "Kind: A" }).click();
       const chosen = document.querySelector("[popover]:popover-open a[aria-current]")!;

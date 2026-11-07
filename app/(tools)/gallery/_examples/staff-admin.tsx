@@ -5,7 +5,6 @@ import { exampleOldLettersResult, exampleSentEmails } from "@/app/(staff)/staff/
 // Their links go to /staff pages, which send anyone without a session to the
 // login page.
 import { Button } from "@/components/ui/Button";
-import ChangesFilters from "@/app/(staff)/staff/_components/ChangesFilters";
 import ChangesTable from "@/app/(staff)/staff/_components/ChangesTable";
 import { exampleChanges } from "@/app/(staff)/staff/_components/ChangesTable.examples";
 import AuditDetail, { FieldChanges } from "@/app/(staff)/staff/_components/AuditDetail";
@@ -69,6 +68,7 @@ import {
   StaffAccountsTableExample,
   AddStaffExample,
   MyGmailExample,
+  ChangesFiltersExample,
 } from "./staff.client";
 
 // A run of each job, as its job's page shows it. A held politician sync, with its buttons, is in the client file.
@@ -285,9 +285,6 @@ const RUNS: Record<ImportJob, Variant> = {
     ),
   },
 };
-
-/** What a saved filter's form does in the gallery: nothing. */
-const noAction = async () => {};
 
 export const staffAdmin: Group = {
   id: "staff-admin",
@@ -945,15 +942,7 @@ export const staffAdmin: Group = {
       variants: [
         {
           label: "Several of who chosen, one of what left out, and how recent",
-          render: () => (
-            <StaffPage as="div">
-              <ChangesFilters
-                search={changesSearch({ actor: ["jo@pauseai.uk", "sync"], action: "!add note", when: "30" })}
-                choices={{ actors: ["jo@pauseai.uk", "sync"], actions: ["add note", "edit event"] }}
-                actions={{ save: noAction, update: noAction, rename: noAction, remove: noAction }}
-              />
-            </StaffPage>
-          ),
+          render: () => <ChangesFiltersExample />,
         },
       ],
     },
