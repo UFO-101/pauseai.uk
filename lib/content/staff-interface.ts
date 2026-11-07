@@ -2127,7 +2127,7 @@ All events: ${link}`,
     total: (total: number) => `${total} ${total === 1 ? "email" : "emails"}`,
     search: "Sender, politician or topic",
     // Who a letter is from, the filter's name and its choices.
-    from: "From",
+    from: "Started by",
     fromKinds: {
       supporter: "Supporters",
       pauseai: "PauseAI",

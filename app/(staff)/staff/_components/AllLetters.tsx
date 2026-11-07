@@ -158,7 +158,7 @@ function Topic({ letter }: { letter: AnyLetter }) {
  */
 const COLUMNS: ListColumn<AnyLetter>[] = [
   { key: "status", label: words.columns.status, short: true, cell: (letter) => <Status letter={letter} /> },
-  { key: "from", label: words.columns.from, cell: (letter) => <From letter={letter} /> },
+  { key: "from", label: copy.from, cell: (letter) => <From letter={letter} /> },
   { key: "to", label: words.columns.to, cell: (letter) => <To letter={letter} /> },
   { key: "topic", label: copy.topic, cell: (letter) => <Topic letter={letter} /> },
   { key: "sent", label: words.columns.sent, short: true, cell: (letter) => when(letter.sentAt) },

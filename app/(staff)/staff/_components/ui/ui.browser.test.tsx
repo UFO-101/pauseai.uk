@@ -40,6 +40,30 @@ describe("ExternalLink", () => {
 });
 
 describe("FilterBarLines", () => {
+  it("doesn't count a chip's menu, open or shut, as taking room in the row", async () => {
+    const screen = await render(
+      <div style={{ width: 400 }}>
+        <FilterBarLines className="row">
+          <span style={{ display: "inline-block", width: 100 }}>Search</span>
+          <span style={{ display: "flex", columnGap: 100 }}>
+            <button type="button" popoverTarget="wide" style={{ width: 100 }}>
+              Chip
+            </button>
+            <div id="wide" popover="auto" style={{ width: 600 }}>
+              A long menu
+            </div>
+          </span>
+        </FilterBarLines>
+      </div>,
+    );
+    const row = screen.container.querySelector<HTMLElement>(".row")!;
+    await page.getByRole("button", { name: "Chip" }).click();
+    await expect.element(page.getByText("A long menu")).toBeVisible();
+    // Long enough for a resize to have been measured.
+    await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+    expect(row.hasAttribute("data-stacked")).toBe(false);
+  });
+
   const lines = (width: string) => (
     <div style={{ width }}>
       <style>{".row, .row > :last-child { column-gap: 12px; }"}</style>
