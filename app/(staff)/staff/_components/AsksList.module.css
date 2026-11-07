@@ -59,6 +59,11 @@
     grid-column: 1 / -1;
   }
 
+  /* A grid's margins don't collapse: the gap between groups is enough. */
+  .group + .group h2 {
+    margin-top: 0;
+  }
+
   .ask {
     grid-template-areas: "what ways standing";
   }
