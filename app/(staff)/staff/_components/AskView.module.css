@@ -12,6 +12,11 @@
   align-items: start;
 }
 
+/* With an answer chosen, only the columns' tops: two to a row on a phone. */
+.heads {
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+
 .column {
   overflow: hidden;
   border: 1px solid var(--border);
@@ -63,6 +68,32 @@
   color: var(--status-red);
 }
 
+/* The top of the answer chosen, underlined in its own colour. */
+.columnHead:has([aria-current]) {
+  box-shadow: inset 0 -3px currentcolor;
+}
+
+/* Those who gave the answer chosen, as a column is boxed, its edge in the answer's colour. */
+.chosen {
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--text-secondary);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.chosen[data-tone="green"] {
+  border-top-color: var(--status-green);
+}
+
+.chosen[data-tone="amber"] {
+  border-top-color: var(--status-amber);
+}
+
+.chosen[data-tone="red"] {
+  border-top-color: var(--status-red);
+}
+
 .people {
   margin: 0;
   padding: 0;
@@ -91,6 +122,11 @@
   padding: var(--space-2) var(--space-4);
   border-top: 1px solid var(--border);
   font-size: var(--text-xs);
+}
+
+.toPoliticians {
+  margin: 0;
+  font-size: var(--text-sm);
 }
 
 /* Its kind's picture beside who asked them to do what. */

@@ -243,6 +243,7 @@ describe("AskView", () => {
 
   it("gives a letter the months of its letters, or with none the month typed, and an event its day", async () => {
     const { rerender } = await render(<AskView ask={exampleAskPage} answer="" />);
+    await expect.element(link(words.everyone)).toHaveAttribute("href", `/staff/politicians?ask=${exampleAskPage.slug}`);
     await says(words.when);
     await says("Jun–Nov 2026");
     await rerender(
@@ -294,7 +295,7 @@ describe("AskView", () => {
     await says(words.none);
   });
 
-  it("shows those who gave an answer chosen, with a lozenge for each, and pressed again, the columns", async () => {
+  it("shows those who gave an answer chosen, under the columns' tops, and pressed again, the columns", async () => {
     const pill = (name: string, n: number) => page.getByRole("link", { name: `${name} ${n}`, exact: true });
     const signed = () => pill(staffCopy.statuses.signed, 2);
     const none = () => pill(staffCopy.statuses.noAnswer, 37);
@@ -308,7 +309,7 @@ describe("AskView", () => {
     await says(staffCopy.statuses.declined);
     await says("1 Oct 2026");
     await expect.element(link(words.everyone)).toHaveAttribute("href", `/staff/politicians?ask=${exampleAskPage.slug}`);
-    // Those with no answer, and no lozenge for an answer nobody gave.
+    // Those with no answer, and an answer nobody gave isn't a link.
     await rerender(
       <AskView
         ask={{

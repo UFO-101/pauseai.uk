@@ -130,6 +130,16 @@ SELECT id, 'ai-safety-briefing-jan-2027', 'event', CASE airtable_id WHEN 'recPla
   (now() - interval '5 days')::date, '', 'jo@pauseai.uk', now() - interval '5 days'
 FROM notable_people WHERE airtable_id IN ('recPlaceholder', 'recDummy');
 
+-- A letter with more answers than a column shows, and more than a page holds:
+-- 150 made-up politicians signed it and 12 declined.
+INSERT INTO asks (slug, title, kind, date, url, asked_by) VALUES
+  ('pause-treaty-letter', 'Letter calling for a pause treaty', 'letter', '2026-03-10', NULL, '{pauseai}');
+INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, status_date, note, updated_by, updated_at)
+SELECT id, 'pause-treaty-letter', 'letter', CASE WHEN rank <= 150 THEN 'signed' ELSE 'declined' END,
+  '2026-03-20', '', 'jo@pauseai.uk', '2026-03-20'
+FROM (SELECT id, row_number() OVER (ORDER BY name) AS rank FROM notable_people WHERE email LIKE '%@parliament.example') made
+WHERE rank <= 162;
+
 -- Statuses: Polly signed the letter to the PM last month; Dora this week;
 -- the peer backs the bill, from ControlAI's letter, the week before; Backy
 -- McTestface MP's bill status (lib/test-mps.json) was already there. Then

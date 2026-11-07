@@ -6,7 +6,7 @@ import styles from "./AskWays.module.css";
 
 /**
  * The campaigns and mailings that put an ask, each kind under its own heading,
- * and in a tight column. `wide`, for the whole of a page: the kinds side by
+ * and in a tight column of its own, so they line up from one ask to the next. `wide`, for the whole of a page: the kinds side by
  * side, with how many letters each sent at the end of its line.
  */
 export default function AskWays({ ways, wide = false }: { ways: AskWay[]; wide?: boolean }) {
@@ -16,7 +16,7 @@ export default function AskWays({ ways, wide = false }: { ways: AskWay[]; wide?:
         const theirs = ways.filter((way) => way.kind === kind);
         return (
           theirs.length > 0 && (
-            <div key={kind}>
+            <div key={kind} className={styles[kind]}>
               <p className={styles.heading}>{staffCopy.asks.waysOf[kind]}</p>
               <ul>
                 {theirs.map((way) => (
