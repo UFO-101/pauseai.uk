@@ -533,6 +533,24 @@ describeWithDatabase("the import of old letters", () => {
     });
   });
 
+  it("keeps a forward with its Date over its From, once what matched nothing is queued again", async () => {
+    await seed();
+    await run();
+    expect((await outcomeOf("0b07")).outcome).toBe("unmatched");
+    mailIs(
+      "0b07",
+      "t-ours",
+      "2026-10-31T10:04:00.000Z",
+      { From: "Vera Volunteer <vera.volunteer@example.com>", Subject: "Fwd: After our meeting" },
+      Buffer.from(
+        "fyi\n\n-------- Forwarded Message --------\nSubject: \tAfter our meeting\nDate: \tFri, 30 Oct 2026\nFrom: \tVera <vera.volunteer@example.com>\nTo: \tPolly <polly.placeholder.mp@parliament.uk>\n\nDear Polly,",
+      ),
+    );
+    await query("UPDATE old_letters_mail SET outcome = NULL WHERE outcome = 'unmatched'");
+    await run();
+    expect((await outcomeOf("0b07")).outcome).toBe("one_off");
+  });
+
   it("keeps a thread whole: a message no search found, once its thread is kept", async () => {
     await seed();
     await run();

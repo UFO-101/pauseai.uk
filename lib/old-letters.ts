@@ -413,8 +413,9 @@ export function quotedHeaders(text: string): QuotedHeaders[] {
     const from = field(lines[i], "from");
     if (from === undefined) continue;
     const block: QuotedHeaders = { from, sent: "", to: "", cc: "", subject: "" };
-    for (const line of lines.slice(i + 1, i + 12)) {
-      if (!line.trim()) continue;
+    /** Takes a line's field into the block; false at a line that's no field, which ends the headers. */
+    const takeField = (line: string): boolean => {
+      if (!line.trim()) return true;
       const sent = field(line, "sent") ?? field(line, "date");
       const to = field(line, "to");
       const cc = field(line, "cc");
@@ -423,8 +424,16 @@ export function quotedHeaders(text: string): QuotedHeaders[] {
       else if (to !== undefined) block.to = to;
       else if (cc !== undefined) block.cc = cc;
       else if (subject !== undefined) block.subject = subject;
-      else break;
-    }
+      else return false;
+      return true;
+    };
+    lines.slice(i + 1, i + 12).every(takeField);
+    // Thunderbird's forward has its Subject and Date over its From.
+    if (!block.sent)
+      lines
+        .slice(Math.max(0, i - 11), i)
+        .reverse()
+        .every(takeField);
     if (block.sent) found.push(block);
   }
   for (const match of clean.matchAll(
