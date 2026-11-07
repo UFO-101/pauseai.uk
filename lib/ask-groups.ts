@@ -7,14 +7,14 @@ const month = (day: string, year: boolean) =>
   new Date(day).toLocaleDateString("en-GB", { month: "short", year: year ? "numeric" : undefined, timeZone: "UTC" });
 
 /**
- * When an ask is or ran, in words. An event's day, as only a person knows it.
- * A letter's first to last letter, in months, or the day of the only one; with
- * none on record, the day typed for it, if any.
+ * When an ask is or ran, in words. An event's day, a real date people need. A
+ * letter runs over a time, so its months: from its first letter to its last, or
+ * with none on record the month typed for it, if any.
  */
 export function askPeriod(ask: AskWithCounts): string {
+  if (ask.kind === "event") return ask.date ? staffDate(ask.date) : "";
   const { firstLetter: first, lastLetter: last } = ask;
-  if (ask.kind === "event" || !first || !last) return ask.date ? staffDate(ask.date) : "";
-  if (first === last) return staffDate(first);
+  if (!first || !last) return ask.date ? month(ask.date, true) : "";
   if (first.slice(0, 7) === last.slice(0, 7)) return month(first, true);
   const sameYear = first.slice(0, 4) === last.slice(0, 4);
   return `${month(first, !sameYear)}–${month(last, true)}`;

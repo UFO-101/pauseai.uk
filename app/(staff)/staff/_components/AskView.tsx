@@ -1,6 +1,7 @@
 import { buttonClass } from "@/components/ui/Button";
 import { Muted } from "@/components/ui/Text";
 import Tag from "@/components/ui/Tag";
+import { askPeriod } from "@/lib/ask-groups";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { filtersPath, pageParam } from "@/lib/staff-search";
 import type { AskAnswer, AskAnswerGroup, AskPageData } from "@/lib/server/asks";
@@ -179,7 +180,7 @@ export default function AskView({ ask, answer }: { ask: AskPageData; answer: str
             {askedLine(ask)}
           </span>
         </BandFact>
-        <BandFact label={ask.kind === "letter" ? page.started : page.on}>{ask.date && staffDate(ask.date)}</BandFact>
+        <BandFact label={ask.kind === "letter" ? page.when : page.on}>{askPeriod(ask)}</BandFact>
         <BandFact label={page.readIt[ask.kind]}>
           {ask.url &&
             (ask.url.startsWith("/") ? (

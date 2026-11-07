@@ -1222,7 +1222,7 @@ export const staffCopy = {
     // An ask's own page.
     page: {
       asked: "Asked",
-      started: "Started",
+      when: "When",
       on: "On",
       readIt: { letter: "Read it", event: "Find out more" } as Record<string, string>,
       theLink: { letter: "The letter", event: "The event" } as Record<string, string>,

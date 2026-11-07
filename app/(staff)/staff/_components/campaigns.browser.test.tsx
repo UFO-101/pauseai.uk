@@ -241,6 +241,19 @@ describe("AskView", () => {
     await expect.element(link("Polly Placeholder")).toHaveAttribute("href", "/staff/politicians/1");
   });
 
+  it("gives a letter the months of its letters, or with none the month typed, and an event its day", async () => {
+    const { rerender } = await render(<AskView ask={exampleAskPage} answer="" />);
+    await says(words.when);
+    await says("Jun–Nov 2026");
+    await rerender(
+      <AskView ask={{ ...exampleAskPage, date: "2026-06-01", firstLetter: null, lastLetter: null }} answer="" />,
+    );
+    await says("Jun 2026");
+    await rerender(<AskView ask={{ ...exampleAskPage, kind: "event", date: "2026-11-01" }} answer="" />);
+    await says(words.on);
+    await says("1 Nov 2026");
+  });
+
   it("gives each answer a column, its count leading to all who gave it", async () => {
     const column = (name: string) => page.getByRole("link", { name, exact: true });
     const { rerender } = await render(<AskView ask={exampleAskPage} answer="" />);
@@ -317,11 +330,6 @@ describe("AskView", () => {
     await expect
       .element(page.getByRole("link", { name: staffCopy.paging.next }))
       .toHaveAttribute("href", `${path}?answer=signed&page=2`);
-  });
-
-  it("gives an ask with a date its day", async () => {
-    await render(<AskView ask={{ ...exampleAskPage, date: "2026-11-23" }} answer="" />);
-    await says("23 Nov 2026");
   });
 
   it("an event the code names: no Edit, a link on our site or another's, and when there's nothing", async () => {

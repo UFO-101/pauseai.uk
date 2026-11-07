@@ -13,17 +13,17 @@ describe("askPeriod", () => {
     expect(askPeriod(ask(event))).toBe("");
   });
 
-  it("gives a letter the months of its letters, or the day of the only one", () => {
+  it("gives a letter the months of its letters", () => {
     const letters = (firstLetter: string, lastLetter: string) =>
       askPeriod(ask({ date: "2020-01-01", firstLetter, lastLetter }));
     expect(letters("2026-06-18", "2026-11-04")).toBe("Jun–Nov 2026");
     expect(letters("2025-06-02", "2026-02-01")).toBe("Jun 2025–Feb 2026");
     expect(letters("2026-06-01", "2026-06-20")).toBe("Jun 2026");
-    expect(letters("2026-10-29", "2026-10-29")).toBe("29 Oct 2026");
+    expect(letters("2026-10-29", "2026-10-29")).toBe("Oct 2026");
   });
 
-  it("gives a letter with no letters the day typed for it, if any", () => {
-    expect(askPeriod(ask({ date: "2025-02-06" }))).toBe("6 Feb 2025");
+  it("gives a letter with no letters the month typed for it, if any", () => {
+    expect(askPeriod(ask({ date: "2025-02-06" }))).toBe("Feb 2025");
     expect(askPeriod(ask({}))).toBe("");
   });
 });
