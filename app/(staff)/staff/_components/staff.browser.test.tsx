@@ -2614,7 +2614,10 @@ describe("ImportOverview", () => {
       "/staff/audit-log",
       "/staff/mailings",
     ]);
-    // After its name, the MP check says it changes nothing, the sending that it acts, the tidying that it's housekeeping.
+    // After its name, the MP check says it changes nothing, the sending and the Luma import that they act, the tidying that it's housekeeping.
+    expect(cards[0].querySelector("h3")!.textContent).toBe(
+      `${jobTitles["import-luma"]}${staffCopy.import.takesAction}`,
+    );
     expect(cards[5].querySelector("h3")!.textContent).toBe(`${jobTitles["check-mps"]}${staffCopy.import.checkOnly}`);
     expect(cards[3].querySelector("h3")!.textContent).toBe(
       `${jobTitles["send-mailings"]}${staffCopy.import.takesAction}`,

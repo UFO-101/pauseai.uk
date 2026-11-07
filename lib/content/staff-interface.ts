@@ -1486,7 +1486,8 @@ All events: ${link}`,
     intro: {
       before: "The public events on ",
       link: "our Luma calendar",
-      after: ", who registered for each, who the hosts are and who is subscribed to the calendar (the contacts).",
+      after:
+        ", who registered for each, who the hosts are and who is subscribed to the calendar (the contacts). ⁂ It also tags new upcoming events on Luma, when their name or place makes clear which tag, and emails the notification inbox about the rest.",
     },
     importNow: "Import Luma now",
     never: "Not imported yet.",

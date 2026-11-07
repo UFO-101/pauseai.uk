@@ -51,11 +51,12 @@ const SOURCES: Record<ImportJob, ImportSource> = {
   "tidy-logs": "database",
 };
 
-/** What sets a job apart, in a lozenge after its name: the check that changes nothing, the jobs that send mail to people outside, the tidying that's the site's housekeeping. */
+/** What sets a job apart, in a lozenge after its name: the check that changes nothing, the jobs that change things outside the site, sending mail to people or tagging events on Luma, the tidying that's the site's housekeeping. */
 const TAGS: Partial<Record<ImportJob, string>> = {
   "check-mps": words.checkOnly,
   "send-mailings": words.takesAction,
   "read-gmail": words.takesAction,
+  "import-luma": words.takesAction,
   "tidy-logs": words.siteAdmin,
 };
 
