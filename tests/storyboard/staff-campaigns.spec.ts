@@ -56,7 +56,7 @@ test("No answer yet", async ({ page, flowDatabase }) => {
 });
 
 test("Asks", async ({ page, request, flowDatabase }) => {
-  story("The asks page leads each ask with how many agreed, then its answers and how we asked.");
+  story("The asks page lists each ask as the mailings page does: who asked, what they answered, and how it stands.");
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase, ["supporters"]);
   await importEmails(page);
@@ -153,11 +153,8 @@ test("A new ask", async ({ page, flowDatabase }) => {
   await frame(page, "The ask, added");
 
   story("They edit it to add the event's web address. Its title links there.");
-  await page
-    .getByRole("listitem")
-    .filter({ hasText: "Winter reception" })
-    .getByRole("link", { name: asks.edit })
-    .click();
+  await page.getByRole("link", { name: "Winter reception" }).click();
+  await page.getByRole("link", { name: asks.edit }).click();
   await expect(page.getByText("winter-reception-dec-2026", { exact: true })).toBeVisible();
   await page.getByLabel(asks.byKind.event.url).fill("https://luma.com/winter");
   await page.getByRole("button", { name: asks.save }).click();
@@ -170,11 +167,8 @@ test("A new ask", async ({ page, flowDatabase }) => {
   );
   await frame(page, "The ask, changed");
   story("Then they delete it. Delete asks to be pressed a second time.");
-  await page
-    .getByRole("listitem")
-    .filter({ hasText: "Winter reception" })
-    .getByRole("link", { name: asks.edit })
-    .click();
+  await page.getByRole("link", { name: "Winter reception" }).click();
+  await page.getByRole("link", { name: asks.edit }).click();
   await page.getByRole("button", { name: asks.delete }).click();
   await expect(page.getByRole("button", { name: staffCopy.deleteIt })).toBeFocused();
   await frame(page, "Delete, pressed once", { window: true });

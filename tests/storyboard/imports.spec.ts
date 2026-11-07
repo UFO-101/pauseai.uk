@@ -485,8 +485,6 @@ test("One-off imports", async ({ page, request, flowDatabase }) => {
     }),
   ).toBeVisible();
   await page.goto(`${BASE}/staff/asks`);
-  await expect(
-    page.getByRole("link", { name: staffCopy.asks.count(staffCopy.statuses.meeting_staff, 1) }),
-  ).toBeVisible();
+  await expect(page.getByText(`${staffCopy.statuses.meeting_staff} 1`)).toBeVisible();
   await frame(page, "The asks page");
 });

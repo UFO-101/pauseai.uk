@@ -19,13 +19,27 @@ export type Ask = {
   askedBy: Asker[];
 };
 
-/** An ask, with how many people have given each answer, how many were written to, how many of those haven't answered, and how many campaigns and mailings put it. */
+/** A campaign or mailing that put an ask: its link, name and letters. */
+export type AskWay = {
+  kind: "campaign" | "mailing";
+  href: string;
+  title: string;
+  letters: number;
+};
+
+/** An ask, with how many people have given each answer, how many were written to, how many of those haven't answered, how many campaigns and mailings put it, and which. */
 export type AskWithCounts = Ask & {
   counts: Partial<Record<AskStatus, number>>;
+  /** The days of its first and last letters, yyyy-mm-dd, if it has any. */
+  firstLetter: string | null;
+  lastLetter: string | null;
   writtenTo: number;
+  /** How many of those written to replied to a letter. */
+  replied: number;
   noAnswer: number;
   campaigns: number;
   mailings: number;
+  ways: AskWay[];
 };
 
 /** A campaign's row: its title, and the ask it makes, if any. */
@@ -49,12 +63,24 @@ export async function asksWithCounts(): Promise<AskWithCounts[]> {
   );
 }
 
-/** One row's written-to count, those of them with no answer, and the campaigns and mailings that put it. */
+/** One row's first and last letters, written-to count, those of them who replied, those with no answer, and the campaigns and mailings that put it: campaigns first, then mailings, the latest of each first. */
 const HOW_ASKED = `
   (SELECT count(DISTINCT l.notable_person_id)::int FROM letters l
      LEFT JOIN letters_from_supporters s ON s.id = l.id LEFT JOIN campaigns c ON c.slug = s.campaign
      LEFT JOIN letters_from_pauseai p ON p.id = l.id LEFT JOIN mailings m ON m.id = p.mailing_id
    WHERE c.ask = a.slug OR m.ask = a.slug) AS "writtenTo",
+  (SELECT to_char(min(coalesce(l.sent_at, l.created_at)), 'YYYY-MM-DD') FROM letters l
+     LEFT JOIN letters_from_supporters s ON s.id = l.id LEFT JOIN campaigns c ON c.slug = s.campaign
+     LEFT JOIN letters_from_pauseai p ON p.id = l.id LEFT JOIN mailings m ON m.id = p.mailing_id
+   WHERE c.ask = a.slug OR m.ask = a.slug) AS "firstLetter",
+  (SELECT to_char(max(coalesce(l.sent_at, l.created_at)), 'YYYY-MM-DD') FROM letters l
+     LEFT JOIN letters_from_supporters s ON s.id = l.id LEFT JOIN campaigns c ON c.slug = s.campaign
+     LEFT JOIN letters_from_pauseai p ON p.id = l.id LEFT JOIN mailings m ON m.id = p.mailing_id
+   WHERE c.ask = a.slug OR m.ask = a.slug) AS "lastLetter",
+  (SELECT count(DISTINCT l.notable_person_id)::int FROM letters l
+     LEFT JOIN letters_from_supporters s ON s.id = l.id LEFT JOIN campaigns c ON c.slug = s.campaign
+     LEFT JOIN letters_from_pauseai p ON p.id = l.id LEFT JOIN mailings m ON m.id = p.mailing_id
+   WHERE (c.ask = a.slug OR m.ask = a.slug) AND l.replied_at IS NOT NULL) AS replied,
   (SELECT count(DISTINCT l.notable_person_id)::int FROM letters l
      LEFT JOIN letters_from_supporters s ON s.id = l.id LEFT JOIN campaigns c ON c.slug = s.campaign
      LEFT JOIN letters_from_pauseai p ON p.id = l.id LEFT JOIN mailings m ON m.id = p.mailing_id
@@ -62,15 +88,20 @@ const HOW_ASKED = `
      SELECT 1 FROM ask_statuses st WHERE st.notable_person_id = l.notable_person_id AND st.ask = a.slug
    )) AS "noAnswer",
   (SELECT count(*)::int FROM campaigns c WHERE c.ask = a.slug) AS campaigns,
-  (SELECT count(*)::int FROM mailings m WHERE m.ask = a.slug AND m.state <> 'draft') AS mailings`;
-
-/** A campaign or mailing that put an ask: its link, name and letters. */
-export type AskWay = {
-  kind: "campaign" | "mailing";
-  href: string;
-  title: string;
-  letters: number;
-};
+  (SELECT count(*)::int FROM mailings m WHERE m.ask = a.slug AND m.state <> 'draft') AS mailings,
+  (SELECT coalesce(
+     json_agg(json_build_object('kind', w.kind, 'href', w.href, 'title', w.title, 'letters', w.letters)
+       ORDER BY w.kind, w.last DESC NULLS LAST, w.title),
+     '[]')
+   FROM (
+     SELECT 'campaign' AS kind, '/staff/campaigns/' || c.slug AS href, c.title, max(l.created_at) AS last, count(l.id)::int AS letters
+     FROM campaigns c LEFT JOIN letters_from_supporters s ON s.campaign = c.slug LEFT JOIN letters l ON l.id = s.id
+     WHERE c.ask = a.slug GROUP BY c.slug
+     UNION ALL
+     SELECT 'mailing', '/staff/mailings/' || m.id, m.title, max(coalesce(l.sent_at, l.created_at)), count(l.id)::int
+     FROM mailings m LEFT JOIN letters_from_pauseai p ON p.mailing_id = m.id LEFT JOIN letters l ON l.id = p.id
+     WHERE m.ask = a.slug AND m.state <> 'draft' GROUP BY m.id
+   ) w) AS ways`;
 
 /** A politician's answer to an ask. */
 export type AskAnswer = {
@@ -108,7 +139,6 @@ export type AskAnswerGroup = { key: string; total: number; people: AskAnswer[] }
 /** An ask's own page: how it was put, its answers' columns, and, with an answer chosen, a page of those who gave it. */
 export type AskPageData = AskWithCounts & {
   fixed: boolean;
-  ways: AskWay[];
   /** Each answer its kind allows, then those with no answer if there are any. Without an answer chosen, its first few people. */
   groups: AskAnswerGroup[];
   answers: AskAnswer[];
@@ -160,19 +190,7 @@ export async function askPageData(slug: string, answer = "", page = 1): Promise<
     ...(ask.noAnswer ? [{ key: "none", statuses: [], total: ask.noAnswer }] : []),
   ];
   const chosen = columns.find((column) => column.key === answer)?.statuses ?? [];
-  const [ways, groups, answers, total] = await Promise.all([
-    query<AskWay>(
-      `SELECT kind, href, title, letters FROM (
-         SELECT 'campaign' AS kind, '/staff/campaigns/' || c.slug AS href, c.title, max(l.created_at) AS last, count(l.id)::int AS letters
-         FROM campaigns c LEFT JOIN letters_from_supporters s ON s.campaign = c.slug LEFT JOIN letters l ON l.id = s.id
-         WHERE c.ask = $1 GROUP BY c.slug
-         UNION ALL
-         SELECT 'mailing', '/staff/mailings/' || m.id, m.title, max(coalesce(l.sent_at, l.created_at)), count(l.id)::int
-         FROM mailings m LEFT JOIN letters_from_pauseai p ON p.mailing_id = m.id LEFT JOIN letters l ON l.id = p.id
-         WHERE m.ask = $1 AND m.state <> 'draft' GROUP BY m.id
-       ) ways ORDER BY kind, last DESC NULLS LAST, title`,
-      [slug],
-    ),
+  const [groups, answers, total] = await Promise.all([
     Promise.all(
       columns.map(async ({ key, statuses, total: count }) => ({
         key,
@@ -192,7 +210,6 @@ export async function askPageData(slug: string, answer = "", page = 1): Promise<
   return {
     ...ask,
     fixed: FIXED_ASKS.includes(slug),
-    ways,
     groups,
     answers,
     answersTotal: total,

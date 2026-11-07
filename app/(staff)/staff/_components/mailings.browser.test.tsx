@@ -366,7 +366,7 @@ describe("MailingView", () => {
     await expect.element(page.getByText(copy.counts.stopped)).not.toBeInTheDocument();
     // Each recipient: their seat and party, their answer, how it went and their letter.
     await expect.element(recipient("Polly")).toMatchTextContent("Cities of London and Westminster · Labour (Co-op)");
-    await expect.element(recipient("Polly")).toMatchTextContent(`✓ ${staffCopy.statuses.going}`);
+    await expect.element(recipient("Polly")).toMatchTextContent(staffCopy.statuses.going);
     await expect.element(recipient("Polly")).toMatchTextContent(staffCopy.mailings.columns.answered);
     await expect
       .element(recipient("Polly").getByRole("link", { name: copy.letterAndReplies(2) }))

@@ -130,14 +130,7 @@ describe("the lists' counts", () => {
     ]) {
       expect(say(1)).not.toBe(say(2).replaceAll("2", "1"));
     }
-    for (const list of [
-      letters,
-      politicians,
-      staffCopy.supporters,
-      staffCopy.mailings,
-      staffCopy.asks,
-      staffCopy.changes,
-    ]) {
+    for (const list of [letters, politicians, staffCopy.supporters, staffCopy.mailings, staffCopy.changes]) {
       expect(list.total(1)).not.toBe(list.total(2).replace("2", "1"));
     }
   });
@@ -162,7 +155,7 @@ it("says one and many of each of the new pages' counts", () => {
     [oneOff.unmatchedAlert.subject(1), oneOff.unmatchedAlert.subject(2)],
     [gmailReading.oneOffs(1), gmailReading.oneOffs(2)],
     [asks.page.letters(1), asks.page.letters(2)],
-    [asks.page.way(1, "mailing"), asks.page.way(2, "campaign")],
+    [asks.page.lettersWord(1), asks.page.lettersWord(2)],
   ]) {
     expect(words[0]).not.toBe(words[1]);
   }

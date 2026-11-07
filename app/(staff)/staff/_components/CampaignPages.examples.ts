@@ -79,7 +79,10 @@ export const exampleChanged = 6;
 export const exampleAskPage: AskPageData = {
   ...exampleAsks[3],
   counts: { signed: 2, declined: 1 },
+  firstLetter: "2026-06-18",
+  lastLetter: "2026-11-04",
   writtenTo: 40,
+  replied: 5,
   campaigns: 1,
   mailings: 1,
   fixed: false,

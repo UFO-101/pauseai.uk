@@ -569,10 +569,9 @@ test("From a mailing to its ask", async ({ page, request, flowDatabase }) => {
   await expect(page).toHaveURL(`${BASE}/staff/asks/edinburgh-conference-2026`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Edinburgh conference");
   await frame(page, "The conference's page");
-  story("On the asks page, each answer's count is a link to the politicians who gave it. One is going.");
-  await page.goto(`${BASE}/staff/asks`);
-  await page.getByRole("link", { name: staffCopy.asks.count(staffCopy.statuses.going, 1) }).click();
-  await expect(page).toHaveURL(/ask=edinburgh-conference-2026&answer=going/);
+  story("On its page, each answer's column heading lists those who gave it. One is going.");
+  await page.getByRole("link", { name: new RegExp(`^${staffCopy.statuses.going} \\d`) }).click();
+  await expect(page).toHaveURL(/answer=going/);
   await expect(page.getByRole("row").filter({ hasText: "Morag Example" })).toBeVisible();
   await expect(page.getByRole("row")).toHaveCount(2);
   await frame(page, "The politicians going");

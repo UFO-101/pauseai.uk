@@ -62,23 +62,11 @@
   border-top: 1px solid var(--border);
 }
 
-/* The answer, bold, over its date: a yes ticked in green, a no crossed. */
+/* The answer, bold, over its date. */
 .answer {
   display: grid;
   align-content: start;
   font-weight: 700;
-}
-
-.yes {
-  color: var(--status-green);
-}
-
-.yes > :first-child::before {
-  content: "✓ " / "";
-}
-
-.no > :first-child::before {
-  content: "✕ " / "";
 }
 
 /* The ask's title, then who asked and when, who answered, and the form. */

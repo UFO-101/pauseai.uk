@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { buttonClass } from "@/components/ui/Button";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { now } from "@/lib/now";
 import { asksWithCounts } from "@/lib/server/asks";
 import { requireStaff } from "@/lib/server/staff-auth";
 import { askFormSearch, firstOf, type ParamValue } from "@/lib/staff-search";
 import AsksList from "../../_components/AsksList";
-import DownloadMenu from "../../_components/ui/DownloadMenu";
 import PageTitle from "../../_components/ui/PageTitle";
 import StaffLink from "../../_components/ui/StaffLink";
 
@@ -21,17 +21,14 @@ export default async function AsksPage({ searchParams }: { searchParams: Promise
       <PageTitle
         intro={staffCopy.asks.intro}
         action={
-          <>
-            <DownloadMenu download={(format) => `/staff/asks/download?format=${format}`} />
-            <StaffLink className={buttonClass({ variant: "primary", fit: true })} href="/staff/asks/new">
-              {staffCopy.asks.newTitle}
-            </StaffLink>
-          </>
+          <StaffLink className={buttonClass({ variant: "primary", fit: true })} href="/staff/asks/new">
+            {staffCopy.asks.newTitle}
+          </StaffLink>
         }
       >
         {staffCopy.asks.title}
       </PageTitle>
-      <AsksList asks={asks} notice={notice} picked={firstOf(params.ask)} />
+      <AsksList asks={asks} now={now()} notice={notice} picked={firstOf(params.ask)} />
     </>
   );
 }

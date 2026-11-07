@@ -1,4 +1,5 @@
 import "server-only";
+import type { AskStatus } from "@/lib/asks";
 import type { Permission } from "@/lib/staff-permissions";
 import type { LetterBackend, LetterFilter } from "@/lib/staff-search";
 import {
@@ -60,7 +61,7 @@ export type LetterSummary = {
   /** The politician's seat and party, and their answer to the campaign's ask, if any. */
   constituency: string | null;
   party: string | null;
-  answer: string | null;
+  answer: AskStatus | null;
   /** The share of its words, from 0 to 1, that weren't in the campaign's draft; none for one with no draft, as from Airtable. */
   ownWords: number | null;
   /** What sent it; none for one of this site's never sent. */

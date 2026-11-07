@@ -1,11 +1,14 @@
-import { buttonClass } from "@/components/ui/Button";
 import Tag, { type TagTone } from "@/components/ui/Tag";
 import { Muted } from "@/components/ui/Text";
-import { AGREED_STATUSES, ASK_STATUSES, askHref, FIXED_ASKS } from "@/lib/asks";
+import { ASK_STATUSES, askHref } from "@/lib/asks";
+import { askGroups, askPeriod } from "@/lib/ask-groups";
 import { staffCopy } from "@/lib/content/staff-interface";
 import type { AskWithCounts } from "@/lib/server/asks";
-import type { DownloadColumn } from "@/lib/staff-list";
-import { staffDate } from "@/lib/staff-time";
+import { askedLine } from "./AskLine";
+import AskKindIcon from "./AskKindIcon";
+import AskWays from "./AskWays";
+import Counts from "./ui/Counts";
+import Grid, { spanClass } from "./ui/Grid";
 import Strip from "./ui/Strip";
 import StaffLink from "./ui/StaffLink";
 import styles from "./AsksList.module.css";
@@ -29,47 +32,17 @@ const answersOf = (ask: AskWithCounts) => ASK_STATUSES[ask.kind].filter((status)
 /** How many politicians gave any answer. */
 export const answeredOf = (ask: AskWithCounts) => Object.values(ask.counts).reduce((total: number, n) => total + n!, 0);
 
-/** How many politicians agreed to it. */
-export const agreedOf = (ask: AskWithCounts) =>
-  AGREED_STATUSES.reduce((total, status) => total + (ask.counts[status] ?? 0), 0);
+/** How far an ask has gone: who was written to, in how many letters, and who replied. */
+export function askCounts(ask: AskWithCounts) {
+  const letters = ask.ways.reduce((total, way) => total + way.letters, 0);
+  return [
+    { key: "writtenTo", n: ask.writtenTo, label: copy.page.writtenTo },
+    { key: "letters", n: letters, label: copy.page.lettersWord(letters) },
+    { key: "replied", n: ask.replied, label: copy.page.replied },
+  ];
+}
 
-/** The campaigns and mailings that put it, in words. */
-export const howAsked = (ask: AskWithCounts) =>
-  [
-    ask.campaigns ? copy.page.way(ask.campaigns, "campaign") : "",
-    ask.mailings ? copy.page.way(ask.mailings, "mailing") : "",
-  ]
-    .filter(Boolean)
-    .join(" · ");
-
-/** The asks' columns in a download, the kind leading: read with the title as a sentence, "We ask them to" sign this. */
-export const askColumns: DownloadColumn<AskWithCounts>[] = [
-  { key: "kind", label: copy.columns.kind, text: (a) => copy.kinds[a.kind] },
-  { key: "ask", label: copy.columns.ask, text: (a) => a.title },
-  {
-    key: "askedBy",
-    label: copy.columns.askedBy,
-    text: (a) => a.askedBy.map((asker) => copy.askedBy[asker]).join("; "),
-  },
-  { key: "how", label: copy.columns.how, text: (a) => howAsked(a) },
-  {
-    key: "answers",
-    label: copy.columns.answers,
-    text: (a) =>
-      answersOf(a)
-        .map((status) => copy.count(staffCopy.statuses[status], a.counts[status]!))
-        .join("; "),
-  },
-  { key: "writtenTo", label: copy.columns.writtenTo, text: (a) => String(a.writtenTo) },
-  { key: "answered", label: copy.columns.answered, text: (a) => String(answeredOf(a)) },
-  { key: "date", label: copy.columns.date, text: (a) => a.date },
-];
-
-/**
- * An ask's lozenges: how many gave each answer its kind allows, each leading
- * to the politicians who gave it, then those written to with no answer,
- * leading to its own page, which lists them.
- */
+/** An ask's lozenges: how many gave each answer its kind allows, then those written to with no answer. */
 function Answers({ ask }: { ask: AskWithCounts }) {
   if (answersOf(ask).length === 0 && !ask.noAnswer)
     return (
@@ -80,34 +53,60 @@ function Answers({ ask }: { ask: AskWithCounts }) {
   return (
     <div className={styles.answers}>
       {answersOf(ask).map((status) => (
-        <StaffLink key={status} href={`/staff/politicians?ask=${ask.slug}&answer=${status}`}>
-          <Tag tone={ANSWER_TONES[status]}>
-            {staffCopy.statuses[status]} <strong>{ask.counts[status]!.toLocaleString("en-GB")}</strong>
-          </Tag>
-        </StaffLink>
+        <Tag key={status} tone={ANSWER_TONES[status]}>
+          {staffCopy.statuses[status]} <strong>{ask.counts[status]!.toLocaleString("en-GB")}</strong>
+        </Tag>
       ))}
       {ask.noAnswer > 0 && (
-        <StaffLink className={styles.noAnswer} href={`${askHref(ask.slug)}?answer=none`}>
+        <span className={styles.noAnswer}>
           {staffCopy.statuses.noAnswer} <strong>{ask.noAnswer.toLocaleString("en-GB")}</strong>
-        </StaffLink>
+        </span>
       )}
     </div>
   );
 }
 
+/** One ask's row: who asked them to do what and when, its title and its answers; the campaigns and mailings that asked it; and how it stands. */
+function AskRow({ ask, picked, Title }: { ask: AskWithCounts; picked: boolean; Title: "h2" | "h3" }) {
+  return (
+    <li id={ask.slug} className={styles.ask} aria-current={picked || undefined}>
+      <div className={styles.what}>
+        <span className={styles.asked}>
+          <AskKindIcon kind={ask.kind} size={16} />
+          {[askedLine(ask), askPeriod(ask)].filter(Boolean).join(" · ")}
+        </span>
+        <Title className={styles.title}>
+          <StaffLink href={askHref(ask.slug)}>{ask.title}</StaffLink>
+        </Title>
+        <Answers ask={ask} />
+      </div>
+      {ask.ways.length > 0 && (
+        <div className={styles.how}>
+          <AskWays ways={ask.ways} />
+        </div>
+      )}
+      <div className={styles.standing}>
+        <Counts small counts={askCounts(ask)} />
+      </div>
+    </li>
+  );
+}
+
 /**
- * Every ask, newest first, each leading with how many agreed, then what we
- * ask, its answers, and at the right its date, who asks it and how, and its
- * Edit, but for those the code names, which staff can't change. A row's ID is
- * its slug, so a link can lead to it, the one `picked` tinted; over them,
- * `notice`, how the last save or delete went.
+ * Every ask, as the list of mailings sets out its rows: events still to come,
+ * then the rest under their months and years (askGroups). A row's ID is its
+ * slug, so a link can lead to it, the one `picked` tinted; over them, `notice`,
+ * how the last save or delete went.
  */
 export default function AsksList({
   asks,
+  now,
   notice = "",
   picked = "",
 }: {
   asks: AskWithCounts[];
+  /** What divides what's to come from what's gone, and which months have their own heading. */
+  now: Date;
   notice?: string;
   picked?: string;
 }) {
@@ -120,54 +119,23 @@ export default function AsksList({
           </Strip>
         </div>
       )}
-      <p className={styles.count}>{copy.total(asks.length)}</p>
       {asks.length === 0 ? (
         <p>{copy.none}</p>
       ) : (
-        <ol className={styles.list}>
-          {asks.map((ask) => (
-            <li key={ask.slug} id={ask.slug} className={styles.ask} aria-current={ask.slug === picked || undefined}>
-              <div className={styles.agreed}>
-                <strong data-zero={!agreedOf(ask) || undefined}>{agreedOf(ask).toLocaleString("en-GB")}</strong>
-                {/* An ask's first answer is the one that means it agreed. */}
-                <Muted>{staffCopy.statuses[ASK_STATUSES[ask.kind][0]]}</Muted>
-              </div>
-              <div className={styles.main}>
-                <span className={styles.kind}>{copy.kinds[ask.kind]}</span>
-                <h2 className={styles.title}>
-                  <StaffLink href={askHref(ask.slug)}>{ask.title}</StaffLink>
-                </h2>
-                <Answers ask={ask} />
-              </div>
-              <div className={styles.side}>
-                <div>{ask.date && staffDate(ask.date)}</div>
-                {ask.askedBy.map((asker) => (
-                  <div key={asker}>
-                    <Muted>{copy.askedBy[asker]}</Muted>
-                  </div>
-                ))}
-                {ask.writtenTo > 0 && (
-                  <div>
-                    <Muted>
-                      {ask.writtenTo.toLocaleString("en-GB")} {copy.page.writtenTo}
-                    </Muted>
-                  </div>
-                )}
-                <div>
-                  <Muted>{howAsked(ask)}</Muted>
-                </div>
-                {!FIXED_ASKS.includes(ask.slug) && (
-                  <StaffLink
-                    className={buttonClass({ variant: "ghost", size: "small", fit: true })}
-                    href={`/staff/asks/${ask.slug}/edit`}
-                  >
-                    {copy.edit}
-                  </StaffLink>
-                )}
-              </div>
-            </li>
-          ))}
-        </ol>
+        <Grid>
+          <div className={spanClass(6)}>
+            {askGroups(asks, now).map((group) => (
+              <section key={group.key} className={styles.group} aria-label={group.heading || undefined}>
+                {group.heading && <h2>{group.heading}</h2>}
+                <ol className={styles.list}>
+                  {group.items.map((ask) => (
+                    <AskRow key={ask.slug} ask={ask} picked={ask.slug === picked} Title={group.heading ? "h3" : "h2"} />
+                  ))}
+                </ol>
+              </section>
+            ))}
+          </div>
+        </Grid>
       )}
     </>
   );

@@ -30,7 +30,16 @@ describeWithDatabase("asks and campaigns", () => {
       [id],
     );
     const ask = await askPageData("deepmind-letter");
-    expect(ask).toMatchObject({ fixed: true, writtenTo: 1, noAnswer: 0, counts: { signed: 1, declined: 1 } });
+    expect(ask).toMatchObject({
+      fixed: true,
+      writtenTo: 1,
+      replied: 0,
+      noAnswer: 0,
+      counts: { signed: 1, declined: 1 },
+    });
+    await query("UPDATE letters SET replied_at = now() WHERE id = $1", [id]);
+    expect((await askPageData("deepmind-letter"))!.replied).toBe(1);
+    expect(ask).toMatchObject({ firstLetter: "2025-07-01", lastLetter: "2025-07-01" });
     expect(ask!.mailings).toBeGreaterThan(0);
     expect(ask!.campaigns).toBeGreaterThan(0);
     // Campaigns first, then mailings, the latest of each first.

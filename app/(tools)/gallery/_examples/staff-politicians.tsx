@@ -14,6 +14,9 @@ import {
 } from "@/app/(staff)/staff/_components/PoliticianTable.examples";
 import AskView from "@/app/(staff)/staff/_components/AskView";
 import { exampleAskPage } from "@/app/(staff)/staff/_components/CampaignPages.examples";
+import AnswerWord from "@/app/(staff)/staff/_components/AnswerWord";
+import AskWays from "@/app/(staff)/staff/_components/AskWays";
+import AskKindIcon from "@/app/(staff)/staff/_components/AskKindIcon";
 import AsksList from "@/app/(staff)/staff/_components/AsksList";
 import { AskLead, AskPreview, AskTitle } from "@/app/(staff)/staff/_components/AskLine";
 import type { Group } from "../_components/types";
@@ -459,6 +462,46 @@ export const staffPoliticians: Group = {
       ],
     },
     {
+      name: "AnswerWord",
+      file: "app/(staff)/staff/_components/AnswerWord.tsx",
+      variants: [
+        {
+          label: "A yes, a no, one in between, and none",
+          render: () => (
+            <div style={{ display: "grid" }}>
+              <AnswerWord status="signed" />
+              <AnswerWord status="declined_surgery" />
+              <AnswerWord status="tentative" />
+              <AnswerWord status={null} />
+            </div>
+          ),
+        },
+      ],
+    },
+    {
+      name: "AskWays",
+      file: "app/(staff)/staff/_components/AskWays.tsx",
+      variants: [
+        { label: "Named", render: () => <AskWays ways={exampleAskPage.ways} /> },
+        { label: "Wide, with their letters", render: () => <AskWays ways={exampleAskPage.ways} wide /> },
+      ],
+    },
+    {
+      name: "AskKindIcon",
+      file: "app/(staff)/staff/_components/AskKindIcon.tsx",
+      variants: [
+        {
+          label: "A letter and an event",
+          render: () => (
+            <>
+              <AskKindIcon kind="letter" />
+              <AskKindIcon kind="event" size={16} />
+            </>
+          ),
+        },
+      ],
+    },
+    {
       name: "AsksList",
       file: "app/(staff)/staff/_components/AsksList.tsx",
       variants: [
@@ -466,7 +509,7 @@ export const staffPoliticians: Group = {
           label: "Every ask, with its answers",
           render: () => (
             <StaffPage as="div">
-              <AsksList asks={exampleAsksWithCounts} />
+              <AsksList asks={exampleAsksWithCounts} now={new Date("2026-10-01T12:00:00Z")} />
             </StaffPage>
           ),
         },

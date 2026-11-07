@@ -5,25 +5,22 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import { filtersPath, pageParam } from "@/lib/staff-search";
 import type { AskAnswer, AskAnswerGroup, AskPageData } from "@/lib/server/asks";
 import { staffDate } from "@/lib/staff-time";
-import { agreedOf, answeredOf, ANSWER_TONES, howAsked } from "./AsksList";
+import { answeredOf, ANSWER_TONES, askCounts } from "./AsksList";
 import Band, { BandFact } from "./ui/Band";
 import Counts from "./ui/Counts";
 import Grid, { Card } from "./ui/Grid";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
 import StaffLink from "./ui/StaffLink";
 import SegmentLinks from "./ui/SegmentLinks";
+import { askedLine } from "./AskLine";
+import AskKindIcon from "./AskKindIcon";
+import AskWays from "./AskWays";
 import styles from "./AskView.module.css";
 import TestTag from "./TestTag";
 import ExternalLink from "./ui/ExternalLink";
 
 const copy = staffCopy.asks;
 const page = copy.page;
-
-/** Who asked and what, in the words a politician's page uses. */
-function askedLine(ask: AskPageData): string {
-  const who = new Intl.ListFormat("en-GB").format(ask.askedBy.map((asker) => copy.askedBy[asker]));
-  return staffCopy.politician.askedThem(who, ask.kind);
-}
 
 /** What a column of answers is called. */
 function groupName(key: string): string {
@@ -156,14 +153,14 @@ function ChosenAnswer({ ask, answer, path }: { ask: AskPageData; answer: string;
 
 /**
  * An ask's page, in a mailing's shape: over its title what they were asked to
- * do, its date and where to read it, with its counts; then its answers, a
- * column each, or those of the one chosen; and last how we asked, in a line.
+ * do, its date and where to read it; then its answers, a column each, or those
+ * of the one chosen; and last how we asked, how many were written to, its letters and
+ * who replied at its top right, and each campaign and mailing under its kind.
  * It has no letters of its own. An ask the code names can't be edited.
  */
 export default function AskView({ ask, answer }: { ask: AskPageData; answer: string }) {
   const path = `/staff/asks/${ask.slug}`;
   const answered = answeredOf(ask);
-  const letters = ask.ways.reduce((total, way) => total + way.letters, 0);
   return (
     <div className={styles.page}>
       <Band
@@ -175,17 +172,13 @@ export default function AskView({ ask, answer }: { ask: AskPageData; answer: str
             </StaffLink>
           )
         }
-        aside={
-          <Counts
-            counts={[
-              { key: "writtenTo", n: ask.writtenTo, label: page.writtenTo },
-              { key: "answered", n: answered, label: page.answered },
-              { key: "agreed", n: agreedOf(ask), label: page.agreed, tone: "green" },
-            ]}
-          />
-        }
       >
-        <BandFact label={page.asked}>{askedLine(ask)}</BandFact>
+        <BandFact label={page.asked}>
+          <span className={styles.asked}>
+            <AskKindIcon kind={ask.kind} size={18} />
+            {askedLine(ask)}
+          </span>
+        </BandFact>
         <BandFact label={ask.kind === "letter" ? page.started : page.on}>{ask.date && staffDate(ask.date)}</BandFact>
         <BandFact label={page.readIt[ask.kind]}>
           {ask.url &&
@@ -214,27 +207,19 @@ export default function AskView({ ask, answer }: { ask: AskPageData; answer: str
         </section>
       )}
       <Grid>
-        <Card span={6} look="aside" title={page.howWeAsked} id="how-we-asked">
+        <Card
+          span={6}
+          look="aside"
+          title={page.howWeAsked}
+          id="how-we-asked"
+          action={<Counts small counts={askCounts(ask)} />}
+        >
           {ask.ways.length === 0 ? (
             <p>
               <Muted>{page.noWay}</Muted>
             </p>
           ) : (
-            <>
-              <p className={styles.waysTotal}>
-                <Muted>
-                  {howAsked(ask)} · {page.letters(letters)}
-                </Muted>
-              </p>
-              <ul className={styles.ways}>
-                {ask.ways.map((way) => (
-                  <li key={way.href}>
-                    <StaffLink href={way.href}>{way.title}</StaffLink>{" "}
-                    <Muted>{way.letters.toLocaleString("en-GB")}</Muted>
-                  </li>
-                ))}
-              </ul>
-            </>
+            <AskWays ways={ask.ways} wide />
           )}
         </Card>
       </Grid>

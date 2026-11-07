@@ -51,9 +51,8 @@
   font-size: var(--text-sm);
 }
 
-/* Their answer to the ask, in green. */
+/* Their answer to the ask. */
 .answer {
-  color: var(--status-green);
   font-weight: 600;
 }
 

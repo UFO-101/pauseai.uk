@@ -1,0 +1,11 @@
+.yes {
+  color: var(--status-green);
+}
+
+.yes::before {
+  content: "✓ " / "";
+}
+
+.no::before {
+  content: "✕ " / "";
+}

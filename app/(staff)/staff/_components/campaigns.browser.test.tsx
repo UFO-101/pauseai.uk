@@ -6,6 +6,7 @@ import { page } from "vitest/browser";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { staffTime } from "@/lib/staff-time";
 import type { Mailing } from "@/lib/server/mailings";
+import AnswerWord from "./AnswerWord";
 import AskView from "./AskView";
 import ChangesTable from "./ChangesTable";
 import CampaignLetter from "./CampaignLetter";
@@ -155,7 +156,7 @@ describe("CampaignView's public page", () => {
 describe("CampaignView", () => {
   const letters = [
     exampleLetter,
-    { ...exampleLetter, id: 2, status: "sent", answer: "signed", constituency: null, party: "" },
+    { ...exampleLetter, id: 2, status: "sent", answer: "signed" as const, constituency: null, party: "" },
     { ...exampleLetter, id: 3, status: "sent", repliedAt: NOW, ownWords: null, supporterId: null },
     { ...exampleLetter, id: 4, status: "sent", autoRepliedAt: NOW },
     { ...exampleLetter, id: 5, status: "unknown" },
@@ -178,7 +179,7 @@ describe("CampaignView", () => {
     await says(copy.politicians(9));
     await says(staffCopy.mailingPages.answeredBar(3, 9));
     await expect.element(link(exampleCampaign.askTitle!)).toHaveAttribute("href", `/staff/asks/${exampleCampaign.ask}`);
-    await says(`✓ ${staffCopy.statuses.signed}`);
+    await says(staffCopy.statuses.signed);
     await says(staffCopy.letters.status.bounced);
     await says(staffCopy.letters.status.auto_reply);
     await says("unknown");
@@ -199,17 +200,44 @@ describe("CampaignView", () => {
   });
 });
 
+describe("AnswerWord", () => {
+  const mark = (name: string) => getComputedStyle(page.getByText(name).element(), "::before").content;
+
+  it("ticks a yes, crosses a no, and marks nothing else", async () => {
+    await render(
+      <>
+        <AnswerWord status="signed" />
+        <AnswerWord status="going" />
+        <AnswerWord status="declined" />
+        <AnswerWord status="declined_surgery" />
+        <AnswerWord status="tentative" />
+        <AnswerWord status={null} />
+      </>,
+    );
+    expect(mark(staffCopy.statuses.signed)).toContain("✓");
+    expect(mark(staffCopy.statuses.going)).toContain("✓");
+    expect(mark(staffCopy.statuses.declined)).toContain("✕");
+    expect(mark(staffCopy.statuses.declined_surgery)).toContain("✕");
+    expect(mark(staffCopy.statuses.tentative)).toBe("none");
+    expect(mark(staffCopy.statuses.noAnswer)).toBe("none");
+  });
+});
+
 describe("AskView", () => {
   const path = `/staff/asks/${exampleAskPage.slug}`;
   const words = staffCopy.asks.page;
 
-  it("leads with what they were asked and its counts, then its answers, then how we asked", async () => {
+  it("leads with what they were asked, then its answers, then how we asked and its counts", async () => {
     await render(<AskView ask={exampleAskPage} answer="" />);
     expect(document.body.textContent).toContain(staffCopy.politician.askedThem("PauseAI", "letter").slice(0, 8));
     await expect.element(link(exampleAskPage.ways[0].title)).toHaveAttribute("href", exampleAskPage.ways[0].href);
-    await says(`${words.way(1, "campaign")} · ${words.way(1, "mailing")} · ${words.letters(40)}`);
+    // Each kind under its own heading, with how many letters each sent.
+    await says(staffCopy.asks.waysOf.campaign);
+    await says(staffCopy.asks.waysOf.mailing);
+    expect(document.body.textContent).toContain(`${exampleAskPage.ways[0].title}${words.letters(19)}`);
     await expect.element(link(staffCopy.asks.edit)).toHaveAttribute("href", `${path}/edit`);
-    await says(words.agreed);
+    await says(`5 ${words.replied}`);
+    await says(`40 ${words.lettersWord(40)}`);
     await expect.element(link("Polly Placeholder")).toHaveAttribute("href", "/staff/politicians/1");
   });
 

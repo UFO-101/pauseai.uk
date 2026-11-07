@@ -92,24 +92,9 @@
   font-size: var(--text-xs);
 }
 
-.waysTotal {
-  margin: 0;
-  font-size: var(--text-xs);
-}
-
-/* Every campaign and mailing that put it, in a line, a dot between each. */
-.ways {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) 0;
-  margin: 0;
-  padding: 0;
-  font-size: var(--text-sm);
-  list-style: none;
-}
-
-.ways li + li::before {
-  content: "·";
-  margin: 0 var(--space-2);
-  color: var(--muted);
+/* Its kind's picture beside who asked them to do what. */
+.asked {
+  display: inline-flex;
+  gap: var(--space-1);
+  align-items: center;
 }
