@@ -52,11 +52,16 @@ async function headerHeight(page: Page): Promise<number> {
   return page.evaluate(() => (document.querySelector("header") as HTMLElement).offsetHeight);
 }
 
-/** Scroll-padding should land the target below the sticky nav, not under it. */
+/**
+ * Scroll-padding should land the target below the sticky nav, not under it.
+ * It waits for the target to arrive, as a smooth scroll on a loaded runner can
+ * pause for longer than scrollSettled() allows; a target that lands elsewhere
+ * never arrives, and fails.
+ */
 async function expectClearOfNav(page: Page, id: string) {
+  await expect.poll(() => targetOffset(page, id), `#${id} landed too far down the viewport`).toBeLessThan(120);
   const [top, header] = await Promise.all([targetOffset(page, id), headerHeight(page)]);
   expect(top, `#${id} sits under the ${header}px sticky nav`).toBeGreaterThanOrEqual(header - 5);
-  expect(top, `#${id} landed too far down the viewport`).toBeLessThan(120);
 }
 
 test.describe("in-page scrolling", () => {

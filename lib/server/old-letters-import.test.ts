@@ -1216,3 +1216,11 @@ it("searches parliaments' domains, a politician's own, and addresses on neither 
   expect(sent[1]).not.toContain("a@parliament.uk");
   expect(politicianSearches(book, "received")[0]).toMatch(/^-in:sent \{from:parliament\.uk/);
 });
+
+it("splits the politicians' own domains over searches short enough for Gmail", () => {
+  const domains = new Map(Array.from({ length: 100 }, (_, i) => [`a-rather-long-domain-${i}.example`, i]));
+  const searches = politicianSearches({ addresses: new Map(), domains }, "sent");
+  expect(searches.length).toBeGreaterThan(1);
+  for (const search of searches) expect(search.length).toBeLessThan(2500);
+  for (const domain of domains.keys()) expect(searches.join(" ")).toContain(`to:${domain}`);
+});

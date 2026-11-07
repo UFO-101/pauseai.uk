@@ -89,8 +89,8 @@ const READ_MS = 20_000;
 /** The group's mail, as Gmail lists it. */
 const GROUP_SEARCH = "list:policy@pauseai.uk OR list:policy-archive@pauseai.uk";
 
-/** How many addresses a Gmail search names at once. */
-const ADDRESSES_A_SEARCH = 30;
+/** How many addresses or domains a Gmail search names at once: too long a search, and it answers 400. */
+const NAMES_A_SEARCH = 30;
 
 /** Why reading stopped short. */
 class TimeUp extends Error {}
@@ -154,9 +154,10 @@ export function politicianSearches(book: PoliticianBook, side: "sent" | "receive
   const others = [...book.addresses.keys()].filter(
     (address) => !domains.some((d) => address.endsWith(`.${d}`) || address.endsWith(`@${d}`)),
   );
-  const searches = [words(domains)];
-  for (let i = 0; i < others.length; i += ADDRESSES_A_SEARCH)
-    searches.push(words(others.slice(i, i + ADDRESSES_A_SEARCH)));
+  const searches: string[] = [];
+  for (const group of [domains, others]) {
+    for (let i = 0; i < group.length; i += NAMES_A_SEARCH) searches.push(words(group.slice(i, i + NAMES_A_SEARCH)));
+  }
   return searches;
 }
 
