@@ -84,6 +84,7 @@ const EXAMPLE_NATIONS = [
       { value: "england", label: "England" },
       { value: "scotland", label: "Scotland" },
       { value: "wales", label: "Wales" },
+      { value: "ireland", label: "Northern Ireland" },
     ],
   },
 ];
@@ -941,6 +942,19 @@ export const staffKit: Group = {
               <FilterBar
                 path="#"
                 values={{ nation: ["scotland", "!wales"] }}
+                search={{ name: "q", label: "Name" }}
+                filters={EXAMPLE_NATIONS}
+              />
+            </StaffPage>
+          ),
+        },
+        {
+          label: "A filter that repeats, several choices: all it finds on one chip, all it leaves out on another",
+          render: () => (
+            <StaffPage as="div">
+              <FilterBar
+                path="#"
+                values={{ nation: ["scotland", "england", "!wales", "!ireland"] }}
                 search={{ name: "q", label: "Name" }}
                 filters={EXAMPLE_NATIONS}
               />

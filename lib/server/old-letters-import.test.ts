@@ -14,7 +14,7 @@ import {
 import { stubLettersInboxEnv } from "@/tests/gmail-sends";
 import { sentToday } from "./gmail-accounts";
 import { query, transaction } from "./db";
-import { importOldLetters, jobProgress, politicianSearches } from "./old-letters-import";
+import { importOldLetters, jobProgress, pacer, politicianSearches } from "./old-letters-import";
 
 const GMAIL = "https://gmail.googleapis.com/gmail/v1/users/me";
 
@@ -123,6 +123,27 @@ const outcomeOf = async (id: string) =>
       [id],
     )
   )[0];
+
+describe("the pacer", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("lets the first request straight through, makes the next wait out the pace, and stops once time is up", async () => {
+    vi.useFakeTimers();
+    const result = { requests: 0 };
+    const turn = pacer(500, Date.now() + 1000, result);
+    await turn();
+    expect(result.requests).toBe(1);
+    const second = turn();
+    await vi.advanceTimersByTimeAsync(499);
+    expect(result.requests).toBe(1);
+    await vi.advanceTimersByTimeAsync(1);
+    await second;
+    expect(result.requests).toBe(2);
+    await vi.advanceTimersByTimeAsync(500);
+    await expect(turn()).rejects.toThrow();
+    expect(result.requests).toBe(2);
+  });
+});
 
 describeWithDatabase("the import of old letters", () => {
   useTestDatabase();

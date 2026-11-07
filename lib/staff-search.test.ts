@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  changesSearch,
   sentEmailsSearch,
   accountsSearch,
   allLettersSearch,
@@ -20,6 +21,54 @@ import {
   erasedPath,
   eraseLeftovers,
 } from "./staff-search";
+
+describe("changesSearch", () => {
+  it("reads the audit log's filters, any and none, and its sort, as typed and as applied", () => {
+    expect(
+      changesSearch({
+        q: " polly ",
+        actor: ["jo@pauseai.uk", "!sync"],
+        action: "!add note",
+        when: "30",
+        sort: "actor",
+        dir: "asc",
+        page: "2",
+        saved: "4",
+      }),
+    ).toEqual({
+      q: " polly ",
+      actor: ["jo@pauseai.uk", "!sync"],
+      action: ["!add note"],
+      when: "30",
+      sort: "actor",
+      dir: "asc",
+      page: "2",
+      saved: "4",
+      filter: {
+        search: "polly",
+        actor: ["jo@pauseai.uk"],
+        action: undefined,
+        days: 30,
+        not: { actor: ["sync"], action: ["add note"] },
+        sort: { key: "actor", dir: "asc" },
+        page: 2,
+      },
+    });
+  });
+
+  it("is newest first, of everything, with nothing asked for, or what it doesn't know", () => {
+    const { filter } = changesSearch({ when: "5", sort: "details", q: "  " });
+    expect(filter).toEqual({
+      search: undefined,
+      actor: undefined,
+      action: undefined,
+      days: undefined,
+      not: undefined,
+      sort: { key: "day", dir: "desc" },
+      page: 1,
+    });
+  });
+});
 
 describe("sentEmailsSearch", () => {
   it("reads the sent emails' filters and search, those to leave out apart", () => {

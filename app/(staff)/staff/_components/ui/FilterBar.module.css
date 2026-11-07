@@ -296,9 +296,21 @@
 }
 
 /* A choice clicked (StaffLink): chosen at once, the one it was no longer; the menu closes when the list arrives. */
-.choices:has(a[data-pending]) a[aria-current]:not([data-pending]) {
+.choices:not(.toggles):has(a[data-pending]) a[aria-current]:not([data-pending]) {
   background: none;
   font-weight: inherit;
+}
+
+/* A repeating filter's chip's choices: following one chosen takes it off, as the × at its right says. */
+.toggles a[aria-current] {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: space-between;
+}
+
+.toggles a[aria-current]::after {
+  content: "×" / "";
+  font-weight: 400;
 }
 
 /* Under a chip's choices, ruled off from them: turning it the other way and

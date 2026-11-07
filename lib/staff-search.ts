@@ -4,6 +4,8 @@
 import { staffCopy } from "@/lib/content/staff-interface";
 import { listWindow, type DashboardWindow } from "./staff-dashboard";
 import { contactState } from "@/lib/contact-permissions";
+import { CHANGE_SORTS } from "@/lib/change-sort";
+import type { ChangesFilter } from "@/lib/server/audit";
 import type { BlocksFilter } from "@/lib/server/email";
 import type { SentEmailsFilter } from "@/lib/server/sent-emails";
 import { campaignBySlug } from "@/lib/email-your-mp";
@@ -182,6 +184,52 @@ export function sentEmailsSearch(
       backend: backends,
       link: links,
       not: notOf({ purpose: notPurposes, outcome: notOutcomes, backend: notBackends, link: notLinks }),
+      page: pageNumber(page),
+    },
+  };
+}
+
+export type ChangesSearch = {
+  q: string;
+  /** Who did it: a staff email, or "sync". */
+  actor: string[];
+  /** What they did. */
+  action: string[];
+  /** Those of the last so many days. */
+  when: string;
+  sort: string;
+  dir: string;
+  page: string;
+  /** The saved filter loaded, by ID. */
+  saved: string;
+};
+
+/** The audit log's filters and sort, each as typed and as applied. */
+export function changesSearch(
+  params: Partial<Record<keyof ChangesSearch, ParamValue>>,
+): ChangesSearch & { filter: ChangesFilter } {
+  const [q, when, sort, dir, page, saved] = (["q", "when", "sort", "dir", "page", "saved"] as const).map((name) =>
+    firstOf(params[name]),
+  );
+  const [actor, action] = (["actor", "action"] as const).map((name) => valuesOf(params[name]));
+  const [actors, notActors] = anyAndNone(actor, (values) => values);
+  const [actions, notActions] = anyAndNone(action, (values) => values);
+  return {
+    q,
+    actor,
+    action,
+    when,
+    sort,
+    dir,
+    page,
+    saved,
+    filter: {
+      search: q.trim() || undefined,
+      actor: actors,
+      action: actions,
+      days: listWindow(when),
+      not: notOf({ actor: notActors, action: notActions }),
+      sort: parseSort(CHANGE_SORTS, "day", sort, dir),
       page: pageNumber(page),
     },
   };

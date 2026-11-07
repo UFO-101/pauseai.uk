@@ -58,6 +58,7 @@ import Tag from "@/components/ui/Tag";
 import { GmailConnect, GmailOutcome, SentToday } from "@/app/(staff)/staff/_components/GmailConnect";
 import AccountTitle from "@/app/(staff)/staff/_components/AccountTitle";
 import { staffCopy } from "@/lib/content/staff-interface";
+import { changesSearch } from "@/lib/staff-search";
 import type { ImportJob } from "@/lib/import-runs";
 import type { Group, Variant } from "../_components/types";
 import {
@@ -67,6 +68,7 @@ import {
   StaffAccountsTableExample,
   AddStaffExample,
   MyGmailExample,
+  ChangesFiltersExample,
 } from "./staff.client";
 
 // A run of each job, as its job's page shows it. A held politician sync, with its buttons, is in the client file.
@@ -935,6 +937,16 @@ export const staffAdmin: Group = {
       ],
     },
     {
+      name: "ChangesFilters",
+      file: "app/(staff)/staff/_components/ChangesFilters.tsx",
+      variants: [
+        {
+          label: "Several of who chosen, one of what left out, and how recent",
+          render: () => <ChangesFiltersExample />,
+        },
+      ],
+    },
+    {
       name: "ChangesTable",
       file: "app/(staff)/staff/_components/ChangesTable.tsx",
       variants: [
@@ -943,6 +955,7 @@ export const staffAdmin: Group = {
           render: () => (
             <StaffPage as="div">
               <ChangesTable
+                search={changesSearch({})}
                 log={{ changes: exampleChanges, total: exampleChanges.length, pages: 1, pageSize: 100 }}
                 page={1}
                 airtableTable="https://airtable.com/app/tbl"

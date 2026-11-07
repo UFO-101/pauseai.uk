@@ -3,7 +3,7 @@
 import { filtersPath, valuesOf, WHO_PARAMS, type ParamValue, type Params } from "@/lib/staff-search";
 
 /** The lists that can have saved filters. */
-export const SAVED_LISTS = ["politicians", "supporters", "events"] as const;
+export const SAVED_LISTS = ["politicians", "supporters", "events", "audit-log"] as const;
 export type SavedList = (typeof SAVED_LISTS)[number];
 
 /** Each list's page. */
@@ -11,18 +11,21 @@ export const SAVED_LIST_PATHS: Record<SavedList, string> = {
   politicians: "/staff/politicians",
   supporters: "/staff/supporters",
   events: "/staff/events",
+  "audit-log": "/staff/audit-log",
 };
 
 /** Each list's parameters that choose what it shows, its tab apart on the events list. */
 const CHOOSING_PARAMS: Record<SavedList, readonly string[]> = {
   ...WHO_PARAMS,
   events: ["q", "owner", "tag", "place", "removed", "held"],
+  "audit-log": ["q", "actor", "action", "when"],
 };
 
 const SAVED_PARAMS: Record<SavedList, readonly string[]> = {
   politicians: [...CHOOSING_PARAMS.politicians, "sort", "dir"],
   supporters: [...CHOOSING_PARAMS.supporters, "sort", "dir"],
   events: ["when", ...CHOOSING_PARAMS.events, "sort", "dir"],
+  "audit-log": [...CHOOSING_PARAMS["audit-log"], "sort", "dir"],
 };
 
 /** What goes with a list's URL but isn't part of a filter, kept when one is loaded: who a mailing is being chosen for. */

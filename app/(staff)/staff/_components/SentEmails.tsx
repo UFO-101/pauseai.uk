@@ -17,7 +17,6 @@ import FilterBar, { type Filter } from "./ui/FilterBar";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
 import StaffLink from "./ui/StaffLink";
 import Withheld from "./ui/Withheld";
-import styles from "./SentEmails.module.css";
 
 const PATH = "/staff/sent-emails";
 const copy = staffCopy.sentEmails;
@@ -117,8 +116,7 @@ const columns: (ListColumn<SentEmail> & { key: SentEmailSort | "links" })[] = [
 ];
 
 /**
- * The send log, for admins: a heading only a screen reader reads, as the
- * menu names the page; a search and filters; then a row for each email, each
+ * The send log, for admins: its heading; a search and filters; then a row for each email, each
  * column but its links a sort, newest first unless another is chosen.
  * A row never shows the email's text.
  */
@@ -163,7 +161,7 @@ export default function SentEmails({
   );
   return (
     <>
-      <h1 className={styles.heading}>{staffCopy.nav.sentEmails}</h1>
+      <h1>{staffCopy.nav.sentEmails}</h1>
       {!supporters && (
         <p>
           <Withheld>{copy.withheld}</Withheld>
