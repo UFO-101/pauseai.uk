@@ -4,6 +4,7 @@ import { logChange } from "./audit";
 import { query, transaction } from "./db";
 import { gmailAccess } from "./gmail-accounts";
 import { newMessageId } from "./mime";
+import { alertIfPoliticianBlocked } from "./notifications";
 import { GmailError, gmailMessageId, sendGmail, sendRawGmail } from "./outside-services/gmail";
 import { PostmarkError, sendEmail, unsuppress, type Email } from "./outside-services/postmark";
 import { resendAfterFix } from "./relays";
@@ -98,7 +99,8 @@ export async function isBlocked(address: string): Promise<boolean> {
 
 /**
  * Sends an email, unless its address is blocked. The provider refusing an
- * address it suppressed blocks it here too. Every try is logged in
+ * address it suppressed blocks it here too, and staff are told if it's a
+ * politician's. Every try is logged in
  * email_sends; a failure is logged to the console as well. Never throws for
  * the provider: callers decide what to tell people.
  */
@@ -155,7 +157,14 @@ export async function send(
       const named = inactiveAddresses(error.message);
       const inactive = named.length ? named : [address];
       for (const each of inactive) {
-        await recordProblem({ address: each, messageId: null, kind: "hard", reason: error.message, canReset: true });
+        const problem = {
+          address: each,
+          messageId: null,
+          kind: "hard",
+          reason: error.message,
+          canReset: true,
+        } as const;
+        if (await recordProblem(problem)) await alertIfPoliticianBlocked(each, error.message, undefined);
       }
       if (inactive.includes(address)) {
         await log("refused");

@@ -56,7 +56,7 @@ describeWithDatabase("handleDeliveryProblem", () => {
   const letter = async () => (await query<{ status: string }>("SELECT status FROM letters"))[0].status;
   const events = () => query("SELECT status, details FROM letter_events");
 
-  it("marks a mailing's letter that bounced, without emailing staff", async () => {
+  it("marks a mailing's letter that bounced, leaving staff to the day's report", async () => {
     const mp = await addTestMp();
     const [{ id }] = await query<{ id: number }>(
       "INSERT INTO letters (kind, notable_person_id, status) VALUES ('pauseai', $1, 'sent') RETURNING id::int AS id",
@@ -70,6 +70,35 @@ describeWithDatabase("handleDeliveryProblem", () => {
     await handleDeliveryProblem(BOUNCE, REQUEST);
     expect(await letter()).toBe("bounced");
     expect(await events()).toMatchObject([{ status: "bounced" }]);
+    expect(sent).toEqual([]);
+  });
+
+  it.each(["office-notice", null] as const)(
+    "emails staff of a politician's address blocked by an email of purpose %s, which has no hook to tell them",
+    async (purpose) => {
+      if (purpose) await sentEmail(purpose);
+      else await addTestMp();
+      const sent = postmark();
+      await handleDeliveryProblem({ ...BOUNCE, address: `"Test" <${BOUNCE.address.toUpperCase()}>` }, REQUEST);
+      const words = staffCopy.alert.notALetter;
+      expect(sent).toMatchObject([{ Subject: words.subject("Testy McTestface MP") }]);
+      expect(sent[0].TextBody).toBe(
+        words.body(
+          "Testy McTestface MP",
+          "test-mp@parliament.example",
+          "Unknown user",
+          "https://pauseai.uk/staff/politicians/blocked-emails",
+        ),
+      );
+    },
+  );
+
+  it("says nothing of an address blocked that isn't a politician's in office", async () => {
+    await sentEmail("forwarded-reply");
+    const sent = postmark();
+    await handleDeliveryProblem({ ...BOUNCE, address: "someone@example.org" }, REQUEST);
+    await query("UPDATE notable_people SET status = 'left_office'");
+    await handleDeliveryProblem(BOUNCE, REQUEST);
     expect(sent).toEqual([]);
   });
 
@@ -141,7 +170,7 @@ describeWithDatabase("handleDeliveryProblem", () => {
   });
 
   it("leaves letters alone for other emails, ones we didn't send, and a letter since deleted", async () => {
-    const sent = postmark();
+    postmark();
     for (const purpose of ["forwarded-reply", "staff-login", "staff-alert"] as const) {
       await query("TRUNCATE letters, email_sends, politicians RESTART IDENTITY CASCADE");
       await sentEmail(purpose);
@@ -157,7 +186,6 @@ describeWithDatabase("handleDeliveryProblem", () => {
     await query("DELETE FROM letters WHERE id = $1", [id]);
     await handleDeliveryProblem(BOUNCE, REQUEST);
     expect(await query("SELECT * FROM letter_events")).toEqual([]);
-    expect(sent).toEqual([]);
     // Every problem is still recorded.
     expect(await query("SELECT count(*)::int AS n FROM email_problems")).toEqual([{ n: 6 }]);
   });

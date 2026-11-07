@@ -90,6 +90,26 @@ describeWithDatabase("send", () => {
     expect(await sends()).toMatchObject([{ outcome: "refused" }]);
   });
 
+  it("tells staff, once, when Postmark refuses a politician's address", async () => {
+    vi.stubEnv("NOTIFICATION_INBOX", "notifications@pauseai.uk");
+    vi.stubEnv("SITE_ORIGIN", "https://pauseai.uk");
+    const mp = await addTestMp();
+    const [{ email }] = await query<{ email: string }>("SELECT email FROM notable_people WHERE id = $1", [mp]);
+    const alerts: string[] = [];
+    server.use(
+      http.post(POSTMARK, async ({ request }) => {
+        const { To, Subject } = (await request.json()) as { To: string; Subject: string };
+        if (To === email) return HttpResponse.json({ ErrorCode: 406, Message: "Inactive recipient" }, { status: 422 });
+        alerts.push(Subject);
+        return HttpResponse.json({ ErrorCode: 0, MessageID: "alert" });
+      }),
+    );
+    expect(await send({ ...EMAIL, To: email }, "mailing")).toEqual({ sent: false, reason: "blocked" });
+    expect(alerts).toEqual([staffCopy.alert.notALetter.subject("Testy McTestface MP")]);
+    expect(await send({ ...EMAIL, To: email }, "mailing")).toEqual({ sent: false, reason: "blocked" });
+    expect(alerts).toHaveLength(1);
+  });
+
   it("blocks only the addresses Postmark names, and says it failed when they don't include the To", async () => {
     const refusal = (names: string) =>
       server.use(
@@ -108,9 +128,11 @@ describeWithDatabase("send", () => {
     expect(await isBlocked("copy@example.org")).toBe(true);
     expect(await isBlocked("other@example.org")).toBe(true);
     expect(await isBlocked("jo@example.org")).toBe(false);
+    // A Cc already blocked stays so.
+    expect(await send(EMAIL, "letter")).toEqual({ sent: false, reason: "failed" });
     refusal("jo@example.org");
     expect(await send(EMAIL, "letter")).toEqual({ sent: false, reason: "blocked" });
-    expect(await sends()).toMatchObject([{ outcome: "failed" }, { outcome: "refused" }]);
+    expect(await sends()).toMatchObject([{ outcome: "failed" }, { outcome: "failed" }, { outcome: "refused" }]);
   });
 
   it("says it failed, and logs it, when Postmark fails for any other reason", async () => {

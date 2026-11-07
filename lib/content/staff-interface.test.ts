@@ -61,10 +61,12 @@ describe("staff interface copy", () => {
     expect(subject(2, "letters@pauseai.uk")).toBe("2 MP emails in letters@pauseai.uk not relayed");
   });
 
-  it("counts supporters' bounces and letters waiting, one or more", () => {
+  it("counts supporters' and mailings' bounces and letters waiting, one or more", () => {
     const bounces = staffCopy.notifications.supporterBounces;
     expect(bounces.subject(1)).not.toBe(bounces.subject(2).replace("2", "1"));
     expect(bounces.body(1, 1, [], "/l")).not.toBe(bounces.body(1, 2, [], "/l").replace("2", "1"));
+    const mailing = staffCopy.notifications.mailingBounces;
+    expect(mailing.subject(1)).not.toBe(mailing.subject(2).replace("2", "1"));
     const waiting = staffCopy.notifications.lettersWaiting;
     expect(waiting.subject(1, 3)).not.toBe(waiting.subject(2, 3).replace("2", "1"));
     expect(waiting.body(1, 3, "why", "/l")).not.toBe(waiting.body(2, 3, "why", "/l").replace("2", "1"));

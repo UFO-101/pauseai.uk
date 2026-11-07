@@ -10,7 +10,7 @@ import { gmailAccount, sentToday } from "./gmail-accounts";
 import { LETTERS_DAILY_LIMIT, lettersInbox } from "./letters-inbox";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { reportSupporterBounces, tellOfficesOfHeldReplies } from "./held-replies";
-import { notifyStaff, staffLink } from "./notifications";
+import { notifyStaff, reportMailingBounces, staffLink } from "./notifications";
 import { mpName, nameLine, proxyLine } from "./proxies";
 import { resendAfterFix, sendRelay, uncertainRelays } from "./relays";
 import { problem } from "./problems";
@@ -323,7 +323,8 @@ export type LetterQueueRun = { sent: number; left: number };
  * letters inbox can't send. Then tells the notification inbox if letters
  * have waited too long (tellOfLateLetters), linking from `request`'s site;
  * tells MPs' offices of replies held a day for a supporter's bouncing
- * address; and, once a day, reports how often that happens (held-replies.ts).
+ * address; and, once a day, reports how often that happens (held-replies.ts)
+ * and which MPs' addresses bounced a mailing (reportMailingBounces).
  */
 export async function sendLetterQueue(until: number, request?: Request): Promise<LetterQueueRun> {
   await uncertainRelays();
@@ -345,5 +346,6 @@ export async function sendLetterQueue(until: number, request?: Request): Promise
   await tellOfLateLetters(request);
   await tellOfficesOfHeldReplies();
   await reportSupporterBounces(request);
+  await reportMailingBounces(request);
   return { sent, left: Number(left) };
 }

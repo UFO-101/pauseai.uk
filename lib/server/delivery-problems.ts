@@ -1,9 +1,9 @@
 import "server-only";
-import { staffCopy } from "@/lib/content/staff-interface";
 import { query } from "./db";
 import { recordProblem, type DeliveryProblem, type Purpose } from "./email";
 import { letterEvent, noticeToSender } from "./letter-sending";
-import { notifyStaff, staffLink } from "./notifications";
+import { alertBouncedMp, alertIfPoliticianBlocked } from "./notifications";
+import { bareAddress } from "@/lib/email-parsing/addresses";
 import { relayBounced } from "./relays";
 
 // What happens when an email bounces or is complained about: the address is
@@ -12,9 +12,10 @@ import { relayBounced } from "./relays";
 
 type Sent = { purpose: Purpose; letterId: number | null; rfcMessageId: string | null };
 
-type Hook = (sent: Sent, problem: DeliveryProblem, request: Request | undefined) => Promise<void>;
+/** What a purpose does about its email's problem. Says whether staff have been told, or will be. */
+type Hook = (sent: Sent, problem: DeliveryProblem, request: Request | undefined) => Promise<boolean>;
 
-const nothing: Hook = async () => {};
+const nothing: Hook = async () => false;
 
 /** Marks a letter bounced or complained about, with an event saying why. Returns the politician's name. */
 async function markLetter(letterId: number | null, problem: DeliveryProblem): Promise<string | undefined> {
@@ -45,29 +46,17 @@ const letterProblem: Hook = async ({ letterId }, problem, request) => {
      WHERE s.id = $1 AND lower(trim(f.email)) = lower(trim($2))`,
     [letterId, problem.address],
   );
-  if (fromSender) return;
+  if (fromSender) return false;
   const mpName = await markLetter(letterId, problem);
-  if (!mpName || problem.kind === "soft") return;
+  if (!mpName || problem.kind === "soft") return false;
   // One from the letters inbox: its sender is told it hasn't reached their MP, in our own words, never the bounce.
   const [proxied] = await query("SELECT 1 FROM letters_from_supporters WHERE id = $1 AND proxy_id IS NOT NULL", [
     letterId,
   ]);
   if (proxied && problem.kind === "hard") await noticeToSender(letterId!, "bounced");
-  await alertStaff(mpName, problem, request);
+  await alertBouncedMp(mpName, problem.address, problem.reason, request);
+  return true;
 };
-
-/** Tells the notification inbox an MP's address bounced, as nobody can write to them until someone fixes it. */
-async function alertStaff(mpName: string, problem: DeliveryProblem, request: Request | undefined) {
-  await notifyStaff(
-    staffCopy.alert.subject(mpName),
-    staffCopy.alert.body(
-      mpName,
-      problem.address,
-      problem.reason,
-      staffLink("/staff/politicians/blocked-emails", request),
-    ),
-  );
-}
 
 /**
  * A relay's bounce. One to the MP that bounced hard is marked so, the
@@ -87,9 +76,10 @@ const relayProblem: Hook = async ({ letterId, rfcMessageId }, problem, request) 
     email: problem.address,
     reason: problem.reason,
   });
-  if (!toMp || problem.kind === "soft") return;
+  if (!toMp || problem.kind === "soft") return false;
   await relayBounced(toMp.id, letterId!);
-  await alertStaff(toMp.mpName, problem, request);
+  await alertBouncedMp(toMp.mpName, problem.address, problem.reason, request);
+  return true;
 };
 
 /** The supporter's copy bounced: their address is blocked (recordProblem), and the history says so. */
@@ -98,15 +88,17 @@ const copyProblem: Hook = async ({ letterId }, problem) => {
     email: problem.address,
     reason: problem.reason,
   });
+  return false;
 };
 
 /**
- * A mailing's letter's bounce: the letter says so. Staff aren't told one
- * at a time, as a mailing goes to many; its page counts them, and the
- * address is on Politicians' blocked emails.
+ * A mailing's letter's bounce: the letter says so, and its mailing's page
+ * counts it. As a mailing goes to many, staff are told of them together, in
+ * the day's report (reportMailingBounces).
  */
 const mailingProblem: Hook = async ({ letterId }, problem) => {
   await markLetter(letterId, problem);
+  return true;
 };
 
 const HOOKS: Record<Purpose, Hook> = {
@@ -114,7 +106,7 @@ const HOOKS: Record<Purpose, Hook> = {
   "letter-copy": copyProblem,
   relay: relayProblem,
   "supporter-notice": nothing,
-  // An MP's address bouncing it is blocked, as any is; the letter's own bounce has told everyone else.
+  // An MP's address bouncing it is blocked, as any is.
   "office-notice": nothing,
   mailing: mailingProblem,
   "forwarded-reply": nothing,
@@ -126,15 +118,18 @@ const HOOKS: Record<Purpose, Hook> = {
 
 /**
  * Records a bounce or complaint, then hands it to the purpose of the email
- * it was about, if we sent it. `request` is the call that brought it,
+ * it was about, if we sent it. A politician's address it blocks, from any
+ * email or none we can place, is told to staff once, unless its purpose
+ * sees to that. `request` is the call that brought it,
  * Postmark's webhook or the job that reads Gmail, for staffLink(); none when
  * staff read Gmail from its page.
  */
 export async function handleDeliveryProblem(problem: DeliveryProblem, request?: Request): Promise<void> {
-  await recordProblem(problem);
+  const blocked = await recordProblem(problem);
   const [sent] = await query<Sent>(
     `SELECT purpose, letter_id::int AS "letterId", rfc_message_id AS "rfcMessageId" FROM email_sends WHERE message_id = $1`,
     [problem.messageId],
   );
-  if (sent) await HOOKS[sent.purpose](sent, problem, request);
+  const told = sent ? await HOOKS[sent.purpose](sent, problem, request) : false;
+  if (blocked && !told) await alertIfPoliticianBlocked(bareAddress(problem.address), problem.reason, request);
 }

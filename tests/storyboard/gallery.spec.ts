@@ -75,6 +75,8 @@ for (const group of GROUPS) {
   test(`gallery: ${group}`, async ({ page }) => {
     await open(page, `/gallery/${group}`);
     await expect(page.locator(`[data-gallery-group="${group}"]`)).toBeVisible();
+    // The attachments' example PDF isn't there to draw, so each ends as a sheet, a blank canvas until pdf.js has found that.
+    if (group === "staff-mailings-events") await expect(page.locator("canvas")).toHaveCount(0);
     await frame(page, group);
   });
 }
