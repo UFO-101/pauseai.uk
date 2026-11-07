@@ -2,7 +2,7 @@ import "server-only";
 import { gunzipSync } from "node:zlib";
 import { checkMailingDoc, letterFor, type MailingRecipientValues } from "@/lib/mailing-doc";
 import { docFromMarkup, type LetterDoc } from "@/lib/letter-format";
-import { replyText } from "@/lib/reply-text";
+import { letterText, replyParts } from "@/lib/reply-text";
 import { query } from "./db";
 import { decodeWords, firstOfType, parseMime, partText } from "./mime";
 import { letterReply } from "./outside-services/blobs";
@@ -26,8 +26,10 @@ export type ThreadMessage = {
   /** An automatic reply, such as an office's acknowledgement or an out-of-office, as reading it noted. */
   auto: boolean;
   subject: string;
-  /** Its plain text, or its HTML's text, without the mail it quotes; null if the kept message can't be read. */
+  /** Its plain text, or its HTML's text, without the mail it quotes or its footer; null if the kept message can't be read. */
   text: string | null;
+  /** The mail it quotes and its footer, folded under its text; empty if none or the kept message can't be read. */
+  quoted: string;
   /** Who it was copied to, as its Cc said; null if nobody, or the kept message can't be read. */
   cc: string | null;
 };
@@ -49,24 +51,52 @@ export type LetterThread = {
   messages: ThreadMessage[];
 };
 
-/** Some HTML's text: its tags gone, its breaks kept. */
+/** The entities mail's HTML names, beyond its numbered ones. */
+const HTML_ENTITIES: Record<string, string> = {
+  amp: "&",
+  apos: "'",
+  bull: "•",
+  euro: "€",
+  gt: ">",
+  hellip: "…",
+  ldquo: "“",
+  lsquo: "‘",
+  lt: "<",
+  mdash: "—",
+  nbsp: "\u00a0",
+  ndash: "–",
+  pound: "£",
+  quot: '"',
+  rdquo: "”",
+  rsquo: "’",
+};
+
+/** Some text with HTML's entities as characters: one it doesn't know stays as it is. */
+function entitiesRead(text: string): string {
+  return text.replace(/&(?:#(\d+)|#x([0-9a-f]+)|([a-z]+));/gi, (entity, decimal, hex, name) => {
+    if (decimal) return String.fromCodePoint(Number(decimal));
+    if (hex) return String.fromCodePoint(parseInt(hex, 16));
+    return HTML_ENTITIES[name] ?? entity;
+  });
+}
+
+/** Some HTML's text: its source's wrapping and its tags gone, a blank line between paragraphs, a line for each other break. */
 function tagsGone(html: string): string {
-  return html
-    .replace(/<br\s*\/?>|<\/(p|div|li|tr|h\d)>/gi, "\n")
-    .replace(/<[^>]+>/g, "")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&amp;/g, "&");
+  const lines = html
+    .replace(/\s+/g, " ")
+    .replace(/<li\b[^>]*>/gi, "\n- ")
+    .replace(/<\/(p|h\d)>/gi, "\n\n")
+    .replace(/<br\s*\/?>|<\/(div|tr)>/gi, "\n")
+    .replace(/<[^>]+>/g, "");
+  return entitiesRead(lines).replace(/ *\n */g, "\n");
 }
 
 /** An HTML part's text, what's in a blockquote marked with "> " as plain text quotes it. */
 function htmlText(html: string): string {
   let depth = 0;
   return html
-    .replace(/<(style|script)[^>]*>[\s\S]*?<\/\1>/gi, "")
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/<(head|style|script)\b[^>]*>[\s\S]*?<\/\1>/gi, "")
     .split(/(<\/?blockquote\b[^>]*>)/i)
     .map((part) => {
       if (/^<blockquote/i.test(part)) {
@@ -86,24 +116,21 @@ function htmlText(html: string): string {
 }
 
 /**
- * A kept message's text, without the mail it quotes: its plain text if it
- * has one, else its HTML's, or null if it has neither; and whom it was
- * copied to, as its Cc said, or null. Both null if it's gone.
+ * A kept message's text and, apart, the mail it quotes and its footer: from
+ * its plain text if it has one, else its HTML's; its text null if it has
+ * neither. And whom it was copied to, as its Cc said, or null. Null and empty
+ * if it's gone.
  */
-export async function messageContent(blobKey: string): Promise<{ text: string | null; cc: string | null }> {
+export async function messageContent(
+  blobKey: string,
+): Promise<{ text: string | null; quoted: string; cc: string | null }> {
   const gzipped = await letterReply(blobKey);
-  if (!gzipped) return { text: null, cc: null };
+  if (!gzipped) return { text: null, quoted: "", cc: null };
   const message = parseMime(gunzipSync(gzipped).toString("latin1"));
   const cc = message.headers.get("cc");
-  return { text: textOf(message), cc: cc ? decodeWords(cc) : null };
-}
-
-/** A message's text, without the mail it quotes: its plain text if it has one, else its HTML's; null if neither. */
-function textOf(message: ReturnType<typeof parseMime>): string | null {
-  const plain = firstOfType(message, "text/plain");
-  if (plain) return replyText(partText(plain).replace(/\r\n/g, "\n").trim());
-  const html = firstOfType(message, "text/html");
-  return html ? replyText(htmlText(partText(html))) : null;
+  const whole = firstOfType(message, "text/plain") || firstOfType(message, "text/html") ? wholeTextOf(message) : null;
+  const parts = whole === null ? { text: null, quoted: "" } : replyParts(whole);
+  return { ...parts, cc: cc ? decodeWords(cc) : null };
 }
 
 /** A message's whole text, the mail it quotes included: its plain text if it has one, else its HTML's; empty if neither. */
@@ -141,7 +168,7 @@ export async function letterThread(mailingId: number, letterId: number): Promise
   const body = checkMailingDoc(stored);
   return {
     ...thread,
-    letter: ownText ? docFromMarkup(ownText) : body && mergeValues ? letterFor(body, mergeValues) : null,
+    letter: ownText ? docFromMarkup(letterText(ownText)) : body && mergeValues ? letterFor(body, mergeValues) : null,
     messages: await threadMessages(letterId),
   };
 }

@@ -132,11 +132,11 @@ describeWithDatabase("letter threads", () => {
       messages: [{ text: null }],
     });
     await saveLetterReply("pdf.eml.gz", gzipSync("Content-Type: application/pdf\r\n\r\n%PDF"));
-    expect(await messageContent("pdf.eml.gz")).toEqual({ text: null, cc: null });
-    expect(await messageContent("never-kept.eml.gz")).toEqual({ text: null, cc: null });
+    expect(await messageContent("pdf.eml.gz")).toEqual({ text: null, quoted: "", cc: null });
+    expect(await messageContent("never-kept.eml.gz")).toEqual({ text: null, quoted: "", cc: null });
   });
 
-  it("leaves out the mail a reply quotes, in plain text or in an HTML blockquote", async () => {
+  it("folds the mail a reply quotes, in plain text or in an HTML blockquote", async () => {
     await saveLetterReply(
       "plain.eml.gz",
       gzipSync(
@@ -144,7 +144,11 @@ describeWithDatabase("letter threads", () => {
       ),
     );
     // Its Cc as it came, its encoded words decoded.
-    expect(await messageContent("plain.eml.gz")).toEqual({ text: "Yes.", cc: "Casey Wörker <casey@parliament.uk>" });
+    expect(await messageContent("plain.eml.gz")).toEqual({
+      text: "Yes.",
+      quoted: "On Mon, Jo wrote:\n> Will you?",
+      cc: "Casey Wörker <casey@parliament.uk>",
+    });
     await saveLetterReply(
       "html.eml.gz",
       gzipSync(
@@ -152,7 +156,22 @@ describeWithDatabase("letter threads", () => {
           "<blockquote>Will you?<blockquote>Older</blockquote></blockquote>",
       ),
     );
-    expect(await messageContent("html.eml.gz")).toEqual({ text: "No.", cc: null });
+    expect(await messageContent("html.eml.gz")).toMatchObject({ text: "No.", cc: null });
+    expect((await messageContent("html.eml.gz")).quoted).toContain("> Will you?");
+  });
+
+  it("reads HTML as its paragraphs and characters, not its source's layout", async () => {
+    await saveLetterReply(
+      "layout.eml.gz",
+      gzipSync(
+        "Content-Type: text/html\r\n\r\n<html><head><title>Not this</title></head><body><!-- nor this -->" +
+          "<p>Dear&nbsp;Jo,</p>\r\n<p>It&rsquo;s\r\nsplit in the source &amp; &#8211; &#x2014; &unknown;.</p>" +
+          "<div>A line</div><div><br></div><div>Another<br>line</div><ul><li>First</li><li>Second</li></ul></body></html>",
+      ),
+    );
+    expect((await messageContent("layout.eml.gz")).text).toBe(
+      "Dear\u00a0Jo,\n\nIt’s split in the source & – — &unknown;.\n\nA line\n\nAnother\nline\n\n- First\n- Second",
+    );
   });
 
   it("lists the kept replies after an ID for the backup, and gives each one's file", async () => {

@@ -340,7 +340,9 @@ Gmail refuses; a mailbox's limit applies to all its reading, the regular read's 
   charset they name. Bytes not valid in that charset are read one to a character
   (`decodedText`), and the control characters that curly quotes and dashes became
   are made whole (`restoreCutDown`). Characters whose low byte is an ordinary one,
-  such as an ellipsis as `&`, can't be told apart.
+  such as an ellipsis as `&`, can't be told apart. Letters whose paragraphs were
+  read as one are split again at the sentences their mailing's letters share
+  (`splitFlatLetters`), which needs only what's kept.
 - **What's stored.** A mailing's template in `imported_text`, in `body`'s format,
   its subject and who it went from; each letter that fits it, its greeting and own
   paragraph in `merge_values`, and one that doesn't, its whole text in `own_text`.

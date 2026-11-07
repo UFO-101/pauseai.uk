@@ -66,7 +66,7 @@ async function seed() {
     "UPDATE letters_from_supporters SET airtable_id = 'recWebWendyFrontier', postmark_mailbox = NULL WHERE id = $1",
     [form],
   );
-  return { polly, dora, mo, morag, deepmind, csrb, edinburgh, debate, august, june, form };
+  return { polly, dora, mo, morag, deepmind, csrb, edinburgh, debate, august, june, form, mailingLetter };
 }
 
 async function run() {
@@ -387,6 +387,123 @@ describeWithDatabase("the import of old letters", () => {
       "SELECT imported_text AS text FROM mailings WHERE old_letters_key = 'deepmind-august'",
     );
     expect(text).toBeNull();
+  });
+
+  describe("putting right mailings already built", () => {
+    const flatLetter = (own: string) =>
+      `Dear You, Would you join 40 of your colleagues? I lead a network in many countries, working on one risk. They promised to test their models before they released them. They broke that promise, and they won't say who tested them. ${own} We must act now. Yours sincerely, Jo`;
+    const mailingId = async (key: string) =>
+      (await query<{ id: number }>("SELECT id::int AS id FROM mailings WHERE old_letters_key = $1", [key]))[0].id;
+    const letterOf = async (id: number) =>
+      (
+        await query<{ values: { values: Record<string, string> } | null; own: string | null }>(
+          "SELECT merge_values AS values, own_text AS own FROM letters_from_pauseai WHERE id = $1",
+          [id],
+        )
+      )[0];
+    const textOf = async (key: string) =>
+      (
+        await query<{ text: unknown }>("SELECT imported_text AS text FROM mailings WHERE old_letters_key = $1", [key])
+      )[0].text;
+
+    /** A finished import with deepmind-40's letters read as one paragraph, and a signature all its text has. */
+    async function flatMailing() {
+      const { polly, mo, august, mailingLetter } = await seed();
+      await run();
+      const id = await mailingId("deepmind-40");
+      const letters = await Promise.all([
+        mailingLetter(polly, "DeepMind letter", "2025-08-01T09:00:00Z", "recX"),
+        mailingLetter(mo, "DeepMind letter", "2025-08-01T09:00:00Z", "recY"),
+        mailingLetter(mo, "DeepMind letter", "2025-08-01T10:00:00Z", "recZ"),
+      ]);
+      const texts = [
+        flatLetter("As you said so well."),
+        flatLetter("Another paragraph."),
+        `Dear You, ${"Quite different. ".repeat(15)}`.trim(),
+      ];
+      await Promise.all(
+        letters.map((letter, i) =>
+          query("UPDATE letters_from_pauseai SET mailing_id = $2, merge_values = $3, own_text = NULL WHERE id = $1", [
+            letter,
+            id,
+            JSON.stringify({ values: { greeting: texts[i], own: "" }, meets: [] }),
+          ]),
+        ),
+      );
+      await query("UPDATE mailings SET imported_text = $2 WHERE id = $1", [
+        id,
+        JSON.stringify({
+          type: "doc",
+          content: [{ type: "paragraph", content: [{ type: "text", text: "> Jo Bloggs > Director >" }] }],
+        }),
+      ]);
+      return { august, letters };
+    }
+
+    it("splits them, even once the import has finished, and August's letters follow", async () => {
+      const { august, letters } = await flatMailing();
+      const finished = await importOldLetters(NIGHTLY, 0);
+      expect(finished.finished).toBe(true);
+
+      expect((await letterOf(letters[0])).values?.values).toEqual({
+        greeting: "Dear You,",
+        own: "As you said so well.",
+      });
+      expect(await letterOf(letters[2])).toMatchObject({ values: null });
+      expect((await letterOf(letters[2])).own).toContain("Quite different.");
+
+      const text = JSON.stringify(await textOf("deepmind-40"));
+      expect(text).toContain("We must act now.");
+      expect(text).toContain('"type":"hardBreak"');
+      expect(text).not.toContain('">');
+
+      const made = JSON.stringify(await textOf("deepmind-august"));
+      expect(made).toContain('"field":"colleagues"');
+      expect(made).toContain("We must act now.");
+      expect((await letterOf(august)).values?.values).toMatchObject({ own: "As you said so well.", colleagues: "50" });
+
+      // Again, it has nothing to do.
+      const before = await textOf("deepmind-40");
+      await importOldLetters(NIGHTLY, 0);
+      expect(await textOf("deepmind-40")).toEqual(before);
+    });
+
+    it("leaves letters that share nothing as they are", async () => {
+      const { polly, mo, mailingLetter } = await seed();
+      await run();
+      const id = await mailingId("deepmind-25");
+      const greeting = (words: string) => `Dear You, ${`${words}. `.repeat(12)}`.trim();
+      const letters = await Promise.all([
+        mailingLetter(polly, "DeepMind letter", "2025-07-20T09:00:00Z", "recX"),
+        mailingLetter(mo, "DeepMind letter", "2025-07-20T09:00:00Z", "recY"),
+      ]);
+      await Promise.all(
+        letters.map((letter, i) =>
+          query("UPDATE letters_from_pauseai SET mailing_id = $2, merge_values = $3, own_text = NULL WHERE id = $1", [
+            letter,
+            id,
+            JSON.stringify({ values: { greeting: greeting(`Unlike any other ${"ab"[i]}`), own: "" }, meets: [] }),
+          ]),
+        ),
+      );
+      await query("UPDATE mailings SET imported_text = $2 WHERE id = $1", [
+        id,
+        JSON.stringify({ type: "doc", content: [] }),
+      ]);
+      await importOldLetters(NIGHTLY, 0);
+      expect((await letterOf(letters[0])).values?.values.greeting).toBe(greeting("Unlike any other a"));
+    });
+
+    it("removes the mailing of Joseph's own liability letters, as it has none", async () => {
+      await seed();
+      await run();
+      await query(
+        `INSERT INTO mailings (title, audience, channel, state, old_letters_key, airtable_sent_between)
+         SELECT 'Old', audience, channel, state, 'liability-own', airtable_sent_between FROM mailings WHERE old_letters_key = 'frontier-own'`,
+      );
+      await importOldLetters(NIGHTLY, 0);
+      expect(await query("SELECT 1 FROM mailings WHERE old_letters_key = 'liability-own'")).toEqual([]);
+    });
   });
 
   it("keeps a thread whole: a message no search found, once its thread is kept", async () => {

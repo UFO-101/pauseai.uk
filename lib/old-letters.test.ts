@@ -3,9 +3,13 @@ import { FORM_VERSIONS } from "./content/pauseai-info-form";
 import {
   addressesIn,
   augustColleagues,
+  asSentences,
   augustTemplate,
   deepmindMailing,
   documentaryMailing,
+  sharedParagraphs,
+  splitFlatLetters,
+  withoutQuoteMarks,
   fitTemplate,
   formDraft,
   formVersionAt,
@@ -109,7 +113,7 @@ describe("which mailing a letter belongs to", () => {
     expect(of("Invitation to speak on panel with Professor Stuart Russell")).toBe("russell-speak");
     expect(of("Invitation to Co-host Panel Discussion on AI Risk")).toBe("russell-cohost");
     expect(of("PauseAI Conference in Parliament on Monday")).toBe("conference-parliament");
-    expect(of("Request to co-sign letter on AI liability")).toBe("liability-own");
+    expect(of("Request to co-sign letter on AI liability")).toBeUndefined();
     expect(of("Request to co-sign letter on frontier AI risks")).toBe("frontier-own");
     expect(of("Westminster Hall Debate on AI Safety")).toBe("westminster-hall");
     expect(of("Request to co-sign letter on Google's breach", "join 40 of your")).toBe("deepmind-40");
@@ -196,6 +200,95 @@ describe("the August letters", () => {
     expect(august.content[2]).toEqual({ type: "paragraph", content: [] });
     expect(august.content[3]).toEqual(doc.content[3]);
     expect(august.content[4]).toEqual(doc.content[4]);
+  });
+});
+
+describe("letters read as one paragraph", () => {
+  const flat = (name: string, own: string) =>
+    `Dear ${name}, Would you sign? I’m the director. Last May they promised. ${own} We must act. Next steps 30-min call. Let me know. Thank you. Yours sincerely, Jo`;
+
+  it("reads a letter as its greeting and a paragraph per sentence, with “Next steps” on its own", () => {
+    expect(asSentences(flat("Ms Smith", "You spoke up.")).split("\n\n")).toEqual([
+      "Dear Ms Smith,",
+      "Would you sign?",
+      "I’m the director.",
+      "Last May they promised.",
+      "You spoke up.",
+      "We must act.",
+      "Next steps",
+      "30-min call.",
+      "Let me know.",
+      "Thank you.",
+      "Yours sincerely, Jo",
+    ]);
+    expect(asSentences("No greeting. Just this.")).toBe("No greeting.\n\nJust this.");
+  });
+
+  it("splits a mailing's letters at the sentences they share, keeping a letter's own and what the mailing had", () => {
+    const split = splitFlatLetters(
+      [
+        flat("Ms Smith", "You spoke up. So did we."),
+        flat("Mr Jones", "You care."),
+        "Dear Dr Lee, Would you sign? Something else altogether.",
+      ],
+      ["Jo Bloggs"],
+    )!;
+    expect(split.letters[0]).toEqual({
+      values: { greeting: "Dear Ms Smith,", own: "You spoke up. So did we." },
+      meets: [],
+    });
+    expect(split.letters[1]).toEqual({ values: { greeting: "Dear Mr Jones,", own: "You care." }, meets: [] });
+    expect(split.letters[2]).toBe("Dear Dr Lee,\n\nWould you sign?\n\nSomething else altogether.\n\nJo Bloggs");
+    expect(sharedParagraphs(split.doc)).toEqual([
+      "Would you sign?",
+      "I’m the director. Last May they promised.",
+      "We must act.",
+      "Next steps",
+      "30-min call. Let me know.",
+      "Thank you.",
+      "Yours sincerely, Jo",
+      "Jo Bloggs",
+    ]);
+    expect(split.doc.content[3]).toEqual({ type: "paragraph", content: [{ type: "field", attrs: { field: "own" } }] });
+  });
+
+  it("gives nothing for letters that share nothing", () => {
+    expect(splitFlatLetters(["Dear A, One thing.", "Dear B, Another thing."], [])).toBeUndefined();
+  });
+});
+
+describe("a mailing's text with a mailer's quote marks", () => {
+  it("puts each quoted line on its own, leaving other paragraphs and a link's bracket", () => {
+    const doc = withoutQuoteMarks({
+      type: "doc",
+      content: [
+        { type: "paragraph" },
+        { type: "paragraph", content: [{ type: "text", text: "See <https://example.org> > here" }] },
+        { type: "paragraph", content: [{ type: "text", text: "> Jo Bloggs > Director > <https://example.org> >" }] },
+        { type: "bulletList", content: [] } as never,
+      ],
+    });
+    expect(doc.content[1]).toEqual({
+      type: "paragraph",
+      content: [{ type: "text", text: "See <https://example.org> > here" }],
+    });
+    expect(doc.content[2]).toEqual({
+      type: "paragraph",
+      content: [
+        { type: "text", text: "Jo Bloggs" },
+        { type: "hardBreak" },
+        { type: "text", text: "Director" },
+        { type: "hardBreak" },
+        { type: "text", text: "<https://example.org>" },
+      ],
+    });
+    expect(doc.content[0]).toEqual({ type: "paragraph", content: [] });
+    expect(sharedParagraphs(doc)).toEqual([
+      "See <https://example.org> > here",
+      "Jo Bloggs",
+      "Director",
+      "<https://example.org>",
+    ]);
   });
 });
 

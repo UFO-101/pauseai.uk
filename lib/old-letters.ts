@@ -84,7 +84,6 @@ export const OLD_MAILINGS: readonly OldMailing[] = [
   { key: "russell-speak", between: ["2026-06-15", "2026-08-04"], template: false },
   { key: "russell-cohost", between: ["2026-08-13", "2026-08-14"], template: true },
   { key: "conference-parliament", between: ["2026-09-03", "2026-09-04"], template: false },
-  { key: "liability-own", between: ["2026-05-20", "2026-06-17"], template: false },
   { key: "frontier-own", between: ["2026-06-19", "2026-10-16"], template: false },
 ];
 
@@ -137,7 +136,6 @@ export function mailingOfNewLetter(subject: string, text: string, at: Date): Old
   if (/^Invitation to speak on panel with Professor Stuart Russell/i.test(about)) return "russell-speak";
   if (/^Invitation to Co-host Panel Discussion on AI Risk/i.test(about)) return "russell-cohost";
   if (/^PauseAI Conference in Parliament/i.test(about)) return "conference-parliament";
-  if (/^Request to co-sign letter on AI liability/i.test(about)) return "liability-own";
   if (/^Request to co-sign letter on frontier AI risks/i.test(about)) return "frontier-own";
   if (/^Westminster Hall Debate on AI Safety/i.test(about)) return "westminster-hall";
   if (/^Request to co-sign letter on Google's breach/i.test(about)) return deepmindMailing(text, at);
@@ -215,6 +213,81 @@ const fieldParagraph = (field: string): MailingDoc["content"][number] => ({
   type: "paragraph",
   content: [{ type: "field", attrs: { field } }],
 });
+
+/** A greeting longer than this has a whole letter in it: one whose paragraphs were read as one. */
+export const LONGEST_GREETING = 200;
+
+/** Where a letter read as one paragraph had a new one, of its shared sentences. */
+const STARTS_PARAGRAPH = /^(Would you|I’m the|Ten of|Next steps|30-min|Alternatively|We aim|Thank you|Yours)/;
+
+/** Sentences together as the paragraphs they came in, each of `whole` a paragraph already. */
+function asParagraphs(sentences: string[], whole: string[]): string[] {
+  return sentences.reduce<string[]>((grouped, sentence) => {
+    const prior = grouped.at(-1);
+    if (prior === undefined || whole.includes(sentence) || whole.includes(prior) || STARTS_PARAGRAPH.test(sentence)) {
+      return [...grouped, sentence];
+    }
+    return [...grouped.slice(0, -1), `${prior} ${sentence}`];
+  }, []);
+}
+
+/** A letter read as one paragraph, as a greeting and one paragraph per sentence. */
+export function asSentences(flat: string): string {
+  const [, greeting = "", body = flat] = /^((?:dear|hi|hello)\b[^,]*,)\s+([\s\S]*)$/i.exec(flat) ?? [];
+  const sentences = body.replace(/\sNext steps\s/, "\nNext steps\n").split(/\n|(?<=[.?!])\s+(?=[A-Z0-9])/);
+  return [greeting, ...sentences].filter(Boolean).join("\n\n");
+}
+
+/**
+ * A mailing whose letters were each read as one paragraph, split again at the
+ * sentences most of them share: its text, and each letter's values, or its
+ * whole text if it doesn't fit. `shared` is what the mailing's text had already.
+ * Undefined if the letters share nothing.
+ */
+export function splitFlatLetters(
+  flats: string[],
+  shared: string[],
+): { doc: MailingDoc; letters: (OldLetterValues | string)[] } | undefined {
+  const texts = flats.map((flat) => [asSentences(flat), ...shared].join("\n\n"));
+  const template = templateOf(texts);
+  if (!template) return undefined;
+  return {
+    doc: templateDoc({ before: asParagraphs(template.before, shared), after: asParagraphs(template.after, shared) }),
+    letters: texts.map((text) => {
+      const fit = fitTemplate(text, template);
+      if (!fit) return text;
+      return { ...fit, values: { ...fit.values, own: fit.values.own.replace(/\n\n/g, " ") } };
+    }),
+  };
+}
+
+/** The words of each of a mailing's paragraphs that has no fields. */
+export function sharedParagraphs(doc: MailingDoc): string[] {
+  return doc.content.flatMap((block) => {
+    const content = block.type === "paragraph" ? (block.content ?? []) : [];
+    return content.flatMap((node) => (node.type === "text" ? [node.text] : []));
+  });
+}
+
+/** A mailing's text without the "> " of lines a mailer quoted: each such line on a line of its own. */
+export function withoutQuoteMarks(doc: MailingDoc): MailingDoc {
+  return {
+    ...doc,
+    content: doc.content.map((block) =>
+      block.type === "paragraph" ? { ...block, content: (block.content ?? []).flatMap(linesOfQuote) } : block,
+    ),
+  };
+}
+
+function linesOfQuote<Node extends { type: string }>(node: Node) {
+  const text = node.type === "text" ? (node as Node & { text: string }).text : "";
+  if (!text.startsWith(">")) return [node];
+  const lines = text.split(/(?:^|\s+)>(?:\s+|$)/).filter(Boolean);
+  return lines.flatMap((line, i) => [
+    ...(i ? [{ type: "hardBreak" as const }] : []),
+    { type: "text" as const, text: line },
+  ]);
+}
 
 /** A template as a mailing's text, its greeting and own paragraph its fields. */
 export function templateDoc({ before, after }: OldTemplate): MailingDoc {

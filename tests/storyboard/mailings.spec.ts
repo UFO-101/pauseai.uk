@@ -518,9 +518,13 @@ test("Sending from your Gmail", async ({ page, request, flowDatabase }) => {
   );
   await page.reload();
   await expect(page.getByText("I look", { exact: false })).toBeVisible();
-  // Without the letter she quotes, which is above it already.
-  await expect(page.getByText("We'd love to see you", { exact: false })).toHaveCount(0);
+  // The letter she quotes, which is above it already, is folded away.
+  await expect(page.getByText("We'd love to see you", { exact: false })).toBeHidden();
   await frame(page, "Morag's reply");
+  story("The letter she quotes is folded under her reply, for anyone who wants to see what she was answering.");
+  await page.getByText(staffCopy.letterThread.quoted).click();
+  await expect(page.getByText("We'd love to see you", { exact: false }).last()).toBeVisible();
+  await frame(page, "The letter she quotes, unfolded");
 });
 
 test("Old mailings", async ({ page, request, flowDatabase }) => {

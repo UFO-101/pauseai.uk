@@ -79,7 +79,6 @@ test("A second press", async ({ page, flowDatabase }) => {
   const stopped = JSON.stringify(exampleOldLettersResult).replaceAll("'", "''");
   const problems = JSON.stringify([
     { what: staffCopy.problems.job.unreadable, error: "18f0a" },
-    { what: staffCopy.problems.job.matchedNothing, error: "1" },
   ]).replaceAll("'", "''");
   runSql(
     flowDatabase,

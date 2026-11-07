@@ -23,6 +23,21 @@ function NoText({ note, link }: { note: string; link: ReactNode }) {
   );
 }
 
+/** A message's text, with the mail it quotes and its footer, if any, folded under it. */
+export function MessageText({ text, quoted }: { text: string; quoted: string }) {
+  return (
+    <>
+      <div className={styles.text}>{text}</div>
+      {quoted && (
+        <details className={styles.quoted}>
+          <summary>{copy.quoted}</summary>
+          <div className={styles.text}>{quoted}</div>
+        </details>
+      )}
+    </>
+  );
+}
+
 /** The thread's section: its heading, `link`, if any, at its right, over its messages. */
 function Thread({ link, children }: { link?: ReactNode; children: ReactNode }) {
   return (
@@ -80,7 +95,11 @@ export default function LetterThread({ thread, link }: { thread: Thread; link?: 
           at={message.at}
           subject={message.subject}
         >
-          {message.text === null ? <Muted>{copy.unreadable}</Muted> : <div className={styles.text}>{message.text}</div>}
+          {message.text === null ? (
+            <Muted>{copy.unreadable}</Muted>
+          ) : (
+            <MessageText text={message.text} quoted={message.quoted} />
+          )}
         </ThreadEmail>
       ))}
       {thread.messages.length === 0 && (
@@ -138,7 +157,7 @@ export function SupporterLetterThread({ letter, link }: { letter: SupporterLette
             {message.text === null ? (
               <Muted>{copy.unreadable}</Muted>
             ) : (
-              <div className={styles.text}>{message.text}</div>
+              <MessageText text={message.text} quoted={message.quoted} />
             )}
           </ThreadEmail>
         );

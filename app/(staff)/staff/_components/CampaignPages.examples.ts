@@ -177,6 +177,7 @@ export const exampleOneOffThread: OneOffThread = {
       account: "joseph@pauseai.uk",
       politicians: { "polly.placeholder.mp@parliament.uk": 1 },
       text: "Dear Polly,\n\nCould we meet?",
+      quoted: "",
     },
     {
       id: 2,
@@ -189,6 +190,7 @@ export const exampleOneOffThread: OneOffThread = {
       account: "joseph@pauseai.uk",
       politicians: { "polly.placeholder.mp@parliament.uk": 1 },
       text: null,
+      quoted: "",
     },
   ],
 };

@@ -161,7 +161,6 @@ paragraph. Documentary's are told apart by subject and text.
 | Stuart Russell panel: invitation to speak | 10 | Jun–Aug 2026 | Each its own | New |
 | Stuart Russell panel: invitation to co-host | 8 | 13 Aug 2026 | Template | New |
 | Conference in Parliament | 5 | 3 Sep 2026 | Each its own | New |
-| Liability letter: Joseph's own | 14 | May–Jun 2026 | Each its own | New |
 | Frontier AI letter: Joseph's own | 12 | Jun–Oct 2026 | Each its own | New |
 | Frontier AI form letters | 611 | Jun–Oct 2026 | 6 form versions | Existing campaign |
 | Liability form letters | 65 | May–Jun 2026 | 4 form versions | Existing campaign |
