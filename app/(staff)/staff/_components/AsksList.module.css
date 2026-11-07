@@ -38,19 +38,34 @@
   grid-area: ways;
 }
 
-/* With room, all the rows share columns: the ask as wide as the widest needs, up
-   to half, how it was asked taking what's left. */
+/* With room, all the rows of all the groups share columns: the ask as wide as
+   the widest needs, up to half, how it was asked taking what's left. */
 @container (min-width: 60rem) {
-  .list {
+  .groups {
     display: grid;
     grid-template-columns: fit-content(50%) minmax(0, 1fr) auto;
     column-gap: var(--space-5);
   }
 
+  .group,
+  .list,
   .ask {
+    display: grid;
     grid-column: 1 / -1;
-    grid-template-areas: "what ways standing";
     grid-template-columns: subgrid;
+  }
+
+  .group h2 {
+    grid-column: 1 / -1;
+  }
+
+  /* A grid's margins don't collapse: the gap between groups is enough. */
+  .group + .group h2 {
+    margin-top: 0;
+  }
+
+  .ask {
+    grid-template-areas: "what ways standing";
   }
 }
 

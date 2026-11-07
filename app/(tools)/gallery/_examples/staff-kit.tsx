@@ -15,7 +15,6 @@ import StaffNav, { type StaffPage as StaffPageName } from "@/app/(staff)/staff/_
 import Breadcrumb from "@/app/(staff)/staff/_components/Breadcrumb";
 import NotIcon from "@/app/(staff)/staff/_components/ui/NotIcon";
 import ListFrame, { ListTable, type ListColumn } from "@/app/(staff)/staff/_components/ui/ListFrame";
-import SegmentLinks from "@/app/(staff)/staff/_components/ui/SegmentLinks";
 import PageIntro from "@/app/(staff)/staff/_components/ui/PageIntro";
 import Withheld from "@/app/(staff)/staff/_components/ui/Withheld";
 import ChoiceSearch from "@/app/(staff)/staff/_components/ui/ChoiceSearch";
@@ -333,27 +332,6 @@ export const staffKit: Group = {
                   <NavIcon key={id} id={id} />
                 ))}
               </p>
-            </StaffPage>
-          ),
-        },
-      ],
-    },
-    {
-      name: "SegmentLinks",
-      file: "app/(staff)/staff/_components/ui/SegmentLinks.tsx",
-      variants: [
-        {
-          label: "Choosing what a list shows, one chosen and one of nothing",
-          render: () => (
-            <StaffPage as="div">
-              <SegmentLinks
-                label="Answers"
-                links={[
-                  { key: "signed", words: "Signed 4", href: "#signed" },
-                  { key: "declined", words: "Declined 2", href: "#declined", current: true, title: "Show them all" },
-                  { key: "none", words: "No answer 9", href: "#none", quiet: true },
-                ]}
-              />
             </StaffPage>
           ),
         },

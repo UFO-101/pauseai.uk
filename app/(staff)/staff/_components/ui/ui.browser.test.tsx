@@ -64,6 +64,38 @@ describe("FilterBarLines", () => {
     expect(row.hasAttribute("data-stacked")).toBe(false);
   });
 
+  it("counts a box that grows at what it asks for, so a bar that has room again stops being stacked", async () => {
+    const bar = (width: number) => (
+      <div style={{ width }}>
+        <FilterBarLines className="growing">
+          <span style={{ flex: "1 1 100px" }}>Search</span>
+          <span style={{ display: "flex" }}>
+            <span style={{ width: 100 }}>Chip</span>
+          </span>
+        </FilterBarLines>
+      </div>
+    );
+    const screen = await render(
+      <>
+        <style>
+          {".growing { display: flex; flex-wrap: wrap; } .growing, .growing > :last-child { column-gap: 12px; }"}
+        </style>
+        {bar(200)}
+      </>,
+    );
+    const row = screen.container.querySelector<HTMLElement>(".growing")!;
+    await expect.poll(() => row.hasAttribute("data-stacked")).toBe(true);
+    await screen.rerender(
+      <>
+        <style>
+          {".growing { display: flex; flex-wrap: wrap; } .growing, .growing > :last-child { column-gap: 12px; }"}
+        </style>
+        {bar(400)}
+      </>,
+    );
+    await expect.poll(() => row.hasAttribute("data-stacked")).toBe(false);
+  });
+
   const lines = (width: string) => (
     <div style={{ width }}>
       <style>{".row, .row > :last-child { column-gap: 12px; }"}</style>

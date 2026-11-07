@@ -12,7 +12,6 @@ import Counts from "./ui/Counts";
 import Grid, { Card } from "./ui/Grid";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
 import StaffLink from "./ui/StaffLink";
-import SegmentLinks from "./ui/SegmentLinks";
 import { askedLine } from "./AskLine";
 import AskKindIcon from "./AskKindIcon";
 import AskWays from "./AskWays";
@@ -66,22 +65,42 @@ const answerColumns: ListColumn<AskAnswer>[] = [
 ];
 
 /**
- * One answer's column: how many gave it, leading to all of them, and the
- * first few. Someone whose answer differs from the column's name is tagged
- * with theirs.
+ * The top of one answer's column: its name and how many gave it, in its
+ * colour, leading to all of them. With an answer chosen (`answer`), its own
+ * top is marked, and leads back to the columns.
  */
-function AnswerColumn({ group, path }: { group: AskAnswerGroup; path: string }) {
-  const href = `${path}?answer=${group.key}`;
+function ColumnHead({ group, path, answer = "" }: { group: AskAnswerGroup; path: string; answer?: string }) {
+  const current = group.key === answer;
   const heading = (
     <>
       <span>{groupName(group.key)}</span> <strong>{group.total.toLocaleString("en-GB")}</strong>
     </>
   );
   return (
+    <h2 className={styles.columnHead}>
+      {group.total > 0 ? (
+        <StaffLink
+          href={current ? path : `${path}?answer=${group.key}`}
+          aria-current={current || undefined}
+          title={current ? page.showAll : undefined}
+        >
+          {heading}
+        </StaffLink>
+      ) : (
+        <span>{heading}</span>
+      )}
+    </h2>
+  );
+}
+
+/**
+ * One answer's column: its top, and the first few who gave it. Someone whose
+ * answer differs from the column's name is tagged with theirs.
+ */
+function AnswerColumn({ group, path }: { group: AskAnswerGroup; path: string }) {
+  return (
     <section className={styles.column} data-tone={GROUP_TONES[group.key]}>
-      <h2 className={styles.columnHead}>
-        {group.total > 0 ? <StaffLink href={href}>{heading}</StaffLink> : <span>{heading}</span>}
-      </h2>
+      <ColumnHead group={group} path={path} />
       {group.people.length === 0 ? (
         <p className={styles.columnFoot}>
           <Muted>{page.none}</Muted>
@@ -104,7 +123,7 @@ function AnswerColumn({ group, path }: { group: AskAnswerGroup; path: string }) 
       )}
       {group.total > group.people.length && (
         <p className={styles.columnFoot}>
-          <StaffLink href={href}>{page.allOf(group.total)}</StaffLink>
+          <StaffLink href={`${path}?answer=${group.key}`}>{page.allOf(group.total)}</StaffLink>
         </p>
       )}
     </section>
@@ -112,26 +131,21 @@ function AnswerColumn({ group, path }: { group: AskAnswerGroup; path: string }) 
 }
 
 /**
- * Those who gave one answer, a page at a time, under a lozenge for each answer
- * given, which chooses it; the one chosen, pressed again, goes back to the columns.
+ * Those who gave one answer, a page at a time, under the tops of the columns,
+ * which choose an answer; the one chosen, pressed again, goes back to the
+ * columns. The list's edge is in the chosen answer's colour.
  */
 function ChosenAnswer({ ask, answer, path }: { ask: AskPageData; answer: string; path: string }) {
   return (
-    <Grid>
-      <Card span={6} as="div" title={page.answersTitle} id="answers">
-        <SegmentLinks
-          label={page.answersTitle}
-          links={ask.groups
-            .filter((group) => group.total > 0)
-            .map(({ key, total }) => ({
-              key,
-              words: `${groupName(key)} ${total.toLocaleString("en-GB")}`,
-              href: key === answer ? path : `${path}?answer=${key}`,
-              quiet: key === "none",
-              current: key === answer,
-              title: key === answer ? page.showAll : undefined,
-            }))}
-        />
+    <>
+      <nav className={`${styles.columns} ${styles.heads}`} aria-label={page.answersTitle}>
+        {ask.groups.map((group) => (
+          <div key={group.key} className={styles.column} data-tone={GROUP_TONES[group.key]}>
+            <ColumnHead group={group} path={path} answer={answer} />
+          </div>
+        ))}
+      </nav>
+      <section className={styles.chosen} data-tone={GROUP_TONES[answer]} aria-label={page.answersTitle}>
         <ListFrame
           count={staffCopy.campaigns.politicians(ask.answersTotal)}
           total={ask.answersTotal}
@@ -144,18 +158,15 @@ function ChosenAnswer({ ask, answer, path }: { ask: AskPageData; answer: string;
           rowKey={(a) => a.politicianId}
           empty={page.none}
         />
-        <p>
-          <StaffLink href={`/staff/politicians?ask=${ask.slug}`}>{page.everyone}</StaffLink>
-        </p>
-      </Card>
-    </Grid>
+      </section>
+    </>
   );
 }
 
 /**
  * An ask's page, in a mailing's shape: over its title what they were asked to
  * do, its date and where to read it; then its answers, a column each, or those
- * of the one chosen; and last how we asked, how many were written to, its letters and
+ * of the one chosen; a link to those who answered on the politicians list; and last how we asked, how many were written to, its letters and
  * who replied at its top right, and each campaign and mailing under its kind.
  * It has no letters of its own. An ask the code names can't be edited.
  */
@@ -207,6 +218,9 @@ export default function AskView({ ask, answer }: { ask: AskPageData; answer: str
           ))}
         </section>
       )}
+      <p className={styles.toPoliticians}>
+        <StaffLink href={`/staff/politicians?ask=${ask.slug}`}>{page.everyone}</StaffLink>
+      </p>
       <Grid>
         <Card
           span={6}

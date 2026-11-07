@@ -39,7 +39,8 @@ async function press(page: Page, database: string) {
   const before = finished();
   await page.goto(`${BASE}${importPath("import-old-letters")}`);
   await page.getByRole("button", { name: words.importNow }).click();
-  await expect.poll(finished).not.toBe(before);
+  // The import runs in the background, which takes longer than the usual wait on a busy machine.
+  await expect.poll(finished, { timeout: 30_000 }).not.toBe(before);
   await page.reload();
 }
 

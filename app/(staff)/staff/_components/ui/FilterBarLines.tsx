@@ -18,12 +18,15 @@ export default function FilterBarLines({ className, children }: { className: str
       widths.reduce((sum, width) => sum + width, 0) +
       Math.max(widths.length - 1, 0) * parseFloat(getComputedStyle(parent).columnGap);
     const widthOf = (element: Element) => element.getBoundingClientRect().width;
+    // What a box that grows asks for, its flex-basis, not the width it has grown to: that depends on whether it's
+    // stacked, so a bar once stacked would stay so, and a phone's bar could settle either way.
+    const asksFor = (element: Element) => parseFloat(getComputedStyle(element).flexBasis) || widthOf(element);
     const measure = () => {
       const kids = [...bar.children];
       const chips = kids.pop()!;
       // A chip's menu, beside it in the markup, opens over the page and takes no room in the row.
       const inRow = [...chips.children].filter((chip) => !chip.hasAttribute("popover"));
-      const needed = side(bar, [...kids.map(widthOf), side(chips, inRow.map(widthOf))]);
+      const needed = side(bar, [...kids.map(asksFor), side(chips, inRow.map(widthOf))]);
       setStacked(needed > bar.clientWidth);
     };
     const observer = new ResizeObserver(measure);

@@ -98,10 +98,13 @@ test("An ask's pages", async ({ page, flowDatabase }) => {
     `INSERT INTO asks (slug, title, kind, asked_by) VALUES ('our-letter', 'Our letter', 'letter', '{pauseai}');
      WITH people AS (
        INSERT INTO notable_people (kind, airtable_id, name)
-       SELECT 'politician', 'recMany' || n, 'Signer ' || lpad(n::text, 3, '0') FROM generate_series(1, 150) n RETURNING id
+       SELECT 'politician', 'recMany' || n, 'Signer ' || lpad(n::text, 3, '0') FROM generate_series(1, 162) n RETURNING id, name
+     ), seats AS (
+       INSERT INTO politicians (id, house, constituency, party, country)
+       SELECT id, 'commons', 'Exampleton ' || right(name, 3), 'Example Party', 'england' FROM people
      )
      INSERT INTO ask_statuses (notable_person_id, ask, ask_kind, status, updated_by)
-     SELECT id, 'our-letter', 'letter', 'signed', 'jo@pauseai.uk' FROM people`,
+     SELECT id, 'our-letter', 'letter', CASE WHEN right(name, 3)::int <= 150 THEN 'signed' ELSE 'declined' END, 'jo@pauseai.uk' FROM people`,
   );
   await logIn(page, flowDatabase, ["supporters"]);
   await page.goto(`${BASE}/staff/asks/our-letter`);
@@ -113,8 +116,21 @@ test("An ask's pages", async ({ page, flowDatabase }) => {
   story("Next shows the rest, and the answer chosen stays chosen.");
   await page.getByRole("link", { name: staffCopy.paging.next }).click();
   await expect(page).toHaveURL(/page=2/);
-  await expect(page.getByRole("link", { name: "Signer 150" })).toBeVisible();
+  await expect(page.getByRole("link", { name: `${staffCopy.statuses.signed} 150` })).toHaveAttribute(
+    "aria-current",
+    "true",
+  );
   await frame(page, "The second page");
+
+  story("The other answer's column top chooses that answer instead.");
+  await page.getByRole("link", { name: `${staffCopy.statuses.declined} 12` }).click();
+  await expect(page.getByText(staffCopy.campaigns.politicians(12))).toBeVisible();
+  await frame(page, "Those who declined");
+
+  story("Under the answers, a link leads to everyone who answered, on the politicians list.");
+  await page.getByRole("link", { name: staffCopy.asks.page.everyone }).click();
+  await expect(page).toHaveURL(/\/staff\/politicians\?ask=our-letter/);
+  await frame(page, "Those who answered, on the politicians list");
 });
 
 test("Sent emails", async ({ page, flowDatabase }) => {

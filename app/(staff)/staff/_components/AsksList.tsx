@@ -123,7 +123,7 @@ export default function AsksList({
         <p>{copy.none}</p>
       ) : (
         <Grid>
-          <div className={spanClass(6)}>
+          <div className={`${spanClass(6)} ${styles.groups}`}>
             {askGroups(asks, now).map((group) => (
               <section key={group.key} className={styles.group} aria-label={group.heading || undefined}>
                 {group.heading && <h2>{group.heading}</h2>}
