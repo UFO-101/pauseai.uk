@@ -96,9 +96,13 @@ test("Filtering supporters", async ({ page, request, flowDatabase }) => {
   const named = names.filter((name) => name !== copy.noName);
   expect(names).toEqual([...named.sort(), copy.noName]);
   await frame(page, "The list, filtered and sorted by name");
-  story("They change the filter to those who wrote to their MP. Nobody has yet.");
+  story(
+    "They change the filter to those who wrote to their MP, adding it on the chip, then taking off the first. Nobody has yet.",
+  );
 
   await changeFilter(page, `${copy.columns.badges}: ${copy.badges.registered}`, copy.badges.letter);
+  const both = `${copy.columns.badges}: ${staffCopy.filters.anyOf([copy.badges.registered, copy.badges.letter])}`;
+  await changeFilter(page, both, copy.badges.registered);
   await expect(page.getByText(copy.none)).toBeVisible();
   await frame(page, "The list, with nobody in it");
 

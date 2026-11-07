@@ -18,11 +18,11 @@ function addEntries(database: string) {
   runSql(
     database,
     `INSERT INTO audit_log (actor, action, details, at) VALUES
-       ('${JO}', 'add note', '{"noteId": 1}', now() - interval '2 days'),
+       ('${JO}', 'save filter', '{"id": 1, "list": "events"}', now() - interval '2 days'),
        ('${SAM}', 'edit event', '{"owner": "${JO}"}', now() - interval '3 days'),
-       ('${SAM}', 'add note', '{"noteId": 2}', now() - interval '5 days'),
+       ('${SAM}', 'save filter', '{"id": 2, "list": "events"}', now() - interval '5 days'),
        ('sync', 'sync politicians', '{}', now() - interval '6 days'),
-       ('${JO}', 'set status', '{}', now() - interval '60 days')`,
+       ('${JO}', 'rename filter', '{"id": 1, "list": "events"}', now() - interval '60 days')`,
   );
 }
 
@@ -47,7 +47,7 @@ test("Filtering the audit log", { tag: "@phone" }, async ({ page, flowDatabase }
   story("They filter by who.");
   await addFilter(page, copy.actor, JO);
   await expect(page).toHaveURL(/actor=jo/);
-  await expect.poll(() => whoAndWhat(page)).toEqual([`${JO} add note`, `${JO} set status`]);
+  await expect.poll(() => whoAndWhat(page)).toEqual([`${JO} save filter`, `${JO} rename filter`]);
   await frame(page, "Only Jo's");
 
   story("Sam's too: the same chip's menu adds another, and the chip says both.");
@@ -68,19 +68,19 @@ test("Filtering the audit log", { tag: "@phone" }, async ({ page, flowDatabase }
   await addFilter(page, copy.at, filters.lastDays(7));
   await page.getByRole("table").getByRole("link", { name: copy.action }).click();
   await expect(page).toHaveURL(/sort=action/);
-  await expect.poll(() => whoAndWhat(page)).toEqual([`${JO} add note`, `${SAM} add note`, `${SAM} edit event`]);
+  await expect.poll(() => whoAndWhat(page)).toEqual([`${JO} save filter`, `${SAM} save filter`, `${SAM} edit event`]);
   await frame(page, "The last week's, by what");
 
-  story("Leaving out the notes instead, from Except.");
+  story("Leaving out the saved filters, from Except.");
   await page.getByRole("button", { name: filters.except }).click();
   const group = page
     .locator("[popover]:popover-open details")
     .filter({ has: page.locator("summary", { hasText: new RegExp(`^${copy.action}$`) }) });
   await group.locator("summary").click();
-  await group.getByRole("link", { name: "add note", exact: true }).click();
-  await expect(page.getByRole("button", { name: filters.notChip(copy.action, "add note") })).toBeVisible();
+  await group.getByRole("link", { name: "save filter", exact: true }).click();
+  await expect(page.getByRole("button", { name: filters.notChip(copy.action, "save filter") })).toBeVisible();
   await expect.poll(() => whoAndWhat(page)).toEqual([`${SAM} edit event`]);
-  await frame(page, "Without the notes");
+  await frame(page, "Without the saved filters");
 
   story("Turning Who round leaves both out, so the list is the sync's.");
   await changeFilter(page, both, filters.exceptAllInstead);
@@ -94,8 +94,10 @@ test("Searching the audit log, and saving it", async ({ page, flowDatabase }) =>
   addEntries(flowDatabase);
   await logIn(page, flowDatabase, ["admin", "supporters"]);
   await page.goto(`${BASE}/staff/audit-log`);
-  await page.getByRole("searchbox", { name: copy.search }).fill("edit event");
-  await page.getByRole("button", { name: staffCopy.search, exact: true }).click();
+  const box = page.getByRole("searchbox", { name: copy.search });
+  await box.fill("edit event");
+  await box.press("Enter");
+  await expect(page).toHaveURL(/q=edit/);
   await expect.poll(() => whoAndWhat(page)).toEqual([`${SAM} edit event`]);
   await frame(page, "What the search found");
 
