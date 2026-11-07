@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, onTestFinished, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page, userEvent, type Locator } from "vitest/browser";
 import { ASK_STATUSES } from "@/lib/asks";
@@ -788,7 +788,12 @@ describe("StaffAccountsTable", () => {
     ]);
     expect(Number(getComputedStyle(document.querySelector("dt")!).fontWeight)).toBeGreaterThanOrEqual(600);
 
-    // Remove, pressed twice.
+    // Remove, pressed twice. With timers faked, the seconds Confirm? waits for can't run out between the presses, however
+    // busy the machine.
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
     const jo = page.getByRole("row").filter({ hasText: "jo@pauseai.uk" });
     await jo.getByRole("button", { name: copy.remove }).click();
     expect(remove.sent).toHaveLength(0);
