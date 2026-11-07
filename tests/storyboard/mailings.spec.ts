@@ -371,11 +371,11 @@ test("A mailing's letter bounces", async ({ page, request, flowDatabase }) => {
   );
   await syncPoliticians(request, BASE);
   await logIn(page, flowDatabase);
-  const sent = addMailing(flowDatabase, "Edinburgh follow-up", "sent", ["sent"]);
+  const sent = addMailing(flowDatabase, "Edinburgh follow-up", "sent", ["skipped:left-office", "sent"]);
   const [[letter, address, name]] = runSql(
     flowDatabase,
     `SELECT l.id, n.email, n.name FROM letters_from_pauseai m JOIN letters l USING (id) JOIN notable_people n ON n.id = l.notable_person_id
-     WHERE m.mailing_id = ${sent}`,
+     WHERE m.mailing_id = ${sent} AND l.status = 'sent'`,
   ).map((row) => row.split("\t"));
   runSql(
     flowDatabase,
