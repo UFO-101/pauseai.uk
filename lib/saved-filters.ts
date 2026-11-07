@@ -25,8 +25,8 @@ const SAVED_PARAMS: Record<SavedList, readonly string[]> = {
   events: ["when", ...CHOOSING_PARAMS.events, "sort", "dir"],
 };
 
-/** What goes with a list's URL but isn't part of a filter, kept when one is loaded: who a mailing is being chosen for. */
-const CARRIED_PARAMS = ["mailing", "pasted"];
+/** What goes with a list's URL but isn't part of a filter, kept when one is loaded: who a mailing or a message is being chosen for. */
+const CARRIED_PARAMS = ["mailing", "pasted", "message"];
 
 type RawParams = Partial<Record<string, ParamValue>>;
 
