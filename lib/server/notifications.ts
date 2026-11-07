@@ -1,5 +1,6 @@
 import "server-only";
 import { siteUrlIfKnown } from "@/lib/site-url";
+import { query } from "./db";
 import { send, type Purpose } from "./email";
 import { notifyDomain } from "./outside-services/postmark";
 import { problem } from "./problems";
@@ -49,4 +50,33 @@ export async function notifyStaff(
     letterId,
   );
   return result.sent;
+}
+
+/** Tells the notification inbox an MP's address bounced, as nobody can write to them until someone fixes it. */
+export async function alertBouncedMp(
+  mpName: string,
+  address: string,
+  reason: string,
+  request: Request | undefined,
+): Promise<void> {
+  await notifyStaff(
+    staffCopy.alert.subject(mpName),
+    staffCopy.alert.body(mpName, address, reason, staffLink("/staff/politicians/blocked-emails", request)),
+  );
+}
+
+/**
+ * Tells the notification inbox of an address just blocked, if it's that of
+ * a politician in office, whom the dashboard then shows as waiting on a person.
+ */
+export async function alertIfPoliticianBlocked(
+  address: string,
+  reason: string,
+  request: Request | undefined,
+): Promise<void> {
+  const politicians = await query<{ name: string }>(
+    "SELECT name FROM notable_people WHERE lower(email) = $1 AND status = 'in_office' ORDER BY id",
+    [address],
+  );
+  for (const { name } of politicians) await alertBouncedMp(name, address, reason, request);
 }

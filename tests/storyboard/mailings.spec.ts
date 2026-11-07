@@ -1,9 +1,9 @@
 import type { Page } from "@playwright/test";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { runSql } from "@/scripts/fresh-database.mjs";
-import { addStaffAccount, logInAsStaff, newestEmail, syncPoliticians } from "../steps";
+import { addStaffAccount, logInAsStaff, newestEmail, syncPoliticians, WEBHOOK_AUTH } from "../steps";
 import { BASE, emailFrame, expect, frame, story, test } from "./fixtures";
-import { importEmails, stayOnPage } from "./staff-steps";
+import { importEmails, NOTIFICATION_INBOX, stayOnPage } from "./staff-steps";
 import { scrollSettled } from "./settle";
 
 // Mailings to politicians written on the site: started from New mailing,
@@ -12,7 +12,7 @@ import { scrollSettled } from "./settle";
 // changed from the list, and deleted; names pasted to tick; one sent
 // from your Gmail, connected from the page, scheduled and sent by the
 // hourly job; and the pages of mailings scheduled, sending and sent, made in
-// the database as scheduling would make them.
+// the database as scheduling would make them; a letter of one bouncing.
 
 const copy = staffCopy.mailingPages;
 
@@ -363,6 +363,50 @@ test("Sending and sent", async ({ page, request, flowDatabase }) => {
   await expect(page).toHaveURL(new RegExp(`/staff/mailings/${sent}/letters/\\d+$`));
   await expect(page.getByRole("navigation").getByRole("link", { name: "Edinburgh follow-up" })).toBeVisible();
   await frame(page, "A failed letter's page");
+});
+
+test("A mailing's letter bounces", async ({ page, request, flowDatabase }) => {
+  story(
+    "A mailing has been sent, and one MP's address bounces its letter. The address is blocked, and staff get an email.",
+  );
+  await syncPoliticians(request, BASE);
+  await logIn(page, flowDatabase);
+  const sent = addMailing(flowDatabase, "Edinburgh follow-up", "sent", ["sent"]);
+  const [[letter, address, name]] = runSql(
+    flowDatabase,
+    `SELECT l.id, n.email, n.name FROM letters_from_pauseai m JOIN letters l USING (id) JOIN notable_people n ON n.id = l.notable_person_id
+     WHERE m.mailing_id = ${sent}`,
+  ).map((row) => row.split("\t"));
+  runSql(
+    flowDatabase,
+    `INSERT INTO email_sends (purpose, letter_id, address, outcome, message_id)
+     VALUES ('mailing', ${letter}, lower('${address}'), 'sent', 'mailing-bounce-${letter}')`,
+  );
+  const bounce = await request.post(`${BASE}/api/postmark/bounce`, {
+    headers: { Authorization: WEBHOOK_AUTH },
+    data: {
+      RecordType: "Bounce",
+      Type: "HardBounce",
+      TypeCode: 1,
+      MessageID: `mailing-bounce-${letter}`,
+      Name: "Hard bounce",
+      Description: "The server was unable to deliver your message (ex: unknown user, mailbox not found).",
+      Email: address,
+      BouncedAt: "2026-10-20T09:00:00Z",
+      Inactive: true,
+      CanActivate: true,
+    },
+  });
+  expect(await bounce.json()).toEqual({ recorded: true });
+  const alert = newestEmail(
+    (email) => email.To === NOTIFICATION_INBOX && email.Subject === staffCopy.alert.subject(name),
+  )!;
+  await emailFrame(page, alert, "The email staff get");
+  story("The dashboard shows the same MP, waiting for someone to fix the address.");
+
+  await page.goto(`${BASE}/staff`);
+  await expect(page.getByText(staffCopy.home.dashboard.actions.blockedMp(name))).toBeVisible();
+  await frame(page, "The dashboard");
 });
 
 test("A stopped mailing", async ({ page, request, flowDatabase }) => {
