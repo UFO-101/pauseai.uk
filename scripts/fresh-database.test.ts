@@ -242,6 +242,7 @@ describe.skipIf(process.env.NETLIFY === "true")("copying a database", () => {
           "event passed_on",
           "event tentative",
           "event tentative_staff",
+          "letter declined",
           "letter signed",
         ]);
         expect(
