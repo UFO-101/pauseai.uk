@@ -47,7 +47,9 @@ describeWithDatabase("savedFiltersIf", () => {
   it("gives those not allowed only the URL's parameters, and those allowed the state too", async () => {
     const id = await createSavedFilter("audit-log", "Jo's", { actor: "jo@pauseai.uk" }, "jo@pauseai.uk");
     const url = { actor: "jo@pauseai.uk", saved: String(id) };
-    expect(await savedFiltersIf(false, "audit-log", url)).toEqual({ params: url });
+    expect(await savedFiltersIf(false, "audit-log", url)).toEqual({
+      params: { actor: ["jo@pauseai.uk"], saved: [String(id)] },
+    });
     const { state, params } = await savedFiltersIf(true, "audit-log", url);
     expect(state!.rows.map((row) => row.name)).toEqual(["Jo's"]);
     expect(params.actor).toEqual(["jo@pauseai.uk"]);
