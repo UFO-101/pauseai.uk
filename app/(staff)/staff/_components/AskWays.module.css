@@ -12,13 +12,16 @@
   min-width: 0;
 }
 
-/* A long list flows into a second column, if it has the room. */
 .ways ul {
   margin: 0;
   padding: 0;
+  list-style: none;
+}
+
+/* A long list flows into a second column, if it has the room. */
+.ways ul:has(> li:nth-child(4)) {
   columns: 13rem;
   column-gap: var(--space-4);
-  list-style: none;
 }
 
 .ways li {
@@ -41,7 +44,7 @@
 }
 
 /* Each on a ruled line, its letters at the end. */
-.wide ul {
+.wide ul:has(> li:nth-child(4)) {
   columns: auto;
 }
 

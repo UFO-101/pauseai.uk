@@ -82,6 +82,7 @@
 
 .person {
   display: grid;
+  justify-items: start;
   min-width: 0;
 }
 
@@ -97,4 +98,11 @@
   display: inline-flex;
   gap: var(--space-1);
   align-items: center;
+}
+
+/* A phone: the counts under the title, with the room to keep each label on a line. */
+@media (max-width: 30rem) {
+  .howCounts {
+    width: 100%;
+  }
 }

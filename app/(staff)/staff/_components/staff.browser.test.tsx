@@ -2033,7 +2033,7 @@ describe("PoliticianDetails", () => {
     // Signed, and when, ticked in green.
     const answer = (group: typeof letter) => group.element().querySelector("[class*=answer]")!;
     expect(answer(letter).textContent).toBe(`${staffCopy.statuses.signed}1 Oct 2026${staffCopy.politician.edit}`);
-    expect(answer(letter).className).toMatch(/yes/);
+    expect(answer(letter).firstElementChild!.className).toMatch(/yes/);
     // The ask's title leads to its page; who asked it and when.
     await expect
       .element(letter.getByRole("link", { name: ask("frontier-ai-letter").title }))
@@ -2054,7 +2054,7 @@ describe("PoliticianDetails", () => {
     // Declined, from Airtable: crossed, not green, with no form, as staff don't record it.
     const event = row("edinburgh-conference-2026");
     expect(answer(event).textContent).toBe(staffCopy.statuses.declined);
-    expect(answer(event).className).not.toMatch(/yes/);
+    expect(answer(event).firstElementChild!.className).not.toMatch(/yes/);
     await expect.element(event.getByText(staffCopy.politician.fromImport.airtable)).toBeVisible();
     await expect
       .element(
@@ -2100,7 +2100,7 @@ describe("PoliticianDetails", () => {
     const row = page.getByRole("group", { name: bare.title });
     const answer = row.element().querySelector("[class*=answer]")!;
     expect(answer.textContent).toBe(staffCopy.statuses.tentative);
-    expect(answer.className).not.toMatch(/yes/);
+    expect(answer.firstElementChild!.className).not.toMatch(/yes/);
     await expect.element(row.getByRole("link")).toHaveAttribute("href", `/staff/asks/${bare.slug}`);
     await expect.element(row.getByText(staffCopy.politician.askedThem("", "event"), { exact: true })).toBeVisible();
   });
@@ -2152,10 +2152,12 @@ describe("PoliticianDetails", () => {
       .element()
       .querySelector("[class*=answer]")!;
     expect(answer.textContent).toBe(`${staffCopy.statuses.declined}1 Oct 2026${staffCopy.politician.edit}`);
-    expect(answer.className).toMatch(/no/);
+    expect(answer.firstElementChild!.className).toMatch(/no/);
   });
 
   it("chooses an event's answer from a list, where staff record it", async () => {
+    // Wide enough that the form's Save is on screen, whichever tests ran before it.
+    await page.viewport(1280, 800);
     // Staff record the letter to the PM; an event made one of its asks, its answer is chosen from a list.
     const event = { ...ask("frontier-ai-letter"), kind: "event" as const, title: "Example Event" };
     const { fn, sent } = action();
@@ -2199,7 +2201,7 @@ describe("PoliticianDetails", () => {
       />,
     );
     const going = page.getByRole("group", { name: "Example Event" }).last();
-    expect(going.element().querySelector("[class*=answer]")!.className).toMatch(/yes/);
+    expect(going.element().querySelector("[class*=answer]")!.firstElementChild!.className).toMatch(/yes/);
     expect(going.element().querySelector("[role=radio][aria-checked=true]")!.textContent).toBe(
       staffCopy.statuses.going,
     );

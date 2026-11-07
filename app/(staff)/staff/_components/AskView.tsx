@@ -212,7 +212,11 @@ export default function AskView({ ask, answer }: { ask: AskPageData; answer: str
           look="aside"
           title={page.howWeAsked}
           id="how-we-asked"
-          action={<Counts small counts={askCounts(ask)} />}
+          action={
+            <div className={styles.howCounts}>
+              <Counts small counts={askCounts(ask)} />
+            </div>
+          }
         >
           {ask.ways.length === 0 ? (
             <p>
