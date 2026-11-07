@@ -248,22 +248,21 @@ describe("SupporterLetterThread", () => {
     await expect.element(page.getByRole("button", { name: staffCopy.letterChanges.asSent })).toBeVisible();
   });
 
-  it("folds an automatic reply to its first paragraph, unfolded by its fold or Show as sent, and folded again by Show less", async () => {
+  it("folds an automatic reply to its first paragraph, unfolded and folded again by a click", async () => {
     const changes = staffCopy.letterChanges;
     await render(<SupporterLetterThread letter={exampleAutoRepliedLetterDetails} />);
     const [, acknowledgement, away] = page.getByRole("article").all();
-    const text = () => acknowledgement.element().textContent;
-    expect(text()).toContain("Thank you for contacting me.");
-    expect(text()).not.toContain("constituency office");
-    await acknowledgement.getByRole("button", { name: changes.more(3) }).click();
-    expect(text()).toContain("constituency office");
-    await acknowledgement.getByRole("button", { name: changes.showLess }).click();
-    expect(text()).not.toContain("constituency office");
-    await acknowledgement.getByRole("button", { name: changes.asSent }).click();
-    expect(text()).toContain("For my surgeries");
+    await expect.element(acknowledgement.getByText("Thank you for contacting me.", { exact: false })).toBeVisible();
+    const office = acknowledgement.getByText("constituency office", { exact: false });
+    await expect.element(office).not.toBeVisible();
+    const fold = acknowledgement.getByText(changes.more(3));
+    await fold.click();
+    await expect.element(office).toBeVisible();
+    await fold.click();
+    await expect.element(office).not.toBeVisible();
     // One of a single paragraph, whole, with nothing to unfold.
     expect(away.element().textContent).toContain("I'm away until Monday.");
-    expect(away.getByRole("button").all()).toHaveLength(0);
+    expect(away.element().querySelector("details")).toBeNull();
     expect(changes.more(1)).not.toBe(changes.more(2));
   });
 
@@ -439,12 +438,12 @@ describe("LetterChanges", () => {
     const { container } = await render(<LetterChanges {...EMAIL} sent={sent} draft={draft} />);
     expect([...container.querySelectorAll("ins")].map((e) => e.textContent)).toEqual(["I live here."]);
     expect([...container.querySelectorAll("del")].map((e) => e.textContent)).toEqual(["now "]);
-    await expect.element(page.getByRole("button", { name: words.folded(2) })).toBeVisible();
-    await expect.element(page.getByText("Two.", { exact: false })).not.toBeInTheDocument();
-    await page.getByRole("button", { name: words.folded(3) }).click();
+    await expect.element(page.getByText(words.folded(2))).toBeVisible();
+    await expect.element(page.getByText("Two.", { exact: false })).not.toBeVisible();
+    await page.getByText(words.folded(3)).click();
     await expect.element(page.getByText("Two.\n\nThree.\n\nJane")).toBeVisible();
-    await expect.element(page.getByRole("button", { name: words.folded(3) })).not.toBeInTheDocument();
-    await expect.element(page.getByRole("button", { name: words.folded(1) })).not.toBeInTheDocument();
+    await page.getByText(words.folded(3)).click();
+    await expect.element(page.getByText("Two.", { exact: false })).not.toBeVisible();
   });
 
   it("shows the letter as sent, and back, from the subject's line", async () => {
@@ -457,15 +456,16 @@ describe("LetterChanges", () => {
     await expect.element(page.getByRole("button", { name: words.asSent })).toBeVisible();
     expect(container.querySelector("ins")).not.toBeNull();
     // Unfolded, then as sent and back: folded again.
-    await page.getByRole("button", { name: words.folded(2) }).click();
+    await page.getByText(words.folded(2)).click();
+    await expect.element(page.getByText("One.", { exact: false })).toBeVisible();
     await page.getByRole("button", { name: words.asSent }).click();
     await page.getByRole("button", { name: words.showChanges }).click();
-    await expect.element(page.getByRole("button", { name: words.folded(2) })).toBeVisible();
+    await expect.element(page.getByText("One.", { exact: false })).not.toBeVisible();
   });
 
   it("folds a letter sent as drafted whole, and with no draft kept shows the letter alone", async () => {
     await render(<LetterChanges {...EMAIL} sent={draft} draft={draft} />);
-    await expect.element(page.getByRole("button", { name: words.folded(6) })).toBeVisible();
+    await expect.element(page.getByText(words.folded(6))).toBeVisible();
     const { container } = await render(<LetterChanges {...EMAIL} sent={sent} draft={null} />);
     expect(container.querySelector("article > div")!.textContent).toBe(sent);
     expect(container.querySelector("button")).toBeNull();

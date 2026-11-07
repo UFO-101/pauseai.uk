@@ -24,24 +24,6 @@
   color: var(--status-red);
 }
 
-/* Paragraphs left as they were, folded: a dashed line across the letter
-   saying how many, which unfolds them. */
-.fold {
-  padding: var(--space-1) var(--space-2);
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
-  color: var(--text-secondary);
-  font: inherit;
-  font-size: var(--text-sm);
-  text-align: left;
-  cursor: pointer;
-}
-
-.fold:hover {
-  color: var(--text);
-}
-
 /* Show as sent, or Show changes, on the subject's line: a quiet button, as a link. */
 .toggle {
   padding: 0;

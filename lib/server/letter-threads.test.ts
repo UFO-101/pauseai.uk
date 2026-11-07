@@ -133,8 +133,8 @@ describeWithDatabase("letter threads", () => {
       messages: [{ text: null }],
     });
     await saveLetterReply("pdf.eml.gz", gzipSync("Content-Type: application/pdf\r\n\r\n%PDF"));
-    expect(await messageContent("pdf.eml.gz")).toEqual({ text: null, quoted: "", cc: null });
-    expect(await messageContent("never-kept.eml.gz")).toEqual({ text: null, quoted: "", cc: null });
+    expect(await messageContent("pdf.eml.gz")).toEqual({ text: null, quoted: "", cc: null, auto: false });
+    expect(await messageContent("never-kept.eml.gz")).toEqual({ text: null, quoted: "", cc: null, auto: false });
   });
 
   it("folds the mail a reply quotes, in plain text or in an HTML blockquote", async () => {
@@ -149,6 +149,7 @@ describeWithDatabase("letter threads", () => {
       text: "Yes.",
       quoted: "On Mon, Jo wrote:\n> Will you?",
       cc: "Casey Wörker <casey@parliament.uk>",
+      auto: false,
     });
     await saveLetterReply(
       "html.eml.gz",
@@ -159,6 +160,17 @@ describeWithDatabase("letter threads", () => {
     );
     expect(await messageContent("html.eml.gz")).toMatchObject({ text: "No.", cc: null });
     expect((await messageContent("html.eml.gz")).quoted).toContain("> Will you?");
+  });
+
+  it("says a machine sent a message, by its headers or its subject, however encoded", async () => {
+    const saved = async (key: string, headers: string) => {
+      await saveLetterReply(key, gzipSync(`${headers}\r\n\r\nAway.\r\n`));
+      return (await messageContent(key)).auto;
+    };
+    expect(await saved("header.eml.gz", "Subject: Your letter\r\nAuto-Submitted: auto-replied")).toBe(true);
+    expect(await saved("subject.eml.gz", "Subject: =?utf-8?Q?Automatic_reply=3A_Hello?=")).toBe(true);
+    expect(await saved("person.eml.gz", "Subject: Re: Hello")).toBe(false);
+    expect(await saved("nosubject.eml.gz", "From: jo@example.com")).toBe(false);
   });
 
   it("reads HTML as its paragraphs and characters, not its source's layout", async () => {

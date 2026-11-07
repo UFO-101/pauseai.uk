@@ -4,6 +4,7 @@ import { checkMailingDoc, letterFor, type MailingRecipientValues } from "@/lib/m
 import { docFromMarkup, type LetterDoc } from "@/lib/letter-format";
 import { firstOfType, decodeWords, parseMime, wholeTextOf } from "@/lib/email-parsing/mime";
 import { letterText, replyParts } from "@/lib/email-parsing/reply-text";
+import { isMachineReply } from "@/lib/email-parsing/subjects";
 import { query } from "./db";
 import { letterReply } from "./outside-services/blobs";
 
@@ -54,19 +55,21 @@ export type LetterThread = {
 /**
  * A kept message's text and, apart, the mail it quotes and its footer: from
  * its plain text if it has one, else its HTML's; its text null if it has
- * neither. And whom it was copied to, as its Cc said, or null. Null and empty
- * if it's gone.
+ * neither. Whom it was copied to, as its Cc said, or null. And whether a
+ * machine sent it, by its headers and subject. Null, empty and false if it's
+ * gone.
  */
 export async function messageContent(
   blobKey: string,
-): Promise<{ text: string | null; quoted: string; cc: string | null }> {
+): Promise<{ text: string | null; quoted: string; cc: string | null; auto: boolean }> {
   const gzipped = await letterReply(blobKey);
-  if (!gzipped) return { text: null, quoted: "", cc: null };
+  if (!gzipped) return { text: null, quoted: "", cc: null, auto: false };
   const message = parseMime(gunzipSync(gzipped).toString("latin1"));
   const cc = message.headers.get("cc");
   const whole = firstOfType(message, "text/plain") || firstOfType(message, "text/html") ? wholeTextOf(message) : null;
   const parts = whole === null ? { text: null, quoted: "" } : replyParts(whole);
-  return { ...parts, cc: cc ? decodeWords(cc) : null };
+  const auto = isMachineReply((name) => message.headers.get(name), decodeWords(message.headers.get("subject") ?? ""));
+  return { ...parts, cc: cc ? decodeWords(cc) : null, auto };
 }
 
 /** One of a mailing's letters and its thread; undefined if the mailing has no such letter. */
@@ -111,7 +114,12 @@ export async function threadMessages(letterId: number): Promise<ThreadMessage[]>
      FROM letter_replies r WHERE letter_id = $1 ORDER BY at, id`,
     [letterId],
   );
-  return Promise.all(replies.map(async ({ blobKey, ...reply }) => ({ ...reply, ...(await messageContent(blobKey)) })));
+  return Promise.all(
+    replies.map(async ({ blobKey, ...reply }) => {
+      const { text, quoted, cc } = await messageContent(blobKey);
+      return { ...reply, text, quoted, cc };
+    }),
+  );
 }
 
 /** The kept messages after `after`, by ID, as many as `limit`, for the backup: each one's ID and key. */

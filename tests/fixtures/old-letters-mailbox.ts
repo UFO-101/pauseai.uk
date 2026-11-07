@@ -229,6 +229,16 @@ const OLD_MAIL: readonly OldMail[] = [
     "Thursday works. *Come to Portcullis House.*\n\nDirections: https://example.org/portcullis-house",
     { "In-Reply-To": "<0a13@mail.gmail.com>", References: "<0a13@mail.gmail.com>" },
   ),
+  // Her office's out-of-office, Outlook's: only its subject says it's automatic.
+  got(
+    "0a99",
+    "t-coffee",
+    "2026-08-02T09:05:00.000Z",
+    `Polly Placeholder <${POLLY}>`,
+    "Automatic reply: Coffee next week?",
+    "I'm out of the office until Monday.\n\nThis email may be confidential. If you received it in error, please delete it.",
+    { "In-Reply-To": "<0a13@mail.gmail.com>", References: "<0a13@mail.gmail.com>" },
+  ),
   // In the same thread, a message no search finds, from someone else: kept as the thread is.
   mail(
     JOSEPH_MAILBOX,

@@ -58,7 +58,7 @@ export default function OneOffThreadView({ thread }: { thread: OneOffThread }) {
               {message.text === null ? (
                 <Muted>{copy.unreadable}</Muted>
               ) : (
-                <MessageText text={message.text} quoted={message.quoted} />
+                <MessageText text={message.text} quoted={message.quoted} auto={message.auto} />
               )}
             </ThreadEmail>
           ))}

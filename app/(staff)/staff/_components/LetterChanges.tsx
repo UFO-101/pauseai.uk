@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { staffCopy } from "@/lib/content/staff-interface";
 import { changeBlocks, type Change } from "@/lib/letter-changes";
+import MailFold from "./MailFold";
 import ThreadEmail from "./ThreadEmail";
 import ThreadText from "./ThreadText";
 import styles from "./LetterChanges.module.css";
@@ -30,8 +31,8 @@ function Changes({ changes }: { changes: Change[] }) {
  * A supporter's letter as an email (ThreadEmail), its body the changes they
  * made to the draft the campaign gave them: each paragraph they changed,
  * added or cut, word by word, and between them, the paragraphs they left
- * alone, folded to a line saying how many, which a click unfolds, as the
- * campaign's text is known already. At the right of the subject's line, a
+ * alone, folded (MailFold) to a line saying how many, as the campaign's
+ * text is known already. At the right of the subject's line, a
  * button shows the letter as sent instead, then the changes again, folded. With no
  * draft kept, the letter alone, and no button.
  */
@@ -51,7 +52,6 @@ export default function LetterChanges({
   draft: string | null;
 }) {
   const [asSent, setAsSent] = useState(false);
-  const [unfolded, setUnfolded] = useState<number[]>([]);
   const email = { from, to, at, subject };
   if (draft === null) {
     return (
@@ -63,15 +63,7 @@ export default function LetterChanges({
     );
   }
   const toggle = (
-    // Back to the changes, folded again.
-    <button
-      type="button"
-      className={styles.toggle}
-      onClick={() => {
-        setAsSent(!asSent);
-        setUnfolded([]);
-      }}
-    >
+    <button type="button" className={styles.toggle} onClick={() => setAsSent(!asSent)}>
       {asSent ? copy.showChanges : copy.asSent}
     </button>
   );
@@ -86,75 +78,12 @@ export default function LetterChanges({
           {changeBlocks(draft, sent).map((block, i) =>
             block.kind === "changed" ? (
               <Changes key={i} changes={block.changes} />
-            ) : unfolded.includes(i) ? (
-              <div key={i} className={styles.text}>
-                <ThreadText text={block.paragraphs.join("\n\n")} />
-              </div>
             ) : (
-              <button key={i} type="button" className={styles.fold} onClick={() => setUnfolded([...unfolded, i])}>
-                {copy.folded(block.paragraphs.length)}
-              </button>
+              <MailFold key={i} summary={copy.folded(block.paragraphs.length)}>
+                <ThreadText text={block.paragraphs.join("\n\n")} />
+              </MailFold>
             ),
           )}
-        </div>
-      )}
-    </ThreadEmail>
-  );
-}
-
-/**
- * An automatic reply as an email (ThreadEmail), folded to its first
- * paragraph, as the rest is rarely worth reading: then a line saying how
- * many more there are, which unfolds them, and at the right of the
- * subject's line a button that shows it as sent, then folds it again. One
- * of a single paragraph is shown whole.
- */
-export function FoldedAutoReply({
-  from,
-  to,
-  cc,
-  at,
-  subject,
-  text,
-}: {
-  from: ReactNode;
-  to: string;
-  cc: string | null;
-  at: string;
-  subject: string;
-  text: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const email = { from, to, cc, at, subject };
-  const [first, ...rest] = text.split(/\n\s*\n/);
-  if (rest.length === 0) {
-    return (
-      <ThreadEmail {...email}>
-        <div className={styles.text}>
-          <ThreadText text={text} />
-        </div>
-      </ThreadEmail>
-    );
-  }
-  const toggle = (
-    <button type="button" className={styles.toggle} onClick={() => setOpen(!open)}>
-      {open ? copy.showLess : copy.asSent}
-    </button>
-  );
-  return (
-    <ThreadEmail {...email} action={toggle}>
-      {open ? (
-        <div className={styles.text}>
-          <ThreadText text={text} />
-        </div>
-      ) : (
-        <div className={styles.changes}>
-          <div className={styles.text}>
-            <ThreadText text={first} />
-          </div>
-          <button type="button" className={styles.fold} onClick={() => setOpen(true)}>
-            {copy.more(rest.length)}
-          </button>
         </div>
       )}
     </ThreadEmail>

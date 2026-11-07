@@ -4,7 +4,8 @@ import { staffCopy } from "@/lib/content/staff-interface";
 import type { LetterThread as Thread } from "@/lib/server/letter-threads";
 import type { SupporterLetterDetails } from "@/lib/server/letters";
 import { named } from "@/lib/email-parsing/addresses";
-import LetterChanges, { FoldedAutoReply } from "./LetterChanges";
+import LetterChanges from "./LetterChanges";
+import MailFold from "./MailFold";
 import ThreadEmail from "./ThreadEmail";
 import ThreadText from "./ThreadText";
 import { MailingLetter } from "./MailingLetter";
@@ -24,22 +25,29 @@ function NoText({ note, link }: { note: string; link: ReactNode }) {
   );
 }
 
-/** A message's text, with the mail it quotes and its footer, if any, folded under it. */
-export function MessageText({ text, quoted }: { text: string; quoted: string }) {
+/**
+ * A message's text, then the mail it quotes and its footer, if any, folded
+ * (MailFold). An automatic reply shows only its first paragraph, the rest
+ * folded too, as it's rarely worth reading.
+ */
+export function MessageText({ text, quoted, auto = false }: { text: string; quoted: string; auto?: boolean }) {
+  const [first, ...rest] = auto ? text.split(/\n\s*\n/) : [text];
   return (
-    <>
+    <div className={styles.message}>
       <div className={styles.text}>
-        <ThreadText text={text} />
+        <ThreadText text={first} />
       </div>
-      {quoted && (
-        <details className={styles.quoted}>
-          <summary>{copy.quoted}</summary>
-          <div className={styles.text}>
-            <ThreadText text={quoted} />
-          </div>
-        </details>
+      {rest.length > 0 && (
+        <MailFold summary={staffCopy.letterChanges.more(rest.length)}>
+          <ThreadText text={rest.join("\n\n")} />
+        </MailFold>
       )}
-    </>
+      {quoted && (
+        <MailFold summary={copy.quoted}>
+          <ThreadText text={quoted} />
+        </MailFold>
+      )}
+    </div>
   );
 }
 
@@ -103,7 +111,7 @@ export default function LetterThread({ thread, link }: { thread: Thread; link?: 
           {message.text === null ? (
             <Muted>{copy.unreadable}</Muted>
           ) : (
-            <MessageText text={message.text} quoted={message.quoted} />
+            <MessageText text={message.text} quoted={message.quoted} auto={message.auto} />
           )}
         </ThreadEmail>
       ))}
@@ -122,8 +130,7 @@ export default function LetterThread({ thread, link }: { thread: Thread; link?: 
  * their MP, when it went, with its subject. One from the letters inbox
  * shows its text against the draft it was written from (LetterChanges),
  * with `link`, the way to it there, at the right of the heading, then each
- * message both ways, oldest first, an automatic reply folded
- * (FoldedAutoReply). For another, whose text the site doesn't have, a
+ * message both ways, oldest first. For another, whose text the site doesn't have, a
  * note saying so, with `link` in its place.
  */
 export function SupporterLetterThread({ letter, link }: { letter: SupporterLetterDetails; link?: ReactNode }) {
@@ -146,27 +153,22 @@ export function SupporterLetterThread({ letter, link }: { letter: SupporterLette
           <NoText note={copy.supporterNoText} link={link} />
         </ThreadEmail>
       )}
-      {sent?.messages.map((message) => {
-        const email = {
-          from: named(message.fromName, message.fromAddress),
-          to: message.fromSupporter ? mp : sender,
-          cc: message.cc,
-          at: message.at,
-          subject: message.subject,
-        };
-        // An automatic reply folded to its first paragraph.
-        return message.auto && message.text !== null ? (
-          <FoldedAutoReply key={message.id} {...email} text={message.text} />
-        ) : (
-          <ThreadEmail key={message.id} {...email}>
-            {message.text === null ? (
-              <Muted>{copy.unreadable}</Muted>
-            ) : (
-              <MessageText text={message.text} quoted={message.quoted} />
-            )}
-          </ThreadEmail>
-        );
-      })}
+      {sent?.messages.map((message) => (
+        <ThreadEmail
+          key={message.id}
+          from={named(message.fromName, message.fromAddress)}
+          to={message.fromSupporter ? mp : sender}
+          cc={message.cc}
+          at={message.at}
+          subject={message.subject}
+        >
+          {message.text === null ? (
+            <Muted>{copy.unreadable}</Muted>
+          ) : (
+            <MessageText text={message.text} quoted={message.quoted} auto={message.auto} />
+          )}
+        </ThreadEmail>
+      ))}
     </Thread>
   );
 }

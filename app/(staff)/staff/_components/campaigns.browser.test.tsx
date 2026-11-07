@@ -404,6 +404,11 @@ describe("the one-off emails", () => {
     await expect.element(page.getByRole("heading", { level: 1 })).toHaveTextContent(exampleOneOffThread.subject!);
     await says("Could we meet?");
     await says(staffCopy.oneOff.unreadable);
+    // The out-of-office shows its first paragraph, the rest folded.
+    await says("I'm away until Monday.");
+    await expect.element(page.getByText("may be confidential", { exact: false })).not.toBeVisible();
+    await page.getByText(staffCopy.letterChanges.more(1)).click();
+    await says("This email may be confidential.");
     for (const name of ["Placeholder, Polly", "polly.placeholder.mp@parliament.uk"]) {
       await expect.element(link(name)).toHaveAttribute("href", "/staff/politicians/1");
     }

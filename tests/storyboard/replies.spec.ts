@@ -255,13 +255,14 @@ test("Automatic replies", async ({ page, request, flowDatabase }) => {
   );
   const folded = page.getByRole("article", { name: "Automatic reply: Please back a pause" });
   const changes = staffCopy.letterChanges;
-  await folded.getByRole("button", { name: changes.more(2) }).scrollIntoViewIfNeeded();
-  await expect(folded).not.toContainText("constituency office");
+  const fold = folded.getByText(changes.more(2));
+  await fold.scrollIntoViewIfNeeded();
+  await expect(folded.getByText("constituency office")).toBeHidden();
   await frame(page, "The acknowledgement, folded");
-  story("Show as sent unfolds it.");
-  await folded.getByRole("button", { name: changes.asSent }).click();
-  await expect(folded).toContainText("constituency office");
-  await frame(page, "The acknowledgement, as sent");
+  story("A click unfolds it.");
+  await fold.click();
+  await expect(folded.getByText("constituency office")).toBeVisible();
+  await frame(page, "The acknowledgement, unfolded");
 });
 
 test("Emails that aren't relayed", async ({ page, request, flowDatabase }) => {
