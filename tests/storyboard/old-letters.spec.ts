@@ -77,9 +77,7 @@ test("A second press", async ({ page, flowDatabase }) => {
   await logIn(page, flowDatabase, ["supporters", "admin"]);
   // The run before it stopped short, with what it reported.
   const stopped = JSON.stringify(exampleOldLettersResult).replaceAll("'", "''");
-  const problems = JSON.stringify([
-    { what: staffCopy.problems.job.unreadable, error: "18f0a" },
-  ]).replaceAll("'", "''");
+  const problems = JSON.stringify([{ what: staffCopy.problems.job.unreadable, error: "18f0a" }]).replaceAll("'", "''");
   runSql(
     flowDatabase,
     `INSERT INTO import_runs (job, started_by, status, result, problems, at) VALUES ('import-old-letters', 'jo@pauseai.uk', 'ok', '${stopped}', '${problems}', '2026-11-01T10:00:00Z')`,
