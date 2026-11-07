@@ -214,81 +214,6 @@ const fieldParagraph = (field: string): MailingDoc["content"][number] => ({
   content: [{ type: "field", attrs: { field } }],
 });
 
-/** A greeting longer than this has a whole letter in it: one whose paragraphs were read as one. */
-export const LONGEST_GREETING = 200;
-
-/** Where a letter read as one paragraph had a new one, of its shared sentences. */
-const STARTS_PARAGRAPH = /^(Would you|I’m the|Ten of|Next steps|30-min|Alternatively|We aim|Thank you|Yours)/;
-
-/** Sentences together as the paragraphs they came in, each of `whole` a paragraph already. */
-function asParagraphs(sentences: string[], whole: string[]): string[] {
-  return sentences.reduce<string[]>((grouped, sentence) => {
-    const prior = grouped.at(-1);
-    if (prior === undefined || whole.includes(sentence) || whole.includes(prior) || STARTS_PARAGRAPH.test(sentence)) {
-      return [...grouped, sentence];
-    }
-    return [...grouped.slice(0, -1), `${prior} ${sentence}`];
-  }, []);
-}
-
-/** A letter read as one paragraph, as a greeting and one paragraph per sentence. */
-export function asSentences(flat: string): string {
-  const [, greeting = "", body = flat] = /^((?:dear|hi|hello)\b[^,]*,)\s+([\s\S]*)$/i.exec(flat) ?? [];
-  const sentences = body.replace(/\sNext steps\s/, "\nNext steps\n").split(/\n|(?<=[.?!])\s+(?=[A-Z0-9])/);
-  return [greeting, ...sentences].filter(Boolean).join("\n\n");
-}
-
-/**
- * A mailing whose letters were each read as one paragraph, split again at the
- * sentences most of them share: its text, and each letter's values, or its
- * whole text if it doesn't fit. `shared` is what the mailing's text had already.
- * Undefined if the letters share nothing.
- */
-export function splitFlatLetters(
-  flats: string[],
-  shared: string[],
-): { doc: MailingDoc; letters: (OldLetterValues | string)[] } | undefined {
-  const texts = flats.map((flat) => [asSentences(flat), ...shared].join("\n\n"));
-  const template = templateOf(texts);
-  if (!template) return undefined;
-  return {
-    doc: templateDoc({ before: asParagraphs(template.before, shared), after: asParagraphs(template.after, shared) }),
-    letters: texts.map((text) => {
-      const fit = fitTemplate(text, template);
-      if (!fit) return text;
-      return { ...fit, values: { ...fit.values, own: fit.values.own.replace(/\n\n/g, " ") } };
-    }),
-  };
-}
-
-/** The words of each of a mailing's paragraphs that has no fields. */
-export function sharedParagraphs(doc: MailingDoc): string[] {
-  return doc.content.flatMap((block) => {
-    const content = block.type === "paragraph" ? (block.content ?? []) : [];
-    return content.flatMap((node) => (node.type === "text" ? [node.text] : []));
-  });
-}
-
-/** A mailing's text without the "> " of lines a mailer quoted: each such line on a line of its own. */
-export function withoutQuoteMarks(doc: MailingDoc): MailingDoc {
-  return {
-    ...doc,
-    content: doc.content.map((block) =>
-      block.type === "paragraph" ? { ...block, content: (block.content ?? []).flatMap(linesOfQuote) } : block,
-    ),
-  };
-}
-
-function linesOfQuote<Node extends { type: string }>(node: Node) {
-  const text = node.type === "text" ? (node as Node & { text: string }).text : "";
-  if (!text.startsWith(">")) return [node];
-  const lines = text.split(/(?:^|\s+)>(?:\s+|$)/).filter(Boolean);
-  return lines.flatMap((line, i) => [
-    ...(i ? [{ type: "hardBreak" as const }] : []),
-    { type: "text" as const, text: line },
-  ]);
-}
-
 /** A template as a mailing's text, its greeting and own paragraph its fields. */
 export function templateDoc({ before, after }: OldTemplate): MailingDoc {
   return {
@@ -548,10 +473,10 @@ function firstMailbox(line: string): string {
  * Curly quotes and dashes as Joseph's sends have them: whatever sent those mail
  * kept only each character's low byte, which leaves a control character.
  */
-export const CUT_DOWN_CHARACTERS = "\x13\x14\x18\x19\x1c\x1d";
+const CUT_DOWN_CHARACTERS = "\x13\x14\x18\x19\x1c\x1d";
 
 /** The characters those were, in the same order. */
-export const WHOLE_CHARACTERS = "\u2013\u2014\u2018\u2019\u201c\u201d";
+const WHOLE_CHARACTERS = "\u2013\u2014\u2018\u2019\u201c\u201d";
 
 /** A text with its cut-down characters whole again. */
 export function restoreCutDown(text: string): string {

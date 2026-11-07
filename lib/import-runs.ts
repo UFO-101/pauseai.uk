@@ -51,7 +51,7 @@ export const JOB_SCHEDULES: Record<ImportJob, "frequent" | "hourly" | "nightly" 
   "sync-emails": "oneOff",
   "import-web-form-letters": "oneOff",
   "import-go-to-parliament": "oneOff",
-  "import-old-letters": "frequent",
+  "import-old-letters": "oneOff",
   "check-mps": "nightly",
   "import-controlai": "nightly",
 };
@@ -278,8 +278,6 @@ export type OldLettersImportResult = {
   stoppedWhy?: string;
   /** How many of its searches it has listed: its place, between its calls. */
   searchesDone?: number;
-  /** The last letter whose garbled text it has read again: its place, between its calls. */
-  textsDone?: number;
   /** The first message of the last kept thread whose missing messages it has listed: its place, between its calls. */
   threadsDone?: number;
   /** Messages listed and read this run, and how many are left. */
