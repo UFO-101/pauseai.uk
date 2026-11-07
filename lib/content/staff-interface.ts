@@ -1533,9 +1533,8 @@ All events: ${link}`,
     showChanges: "Show changes",
     // In place of paragraphs left as they were; a click unfolds them.
     folded: (n: number) => (n === 1 ? "1 paragraph unchanged" : `${n} paragraphs unchanged`),
-    // An automatic reply folded to its first paragraph: in place of the rest, which a click unfolds; then back.
+    // An automatic reply folded to its first paragraph: in place of the rest, which a click unfolds.
     more: (n: number) => (n === 1 ? "1 more paragraph" : `${n} more paragraphs`),
-    showLess: "Show less",
   },
   // The letters inbox, which supporters' letters to MPs go from (lib/server/letters-inbox-reading.ts).
   lettersInbox: {

@@ -97,7 +97,7 @@ test("Jane writes to her MP", async ({ page, flowDatabase }) => {
   await expect(entries.first()).toContainText(staffCopy.letters.backends.gmail);
   await expect(entries.first()).toContainText(`${history.fields.to}${OFFICE_ADDRESS}`);
   await expect(entries.first()).toContainText(staffCopy.letters.status.copy_sent);
-  await expect(page.getByRole("article").getByRole("button", { name: /unchanged/ })).toBeVisible();
+  await expect(page.getByRole("article").getByText(/unchanged/)).toBeVisible();
   await frame(page, "The letter's page");
 });
 
@@ -255,13 +255,14 @@ test("Automatic replies", async ({ page, request, flowDatabase }) => {
   );
   const folded = page.getByRole("article", { name: "Automatic reply: Please back a pause" });
   const changes = staffCopy.letterChanges;
-  await folded.getByRole("button", { name: changes.more(2) }).scrollIntoViewIfNeeded();
-  await expect(folded).not.toContainText("constituency office");
+  const fold = folded.getByText(changes.more(2));
+  await fold.scrollIntoViewIfNeeded();
+  await expect(folded.getByText("constituency office")).toBeHidden();
   await frame(page, "The acknowledgement, folded");
-  story("Show as sent unfolds it.");
-  await folded.getByRole("button", { name: changes.asSent }).click();
-  await expect(folded).toContainText("constituency office");
-  await frame(page, "The acknowledgement, as sent");
+  story("A click unfolds it.");
+  await fold.click();
+  await expect(folded.getByText("constituency office")).toBeVisible();
+  await frame(page, "The acknowledgement, unfolded");
 });
 
 test("Emails that aren't relayed", async ({ page, request, flowDatabase }) => {
@@ -485,14 +486,15 @@ test("Jane changes the letter", async ({ page, flowDatabase }) => {
   await expect(letter.locator("ins").first()).toContainText("My children ask me about AI");
   await expect(letter.locator("del").first()).toContainText("arrange a short meeting");
   // The campaign's paragraphs she left alone, folded.
-  await expect(letter).not.toContainText("national security");
+  const unchanged = letter.getByText("national security").first();
+  await expect(unchanged).toBeHidden();
   await frame(page, "The letter's page");
   story("Clicking a fold opens it.");
   await letter
-    .getByRole("button", { name: /unchanged/ })
+    .getByText(/unchanged/)
     .first()
     .click();
-  await expect(letter).toContainText("national security");
+  await expect(unchanged).toBeVisible();
   await frame(page, "A fold opened");
   story("Show as sent shows the letter as the MP got it.");
   await letter.getByRole("button", { name: words.asSent }).click();

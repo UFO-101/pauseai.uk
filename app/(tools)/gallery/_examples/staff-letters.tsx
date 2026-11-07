@@ -41,7 +41,8 @@ import FindInGmail from "@/app/(staff)/staff/_components/FindInGmail";
 import StaffPage from "@/app/(staff)/staff/_components/ui/StaffPage";
 import { campaigns } from "@/lib/content/email-your-mp";
 import BounceReason from "@/app/(staff)/staff/_components/BounceReason";
-import LetterChanges, { FoldedAutoReply } from "@/app/(staff)/staff/_components/LetterChanges";
+import LetterChanges from "@/app/(staff)/staff/_components/LetterChanges";
+import MailFold from "@/app/(staff)/staff/_components/MailFold";
 import { MessageText } from "@/app/(staff)/staff/_components/LetterThread";
 import ThreadEmail from "@/app/(staff)/staff/_components/ThreadEmail";
 import LetterThread, { SupporterLetterThread } from "@/app/(staff)/staff/_components/LetterThread";
@@ -138,6 +139,17 @@ export const staffLetters: Group = {
             </StaffPage>
           ),
         },
+        {
+          label: "An automatic reply of four paragraphs, folded to its first",
+          render: () => {
+            const reply = exampleAutoRepliedLetterDetails.sent!.messages[0];
+            return (
+              <StaffPage as="div">
+                <MessageText text={reply.text!} quoted="" auto />
+              </StaffPage>
+            );
+          },
+        },
       ],
     },
     {
@@ -194,26 +206,16 @@ export const staffLetters: Group = {
       ],
     },
     {
-      name: "FoldedAutoReply",
-      file: "app/(staff)/staff/_components/LetterChanges.tsx",
+      name: "MailFold",
+      file: "app/(staff)/staff/_components/MailFold.tsx",
       variants: [
         {
-          label: "An automatic reply of four paragraphs, folded to its first; Show as sent above",
-          render: () => {
-            const reply = exampleAutoRepliedLetterDetails.sent!.messages[0];
-            return (
-              <StaffPage as="div">
-                <FoldedAutoReply
-                  from={reply.fromName}
-                  to="Jane Smith <jane@example.com>"
-                  cc={null}
-                  at={reply.at}
-                  subject={reply.subject}
-                  text={reply.text!}
-                />
-              </StaffPage>
-            );
-          },
+          label: "Folded, as it first shows",
+          render: () => (
+            <StaffPage as="div">
+              <MailFold summary="2 paragraphs unchanged">{"Dear Jo,\n\nI'm writing about the bill."}</MailFold>
+            </StaffPage>
+          ),
         },
       ],
     },

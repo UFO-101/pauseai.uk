@@ -27,20 +27,10 @@
   overflow-wrap: anywhere;
 }
 
-/* The mail a message quotes and its footer, folded under its text. */
-.quoted {
-  margin-top: var(--space-3);
-}
-
-.quoted summary {
-  color: var(--text-muted);
-  font-size: var(--text-sm);
-  cursor: pointer;
-}
-
-.quoted .text {
-  margin-top: var(--space-2);
-  color: var(--text-muted);
+/* A message's text and what's folded under it, a step apart. */
+.message {
+  display: grid;
+  gap: var(--space-3);
 }
 
 /* The note, small, grey and slanted, with the way to the letter in Gmail

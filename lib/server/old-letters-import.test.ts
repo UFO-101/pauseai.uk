@@ -295,7 +295,7 @@ describeWithDatabase("the import of old letters", () => {
       subject: "Coffee next week?",
       someone: false,
       people: [polly],
-      n: 2,
+      n: 3,
     });
     // Parliament's domain, with no one we know: it counts, and whose it is isn't known. Not PauseAI's or a politician's, but on Parliament's domain.
     expect(thread("Room booking request")).toMatchObject({ people: [], n: 2 });

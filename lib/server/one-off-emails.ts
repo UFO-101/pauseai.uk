@@ -450,6 +450,8 @@ export type OneOffMessage = {
   text: string | null;
   /** The mail it quotes and its footer, folded under its text; empty if none. */
   quoted: string;
+  /** Sent by a machine, such as an out-of-office, by its kept mail's headers and subject. */
+  auto: boolean;
 };
 
 /** A one-off thread, for its page: `messages` null for staff who can't see it. */
@@ -464,7 +466,7 @@ export async function getOneOffThread(
   const [row] = await threadRows("t.id = $1", [id], supporters, 1, 0);
   if (!row) return undefined;
   if (row.someoneElse && !supporters) return { ...row, messages_: null };
-  const rows = await query<Omit<OneOffMessage, "text" | "quoted" | "politicians"> & { blobKey: string }>(
+  const rows = await query<Omit<OneOffMessage, "text" | "quoted" | "auto" | "politicians"> & { blobKey: string }>(
     `SELECT id::int AS id, at, from_name AS "fromName", from_address AS "fromAddress", to_line AS "to", cc_line AS cc,
        subject, account, blob_key AS "blobKey"
      FROM one_off_messages WHERE thread_id = $1 ORDER BY at, id`,
@@ -473,9 +475,9 @@ export async function getOneOffThread(
   const book = await politicianBook();
   const messages = await Promise.all(
     rows.map(async ({ blobKey, ...message }) => {
-      const { text, quoted } = await messageContent(blobKey);
+      const { text, quoted, auto } = await messageContent(blobKey);
       const addresses = [message.fromAddress, ...addressesIn(`${message.to} ${message.cc}`)];
-      return { ...message, politicians: politicianAddresses(book, addresses), text, quoted };
+      return { ...message, politicians: politicianAddresses(book, addresses), text, quoted, auto };
     }),
   );
   return { ...row, messages_: messages };

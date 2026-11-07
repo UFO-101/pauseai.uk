@@ -302,6 +302,16 @@ test("One-off emails", async ({ page, request, flowDatabase }) => {
   await expect(page.getByRole("link", { name: "Polly Placeholder" }).first()).toBeVisible();
   await frame(page, "A thread");
 
+  story("An out-of-office in the thread shows only its first paragraph, the rest folded under it.");
+  const away = page.getByRole("article", { name: "Automatic reply: Coffee next week?" });
+  const rest = away.getByText(staffCopy.letterChanges.more(2));
+  await rest.scrollIntoViewIfNeeded();
+  await expect(away.getByText("working for everyone")).toBeHidden();
+  await frame(page, "An out-of-office, folded");
+  await rest.click();
+  await expect(away.getByText("working for everyone")).toBeVisible();
+  await frame(page, "An out-of-office, unfolded");
+
   story("A politician's page lists theirs.");
   const [polly] = runSql(flowDatabase, "SELECT id FROM notable_people WHERE airtable_id = 'recPlaceholder'");
   await page.goto(`${BASE}/staff/politicians/${polly}`);
