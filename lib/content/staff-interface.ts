@@ -1460,9 +1460,9 @@ All events: ${link}`,
       `A letter to ${mp} (${address}) didn't arrive. The mail server said: “${reason.replace(/\.+$/, "")}.”\n\nNothing more will be sent to that address until it's fixed in Airtable and unblocked here:\n${link}`,
     // An email to an MP that wasn't a letter or a relay, or one the site can't place.
     notALetter: {
-      subject: (mp: string) => `⁂ An email to ${mp} bounced`,
+      subject: (mp: string) => `An email to ${mp} bounced`,
       body: (mp: string, address: string, reason: string, link: string) =>
-        `⁂ An email to ${mp} (${address}) didn't arrive. The mail server said: “${reason.replace(/\.+$/, "")}.”\n\nNothing more will be sent to that address until it's fixed in Airtable and unblocked here:\n${link}`,
+        `An email to ${mp} (${address}) didn't arrive. The mail server said: “${reason.replace(/\.+$/, "")}.”\n\nNothing more will be sent to that address until it's fixed in Airtable and unblocked here:\n${link}`,
     },
   },
   // The web imports, after the Airtable ones on the import page: ControlAI's
@@ -1604,9 +1604,9 @@ All events: ${link}`,
     },
     // Once a day at most: each MP whose address bounced a mailing's letter since the last, and what its server said.
     mailingBounces: {
-      subject: (count: number) => `⁂ ${count} ${count === 1 ? "MP's address" : "MPs' addresses"} bounced a mailing`,
+      subject: (count: number) => `${count} ${count === 1 ? "MP's address" : "MPs' addresses"} bounced a mailing`,
       body: (lines: string[], link: string) =>
-        `⁂ These MPs' addresses bounced letters from a mailing since the last report:\n\n${lines.join("\n")}\n\nNothing more will be sent to them until they're fixed in Airtable and unblocked here:\n${link}`,
+        `These MPs' addresses bounced letters from a mailing since the last report:\n\n${lines.join("\n")}\n\nNothing more will be sent to them until they're fixed in Airtable and unblocked here:\n${link}`,
     },
     // Once a day at most: the supporters' copies that bounced since the last, so their MP's replies can't be
     // passed on; how many replies are held; each address's domain and what its server said.
