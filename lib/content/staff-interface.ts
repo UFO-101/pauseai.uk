@@ -1277,7 +1277,7 @@ All events: ${link}`,
       answer: "Answer",
       lastWrittenTo: "Last written to",
       // Under the answers: leads to the politicians list, filtered to those who answered this ask.
-      everyone: "⁂ See everyone who answered this ask in the Politicians list, where you can filter them →",
+      everyone: "All answers in Politicians →",
       letters: (n: number) => `${n} ${n === 1 ? "letter" : "letters"}`,
     },
     askedBy: { supporters: "Supporters", pauseai: "PauseAI", controlai: "ControlAI" },
