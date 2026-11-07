@@ -110,19 +110,22 @@ export async function layoutSettled(page: Page, selector: string): Promise<void>
  * runs; an editor may scroll its caret back into view a frame later. After
  * Back, the browser puts the window where it was as the page loads, which
  * can be after it was sent to the top: so it waits for the load, and the
- * top has to hold for a few frames.
+ * top has to hold for a few frames. So does leaving the field: on a busy
+ * machine an editor can take focus back after the blur, and its ring would
+ * show in one run and not the next.
  */
 export async function wholePage(page: Page): Promise<void> {
   await page.waitForLoadState("load");
-  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
   await expect
     .poll(() =>
       page.evaluate(async () => {
+        const inField = () => document.activeElement !== null && document.activeElement !== document.body;
+        if (inField()) (document.activeElement as HTMLElement).blur();
         window.scrollTo({ top: 0, behavior: "instant" });
         const tick = () => new Promise((done) => requestAnimationFrame(() => setTimeout(done, 50)));
-        for (let i = 0; i < 4 && window.scrollY === 0; i++) await tick();
-        return window.scrollY;
+        for (let i = 0; i < 4 && window.scrollY === 0 && !inField(); i++) await tick();
+        return window.scrollY === 0 && !inField();
       }),
     )
-    .toBe(0);
+    .toBe(true);
 }

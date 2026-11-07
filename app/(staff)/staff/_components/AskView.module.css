@@ -121,6 +121,11 @@
   margin: 0;
   padding: var(--space-2) var(--space-4);
   border-top: 1px solid var(--border);
+  font-size: var(--text-xs);
+}
+
+/* The way to all of an answer, larger than a column's note that there's nothing yet. */
+.columnFoot a {
   font-size: var(--text-md);
 }
 
