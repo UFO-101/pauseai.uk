@@ -56,8 +56,8 @@ export type AllLettersFound = { letters: AnyLetter[]; total: number; pages: numb
 /** Parliaments' domains and any subdomain of them, as a regular expression over an address. */
 const PARLIAMENT_ADDRESS = `@(.+\\.)?(${PARLIAMENT_DOMAINS.join("|").replace(/\./g, "\\.")})$`;
 
-/** Those on a To line: PauseAI once, however many of us, first; each other by name, or address with none. */
-function recipientsOf(line: string, book: PoliticianBook): EmailRecipient[] {
+/** Those on a To line: PauseAI once, however many of us, first; a politician of the thread's `known` by their name; each other by the line's name, or address with none. */
+function recipientsOf(line: string, book: PoliticianBook, known: EmailPerson[]): EmailRecipient[] {
   const people = mailboxes(line);
   const politicians = politicianAddresses(
     book,
@@ -67,7 +67,7 @@ function recipientsOf(line: string, book: PoliticianBook): EmailRecipient[] {
   return [
     ...(others.length < people.length ? [{ name: "", politicianId: null, pauseai: true }] : []),
     ...others.map(({ name, address }) => ({
-      name: name || address,
+      name: known.find((person) => person.id === politicians[address])?.name ?? (name || address),
       politicianId: politicians[address] ?? null,
       pauseai: false,
     })),
@@ -180,7 +180,7 @@ export async function listAllLetters(filter: AllLettersFilter, supporters: boole
     values,
   );
   const letters = rows.map(({ toLine, ...row }) =>
-    row.kind === "one-off" ? { ...row, recipients: recipientsOf(toLine!, book) } : row,
+    row.kind === "one-off" ? { ...row, recipients: recipientsOf(toLine!, book, row.people) } : row,
   ) as AnyLetter[];
   return { letters, total, pages: Math.max(1, Math.ceil(total / ALL_LETTERS_PAGE_SIZE)) };
 }

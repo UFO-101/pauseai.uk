@@ -184,6 +184,21 @@ describeWithDatabase("listAllLetters", () => {
     });
   });
 
+  it("names a politician on a thread by their own name, whatever the To line calls them", async () => {
+    vi.stubEnv("FIXTURE_NOW", NOW);
+    const polly = await addTestPolitician();
+    await thread(
+      "Bare",
+      [["jo@pauseai.uk", "2026-10-17T10:00:00Z"]],
+      false,
+      [polly],
+      [],
+      "polly.placeholder.mp@parliament.uk",
+    );
+    const [row] = (await listAllLetters(allLettersSearch({}).filter, true)).letters;
+    expect(row).toMatchObject({ recipients: [{ name: "Polly Placeholder", politicianId: polly, pauseai: false }] });
+  });
+
   it("filters by several senders, or all but some", async () => {
     await fill();
     await thread("A thread", [["jo@pauseai.uk", "2026-10-17T10:00:00Z"]]);

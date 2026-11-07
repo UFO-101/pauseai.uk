@@ -15,7 +15,6 @@ import { staffTime } from "@/lib/staff-time";
 import CampaignName from "./CampaignName";
 import FilterBar, { type Filter } from "./ui/FilterBar";
 import ListFrame, { type ListColumn } from "./ui/ListFrame";
-import PageIntro from "./ui/PageIntro";
 import StaffLink from "./ui/StaffLink";
 import Withheld from "./ui/Withheld";
 
@@ -201,7 +200,11 @@ export default function AllLetters({
         search={{ name: "q", label: copy.search }}
         filters={emailFilters(supporters, people)}
       />
-      {search.type.includes("one-off") && <PageIntro>{copy.intro(inbox)}</PageIntro>}
+      {search.type.includes("one-off") && (
+        <p>
+          <Muted>{copy.intro(inbox)}</Muted>
+        </p>
+      )}
       <ListFrame
         count={copy.total(found.total)}
         total={found.total}
