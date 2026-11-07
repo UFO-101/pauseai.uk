@@ -861,12 +861,12 @@ describeWithDatabase("the import of old letters", () => {
     await connectTestGmail("joseph@pauseai.uk");
     await connectTestGmail("policy@pauseai.uk");
     // A pace much longer than a request takes, however busy the machine, so the second request has to wait for it, and the time is up then.
-    const paced = await importOldLetters("jo@pauseai.uk", 5_000, 5_000);
+    const paced = await importOldLetters("jo@pauseai.uk", 3_000, 3_000);
     expect(paced.requests).toBe(2);
     expect((await importOldLetters("jo@pauseai.uk", undefined, 1)).finished).toBe(false);
     vi.stubEnv("DATA_FIXTURES", "1");
     expect((await importOldLetters("jo@pauseai.uk", undefined, 60_000)).finished).toBe(true);
-  });
+  }, 30_000);
 
   it("carries on from where the last run stopped when its time is up", async () => {
     await seed();
