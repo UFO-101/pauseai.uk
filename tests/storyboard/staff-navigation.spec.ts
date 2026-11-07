@@ -248,7 +248,7 @@ test("An MP signs", async ({ page, request, flowDatabase }) => {
   story("They open Politicians from the sidebar (on a phone, from the menu). The test politicians are left out.");
 
   // The pages are in the sidebar; on a phone, behind the bar's menu.
-  const politicians = page.getByRole("link", { name: staffCopy.nav.politicians });
+  const politicians = page.getByRole("link", { name: staffCopy.nav.politicians, exact: true });
   if (!(await politicians.first().isVisible())) await page.locator("nav details > summary").click();
   await politicians.filter({ visible: true }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(staffCopy.politicians.title);

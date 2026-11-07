@@ -2,6 +2,6 @@
 -- its region, as Luma says; and when we last settled its tags, so one
 -- applied or asked about isn't touched again.
 ALTER TABLE luma_events
-  ADD COLUMN location_type text,
-  ADD COLUMN region text,
-  ADD COLUMN tags_checked_at timestamptz;
+  ADD COLUMN IF NOT EXISTS location_type text,
+  ADD COLUMN IF NOT EXISTS region text,
+  ADD COLUMN IF NOT EXISTS tags_checked_at timestamptz;
