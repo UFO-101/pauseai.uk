@@ -128,7 +128,7 @@ type Reader = {
 };
 
 /** Waits for each Gmail request's turn, and stops the run when its time is up. */
-function pacer(paceMs: number, until: number, result: OldLettersImportResult) {
+export function pacer(paceMs: number, until: number, result: Pick<OldLettersImportResult, "requests">) {
   let next = 0;
   return async () => {
     const at = Date.now();
